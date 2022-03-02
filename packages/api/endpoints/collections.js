@@ -31,6 +31,7 @@ const {
 } = require('../lib/publishSnsMessageUtils');
 const models = require('../models');
 const { isBadRequestError } = require('../lib/errors');
+const { validateCollection } = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
@@ -186,6 +187,7 @@ async function put(req, res) {
 
   const { name, version } = req.params;
   const collection = req.body;
+  validateCollection(collection);
   let oldPgCollection;
   let apiPgCollection;
 

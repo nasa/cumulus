@@ -31,12 +31,17 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const {
+  InvalidRegexError,
+  UnmatchedRegexError,
+} = require('@cumulus/errors');
 
 const { AccessToken } = require('../../../models');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
   createCollectionTestRecords,
+  fakeCollectionFactory,
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/collections');
@@ -267,13 +272,12 @@ test.serial('PUT replaces an existing collection in all data stores with correct
 });
 
 test.serial('PUT returns 404 for non-existent collection', async (t) => {
-  const name = randomString();
-  const version = randomString();
+  const originalCollection = fakeCollectionFactory();
   const response = await request(app)
-    .put(`/collections/${name}/${version}`)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ name, version })
+    .send(originalCollection)
     .expect(404);
   const { message, record } = response.body;
 
@@ -281,37 +285,33 @@ test.serial('PUT returns 404 for non-existent collection', async (t) => {
   t.falsy(record);
 });
 
-test.serial('PUT returns 400 for name mismatch between params and payload',
-  async (t) => {
-    const name = randomString();
-    const version = randomString();
-    const response = await request(app)
-      .put(`/collections/${name}/${version}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({ name: randomString(), version })
-      .expect(400);
-    const { message, record } = response.body;
+test.serial('PUT returns 400 for name mismatch between params and payload', async (t) => {
+  const originalCollection = fakeCollectionFactory();
+  const response = await request(app)
+    .put(`/collections/${randomString()}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalCollection)
+    .expect(400);
+  const { message, record } = response.body;
 
-    t.truthy(message);
-    t.falsy(record);
-  });
+  t.truthy(message);
+  t.falsy(record);
+});
 
-test.serial('PUT returns 400 for version mismatch between params and payload',
-  async (t) => {
-    const name = randomString();
-    const version = randomString();
-    const response = await request(app)
-      .put(`/collections/${name}/${version}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({ name, version: randomString() })
-      .expect(400);
-    const { message, record } = response.body;
+test.serial('PUT returns 400 for version mismatch between params and payload', async (t) => {
+  const originalCollection = fakeCollectionFactory();
+  const response = await request(app)
+    .put(`/collections/${originalCollection.name}/${randomString()}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalCollection)
+    .expect(400);
+  const { message, record } = response.body;
 
-    t.truthy(message);
-    t.falsy(record);
-  });
+  t.truthy(message);
+  t.falsy(record);
+});
 
 test.serial('PUT rollbacks Postgres record and does not write to Elasticsearch or publish SNS message if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;
@@ -434,4 +434,236 @@ test.serial('PUT does not write to PostgreSQL or publish SNS message if writing 
   }).promise();
 
   t.is(Messages, undefined);
+});
+
+test.serial('PUT throws InvalidRegexError for invalid granuleIdExtraction', async (t) => {
+  const updateCollection = fakeCollectionFactory({ granuleIdExtraction: '*' });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: InvalidRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for non-matching granuleIdExtraction', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    granuleIdExtraction: '(1234)',
+    sampleFileName: 'abcd',
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for granuleIdExtraction with no matching group', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    granuleIdExtraction: '1234',
+    sampleFileName: '1234',
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for invalid granuleId regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({ granuleId: '*' });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: InvalidRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for non-matching granuleId regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    granuleIdExtraction: '(1234)',
+    sampleFileName: '1234',
+    granuleId: 'abcd',
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for invalid file.regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '*',
+      sampleFileName: 'filename',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: InvalidRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for non-matching file.regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^1234$',
+      sampleFileName: 'filename',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for unmatched file.checksumFor', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+      checksumFor: '^1234$',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    {
+      instanceOf: UnmatchedRegexError,
+      message: 'checksumFor \'^1234$\' does not match any file regex',
+    }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for file.checksumFor matching multiple files', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+    },
+    {
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename2',
+    },
+    {
+      bucket: 'bucket',
+      regex: '^file.*$',
+      sampleFileName: 'filename3',
+      checksumFor: '^.*$',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    {
+      instanceOf: InvalidRegexError,
+      message: 'checksumFor \'^.*$\' matches multiple file regexes',
+    }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for file.checksumFor matching its own file', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+      checksumFor: '^.*$',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    {
+      instanceOf: InvalidRegexError,
+      message: 'checksumFor \'^.*$\' cannot be used to validate itself',
+    }
+  );
 });
