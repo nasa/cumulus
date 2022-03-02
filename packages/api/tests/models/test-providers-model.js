@@ -89,7 +89,8 @@ test('Providers.delete() throws an exception if the provider has associated rule
     ),
   ]);
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   try {
     await providersModel.delete({ id: providerId });
