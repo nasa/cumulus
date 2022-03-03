@@ -22,14 +22,14 @@ async function getAuthToken() {
 }
 
 /**
- * Get request to LZARDS
+ * Send GET request to LZARDS
  *
  * @param {Object} params
  * @param {string} params.lzardsApiUri - LZARDS endpoint url
  * @param {string} params.queryParams - string containing query parameters to pass to lzards
  * @returns {Promise<Object>} - resolves to the LZARDS return
  */
-async function getRequestToLzards({ lzardsApiUri = process.env.lzards_api, queryParams }) {
+async function sendGetRequestToLzards({ lzardsApiUri = process.env.lzards_api, queryParams }) {
   if (!lzardsApiUri) {
     const errMsg = 'The lzards_api environment variable is not set';
     log.error(errMsg);
@@ -56,11 +56,11 @@ async function getRequestToLzards({ lzardsApiUri = process.env.lzards_api, query
       }
     );
   } catch (error) {
-    log.error('postRequestToLzards encountered error:', error);
+    log.error('sendGetRequestToLzards encountered error:', error);
     throw error;
   }
 }
 
 module.exports = {
-  getRequestToLzards,
+  sendGetRequestToLzards,
 };
