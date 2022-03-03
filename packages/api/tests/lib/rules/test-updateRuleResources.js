@@ -127,8 +127,8 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
 
   t.is(createdRule.name, kinesisRule.name);
   t.is(createdRule.value, kinesisRule.value);
-  t.false(createdRule.arn === undefined);
-  t.false(createdRule.log_event_arn === undefined);
+  t.not(createdRule.arn, undefined);
+  t.not(createdRule.log_event_arn, undefined);
 
   // update rule
   const updatedKinesisRule = {
@@ -199,8 +199,8 @@ test.serial('Updating a kinesis type rule to disabled does not change event sour
   });
   // create rule trigger
   const createdRule = await createRuleTrigger(kinesisRule);
-  t.false(createdRule.arn === undefined);
-  t.false(createdRule.log_event_arn === undefined);
+  t.not(createdRule.arn, undefined);
+  t.not(createdRule.log_event_arn, undefined);
 
   // update rule state by setting enabled to false
   const updatedKinesisRule = {
@@ -273,7 +273,7 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
   });
 });
 
-test.serial('Updating a valid SQS rule to have an invalid schema throws an error and does not update triggers', async (t) => {
+test.serial('Updating a valid SQS rule to have an invalid schema throws an error', async (t) => {
   const queues = await createSqsQueues(randomString());
   const sqsRule = fakeRuleRecordFactory({
     workflow,
@@ -289,27 +289,21 @@ test.serial('Updating a valid SQS rule to have an invalid schema throws an error
   t.is(sqsRuleWithTrigger.value, sqsRule.value);
 
   // update rule to be invalid by setting type to null
-  const updatedKinesisRule = {
+  const updatedSqsRule = {
     ...sqsRuleWithTrigger,
     type: null,
   };
   await t.throwsAsync(
-    updateRuleTrigger(sqsRuleWithTrigger, updatedKinesisRule, t.context.testKnex),
+    updateRuleTrigger(sqsRuleWithTrigger, updatedSqsRule, t.context.testKnex),
     { name: 'SchemaValidationError' }
   );
-  const updatedKinesisEventMappings = await getKinesisEventMappings();
-  const updatedConsumerEventMappings = updatedKinesisEventMappings[0].EventSourceMappings;
-  const updatedLogEventMappings = updatedKinesisEventMappings[1].EventSourceMappings;
-
-  t.is(updatedConsumerEventMappings.length, 0);
-  t.is(updatedLogEventMappings.length, 0);
   t.teardown(async () => {
     await deleteRuleResources(t.context.testKnex, sqsRuleWithTrigger);
     await SQS.deleteQueue(queues.queueUrl);
   });
 });
 
-test.serial('Updating a rule trigger for an SQS rule fails if there is no redrive policy on the queue', async (t) => {
+test.serial('Updating an SQS rule fails if there is no redrive policy on the queue', async (t) => {
   const queues = await createSqsQueues(randomString());
   const rule = fakeRuleRecordFactory({
     workflow,
@@ -334,7 +328,7 @@ test.serial('Updating a rule trigger for an SQS rule fails if there is no redriv
   t.teardown(async () => await SQS.deleteQueue(queueUrl));
 });
 
-test.serial('Updating a rule trigger for an SQS rule succeeds', async (t) => {
+test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
   const queues = await createSqsQueues(randomString());
   const rule = fakeRuleRecordFactory({
     workflow,
@@ -355,7 +349,7 @@ test.serial('Updating a rule trigger for an SQS rule succeeds', async (t) => {
     value: newQueues.queueUrl,
   };
   const updatedSqsRule = await updateRuleTrigger(sqsRule, updatedRule, t.context.testKnex);
-  t.deepEqual(updatedSqsRule.value, newQueues.queueUrl);
+  t.is(updatedSqsRule.value, newQueues.queueUrl);
   t.teardown(async () => {
     await SQS.deleteQueue(queues.queueUrl);
     await SQS.deleteQueue(newQueues.queueUrl);
@@ -406,7 +400,8 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
 
   const ruleWithTrigger = await createRuleTrigger(rule);
 
-  t.is(rule.value, TopicArn);
+  t.is(ruleWithTrigger.value, TopicArn);
+  t.truthy(ruleWithTrigger.arn);
 
   const updates = {
     ...rule,
@@ -438,7 +433,7 @@ test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific e
         promise: () => Promise.resolve({
           Subscriptions: [{
             Endpoint: process.env.messageConsumer,
-            SubscriptionArn: snsTopicArn,
+            SubscriptionArn: randomString(),
           }],
         }),
       }),
