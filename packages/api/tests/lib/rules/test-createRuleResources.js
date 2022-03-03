@@ -356,7 +356,6 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
   });
 });
 
-
 test('buildPayload builds a lambda payload from the rule', async (t) => {
   const ruleParams = {
     type: 'onetime',
