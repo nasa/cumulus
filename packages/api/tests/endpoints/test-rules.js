@@ -743,7 +743,6 @@ test('PUT replaces a rule', async (t) => {
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
-  console.log('UPDATE RULE', updateRule);
 
   await request(app)
     .put(`/rules/${updateRule.name}`)
@@ -756,6 +755,7 @@ test('PUT replaces a rule', async (t) => {
   const updatedEsRecord = await esRulesClient.get(translatedPgRecord.name);
 
   // PG and ES records have the same timestamps
+  t.true(actualPostgresRule.updated_at > originalPgRecord.updated_at);
   t.is(actualPostgresRule.created_at.getTime(), updatedEsRecord.createdAt);
   t.is(actualPostgresRule.updated_at.getTime(), updatedEsRecord.updatedAt);
   t.deepEqual(
@@ -768,6 +768,12 @@ test('PUT replaces a rule', async (t) => {
       timestamp: updatedEsRecord.timestamp,
     }
   );
+  t.like(actualPostgresRule, {
+    ...omit(originalPgRecord, ['queue_url']),
+    enabled: true,
+    created_at: new Date(originalPgRecord.created_at),
+    updated_at: actualPostgresRule.updated_at,
+  });
 });
 
 test('PUT returns 404 for non-existent rule', async (t) => {
