@@ -157,7 +157,6 @@ test('Creating rule triggers for a kinesis type rule adds event mappings', async
   t.false(createdRule.log_event_arn === undefined);
 
   // Clean Up
-  // await deleteRuleResources(t.context.testKnex, kinesisRule);
   await deleteKinesisEventSourceMappings();
 });
 
@@ -226,14 +225,13 @@ test('Creating a rule trigger for an SQS rule succeeds', async (t) => {
   t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
 });
 
-test('Creating a rule trigger for an SQS rule succeeds sets default value for meta.retries and visibilityTimeout', async (t) => {
+test('Creating a rule trigger for an SQS rule succeeds and sets default value for meta.retries and visibilityTimeout', async (t) => {
   const queues = await createSqsQueues(randomString());
   const rule = fakeRuleRecordFactory({
     workflow,
     type: 'sqs',
     value: queues.queueUrl,
     enabled: true,
-    meta: {},
   });
   const sqsRule = await createRuleTrigger(rule);
   t.is(sqsRule.meta.retries, 3);
