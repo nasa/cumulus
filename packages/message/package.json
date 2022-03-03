@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/message",
-  "version": "10.1.1-alpha.0",
+  "version": "10.0.0",
   "description": "Utilities for building and parsing Cumulus messages",
   "keywords": [
     "GIBS",
