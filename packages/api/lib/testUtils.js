@@ -12,10 +12,11 @@ const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
-  translateApiRuleToPostgresRule,
   translateApiPdrToPostgresPdr,
   translateApiExecutionToPostgresExecution,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  fakeRuleRecordFactory,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -36,6 +37,7 @@ const {
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
+const { createRuleTrigger } = require('./rulesHelpers');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -488,28 +490,27 @@ const createProviderTestRecords = async (context, providerParams) => {
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
-    ruleModel,
     rulePgModel,
     esClient,
     esRulesClient,
   } = context;
-  const originalRule = fakeRuleFactoryV2(ruleParams);
 
-  const ruleWithTrigger = await ruleModel.createRuleTrigger(originalRule);
-  const originalDynamoRule = await ruleModel.create(ruleWithTrigger);
+  const originalRule = fakeRuleRecordFactory(ruleParams);
 
-  const insertPgRecord = await translateApiRuleToPostgresRule(originalDynamoRule, testKnex);
-  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+  const ruleWithTrigger = await createRuleTrigger(originalRule);
+
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, ruleWithTrigger);
 
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
   );
-  await indexRule(esClient, originalDynamoRule, process.env.ES_INDEX);
+  const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+  await indexRule(esClient, originalApiRule, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );
   return {
-    originalDynamoRule,
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   };
