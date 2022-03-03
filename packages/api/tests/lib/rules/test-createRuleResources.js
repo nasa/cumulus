@@ -174,8 +174,6 @@ test('Creating an invalid kinesis type rule does not add event mappings', async 
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
 
-  console.log(JSON.stringify(kinesisEventMappings));
-
   t.is(consumerEventMappings.length, 0);
   t.is(logEventMappings.length, 0);
 });
