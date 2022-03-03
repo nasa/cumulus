@@ -183,7 +183,7 @@ test('POST creates a new provider in all data stores', async (t) => {
   t.like(esRecord, record);
 });
 
-test('POST creates a new provider in Dynamo and PG with correct timestamps', async (t) => {
+test('POST creates a new provider in PG with correct timestamps', async (t) => {
   const { providerPgModel } = t.context;
   const newProviderId = randomString();
   const newProvider = fakeProviderFactory({
@@ -212,7 +212,7 @@ test('POST creates a new provider in Dynamo and PG with correct timestamps', asy
     newProvider.id
   );
 
-  // PG and Dynamo records have the same timestamps
+  // PG and ES and returned API records have the same timestamps
   t.is(providerPgRecord.created_at.getTime(), record.createdAt);
   t.is(providerPgRecord.updated_at.getTime(), record.updatedAt);
   t.is(providerPgRecord.created_at.getTime(), esRecord.createdAt);
