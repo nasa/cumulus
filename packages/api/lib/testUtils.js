@@ -495,13 +495,16 @@ const createRuleTestRecords = async (context, ruleParams) => {
   } = context;
   const originalRule = fakeRuleFactoryV2(ruleParams);
 
-  const insertPgRecord = await translateApiRuleToPostgresRule(originalRule, testKnex);
-  const originalDynamoRule = await ruleModel.create(originalRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(originalRule);
+  const originalDynamoRule = await ruleModel.create(ruleWithTrigger);
+
+  const insertPgRecord = await translateApiRuleToPostgresRule(originalDynamoRule, testKnex);
   const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
   );
-  await indexRule(esClient, originalRule, process.env.ES_INDEX);
+  await indexRule(esClient, originalDynamoRule, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );

@@ -425,6 +425,68 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
   });
 });
 
+test.serial('Updating an SNS rule to "disabled" removes the event source mapping ARN', async (t) => {
+  const snsTopicArn = randomString();
+  const { TopicArn } = await awsServices.sns().createTopic({
+    Name: snsTopicArn,
+  }).promise();
+
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const rule = fakeRuleRecordFactory({
+    type: 'sns',
+    value: TopicArn,
+    workflow,
+    enabled: true,
+  });
+
+  const ruleWithTrigger = await createRuleTrigger(rule);
+
+  t.is(ruleWithTrigger.value, TopicArn);
+  t.truthy(ruleWithTrigger.arn);
+
+  const updates = {
+    ...ruleWithTrigger,
+    enabled: false,
+  };
+  const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.arn }));
+
+  t.true(Object.prototype.hasOwnProperty.call(updatedSnsRule, 'arn'));
+  t.is(updatedSnsRule.arn, undefined);
+
+  t.teardown(async () => {
+    lambdaStub.restore();
+    snsStub.restore();
+    unsubscribeSpy.restore();
+    await awsServices.sns().deleteTopic({ TopicArn }).promise();
+  });
+});
+
 test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific error', async (t) => {
   const snsTopicArn = randomString();
   const snsStub = sinon.stub(awsServices, 'sns')

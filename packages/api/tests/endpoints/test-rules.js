@@ -22,6 +22,7 @@ const {
   fakeRuleRecordFactory,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
+const awsServices = require('@cumulus/aws-client/services');
 const S3 = require('@cumulus/aws-client/S3');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
@@ -774,6 +775,80 @@ test('PUT replaces a rule', async (t) => {
     created_at: new Date(originalPgRecord.created_at),
     updated_at: actualPostgresRule.updated_at,
   });
+});
+
+test('put() sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  t.teardown(() => {
+    snsStub.restore();
+    lambdaStub.restore();
+  });
+
+  const {
+    esRulesClient,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const {
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      collection: undefined,
+      provider: undefined,
+      rule: {
+        value: 'kinesis-arn',
+        type: 'sns',
+      },
+      state: 'ENABLED',
+    }
+  );
+
+  t.truthy(originalPgRecord.arn);
+  t.is(originalEsRecord.rule.arn, originalPgRecord.arn);
+
+  const translatedPgRecord = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+
+  const updateRule = {
+    ...translatedPgRecord,
+    state: 'DISABLED',
+  };
+
+  await request(app)
+    .put(`/rules/${updateRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updateRule)
+    .expect(200);
+
+  const updatedPostgresRule = await rulePgModel.get(testKnex, { name: updateRule.name });
+  const updatedEsRecord = await esRulesClient.get(translatedPgRecord.name);
+
+  t.is(updatedPostgresRule.arn, null);
+  t.is(updatedEsRecord.rule.arn, undefined);
 });
 
 test('PUT returns 404 for non-existent rule', async (t) => {
