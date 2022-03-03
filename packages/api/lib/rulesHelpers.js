@@ -623,7 +623,7 @@ async function updateRuleTrigger(ruleItem, updates, knex) {
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
   // the default value for enabled is true
-  if (ruleItem.enabled === undefined) {
+  if (newRuleItem.enabled === undefined) {
     newRuleItem.enabled = true;
   }
 
