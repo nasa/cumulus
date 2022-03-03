@@ -150,18 +150,18 @@ async function put(req, res) {
 
   try {
     const oldRule = await rulePgModel.get(knex, { name });
-    const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
-    const translatedApiRule = await translateApiRuleToPostgresRuleRaw(apiRule, knex);
 
     apiRule.updatedAt = Date.now();
-    apiRule.createdAt = oldRule.createdAt;
+    apiRule.createdAt = oldRule.created_at;
+    const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRule, knex);
 
     // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
+      const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
       return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
     }
 
-    const ruleWithTrigger = await updateRuleTrigger(oldRule, translatedApiRule, knex);
+    const ruleWithTrigger = await updateRuleTrigger(oldRule, apiPgRule, knex);
 
     await createRejectableTransaction(knex, async (trx) => {
       const [pgRule] = await rulePgModel.upsert(trx, ruleWithTrigger);
