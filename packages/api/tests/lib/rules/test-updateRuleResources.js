@@ -14,6 +14,7 @@ const {
   randomId,
   randomString,
 } = require('@cumulus/common/test-utils');
+const workflows = require('@cumulus/common/workflows');
 const {
   destroyLocalTestDb,
   fakeRuleRecordFactory,
@@ -74,12 +75,12 @@ test.before(async (t) => {
 
   await createBucket(process.env.system_bucket);
 
-  const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
-  const templateFile = `${process.env.stackName}/workflow_template.json`;
+  const workflowFileKey = workflows.getWorkflowFileKey(process.env.stackName, workflow);
+  const templateFile = workflows.templateKey(process.env.stackName);
   await Promise.all([
     putJsonS3Object(
       process.env.system_bucket,
-      workflowfile,
+      workflowFileKey,
       {}
     ),
     putJsonS3Object(
@@ -422,6 +423,68 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
     snsStub.restore();
     unsubscribeSpy.restore();
     await awsServices.sns().deleteTopic({ TopicArn: TopicArn2 }).promise();
+  });
+});
+
+test.serial('Updating an SNS rule to "disabled" removes the event source mapping ARN', async (t) => {
+  const snsTopicArn = randomString();
+  const { TopicArn } = await awsServices.sns().createTopic({
+    Name: snsTopicArn,
+  }).promise();
+
+  const lambdaStub = sinon.stub(awsServices, 'lambda')
+    .returns({
+      addPermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      removePermission: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const snsStub = sinon.stub(awsServices, 'sns')
+    .returns({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
+          Subscriptions: [{
+            Endpoint: process.env.messageConsumer,
+            SubscriptionArn: randomString(),
+          }],
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const rule = fakeRuleRecordFactory({
+    type: 'sns',
+    value: TopicArn,
+    workflow,
+    enabled: true,
+  });
+
+  const ruleWithTrigger = await createRuleTrigger(rule);
+
+  t.is(ruleWithTrigger.value, TopicArn);
+  t.truthy(ruleWithTrigger.arn);
+
+  const updates = {
+    ...ruleWithTrigger,
+    enabled: false,
+  };
+  const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.arn }));
+
+  t.true(Object.prototype.hasOwnProperty.call(updatedSnsRule, 'arn'));
+  t.is(updatedSnsRule.arn, undefined);
+
+  t.teardown(async () => {
+    lambdaStub.restore();
+    snsStub.restore();
+    unsubscribeSpy.restore();
+    await awsServices.sns().deleteTopic({ TopicArn }).promise();
   });
 });
 

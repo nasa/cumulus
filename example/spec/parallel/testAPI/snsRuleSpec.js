@@ -272,7 +272,6 @@ describe('The SNS-type rule', () => {
           ...updatedRule,
           state: 'ENABLED',
           rule: {
-            arn: null,
             value: updatedRule.rule.value,
             type: 'sns',
           },
@@ -377,7 +376,6 @@ describe('The SNS-type rule', () => {
         const updateParams = {
           ...createdRule.record,
           rule: {
-            arn: null,
             value: TopicArn,
             type: 'sns',
           },

@@ -280,11 +280,7 @@ async function deleteRuleResources(knex, rule) {
  */
 function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
   const updatedRuleItem = cloneDeep(ruleItem);
-  if (!snsSubscriptionArn) {
-    delete updatedRuleItem.arn;
-  } else {
-    updatedRuleItem.arn = snsSubscriptionArn;
-  }
+  updatedRuleItem.arn = snsSubscriptionArn;
   return updatedRuleItem;
 }
 
