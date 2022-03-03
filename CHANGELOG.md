@@ -103,6 +103,12 @@ releases.
 
 ### Fixed
 
+- **CUMULUS-2854**
+  - Fixed queue granules behavior where the task was not accounting for granules that
+  *already* had createdAt set. Workflows downstream in this scenario should no longer
+  fail to write their granules due to order-of-db-writes constraints in the database
+  update logic.
+
 - Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
 which prevented it from running a Fargate task for data migration.
 

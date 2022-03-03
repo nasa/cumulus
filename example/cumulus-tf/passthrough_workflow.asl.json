@@ -1,0 +1,9 @@
+{
+  "Comment": "State machine that creates a step function success event",
+  "StartAt": "SuccessState",
+  "States": {
+    "SuccessState": {
+      "Type": "Succeed"
+    }
+  }
+}
