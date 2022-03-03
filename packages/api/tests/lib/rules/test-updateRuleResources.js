@@ -14,6 +14,7 @@ const {
   randomId,
   randomString,
 } = require('@cumulus/common/test-utils');
+const workflows = require('@cumulus/common/workflows');
 const {
   destroyLocalTestDb,
   fakeRuleRecordFactory,
@@ -74,12 +75,12 @@ test.before(async (t) => {
 
   await createBucket(process.env.system_bucket);
 
-  const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
-  const templateFile = `${process.env.stackName}/workflow_template.json`;
+  const workflowFileKey = workflows.getWorkflowFileKey(process.env.stackName, workflow);
+  const templateFile = workflows.templateKey(process.env.stackName);
   await Promise.all([
     putJsonS3Object(
       process.env.system_bucket,
-      workflowfile,
+      workflowFileKey,
       {}
     ),
     putJsonS3Object(
