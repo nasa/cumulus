@@ -2,9 +2,11 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const awsServices = require('@cumulus/aws-client/services');
 const SQS = require('@cumulus/aws-client/SQS');
+const workflows = require('@cumulus/common/workflows');
 const {
   createBucket,
   putJsonS3Object,
@@ -24,6 +26,7 @@ const {
 } = require('@cumulus/db');
 const {
   createRuleTrigger,
+  buildPayload,
 } = require('../../../lib/rulesHelpers');
 const { createSqsQueues } = require('../../../lib/testUtils');
 
@@ -72,17 +75,17 @@ test.before(async (t) => {
 
   await createBucket(process.env.system_bucket);
 
-  const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
-  const templateFile = `${process.env.stackName}/workflow_template.json`;
+  const workflowFileKey = workflows.getWorkflowFileKey(process.env.stackName, workflow);
+  const templateFileKey = workflows.templateKey(process.env.stackName);
   await Promise.all([
     putJsonS3Object(
       process.env.system_bucket,
-      workflowfile,
+      workflowFileKey,
       {}
     ),
     putJsonS3Object(
       process.env.system_bucket,
-      templateFile,
+      templateFileKey,
       {}
     ),
   ]);
@@ -351,4 +354,51 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     addPermissionSpy.restore();
     await awsServices.sns().deleteTopic({ TopicArn }).promise();
   });
+});
+
+
+test('buildPayload builds a lambda payload from the rule', async (t) => {
+  const ruleParams = {
+    type: 'onetime',
+    workflow,
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+    cumulus_meta: {
+      execution_name: 'fakeName',
+    },
+    payload: {
+      input: 'test',
+    },
+    execution_name_prefix: randomString(),
+    asyncOperationId: 1,
+  };
+  const rule = fakeRuleRecordFactory(ruleParams);
+  const expectedPayload = {
+    provider: rule.provider,
+    collection: rule.collection,
+    meta: rule.meta,
+    cumulus_meta: rule.cumulus_meta,
+    payload: rule.payload,
+    queueUrl: rule.queue_url,
+    executionNamePrefix: rule.execution_name_prefix,
+    asyncOperationId: rule.asyncOperationId,
+  };
+  const payload = await buildPayload(rule);
+  t.deepEqual(omit(payload, ['template', 'definition']), expectedPayload);
+});
+
+test('buildPayload throws error if workflow file does not exist', async (t) => {
+  const fakeWorkflow = randomString();
+  const workflowFileKey = workflows.getWorkflowFileKey(process.env.stackName, fakeWorkflow);
+  const ruleParams = {
+    type: 'onetime',
+    workflow: fakeWorkflow,
+  };
+  const rule = fakeRuleRecordFactory(ruleParams);
+  await t.throwsAsync(
+    buildPayload(rule),
+    { message: `Workflow doesn\'t exist: s3://${process.env.system_bucket}/${workflowFileKey} for ${rule.name}` }
+  );
 });

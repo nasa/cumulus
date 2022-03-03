@@ -508,19 +508,19 @@ function recordIsValid(rule) {
 }
 
 /*
- * Build payload for lambda invocation
+ * Build payload from rule for lambda invocation
  *
- * @param {ApiRule} item
+ * @param {PostgresRule} rule
  * @returns {Object} lambda invocation payload
  */
-async function buildPayload(item) {
+async function buildPayload(rule) {
   // makes sure the workflow exists
   const bucket = process.env.system_bucket;
   const stack = process.env.stackName;
-  const workflowFileKey = workflows.getWorkflowFileKey(stack, item.workflow);
+  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
 
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
-  if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${item.name}`);
+  if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
 
   const definition = await s3Utils.getJsonS3Object(
     bucket,
@@ -531,21 +531,21 @@ async function buildPayload(item) {
   return {
     template,
     definition,
-    provider: item.provider,
-    collection: item.collection,
-    meta: get(item, 'meta', {}),
-    cumulus_meta: get(item, 'cumulus_meta', {}),
-    payload: get(item, 'payload', {}),
-    queueUrl: item.queueUrl,
-    asyncOperationId: item.asyncOperationId,
-    executionNamePrefix: item.executionNamePrefix,
+    provider: rule.provider,
+    collection: rule.collection,
+    meta: get(rule, 'meta', {}),
+    cumulus_meta: get(rule, 'cumulus_meta', {}),
+    payload: get(rule, 'payload', {}),
+    queueUrl: rule.queue_url,
+    executionNamePrefix: rule.execution_name_prefix,
+    asyncOperationId: rule.asyncOperationId,
   };
 }
 
 /*
  * Invokes lambda for rule rerun
  *
- * @param {ApiRule} item
+ * @param {PostgresRule} item
  * @returns {Promise} lambda invocation response
  */
 async function invokeRerun(item) {
@@ -664,6 +664,7 @@ async function createRuleTrigger(ruleItem) {
 }
 
 module.exports = {
+  buildPayload,
   createRuleTrigger,
   deleteKinesisEventSource,
   deleteKinesisEventSources,

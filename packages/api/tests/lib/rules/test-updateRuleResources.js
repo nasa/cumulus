@@ -1,9 +1,9 @@
 'use strict';
 
 const test = require('ava');
+const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
-const sinon = require('sinon');
 const SQS = require('@cumulus/aws-client/SQS');
 const {
   createBucket,
@@ -76,7 +76,9 @@ test.before(async (t) => {
   await createBucket(process.env.system_bucket);
 
   const workflowFileKey = workflows.getWorkflowFileKey(process.env.stackName, workflow);
-  const templateFile = workflows.templateKey(process.env.stackName);
+  const templateFileKey = workflows.templateKey(process.env.stackName);
+  t.context.workflowFileKey = workflowFileKey;
+  t.context.templateFileKey = templateFileKey;
   await Promise.all([
     putJsonS3Object(
       process.env.system_bucket,
@@ -85,7 +87,7 @@ test.before(async (t) => {
     ),
     putJsonS3Object(
       process.env.system_bucket,
-      templateFile,
+      templateFileKey,
       {}
     ),
   ]);
