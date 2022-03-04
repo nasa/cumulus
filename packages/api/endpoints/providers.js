@@ -96,8 +96,8 @@ async function post(req, res) {
     validateProviderHost(apiProvider.host);
 
     await createRejectableTransaction(knex, async (trx) => {
-      await providerPgModel.create(trx, postgresProvider);
-      record = translatePostgresProviderToApiProvider(postgresProvider);
+      const [updatedPostgresProvider] = await providerPgModel.create(trx, postgresProvider);
+      record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
       await indexProvider(esClient, record, process.env.ES_INDEX);
     });
     return res.send({ record, message: 'Record saved' });
