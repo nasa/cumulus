@@ -16,7 +16,11 @@ async function handler(event) {
     log.error(`queryParams not provided in event: ${JSON.stringify(event)}`);
   }
 
-  return await sendGetRequestToLzards({ queryParams: event.queryParams });
+  const response = await sendGetRequestToLzards({ queryParams: event.queryParams });
+
+  log.debug(`Response from lzards API: ${JSON.stringify(response.body)}`);
+
+  return response.body;
 }
 
 module.exports = {
