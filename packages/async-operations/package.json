@@ -33,6 +33,7 @@
     "@cumulus/errors": "10.1.0",
     "@cumulus/es-client": "10.1.0",
     "@cumulus/types": "10.1.0",
+    "knex": "0.95.15",
     "uuid": "8.3.2"
   },
   "devDependencies": {
