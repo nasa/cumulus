@@ -53,5 +53,8 @@ jtran-int-tf:
 jtran-tf:
   bucket: jtran-internal
 
+vkn-ci-tf:
+  bucket: vkn-ci-tf-internal 
+  
 np:
   bucket: npauzenga-internal
