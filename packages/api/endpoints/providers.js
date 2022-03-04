@@ -164,8 +164,8 @@ async function put(req, res) {
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
   await createRejectableTransaction(knex, async (trx) => {
-    const updatedPostgresProvider = await providerPgModel.upsert(trx, postgresProvider);
-    record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
+    await providerPgModel.upsert(trx, postgresProvider);
+    record = translatePostgresProviderToApiProvider(postgresProvider);
     await indexProvider(esClient, record, process.env.ES_INDEX);
   });
 
