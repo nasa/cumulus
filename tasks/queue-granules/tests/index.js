@@ -23,7 +23,7 @@ const noop = require('lodash/noop');
 
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
-const { groupAndBatchGranules } = require('..');
+const { groupAndBatchGranules, updateGranuleBatchCreatedAt } = require('..');
 const fakeGranulesApi = {
   updateGranule: noop,
 };
@@ -109,7 +109,7 @@ test('groupAndBatchGranules uses default if batchSize is NaN', (t) => {
     { granuleId: '3', dataType: 'XYZ', version: '001' },
   ];
   const expectedBatchGranules = granules.map((g) => [g]);
-  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, null);
+  const actualGroupedAndBatchedGranules = groupAndBatchGranules(granules, undefined);
   t.deepEqual(actualGroupedAndBatchedGranules, expectedBatchGranules);
 });
 
@@ -274,19 +274,23 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
     workflow,
   } = t.context;
 
+  const createdAt = Date.now();
+
   const granule1 = {
+    createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    version: '6',
-    granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    granuleId: `granule-${randomString().slice(0, 6)}`,
+    version: '6',
   };
   const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
   const granule2 = {
+    createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    version: '6',
-    granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    granuleId: `granule-${randomString().slice(0, 6)}`,
+    version: '6',
   };
   const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
@@ -336,9 +340,10 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       payload: {
         granules: [
           {
+            createdAt,
             dataType: granule1.dataType,
-            granuleId: granule1.granuleId,
             files: granule1.files,
+            granuleId: granule1.granuleId,
             version: granule1.version,
           },
         ],
@@ -367,15 +372,74 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       payload: {
         granules: [
           {
+            createdAt,
             dataType: granule2.dataType,
-            granuleId: granule2.granuleId,
             files: granule2.files,
+            granuleId: granule2.granuleId,
             version: granule2.version,
           },
         ],
       },
     }
   );
+});
+
+test.serial('granules are enqueued with createdAt values added to granules that are missing them', async (t) => {
+  const {
+    collectionConfigStore,
+    event,
+  } = t.context;
+
+  const createdAt = Date.now();
+
+  const granule1 = {
+    dataType: `data-type-${randomString().slice(0, 6)}`,
+    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    granuleId: `granule-${randomString().slice(0, 6)}`,
+    version: '6',
+  };
+  const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
+
+  const granule2 = {
+    createdAt,
+    dataType: `data-type-${randomString().slice(0, 6)}`,
+    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    granuleId: `granule-${randomString().slice(0, 6)}`,
+    version: '6',
+  };
+  const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
+
+  event.input.granules = [granule1, granule2];
+
+  await Promise.all([
+    collectionConfigStore.put(granule1.dataType, granule1.version, collectionConfig1),
+    collectionConfigStore.put(granule2.dataType, granule2.version, collectionConfig2),
+  ]);
+
+  await validateConfig(t, event.config);
+  await validateInput(t, event.input);
+
+  const output = await queueGranules(event);
+
+  await validateOutput(t, output);
+
+  // Get messages from the queue
+  const receiveMessageResponse = await sqs().receiveMessage({
+    QueueUrl: event.config.queueUrl,
+    MaxNumberOfMessages: 10,
+    WaitTimeSeconds: 1,
+  }).promise();
+  const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
+
+  t.is(messages.length, 2);
+
+  const message1 = messages.find((message) =>
+    message.payload.granules[0].granuleId === granule1.granuleId);
+  const message2 = messages.find((message) =>
+    message.payload.granules[0].granuleId === granule2.granuleId);
+
+  t.true(createdAt < message1.payload.granules[0].createdAt);
+  t.is(createdAt, message2.payload.granules[0].createdAt);
 });
 
 test.serial('The correct message is enqueued with a PDR', async (t) => {
@@ -387,6 +451,8 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     stateMachineArn,
     workflow,
   } = t.context;
+
+  const createdAt = Date.now();
 
   // if the event.cumulus_config has 'state_machine' and 'execution_name', the enqueued message
   // will have 'parentExecutionArn'
@@ -405,6 +471,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    createdAt,
   };
   const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
@@ -413,6 +480,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
     files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    createdAt,
   };
   const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
 
@@ -468,6 +536,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
             granuleId: granule1.granuleId,
             files: granule1.files,
             version: granule1.version,
+            createdAt,
           },
         ],
       },
@@ -501,6 +570,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
             granuleId: granule2.granuleId,
             files: granule2.files,
             version: granule2.version,
+            createdAt,
           },
         ],
       },
@@ -710,7 +780,7 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
   );
 });
 
-test('createdAt for queued granule is older than enqueueGranuleIngestMessage date', async (t) => {
+test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessage date when granules do not have createdAt set', async (t) => {
   const { event } = t.context;
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
@@ -726,7 +796,7 @@ test('createdAt for queued granule is older than enqueueGranuleIngestMessage dat
   ];
 
   const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
-  const enqueueGranuleIngestMessageMock = sinon.spy(() => new Date(Date.now() + 1).valueOf());
+  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
 
   const testMocks = {
     updateGranuleMock,
@@ -734,5 +804,29 @@ test('createdAt for queued granule is older than enqueueGranuleIngestMessage dat
   };
 
   await queueGranules(event, testMocks);
-  t.assert(updateGranuleMock.returnValues[0] < enqueueGranuleIngestMessageMock.returnValues[0]);
+  const expectedCreatedAt = enqueueGranuleIngestMessageMock.returnValues[0].granules[0].createdAt;
+  t.assert(updateGranuleMock.returnValues[0] === expectedCreatedAt);
+});
+
+test('updatedGranuleBatchCreatedAt updates batch granule object with correct createdAt values', (t) => {
+  const testGranuleBatch = [
+    {
+      granuleId: 1,
+      collectionId: 'fakeCollection',
+      status: 'complete',
+    },
+    {
+      granuleId: 1,
+      collectionId: 'fakeCollection',
+      status: 'complete',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    },
+  ];
+  const createdAtTestDate = Date.now();
+
+  const expected = [{ ...testGranuleBatch[0], createdAt: createdAtTestDate }, testGranuleBatch[1]];
+
+  const actual = updateGranuleBatchCreatedAt(testGranuleBatch, createdAtTestDate);
+  t.deepEqual(actual, expected);
 });

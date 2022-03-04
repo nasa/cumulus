@@ -202,7 +202,8 @@ test('Attempting to delete a collection with an associated rule returns a 409 re
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   const response = await request(app)
     .delete(`/collections/${collection.name}/${collection.version}`)
@@ -235,7 +236,8 @@ test('Attempting to delete a collection with an associated rule does not delete 
     Body: JSON.stringify({}),
   }).promise();
 
-  await ruleModel.create(rule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
+  await ruleModel.create(ruleWithTrigger);
 
   await request(app)
     .delete(`/collections/${collection.name}/${collection.version}`)

@@ -407,7 +407,7 @@ test('constructCmrConceptLink returns umm_json link', (t) => {
 
 test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
   const cmrFile = {
-    bucket: 'Echo10FileBucket',
+    bucket: 'echo10filebucket',
     key: 'metadata.cmr.xml',
   };
   await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
@@ -436,7 +436,7 @@ test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving ta
 
 test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving tags and setting ContentType', async (t) => {
   const cmrFile = {
-    bucket: 'UMMGJSONFileBucket',
+    bucket: 'ummg-file-bucket',
     key: 'metadata.cmr.json',
   };
   await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
