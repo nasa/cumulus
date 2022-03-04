@@ -22,7 +22,6 @@ describe('The Lzards API Client', () => {
   let provider;
   let ingestBucket;
   let ingestPath;
-  let lzardsBackupOutput;
 
   beforeAll(async () => {
     try {
@@ -34,7 +33,6 @@ describe('The Lzards API Client', () => {
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       lzardsBackupFunctionName = `${prefix}-LzardsBackup`;
       lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
-      lzards
       functionConfig = await lambda().getFunctionConfiguration({
         lzardsBackupFunctionName,
       }).promise();
@@ -118,7 +116,7 @@ describe('The Lzards API Client', () => {
         },
       });
 
-      lzardsBackupOutput = await pTimeout(
+      await pTimeout(
         lambda().invoke({ lzardsBackupFunctionName, Payload }).promise(),
         (functionConfig.Timeout + 10) * 1000
       );
@@ -128,30 +126,23 @@ describe('The Lzards API Client', () => {
     }
   });
 
-  it('returns information for granules successfully backed up to lzards', () => {
+  it('returns information for granules successfully backed up to lzards', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
+      const lzardsGetPayload = {
+        queryParams: `/?metadata[collection]=${collection.name}&metadata[granuleId]=FakeGranule2`,
+      };
 
-        const lzardsGetPayload = {
-            queryParams: `/?metadata[collection]=${collection.name}&metadata[granuleId]=FakeGranule2`
-        };
+      const lzardsApiGetOutput = await pTimeout(
+        lambda().invoke({ lzardsApiGetFunctionName, lzardsGetPayload }).promise(),
+        (functionConfig.Timeout + 10) * 1000
+      );
 
-        const lzardsApiGetOutput = await pTimeout(
-            lambda().invoke({ lzardsApiGetFunctionName, lzardsGetPayload }).promise(),
-            (functionConfig.Timeout + 10) * 1000
-        );
+      console.log(`lzardsApiGetOutput: ${JSON.stringify(lzardsApiGetOutput)}`);
 
-        console.log(`lzardsApiGetOutput: ${JSON.stringify(lzardsApiGetOutput)}`);
-
-        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+      expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
     }
   });
-
-//   it('returns no information for granules not backed up to lzards', () => {
-//     // const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
-//     // expect(backupStatus[0].status).toBe('COMPLETED');
-//     // expect(backupStatus[0].statusCode).toBe(201);
-//   });
 
   afterAll(async () => {
     await pAll(
