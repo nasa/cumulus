@@ -15,7 +15,6 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The Lzards API Client', () => {
   let beforeAllFailed = false;
   let collection;
-  let lzardsBackupFunctionName;
   let lzardsApiGetFunctionName;
   let functionConfig;
   let prefix;
@@ -31,10 +30,10 @@ describe('The Lzards API Client', () => {
       ingestPath = `${prefix}/lzardsApiClientSpec`;
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
-      lzardsBackupFunctionName = `${prefix}-LzardsBackup`;
+      const FunctionName = `${prefix}-LzardsBackup`;
       lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
       functionConfig = await lambda().getFunctionConfiguration({
-        lzardsBackupFunctionName,
+        FunctionName,
       }).promise();
 
       // Create the collection
@@ -117,7 +116,7 @@ describe('The Lzards API Client', () => {
       });
 
       await pTimeout(
-        lambda().invoke({ FunctionName: lzardsBackupFunctionName, Payload }).promise(),
+        lambda().invoke({ FunctionName, Payload }).promise(),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
