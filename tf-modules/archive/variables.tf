@@ -232,12 +232,6 @@ variable "launchpad_passphrase" {
   default = ""
 }
 
-variable "lzards_api" {
-  description = "LZARDS API endpoint"
-  type        = string
-  default     = "https://lzards.sit.earthdata.nasa.gov/api/backups"
-}
-
 variable "metrics_es_host" {
   type = string
   default = null
