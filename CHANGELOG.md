@@ -28,6 +28,9 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
+- **CUMULUS-NONE**
+  - Adds logging to ecs/async-operation Docker conatiner that launches async
+    tasks on ECS. Sets default `async_operation_image_version` to 39.
 - **CUMULUS-2845**
   - Updated rules model to decouple `createRuleTrigger` from `create`.
   - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
@@ -44,6 +47,11 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 - **CUMULUS-2846**
   - Fixed logic for `PUT /rules/<name>` endpoint causing rules to be saved
   inconsistently between DynamoDB and PostgreSQL
+- **CUMULUS-2854**
+  - Fixed queue granules behavior where the task was not accounting for granules that
+  *already* had createdAt set. Workflows downstream in this scenario should no longer
+  fail to write their granules due to order-of-db-writes constraints in the database
+  update logic.
 
 ## [v10.1.0] 2022-02-23
 
@@ -61,9 +69,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
-- **CUMULUS-NONE**
-  - Adds logging to ecs/async-operation Docker conatiner that launches async
-    tasks on ECS. Sets default `async_operation_image_version` to 39.
 - **CUMULUS-2492**
   - Modify collectionId logic to accomodate trailing underscores in collection short names. e.g. `shortName____`
 - **CUMULUS-2847**
@@ -84,8 +89,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Fixed
 
-- Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
-which prevented it from running a Fargate task for data migration.
 - **CUMULUS-2853**
   - Move OAUTH_PROVIDER to lambda env variables to address regression in CUMULUS-2781
   - Add logging output to api app router
@@ -104,12 +107,6 @@ are included in the future will have a corresponding CHANGELOG entry in future
 releases.
 
 ### Fixed
-
-- **CUMULUS-2854**
-  - Fixed queue granules behavior where the task was not accounting for granules that
-  *already* had createdAt set. Workflows downstream in this scenario should no longer
-  fail to write their granules due to order-of-db-writes constraints in the database
-  update logic.
 
 - Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
 which prevented it from running a Fargate task for data migration.
