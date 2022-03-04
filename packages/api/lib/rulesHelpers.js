@@ -12,7 +12,7 @@ const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { invoke } = require('@cumulus/aws-client/Lambda');
-const { RulePgModel } = require('@cumulus/db');
+const { RulePgModel, translatePostgresRuleToApiRule } = require('@cumulus/db');
 const { ValidationError } = require('@cumulus/errors');
 
 const { listRules } = require('@cumulus/api-client/rules');
@@ -511,13 +511,16 @@ function recordIsValid(rule) {
  * Build payload from rule for lambda invocation
  *
  * @param {PostgresRule} rule
+ * @param {Knex} knex
+ *
  * @returns {Object} lambda invocation payload
  */
-async function buildPayload(rule) {
+async function buildPayload(rule, knex) {
   // makes sure the workflow exists
   const bucket = process.env.system_bucket;
   const stack = process.env.stackName;
   const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
+  const apiRule = await translatePostgresRuleToApiRule(rule, knex);
 
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
   if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
@@ -531,13 +534,13 @@ async function buildPayload(rule) {
   return {
     template,
     definition,
-    provider: rule.provider,
-    collection: rule.collection,
-    meta: get(rule, 'meta', {}),
+    provider: apiRule.provider,
+    collection: apiRule.collection,
+    meta: get(apiRule, 'meta', {}),
     cumulus_meta: get(rule, 'cumulus_meta', {}),
-    payload: get(rule, 'payload', {}),
-    queueUrl: rule.queue_url,
-    executionNamePrefix: rule.execution_name_prefix,
+    payload: get(apiRule, 'payload', {}),
+    queueUrl: apiRule.queueUrl,
+    executionNamePrefix: apiRule.executionNamePrefix,
     asyncOperationId: rule.asyncOperationId,
   };
 }
@@ -546,10 +549,12 @@ async function buildPayload(rule) {
  * Invokes lambda for rule rerun
  *
  * @param {PostgresRule} item
+ * @param {Knex} knex
+ *
  * @returns {Promise} lambda invocation response
  */
-async function invokeRerun(item) {
-  const payload = await buildPayload(item);
+async function invokeRerun(item, knex) {
+  const payload = await buildPayload(item, knex);
   await invoke(process.env.invoke, payload);
 }
 
@@ -571,7 +576,7 @@ async function updateRuleTrigger(ruleItem, updates, knex) {
 
   switch (mergedRule.type) {
   case 'scheduled': {
-    const payload = await buildPayload(mergedRule);
+    const payload = await buildPayload(mergedRule, knex);
     await addRule(mergedRule, payload);
     break;
   }
@@ -614,9 +619,11 @@ async function updateRuleTrigger(ruleItem, updates, knex) {
  * Creates rule trigger for rule
  *
  * @param {PostgresRule} rule - Rule to create trigger for
+ * @param {Knex} knex
+ *
  * @returns {PostgresRule}    - Returns new rule object
  */
-async function createRuleTrigger(ruleItem) {
+async function createRuleTrigger(ruleItem, knex) {
   let newRuleItem = cloneDeep(ruleItem);
   // the default value for enabled is true
   if (newRuleItem.enabled === undefined) {
@@ -632,7 +639,7 @@ async function createRuleTrigger(ruleItem) {
   // Validate rule before kicking off workflows or adding event source mappings
   recordIsValid(newRuleItem);
 
-  const payload = await buildPayload(newRuleItem);
+  const payload = await buildPayload(newRuleItem, knex);
   switch (newRuleItem.type) {
   case 'onetime': {
     await invoke(process.env.invoke, payload);

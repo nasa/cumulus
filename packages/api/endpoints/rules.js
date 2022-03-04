@@ -92,7 +92,7 @@ async function post(req, res) {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
     // Create rule trigger
-    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
+    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule, knex);
     const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, knex);
 
     try {

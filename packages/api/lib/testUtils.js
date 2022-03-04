@@ -497,7 +497,7 @@ const createRuleTestRecords = async (context, ruleParams) => {
 
   const originalRule = fakeRuleRecordFactory(ruleParams);
 
-  const ruleWithTrigger = await createRuleTrigger(originalRule);
+  const ruleWithTrigger = await createRuleTrigger(originalRule, testKnex);
 
   const [ruleCumulusId] = await rulePgModel.create(testKnex, ruleWithTrigger);
 

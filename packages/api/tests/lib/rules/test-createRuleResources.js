@@ -17,11 +17,15 @@ const {
   randomString,
 } = require('@cumulus/common/test-utils');
 const {
+  CollectionPgModel,
   destroyLocalTestDb,
+  fakeCollectionRecordFactory,
+  fakeProviderRecordFactory,
   fakeRuleRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
+  ProviderPgModel,
   RulePgModel,
 } = require('@cumulus/db');
 const {
@@ -117,7 +121,7 @@ test('Creating a rule trigger defaults enabled to true', async (t) => {
   delete rule.enabled;
 
   // create rule trigger
-  const ruleWithTrigger = await createRuleTrigger(rule);
+  const ruleWithTrigger = await createRuleTrigger(rule, t.context.testKnex);
 
   t.true(ruleWithTrigger.enabled);
 });
@@ -131,7 +135,7 @@ test('Creating an invalid rule does not create workflow triggers', async (t) => 
   rule.type = 'invalid';
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule),
+    () => createRuleTrigger(rule, t.context.testKnex),
     { name: 'ValidationError' }
   );
 });
@@ -144,7 +148,7 @@ test('Creating rule triggers for a kinesis type rule adds event mappings', async
     value: randomString(),
   });
   // create rule
-  const createdRule = await createRuleTrigger(kinesisRule);
+  const createdRule = await createRuleTrigger(kinesisRule, t.context.testKnex);
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
@@ -171,7 +175,7 @@ test('Creating an invalid kinesis type rule does not add event mappings', async 
     value: randomString(),
   });
   delete kinesisRule.name;
-  await t.throwsAsync(createRuleTrigger(kinesisRule), { name: 'SchemaValidationError' });
+  await t.throwsAsync(createRuleTrigger(kinesisRule, t.context.testKnex), { name: 'SchemaValidationError' });
 
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
@@ -189,7 +193,7 @@ test('Creating a rule trigger SQS rule fails if queue does not exist', async (t)
     enabled: true,
   });
   await t.throwsAsync(
-    createRuleTrigger(rule),
+    createRuleTrigger(rule, t.context.testKnex),
     { message: /SQS queue non-existent-queue does not exist/ }
   );
 });
@@ -203,7 +207,7 @@ test('Creating a rule trigger for an SQS rule fails if there is no redrive polic
     enabled: true,
   });
   await t.throwsAsync(
-    createRuleTrigger(rule),
+    createRuleTrigger(rule, t.context.testKnex),
     { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
   t.teardown(async () => await SQS.deleteQueue(queueUrl));
@@ -221,7 +225,7 @@ test('Creating a rule trigger for an SQS rule succeeds', async (t) => {
       retries: 4,
     },
   });
-  const sqsRule = await createRuleTrigger(rule);
+  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
   t.deepEqual(sqsRule, rule);
   t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
 });
@@ -234,7 +238,7 @@ test('Creating a rule trigger for an SQS rule succeeds and sets default value fo
     value: queues.queueUrl,
     enabled: true,
   });
-  const sqsRule = await createRuleTrigger(rule);
+  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
   t.is(sqsRule.meta.retries, 3);
   t.is(sqsRule.meta.visibilityTimeout, 300);
   t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
@@ -249,7 +253,7 @@ test('Creating a rule trigger for a rule without a type fails', async (t) => {
   delete rule.type;
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule),
+    () => createRuleTrigger(rule, t.context.testKnex),
     { name: 'SchemaValidationError' }
   );
 });
@@ -263,7 +267,7 @@ test('Creating a rule trigger for a rule without a workflow fails', async (t) =>
   delete rule.workflow;
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule),
+    () => createRuleTrigger(rule, t.context.testKnex),
     { name: 'SchemaValidationError' }
   );
 });
@@ -277,7 +281,7 @@ test('Creating a rule trigger for a rule without a name fails', async (t) => {
   delete rule.name;
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule),
+    () => createRuleTrigger(rule, t.context.testKnex),
     { name: 'SchemaValidationError' }
   );
 });
@@ -291,7 +295,7 @@ test('Creating a disabled SNS rule creates no event source mapping', async (t) =
     enabled: false,
   });
 
-  const rule = await createRuleTrigger(item);
+  const rule = await createRuleTrigger(item, t.context.testKnex);
 
   t.is(rule.enabled, false);
   t.is(rule.value, snsTopicArn);
@@ -338,7 +342,7 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
   const subscribeSpy = sinon.spy(awsServices.sns(), 'subscribe');
   const addPermissionSpy = sinon.spy(awsServices.lambda(), 'addPermission');
 
-  await createRuleTrigger(rule);
+  await createRuleTrigger(rule, t.context.testKnex);
   t.true(subscribeSpy.called);
   t.true(subscribeSpy.calledWith({
     TopicArn: rule.value,
@@ -357,6 +361,24 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
 });
 
 test('buildPayload builds a lambda payload from the rule', async (t) => {
+  const collectionPgModel = new CollectionPgModel();
+  const providerPgModel = new ProviderPgModel();
+  const testPgProvider = fakeProviderRecordFactory();
+  const [pgProvider] = await providerPgModel.create(
+    t.context.testKnex,
+    testPgProvider,
+    '*'
+  );
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v1';
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+  const [pgCollection] = await collectionPgModel.create(
+    t.context.testKnex,
+    testPgCollection
+  );
   const ruleParams = {
     type: 'onetime',
     workflow,
@@ -372,19 +394,21 @@ test('buildPayload builds a lambda payload from the rule', async (t) => {
     },
     execution_name_prefix: randomString(),
     asyncOperationId: 1,
+    provider_cumulus_id: pgProvider.cumulus_id,
+    collection_cumulus_id: pgCollection.cumulus_id,
   };
   const rule = fakeRuleRecordFactory(ruleParams);
   const expectedPayload = {
-    provider: rule.provider,
-    collection: rule.collection,
+    provider: pgProvider.name,
+    collection: { name: pgCollection.name, version: pgCollection.version },
     meta: rule.meta,
-    cumulus_meta: rule.cumulus_meta,
+    cumulus_meta: { execution_name: rule.cumulus_meta.execution_name },
     payload: rule.payload,
     queueUrl: rule.queue_url,
     executionNamePrefix: rule.execution_name_prefix,
     asyncOperationId: rule.asyncOperationId,
   };
-  const payload = await buildPayload(rule);
+  const payload = await buildPayload(rule, t.context.testKnex);
   t.deepEqual(omit(payload, ['template', 'definition']), expectedPayload);
 });
 
@@ -397,7 +421,7 @@ test('buildPayload throws error if workflow file does not exist', async (t) => {
   };
   const rule = fakeRuleRecordFactory(ruleParams);
   await t.throwsAsync(
-    buildPayload(rule),
+    buildPayload(rule, t.context.testKnex),
     { message: `Workflow doesn\'t exist: s3://${process.env.system_bucket}/${workflowFileKey} for ${rule.name}` }
   );
 });

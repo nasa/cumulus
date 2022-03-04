@@ -118,7 +118,7 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
     value: randomString(),
   });
   // create rule trigger
-  const createdRule = await createRuleTrigger(kinesisRule);
+  const createdRule = await createRuleTrigger(kinesisRule, testKnex);
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
@@ -164,7 +164,7 @@ test.serial('Updating a kinesis type rule value updates event mappings', async (
     value: randomString(),
   });
   // create rule
-  const createdRule = await createRuleTrigger(kinesisRule);
+  const createdRule = await createRuleTrigger(kinesisRule, testKnex);
 
   // update rule value
   const updatedKinesisRule = {
@@ -201,7 +201,7 @@ test.serial('Updating a kinesis type rule to disabled does not change event sour
     value: randomString(),
   });
   // create rule trigger
-  const createdRule = await createRuleTrigger(kinesisRule);
+  const createdRule = await createRuleTrigger(kinesisRule, testKnex);
   t.not(createdRule.arn, undefined);
   t.not(createdRule.log_event_arn, undefined);
 
@@ -241,7 +241,7 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
     value: randomString(),
   });
   // create rule trigger
-  const createdRule = await createRuleTrigger(kinesisRule);
+  const createdRule = await createRuleTrigger(kinesisRule, testKnex);
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
@@ -288,7 +288,7 @@ test.serial('Updating a valid SQS rule to have an invalid schema throws an error
       retries: 4,
     },
   });
-  const sqsRuleWithTrigger = await createRuleTrigger(sqsRule);
+  const sqsRuleWithTrigger = await createRuleTrigger(sqsRule, t.context.testKnex);
   t.is(sqsRuleWithTrigger.value, sqsRule.value);
 
   // update rule to be invalid by setting type to null
@@ -318,7 +318,7 @@ test.serial('Updating an SQS rule fails if there is no redrive policy on the que
       retries: 4,
     },
   });
-  const sqsRule = await createRuleTrigger(rule);
+  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
   const queueUrl = await SQS.createQueue(randomId('queue'));
   const updatedRule = {
     ...rule,
@@ -343,7 +343,7 @@ test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
       retries: 4,
     },
   });
-  const sqsRule = await createRuleTrigger(rule);
+  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
   t.deepEqual(sqsRule.value, queues.queueUrl);
 
   const newQueues = await createSqsQueues(randomString());
@@ -401,7 +401,7 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
     enabled: true,
   });
 
-  const ruleWithTrigger = await createRuleTrigger(rule);
+  const ruleWithTrigger = await createRuleTrigger(rule, t.context.testKnex);
 
   t.is(ruleWithTrigger.value, TopicArn);
   t.truthy(ruleWithTrigger.arn);
@@ -466,7 +466,7 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
     enabled: true,
   });
 
-  const ruleWithTrigger = await createRuleTrigger(rule);
+  const ruleWithTrigger = await createRuleTrigger(rule, t.context.testKnex);
 
   t.is(ruleWithTrigger.value, TopicArn);
   t.truthy(ruleWithTrigger.arn);
