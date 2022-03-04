@@ -42,20 +42,20 @@ test.after.always(() => {
   sandbox.restore();
 });
 
-test.serial('getRequestToLzards returns error status when lzards_api environment is not set',
+test.serial('sendGetRequestToLzards returns error status when lzards_api environment is not set',
   async (t) => {
-    await t.throwsAsync(lzards.getRequestToLzards({ queryParams: 'test=1' }),
+    await t.throwsAsync(lzards.sendGetRequestToLzards({ queryParams: 'test=1' }),
       { name: 'Error', message: 'The lzards_api environment variable is not set' });
   });
 
-test.serial('getRequestToLzards returns error status when queryParams are not provided',
+test.serial('sendGetRequestToLzards returns error status when queryParams are not provided',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
-    await t.throwsAsync(lzards.getRequestToLzards({ }),
+    await t.throwsAsync(lzards.sendGetRequestToLzards({ }),
       { name: 'Error', message: 'The required queryParams parameter is not set' });
   });
 
-test.serial('getRequestToLzards sends request to lzards api',
+test.serial('sendGetRequestToLzards sends request to lzards api',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
     const granuleId = randomId('granId');
@@ -81,7 +81,7 @@ test.serial('getRequestToLzards sends request to lzards api',
       },
     };
 
-    const response = await lzards.getRequestToLzards({ queryParams });
+    const response = await lzards.sendGetRequestToLzards({ queryParams });
 
     t.true(fakeGetToLzards.calledWith(requestUrl, requestBody));
     t.is(response.statusCode, 200);
@@ -90,7 +90,7 @@ test.serial('getRequestToLzards sends request to lzards api',
 test.serial('getAuthToken throws an error if launchpad_api environment variable is not present',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
-    await t.throwsAsync(lzardsGetAuthToken.getRequestToLzards({ queryParams: 'test=1' }),
+    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ queryParams: 'test=1' }),
       { name: 'MissingRequiredEnvVarError', message: 'The launchpad_api environment variable must be set' });
   });
 
@@ -98,7 +98,7 @@ test.serial('getAuthToken throws an error if launchpad_passphrase_secret_name en
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
     process.env.launchpad_api = 'fake_launchpad_api';
-    await t.throwsAsync(lzardsGetAuthToken.getRequestToLzards({ queryParams: 'test=1' }),
+    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ queryParams: 'test=1' }),
       { name: 'MissingRequiredEnvVarError', message: 'The launchpad_passphrase_secret_name environment variable must be set' });
   });
 
@@ -108,7 +108,7 @@ test.serial('getAuthToken throws an error if launchpad_certificate environment v
     process.env.lzards_api = 'fake_lzards_api';
     process.env.launchpad_api = 'fake_launchpad_api';
     process.env.launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
-    await t.throwsAsync(lzardsGetAuthToken.getRequestToLzards({ queryParams: 'test=1' }),
+    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ queryParams: 'test=1' }),
       { name: 'MissingRequiredEnvVarError', message: 'The launchpad_certificate environment variable must be set' });
   });
 
@@ -118,6 +118,6 @@ test.serial('getAuthToken throws an error if getSecretString() fails to return s
     process.env.lzards_api = 'fake_lzards_api';
     process.env.launchpad_api = 'fake_launchpad_api';
     process.env.launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
-    await t.throwsAsync(lzardsGetAuthToken.getRequestToLzards({ queryParams: 'test=1' }),
+    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ queryParams: 'test=1' }),
       { name: 'Error', message: 'The value stored in "launchpad_passphrase_secret_name" must be defined' });
   });
