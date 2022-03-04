@@ -117,7 +117,7 @@ describe('The Lzards API Client', () => {
       });
 
       await pTimeout(
-        lambda().invoke({ lzardsBackupFunctionName, Payload }).promise(),
+        lambda().invoke({ FunctionName: lzardsBackupFunctionName, Payload }).promise(),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
@@ -134,7 +134,7 @@ describe('The Lzards API Client', () => {
       };
 
       const lzardsApiGetOutput = await pTimeout(
-        lambda().invoke({ lzardsApiGetFunctionName, lzardsGetPayload }).promise(),
+        lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
         (functionConfig.Timeout + 10) * 1000
       );
 
