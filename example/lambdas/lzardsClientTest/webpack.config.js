@@ -1,18 +1,7 @@
 const path = require('path');
 const { IgnorePlugin } = require('webpack');
 
-const ignoredPackages = [
-  'mssql',
-  'mssql/lib/base',
-  'mssql/package.json',
-  'mysql',
-  'mysql2',
-  'oracledb',
-  'pg-native',
-  'pg-query-stream',
-  'sqlite3',
-  'tedious'
-];
+const ignoredPackages = [ ];
 
 module.exports = {
   plugins: [
