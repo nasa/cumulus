@@ -267,7 +267,6 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        // need to explicitly set arn to null because including arn isn't allowed when setting a disabled rule to enabled
         const updateParams = {
           ...updatedRule,
           state: 'ENABLED',
