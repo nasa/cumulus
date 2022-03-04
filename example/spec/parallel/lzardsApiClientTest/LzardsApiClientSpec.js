@@ -128,9 +128,9 @@ describe('The Lzards API Client', () => {
   it('returns information for granules successfully backed up to lzards', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      const lzardsGetPayload = {
+      const lzardsGetPayload = JSON.stringify({
         queryParams: `/?metadata[collection]=${collection.name}&metadata[granuleId]=FakeGranule2`,
-      };
+      });
 
       const lzardsApiGetOutput = await pTimeout(
         lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
