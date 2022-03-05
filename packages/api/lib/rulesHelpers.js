@@ -548,14 +548,12 @@ async function buildPayload(rule, cumulusMeta, asyncOperationId) {
 /*
  * Invokes lambda for rule rerun
  *
- * @param {PostgresRule} rule
- * @param {Knex} knex
+ * @param {ApiRule} rule
  *
  * @returns {Promise} lambda invocation response
  */
-async function invokeRerun(rule, knex) {
-  const apiRule = await translatePostgresRuleToApiRule(rule, knex);
-  const payload = await buildPayload(apiRule);
+async function invokeRerun(rule) {
+  const payload = await buildPayload(rule);
   await invoke(process.env.invoke, payload);
 }
 
