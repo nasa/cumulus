@@ -1,3 +1,18 @@
+resource "aws_ssm_parameter" "dynamo_table_names" {
+  name = "${var.prefix}-dynamo-table-names"
+  type = "String"
+  value = jsonencode({
+    AccessTokensTable          = var.dynamo_tables.access_tokens.name
+    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
+    CollectionsTable           = var.dynamo_tables.collections.name
+    ExecutionsTable            = var.dynamo_tables.executions.name
+    GranulesTable              = var.dynamo_tables.granules.name
+    PdrsTable                  = var.dynamo_tables.pdrs.name
+    ProvidersTable             = var.dynamo_tables.providers.name
+    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+    RulesTable                 = var.dynamo_tables.rules.name
+  })
+}
 locals {
   api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
   api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
@@ -40,7 +55,7 @@ locals {
       DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
-      dynamoTableNameString            = local.dynamo_table_namestring
+      dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
