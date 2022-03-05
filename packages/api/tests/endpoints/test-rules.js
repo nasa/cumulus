@@ -736,7 +736,6 @@ test.serial('post() does not write to DynamoDB/PostgreSQL if writing to Elastics
 test('PUT replaces a rule', async (t) => {
   const {
     originalDynamoRule,
-    originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
     t.context,
@@ -780,7 +779,7 @@ test('PUT replaces a rule', async (t) => {
     queue_url: null,
     enabled: true,
     created_at: new Date(originalDynamoRule.createdAt),
-    updated_at: originalPgRecord.updated_at,
+    updated_at: new Date(actualRule.updatedAt),
   });
   t.deepEqual(actualRule, {
     // should not contain a queueUrl property
