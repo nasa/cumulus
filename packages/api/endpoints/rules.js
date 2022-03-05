@@ -150,6 +150,7 @@ async function put(req, res) {
 
   try {
     const oldRule = await rulePgModel.get(knex, { name });
+    const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.created_at;
@@ -157,7 +158,6 @@ async function put(req, res) {
 
     // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
-      const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
       return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
     }
 

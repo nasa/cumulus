@@ -27,12 +27,15 @@ const {
   migrationDir,
   ProviderPgModel,
   RulePgModel,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   createRuleTrigger,
   buildPayload,
 } = require('../../../lib/rulesHelpers');
-const { createSqsQueues } = require('../../../lib/testUtils');
+const {
+  createSqsQueues,
+} = require('../../../lib/testUtils');
 
 const workflow = randomString();
 const testDbName = randomString(12);
@@ -392,12 +395,14 @@ test('buildPayload builds a lambda payload from the rule', async (t) => {
     payload: {
       input: 'test',
     },
+    queue_url: randomString(),
     execution_name_prefix: randomString(),
-    asyncOperationId: 1,
+    asyncOperationId: randomString(),
     provider_cumulus_id: pgProvider.cumulus_id,
     collection_cumulus_id: pgCollection.cumulus_id,
   };
   const rule = fakeRuleRecordFactory(ruleParams);
+  const apiRule = await translatePostgresRuleToApiRule(rule, t.context.testKnex);
   const expectedPayload = {
     provider: pgProvider.name,
     collection: { name: pgCollection.name, version: pgCollection.version },
@@ -408,7 +413,7 @@ test('buildPayload builds a lambda payload from the rule', async (t) => {
     executionNamePrefix: rule.execution_name_prefix,
     asyncOperationId: rule.asyncOperationId,
   };
-  const payload = await buildPayload(rule, t.context.testKnex);
+  const payload = await buildPayload(apiRule, ruleParams.cumulus_meta, ruleParams.asyncOperationId);
   t.deepEqual(omit(payload, ['template', 'definition']), expectedPayload);
 });
 
@@ -420,8 +425,9 @@ test('buildPayload throws error if workflow file does not exist', async (t) => {
     workflow: fakeWorkflow,
   };
   const rule = fakeRuleRecordFactory(ruleParams);
+  const apiRule = await translatePostgresRuleToApiRule(rule, t.context.testKnex);
   await t.throwsAsync(
-    buildPayload(rule, t.context.testKnex),
+    buildPayload(apiRule),
     { message: `Workflow doesn\'t exist: s3://${process.env.system_bucket}/${workflowFileKey} for ${rule.name}` }
   );
 });
