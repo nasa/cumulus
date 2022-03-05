@@ -419,7 +419,10 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
   });
 
   t.deepEqual(
-    result,
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
     expectedApiGranule
   );
 });
@@ -768,7 +771,10 @@ test('translatePostgresGranuleResultToApiGranule converts DB result to API granu
   );
 
   t.deepEqual(
-    result,
+    {
+      ...result,
+      files: orderBy(result.files, ['bucket', 'key']),
+    },
     expectedApiGranule
   );
 });
