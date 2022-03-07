@@ -16,6 +16,7 @@ describe('The Lzards Backup Task ', () => {
   let beforeAllFailed = false;
   let collection;
   let FunctionName;
+  let lzardsApiGetFunctionName;
   let functionConfig;
   let prefix;
   let provider;
@@ -32,6 +33,7 @@ describe('The Lzards Backup Task ', () => {
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
+      lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
       }).promise();
@@ -136,6 +138,26 @@ describe('The Lzards Backup Task ', () => {
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
+  });
+
+  describe('The Lzards API Client', () => {
+    it('returns information for granules successfully backed up to lzards', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = JSON.stringify({
+          queryParams: `/?metadata[collection]=${collection.name}&metadata[granuleId]=FakeGranule2`,
+        });
+
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          (functionConfig.Timeout + 10) * 1000
+        );
+
+        console.log(`lzardsApiGetOutput: ${JSON.stringify(lzardsApiGetOutput)}`);
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+      }
+    });
   });
 
   afterAll(async () => {
