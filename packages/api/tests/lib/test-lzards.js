@@ -80,7 +80,7 @@ test.serial('sendGetRequestToLzards sends request to lzards api',
         collection,
         granuleId,
       },
-    }; //`?metadata[collection]=${collection}&metadata[granuleId]=${granuleId}`;
+    };
     const requestUrl = `${process.env.lzards_api}`;
     const requestBody = {
       responseType: 'json',
