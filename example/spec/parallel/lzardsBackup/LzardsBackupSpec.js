@@ -182,7 +182,6 @@ describe('The Lzards Backup Task ', () => {
 
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
 
-
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(0);
       }
