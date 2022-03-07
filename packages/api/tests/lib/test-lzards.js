@@ -107,7 +107,7 @@ test.serial('getAuthToken throws an error if launchpad_api environment variable 
       { name: 'MissingRequiredEnvVarError', message: 'The launchpad_api environment variable must be set' });
   });
 
-test.serial('getAuthToken throws an error if launchpad_passphrase_secret_name environment variable is not present',
+test.serial('getAuthToken throws an error if lzards_launchpad_passphrase_secret_name environment variable is not present',
   async (t) => {
     const searchParams = {
       test: 1,
@@ -115,10 +115,10 @@ test.serial('getAuthToken throws an error if launchpad_passphrase_secret_name en
     process.env.lzards_api = 'fake_lzards_api';
     process.env.launchpad_api = 'fake_launchpad_api';
     await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ searchParams }),
-      { name: 'MissingRequiredEnvVarError', message: 'The launchpad_passphrase_secret_name environment variable must be set' });
+      { name: 'MissingRequiredEnvVarError', message: 'The lzards_launchpad_passphrase_secret_name environment variable must be set' });
   });
 
-test.serial('getAuthToken throws an error if launchpad_certificate environment variable is not present',
+test.serial('getAuthToken throws an error if lzards_launchpad_certificate environment variable is not present',
   async (t) => {
     const searchParams = {
       test: 1,
@@ -126,9 +126,9 @@ test.serial('getAuthToken throws an error if launchpad_certificate environment v
     fakeGetSecretString.resolves('fakeSecretString');
     process.env.lzards_api = 'fake_lzards_api';
     process.env.launchpad_api = 'fake_launchpad_api';
-    process.env.launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
+    process.env.lzards_launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
     await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ searchParams }),
-      { name: 'MissingRequiredEnvVarError', message: 'The launchpad_certificate environment variable must be set' });
+      { name: 'MissingRequiredEnvVarError', message: 'The lzards_launchpad_certificate environment variable must be set' });
   });
 
 test.serial('getAuthToken throws an error if getSecretString() fails to return secret',
@@ -139,7 +139,7 @@ test.serial('getAuthToken throws an error if getSecretString() fails to return s
     fakeGetSecretString.resolves(undefined);
     process.env.lzards_api = 'fake_lzards_api';
     process.env.launchpad_api = 'fake_launchpad_api';
-    process.env.launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
+    process.env.lzards_launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
     await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ searchParams }),
       { name: 'Error', message: 'The value stored in "launchpad_passphrase_secret_name" must be defined' });
   });
