@@ -179,12 +179,12 @@ resource "aws_lambda_function" "lzards_api_client_test" {
 
   environment {
     variables = {
-      system_bucket                    = var.system_bucket
-      stackName                        = var.prefix
-      lzards_api                       = var.lzards_api
-      launchpad_api                    = var.launchpad_api
-      launchpad_certificate            = var.lzards_launchpad_certificate
-      launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.name
+      system_bucket                           = var.system_bucket
+      stackName                               = var.prefix
+      lzards_api                              = var.lzards_api
+      launchpad_api                           = var.launchpad_api
+      lzards_launchpad_certificate            = var.lzards_launchpad_certificate
+      lzards_launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.name
     }
   }
 

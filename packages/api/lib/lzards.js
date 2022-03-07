@@ -10,11 +10,11 @@ const log = new Logger({ sender: 'api/lib/lzards' });
 
 async function getAuthToken() {
   const api = getRequiredEnvVar('launchpad_api');
-  const passphrase = await getSecretString(getRequiredEnvVar('launchpad_passphrase_secret_name'));
+  const passphrase = await getSecretString(getRequiredEnvVar('lzards_launchpad_passphrase_secret_name'));
   if (!passphrase) {
     throw new Error('The value stored in "launchpad_passphrase_secret_name" must be defined');
   }
-  const certificate = getRequiredEnvVar('launchpad_certificate');
+  const certificate = getRequiredEnvVar('lzards_launchpad_certificate');
   const token = await getLaunchpadToken({
     api, passphrase, certificate,
   });
