@@ -55,6 +55,7 @@ locals {
       DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
+      dynamoTableNameString            = local.dynamo_table_namestring
       dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
