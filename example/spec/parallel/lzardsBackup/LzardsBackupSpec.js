@@ -146,7 +146,7 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = JSON.stringify({
           searchParams: {
-            'metadata[collection]': collection.name,
+            'metadata[collection]': `${collection.name}___${collection.version}`,
             'metadata[granuleId]': 'FakeGranule2',
           },
         });
@@ -156,9 +156,35 @@ describe('The Lzards Backup Task ', () => {
           (functionConfig.Timeout + 10) * 1000
         );
 
-        console.log(`lzardsApiGetOutput: ${JSON.stringify(lzardsApiGetOutput)}`);
+        const payload = JSON.parse(lzardsApiGetOutput.Payload);
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(1);
+        expect(payload.items[0].metadata.granuleId).toBe('FakeGranule2');
+        expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
+      }
+    });
+
+    it('returns no results for granules not backed up', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = JSON.stringify({
+          searchParams: {
+            'metadata[collection]': 'notBackedUpCollectionName',
+            'metadata[granuleId]': 'FakeGranule2',
+          },
+        });
+
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          (functionConfig.Timeout + 10) * 1000
+        );
+
+        const payload = JSON.parse(lzardsApiGetOutput.Payload);
+
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(0);
       }
     });
   });
