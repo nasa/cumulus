@@ -158,6 +158,8 @@ describe('The Lzards Backup Task ', () => {
 
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
 
+        console.log(`lzardsGetPayload: ${JSON.stringify(payload)}`);
+
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(1);
         expect(payload.items[0].metadata.granuleId).toBe('FakeGranule2');
@@ -181,6 +183,8 @@ describe('The Lzards Backup Task ', () => {
         );
 
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
+
+        console.log(`lzardsGetPayload: ${JSON.stringify(payload)}`);
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(0);
