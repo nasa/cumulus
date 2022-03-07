@@ -145,7 +145,10 @@ describe('The Lzards Backup Task ', () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = JSON.stringify({
-          queryParams: `/?metadata[collection]=${collection.name}&metadata[granuleId]=FakeGranule2`,
+          searchParams: {
+            'metadata[collection]': collection.name,
+            'metadata[granuleId]': 'FakeGranule2',
+          },
         });
 
         const lzardsApiGetOutput = await pTimeout(
