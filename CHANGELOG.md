@@ -545,7 +545,7 @@ of response and not the raw API endpoint response
   and CUMULUS-2306 from the RDS-Phase-2 feature branch in support of CUMULUS-2644
   - Added `resetPostgresDb` method to support resetting between integration test suite runs
 - **CUMULUS-2787**
-  - Added lzards endpoint to support sending `GET` requests to lzards through the Cumulus API
+  - Added lzards API lib with general `submitGetRequestToLzards` method to @cumulus/api to support LZARDS reconciliation report
 
 ### Changed
 
