@@ -19,12 +19,12 @@ test('translatePostgresProviderToApiProvider translates the expected API record'
     global_connection_limit: 1,
     host: 'fakeHost',
     name: 'testId',
-    password: 'fakeEncryptedString',
+    password: 'fakeEncryptedPasswordString',
     port: 1234,
     private_key: 'fakeKey',
     protocol: 'fakeProtocol',
     updated_at: new Date(5678),
-    username: 'fakeEncryptedString',
+    username: 'fakeEncryptedUsernameString',
     allowed_redirects: allowedRedirects,
   };
 
@@ -36,12 +36,12 @@ test('translatePostgresProviderToApiProvider translates the expected API record'
     globalConnectionLimit: 1,
     host: 'fakeHost',
     id: 'testId',
-    password: 'fakeEncryptedString',
+    password: 'fakeEncryptedPasswordString',
     port: 1234,
     privateKey: 'fakeKey',
     protocol: 'fakeProtocol',
     updatedAt: 5678,
-    username: 'fakeEncryptedString',
+    username: 'fakeEncryptedUsernameString',
     allowedRedirects,
   };
 
@@ -81,7 +81,7 @@ test('translatePostgresProviderToApiProvider does not return encrypted key if us
 });
 
 test('translateApiProviderToPostgresProvider translates a Cumulus Provider object to a Postgres Provider object', async (t) => {
-  const fakeEncryptFunction = () => Promise.resolve('fakeEncryptedString');
+  const fakeEncryptFunction = (str) => Promise.resolve(`encrypted[${str}]`);
   const allowedRedirects = ['host-1', 'host-2'];
   const cumulusProviderObject = {
     id: 'testId',
@@ -107,12 +107,12 @@ test('translateApiProviderToPostgresProvider translates a Cumulus Provider objec
     global_connection_limit: 1,
     host: 'fakeHost',
     name: 'testId',
-    password: 'fakeEncryptedString',
+    password: 'encrypted[fakePassword]',
     port: 1234,
     private_key: 'fakeKey',
     protocol: 'fakeProtocol',
     updated_at: new Date(5678),
-    username: 'fakeEncryptedString',
+    username: 'encrypted[fakeUsername]',
     allowed_redirects: allowedRedirects,
   };
   const result = await translateApiProviderToPostgresProvider(

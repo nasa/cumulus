@@ -375,6 +375,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
+  - **CUMULUS-2810**
+    - fixed bug in translatePostgresProviderToApiProvider and updated tests to prevent reintroduction.
+
   - **CUMULUS-2778**
     - Fixed async operation docker image to correctly update record status in
     Elasticsearch
@@ -400,7 +403,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     @cumulus/message/StepFunctions
 - **CUMULUS-2781**
   - Update API lambda to utilize api_config secret for initial environment variables
-  - 
+  -
 
 ### Fixed
 
