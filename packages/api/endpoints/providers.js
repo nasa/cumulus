@@ -108,7 +108,8 @@ async function post(req, res) {
       return res.boom.badRequest(error.message);
     }
     log.error('Error occurred while trying to create provider:', error);
-    log.error(`Error occurred with provider: ${JSON.stringify(postgresProvider)}`);
+    log.error(`Error occurred with user input provider: ${JSON.stringify(apiProvider)}`);
+    log.error(`Error occurred with translated postgres provider: ${JSON.stringify(postgresProvider)}`);
     return res.boom.badImplementation(error.message);
   }
 }
