@@ -515,7 +515,6 @@ const createRuleTestRecords = async (context, ruleParams) => {
 const createPdrTestRecords = async (context, pdrParams = {}) => {
   const {
     knex,
-    pdrModel,
     pdrPgModel,
     esClient,
     esPdrsClient,
@@ -537,7 +536,6 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   });
 
   const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
-  const originalDynamoPdr = await pdrModel.create(originalPdr);
   const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pdrCumulusId }
@@ -547,7 +545,6 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
     originalPdr.pdrName
   );
   return {
-    originalDynamoPdr,
     originalPgRecord,
     originalEsRecord,
   };
