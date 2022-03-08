@@ -12,10 +12,6 @@ const log = new Logger({ sender: 'lzardsClientTest' });
  * @returns {Promise} confirmation of test pass or failure
  */
 async function handler(event) {
-  if (!event.searchParams) {
-    log.error(`searchParams not provided in event: ${JSON.stringify(event)}`);
-  }
-
   const response = await sendGetRequestToLzards({ searchParams: event.searchParams });
 
   log.debug(`Response from lzards API: ${JSON.stringify(response.body)}`);

@@ -36,12 +36,6 @@ async function sendGetRequestToLzards({ lzardsApiUri = process.env.lzards_api, s
     throw new Error(errMsg);
   }
 
-  if (!searchParams) {
-    const errMsg = 'The required searchParams parameter is not set';
-    log.error(errMsg);
-    throw new Error(errMsg);
-  }
-
   const authToken = await getAuthToken();
 
   try {
