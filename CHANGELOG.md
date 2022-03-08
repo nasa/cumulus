@@ -22,6 +22,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Remove DynamoDB logic from rules `DELETE` endpoint
     - Move event resources deletion logic from `rulesModel` to `rulesHelper`
 
+### Fixed
+- **CUMULUS-2810**
+  - fixed bug in translatePostgresProviderToApiProvider and updated tests to prevent reintroduction.
+
 ## Unreleased
 
 ### Migration steps

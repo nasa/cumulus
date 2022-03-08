@@ -20,7 +20,6 @@ const { Search } = require('@cumulus/es-client/search');
 const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 const { removeNilProperties } = require('@cumulus/common/util');
 
-const Provider = require('../models/providers');
 const { isBadRequestError } = require('../lib/errors');
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
