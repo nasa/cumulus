@@ -122,9 +122,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Added permission for `DynamoDb:DeleteItem` to
       `postgres-migration-async-operation` lambda.
   - **CUMULUS-2778**
-    - Updated default value of `async_operation_image` in `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:38`
-    - Added `ES_HOST` environment variable to async operation ECS task definition to ensure that async operation tasks
-    write to the correct Elasticsearch domain
+    - Updated default value of `async_operation_image` in
+      `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:40`
+    - Added `ES_HOST` environment variable to async operation ECS task
+      definition to ensure that async operation tasks write to the correct
+      Elasticsearch domain
 - **CUMULUS-2642**
   - Reduces the reconcilation report's default maxResponseSize that returns
      the full report rather than an s3 signed url. Reports very close to the
