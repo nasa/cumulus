@@ -147,13 +147,13 @@ resource "aws_secretsmanager_secret" "lzards_api_client_test_launchpad_passphras
 }
 
 resource "aws_secretsmanager_secret_version" "lzards_api_client_test_launchpad_passphrase" {
-  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
+  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
   secret_id     = aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.id
-  secret_string = var.lzards_launchpad_passphrase
+  secret_string = var.launchpad_passphrase
 }
 
 data "aws_iam_policy_document" "lzards_api_client_test_processing_role_get_secrets" {
-  count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
+  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
   statement {
     actions   = ["secretsmanager:GetSecretValue"]
     resources = [
@@ -163,7 +163,7 @@ data "aws_iam_policy_document" "lzards_api_client_test_processing_role_get_secre
 }
 
 resource "aws_iam_role_policy" "lzards_api_client_test_processing_role_get_secrets" {
-  count  = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
+  count  = length(var.launchpad_passphrase) == 0 ? 0 : 1
   name   = "${var.prefix}_lzards_api_client_test_processing_role_get_secrets_policy"
   role   = split("/", module.cumulus.lambda_processing_role_arn)[1]
   policy = data.aws_iam_policy_document.lzards_api_client_test_processing_role_get_secrets[0].json
@@ -183,8 +183,8 @@ resource "aws_lambda_function" "lzards_api_client_test" {
       stackName                               = var.prefix
       lzards_api                              = var.lzards_api
       launchpad_api                           = var.launchpad_api
-      lzards_launchpad_certificate            = var.lzards_launchpad_certificate
-      lzards_launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.name
+      lzards_launchpad_certificate            = var.launchpad_certificate
+      lzards_launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.name
     }
   }
 
