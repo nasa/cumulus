@@ -3,7 +3,7 @@
 const pLimit = require('p-limit');
 const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { s3, systemsManager } = require('@cumulus/aws-client/services');
+const { s3, sns, systemsManager } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,
@@ -133,6 +133,9 @@ async function prepareServices(stackName, bucket) {
   console.log(process.env.ES_HOST);
   await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
   await s3().createBucket({ Bucket: bucket }).promise();
+
+  const { TopicArn } = await sns().createTopic({ Name: randomId('topicName') }).promise();
+  process.env.collection_sns_topic_arn = TopicArn;
 }
 
 function getRequiredAuthEnvVariables() {

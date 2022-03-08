@@ -380,6 +380,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2778**
     - Fixed async operation docker image to correctly update record status in
     Elasticsearch
+  - Updated localAPI to set additional env variable, and fixed `GET /executions/status` response
 
 ## Unreleased
 
