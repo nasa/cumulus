@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmr-client",
-  "version": "10.1.0",
+  "version": "10.1.1",
   "description": "A Node.js client to NASA's Common Metadata Repository (CMR) API.",
   "engines": {
     "node": ">=12.18.0"
@@ -34,11 +34,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "10.1.0",
-    "@cumulus/errors": "10.1.0",
-    "@cumulus/logger": "10.1.0",
+    "@cumulus/aws-client": "10.1.1",
+    "@cumulus/errors": "10.1.1",
+    "@cumulus/logger": "10.1.1",
     "got": "^11.7.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "public-ip": "^3.0.0",
     "xml2js": "^0.4.19"
   }

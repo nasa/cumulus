@@ -49,6 +49,20 @@ function groupAndBatchGranules(granules, batchSize) {
 }
 
 /**
+* Updates each granule in the 'batch' to the passed in createdAt value if one does not already exist
+* @param {Array<Object>} granuleBatch - Array of Cumulus Granule objects
+* @param {number} createdAt           - 'Date.now()' to apply to the granules if there is no
+*                                     existing createdAt value
+* @returns {Array<Object>} updated array of Cumulus Granule objects
+*/
+function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
+  return granuleBatch.map((granule) => ({
+    ...granule,
+    createdAt: granule.createdAt ? granule.createdAt : createdAt,
+  }));
+}
+
+/**
  * See schemas/input.json and schemas/config.json for detailed event description
  *
  * @param {Object} event - Lambda event object
@@ -80,13 +94,14 @@ async function queueGranules(event, testMocks = {}) {
   const pMapConcurrency = get(event, 'config.concurrency', 3);
   const executionArns = await pMap(
     groupedAndBatchedGranules,
-    async (granuleBatch) => {
+    async (granuleBatchIn) => {
       const collectionConfig = await collectionConfigStore.get(
-        granuleBatch[0].dataType,
-        granuleBatch[0].version
+        granuleBatchIn[0].dataType,
+        granuleBatchIn[0].version
       );
-      // include createdAt to ensure write logic passes
+
       const createdAt = Date.now();
+      const granuleBatch = updateGranuleBatchCreatedAt(granuleBatchIn, createdAt);
       await pMap(
         granuleBatch,
         (queuedGranule) => updateGranule({
@@ -98,7 +113,7 @@ async function queueGranules(event, testMocks = {}) {
             ),
             granuleId: queuedGranule.granuleId,
             status: 'queued',
-            createdAt,
+            createdAt: queuedGranule.createdAt,
           },
         }),
         { concurrency: pMapConcurrency }
@@ -147,4 +162,5 @@ module.exports = {
   groupAndBatchGranules,
   handler,
   queueGranules,
+  updateGranuleBatchCreatedAt,
 };
