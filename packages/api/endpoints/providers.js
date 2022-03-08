@@ -129,7 +129,6 @@ async function post(req, res) {
  */
 async function put(req, res) {
   const {
-    providerModel = new Provider(),
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -145,11 +144,10 @@ async function put(req, res) {
     );
   }
 
-  let oldProvider;
-  let oldPgProvider;
+  let existingPgProvider;
 
   try {
-    oldPgProvider = await providerPgModel.get(knex, { name: id });
+    existingPgProvider = await providerPgModel.get(knex, { name: id });
   } catch (error) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
@@ -159,34 +157,17 @@ async function put(req, res) {
     );
   }
 
-  try {
-    oldProvider = await providerModel.get({ id });
-  } catch (error) {
-    if (error.name !== 'RecordDoesNotExist') {
-      throw error;
-    }
-    log.warn(`Dynamo record for Provider ${id} not found, proceeding to update with PostgreSQL record alone`);
-  }
-
   apiProvider.updatedAt = Date.now();
-  apiProvider.createdAt = oldPgProvider.created_at.getTime();
+  apiProvider.createdAt = existingPgProvider.created_at.getTime();
 
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await providerPgModel.upsert(trx, postgresProvider);
-      record = await providerModel.create(apiProvider);
-      await indexProvider(esClient, record, process.env.ES_INDEX);
-    });
-  } catch (innerError) {
-    // Revert Dynamo record update if any write fails
-    if (oldProvider) {
-      await providerModel.create(oldProvider);
-    }
-    throw innerError;
-  }
+  await createRejectableTransaction(knex, async (trx) => {
+    const [updatedPostgresProvider] = await providerPgModel.upsert(trx, postgresProvider);
+    record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
+    await indexProvider(esClient, record, process.env.ES_INDEX);
+  });
 
   return res.send(record);
 }

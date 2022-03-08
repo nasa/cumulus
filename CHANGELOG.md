@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2809**
+    - Remove DynamoDB logic from providers `PUT` endpoint
   - **CUMULUS-2811**
     - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
   - **CUMULUS-2817**
