@@ -35,7 +35,7 @@
     "@cumulus/logger": "10.1.0",
     "@cumulus/message": "10.1.0",
     "@elastic/elasticsearch": "^5.6.20",
-    "aws-elasticsearch-connector": "8.3.0",
+    "aws-elasticsearch-connector": "8.2.0",
     "aws-sdk": "^2.585.0",
     "lodash": "~4.17.21",
     "moment": "2.29.1",
