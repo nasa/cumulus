@@ -26,7 +26,7 @@ const updateAndUploadTestFileToFtpHost = (params) => {
   } = params;
   let data;
   if (replacements.length > 0) {
-    data = fs.readFileSync(file, 'utf8');
+    data = fs.readFileSync(file);
     replacements.forEach((replacement) => {
       data = replace(data, new RegExp(replacement.old, 'g'), replacement.new);
     });
