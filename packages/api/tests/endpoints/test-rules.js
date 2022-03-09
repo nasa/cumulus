@@ -557,7 +557,9 @@ test('POST returns a 400 response if record is missing a required property', asy
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
     .expect(400);
+  const { message } = response.body;
   t.is(response.status, 400);
+  t.true(message.includes('should have required property \'workflow\''));
 });
 
 test('POST returns a 400 response if rule name is invalid', async (t) => {
@@ -570,7 +572,9 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
     .expect(400);
+  const { message } = response.body;
   t.is(response.status, 400);
+  t.true(message.includes('Rule name may only contain letters, numbers, and underscores'));
 });
 
 test('POST returns a 400 response if rule name does not exist', async (t) => {
@@ -583,12 +587,14 @@ test('POST returns a 400 response if rule name does not exist', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
     .expect(400);
+  const { message } = response.body;
   t.is(response.status, 400);
+  t.true(message.includes('should have required property \'name\''));
 });
 
 test('POST returns a 400 response if rule type is invalid', async (t) => {
   const { newRule } = t.context;
-  newRule.type = 'invalid';
+  newRule.rule.type = 'invalid';
 
   const response = await request(app)
     .post('/rules')
@@ -596,7 +602,9 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newRule)
     .expect(400);
+  const { message } = response.body;
   t.is(response.status, 400);
+  t.true(message.includes('should be equal to one of the allowed values'));
 });
 
 test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
@@ -873,7 +881,7 @@ test('PUT returns 404 for non-existent rule', async (t) => {
     .expect(404);
 
   const { message, record } = response.body;
-  t.truthy(message.includes(name));
+  t.true(message.includes(name));
   t.falsy(record);
 });
 
@@ -887,9 +895,104 @@ test('PUT returns 400 for name mismatch between params and payload',
       .expect(400);
     const { message, record } = response.body;
 
-    t.truthy(message);
+    t.true(message.includes('Expected rule name to be'));
     t.falsy(record);
   });
+
+test('PUT returns a 400 response if record is missing workflow property', async (t) => {
+  const {
+    originalApiRule,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queue_url: 'fake-queue-url',
+      workflow,
+    }
+  );
+
+  // Set required property to null to trigger create error
+  originalApiRule.workflow = null;
+
+  const response = await request(app)
+    .put(`/rules/${originalApiRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalApiRule)
+    .expect(400);
+  const { message, detail } = response.body;
+  console.log('response', response.body);
+  t.true(message.includes('The record has validation errors'));
+  t.true(detail.includes('Rule workflow is undefined'));
+});
+
+test('PUT returns a 400 response if record is missing type property', async (t) => {
+  const {
+    originalApiRule,
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queue_url: 'fake-queue-url',
+      workflow,
+    }
+  );
+  originalApiRule.rule.type = null;
+  const response = await request(app)
+    .put(`/rules/${originalPgRecord.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalApiRule)
+    .expect(400);
+  const { message, detail } = response.body;
+  t.true(message.includes('The record has validation errors'));
+  t.true(detail.includes('Rule type is undefined.'));
+});
+
+test('PUT returns a 400 response if rule name is invalid', async (t) => {
+  const {
+    originalApiRule,
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queue_url: 'fake-queue-url',
+      workflow,
+    }
+  );
+  originalApiRule.name = 'bad rule name';
+  const response = await request(app)
+    .put(`/rules/${originalPgRecord.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalApiRule)
+    .expect(400);
+  const { message } = response.body;
+  t.true(message.includes(originalApiRule.name));
+});
+
+test('PUT returns a 400 response if rule type is invalid', async (t) => {
+  const {
+    originalApiRule,
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queue_url: 'fake-queue-url',
+      workflow,
+    }
+  );
+  originalApiRule.rule.type = 'invalid';
+
+  const response = await request(app)
+    .put(`/rules/${originalPgRecord.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalApiRule)
+    .expect(400);
+
+  const { message } = response.body;
+  t.true(message.includes('Rule type \'invalid\' not supported.'));
+});
 
 test('put() does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;

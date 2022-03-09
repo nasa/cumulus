@@ -92,7 +92,7 @@ async function post(req, res) {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
     // Create rule trigger
-    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule, knex);
+    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
     const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, knex);
 
     try {
@@ -154,17 +154,15 @@ async function put(req, res) {
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.created_at;
-    const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRule, knex);
-
     // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
       return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
     }
-
-    const ruleWithTrigger = await updateRuleTrigger(oldRule, apiPgRule, knex);
+    const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
+    const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRuleWithTrigger, knex);
 
     await createRejectableTransaction(knex, async (trx) => {
-      const [pgRule] = await rulePgModel.upsert(trx, ruleWithTrigger);
+      const [pgRule] = await rulePgModel.upsert(trx, apiPgRule);
       translatedRule = await translatePostgresRuleToApiRule(pgRule, knex);
       await indexRule(esClient, translatedRule, process.env.ES_INDEX);
     });
@@ -198,9 +196,11 @@ async function del(req, res) {
     process.env.ES_INDEX
   );
   let rule;
+  let apiRule;
 
   try {
     rule = await rulePgModel.get(knex, { name });
+    apiRule = await translatePostgresRuleToApiRule(rule, knex);
   } catch (error) {
     // If rule doesn't exist in PG or ES, return not found
     if (error instanceof RecordDoesNotExist) {
@@ -222,7 +222,7 @@ async function del(req, res) {
       index: process.env.ES_INDEX,
       ignore: [404],
     });
-    if (rule) await deleteRuleResources(knex, rule);
+    if (rule) await deleteRuleResources(knex, apiRule);
   });
 
   return res.send({ message: 'Record deleted' });

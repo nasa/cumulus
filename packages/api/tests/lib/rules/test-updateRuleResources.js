@@ -17,7 +17,6 @@ const {
 const workflows = require('@cumulus/common/workflows');
 const {
   destroyLocalTestDb,
-  fakeRuleRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
@@ -28,7 +27,10 @@ const {
   updateRuleTrigger,
   deleteRuleResources,
 } = require('../../../lib/rulesHelpers');
-const { createSqsQueues } = require('../../../lib/testUtils');
+const {
+  createSqsQueues,
+  fakeRuleFactoryV2,
+} = require('../../../lib/testUtils');
 
 const workflow = randomString();
 const testDbName = randomString(12);
@@ -111,11 +113,13 @@ test.after.always(async (t) => {
 
 test.serial('Updating rule triggers for a kinesis type rule updates event mappings', async (t) => {
   const { testKnex } = t.context;
-  const kinesisRule = fakeRuleRecordFactory({
-    type: 'kinesis',
+  const kinesisRule = fakeRuleFactoryV2({
     workflow,
-    enabled: true,
-    value: randomString(),
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
   });
   // create rule trigger
   const createdRule = await createRuleTrigger(kinesisRule, testKnex);
@@ -125,18 +129,21 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
 
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
-  t.is(consumerEventMappings[0].UUID, createdRule.arn);
-  t.is(logEventMappings[0].UUID, createdRule.log_event_arn);
+  t.is(consumerEventMappings[0].UUID, createdRule.rule.arn);
+  t.is(logEventMappings[0].UUID, createdRule.rule.logEventArn);
 
   t.is(createdRule.name, kinesisRule.name);
-  t.is(createdRule.value, kinesisRule.value);
-  t.not(createdRule.arn, undefined);
-  t.not(createdRule.log_event_arn, undefined);
+  t.is(createdRule.rule.value, kinesisRule.rule.value);
+  t.not(createdRule.rule.arn, undefined);
+  t.not(createdRule.rule.logEventArn, undefined);
 
   // update rule
   const updatedKinesisRule = {
     ...createdRule,
-    value: 'new-value',
+    rule: {
+      ...createdRule.rule,
+      value: 'new-value',
+    },
   };
   const updatedRule = await updateRuleTrigger(kinesisRule, updatedKinesisRule, testKnex);
   const updatedKinesisEventMappings = await getKinesisEventMappings();
@@ -145,8 +152,8 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
 
   t.is(updatedconsumerEventMappings.length, 1);
   t.is(updatedlogEventMappings.length, 1);
-  t.is(updatedconsumerEventMappings[0].UUID, updatedRule.arn);
-  t.is(updatedlogEventMappings[0].UUID, updatedRule.log_event_arn);
+  t.is(updatedconsumerEventMappings[0].UUID, updatedRule.rule.arn);
+  t.is(updatedlogEventMappings[0].UUID, updatedRule.rule.logEventArn);
 
   // Clean Up
   t.teardown(async () => {
@@ -157,19 +164,24 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
 
 test.serial('Updating a kinesis type rule value updates event mappings', async (t) => {
   const { testKnex } = t.context;
-  const kinesisRule = fakeRuleRecordFactory({
-    type: 'kinesis',
+  const kinesisRule = fakeRuleFactoryV2({
     workflow,
-    enabled: true,
-    value: randomString(),
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
   });
   // create rule
-  const createdRule = await createRuleTrigger(kinesisRule, testKnex);
+  const createdRule = await createRuleTrigger(kinesisRule);
 
   // update rule value
   const updatedKinesisRule = {
     ...createdRule,
-    value: 'new-value',
+    rule: {
+      ...createdRule.rule,
+      value: 'new-value',
+    },
   };
   delete updatedKinesisRule.name;
   const updatedRuleWithTrigger = await updateRuleTrigger(kinesisRule, updatedKinesisRule, testKnex);
@@ -179,11 +191,11 @@ test.serial('Updating a kinesis type rule value updates event mappings', async (
 
   t.is(updatedconsumerEventMappings.length, 1);
   t.is(updatedlogEventMappings.length, 1);
-  t.is(updatedconsumerEventMappings[0].UUID, updatedRuleWithTrigger.arn);
-  t.is(updatedlogEventMappings[0].UUID, updatedRuleWithTrigger.log_event_arn);
+  t.is(updatedconsumerEventMappings[0].UUID, updatedRuleWithTrigger.rule.arn);
+  t.is(updatedlogEventMappings[0].UUID, updatedRuleWithTrigger.rule.logEventArn);
 
-  t.false(createdRule.arn === updatedRuleWithTrigger.arn);
-  t.false(createdRule.log_event_arn === updatedRuleWithTrigger.log_event_arn);
+  t.false(createdRule.rule.arn === updatedRuleWithTrigger.rule.arn);
+  t.false(createdRule.rule.logEventArn === updatedRuleWithTrigger.rule.logEventArn);
 
   // Clean Up
   t.teardown(async () => {
@@ -194,24 +206,26 @@ test.serial('Updating a kinesis type rule value updates event mappings', async (
 
 test.serial('Updating a kinesis type rule to disabled does not change event source mappings', async (t) => {
   const { testKnex } = t.context;
-  const kinesisRule = fakeRuleRecordFactory({
-    type: 'kinesis',
+  const kinesisRule = fakeRuleFactoryV2({
     workflow,
-    enabled: true,
-    value: randomString(),
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
   });
   // create rule trigger
-  const createdRule = await createRuleTrigger(kinesisRule, testKnex);
-  t.not(createdRule.arn, undefined);
-  t.not(createdRule.log_event_arn, undefined);
+  const createdRule = await createRuleTrigger(kinesisRule);
+  t.not(createdRule.rule.arn, undefined);
+  t.not(createdRule.rule.logEventArn, undefined);
 
   // update rule state by setting enabled to false
   const updatedKinesisRule = {
     ...createdRule,
-    enabled: false,
+    state: 'DISABLED',
   };
   const updatedRule = await updateRuleTrigger(kinesisRule, updatedKinesisRule, testKnex);
-  t.false(updatedRule.enabled);
+  t.is(updatedRule.state, 'DISABLED');
 
   const updatedKinesisEventMappings = await getKinesisEventMappings();
   const updatedconsumerEventMappings = updatedKinesisEventMappings[0].EventSourceMappings;
@@ -219,11 +233,11 @@ test.serial('Updating a kinesis type rule to disabled does not change event sour
 
   t.is(updatedconsumerEventMappings.length, 1);
   t.is(updatedlogEventMappings.length, 1);
-  t.is(updatedconsumerEventMappings[0].UUID, updatedRule.arn);
-  t.is(updatedlogEventMappings[0].UUID, updatedRule.log_event_arn);
+  t.is(updatedconsumerEventMappings[0].UUID, updatedRule.rule.arn);
+  t.is(updatedlogEventMappings[0].UUID, updatedRule.rule.logEventArn);
 
-  t.is(createdRule.arn, updatedRule.arn);
-  t.is(createdRule.log_event_arn, updatedRule.log_event_arn);
+  t.is(createdRule.rule.arn, updatedRule.rule.arn);
+  t.is(createdRule.rule.logEventArn, updatedRule.rule.logEventArn);
 
   // Clean Up
   t.teardown(async () => {
@@ -234,22 +248,24 @@ test.serial('Updating a kinesis type rule to disabled does not change event sour
 
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
   const { testKnex } = t.context;
-  const kinesisRule = fakeRuleRecordFactory({
-    type: 'kinesis',
+  const kinesisRule = fakeRuleFactoryV2({
     workflow,
-    enabled: true,
-    value: randomString(),
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
   });
   // create rule trigger
-  const createdRule = await createRuleTrigger(kinesisRule, testKnex);
+  const createdRule = await createRuleTrigger(kinesisRule);
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
 
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
-  t.is(consumerEventMappings[0].UUID, createdRule.arn);
-  t.is(logEventMappings[0].UUID, createdRule.log_event_arn);
+  t.is(consumerEventMappings[0].UUID, createdRule.rule.arn);
+  t.is(logEventMappings[0].UUID, createdRule.rule.logEventArn);
 
   // update rule workflow
   const updatedKinesisRule = {
@@ -263,11 +279,11 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
 
   t.is(updatedconsumerEventMappings.length, 1);
   t.is(updatedlogEventMappings.length, 1);
-  t.is(updatedconsumerEventMappings[0].UUID, updatedRule.arn);
-  t.is(updatedlogEventMappings[0].UUID, updatedRule.log_event_arn);
+  t.is(updatedconsumerEventMappings[0].UUID, updatedRule.rule.arn);
+  t.is(updatedlogEventMappings[0].UUID, updatedRule.rule.logEventArn);
 
-  t.is(createdRule.arn, updatedRule.arn);
-  t.is(createdRule.log_event_arn, updatedRule.log_event_arn);
+  t.is(createdRule.rule.arn, updatedRule.rule.arn);
+  t.is(createdRule.rule.logEventArn, updatedRule.rule.logEventArn);
 
   // Clean Up
   t.teardown(async () => {
@@ -278,23 +294,28 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
 
 test.serial('Updating a valid SQS rule to have an invalid schema throws an error', async (t) => {
   const queues = await createSqsQueues(randomString());
-  const sqsRule = fakeRuleRecordFactory({
+  const sqsRule = fakeRuleFactoryV2({
     workflow,
-    type: 'sqs',
-    value: queues.queueUrl,
-    enabled: true,
+    rule: {
+      type: 'sqs',
+      value: queues.queueUrl,
+    },
+    state: 'ENABLED',
     meta: {
       visibilityTimeout: 100,
       retries: 4,
     },
   });
-  const sqsRuleWithTrigger = await createRuleTrigger(sqsRule, t.context.testKnex);
+  const sqsRuleWithTrigger = await createRuleTrigger(sqsRule);
   t.is(sqsRuleWithTrigger.value, sqsRule.value);
 
   // update rule to be invalid by setting type to null
   const updatedSqsRule = {
     ...sqsRuleWithTrigger,
-    type: null,
+    rule: {
+      ...sqsRuleWithTrigger.rule,
+      type: null,
+    },
   };
   await t.throwsAsync(
     updateRuleTrigger(sqsRuleWithTrigger, updatedSqsRule, t.context.testKnex),
@@ -308,21 +329,26 @@ test.serial('Updating a valid SQS rule to have an invalid schema throws an error
 
 test.serial('Updating an SQS rule fails if there is no redrive policy on the queue', async (t) => {
   const queues = await createSqsQueues(randomString());
-  const rule = fakeRuleRecordFactory({
+  const rule = fakeRuleFactoryV2({
     workflow,
-    type: 'sqs',
-    value: queues.queueUrl,
-    enabled: true,
+    rule: {
+      type: 'sqs',
+      value: queues.queueUrl,
+    },
+    state: 'ENABLED',
     meta: {
       visibilityTimeout: 100,
       retries: 4,
     },
   });
-  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
+  const sqsRule = await createRuleTrigger(rule);
   const queueUrl = await SQS.createQueue(randomId('queue'));
   const updatedRule = {
     ...rule,
-    value: queueUrl,
+    rule: {
+      ...rule.rule,
+      value: queueUrl,
+    },
   };
   await t.throwsAsync(
     updateRuleTrigger(sqsRule, updatedRule, t.context.testKnex),
@@ -333,26 +359,31 @@ test.serial('Updating an SQS rule fails if there is no redrive policy on the que
 
 test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
   const queues = await createSqsQueues(randomString());
-  const rule = fakeRuleRecordFactory({
+  const rule = fakeRuleFactoryV2({
     workflow,
-    type: 'sqs',
-    value: queues.queueUrl,
-    enabled: true,
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queues.queueUrl,
+    },
     meta: {
       visibilityTimeout: 100,
       retries: 4,
     },
   });
-  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
-  t.deepEqual(sqsRule.value, queues.queueUrl);
+  const sqsRule = await createRuleTrigger(rule);
+  t.deepEqual(sqsRule.rule.value, queues.queueUrl);
 
   const newQueues = await createSqsQueues(randomString());
   const updatedRule = {
     ...sqsRule,
-    value: newQueues.queueUrl,
+    rule: {
+      ...rule.rule,
+      value: newQueues.queueUrl,
+    },
   };
   const updatedSqsRule = await updateRuleTrigger(sqsRule, updatedRule, t.context.testKnex);
-  t.is(updatedSqsRule.value, newQueues.queueUrl);
+  t.is(updatedSqsRule.rule.value, newQueues.queueUrl);
   t.teardown(async () => {
     await SQS.deleteQueue(queues.queueUrl);
     await SQS.deleteQueue(newQueues.queueUrl);
@@ -394,31 +425,36 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
     });
 
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-  const rule = fakeRuleRecordFactory({
-    type: 'sns',
-    value: TopicArn,
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
     workflow,
-    enabled: true,
+    state: 'ENABLED',
   });
 
-  const ruleWithTrigger = await createRuleTrigger(rule, t.context.testKnex);
+  const ruleWithTrigger = await createRuleTrigger(rule);
 
-  t.is(ruleWithTrigger.value, TopicArn);
-  t.truthy(ruleWithTrigger.arn);
+  t.is(ruleWithTrigger.rule.value, TopicArn);
+  t.truthy(ruleWithTrigger.rule.arn);
 
   const updates = {
     ...rule,
-    arn: ruleWithTrigger.arn,
-    value: TopicArn2,
+    rule: {
+      ...rule.rule,
+      arn: ruleWithTrigger.rule.arn,
+      value: TopicArn2,
+    },
   };
   const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
   t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.arn }));
+  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.rule.arn }));
 
   t.is(updatedSnsRule.name, rule.name);
-  t.is(updatedSnsRule.type, rule.type);
-  t.is(updatedSnsRule.value, TopicArn2);
-  t.not(updatedSnsRule.arn, rule.arn);
+  t.is(updatedSnsRule.rule.type, rule.rule.type);
+  t.is(updatedSnsRule.rule.value, TopicArn2);
+  t.not(updatedSnsRule.rule.arn, rule.rule.arn);
 
   t.teardown(async () => {
     lambdaStub.restore();
@@ -459,28 +495,30 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
     });
 
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-  const rule = fakeRuleRecordFactory({
-    type: 'sns',
-    value: TopicArn,
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
     workflow,
-    enabled: true,
+    state: 'ENABLED',
   });
 
-  const ruleWithTrigger = await createRuleTrigger(rule, t.context.testKnex);
+  const ruleWithTrigger = await createRuleTrigger(rule);
 
-  t.is(ruleWithTrigger.value, TopicArn);
-  t.truthy(ruleWithTrigger.arn);
+  t.is(ruleWithTrigger.rule.value, TopicArn);
+  t.truthy(ruleWithTrigger.rule.arn);
 
   const updates = {
     ...ruleWithTrigger,
-    enabled: false,
+    state: 'DISABLED',
   };
   const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
   t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.arn }));
+  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.rule.arn }));
 
-  t.true(Object.prototype.hasOwnProperty.call(updatedSnsRule, 'arn'));
-  t.is(updatedSnsRule.arn, undefined);
+  t.true(Object.prototype.hasOwnProperty.call(updatedSnsRule.rule, 'arn'));
+  t.is(updatedSnsRule.rule.arn, undefined);
 
   t.teardown(async () => {
     lambdaStub.restore();
@@ -507,21 +545,26 @@ test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific e
       }),
     });
 
-  const rule = fakeRuleRecordFactory({
-    type: 'sns',
-    value: snsTopicArn,
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'sns',
+      value: snsTopicArn,
+    },
     workflow,
-    enabled: false,
+    state: 'DISABLED',
   });
 
-  t.is(rule.value, snsTopicArn);
-  t.falsy(rule.arn);
-  t.is(rule.enabled, false);
+  t.is(rule.rule.value, snsTopicArn);
+  t.falsy(rule.rule.arn);
+  t.is(rule.state, 'DISABLED');
 
   const updates = {
     name: rule.name,
-    enabled: true,
-    arn: 'test-value',
+    state: 'ENABLED',
+    rule: {
+      ...rule.rule,
+      arn: 'test-value',
+    },
   };
 
   // Should fail because a disabled rule should not have an ARN

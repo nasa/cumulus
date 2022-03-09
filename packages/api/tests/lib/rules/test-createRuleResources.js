@@ -21,13 +21,11 @@ const {
   destroyLocalTestDb,
   fakeCollectionRecordFactory,
   fakeProviderRecordFactory,
-  fakeRuleRecordFactory,
   generateLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
   ProviderPgModel,
   RulePgModel,
-  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   createRuleTrigger,
@@ -35,6 +33,7 @@ const {
 } = require('../../../lib/rulesHelpers');
 const {
   createSqsQueues,
+  fakeRuleFactoryV2,
 } = require('../../../lib/testUtils');
 
 const workflow = randomString();
@@ -115,70 +114,77 @@ test.after.always(async (t) => {
 });
 
 test('Creating a rule trigger defaults enabled to true', async (t) => {
-  const rule = fakeRuleRecordFactory({
-    type: 'onetime',
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'onetime',
+    },
     workflow,
-    enabled: true,
   });
   // remove enabled from rule to be created
-  delete rule.enabled;
+  delete rule.state;
 
   // create rule trigger
-  const ruleWithTrigger = await createRuleTrigger(rule, t.context.testKnex);
+  const ruleWithTrigger = await createRuleTrigger(rule);
 
-  t.true(ruleWithTrigger.enabled);
+  t.is(ruleWithTrigger.state, 'ENABLED');
 });
 
 test('Creating an invalid rule does not create workflow triggers', async (t) => {
-  const rule = fakeRuleRecordFactory({
-    type: 'onetime',
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'onetime',
+    },
     workflow,
-    enabled: true,
+    state: 'ENABLED',
   });
-  rule.type = 'invalid';
+  rule.rule.type = 'invalid';
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule, t.context.testKnex),
+    () => createRuleTrigger(rule),
     { name: 'ValidationError' }
   );
 });
 
 test('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
-  const kinesisRule = fakeRuleRecordFactory({
-    type: 'kinesis',
+  const kinesisRule = fakeRuleFactoryV2({
     workflow,
-    enabled: true,
-    value: randomString(),
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
   });
   // create rule
-  const createdRule = await createRuleTrigger(kinesisRule, t.context.testKnex);
+  const createdRule = await createRuleTrigger(kinesisRule);
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
 
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
-  t.is(consumerEventMappings[0].UUID, createdRule.arn);
-  t.is(logEventMappings[0].UUID, createdRule.log_event_arn);
+  t.is(consumerEventMappings[0].UUID, createdRule.rule.arn);
+  t.is(logEventMappings[0].UUID, createdRule.rule.logEventArn);
 
   t.is(createdRule.name, kinesisRule.name);
-  t.is(createdRule.value, kinesisRule.value);
-  t.false(createdRule.arn === undefined);
-  t.false(createdRule.log_event_arn === undefined);
+  t.is(createdRule.rule.value, kinesisRule.rule.value);
+  t.false(createdRule.rule.arn === undefined);
+  t.false(createdRule.rule.logEventArn === undefined);
 
   // Clean Up
   await deleteKinesisEventSourceMappings();
 });
 
 test('Creating an invalid kinesis type rule does not add event mappings', async (t) => {
-  const kinesisRule = fakeRuleRecordFactory({
-    type: 'kinesis',
+  const kinesisRule = fakeRuleFactoryV2({
     workflow,
-    enabled: true,
-    value: randomString(),
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
   });
   delete kinesisRule.name;
-  await t.throwsAsync(createRuleTrigger(kinesisRule, t.context.testKnex), { name: 'SchemaValidationError' });
+  await t.throwsAsync(createRuleTrigger(kinesisRule), { name: 'SchemaValidationError' });
 
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
@@ -189,28 +195,32 @@ test('Creating an invalid kinesis type rule does not add event mappings', async 
 });
 
 test('Creating a rule trigger SQS rule fails if queue does not exist', async (t) => {
-  const rule = fakeRuleRecordFactory({
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'sqs',
+      value: 'non-existent-queue',
+    },
     workflow,
-    type: 'sqs',
-    value: 'non-existent-queue',
-    enabled: true,
+    state: 'ENABLED',
   });
   await t.throwsAsync(
-    createRuleTrigger(rule, t.context.testKnex),
+    createRuleTrigger(rule),
     { message: /SQS queue non-existent-queue does not exist/ }
   );
 });
 
 test('Creating a rule trigger for an SQS rule fails if there is no redrive policy on the queue', async (t) => {
   const queueUrl = await SQS.createQueue(randomId('queue'));
-  const rule = fakeRuleRecordFactory({
+  const rule = fakeRuleFactoryV2({
     workflow,
-    type: 'sqs',
-    value: queueUrl,
-    enabled: true,
+    rule: {
+      type: 'sqs',
+      value: queueUrl,
+    },
+    state: 'ENABLED',
   });
   await t.throwsAsync(
-    createRuleTrigger(rule, t.context.testKnex),
+    createRuleTrigger(rule),
     { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
   t.teardown(async () => await SQS.deleteQueue(queueUrl));
@@ -218,91 +228,103 @@ test('Creating a rule trigger for an SQS rule fails if there is no redrive polic
 
 test('Creating a rule trigger for an SQS rule succeeds', async (t) => {
   const queues = await createSqsQueues(randomString());
-  const rule = fakeRuleRecordFactory({
+  const rule = fakeRuleFactoryV2({
     workflow,
-    type: 'sqs',
-    value: queues.queueUrl,
-    enabled: true,
+    rule: {
+      type: 'sqs',
+      value: queues.queueUrl,
+    },
+    state: 'ENABLED',
     meta: {
       visibilityTimeout: 100,
       retries: 4,
     },
   });
-  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
+  const sqsRule = await createRuleTrigger(rule);
   t.deepEqual(sqsRule, rule);
   t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
 });
 
 test('Creating a rule trigger for an SQS rule succeeds and sets default value for meta.retries and visibilityTimeout', async (t) => {
   const queues = await createSqsQueues(randomString());
-  const rule = fakeRuleRecordFactory({
+  const rule = fakeRuleFactoryV2({
     workflow,
-    type: 'sqs',
-    value: queues.queueUrl,
-    enabled: true,
+    rule: {
+      type: 'sqs',
+      value: queues.queueUrl,
+    },
+    state: 'ENABLED',
   });
-  const sqsRule = await createRuleTrigger(rule, t.context.testKnex);
+  const sqsRule = await createRuleTrigger(rule);
   t.is(sqsRule.meta.retries, 3);
   t.is(sqsRule.meta.visibilityTimeout, 300);
   t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
 });
 
 test('Creating a rule trigger for a rule without a type fails', async (t) => {
-  const rule = fakeRuleRecordFactory({
-    type: 'onetime',
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'onetime',
+    },
     workflow,
-    enabled: true,
+    state: 'ENABLED',
   });
-  delete rule.type;
+  delete rule.rule.type;
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule, t.context.testKnex),
+    () => createRuleTrigger(rule),
     { name: 'SchemaValidationError' }
   );
 });
 
 test('Creating a rule trigger for a rule without a workflow fails', async (t) => {
-  const rule = fakeRuleRecordFactory({
-    type: 'onetime',
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'onetime',
+    },
     workflow,
-    enabled: true,
+    state: 'ENABLED',
   });
   delete rule.workflow;
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule, t.context.testKnex),
+    () => createRuleTrigger(rule),
     { name: 'SchemaValidationError' }
   );
 });
 
 test('Creating a rule trigger for a rule without a name fails', async (t) => {
-  const rule = fakeRuleRecordFactory({
-    type: 'onetime',
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'onetime',
+    },
     workflow,
-    enabled: true,
+    state: 'ENABLED',
   });
   delete rule.name;
 
   await t.throwsAsync(
-    () => createRuleTrigger(rule, t.context.testKnex),
+    () => createRuleTrigger(rule),
     { name: 'SchemaValidationError' }
   );
 });
 
 test('Creating a disabled SNS rule creates no event source mapping', async (t) => {
   const snsTopicArn = randomString();
-  const item = fakeRuleRecordFactory({
+  const item = fakeRuleFactoryV2({
     workflow,
-    type: 'sns',
-    value: snsTopicArn,
-    enabled: false,
+    rule: {
+      type: 'sns',
+      value: snsTopicArn,
+    },
+    state: 'DISABLED',
   });
 
-  const rule = await createRuleTrigger(item, t.context.testKnex);
+  const rule = await createRuleTrigger(item);
 
-  t.is(rule.enabled, false);
-  t.is(rule.value, snsTopicArn);
-  t.falsy(rule.arn);
+  t.is(rule.state, 'DISABLED');
+  t.is(rule.rule.value, snsTopicArn);
+  t.falsy(rule.rule.arn);
 });
 
 test.serial('Creating an enabled SNS rule creates an event source mapping', async (t) => {
@@ -336,19 +358,21 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
       }),
     });
 
-  const rule = fakeRuleRecordFactory({
-    type: 'sns',
-    value: TopicArn,
+  const rule = fakeRuleFactoryV2({
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
     workflow,
-    enabled: true,
+    state: 'ENABLED',
   });
   const subscribeSpy = sinon.spy(awsServices.sns(), 'subscribe');
   const addPermissionSpy = sinon.spy(awsServices.lambda(), 'addPermission');
 
-  await createRuleTrigger(rule, t.context.testKnex);
+  await createRuleTrigger(rule);
   t.true(subscribeSpy.called);
   t.true(subscribeSpy.calledWith({
-    TopicArn: rule.value,
+    TopicArn: rule.rule.value,
     Protocol: 'lambda',
     Endpoint: process.env.messageConsumer,
     ReturnSubscriptionArn: true,
@@ -383,7 +407,7 @@ test('buildPayload builds a lambda payload from the rule', async (t) => {
     testPgCollection
   );
   const ruleParams = {
-    type: 'onetime',
+    rule: { type: 'onetime' },
     workflow,
     meta: {
       visibilityTimeout: 100,
@@ -395,25 +419,24 @@ test('buildPayload builds a lambda payload from the rule', async (t) => {
     payload: {
       input: 'test',
     },
-    queue_url: randomString(),
-    execution_name_prefix: randomString(),
+    queueUrl: randomString(),
+    executionNamePrefix: randomString(),
     asyncOperationId: randomString(),
-    provider_cumulus_id: pgProvider.cumulus_id,
-    collection_cumulus_id: pgCollection.cumulus_id,
+    provider: pgProvider.name,
+    collection: { name: pgCollection.name, version: pgCollection.version },
   };
-  const rule = fakeRuleRecordFactory(ruleParams);
-  const apiRule = await translatePostgresRuleToApiRule(rule, t.context.testKnex);
+  const rule = fakeRuleFactoryV2(ruleParams);
   const expectedPayload = {
     provider: pgProvider.name,
     collection: { name: pgCollection.name, version: pgCollection.version },
     meta: rule.meta,
     cumulus_meta: { execution_name: rule.cumulus_meta.execution_name },
     payload: rule.payload,
-    queueUrl: rule.queue_url,
-    executionNamePrefix: rule.execution_name_prefix,
+    queueUrl: rule.queueUrl,
+    executionNamePrefix: rule.executionNamePrefix,
     asyncOperationId: rule.asyncOperationId,
   };
-  const payload = await buildPayload(apiRule, ruleParams.cumulus_meta, ruleParams.asyncOperationId);
+  const payload = await buildPayload(rule, ruleParams.cumulus_meta, ruleParams.asyncOperationId);
   t.deepEqual(omit(payload, ['template', 'definition']), expectedPayload);
 });
 
@@ -421,13 +444,12 @@ test('buildPayload throws error if workflow file does not exist', async (t) => {
   const fakeWorkflow = randomString();
   const workflowFileKey = workflows.getWorkflowFileKey(process.env.stackName, fakeWorkflow);
   const ruleParams = {
-    type: 'onetime',
+    rule: { type: 'onetime' },
     workflow: fakeWorkflow,
   };
-  const rule = fakeRuleRecordFactory(ruleParams);
-  const apiRule = await translatePostgresRuleToApiRule(rule, t.context.testKnex);
+  const rule = fakeRuleFactoryV2(ruleParams);
   await t.throwsAsync(
-    buildPayload(apiRule),
+    buildPayload(rule),
     { message: `Workflow doesn\'t exist: s3://${process.env.system_bucket}/${workflowFileKey} for ${rule.name}` }
   );
 });

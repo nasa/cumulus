@@ -17,6 +17,7 @@ const {
   translateApiAsyncOperationToPostgresAsyncOperation,
   fakeRuleRecordFactory,
   translatePostgresRuleToApiRule,
+  translateApiRuleToPostgresRuleRaw,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -496,10 +497,12 @@ const createRuleTestRecords = async (context, ruleParams) => {
   } = context;
 
   const originalRule = fakeRuleRecordFactory(ruleParams);
+  const apiRule = await translatePostgresRuleToApiRule(originalRule, testKnex);
 
-  const ruleWithTrigger = await createRuleTrigger(originalRule, testKnex);
+  const ruleWithTrigger = await createRuleTrigger(apiRule);
+  const pgRuleWithTrigger = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
 
-  const [ruleCumulusId] = await rulePgModel.create(testKnex, ruleWithTrigger);
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, pgRuleWithTrigger);
 
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
