@@ -22,7 +22,7 @@
   "dependencies": {
     "@cumulus/aws-client": "10.1.0",
     "@cumulus/db": "10.1.0",
-    "@cumulus/es-client": "10.1.0",
+    "@cumulus/es-client": "10.1.2-alpha.0",
     "@cumulus/logger": "10.1.0",
     "aws-sdk": "^2.585.0",
     "crypto-random-string": "^3.2.0",

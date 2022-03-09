@@ -123,7 +123,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `postgres-migration-async-operation` lambda.
   - **CUMULUS-2778**
     - Updated default value of `async_operation_image` in
-      `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:40`
+      `tf-modules/cumulus/variables.tf` to `cumuluss/async-operation:41`
     - Added `ES_HOST` environment variable to async operation ECS task
       definition to ensure that async operation tasks write to the correct
       Elasticsearch domain
