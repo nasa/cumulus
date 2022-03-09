@@ -19,11 +19,12 @@ const {
   migrationDir,
   PdrPgModel,
   ProviderPgModel,
-  translateApiPdrToPostgresPdr,
+  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
+  fakePdrRecordFactory,
   fakeProviderRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -293,18 +294,17 @@ test('DELETE returns a 404 if PostgreSQL and Elasticsearch PDR cannot be found',
 test('Deleting a PDR that exists in PostgreSQL and not Elasticsearch succeeds', async (t) => {
   const {
     esPdrsClient,
-    testPgCollection,
-    testPgProvider,
+    collectionCumulusId,
+    providerCumulusId,
     knex,
     pdrPgModel,
   } = t.context;
 
-  const testPdr = fakePdrFactoryV2({
-    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
-    provider: testPgProvider.name,
+  const insertPgRecord = fakePdrRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
   });
 
-  const insertPgRecord = await translateApiPdrToPostgresPdr(testPdr, knex);
   const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pdrCumulusId }
@@ -312,12 +312,12 @@ test('Deleting a PDR that exists in PostgreSQL and not Elasticsearch succeeds', 
 
   t.false(
     await esPdrsClient.exists(
-      testPdr.pdrName
+      originalPgRecord.name
     )
   );
 
   const response = await request(app)
-    .delete(`/pdrs/${testPdr.pdrName}`)
+    .delete(`/pdrs/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -381,8 +381,24 @@ test.serial('DELETE a pdr', async (t) => {
 
 test.serial('DELETE handles the case where the PDR exists in PostgreSQL but not in S3', async (t) => {
   const {
-    originalPgRecord,
-  } = await createPdrTestRecords(t.context);
+    knex,
+    pdrPgModel,
+    esClient,
+    collectionCumulusId,
+    providerCumulusId,
+  } = t.context;
+
+  const insertPgRecord = fakePdrRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
+  });
+
+  const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const originalPgRecord = await pdrPgModel.get(
+    knex, { cumulus_id: pdrCumulusId }
+  );
+  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
+  await indexer.indexPdr(esClient, originalPdr, process.env.ES_INDEX);
 
   const response = await request(app)
     .delete(`/pdrs/${originalPgRecord.name}`)
