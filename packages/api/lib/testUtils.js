@@ -11,13 +11,14 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   fakePdrRecordFactory,
-  translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
-  translateApiExecutionToPostgresExecution,
   fakeRuleRecordFactory,
-  translatePostgresRuleToApiRule,
-  translateApiRuleToPostgresRuleRaw,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  translateApiCollectionToPostgresCollection,
+  translateApiExecutionToPostgresExecution,
+  translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRuleRaw,
+  translatePostgresPdrToApiPdr,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -546,8 +547,7 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pdrCumulusId }
   );
-  const originalPdr = await
-  (originalPgRecord, knex);
+  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
   const originalEsRecord = await esPdrsClient.get(
     originalPdr.pdrName
