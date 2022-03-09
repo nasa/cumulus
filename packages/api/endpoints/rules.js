@@ -2,14 +2,15 @@
 
 const router = require('express-promise-router')();
 const { inTestMode } = require('@cumulus/common/test-utils');
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-
 const {
   getKnexClient,
   RulePgModel,
   TableNames,
   translateApiRuleToPostgresRule,
+  translateApiRuleToPostgresRuleRaw,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { addToLocalES, indexRule } = require('@cumulus/es-client/indexer');
@@ -68,27 +69,30 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    model = new models.Rule(),
+    ruleModel = new models.Rule(),
     dbClient = await getKnexClient(),
+    rulePgModel = new RulePgModel(),
   } = req.testContext || {};
 
   let record;
   const apiRule = req.body || {};
   const name = apiRule.name;
-  const rulePgModel = new RulePgModel();
 
-  if (await model.exists(name)) {
+  if (await ruleModel.exists(name)) {
     return res.boom.conflict(`A record already exists for ${name}`);
   }
 
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+
+    // Create rule trigger
+    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
+    const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, dbClient);
 
     await dbClient.transaction(async (trx) => {
       await rulePgModel.create(trx, postgresRule);
-      record = await model.create(apiRule);
+      record = await ruleModel.create(ruleWithTrigger);
     });
     if (inTestMode()) await addToLocalES(record, indexRule);
     return res.send({ message: 'Record saved', record });
@@ -113,8 +117,14 @@ async function post(req, res) {
  *    name request parameter, or a Not Found (404) if there is no existing rule
  *    with the specified name
  */
-async function put({ params: { name }, body }, res) {
-  const model = new models.Rule();
+async function put(req, res) {
+  const {
+    ruleModel = new models.Rule(),
+    dbClient = await getKnexClient(),
+    rulePgModel = new RulePgModel(),
+  } = req.testContext || {};
+  const { params: { name }, body } = req;
+
   const apiRule = { ...body };
   let newRule;
 
@@ -124,14 +134,12 @@ async function put({ params: { name }, body }, res) {
   }
 
   try {
-    const oldRule = await model.get({ name });
-    const dbClient = await getKnexClient();
-    const rulePgModel = new RulePgModel();
+    const oldRule = await ruleModel.get({ name });
 
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.createdAt;
-    // If rule type is onetime no change is allowed unless it is a rerun
 
+    // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
       return models.Rule.invoke(oldRule).then(() => res.send(oldRule));
     }
@@ -139,16 +147,30 @@ async function put({ params: { name }, body }, res) {
     const fieldsToDelete = Object.keys(oldRule).filter(
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, dbClient);
+    const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldRule, apiRule);
 
-    await dbClient.transaction(async (trx) => {
-      await rulePgModel.upsert(trx, postgresRule);
-      newRule = await model.update(oldRule, apiRule, fieldsToDelete);
-    });
+    try {
+      await dbClient.transaction(async (trx) => {
+        // stores updated record in dynamo
+        newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
+        // make sure we include undefined values so fields will be correctly unset in PG
+        const postgresRule = await translateApiRuleToPostgresRuleRaw(newRule, dbClient);
+        await rulePgModel.upsert(trx, postgresRule);
+      });
+      // wait to delete original event sources until all update operations were successful
+      await ruleModel.deleteOldEventSourceMappings(oldRule);
+    } catch (innerError) {
+      if (newRule) {
+        const ruleWithRevertedTrigger = await ruleModel.updateRuleTrigger(apiRule, oldRule);
+        await ruleModel.update(ruleWithRevertedTrigger);
+      }
+      throw innerError;
+    }
 
     if (inTestMode()) await addToLocalES(newRule, indexRule);
     return res.send(newRule);
   } catch (error) {
+    log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
     }
@@ -204,4 +226,5 @@ router.delete('/:name', del);
 module.exports = {
   router,
   post,
+  put,
 };
