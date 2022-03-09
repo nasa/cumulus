@@ -359,26 +359,6 @@ test.serial('Deleting a PDR that exists in Elastisearch and not PostgreSQL succe
   );
 });
 
-test.serial('DELETE a pdr', async (t) => {
-  const {
-    originalPgRecord,
-  } = await createPdrTestRecords(t.context);
-  // create a new pdr
-
-  const key = `${process.env.stackName}/pdrs/${originalPgRecord.name}`;
-  await awsServices.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
-
-  const response = await request(app)
-    .delete(`/pdrs/${originalPgRecord.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-});
-
 test.serial('DELETE handles the case where the PDR exists in PostgreSQL but not in S3', async (t) => {
   const {
     knex,
@@ -424,12 +404,20 @@ test.serial('DELETE removes a PDR from all data stores', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
   t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
 
   t.false(await t.context.pdrPgModel.exists(t.context.knex, { name: originalPgRecord.name }));
   t.false(
     await t.context.esPdrsClient.exists(
       originalPgRecord.name
     )
+  );
+  t.false(
+    await s3ObjectExists({
+      Bucket: process.env.system_bucket,
+      Key: pdrS3Key(originalPgRecord.name),
+    })
   );
 });
 
