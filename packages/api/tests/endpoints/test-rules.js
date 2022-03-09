@@ -1051,6 +1051,7 @@ test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasti
 
   t.truthy(originalDynamoRule.rule.arn);
   t.truthy(originalPgRecord.arn);
+  t.truthy(originalEsRecord.rule.arn);
 
   const updateRule = {
     ...originalDynamoRule,
@@ -1155,6 +1156,8 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
 
   t.truthy(originalDynamoRule.rule.arn);
   t.truthy(originalDynamoRule.rule.logEventArn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalEsRecord.rule.logEventArn);  
   t.truthy(originalPgRecord.arn);
   t.truthy(originalPgRecord.log_event_arn);
 
@@ -1284,6 +1287,7 @@ test.serial('put() creates the same SQS rule in Dynamo/PostgreSQL/Elasticsearch'
   };
   t.deepEqual(originalDynamoRule.meta, expectedMeta);
   t.deepEqual(originalPgRecord.meta, expectedMeta);
+  t.deepEqual(originalEsRecord.meta, expectedMeta);
 
   const updateRule = {
     ...originalDynamoRule,
@@ -1382,6 +1386,7 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
   );
 
   t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
   t.truthy(originalPgRecord.arn);
 
   const updateRule = {
@@ -1490,6 +1495,7 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
   );
 
   t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
   t.truthy(originalPgRecord.arn);
 
   const updateRule = {
@@ -1603,6 +1609,7 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
   );
 
   t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
   t.truthy(originalPgRecord.arn);
 
   const updateRule = {
