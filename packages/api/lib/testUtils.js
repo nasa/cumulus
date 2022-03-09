@@ -13,15 +13,11 @@ const {
   fakePdrRecordFactory,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
-  translateApiPdrToPostgresPdr,
   translateApiExecutionToPostgresExecution,
   fakeRuleRecordFactory,
   translatePostgresRuleToApiRule,
   translateApiRuleToPostgresRuleRaw,
-  translateApiRuleToPostgresRule,
-  translateApiExecutionToPostgresExecution,
   translateApiAsyncOperationToPostgresAsyncOperation,
-  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -550,7 +546,7 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pdrCumulusId }
   );
-  const originalPdr = await 
+  const originalPdr = await
   (originalPgRecord, knex);
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
   const originalEsRecord = await esPdrsClient.get(
