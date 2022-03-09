@@ -11,7 +11,11 @@ test('describeCfStack() returns the stack information', async (t) => {
   await cf().createStack({
     StackName,
     TemplateBody: JSON.stringify({
-      Resources: {},
+      Resources: {
+        MyBucket: {
+          Type: 'AWS::S3::Bucket',
+        },
+      },
     }),
   }).promise();
 
@@ -60,7 +64,11 @@ test('getCfStackParameterValues() returns object excluding keys for missing para
   await cf().createStack({
     StackName,
     TemplateBody: JSON.stringify({
-      Resources: {},
+      Resources: {
+        MyBucket: {
+          Type: 'AWS::S3::Bucket',
+        },
+      },
     }),
   }).promise();
 
@@ -81,7 +89,11 @@ test('getCfStackParameterValues() returns requested stack parameters', async (t)
         foo: { Type: 'String' },
         key: { Type: 'String' },
       },
-      Resources: {},
+      Resources: {
+        MyBucket: {
+          Type: 'AWS::S3::Bucket',
+        },
+      },
     }),
     Parameters: [
       { ParameterKey: 'foo', ParameterValue: 'bar' },

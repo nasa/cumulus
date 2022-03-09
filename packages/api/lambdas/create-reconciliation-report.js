@@ -13,7 +13,7 @@ const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const Logger = require('@cumulus/logger');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
@@ -25,7 +25,7 @@ const { createInternalReconciliationReport } = require('./internal-reconciliatio
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const GranuleFilesCache = require('../lib/GranuleFilesCache');
 const { ReconciliationReport } = require('../models');
-const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
+const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToESCollectionSearchParams,

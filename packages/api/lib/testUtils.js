@@ -8,6 +8,8 @@ const merge = require('lodash/merge');
 const { randomId } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
+const { translateApiRuleToPostgresRule } = require('@cumulus/db');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
@@ -61,7 +63,7 @@ function fakeGranuleFactory(status = 'completed') {
     granuleId: randomId('granule'),
     dataType: randomId('datatype'),
     version: randomId('vers'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     status,
     execution: randomId('execution'),
     createdAt: Date.now(),
@@ -131,7 +133,7 @@ function fakeRuleFactory(state = 'DISABLED') {
 function fakePdrFactory(status = 'completed') {
   return {
     pdrName: randomId('pdr'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     provider: 'fakeProvider',
     status,
     createdAt: Date.now(),
@@ -147,7 +149,7 @@ function fakePdrFactory(status = 'completed') {
 function fakePdrFactoryV2(params = {}) {
   const pdr = {
     pdrName: randomId('pdr'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     provider: 'fakeProvider',
     status: 'completed',
     createdAt: Date.now(),
@@ -394,6 +396,28 @@ async function getSqsQueueMessageCounts(queueUrl) {
   };
 }
 
+const createRuleTestRecords = async (context, ruleParams) => {
+  const {
+    testKnex,
+    ruleModel,
+    rulePgModel,
+  } = context;
+  const originalRule = fakeRuleFactoryV2(ruleParams);
+
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(originalRule);
+  const originalDynamoRule = await ruleModel.create(ruleWithTrigger);
+  const insertPgRecord = await translateApiRuleToPostgresRule(originalDynamoRule, testKnex);
+
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await rulePgModel.get(
+    testKnex, { cumulus_id: ruleCumulusId }
+  );
+  return {
+    originalDynamoRule,
+    originalPgRecord,
+  };
+};
+
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
@@ -417,4 +441,5 @@ module.exports = {
   isLocalApi,
   testEndpoint,
   setAuthorizedOAuthUsers,
+  createRuleTestRecords,
 };
