@@ -376,8 +376,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS-2810**
-    - fixed bug in translatePostgresProviderToApiProvider and updated tests to prevent reintroduction.
-
+    - Updated @cumulus/db/translate/translatePostgresProviderToApiProvider to
+      correctly return provider password and updated tests to prevent
+      reintroduction.
   - **CUMULUS-2778**
     - Fixed async operation docker image to correctly update record status in
     Elasticsearch
