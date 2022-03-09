@@ -13,7 +13,7 @@ data "aws_s3_bucket" "fake_s3_provider_alternate" {
   bucket = data.aws_cloudformation_export.fake_s3_provider_alternate.value
 }
 
-data "aws_s3_bucket" "fake_s3_pftp_host_configuration_bucket" {
+data "aws_s3_bucket" "fake_s3_ftp_host_configuration_bucket" {
   bucket = var.ftp_host_configuration_bucket
 }
 
@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "lambda_processing_access_fake_s3_provider" {
     resources = [
       "${data.aws_s3_bucket.fake_s3_provider.arn}/*",
       "${data.aws_s3_bucket.fake_s3_provider_alternate.arn}/*",
-      "${data.aws_s3_bucket.fake_s3_pftp_host_configuration_bucket.arn}/*"
+      "${data.aws_s3_bucket.fake_s3_ftp_host_configuration_bucket.arn}/*"
     ]
   }
 }
