@@ -270,10 +270,6 @@ describe('The SNS-type rule', () => {
         const updateParams = {
           ...updatedRule,
           state: 'ENABLED',
-          rule: {
-            value: updatedRule.rule.value,
-            type: 'sns',
-          },
         };
         const putRuleResponse = await updateRule({
           prefix: config.stackName,
