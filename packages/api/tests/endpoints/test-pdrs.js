@@ -410,6 +410,8 @@ test.serial('DELETE handles the case where the PDR exists in PostgreSQL but not 
 
   const parsedBody = response.body;
   t.is(parsedBody.detail, 'Record deleted');
+  t.false(await pdrPgModel.exists(knex, { name: originalPgRecord.name }));
+  t.false(await t.context.esPdrsClient.exists(originalPgRecord.name));
 });
 
 test.serial('DELETE removes a PDR from all data stores', async (t) => {
