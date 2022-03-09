@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 - **CUMULUS-2810**
-  - fixed bug in translatePostgresProviderToApiProvider and updated tests to prevent reintroduction.
+  - Updated @cumulus/db/translate/translatePostgresProviderToApiProvider to correctly return provider password and updated tests to prevent reintroduction.
 
 ## Unreleased
 
