@@ -1157,7 +1157,7 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
   t.truthy(originalDynamoRule.rule.arn);
   t.truthy(originalDynamoRule.rule.logEventArn);
   t.truthy(originalEsRecord.rule.arn);
-  t.truthy(originalEsRecord.rule.logEventArn);  
+  t.truthy(originalEsRecord.rule.logEventArn);
   t.truthy(originalPgRecord.arn);
   t.truthy(originalPgRecord.log_event_arn);
 
