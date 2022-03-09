@@ -187,7 +187,7 @@ describe('The SNS-type rule', () => {
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
 
-      expect(statementSids).toContain(getSnsTriggerPermissionId(postRule.record));
+      expect(statementSids).toContain(getSnsTriggerPermissionId(createdRule.record));
     });
   });
 
