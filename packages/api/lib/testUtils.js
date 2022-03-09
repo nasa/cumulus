@@ -10,14 +10,18 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
+  fakePdrRecordFactory,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiPdrToPostgresPdr,
   translateApiExecutionToPostgresExecution,
-  translateApiAsyncOperationToPostgresAsyncOperation,
   fakeRuleRecordFactory,
   translatePostgresRuleToApiRule,
   translateApiRuleToPostgresRuleRaw,
+  translateApiRuleToPostgresRule,
+  translateApiExecutionToPostgresExecution,
+  translateApiAsyncOperationToPostgresAsyncOperation,
+  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -522,39 +526,37 @@ const createRuleTestRecords = async (context, ruleParams) => {
 const createPdrTestRecords = async (context, pdrParams = {}) => {
   const {
     knex,
-    pdrModel,
     pdrPgModel,
     esClient,
     esPdrsClient,
-    testPgCollection,
-    testPgProvider,
+    collectionCumulusId,
+    providerCumulusId,
   } = context;
 
-  const originalPdr = fakePdrFactoryV2({
+  const insertPgRecord = fakePdrRecordFactory({
     ...pdrParams,
-    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
-    provider: testPgProvider.name,
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
   });
 
-  const pdrS3Key = `${process.env.stackName}/pdrs/${originalPdr.pdrName}`;
+  const pdrS3Key = `${process.env.stackName}/pdrs/${insertPgRecord.name}`;
   await s3PutObject({
     Bucket: process.env.system_bucket,
     Key: pdrS3Key,
     Body: randomString(),
   });
 
-  const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
-  const originalDynamoPdr = await pdrModel.create(originalPdr);
   const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pdrCumulusId }
   );
+  const originalPdr = await 
+  (originalPgRecord, knex);
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
   const originalEsRecord = await esPdrsClient.get(
     originalPdr.pdrName
   );
   return {
-    originalDynamoPdr,
     originalPgRecord,
     originalEsRecord,
   };

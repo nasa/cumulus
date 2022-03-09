@@ -36,6 +36,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         }
       );
       migrationCountResponseBody = JSON.parse(migrationCountResponse.body);
+      console.log(`migrationCounts asyncOperationId ${migrationCountResponseBody.id}`);
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: migrationCountResponseBody.id,
