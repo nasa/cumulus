@@ -11,15 +11,21 @@ const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
 const { invoke } = require('@cumulus/aws-client/Lambda');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const SQS = require('@cumulus/aws-client/SQS');
 const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
+const { getSnsTriggerPermissionId } = require('../lib/snsRuleHelpers');
 
 class Rule extends Manager {
-  constructor() {
+  constructor({
+    SqsUtils = SQS,
+    SqsClient = awsServices.sqs(),
+    SnsClient = awsServices.sns(),
+    LambdaClient = awsServices.lambda(),
+  } = {}) {
     super({
       tableName: process.env.RulesTable,
       tableHash: { name: 'name', type: 'S' },
@@ -36,10 +42,15 @@ class Rule extends Manager {
     this.kinesisSourceEvents = [{ name: process.env.messageConsumer, eventType: 'arn' },
       { name: process.env.KinesisInboundEventLogger, eventType: 'logEventArn' }];
     this.targetId = 'lambdaTarget';
+
+    this.SqsUtils = SqsUtils;
+    this.SqsClient = SqsClient;
+    this.SnsClient = SnsClient;
+    this.LambdaClient = LambdaClient;
   }
 
   async addRule(item, payload) {
-    const name = `${process.env.stackName}-custom-${item.name}`;
+    const name = this.buildCloudWatchRuleName(item);
     const r = await CloudwatchEvents.putEvent(
       name,
       item.rule.value,
@@ -62,10 +73,14 @@ class Rule extends Manager {
     return await Promise.all(deletePromises);
   }
 
+  buildCloudWatchRuleName(item) {
+    return `${process.env.stackName}-custom-${item.name}`;
+  }
+
   async delete(item) {
     switch (item.rule.type) {
     case 'scheduled': {
-      const name = `${process.env.stackName}-custom-${item.name}`;
+      const name = this.buildCloudWatchRuleName(item);
       await CloudwatchEvents.deleteTarget(this.targetId, name);
       await CloudwatchEvents.deleteEvent(name);
       break;
@@ -139,33 +154,25 @@ class Rule extends Manager {
   /**
    * Updates a rule item.
    *
-   * @param {Object} original - the original rule
-   * @param {Object} updates - key/value fields for update; might not be a
-   *    complete rule item
+   * @param {Object} updatedRuleItem - the updated rule item
    * @param {Array<string>} [fieldsToDelete] - names of fields to delete from
    *    rule
    * @returns {Promise} the response from database updates
    */
-  async update(original, updates, fieldsToDelete = []) {
-    // Make a copy of the existing rule to preserve existing values
-    let updatedRuleItem = cloneDeep(original);
+  update(updatedRuleItem, fieldsToDelete = []) {
+    return super.update({ name: updatedRuleItem.name }, updatedRuleItem, fieldsToDelete);
+  }
 
-    // Apply updates to updated rule item to be saved
+  async updateRuleTrigger(ruleItem, updates) {
+    let updatedRuleItem = cloneDeep(ruleItem);
+
+    const stateChanged = updates.state && updates.state !== ruleItem.state;
+    const valueUpdated = updates.rule && updates.rule.value !== ruleItem.rule.value;
+
     merge(updatedRuleItem, updates);
 
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(updatedRuleItem, this.schema, this.removeAdditional);
-
-    const stateChanged = updates.state && updates.state !== original.state;
-    const valueUpdated = updates.rule && updates.rule.value !== original.rule.value;
-
-    updatedRuleItem = await this.updateRuleTrigger(updatedRuleItem, stateChanged, valueUpdated);
-
-    return super.update({ name: original.name }, updatedRuleItem, fieldsToDelete);
-  }
-
-  async updateRuleTrigger(ruleItem, stateChanged, valueUpdated) {
-    let updatedRuleItem = cloneDeep(ruleItem);
 
     switch (updatedRuleItem.rule.type) {
     case 'scheduled': {
@@ -175,7 +182,6 @@ class Rule extends Manager {
     }
     case 'kinesis':
       if (valueUpdated) {
-        await this.deleteKinesisEventSources(updatedRuleItem);
         const updatedRuleItemArns = await this.addKinesisEventSources(updatedRuleItem);
         updatedRuleItem = this.updateKinesisRuleArns(updatedRuleItem,
           updatedRuleItemArns);
@@ -187,9 +193,6 @@ class Rule extends Manager {
           throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
         }
         let snsSubscriptionArn;
-        if (updatedRuleItem.rule.arn) {
-          await this.deleteSnsTrigger(updatedRuleItem);
-        }
         if (updatedRuleItem.state === 'ENABLED') {
           snsSubscriptionArn = await this.addSnsTrigger(updatedRuleItem);
         }
@@ -428,14 +431,13 @@ class Rule extends Manager {
     return (rules.Count && rules.Count > 0);
   }
 
-  async addSnsTrigger(item) {
-    // check for existing subscription
+  async checkForSnsSubscriptions(item) {
     let token;
     let subExists = false;
     let subscriptionArn;
     /* eslint-disable no-await-in-loop */
     do {
-      const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
+      const subsResponse = await this.SnsClient.listSubscriptionsByTopic({
         TopicArn: item.rule.value,
         NextToken: token,
       }).promise();
@@ -453,6 +455,19 @@ class Rule extends Manager {
       if (subExists) break;
     }
     while (token);
+    return {
+      subExists,
+      existingSubscriptionArn: subscriptionArn,
+    };
+  }
+
+  async addSnsTrigger(item) {
+    // check for existing subscription
+    const {
+      subExists,
+      existingSubscriptionArn,
+    } = await this.checkForSnsSubscriptions(item);
+    let subscriptionArn = existingSubscriptionArn;
     /* eslint-enable no-await-in-loop */
     if (!subExists) {
       // create sns subscription
@@ -462,18 +477,18 @@ class Rule extends Manager {
         Endpoint: process.env.messageConsumer,
         ReturnSubscriptionArn: true,
       };
-      const r = await awsServices.sns().subscribe(subscriptionParams).promise();
+      const r = await this.SnsClient.subscribe(subscriptionParams).promise();
       subscriptionArn = r.SubscriptionArn;
+      // create permission to invoke lambda
+      const permissionParams = {
+        Action: 'lambda:InvokeFunction',
+        FunctionName: process.env.messageConsumer,
+        Principal: 'sns.amazonaws.com',
+        SourceArn: item.rule.value,
+        StatementId: getSnsTriggerPermissionId(item),
+      };
+      await this.LambdaClient.addPermission(permissionParams).promise();
     }
-    // create permission to invoke lambda
-    const permissionParams = {
-      Action: 'lambda:InvokeFunction',
-      FunctionName: process.env.messageConsumer,
-      Principal: 'sns.amazonaws.com',
-      SourceArn: item.rule.value,
-      StatementId: `${item.name}Permission`,
-    };
-    await awsServices.lambda().addPermission(permissionParams).promise();
     return subscriptionArn;
   }
 
@@ -486,10 +501,10 @@ class Rule extends Manager {
     // delete permission statement
     const permissionParams = {
       FunctionName: process.env.messageConsumer,
-      StatementId: `${item.name}Permission`,
+      StatementId: getSnsTriggerPermissionId(item),
     };
     try {
-      await awsServices.lambda().removePermission(permissionParams).promise();
+      await this.LambdaClient.removePermission(permissionParams).promise();
     } catch (error) {
       if (isResourceNotFoundException(error)) {
         throw new ResourceNotFoundError(error);
@@ -500,7 +515,23 @@ class Rule extends Manager {
     const subscriptionParams = {
       SubscriptionArn: item.rule.arn,
     };
-    return awsServices.sns().unsubscribe(subscriptionParams).promise();
+    return this.SnsClient.unsubscribe(subscriptionParams).promise();
+  }
+
+  async deleteOldEventSourceMappings(item) {
+    switch (item.rule.type) {
+    case 'kinesis':
+      await this.deleteKinesisEventSources(item);
+      break;
+    case 'sns': {
+      if (item.rule.arn) {
+        await this.deleteSnsTrigger(item);
+      }
+      break;
+    }
+    default:
+      break;
+    }
   }
 
   /**
@@ -511,7 +542,7 @@ class Rule extends Manager {
    */
   async validateAndUpdateSqsRule(rule) {
     const queueUrl = rule.rule.value;
-    if (!(await sqsQueueExists(queueUrl))) {
+    if (!(await this.SqsUtils.sqsQueueExists(queueUrl))) {
       throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
     }
 
@@ -519,7 +550,7 @@ class Rule extends Manager {
       QueueUrl: queueUrl,
       AttributeNames: ['All'],
     };
-    const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+    const attributes = await this.SqsClient.getQueueAttributes(qAttrParams).promise();
     if (!attributes.Attributes.RedrivePolicy) {
       throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
     }

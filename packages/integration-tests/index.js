@@ -24,12 +24,11 @@ const {
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
-const rulesApiClient = require('@cumulus/api-client/rules');
+const rulesApi = require('@cumulus/api-client/rules');
 const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
-const rulesApi = require('./api/rules');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const api = require('./api/api');
@@ -486,8 +485,13 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
       }));
 
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
-      const response = await rulesApiClient.postRule({ prefix: stackName, rule: templatedRule });
-      return JSON.parse(response.body).record;
+
+      const response = await rulesApi.postRule({
+        prefix: stackName,
+        rule: templatedRule,
+      });
+      const { record } = JSON.parse(response.body);
+      return record;
     },
     { concurrency: 1 }
   );
@@ -503,17 +507,6 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
  */
 function addRules(config, dataDirectory, overrides) {
   return addRulesWithPostfix(config, dataDirectory, overrides);
-}
-
-/**
- * deletes a rule by name
- *
- * @param {string} stackName - stack name
- * @param {string} ruleName - name of the rule to delete.
- * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
- */
-async function _deleteOneRule(stackName, ruleName) {
-  return await rulesApiClient.deleteRule({ prefix: stackName, ruleName });
 }
 
 /**
@@ -561,7 +554,10 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 
   await pMap(
     rules,
-    (rule) => _deleteOneRule(stackName, postfix ? `${rule.name}${postfix}` : rule.name),
+    (rule) => rulesApi.deleteRule({
+      prefix: stackName,
+      ruleName: postfix ? `${rule.name}${postfix}` : rule.name,
+    }),
     { concurrency: process.env.CONCURRENCY || 3 }
   );
 

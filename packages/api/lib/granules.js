@@ -7,6 +7,7 @@ const uniqWith = require('lodash/uniqWith');
 const awsClients = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   generateMoveFileParams,
@@ -25,7 +26,6 @@ const { Search } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
-const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
 
 const translateGranule = async (

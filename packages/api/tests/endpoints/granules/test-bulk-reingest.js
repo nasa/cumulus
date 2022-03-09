@@ -27,7 +27,7 @@ process.env = {
   granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomId('tokenSecret'),
   stackName: randomId('stackName'),
-  system_bucket: randomId('systemBucket'),
+  system_bucket: randomId('bucket'),
   AsyncOperationsTable: randomId('AsyncOperationsTable'),
   AsyncOperationTaskDefinition: randomId('taskDefinition'),
   EcsCluster: randomId('EcsCluster'),

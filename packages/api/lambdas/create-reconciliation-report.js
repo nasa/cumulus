@@ -11,6 +11,9 @@ const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue')
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
+const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
+
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 const {
@@ -18,18 +21,16 @@ const {
   getKnexClient,
   QuerySearchClient,
 } = require('@cumulus/db');
-const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
 const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
 const { ReconciliationReport } = require('../models');
-const { deconstructCollectionId, errorify, filenamify } = require('../lib/utils');
+const { errorify, filenamify } = require('../lib/utils');
 const {
   cmrGranuleSearchParams,
   convertToESCollectionSearchParams,

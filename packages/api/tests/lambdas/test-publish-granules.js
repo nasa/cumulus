@@ -11,7 +11,9 @@ test.before(async (t) => {
   process.env.granule_sns_topic_arn = TopicArn;
 
   const QueueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({
+    QueueName,
+  }).promise();
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
@@ -60,6 +62,11 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   await handler(event);
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.teardown(
+    async () => await Promise.all(Messages.map(
+      ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+    ))
+  );
 
   t.is(Messages.length, 1);
 
@@ -75,6 +82,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 test.serial('The publish-granules Lambda function takes a DynamoDB stream event with a multiple records and publishes their granules to SNS', async (t) => {
   const { QueueUrl } = t.context;
   const firstGranuleId = randomString();
+  const secondGranuleId = randomString();
 
   const event = {
     Records: [
@@ -90,7 +98,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
       {
         dynamodb: {
           NewImage: {
-            granuleId: { S: randomString() },
+            granuleId: { S: secondGranuleId },
             status: { S: 'running' },
           },
         },
@@ -103,9 +111,14 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
-    MaxNumberOfMessages: 2,
+    MaxNumberOfMessages: 10,
     WaitTimeSeconds: 10,
   }).promise();
+  t.teardown(
+    async () => await Promise.all(Messages.map(
+      ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+    ))
+  );
 
   t.is(Messages.length, 2);
   const firstMessage = JSON.parse(JSON.parse(Messages[0].Body).Message);
@@ -141,6 +154,11 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   await handler(event);
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.teardown(
+    async () => await Promise.all(Messages.map(
+      ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+    ))
+  );
 
   t.is(Messages.length, 1);
 

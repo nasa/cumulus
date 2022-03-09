@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs-extra');
 const test = require('ava');
 const sinon = require('sinon');
 const cloneDeep = require('lodash/cloneDeep');
@@ -20,7 +21,6 @@ const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils')
 
 process.env.RulesTable = `RulesTable_${randomString()}`;
 process.env.stackName = randomString();
-process.env.messageConsumer = randomString();
 process.env.KinesisInboundEventLogger = randomString();
 process.env.system_bucket = randomString();
 
@@ -56,6 +56,17 @@ async function deleteKinesisEventSourceMappings() {
 let rulesModel;
 
 test.before(async () => {
+  const lambda = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+    },
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'index.handler',
+    Runtime: 'nodejs12.x',
+  }).promise();
+  process.env.messageConsumer = lambda.FunctionName;
+
   // create Rules table
   rulesModel = new models.Rule();
   await rulesModel.createTable();
@@ -99,7 +110,7 @@ test.beforeEach((t) => {
     },
     rule: {
       type: 'kinesis',
-      value: 'my-kinesis-arn',
+      value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
     },
     state: 'ENABLED',
   });
@@ -202,7 +213,8 @@ test('Enabling a disabled rule updates the state', async (t) => {
   t.is(rule.state, 'DISABLED');
 
   const updates = { name: rule.name, state: 'ENABLED' };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.type, rule.type);
@@ -219,18 +231,10 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
 
   const updates = { name: rule.name, rule: null };
 
-  const updateTriggerStub = sinon.stub(models.Rule.prototype, 'updateRuleTrigger').resolves(rule);
-
-  try {
-    await t.throwsAsync(
-      () => rulesModel.update(rule, updates),
-      { name: 'SchemaValidationError' }
-    );
-
-    t.true(updateTriggerStub.notCalled);
-  } finally {
-    updateTriggerStub.restore();
-  }
+  await t.throwsAsync(
+    () => rulesModel.updateRuleTrigger(rule, updates),
+    { name: 'SchemaValidationError' }
+  );
 });
 
 test.serial('Creating rule triggers for a kinesis type rule adds event mappings, creates rule', async (t) => {
@@ -284,7 +288,8 @@ test.serial('Updating a kinesis type rule state does not change event source map
 
   // update rule state
   const updates = { name: rule.name, state: 'ENABLED' };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.state, 'ENABLED');
 
@@ -297,7 +302,7 @@ test.serial('Updating a kinesis type rule state does not change event source map
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('Updaing a kinesis type rule value results in new event source mappings', async (t) => {
+test.serial('Updating a kinesis type rule value results in new event source mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule trigger and rule
@@ -308,10 +313,11 @@ test.serial('Updaing a kinesis type rule value results in new event source mappi
   // update rule value
   const updates = {
     name: rule.name,
-    rule: { type: rule.rule.type, value: 'my-new-kinesis-arn' },
+    rule: { type: rule.rule.type, value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2')}` },
   };
 
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.not(updatedRule.rule.value, rule.rule.value);
@@ -324,6 +330,144 @@ test.serial('Updaing a kinesis type rule value results in new event source mappi
 
   await rulesModel.delete(rule);
   await deleteKinesisEventSourceMappings();
+});
+
+test.serial('Calling updateRuleTrigger() with a kinesis type rule value does not delete existing source mappings', async (t) => {
+  const { kinesisRule } = t.context;
+
+  // create rule trigger and rule
+  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
+  kinesisRule.rule.value = kinesisArn1;
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  const rule = await rulesModel.get({ name: kinesisRule.name });
+  t.teardown(async () => {
+    await rulesModel.delete(rule);
+    await deleteKinesisEventSourceMappings();
+  });
+
+  // update rule value
+  const updates = {
+    name: rule.name,
+    rule: { ...rule.rule, value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2')}` },
+  };
+
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
+
+  t.is(updatedRule.name, rule.name);
+  t.not(updatedRule.rule.value, rule.rule.value);
+
+  // Event source mappings exist and have been updated
+  t.truthy(updatedRule.rule.arn);
+  t.not(updatedRule.rule.arn, rule.rule.arn);
+  t.truthy(updatedRule.rule.logEventArn);
+  t.not(updatedRule.rule.logEventArn, rule.rule.logEventArn);
+
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+
+  t.is(consumerEventMappings.length, 2);
+  t.is(consumerEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
+  t.is(logEventMappings.length, 2);
+  t.is(logEventMappings.filter((mapping) => mapping.EventSourceArn === kinesisArn1).length, 1);
+});
+
+test.serial('Calling updateRuleTrigger() with an SNS type rule value does not delete existing source mappings', async (t) => {
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
+
+  // create rule trigger and rule
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    state: 'ENABLED',
+  });
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  const rule = await rulesModel.get({ name: snsRule.name });
+  t.teardown(async () => {
+    await rulesModel.delete(rule);
+    await awsServices.sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
+    await awsServices.sns().deleteTopic({ TopicArn: topic2.TopicArn }).promise();
+  });
+
+  // update rule value
+  const updates = {
+    name: rule.name,
+    rule: { ...rule.rule, value: topic2.TopicArn },
+  };
+
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
+
+  t.is(updatedRule.name, rule.name);
+  t.not(updatedRule.rule.value, rule.rule.value);
+
+  // Event source mappings exist and have been updated
+  t.truthy(updatedRule.rule.arn);
+  t.not(updatedRule.rule.arn, rule.rule.arn);
+});
+
+test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', async (t) => {
+  const { kinesisRule } = t.context;
+
+  // create rule trigger and rule
+  kinesisRule.rule.value = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  const rule = await rulesModel.get({ name: kinesisRule.name });
+  t.teardown(() => rulesModel.delete(rule));
+
+  const [
+    consumerEventMappingsBefore,
+    logEventMappingsBefore,
+  ] = await getKinesisEventMappings();
+  t.is(consumerEventMappingsBefore.EventSourceMappings.length, 1);
+  t.is(logEventMappingsBefore.EventSourceMappings.length, 1);
+
+  await rulesModel.deleteOldEventSourceMappings(rule);
+
+  const [
+    consumerEventMappingsAfter,
+    logEventMappingsAfter,
+  ] = await getKinesisEventMappings();
+  t.is(consumerEventMappingsAfter.EventSourceMappings.length, 0);
+  t.is(logEventMappingsAfter.EventSourceMappings.length, 0);
+});
+
+test.serial('deleteOldEventSourceMappings() removes SNS source mappings', async (t) => {
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+
+  // create rule trigger and rule
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    state: 'ENABLED',
+  });
+
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  const rule = await rulesModel.get({ name: snsRule.name });
+
+  const { subExists } = await rulesModel.checkForSnsSubscriptions(rule);
+  t.true(subExists);
+
+  await rulesModel.deleteOldEventSourceMappings(rule);
+
+  const { subExists: subExists2 } = await rulesModel.checkForSnsSubscriptions(rule);
+  t.false(subExists2);
 });
 
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
@@ -340,7 +484,8 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
     workflow: 'new-workflow',
   };
 
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.rule.value, rule.rule.value);
@@ -522,7 +667,8 @@ test('Updates rule meta object', async (t) => {
 
   const newTriggerRule = randomId('triggerRule');
   const updates = { name: rule.name, meta: { triggerRule: newTriggerRule } };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.is(updatedRule.meta.triggerRule, newTriggerRule);
 });
@@ -550,7 +696,8 @@ test('Updates a deeply nested key', async (t) => {
       testObject: newTestObject,
     },
   };
-  const updatedRule = await rulesModel.update(rule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
 });
@@ -580,8 +727,8 @@ test('Update preserves nested keys', async (t) => {
       testObject: newTestObject,
     },
   };
-  const updatedRule = await rulesModel.update(rule, updates);
-
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
   t.is(updatedRule.meta.foo, 'bar');
   t.deepEqual(updatedRule.meta.testObject, newTestObject);
 });
@@ -621,7 +768,8 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
     },
   };
 
-  const updatedRule = await rulesModel.update(createdRule, updates);
+  const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(createdRule, updates);
+  const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.deepEqual(updatedRule.meta.testObject, testObject);
   t.is(updatedRule.rule.value, newQueues.queueUrl);

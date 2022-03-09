@@ -333,7 +333,7 @@ test.serial('Should overwrite files.', async (t) => {
 
   const existingModified = new Date(existingFile.LastModified).getTime();
   const itemModified = new Date(item.LastModified).getTime();
-  t.true(itemModified > existingModified);
+  t.true(itemModified >= existingModified);
 
   t.is(updatedFile.ContentLength, content.length);
   t.true(
@@ -583,7 +583,7 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   // check timestamps are updated
   currentFilesMetadata.forEach((f) => {
     const existingFileMeta = existingFilesMetadata.filter((ef) => ef.key === f.key)[0];
-    t.true(new Date(f.LastModified).getTime() > new Date(existingFileMeta.LastModified).getTime());
+    t.true(new Date(f.LastModified).getTime() >= new Date(existingFileMeta.LastModified).getTime());
   });
 
   output.granules[0].files.forEach((f) => {

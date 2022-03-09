@@ -107,7 +107,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    * Fetches multiple items from Postgres
    *
    * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
-   * @param {Partial<RecordType>} params - An object or any portion of an object of type RecordType
+   * @param {Object} params - An object or any portion of an object of type RecordType
    * @returns {Promise<RecordType[]>} List of returned records
    */
   async search(
@@ -116,7 +116,6 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
   ): Promise<RecordType[]> {
     const records: Array<RecordType> = await knexOrTransaction(this.tableName)
       .where(params);
-
     return records;
   }
 

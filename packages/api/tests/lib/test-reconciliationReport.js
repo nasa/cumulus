@@ -122,7 +122,7 @@ test('convertToOrcaGranuleSearchParams returns correct search object.', (t) => {
 test('convertToESCollectionSearchParams returns correct search object with collectionIds.', (t) => {
   const startTimestamp = '2000-10-31T15:00:00.000Z';
   const endTimestamp = '2001-10-31T15:00:00.000Z';
-  const collectionIds = ['name___version', 'name2___version'];
+  const collectionIds = ['name____version', 'name2___version'];
   const testObj = {
     startTimestamp,
     endTimestamp,
@@ -134,7 +134,7 @@ test('convertToESCollectionSearchParams returns correct search object with colle
   const expected = {
     updatedAt__from: 973004400000,
     updatedAt__to: 1004540400000,
-    _id__in: 'name___version,name2___version',
+    _id__in: 'name____version,name2___version',
   };
 
   const actual = convertToESCollectionSearchParams(testObj);

@@ -107,7 +107,7 @@ process.env.ExecutionsTable = randomId('executions');
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('system-bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 
@@ -1224,7 +1224,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
-  const fakeBucket = 'TotallyNotARealBucket';
+  const fakeBucket = 'not-a-real-bucket';
 
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],

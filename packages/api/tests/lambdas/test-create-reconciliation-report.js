@@ -1561,7 +1561,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
-    collectionId: 'MOD09GQ___006',
+    collectionId: constructCollectionId('MOD09GQ', '006'),
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
@@ -1666,7 +1666,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
-    collectionId: 'MOD09GQ___006',
+    collectionId: constructCollectionId('MOD09GQ', '006'),
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
@@ -1781,7 +1781,7 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
-    collectionId: 'MOD09GQ___006',
+    collectionId: constructCollectionId('MOD09GQ', '006'),
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
