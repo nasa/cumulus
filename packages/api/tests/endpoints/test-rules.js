@@ -920,7 +920,6 @@ test('PUT returns a 400 response if record is missing workflow property', async 
     .send(originalApiRule)
     .expect(400);
   const { message, detail } = response.body;
-  console.log('response', response.body);
   t.true(message.includes('The record has validation errors'));
   t.true(detail.includes('Rule workflow is undefined'));
 });
