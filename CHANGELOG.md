@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
   - **CUMULUS-2809**
     - Remove DynamoDB logic from providers `PUT` endpoint
+    - Updates DB models asyncOperation, provider and rule to return all fields on upsert.
+  - **CUMULUS-2810**
+    - Removes addition of DynamoDB record from API endpoint POST /provider/<name>
   - **CUMULUS-2811**
     - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
   - **CUMULUS-2817**
@@ -18,6 +21,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2814**
     - Remove DynamoDB logic from rules `DELETE` endpoint
     - Move event resources deletion logic from `rulesModel` to `rulesHelper`
+
+### Fixed
+- **CUMULUS-2810**
+  - Updated @cumulus/db/translate/translatePostgresProviderToApiProvider to correctly return provider password and updated tests to prevent reintroduction.
 
 ## Unreleased
 

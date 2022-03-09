@@ -20,7 +20,6 @@ const { Search } = require('@cumulus/es-client/search');
 const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 const { removeNilProperties } = require('@cumulus/common/util');
 
-const Provider = require('../models/providers');
 const { isBadRequestError } = require('../lib/errors');
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
@@ -74,7 +73,6 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    providerModel = new Provider(),
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -87,26 +85,20 @@ async function post(req, res) {
 
   const id = apiProvider.id;
 
+  let postgresProvider;
   try {
     let record;
     if (!apiProvider.id) {
       throw new ValidationError('Provider records require an id');
     }
-
-    const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
+    postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await providerPgModel.create(trx, postgresProvider);
-        record = await providerModel.create(apiProvider);
-        await indexProvider(esClient, record, process.env.ES_INDEX);
-      });
-    } catch (innerError) {
-      // Clean up DynamoDB record in case of any failure
-      await providerModel.delete(apiProvider);
-      throw innerError;
-    }
+    await createRejectableTransaction(knex, async (trx) => {
+      const [updatedPostgresProvider] = await providerPgModel.create(trx, postgresProvider, '*');
+      record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
+      await indexProvider(esClient, record, process.env.ES_INDEX);
+    });
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (isCollisionError(error)) {
@@ -116,6 +108,8 @@ async function post(req, res) {
       return res.boom.badRequest(error.message);
     }
     log.error('Error occurred while trying to create provider:', error);
+    log.error(`Error occurred with user input provider: ${JSON.stringify(apiProvider)}`);
+    log.error(`Error occurred with translated postgres provider: ${JSON.stringify(postgresProvider)}`);
     return res.boom.badImplementation(error.message);
   }
 }
