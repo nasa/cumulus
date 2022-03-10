@@ -134,6 +134,8 @@ describe('Ingesting from PDR', () => {
         s3data,
         testDataFolder,
         [
+          { old: '21708', new: '10' },
+          { old: '1098034', new: '10' },
           { old: 'cumulus-test-data/pdrs', new: config.stackName },
           { old: 'DATA_TYPE = MOD09GQ;', new: `DATA_TYPE = MOD09GQ${testSuffix};` },
           { old: 'XXX_NODE_NAME_XXX', new: ftpProvider.host },
