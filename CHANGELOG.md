@@ -26,6 +26,10 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
+- **CUMULUS-2859**
+  - Update `postgres-db-migration` lambda timeout to default 900 seconds
+  - Add `db_migration_lambda_timeout` variable to `data-persistence` module to
+    allow this timeout to be user configurable
 - **CUMULUS-2845**
   - Updated rules model to decouple `createRuleTrigger` from `create`.
   - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
