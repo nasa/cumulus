@@ -27,6 +27,10 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Added
 
+- **CUMULUS-2841**
+  - Add integration test to validate PDR node provider that requires password
+    credentials succeeds on ingest
+
 - **CUMULUS-2846**
   - Added `@cumulus/db/translate/rule.translateApiRuleToPostgresRuleRaw` to translate API rule to PostgreSQL rules and
   **keep undefined fields**
