@@ -7,11 +7,10 @@ const Logger = require('@cumulus/logger');
 const {
   createRejectableTransaction,
   getKnexClient,
-  RulePgModel,
-  translateApiRuleToPostgresRule,
-  translatePostgresRuleToApiRule,
-  translateApiRuleToPostgresRuleRaw,
   isCollisionError,
+  RulePgModel,
+  translateApiRuleToPostgresRuleRaw,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
@@ -91,13 +90,13 @@ async function post(req, res) {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
 
-    const postgresRule = await translateApiRuleToPostgresRule(apiRule, knex);
     // Create rule trigger
-    const ruleWithTrigger = await createRuleTrigger(postgresRule);
+    const ruleWithTrigger = await createRuleTrigger(apiRule);
+    const postgresRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
-        const [pgRecord] = await rulePgModel.create(trx, ruleWithTrigger);
+        const [pgRecord] = await rulePgModel.create(trx, postgresRule);
         record = await translatePostgresRuleToApiRule(pgRecord, knex);
         await indexRule(esClient, record, process.env.ES_INDEX);
       });

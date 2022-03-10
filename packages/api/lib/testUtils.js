@@ -506,7 +506,7 @@ const createRuleTestRecords = async (context, ruleParams) => {
   const [ruleCumulusId] = await rulePgModel.create(testKnex, pgRuleWithTrigger);
 
   const originalPgRecord = await rulePgModel.get(
-    testKnex, { cumulus_id: ruleCumulusId }
+    testKnex, { cumulus_id: ruleCumulusId.cumulus_id }
   );
   const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
   await indexRule(esClient, originalApiRule, process.env.ES_INDEX);

@@ -174,7 +174,9 @@ test.before(async (t) => {
 });
 
 test.beforeEach((t) => {
-  const newRule = fakeRuleFactoryV2();
+  const newRule = fakeRuleFactoryV2({
+    workflow: workflow,
+  });
   delete newRule.collection;
   delete newRule.provider;
   t.context.newRule = newRule;
@@ -328,6 +330,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
   } = await createRuleTestRecords(
     t.context,
     {
+      workflow,
       queueUrl: 'fake-queue-url',
       collection: undefined,
       provider: undefined,
@@ -348,13 +351,12 @@ test('When calling the API endpoint to delete an existing rule it does not retur
 });
 
 test('403 error when calling the API endpoint to delete an existing rule without a valid access token', async (t) => {
-  const newRule = fakeRuleRecordFactory();
-  const translatedRule = await translatePostgresRuleToApiRule(newRule);
+  const { newRule } = t.context;
   let response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(translatedRule)
+    .send(newRule)
     .expect(200);
 
   const { message, record } = response.body;
@@ -518,32 +520,30 @@ test('POST returns a 409 response if record already exists', async (t) => {
 });
 
 test('POST returns a 400 response if record is missing a required property', async (t) => {
-  const newRule = fakeRuleRecordFactory();
-  const translatedRule = await translatePostgresRuleToApiRule(newRule);
+  const { newRule } = t.context;
   // Remove required property to trigger create error
-  delete translatedRule.workflow;
+  delete newRule.workflow;
 
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(translatedRule)
+    .send(newRule)
     .expect(400);
   const { message } = response.body;
   t.is(response.status, 400);
-  t.true(message.includes('should have required property \'workflow\''));
+  t.true(message.includes('The record has validation errors. Rule workflow is undefined'));
 });
 
 test('POST returns a 400 response if rule name is invalid', async (t) => {
-  const newRule = fakeRuleRecordFactory();
-  const translatedRule = await translatePostgresRuleToApiRule(newRule);
-  translatedRule.name = 'bad rule name';
+  const { newRule } = t.context;
+  newRule.name = 'bad rule name';
 
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(translatedRule)
+    .send(newRule)
     .expect(400);
   const { message } = response.body;
   t.is(response.status, 400);
@@ -551,34 +551,33 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
 });
 
 test('POST returns a 400 response if rule name does not exist', async (t) => {
-  const newRule = fakeRuleRecordFactory();
-  const translatedRule = await translatePostgresRuleToApiRule(newRule);
-  translatedRule.name = undefined;
+  const { newRule } = t.context;
+  newRule.name = undefined;
+
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(translatedRule)
+    .send(newRule)
     .expect(400);
   const { message } = response.body;
   t.is(response.status, 400);
-  t.true(message.includes('should have required property \'name\''));
+  t.true(message.includes('The record has validation errors. Rule name is undefined.'));
 });
 
 test('POST returns a 400 response if rule type is invalid', async (t) => {
-  const newRule = fakeRuleRecordFactory();
-  const translatedRule = await translatePostgresRuleToApiRule(newRule);
-  translatedRule.rule.type = 'invalid';
+  const { newRule } = t.context;
+  newRule.rule.type = 'invalid';
 
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(translatedRule)
+    .send(newRule)
     .expect(400);
   const { message } = response.body;
   t.is(response.status, 400);
-  t.true(message.includes('should be equal to one of the allowed values'));
+  t.true(message.includes('Rule type \'invalid\' not supported.'));
 });
 
 test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
@@ -857,9 +856,8 @@ test('PUT returns a 400 response if record is missing workflow property', async 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(originalApiRule)
     .expect(400);
-  const { message, detail } = response.body;
-  t.true(message.includes('The record has validation errors'));
-  t.true(detail.includes('Rule workflow is undefined'));
+  const { message } = response.body;
+  t.true(message.includes('The record has validation errors. Rule workflow is undefined'));
 });
 
 test('PUT returns a 400 response if record is missing type property', async (t) => {
@@ -880,9 +878,8 @@ test('PUT returns a 400 response if record is missing type property', async (t) 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(originalApiRule)
     .expect(400);
-  const { message, detail } = response.body;
-  t.true(message.includes('The record has validation errors'));
-  t.true(detail.includes('Rule type is undefined.'));
+  const { message } = response.body;
+  t.true(message.includes('The record has validation errors. Rule type is undefined.'));
 });
 
 test('PUT returns a 400 response if rule name is invalid', async (t) => {

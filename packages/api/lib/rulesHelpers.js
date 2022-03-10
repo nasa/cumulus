@@ -493,18 +493,18 @@ async function addRule(item, payload) {
  * @returns {void}       - Returns if record is valid, throws error otherwise
  */
 function recordIsValid(rule) {
-  const error = new Error('The record has validation errors');
+  const error = new Error('The record has validation errors. ');
   error.name = 'SchemaValidationError';
   if (!rule.name) {
-    error.detail = 'Rule name is undefined.';
+    error.message += 'Rule name is undefined.';
     throw error;
   }
   if (!rule.workflow) {
-    error.detail = 'Rule workflow is undefined.';
+    error.message += 'Rule workflow is undefined.';
     throw error;
   }
   if (!rule.rule.type) {
-    error.detail = 'Rule type is undefined.';
+    error.message += 'Rule type is undefined.';
     throw error;
   }
 }
