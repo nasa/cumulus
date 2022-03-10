@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update `postgres-db-migration` lambda timeout to default 900 seconds
   - Add `db_migration_lambda_timeout` variable to `data-persistence` module to
     allow this timeout to be user configurable
+- **CUMULUS-2868**
+  - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
 
 ## [v10.1.1] 2022-03-04
 
