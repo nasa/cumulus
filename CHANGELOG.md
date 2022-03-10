@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2868**
+  - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+
 ## [v10.1.1] 2022-03-04
 
 ### Migration steps
