@@ -373,7 +373,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Updated rules model to decouple `createRuleTrigger` from `create`.
     - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
     - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
-- Updated version of `localstack/localstack` used in local unit testing to `0.14.0`
 
 ### Fixed
 
