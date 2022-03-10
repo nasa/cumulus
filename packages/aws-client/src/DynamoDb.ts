@@ -5,6 +5,7 @@
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 import range from 'lodash/range';
+import { waitUntilTableExists, waitUntilTableNotExists } from '@aws-sdk/client-dynamodb';
 import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
@@ -222,9 +223,12 @@ export const parallelScan = async (
  * @static
  */
 export async function createAndWaitForDynamoDbTable(params: AWS.DynamoDB.CreateTableInput) {
-  const createTableResult = await dynamodb().createTable(params).promise();
-  await dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise();
-
+  const dynamoDbClient = dynamodb();
+  const createTableResult = await dynamodb().createTable(params);
+  await waitUntilTableExists({
+    client: dynamoDbClient,
+    maxWaitTime: 5,
+  }, { TableName: params.TableName });
   return createTableResult;
 }
 
@@ -240,6 +244,10 @@ export async function createAndWaitForDynamoDbTable(params: AWS.DynamoDB.CreateT
 export async function deleteAndWaitForDynamoDbTableNotExists(
   params: AWS.DynamoDB.DeleteTableInput
 ) {
-  await dynamodb().deleteTable(params).promise();
-  return dynamodb().waitFor('tableNotExists', { TableName: params.TableName }).promise();
+  const dynamoDbClient = dynamodb();
+  await dynamoDbClient.deleteTable(params);
+  await waitUntilTableNotExists({
+    client: dynamoDbClient,
+    maxWaitTime: 5,
+  }, { TableName: params.TableName });
 }

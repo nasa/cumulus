@@ -1,7 +1,11 @@
 import * as AWS from 'aws-sdk';
 import { ThrottlingException } from '@cumulus/errors';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDB } from 'aws-sdk';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
+
+type AWSClientTypes = DynamoDB | DynamoDBClient | AWS.Service | AWS.DynamoDB.DocumentClient;
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
@@ -70,7 +74,7 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+function localStackAwsClient<T extends AWSClientTypes>(
   Service: new (params: object) => T,
   options: object
 ) {
@@ -103,7 +107,7 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
  *
  * @private
  */
-export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export function testAwsClient<T extends AWSClientTypes>(
   Service: new (params: object) => T,
   options: object
 ): T {

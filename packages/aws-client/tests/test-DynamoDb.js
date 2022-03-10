@@ -11,7 +11,9 @@ const awsServices = require('../services');
 test.before(async () => {
   process.env.tableName = `table${cryptoRandomString({ length: 10 })}`;
 
-  await awsServices.dynamodb().createTable({
+  const client = awsServices.dynamodb();
+  console.log('foo');
+  await client.createTable({
     TableName: process.env.tableName,
     AttributeDefinitions: [
       { AttributeName: 'hash', AttributeType: 'S' },
@@ -23,7 +25,7 @@ test.before(async () => {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5,
     },
-  }).promise();
+  });
 });
 
 test.beforeEach((t) => {
@@ -31,7 +33,7 @@ test.beforeEach((t) => {
 });
 
 test.after.always(
-  () => awsServices.dynamodb().deleteTable({ TableName: process.env.tableName }).promise()
+  () => awsServices.dynamodb().deleteTable({ TableName: process.env.tableName })
 );
 
 test('DynamoDb.get() returns an existing item', async (t) => {

@@ -1,9 +1,10 @@
 import AWS from 'aws-sdk';
+import { DynamoDB, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { inTestMode, testAwsClient } from './test-utils';
 
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
-const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
+export const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
 
 // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74
 // @ts-ignore - AWS.util is not part of the public API and may break
@@ -17,6 +18,8 @@ const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
     return memo;
   };
 };
+
+type AWSClientTypes = DynamoDB | DynamoDBClient | AWS.Service | AWS.DynamoDB.DocumentClient;
 
 /**
  * Return a function which, when called, will return an AWS service object
@@ -33,7 +36,7 @@ const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
  *
  * @private
  */
-const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export const awsClient = <T extends AWSClientTypes>(
   Service: new (params: object) => T,
   version?: string,
   serviceOptions?: object
@@ -54,5 +57,3 @@ const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
   }
   return memoize((o) => new Service(Object.assign(options, o)));
 };
-
-export = awsClient;
