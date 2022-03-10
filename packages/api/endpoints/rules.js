@@ -17,11 +17,11 @@ const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
 const {
+  createRuleTrigger,
   deleteRuleResources,
   invokeRerun,
   updateRuleTrigger,
 } = require('../lib/rulesHelpers');
-const { createRuleTrigger } = require('../lib/rulesHelpers');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 

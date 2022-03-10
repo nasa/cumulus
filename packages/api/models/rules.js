@@ -265,12 +265,6 @@ class Rule extends Manager {
       newRuleItem.state = 'ENABLED';
     }
 
-    // make sure the name only has word characters
-    const re = /\W/;
-    if (re.test(ruleItem.name)) {
-      throw new ValidationError('Rule name may only contain letters, numbers, and underscores.');
-    }
-
     // Validate rule before kicking off workflows or adding event source mappings
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
 
