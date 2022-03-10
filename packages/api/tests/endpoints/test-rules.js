@@ -1039,6 +1039,34 @@ test('PUT replaces a rule', async (t) => {
   );
 });
 
+test('PUT returns 404 for non-existent rule', async (t) => {
+  const name = 'new_make_coffee';
+  const response = await request(app)
+    .put(`/rules/${name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ name })
+    .expect(404);
+
+  const { message, record } = response.body;
+  t.truthy(message.includes(name));
+  t.falsy(record);
+});
+
+test('PUT returns 400 for name mismatch between params and payload',
+  async (t) => {
+    const response = await request(app)
+      .put(`/rules/${randomString()}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send({ name: randomString() })
+      .expect(400);
+    const { message, record } = response.body;
+
+    t.truthy(message);
+    t.falsy(record);
+  });
+
 test.serial('put() creates the same updated SNS rule in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
   const {
     pgProvider,
@@ -1698,34 +1726,6 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     value: topic1.TopicArn,
   });
 });
-
-test('PUT returns 404 for non-existent rule', async (t) => {
-  const name = 'new_make_coffee';
-  const response = await request(app)
-    .put(`/rules/${name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ name })
-    .expect(404);
-
-  const { message, record } = response.body;
-  t.truthy(message.includes(name));
-  t.falsy(record);
-});
-
-test('PUT returns 400 for name mismatch between params and payload',
-  async (t) => {
-    const response = await request(app)
-      .put(`/rules/${randomString()}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({ name: randomString() })
-      .expect(400);
-    const { message, record } = response.body;
-
-    t.truthy(message);
-    t.falsy(record);
-  });
 
 test('put() does not write to PostgreSQL/Elasticsearch if writing to Dynamo fails', async (t) => {
   const { testKnex } = t.context;
