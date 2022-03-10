@@ -41,6 +41,10 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
+- **CUMULUS-NONE**
+  - Adds logging to ecs/async-operation Docker conatiner that launches async
+    tasks on ECS. Sets default async_operation_image_version to 39.
+
 - **CUMULUS-2845**
   - Updated rules model to decouple `createRuleTrigger` from `create`.
   - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
