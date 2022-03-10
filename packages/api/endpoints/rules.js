@@ -160,7 +160,6 @@ async function put(req, res) {
       (key) => !(key in apiRule) && key !== 'createdAt'
     );
 
-    // deletes existing event sources and updates rule properties
     const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldApiRule, apiRule);
 
     try {
