@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2859**
+  - Update `postgres-db-migration` lambda timeout to default 900 seconds
+  - Add `db_migration_lambda_timeout` variable to `data-persistence` module to
+    allow this timeout to be user configurable
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
 
@@ -39,7 +43,8 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 - **CUMULUS-NONE**
   - Adds logging to ecs/async-operation Docker conatiner that launches async
-    tasks on ECS. Sets default `async_operation_image_version` to 39.
+    tasks on ECS. Sets default async_operation_image_version to 39.
+
 - **CUMULUS-2845**
   - Updated rules model to decouple `createRuleTrigger` from `create`.
   - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.

@@ -94,3 +94,9 @@ variable "vpc_id" {
   type    = string
   default = null
 }
+
+variable "db_migration_lambda_timeout" {
+  description = "Timeout in seconds for the database schema migration lambda.   Defaults to 900 seconds"
+  type = number
+  default = 900
+}
