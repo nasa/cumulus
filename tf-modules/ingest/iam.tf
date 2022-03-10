@@ -79,6 +79,7 @@ data "aws_iam_policy_document" "step_policy" {
       "iam:GetPolicy",
       "iam:GetPolicyVersion",
       "iam:GetRole",
+      "iam:PassRole"
     ]
     resources = ["*"]
   }
