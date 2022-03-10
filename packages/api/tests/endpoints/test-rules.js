@@ -1693,120 +1693,6 @@ test.serial('put() keeps initial trigger information if writing to Dynamo fails'
   });
 });
 
-test.serial('put() keeps initial trigger information if writing to Elasticsearch fails', async (t) => {
-  const {
-    pgProvider,
-    pgCollection,
-  } = t.context;
-
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
-  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
-
-  const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
-  t.teardown(() => {
-    deleteOldEventSourceMappingsSpy.restore();
-  });
-
-  const stubbedRulesModel = new Rule();
-
-  const {
-    originalDynamoRule,
-    originalPgRecord,
-    originalEsRecord,
-  } = await createRuleTestRecords(
-    {
-      ...t.context,
-      ruleModel: stubbedRulesModel,
-    },
-    {
-      state: 'ENABLED',
-      rule: {
-        type: 'sns',
-        value: topic1.TopicArn,
-      },
-      collection: {
-        name: pgCollection.name,
-        version: pgCollection.version,
-      },
-      provider: pgProvider.name,
-    }
-  );
-
-  t.truthy(originalDynamoRule.rule.arn);
-  t.truthy(originalEsRecord.rule.arn);
-  t.truthy(originalPgRecord.arn);
-
-  const updateRule = {
-    ...originalDynamoRule,
-    rule: {
-      type: 'sns',
-      value: topic2.TopicArn,
-    },
-  };
-
-  const expressRequest = {
-    params: {
-      name: originalDynamoRule.name,
-    },
-    body: updateRule,
-    testContext: {
-      ruleModel: stubbedRulesModel,
-      esClient: {
-        index: () => {
-          throw new Error('ES fail');
-        },
-      },
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    put(expressRequest, response),
-    { message: 'ES fail' }
-  );
-
-  t.false(deleteOldEventSourceMappingsSpy.called);
-
-  const updatedRule = await ruleModel.get({ name: updateRule.name });
-  const updatedPgRule = await t.context.rulePgModel
-    .get(t.context.testKnex, { name: updateRule.name });
-  const updatedEsRule = await t.context.esRulesClient.get(
-    originalDynamoRule.name
-  );
-
-  t.is(updatedRule.rule.arn, originalDynamoRule.rule.arn);
-  t.is(updatedEsRule.rule.arn, originalEsRecord.rule.arn);
-  t.is(updatedPgRule.arn, originalPgRecord.arn);
-
-  t.like(updatedRule, {
-    ...originalDynamoRule,
-    updatedAt: updatedRule.updatedAt,
-    rule: {
-      type: 'sns',
-      value: topic1.TopicArn,
-    },
-  });
-  t.like(
-    updatedEsRule,
-    {
-      ...originalEsRecord,
-      updatedAt: updatedEsRule.updatedAt,
-      timestamp: updatedEsRule.timestamp,
-      rule: {
-        type: 'sns',
-        value: topic1.TopicArn,
-      },
-    }
-  );
-  t.like(updatedPgRule, {
-    ...originalPgRecord,
-    updated_at: updatedPgRule.updated_at,
-    type: 'sns',
-    value: topic1.TopicArn,
-  });
-});
-
 test.serial('put() keeps initial trigger information if writing to PostgreSQL fails', async (t) => {
   const {
     pgProvider,
@@ -1879,6 +1765,120 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
   await t.throwsAsync(
     put(expressRequest, response),
     { message: 'PG fail' }
+  );
+
+  t.false(deleteOldEventSourceMappingsSpy.called);
+
+  const updatedRule = await ruleModel.get({ name: updateRule.name });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    originalDynamoRule.name
+  );
+
+  t.is(updatedRule.rule.arn, originalDynamoRule.rule.arn);
+  t.is(updatedEsRule.rule.arn, originalEsRecord.rule.arn);
+  t.is(updatedPgRule.arn, originalPgRecord.arn);
+
+  t.like(updatedRule, {
+    ...originalDynamoRule,
+    updatedAt: updatedRule.updatedAt,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+  });
+  t.like(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        type: 'sns',
+        value: topic1.TopicArn,
+      },
+    }
+  );
+  t.like(updatedPgRule, {
+    ...originalPgRecord,
+    updated_at: updatedPgRule.updated_at,
+    type: 'sns',
+    value: topic1.TopicArn,
+  });
+});
+
+test.serial('put() keeps initial trigger information if writing to Elasticsearch fails', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+  const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
+
+  const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
+  t.teardown(() => {
+    deleteOldEventSourceMappingsSpy.restore();
+  });
+
+  const stubbedRulesModel = new Rule();
+
+  const {
+    originalDynamoRule,
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
+    },
+    {
+      state: 'ENABLED',
+      rule: {
+        type: 'sns',
+        value: topic1.TopicArn,
+      },
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
+
+  t.truthy(originalDynamoRule.rule.arn);
+  t.truthy(originalEsRecord.rule.arn);
+  t.truthy(originalPgRecord.arn);
+
+  const updateRule = {
+    ...originalDynamoRule,
+    rule: {
+      type: 'sns',
+      value: topic2.TopicArn,
+    },
+  };
+
+  const expressRequest = {
+    params: {
+      name: originalDynamoRule.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+      esClient: {
+        index: () => {
+          throw new Error('ES fail');
+        },
+      },
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(expressRequest, response),
+    { message: 'ES fail' }
   );
 
   t.false(deleteOldEventSourceMappingsSpy.called);
