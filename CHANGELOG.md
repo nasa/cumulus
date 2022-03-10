@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+
 ### Added
-### Changed
+
 - **CUMULUS-2868**
-  - Added iam:PassRole to step_policy
-    **keep undefined fields**
-### Fixed
-  
+  - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+
+## [v10.1.1] 2022-03-04
+
 ### Migration steps
 
 - Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
@@ -32,6 +33,9 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
+- **CUMULUS-NONE**
+  - Adds logging to ecs/async-operation Docker conatiner that launches async
+    tasks on ECS. Sets default `async_operation_image_version` to 39.
 - **CUMULUS-2845**
   - Updated rules model to decouple `createRuleTrigger` from `create`.
   - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
@@ -48,6 +52,11 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 - **CUMULUS-2846**
   - Fixed logic for `PUT /rules/<name>` endpoint causing rules to be saved
   inconsistently between DynamoDB and PostgreSQL
+- **CUMULUS-2854**
+  - Fixed queue granules behavior where the task was not accounting for granules that
+  *already* had createdAt set. Workflows downstream in this scenario should no longer
+  fail to write their granules due to order-of-db-writes constraints in the database
+  update logic.
 
 ## [v10.1.0] 2022-02-23
 
@@ -65,9 +74,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Changed
 
-- **CUMULUS-NONE**
-  - Adds logging to ecs/async-operation Docker conatiner that launches async
-    tasks on ECS. Sets default `async_operation_image_version` to 39.
 - **CUMULUS-2492**
   - Modify collectionId logic to accomodate trailing underscores in collection short names. e.g. `shortName____`
 - **CUMULUS-2847**
@@ -88,8 +94,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Fixed
 
-- Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
-which prevented it from running a Fargate task for data migration.
 - **CUMULUS-2853**
   - Move OAUTH_PROVIDER to lambda env variables to address regression in CUMULUS-2781
   - Add logging output to api app router
@@ -102,18 +106,7 @@ error in non-NGAP accounts:
 
 ## [v10.0.1] 2022-02-03
 
-**Please note** changes in 10.0.1 may not yet be released in future versions, as
-this is a backport and patch release on the 10.0.x series of releases. Updates that
-are included in the future will have a corresponding CHANGELOG entry in future
-releases.
-
 ### Fixed
-
-- **CUMULUS-2854**
-  - Fixed queue granules behavior where the task was not accounting for granules that
-  *already* had createdAt set. Workflows downstream in this scenario should no longer
-  fail to write their granules due to order-of-db-writes constraints in the database
-  update logic.
 
 - Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
 which prevented it from running a Fargate task for data migration.
@@ -5349,7 +5342,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.1...HEAD
+[v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
 [v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
