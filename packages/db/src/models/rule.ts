@@ -26,7 +26,7 @@ class RulePgModel extends BasePgModel<PostgresRule, PostgresRuleRecord> {
       .insert(rule)
       .onConflict('name')
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
   }
 }
 

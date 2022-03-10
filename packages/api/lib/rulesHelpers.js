@@ -1,20 +1,22 @@
 'use strict';
 
 const get = require('lodash/get');
+const set = require('lodash/set');
 const cloneDeep = require('lodash/cloneDeep');
+const merge = require('lodash/merge');
 
 const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Logger = require('@cumulus/logger');
-const {
-  RulePgModel,
-} = require('@cumulus/db');
+const s3Utils = require('@cumulus/aws-client/S3');
+const workflows = require('@cumulus/common/workflows');
+const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
+const { invoke } = require('@cumulus/aws-client/Lambda');
+const { RulePgModel } = require('@cumulus/db');
+const { ValidationError } = require('@cumulus/errors');
 
 const { listRules } = require('@cumulus/api-client/rules');
 const { removeNilProperties } = require('@cumulus/common/util');
-const { ValidationError } = require('@cumulus/errors');
-const { invoke } = require('@cumulus/aws-client/Lambda');
-const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
@@ -130,16 +132,16 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
 /**
  * Check if a rule's event source mapping is shared with other rules
  *
- * @param {Knex} knex - DB client
- * @param {Object} rule      - the rule item
- * @param {Object} eventType - the rule's event type
+ * @param {Knex}    knex      - DB client
+ * @param {ApiRule} rule      - the rule item
+ * @param {Object}  eventType - the rule's event type
  * @returns {Promise<boolean>} return true if other rules share the same event source mapping
  */
 async function isEventSourceMappingShared(knex, rule, eventType) {
   const rulePgModel = new RulePgModel();
   // Query for count of any other rule that has the same type and arn
   const params = {
-    type: rule.type,
+    type: rule.rule.type,
     ...eventType,
   };
   const [result] = await rulePgModel.count(knex, [[params]]);
@@ -150,10 +152,10 @@ async function isEventSourceMappingShared(knex, rule, eventType) {
 /**
  * Deletes an event source from an event lambda function
  *
- * @param {Knex} knex - DB client
- * @param {Object} rule      - the rule item
- * @param {string} eventType - kinesisSourceEvent type
- * @param {string} id        - event source id
+ * @param {Knex}    knex      - DB client
+ * @param {ApiRule} rule      - the rule item
+ * @param {string}  eventType - kinesisSourceEvent type ['arn', 'log_event_arn']
+ * @param {string}  id        - event source id
  * @returns {Promise} the response from event source delete
  */
 async function deleteKinesisEventSource(knex, rule, eventType, id) {
@@ -170,8 +172,8 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
 
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
- * @param {Knex} knex - DB client
- * @param {Object} rule - the rule item
+ * @param {Knex}    knex - DB client
+ * @param {ApiRule} rule - the rule item
  * @returns {Promise<Array>} array of responses from the event source deletion
  */
 async function deleteKinesisEventSources(knex, rule) {
@@ -180,14 +182,14 @@ async function deleteKinesisEventSources(knex, rule) {
       name: process.env.messageConsumer,
       eventType: 'arn',
       type: {
-        arn: rule.arn,
+        arn: rule.rule.arn,
       },
     },
     {
       name: process.env.KinesisInboundEventLogger,
       eventType: 'log_event_arn',
       type: {
-        log_event_arn: rule.log_event_arn,
+        log_event_arn: rule.rule.logEventArn,
       },
     },
   ];
@@ -204,13 +206,13 @@ async function deleteKinesisEventSources(knex, rule) {
 
 /**
  * Delete a rule's SNS trigger
- * @param {Knex} knex - DB client
- * @param {Object} rule - the rule item
+ * @param {Knex}    knex - DB client
+ * @param {ApiRule} rule - the rule item
  * @returns {Promise} the response from SNS unsubscribe
  */
 async function deleteSnsTrigger(knex, rule) {
   // If event source mapping is shared by other rules, don't delete it
-  if (await isEventSourceMappingShared(knex, rule, { arn: rule.arn })) {
+  if (await isEventSourceMappingShared(knex, rule, { arn: rule.rule.arn })) {
     log.info(`Event source mapping ${rule} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
     return Promise.resolve();
   }
@@ -225,22 +227,24 @@ async function deleteSnsTrigger(knex, rule) {
     if (isResourceNotFoundException(error)) {
       throw new ResourceNotFoundError(error);
     }
+    log.info(`Error attempting to delete permission statement ${JSON.stringify(error)}`);
     throw error;
   }
   // delete sns subscription
   const subscriptionParams = {
-    SubscriptionArn: rule.arn,
+    SubscriptionArn: rule.rule.arn,
   };
+  log.info(`Successfully deleted SNS subscription for ARN ${rule.rule.arn}.`);
   return awsServices.sns().unsubscribe(subscriptionParams).promise();
 }
 
 /**
  * Delete rule resources by rule type
- * @param {Knex} knex - DB client
- * @param {Object} rule - Rule
+ * @param {Knex}    knex - DB client
+ * @param {ApiRule} rule - Rule
  */
 async function deleteRuleResources(knex, rule) {
-  const type = rule.type;
+  const type = rule.rule.type;
   log.info(`Initiating deletion of rule ${JSON.stringify(rule)}`);
   switch (type) {
   case 'scheduled': {
@@ -255,7 +259,7 @@ async function deleteRuleResources(knex, rule) {
     break;
   }
   case 'sns': {
-    if (rule.enabled) {
+    if (rule.state === 'ENABLED') {
       await deleteSnsTrigger(knex, rule);
     }
     break;
@@ -267,43 +271,63 @@ async function deleteRuleResources(knex, rule) {
 }
 
 /**
-   * Add CloudWatch event rule and target
-   *
-   * @param {Object} item    - The rule item
-   * @param {Object} payload - The payload input of the CloudWatch event
-   * @returns {void}
-   */
-async function addRule(item, payload) {
-  const name = `${process.env.stackName}-custom-${item.name}`;
-  const state = item.enabled ? 'ENABLED' : 'DISABLED';
-  await CloudwatchEvents.putEvent(
-    name,
-    item.value,
-    state,
-    'Rule created by cumulus-api'
-  );
-  const targetId = 'lambdaTarget';
+ * Update the event source mapping for SNS type rules.
+ *
+ * Avoids object mutation by cloning the original rule item.
+ *
+ * @param {ApiRule} ruleItem - A rule item
+ * @param {string} snsSubscriptionArn
+ *   UUID for event source mapping from SNS topic to messageConsumer Lambda
+ * @returns {ApiRule} - Updated rule item
+ */
+function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
+  const updatedRuleItem = cloneDeep(ruleItem);
+  updatedRuleItem.rule.arn = snsSubscriptionArn;
+  return updatedRuleItem;
+}
 
-  await CloudwatchEvents.putTarget(
-    name,
-    targetId,
-    process.env.invokeArn,
-    JSON.stringify(payload)
-  );
+/**
+   * Validate and update sqs rule with queue property
+   *
+   * @param {ApiRule} rule -  the sqs rule
+   * @returns {ApiRule} the updated sqs rule
+   */
+async function validateAndUpdateSqsRule(rule) {
+  const queueUrl = rule.rule.value;
+  if (!(await sqsQueueExists(queueUrl))) {
+    throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
+  }
+
+  const qAttrParams = {
+    QueueUrl: queueUrl,
+    AttributeNames: ['All'],
+  };
+  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+  if (!attributes.Attributes.RedrivePolicy) {
+    throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
+  }
+
+  // update rule meta
+  if (!get(rule, 'meta.visibilityTimeout')) {
+    set(rule, 'meta.visibilityTimeout', Number.parseInt(attributes.Attributes.VisibilityTimeout, 10));
+  }
+
+  if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
+  return rule;
 }
 
 /**
    * Add an event source to a target lambda function
    *
-   * @param {Object} item    - The rule item
-   * @param {string} lambda  - The name of the target lambda
-   * @returns {Promise}      - Updated rule item
+   * @param {ApiRule} item   - The rule item
+   * @param {string}  lambda - The name of the target lambda
+   * @returns {Promise}
    */
 async function addKinesisEventSource(item, lambda) {
   // use the existing event source mapping if it already exists and is enabled
   const listParams = {
     FunctionName: lambda.name,
-    EventSourceArn: item.value,
+    EventSourceArn: item.rule.value,
   };
   const listData = await awsServices.lambda().listEventSourceMappings(listParams).promise();
   if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
@@ -321,7 +345,7 @@ async function addKinesisEventSource(item, lambda) {
 
   // create event source mapping
   const params = {
-    EventSourceArn: item.value,
+    EventSourceArn: item.rule.value,
     FunctionName: lambda.name,
     StartingPosition: 'TRIM_HORIZON',
     Enabled: true,
@@ -330,9 +354,9 @@ async function addKinesisEventSource(item, lambda) {
 }
 
 /**
- * Add  event sources for all mappings in the kinesisSourceEvents
- * @param {Object} rule - The rule item
- * @returns {Object}    - Returns updated rule item containing new arn and logEventArn
+ * Add event sources for all mappings in the kinesisSourceEvents
+ * @param {ApiRule} rule - The rule item
+ * @returns {Object}     - Returns arn and logEventArn
  */
 async function addKinesisEventSources(rule) {
   const kinesisSourceEvents = [
@@ -359,34 +383,12 @@ async function addKinesisEventSources(rule) {
 }
 
 /**
- * Update the event source mappings for Kinesis type rules.
+ * Add SNS event sources
  *
- * Avoids object mutation by cloning the original rule item.
- *
- * @param {Object} ruleItem
- *   A rule item
- * @param {Object} ruleArns
- * @param {string} ruleArns.arn
- *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
- * @param {string} ruleArns.logEventArn
- *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
- * @returns {Object}
- *   Updated rule item
+ * @param {ApiRule} item - The rule item
+ * @returns {string}     - Returns snsSubscriptionArn
  */
-function updateKinesisRuleArns(ruleItem, ruleArns) {
-  const updatedRuleItem = cloneDeep(ruleItem);
-  updatedRuleItem.arn = ruleArns.arn;
-  updatedRuleItem.log_event_arn = ruleArns.logEventArn;
-  return updatedRuleItem;
-}
-
-/**
- * Update the event source mappings for SNS type rules.
- *
- * @param {Object} rule - A rule item
- * @returns {Object}    - Updated rule item
- */
-async function addSnsTrigger(rule) {
+async function addSnsTrigger(item) {
   // check for existing subscription
   let token;
   let subExists = false;
@@ -394,7 +396,7 @@ async function addSnsTrigger(rule) {
   /* eslint-disable no-await-in-loop */
   do {
     const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
-      TopicArn: rule.value,
+      TopicArn: item.rule.value,
       NextToken: token,
     }).promise();
     token = subsResponse.NextToken;
@@ -415,87 +417,80 @@ async function addSnsTrigger(rule) {
   if (!subExists) {
     // create sns subscription
     const subscriptionParams = {
-      TopicArn: rule.value,
+      TopicArn: item.rule.value,
       Protocol: 'lambda',
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
     const r = await awsServices.sns().subscribe(subscriptionParams).promise();
     subscriptionArn = r.SubscriptionArn;
+    // create permission to invoke lambda
+    const permissionParams = {
+      Action: 'lambda:InvokeFunction',
+      FunctionName: process.env.messageConsumer,
+      Principal: 'sns.amazonaws.com',
+      SourceArn: item.rule.value,
+      StatementId: `${item.name}Permission`,
+    };
+    await awsServices.lambda().addPermission(permissionParams).promise();
   }
-  // create permission to invoke lambda
-  const permissionParams = {
-    Action: 'lambda:InvokeFunction',
-    FunctionName: process.env.messageConsumer,
-    Principal: 'sns.amazonaws.com',
-    SourceArn: rule.value,
-    StatementId: `${rule.name}Permission`,
-  };
-  await awsServices.lambda().addPermission(permissionParams).promise();
   return subscriptionArn;
 }
 
 /**
- * Update the event source mapping for SNS type rules.
+ * Update the event source mappings for Kinesis type rules.
  *
  * Avoids object mutation by cloning the original rule item.
  *
- * @param {Object} ruleItem
+ * @param {ApiRule} ruleItem
  *   A rule item
- * @param {string} snsSubscriptionArn
- *   UUID for event source mapping from SNS topic to messageConsumer Lambda
- * @returns {Object}
+ * @param {Object} ruleArns
+ *   An object containing arn and logEventArn values
+ * @param {string} ruleArns.arn
+ *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
+ * @param {string} ruleArns.logEventArn
+ *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
+ * @returns {ApiRule}
  *   Updated rule item
  */
-function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
+function updateKinesisRuleArns(ruleItem, ruleArns) {
   const updatedRuleItem = cloneDeep(ruleItem);
-  if (!snsSubscriptionArn) {
-    delete updatedRuleItem.arn;
-  } else {
-    updatedRuleItem.arn = snsSubscriptionArn;
-  }
+  updatedRuleItem.rule.arn = ruleArns.arn;
+  updatedRuleItem.rule.logEventArn = ruleArns.logEventArn;
   return updatedRuleItem;
 }
 
 /**
- * Validate and update SQS rule with queue property
- *
- * @param {Object} rule - The SQS rule
- * @returns {Object}    - Returns the updated SQS rule
- */
-async function validateAndUpdateSqsRule(rule) {
-  const ruleToUpdate = rule;
-  const queueUrl = rule.value;
-  if (!(await sqsQueueExists(queueUrl))) {
-    throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
-  }
+   * Adds CloudWatch event rule and target
+   *
+   * @param {ApiRule} item    - The rule item
+   * @param {Object}  payload - The payload input of the CloudWatch event
+   * @returns {void}
+   */
+async function addRule(item, payload) {
+  const name = `${process.env.stackName}-custom-${item.name}`;
+  const state = item.enabled ? 'ENABLED' : 'DISABLED';
+  await CloudwatchEvents.putEvent(
+    name,
+    item.rule.value,
+    state,
+    'Rule created by cumulus-api'
+  );
+  const targetId = 'lambdaTarget';
 
-  const qAttrParams = {
-    QueueUrl: queueUrl,
-    AttributeNames: ['All'],
-  };
-  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
-  if (!attributes.Attributes.RedrivePolicy) {
-    throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
-  }
-
-  // update rule meta
-  if (!rule.meta.visibilityTimeout) {
-    ruleToUpdate.meta.visibilityTimeout = Number.parseInt(
-      attributes.Attributes.VisibilityTimeout,
-      10
-    );
-  }
-  if (!rule.meta.retries) {
-    ruleToUpdate.meta.retries = 3;
-  }
-  return ruleToUpdate;
+  await CloudwatchEvents.putTarget(
+    name,
+    targetId,
+    process.env.invokeArn,
+    JSON.stringify(payload)
+  );
 }
 
 /*
  * Checks if record is valid
- * @param {Object} rule - Rule to check validation
- * @returns {void}      - Returns if record is valid, throws error otherwise
+ *
+ * @param {ApiRule} rule - Rule to check validation
+ * @returns {void}       - Returns if record is valid, throws error otherwise
  */
 function recordIsValid(rule) {
   const error = new Error('The record has validation errors');
@@ -508,23 +503,136 @@ function recordIsValid(rule) {
     error.detail = 'Rule workflow is undefined.';
     throw error;
   }
-  if (!rule.type) {
+  if (!rule.rule.type) {
     error.detail = 'Rule type is undefined.';
     throw error;
   }
 }
 
 /*
+ * Build payload from rule for lambda invocation
+ *
+ * @param {ApiRule} rule              - API rule
+ * @param {object} [cumulusMeta]      - Optional cumulus_meta object
+ * @param {string} [asyncOperationId] - Optional ID for asynchronous operation
+ *
+ * @returns {Object} lambda invocation payload
+ */
+async function buildPayload(rule, cumulusMeta, asyncOperationId) {
+  // makes sure the workflow exists
+  const bucket = process.env.system_bucket;
+  const stack = process.env.stackName;
+  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
+
+  const exists = await s3Utils.fileExists(bucket, workflowFileKey);
+  if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
+
+  const definition = await s3Utils.getJsonS3Object(
+    bucket,
+    workflowFileKey
+  );
+  const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
+
+  return {
+    template,
+    definition,
+    provider: rule.provider,
+    collection: rule.collection,
+    meta: get(rule, 'meta', {}),
+    cumulus_meta: cumulusMeta || get(rule, 'cumulus_meta', {}),
+    payload: get(rule, 'payload', {}),
+    queueUrl: rule.queueUrl,
+    executionNamePrefix: rule.executionNamePrefix,
+    asyncOperationId: asyncOperationId,
+  };
+}
+
+/*
+ * Invokes lambda for rule rerun
+ *
+ * @param {ApiRule} rule
+ *
+ * @returns {Promise} lambda invocation response
+ */
+async function invokeRerun(rule) {
+  const payload = await buildPayload(rule);
+  await invoke(process.env.invoke, payload);
+}
+
+/*
+ * Updates rule trigger for rule
+ *
+ * @param {ApiRule}        original- Rule to update trigger for
+ * @param {ApiRule}        updates - Updates for rule trigger
+ * @param {Knex}           knex    - Knex DB Client
+ * @returns {ApiRule}              - Returns new rule object
+ */
+async function updateRuleTrigger(original, updates, knex) {
+  let clonedRuleItem = cloneDeep(original);
+  let mergedRule = merge(clonedRuleItem, updates);
+  recordIsValid(mergedRule);
+
+  const stateChanged = updates.state && updates.state !== original.state;
+  const valueUpdated = updates.rule.value !== original.rule.value;
+  const enabled = mergedRule.state === 'ENABLED';
+
+  switch (mergedRule.rule.type) {
+  case 'scheduled': {
+    const payload = await buildPayload(mergedRule);
+    await addRule(mergedRule, payload);
+    break;
+  }
+  case 'kinesis':
+    if (valueUpdated) {
+      await deleteKinesisEventSources(knex, mergedRule);
+      const updatedRuleItemArns = await addKinesisEventSources(mergedRule);
+      mergedRule = updateKinesisRuleArns(mergedRule,
+        updatedRuleItemArns);
+    }
+    break;
+  case 'sns': {
+    if (valueUpdated || stateChanged) {
+      if (enabled && stateChanged && mergedRule.rule.arn) {
+        throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
+      }
+      let snsSubscriptionArn;
+      if (mergedRule.rule.arn) {
+        await deleteSnsTrigger(knex, mergedRule);
+      }
+      if (enabled) {
+        snsSubscriptionArn = await addSnsTrigger(mergedRule);
+      }
+      mergedRule = updateSnsRuleArn(mergedRule,
+        snsSubscriptionArn);
+    }
+    break;
+  }
+  case 'sqs':
+    clonedRuleItem = await validateAndUpdateSqsRule(mergedRule);
+    break;
+  case 'onetime':
+    break;
+  default:
+    throw new ValidationError(`Rule type \'${mergedRule.rule.type}\' not supported.`);
+  }
+
+  return mergedRule;
+}
+
+/*
  * Creates rule trigger for rule
- * @param {PostgresRule} rule - Rule to create trigger for
- * @returns {Object}    - Returns new rule object
+ *
+ * @param {ApiRule} ruleItem - Rule to create trigger for
+ *
+ * @returns {ApiRule}        - Returns new rule object
  */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
   // the default value for enabled is true
-  if (ruleItem.enabled === undefined) {
-    newRuleItem.enabled = true;
+  if (newRuleItem.state === undefined) {
+    newRuleItem.state = 'ENABLED';
   }
+  const enabled = newRuleItem.state === 'ENABLED';
 
   // make sure the name only has word characters
   const re = /\W/;
@@ -535,8 +643,8 @@ async function createRuleTrigger(ruleItem) {
   // Validate rule before kicking off workflows or adding event source mappings
   recordIsValid(newRuleItem);
 
-  const payload = await Rule.buildPayload(newRuleItem);
-  switch (newRuleItem.type) {
+  const payload = await buildPayload(newRuleItem);
+  switch (newRuleItem.rule.type) {
   case 'onetime': {
     await invoke(process.env.invoke, payload);
     break;
@@ -551,7 +659,7 @@ async function createRuleTrigger(ruleItem) {
     break;
   }
   case 'sns': {
-    if (newRuleItem.enabled) {
+    if (enabled) {
       const snsSubscriptionArn = await addSnsTrigger(newRuleItem);
       newRuleItem = updateSnsRuleArn(newRuleItem, snsSubscriptionArn);
     }
@@ -561,12 +669,13 @@ async function createRuleTrigger(ruleItem) {
     newRuleItem = await validateAndUpdateSqsRule(newRuleItem);
     break;
   default:
-    throw new ValidationError(`Rule type \'${newRuleItem.type}\' not supported.`);
+    throw new ValidationError(`Rule type \'${newRuleItem.rule.type}\' not supported.`);
   }
   return newRuleItem;
 }
 
 module.exports = {
+  buildPayload,
   createRuleTrigger,
   deleteKinesisEventSource,
   deleteKinesisEventSources,
@@ -578,7 +687,9 @@ module.exports = {
   filterRulesbyCollection,
   filterRulesByRuleParams,
   getMaxTimeoutForRules,
+  invokeRerun,
   isEventSourceMappingShared,
   lookupCollectionInEvent,
   queueMessageForRule,
+  updateRuleTrigger,
 };

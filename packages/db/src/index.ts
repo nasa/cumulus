@@ -86,6 +86,7 @@ export {
 export {
   translateApiRuleToPostgresRule,
   translatePostgresRuleToApiRule,
+  translateApiRuleToPostgresRuleRaw,
 } from './translate/rules';
 export {
   translateApiExecutionToPostgresExecution,

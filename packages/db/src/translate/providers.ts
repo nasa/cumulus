@@ -27,7 +27,7 @@ export const translatePostgresProviderToApiProvider = (
     createdAt: record.created_at.getTime(),
     updatedAt: record.updated_at.getTime(),
     username: record.username,
-    password: record.username,
+    password: record.password,
     allowedRedirects: record.allowed_redirects,
   } as ApiProvider;
   if (record.username || record.password) {
