@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
-
+### Added
+### Changed
+- **CUMULUS-2868**
+  - Added iam:PassRole to step_policy
+    **keep undefined fields**
+### Fixed
+  
 ## [v10.1.1] 2022-03-04
 
 ### Migration steps
