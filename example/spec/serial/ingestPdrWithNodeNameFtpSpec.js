@@ -125,6 +125,9 @@ describe('Ingesting from PDR', () => {
       }
 
       const { newGranuleId, filePaths } = JSON.parse(testData.Payload);
+      if (!newGranuleId || !filePaths) {
+        throw new Error('FTP Server setup failed', testData);
+      }
       testFilePaths = filePaths;
       await updateAndUploadTestDataToBucket(
         config.bucket,
