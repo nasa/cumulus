@@ -455,10 +455,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
   - Changed the `timeout_action` to `ForceApplyCapacityChange` by default for the RDS serverless database cluster `tf-modules/rds-cluster-tf`
 - **CUMULUS-2781**
   - Update API lambda to utilize api_config secret for initial environment variables
-<<<<<<< HEAD
-  -
-=======
->>>>>>> feature/rds-phase-2
 
 ### Fixed
 
