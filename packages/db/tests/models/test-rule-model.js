@@ -71,3 +71,18 @@ test('RulePgModel.upsert() overwrites a rule record', async (t) => {
     updatedRule
   );
 });
+
+test('RulePgModel.upsert() returns an array of an object with all fields of a record by default', async (t) => {
+  const {
+    knex,
+    rulePgModel,
+    ruleRecord,
+  } = t.context;
+
+  const [upsertedRecord] = await rulePgModel.upsert(knex, ruleRecord);
+
+  t.deepEqual(
+    await rulePgModel.get(knex, ruleRecord),
+    upsertedRecord
+  );
+});

@@ -21,6 +21,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2814**
     - Remove DynamoDB logic from rules `DELETE` endpoint
     - Move event resources deletion logic from `rulesModel` to `rulesHelper`
+  - **CUMULUS-2812**
+    - Remove DynamoDB logic from rules `PUT` endpoint
+    - Move event resources logic from `rulesModel` to `rulesHelper`
   - **CUMULUS-2820**
     - Remove deletion of DynamoDB record from API endpoint DELETE /pdr/<pdrName>
 

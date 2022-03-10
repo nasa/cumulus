@@ -11,12 +11,14 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   fakePdrRecordFactory,
-  translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
-  translateApiRuleToPostgresRule,
-  translateApiExecutionToPostgresExecution,
+  fakeRuleRecordFactory,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  translateApiCollectionToPostgresCollection,
+  translateApiExecutionToPostgresExecution,
+  translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRuleRaw,
   translatePostgresPdrToApiPdr,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -37,6 +39,7 @@ const {
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
+const { createRuleTrigger } = require('./rulesHelpers');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -489,25 +492,29 @@ const createProviderTestRecords = async (context, providerParams) => {
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
-    ruleModel,
     rulePgModel,
     esClient,
     esRulesClient,
   } = context;
-  const originalRule = fakeRuleFactoryV2(ruleParams);
 
-  const insertPgRecord = await translateApiRuleToPostgresRule(originalRule, testKnex);
-  const originalDynamoRule = await ruleModel.create(originalRule);
-  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+  const originalRule = fakeRuleRecordFactory(ruleParams);
+  const apiRule = await translatePostgresRuleToApiRule(originalRule, testKnex);
+
+  const ruleWithTrigger = await createRuleTrigger(apiRule);
+  const pgRuleWithTrigger = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, pgRuleWithTrigger);
+
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
   );
-  await indexRule(esClient, originalRule, process.env.ES_INDEX);
+  const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+  await indexRule(esClient, originalApiRule, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );
   return {
-    originalDynamoRule,
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   };
