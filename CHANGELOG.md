@@ -101,11 +101,6 @@ error in non-NGAP accounts:
 
 ## [v10.0.1] 2022-02-03
 
-**Please note** changes in 10.0.1 may not yet be released in future versions, as
-this is a backport and patch release on the 10.0.x series of releases. Updates that
-are included in the future will have a corresponding CHANGELOG entry in future
-releases.
-
 ### Fixed
 
 - Fixed IAM permissions issue with `<prefix>-postgres-migration-async-operation` Lambda
