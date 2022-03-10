@@ -7,11 +7,11 @@ const Logger = require('@cumulus/logger');
 const {
   createRejectableTransaction,
   getKnexClient,
+  isCollisionError,
   RulePgModel,
   translateApiRuleToPostgresRule,
   translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
-  isCollisionError,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');

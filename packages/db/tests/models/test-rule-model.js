@@ -89,10 +89,11 @@ test('RulePgModel.upsert() overwrites a rule record and deletes fields', async (
 
   const ruleUpdates = {
     ...ruleRecord,
+    queue_url: undefined,
     value: cryptoRandomString({ length: 5 }),
   };
 
-  await rulePgModel.upsert(knex, ruleUpdates, ['queue_url']);
+  await rulePgModel.upsert(knex, ruleUpdates);
 
   const actualRule = await rulePgModel.get(knex, {
     name: ruleRecord.name,

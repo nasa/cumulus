@@ -8,7 +8,6 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const Logger = require('@cumulus/logger');
-
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,

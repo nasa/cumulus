@@ -1224,7 +1224,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
-  const fakeBucket = 'TotallyNotARealBucket';
+  const fakeBucket = 'not-a-real-bucket';
 
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],

@@ -1,8 +1,8 @@
 const test = require('ava');
 const {
   translateApiRuleToPostgresRule,
-  translatePostgresRuleToApiRule,
   translateApiRuleToPostgresRuleRaw,
+  translatePostgresRuleToApiRule,
 } = require('../../dist/translate/rules');
 
 test('translateApiRuleToPostgresRuleRaw converts API rule to Postgres and keeps nil fields', async (t) => {

@@ -34,7 +34,7 @@ import { closeErrorWriteStreams, createErrorFileWriteStream, storeErrors } from 
 import { initialMigrationResult } from './common';
 
 const { getBucket, getKey } = require('@cumulus/api/lib/FileUtils');
-const { deconstructCollectionId } = require('@cumulus/api/lib/utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const logger = new Logger({ sender: '@cumulus/data-migration/granules' });
 
 export interface GranulesAndFilesMigrationResult {

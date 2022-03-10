@@ -4,10 +4,9 @@ const isEqual = require('lodash/isEqual');
 const omit = require('lodash/omit');
 
 const { removeNilProperties } = require('@cumulus/common/util');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const Logger = require('@cumulus/logger');
 
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 /**

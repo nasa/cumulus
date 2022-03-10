@@ -183,13 +183,6 @@ data "aws_iam_policy_document" "lambda_api_gateway_policy" {
 
   statement {
     actions = [
-      "ssm:GetParameter"
-    ]
-    resources = [aws_ssm_parameter.dynamo_table_names.arn]
-  }
-
-  statement {
-    actions = [
       "iam:PassRole"
     ]
     resources = [

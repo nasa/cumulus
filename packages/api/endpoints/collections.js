@@ -92,7 +92,6 @@ async function activeList(req, res) {
 async function get(req, res) {
   const name = req.params.name;
   const version = req.params.version;
-
   try {
     const collectionPgModel = new CollectionPgModel();
     const knex = await getKnexClient();

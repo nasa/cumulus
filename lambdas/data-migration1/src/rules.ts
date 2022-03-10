@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import {
   RulePgModel,
-  translateApiRuleToPostgresRule,
+  translateApiRuleToPostgresRuleRaw,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
@@ -52,7 +52,7 @@ export const migrateRuleRecord = async (
   }
 
   // Map old record to new schema.
-  const updatedRecord = await translateApiRuleToPostgresRule(<RuleRecord>dynamoRecord, knex);
+  const updatedRecord = await translateApiRuleToPostgresRuleRaw(<RuleRecord>dynamoRecord, knex);
 
   await rulePgModel.upsert(knex, updatedRecord);
 };

@@ -89,9 +89,8 @@ test('moveGranuleFilesAndUpdateDatastore throws if granulePgModel.getRecordCumul
     getRecordCumulusId: () => Promise.resolve(1),
   };
 
-  const apiGranule = { granuleId: 'fakeGranule', collectionId: 'fakeCollection___001' };
   await t.throwsAsync(moveGranuleFilesAndUpdateDatastore({
-    apiGranule,
+    apiGranule: {},
     granulesModel,
     destinations: undefined,
     granulePgModel,

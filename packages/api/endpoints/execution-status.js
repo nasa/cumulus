@@ -143,11 +143,11 @@ async function get(req, res) {
     stateMachineArn: getStateMachineArnFromExecutionArn(response.arn),
     name: response.name,
     status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
-    startDate: new Date(response.createdAt),
-    stopDate: new Date(response.createdAt + response.duration * 1000),
+    startDate: response.created_at,
+    stopDate: new Date(response.created_at.getTime() + response.duration * 1000),
     granules: mappedGranules,
-    ...{ input: JSON.stringify(response.original_payload) },
-    ...{ output: JSON.stringify(response.final_payload) },
+    ...(response.original_payload && { input: JSON.stringify(response.original_payload) }),
+    ...(response.final_payload && { output: JSON.stringify(response.final_payload) }),
   };
   return res.send({ warning, execution });
 }

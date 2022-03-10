@@ -1,7 +1,8 @@
 ---
-id: upgrade-rds
+id: version-v10.1.0-upgrade-rds
 title: Upgrade to RDS release
 hide_title: false
+original_id: upgrade-rds
 ---
 
 ## Background

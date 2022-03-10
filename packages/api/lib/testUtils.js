@@ -86,7 +86,7 @@ function fakeGranuleFactory(status = 'completed') {
     granuleId: randomId('granule'),
     dataType: randomId('datatype'),
     version: randomId('vers'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     status,
     execution: getExecutionUrlFromArn(randomId('execution')),
     createdAt: Date.now(),
@@ -156,7 +156,7 @@ function fakeRuleFactory(state = 'DISABLED') {
 function fakePdrFactory(status = 'completed') {
   return {
     pdrName: randomId('pdr'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     provider: 'fakeProvider',
     status,
     createdAt: Date.now(),
@@ -172,7 +172,7 @@ function fakePdrFactory(status = 'completed') {
 function fakePdrFactoryV2(params = {}) {
   const pdr = {
     pdrName: randomId('pdr'),
-    collectionId: 'fakeCollection___v1',
+    collectionId: constructCollectionId('fakeCollection', 'v1'),
     provider: 'fakeProvider',
     status: 'completed',
     createdAt: Date.now(),

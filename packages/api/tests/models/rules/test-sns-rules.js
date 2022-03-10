@@ -60,6 +60,10 @@ test.beforeEach(async (t) => {
   t.context.snsTopicArn = topic.TopicArn;
 });
 
+test.afterEach.always(async (t) => {
+  await awsServices.sns().deleteTopic({ TopicArn: t.context.snsTopicArn }).promise();
+});
+
 test.after.always(async () => {
   // cleanup table
   await rulesModel.deleteTable();

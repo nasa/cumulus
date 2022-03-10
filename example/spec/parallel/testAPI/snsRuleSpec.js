@@ -11,7 +11,7 @@ const {
   removeRuleAddedParams,
 } = require('@cumulus/integration-tests');
 
-const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/rulesHelpers');
+const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteRule,
