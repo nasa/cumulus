@@ -4,16 +4,15 @@ const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash/range');
 const cryptoRandomString = require('crypto-random-string');
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const DynamoDb = require('../DynamoDb');
 const awsServices = require('../services');
 
 test.before(async () => {
-  process.env.tableName = `table${cryptoRandomString({ length: 10 })}`;
+  process.env.tableName = `DynamoDb${cryptoRandomString({ length: 10 })}`;
 
-  const client = awsServices.dynamodb();
-  console.log('foo');
-  await client.createTable({
+  await DynamoDb.createAndWaitForDynamoDbTable({
     TableName: process.env.tableName,
     AttributeDefinitions: [
       { AttributeName: 'hash', AttributeType: 'S' },
@@ -33,7 +32,7 @@ test.beforeEach((t) => {
 });
 
 test.after.always(
-  () => awsServices.dynamodb().deleteTable({ TableName: process.env.tableName })
+  () => DynamoDb.deleteAndWaitForDynamoDbTableNotExists({ TableName: process.env.tableName })
 );
 
 test('DynamoDb.get() returns an existing item', async (t) => {
@@ -47,7 +46,7 @@ test('DynamoDb.get() returns an existing item', async (t) => {
   await client.put({
     TableName: process.env.tableName,
     Item: item,
-  }).promise();
+  });
 
   const response = await DynamoDb.get({
     tableName: process.env.tableName,

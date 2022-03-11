@@ -49,10 +49,10 @@ export const awsClient = <T extends AWSClientTypes>(
 
   if (inTestMode()) {
     // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
-    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
-      // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
-      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
-    }
+    // if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
+    //   // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
+    //   AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
+    // }
     return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
   }
   return memoize((o) => new Service(Object.assign(options, o)));

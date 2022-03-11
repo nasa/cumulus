@@ -1,4 +1,5 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
 import * as AWS from 'aws-sdk';
 import { awsClient } from './client';
 
@@ -14,7 +15,7 @@ export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
-export const dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
+export const dynamodbDocClient = (options?: object) => DynamoDBDocument.from(awsClient(DynamoDB, '2012-08-10')(options));
 export const sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 export const cf = awsClient(AWS.CloudFormation, '2010-05-15');
 export const sns = awsClient(AWS.SNS, '2010-03-31');

@@ -1,7 +1,6 @@
 import * as AWS from 'aws-sdk';
 import { ThrottlingException } from '@cumulus/errors';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDB, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
@@ -15,7 +14,8 @@ const localStackPorts = {
   cloudwatch: 4566,
   cloudwatchevents: 4566,
   cloudwatchlogs: 4566,
-  dynamodb: 4566,
+  DynamoDB: 4566,
+  DynamoDBClient: 4566,
   es: 4566,
   firehose: 4566,
   iam: 4566,
@@ -63,6 +63,8 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
   return `http://${process.env.LOCALSTACK_HOST}:${localStackPorts[identifier]}`;
 }
 
+const getServiceIdentifer = (service: any) => service.serviceIdentifier || service.name;
+
 /**
  * Create an AWS service object that talks to LocalStack.
  *
@@ -83,18 +85,21 @@ function localStackAwsClient<T extends AWSClientTypes>(
   }
 
   // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  const serviceIdentifier = getServiceIdentifer(Service);
+  console.log(serviceIdentifier);
 
   const localStackOptions: { [key: string ]: unknown } = {
     ...options,
-    accessKeyId: 'my-access-key-id',
-    secretAccessKey: 'my-secret-access-key',
+    credentials: {
+      accessKeyId: 'my-access-key-id',
+      secretAccessKey: 'my-secret-access-key',
+    },
     region: 'us-east-1',
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
+  console.log('localStackOptions', localStackOptions);
 
-  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
-
+  if (serviceIdentifier === 'S3') localStackOptions.forcePathStyle = true;
   return new Service(localStackOptions);
 }
 
@@ -112,8 +117,10 @@ export function testAwsClient<T extends AWSClientTypes>(
   options: object
 ): T {
   // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  const serviceIdentifier = getServiceIdentifer(Service);
+  console.log('serviceIdentifier', serviceIdentifier);
   if (localstackSupportedService(serviceIdentifier)) {
+    console.log('supported');
     return localStackAwsClient(Service, options);
   }
 

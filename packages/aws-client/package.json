@@ -43,6 +43,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "aws-sdk": "^2.585.0",
     "@aws-sdk/client-api-gateway": "^3.53.0",
     "@aws-sdk/client-cloudformation": "^3.53.0",
     "@aws-sdk/client-cloudwatch-events": "^3.53.0",
@@ -63,6 +64,7 @@
     "@aws-sdk/client-sqs": "^3.53.0",
     "@aws-sdk/client-ssm": "^3.53.0",
     "@aws-sdk/client-sts": "^3.53.0",
+    "@aws-sdk/lib-dynamodb": "^3.53.0",
     "@aws-sdk/types": "^3.53.0",
     "@cumulus/checksum": "10.1.1",
     "@cumulus/errors": "10.1.1",
