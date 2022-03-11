@@ -6,54 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v10.1.1] 2022-03-04
-
-### Migration steps
-
-- Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
-out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
-[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
-`{"forceRulesMigration": true}`:
-
-```shell
-aws lambda invoke --function-name $PREFIX-data-migration1 \
-  --payload $(echo '{"forceRulesMigration": true}' | base64) $OUTFILE
-```
-
-### Added
-
-- **CUMULUS-2846**
-  - Added `@cumulus/db/translate/rule.translateApiRuleToPostgresRuleRaw` to translate API rule to PostgreSQL rules and
-  **keep undefined fields**
-
-### Changed
-
-- **CUMULUS-NONE**
-  - Adds logging to ecs/async-operation Docker conatiner that launches async
-    tasks on ECS. Sets default `async_operation_image_version` to 39.
-- **CUMULUS-2845**
-  - Updated rules model to decouple `createRuleTrigger` from `create`.
-  - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
-  - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
-- **CUMULUS-2846**
-  - Updated version of `localstack/localstack` used in local unit testing to `0.11.5`
-
-### Fixed
-
-- Upgraded lodash to version 4.17.21 to fix vulnerability
-- **CUMULUS-2845**
-  - Fixed bug in POST `/rules` endpoint causing rule records to be created
-  inconsistently in DynamoDB and PostgreSQL
-- **CUMULUS-2846**
-  - Fixed logic for `PUT /rules/<name>` endpoint causing rules to be saved
-  inconsistently between DynamoDB and PostgreSQL
-- **CUMULUS-2854**
-  - Fixed queue granules behavior where the task was not accounting for granules that
-  *already* had createdAt set. Workflows downstream in this scenario should no longer
-  fail to write their granules due to order-of-db-writes constraints in the database
-  update logic.
-
-## [v10.1.0] 2022-02-23
+## [v10.1.2] 2022-03-11
 
 ### Added
 
@@ -5400,7 +5353,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.2...HEAD
+[v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
