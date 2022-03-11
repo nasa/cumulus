@@ -468,14 +468,6 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
   } = t.context;
 
   const topic1 = randomId('sns');
-  const fakeSubscriptionArn1 = randomId('subscription');
-
-  const addSnsTriggerStub = sinon.stub(Rule.prototype, 'addSnsTrigger')
-    .resolves(fakeSubscriptionArn1);
-  t.teardown(() => {
-    addSnsTriggerStub.restore();
-  });
-  const stubbedRulesModel = new Rule();
 
   const rule = fakeRuleFactoryV2({
     state: 'ENABLED',
@@ -492,9 +484,6 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
 
   const expressRequest = {
     body: rule,
-    testContext: {
-      ruleModel: stubbedRulesModel,
-    },
   };
 
   const response = buildFakeExpressResponse();
@@ -508,11 +497,15 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
     rule.name
   );
 
+  t.truthy(dynamoRule.rule.arn);
+  t.truthy(pgRule.arn);
+  t.truthy(esRule.rule.arn);
+
   t.like(dynamoRule, {
     rule: {
       type: 'sns',
       value: topic1,
-      arn: fakeSubscriptionArn1,
+      arn: dynamoRule.rule.arn,
     },
   });
   t.like(
@@ -521,7 +514,7 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
       rule: {
         type: 'sns',
         value: topic1,
-        arn: fakeSubscriptionArn1,
+        arn: dynamoRule.rule.arn,
       },
     }
   );
@@ -529,7 +522,7 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
     name: rule.name,
     enabled: true,
     type: 'sns',
-    arn: fakeSubscriptionArn1,
+    arn: dynamoRule.rule.arn,
     value: topic1,
   });
 });
