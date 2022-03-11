@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Move event resources deletion logic from `rulesModel` to `rulesHelper`
   - **CUMULUS-2815**
     - Remove update of DynamoDB record from API endpoint PUT /collections/<name>/<version>
+    - Move File Config and Core Config validation logic for Postgres Collections from `api/models/collections.js` to `api/lib/utils.js`   
 
 ## Unreleased
 
