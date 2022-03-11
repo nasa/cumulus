@@ -1416,12 +1416,12 @@ test.serial('put() creates the same updated Kinesis rule in Dynamo/PostgreSQL/El
     originalDynamoRule.name
   );
 
-  t.truthy(originalDynamoRule.rule.arn);
-  t.truthy(originalDynamoRule.rule.logEventArn);
-  t.truthy(originalEsRecord.rule.arn);
-  t.truthy(originalEsRecord.rule.logEventArn);
-  t.truthy(originalPgRecord.arn);
-  t.truthy(originalPgRecord.log_event_arn);
+  t.truthy(updatedRule.rule.arn);
+  t.truthy(updatedRule.rule.logEventArn);
+  t.truthy(updatedEsRule.rule.arn);
+  t.truthy(updatedEsRule.rule.logEventArn);
+  t.truthy(updatedPgRule.arn);
+  t.truthy(updatedPgRule.log_event_arn);
 
   t.not(originalDynamoRule.rule.arn, updatedRule.rule.arn);
   t.not(originalDynamoRule.rule.logEventArn, updatedRule.rule.logEventArn);
