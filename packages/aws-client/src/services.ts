@@ -15,7 +15,11 @@ export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
-export const dynamodbDocClient = (options?: object) => DynamoDBDocument.from(awsClient(DynamoDB, '2012-08-10')(options));
+export const dynamodbDocClient = (docClientOptions?: object, dynamoOptions?: object) =>
+  DynamoDBDocument.from(
+    awsClient(DynamoDB, '2012-08-10')(dynamoOptions),
+    docClientOptions
+  );
 export const sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 export const cf = awsClient(AWS.CloudFormation, '2010-05-15');
 export const sns = awsClient(AWS.SNS, '2010-03-31');
