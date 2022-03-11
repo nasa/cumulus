@@ -469,11 +469,10 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
    */
 async function addRule(item, payload) {
   const name = `${process.env.stackName}-custom-${item.name}`;
-  const state = item.enabled ? 'ENABLED' : 'DISABLED';
   await CloudwatchEvents.putEvent(
     name,
     item.rule.value,
-    state,
+    item.state,
     'Rule created by cumulus-api'
   );
   const targetId = 'lambdaTarget';
