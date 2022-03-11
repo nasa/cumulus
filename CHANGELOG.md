@@ -57,6 +57,69 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ### Added
 
+- **CUMULUS-2859**
+  - Update `postgres-db-migration` lambda timeout to default 900 seconds
+  - Add `db_migration_lambda_timeout` variable to `data-persistence` module to
+    allow this timeout to be user configurable
+- **CUMULUS-2868**
+  - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+
+## [v10.1.1] 2022-03-04
+
+### Migration steps
+
+- Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
+out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
+[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+`{"forceRulesMigration": true}`:
+
+```shell
+aws lambda invoke --function-name $PREFIX-data-migration1 \
+  --payload $(echo '{"forceRulesMigration": true}' | base64) $OUTFILE
+```
+
+### Added
+
+- **CUMULUS-2841**
+  - Add integration test to validate PDR node provider that requires password
+    credentials succeeds on ingest
+
+- **CUMULUS-2846**
+  - Added `@cumulus/db/translate/rule.translateApiRuleToPostgresRuleRaw` to translate API rule to PostgreSQL rules and
+  **keep undefined fields**
+
+### Changed
+
+- **CUMULUS-NONE**
+  - Adds logging to ecs/async-operation Docker conatiner that launches async
+    tasks on ECS. Sets default async_operation_image_version to 39.
+
+- **CUMULUS-2845**
+  - Updated rules model to decouple `createRuleTrigger` from `create`.
+  - Updated rules POST endpoint to call `rulesModel.createRuleTrigger` directly to create rule trigger.
+  - Updated rules PUT endpoints to call `rulesModel.createRuleTrigger` if update fails and reversion needs to occur.
+- **CUMULUS-2846**
+  - Updated version of `localstack/localstack` used in local unit testing to `0.11.5`
+
+### Fixed
+
+- Upgraded lodash to version 4.17.21 to fix vulnerability
+- **CUMULUS-2845**
+  - Fixed bug in POST `/rules` endpoint causing rule records to be created
+  inconsistently in DynamoDB and PostgreSQL
+- **CUMULUS-2846**
+  - Fixed logic for `PUT /rules/<name>` endpoint causing rules to be saved
+  inconsistently between DynamoDB and PostgreSQL
+- **CUMULUS-2854**
+  - Fixed queue granules behavior where the task was not accounting for granules that
+  *already* had createdAt set. Workflows downstream in this scenario should no longer
+  fail to write their granules due to order-of-db-writes constraints in the database
+  update logic.
+
+## [v10.1.0] 2022-02-23
+
+### Added
+
 - **CUMULUS-2775**
   - Added a configurable parameter group for the RDS serverless database cluster deployed by `tf-modules/rds-cluster-tf`. The allowed parameters for the parameter group can be found in the AWS documentation of [allowed parameters for an Aurora PostgreSQL cluster](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Reference.ParameterGroups.html). By default, the following parameters are specified:
     - `shared_preload_libraries`: `pg_stat_statements,auto_explain`
@@ -100,11 +163,6 @@ error in non-NGAP accounts:
   - `events:DescribeRule`
 
 ## [v10.0.1] 2022-02-03
-
-**Please note** changes in 10.0.1 may not yet be released in future versions, as
-this is a backport and patch release on the 10.0.x series of releases. Updates that
-are included in the future will have a corresponding CHANGELOG entry in future
-releases.
 
 ### Fixed
 
