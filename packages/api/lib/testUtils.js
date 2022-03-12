@@ -489,6 +489,15 @@ const createProviderTestRecords = async (context, providerParams) => {
   };
 };
 
+/*
+ * Creates rules for testing
+ *
+ * @param {object} context
+ * @param {PostgresRule} - Postgres Rule parameters
+ *
+ * @returns {Object}
+ *   Returns new object consisting of `originalApiRule`, `originalPgRecord, and `originalEsRecord`
+ */
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,

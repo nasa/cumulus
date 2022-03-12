@@ -331,9 +331,7 @@ test('When calling the API endpoint to delete an existing rule it does not retur
     t.context,
     {
       workflow,
-      queueUrl: 'fake-queue-url',
-      collection: undefined,
-      provider: undefined,
+      queue_url: 'fake-queue-url',
     }
   );
   t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
