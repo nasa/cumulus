@@ -65,6 +65,7 @@
     "@aws-sdk/client-ssm": "^3.53.0",
     "@aws-sdk/client-sts": "^3.53.0",
     "@aws-sdk/lib-dynamodb": "^3.53.0",
+    "@aws-sdk/lib-storage": "^3.53.0",
     "@aws-sdk/types": "^3.53.0",
     "@cumulus/checksum": "10.1.1",
     "@cumulus/errors": "10.1.1",
