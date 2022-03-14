@@ -9,7 +9,7 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { lambda } = require('@cumulus/aws-client/services');
 const { putFile } = require('@cumulus/aws-client/S3');
-
+const { randomString } = require('@cumulus/common/test-utils');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Lzards Backup Task ', () => {
@@ -19,10 +19,16 @@ describe('The Lzards Backup Task ', () => {
   let lzardsApiGetFunctionName;
   let functionConfig;
   let prefix;
-  let provider;
+  let lzardsProvider;
   let ingestBucket;
   let ingestPath;
   let lzardsBackupOutput;
+  let provider;
+
+  const now = new Date().getTime();
+  const thirtyMinutesAgo = now - (1000 * 60 * 30);
+  const tenMinutesAgo = now - (1000 * 60 * 10);
+  const twoMinutesAgo = now - (1000 * 60 * 2);
 
   beforeAll(async () => {
     try {
@@ -37,6 +43,7 @@ describe('The Lzards Backup Task ', () => {
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
       }).promise();
+      provider = `FakeProvider_${randomString()}`;
 
       // Create the collection
       collection = await createCollection(
@@ -85,7 +92,7 @@ describe('The Lzards Backup Task ', () => {
             meta: {
               buckets: config.buckets,
               collection,
-              provider,
+              provider: lzardsProvider,
               stack: config.stackName,
             },
             payload: {
@@ -94,6 +101,8 @@ describe('The Lzards Backup Task ', () => {
                   granuleId: 'FakeGranule2',
                   dataType: collection.name,
                   version: collection.version,
+                  provider,
+                  createdAt: tenMinutesAgo,
                   files: [
                     {
                       fileName: 'testGranule.jpg',
@@ -141,7 +150,24 @@ describe('The Lzards Backup Task ', () => {
   });
 
   describe('The Lzards API Client', () => {
-    it('returns information for granules successfully backed up to lzards', async () => {
+    it('throws an error when no search parameters are provided', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = JSON.stringify({ searchParams: {} });
+
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          (functionConfig.Timeout + 10) * 1000
+        );
+
+        const payload = JSON.parse(lzardsApiGetOutput.Payload);
+
+        expect(lzardsApiGetOutput.FunctionError).toBe('Unhandled');
+        expect(payload.errorMessage).toBe('The required searchParams is not provided or empty');
+      }
+    });
+
+    it('returns info for a request for a single granule successfully backed up to lzards', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = JSON.stringify({
@@ -164,6 +190,36 @@ describe('The Lzards Backup Task ', () => {
         expect(payload.count).toBe(1);
         expect(payload.items[0].metadata.granuleId).toBe('FakeGranule2');
         expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
+        expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
+      }
+    });
+
+    it('returns info for a request with date range provided', async () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        const lzardsGetPayload = JSON.stringify({
+          searchParams: {
+            pageLimit: 25,
+            'metadata[provider]': provider,
+            'metadata[createdAt][gte]': thirtyMinutesAgo,
+            'metadata[createdAt][lte]': twoMinutesAgo,
+          },
+        });
+
+        const lzardsApiGetOutput = await pTimeout(
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          (functionConfig.Timeout + 10) * 1000
+        );
+
+        const payload = JSON.parse(lzardsApiGetOutput.Payload);
+
+        console.log(`lzardsGetPayload: ${JSON.stringify(payload)}`);
+
+        expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
+        expect(payload.count).toBe(1);
+        expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeGreaterThanOrEqual(thirtyMinutesAgo);
+        expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeLessThanOrEqual(twoMinutesAgo);
+        expect(payload.items[0].metadata.provider).toBe(provider);
       }
     });
 
@@ -183,8 +239,6 @@ describe('The Lzards Backup Task ', () => {
         );
 
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
-
-        console.log(`lzardsGetPayload: ${JSON.stringify(payload)}`);
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(0);

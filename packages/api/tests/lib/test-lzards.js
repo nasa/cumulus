@@ -52,6 +52,20 @@ test.serial('sendGetRequestToLzards returns error status when lzards_api environ
       { name: 'Error', message: 'The lzards_api environment variable is not set' });
   });
 
+test.serial('sendGetRequestToLzards returns error status when searchParams are not provided',
+  async (t) => {
+    process.env.lzards_api = 'fake_lzards_api';
+    await t.throwsAsync(lzards.sendGetRequestToLzards({ }),
+      { name: 'Error', message: 'The required searchParams is not provided or empty' });
+  });
+
+test.serial('sendGetRequestToLzards returns error status when searchParams is empty',
+  async (t) => {
+    process.env.lzards_api = 'fake_lzards_api';
+    await t.throwsAsync(lzards.sendGetRequestToLzards({ searchParams: {} }),
+      { name: 'Error', message: 'The required searchParams is not provided or empty' });
+  });
+
 test.serial('sendGetRequestToLzards sends request to lzards api',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';

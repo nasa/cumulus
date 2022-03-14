@@ -132,6 +132,8 @@ export const postRequestToLzards = async (params: {
   collection: string,
   file: MessageGranuleFilesObject,
   granuleId: string,
+  provider: string,
+  createdAt: number
 }) => {
   const {
     accessUrl,
@@ -139,9 +141,11 @@ export const postRequestToLzards = async (params: {
     collection,
     file,
     granuleId,
+    provider,
+    createdAt,
   } = params;
 
-  const provider = getRequiredEnvVar('lzards_provider');
+  const lzardsProvider = getRequiredEnvVar('lzards_provider');
   const lzardsApiUrl = getRequiredEnvVar('lzards_api');
 
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
@@ -150,12 +154,14 @@ export const postRequestToLzards = async (params: {
     return await got.post(lzardsApiUrl,
       {
         json: {
-          provider,
+          provider: lzardsProvider,
           objectUrl: accessUrl,
           metadata: {
             filename: buildS3Uri(file.bucket, file.key),
             collection,
             granuleId,
+            provider,
+            createdAt,
           },
           ...checksumConfig,
         },
@@ -181,6 +187,8 @@ export const makeBackupFileRequest = async (params: {
   collectionId: string,
   file: MessageGranuleFilesObject,
   granuleId: string,
+  provider: string,
+  createdAt: number,
   lzardsPostMethod?: typeof postRequestToLzards,
   generateAccessUrlMethod?: typeof generateAccessUrl,
 }): Promise<MakeBackupFileRequestResult> => {
@@ -190,6 +198,8 @@ export const makeBackupFileRequest = async (params: {
     backupConfig: { authToken },
     file,
     granuleId,
+    provider,
+    createdAt,
     lzardsPostMethod = postRequestToLzards,
     generateAccessUrlMethod = generateAccessUrl,
   } = params;
@@ -208,17 +218,21 @@ export const makeBackupFileRequest = async (params: {
       collection: collectionId,
       file,
       granuleId,
+      provider,
+      createdAt,
     });
     if (statusCode !== 201) {
       log.error(`${granuleId}: Request failed - LZARDS api returned ${statusCode}: ${JSON.stringify(body)}`);
-      return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), body, status: 'FAILED' };
+      return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), provider, createdAt, body, status: 'FAILED' };
     }
-    return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), body, status: 'COMPLETED' };
+    return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), provider, createdAt, body, status: 'COMPLETED' };
   } catch (error) {
     log.error(`${granuleId}: LZARDS request failed: ${error}`);
     return {
       granuleId,
       filename: buildS3Uri(file.bucket, file.key),
+      provider,
+      createdAt,
       body: JSON.stringify({ name: error.name, stack: error.stack }),
       status: 'FAILED',
     };
@@ -286,6 +300,8 @@ export const backupGranule = async (params: {
       file,
       collectionId,
       granuleId: granule.granuleId,
+      provider: granule.provider,
+      createdAt: granule.createdAt,
     })));
   } catch (error) {
     if (error.name === 'CollectionNotDefinedError') {

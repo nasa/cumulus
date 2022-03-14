@@ -5,6 +5,7 @@ const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { getLaunchpadToken } = require('@cumulus/launchpad-auth');
 const got = require('got');
 const Logger = require('@cumulus/logger');
+const isEmpty = require('lodash/isEmpty');
 
 const log = new Logger({ sender: 'api/lib/lzards' });
 
@@ -32,6 +33,12 @@ async function getAuthToken() {
 async function sendGetRequestToLzards({ lzardsApiUri = process.env.lzards_api, searchParams }) {
   if (!lzardsApiUri) {
     const errMsg = 'The lzards_api environment variable is not set';
+    log.error(errMsg);
+    throw new Error(errMsg);
+  }
+
+  if (!searchParams || isEmpty(searchParams)) {
+    const errMsg = 'The required searchParams is not provided or empty';
     log.error(errMsg);
     throw new Error(errMsg);
   }

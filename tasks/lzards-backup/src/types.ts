@@ -17,6 +17,8 @@ export type MakeBackupFileRequestResult = {
   statusCode?: number
   granuleId: string,
   filename: string,
+  provider: string,
+  createdAt: number,
   body?: string,
   status: 'COMPLETED' | 'FAILED',
 };
@@ -33,6 +35,8 @@ export interface MessageGranule {
   dataType: string,
   version: string,
   files: MessageGranuleFilesObject[],
+  provider: string,
+  createdAt: number,
 }
 
 export interface GetCollectionFunctionParams {
