@@ -1,6 +1,6 @@
 'use strict';
 
-const { sendGetRequestToLzards } = require('@cumulus/api/lib/lzards');
+const { sendGetRequestToLzards } = require('@cumulus/lzards-api-client/lzards');
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: 'lzardsClientTest' });
