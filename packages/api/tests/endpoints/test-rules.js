@@ -983,14 +983,6 @@ test('PUT replaces a rule', async (t) => {
     }
   );
 
-  const postgresRule = await translateApiRuleToPostgresRule(originalDynamoRule, t.context.testKnex);
-
-  await t.context.testKnex.transaction(async (trx) => {
-    await t.context.rulePgModel.create(trx, postgresRule);
-    const ruleWithTrigger = await ruleModel.createRuleTrigger(originalDynamoRule);
-    await ruleModel.create(ruleWithTrigger, originalDynamoRule.createdAt);
-  });
-
   const updateRule = {
     ...omit(originalDynamoRule, ['queueUrl', 'provider', 'collection']),
     state: 'ENABLED',
