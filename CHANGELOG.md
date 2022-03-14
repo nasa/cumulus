@@ -15,12 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
 - **CUMULUS-2787**
-  - Added lzards API lib with general `submitGetRequestToLzards` method to @cumulus/api to support LZARDS reconciliation report
+  - Added `lzards-api-client` package to Cumulus with `submitGetRequestToLzards` method to support LZARDS reconciliation report
 
 ### Changed
 - **CUMULUS-2787**
-  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to
-    support querying LZARDS for reconciliation reports
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 
 ## [v10.1.1] 2022-03-04
 
