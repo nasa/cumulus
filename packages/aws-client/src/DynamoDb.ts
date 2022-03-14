@@ -6,18 +6,18 @@ import pMap from 'p-map';
 import pRetry from 'p-retry';
 import range from 'lodash/range';
 import {
-  // DynamoDB,
   waitUntilTableExists,
   waitUntilTableNotExists,
   CreateTableInput,
   DeleteTableInput,
+  ScanInput,
+  ScanOutput,
 } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocument,
   GetCommandInput,
   ScanCommandInput,
 } from '@aws-sdk/lib-dynamodb';
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { dynamodb } from './services';
@@ -31,8 +31,8 @@ import { improveStackTrace } from './utils';
  *
  * @param {Object} params
  * @param {string} params.tableName - Table name to read
- * @param {AWS.DynamoDB.DocumentClient.Key} params.item - Key identifying object to get
- * @param {AWS.DynamoDB.DocumentClient} params.client - Instance of a DynamoDb DocumentClient
+ * @param {GetCommandInput.Key} params.item - Key identifying object to get
+ * @param {DynamoDBDocument} params.client - Instance of a DynamoDb DocumentClient
  * @param {Object} params.getParams - Additional parameters for DocumentClient.get()
  * @returns {Promise<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found
@@ -78,13 +78,13 @@ export const scan = improveStackTrace(
     client: DynamoDBDocument,
     query?: {
       filter?: string,
-      names?: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap,
-      values?: AWS.DynamoDB.DocumentClient.ExpressionAttributeValueMap,
+      names?: ScanInput['ExpressionAttributeNames'],
+      values?: ScanCommandInput['ExpressionAttributeValues'],
     },
     fields?: string,
     limit?: number,
     select: string,
-    startKey?: AWS.DynamoDB.DocumentClient.Key
+    startKey?: ScanInput['ExclusiveStartKey']
   }) => {
     const {
       client,
@@ -96,7 +96,7 @@ export const scan = improveStackTrace(
       tableName,
     } = params;
 
-    const scanParams: AWS.DynamoDB.DocumentClient.ScanInput = {
+    const scanParams: ScanInput = {
       TableName: tableName,
     };
 
@@ -163,11 +163,11 @@ export const scan = improveStackTrace(
  * @param {Object} params
  * @param {number} params.totalSegments
  *   Total number of segments to divide table into for parallel scanning
- * @param {DocumentClient.ScanInput} params.scanParams
+ * @param {ScanInput} params.scanParams
  *   Params for the DynamoDB client scan operation
  *   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
  * @param {function} params.processItemsFunc - Function used to process returned items by scan
- * @param {DocumentClient} [params.dynamoDbClient] - Instance of Dynamo DB document client
+ * @param {DynamoDBDocument} [params.dynamoDbClient] - Instance of Dynamo DB document client
  * @param {pRetry.Options} [params.retryOptions] - Retry options for scan operations
  * @returns {Promise}
  */
@@ -175,7 +175,7 @@ export const parallelScan = async (
   params: {
     totalSegments: number,
     scanParams: ScanCommandInput,
-    processItemsFunc: (items: DocumentClient.ItemList) => Promise<void>,
+    processItemsFunc: (items: ScanOutput['Items']) => Promise<void>,
     dynamoDbClient: DynamoDBDocument,
     retryOptions?: pRetry.Options,
   }
@@ -191,9 +191,9 @@ export const parallelScan = async (
   return await pMap(
     range(totalSegments),
     async (_, segmentIndex) => {
-      let exclusiveStartKey: DocumentClient.Key | undefined;
+      let exclusiveStartKey: ScanInput['ExclusiveStartKey'] | undefined;
 
-      const segmentScanParams: ScanCommandInput = {
+      const segmentScanParams: ScanInput = {
         ...scanParams,
         TotalSegments: totalSegments,
         Segment: segmentIndex,
@@ -258,13 +258,9 @@ export async function deleteAndWaitForDynamoDbTableNotExists(
 ) {
   const dynamoDbClient = dynamodb();
   await dynamoDbClient.deleteTable(params);
-  try {
-    await waitUntilTableNotExists({
-      client: dynamoDbClient,
-      minDelay: 1,
-      maxWaitTime: 3,
-    }, { TableName: params.TableName });
-  } catch (error) {
-    console.log(error);
-  }
+  await waitUntilTableNotExists({
+    client: dynamoDbClient,
+    minDelay: 1,
+    maxWaitTime: 3,
+  }, { TableName: params.TableName });
 }

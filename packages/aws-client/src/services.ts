@@ -1,6 +1,7 @@
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
 import * as AWS from 'aws-sdk';
+
 import { awsClient } from './client';
 
 export const apigateway = awsClient(AWS.APIGateway, '2015-07-09');
@@ -15,7 +16,7 @@ export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
-export const dynamodbDocClient = (docClientOptions?: object, dynamoOptions?: object) =>
+export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOptions?: object) =>
   DynamoDBDocument.from(
     awsClient(DynamoDB, '2012-08-10')(dynamoOptions),
     docClientOptions
