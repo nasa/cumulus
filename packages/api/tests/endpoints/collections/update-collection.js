@@ -241,27 +241,23 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
 });
 
 test('PUT replaces an existing collection and correctly removes fields', async (t) => {
-  const knex = t.context.testKnex;
-  const process = randomString();
-  const originalCollection = fakeCollectionFactory({
-    duplicateHandling: 'replace',
-    process,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
+  const origProcess = randomString();
 
-  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
-  await t.context.collectionModel.create(originalCollection);
-  const originalDynamoCollection = await t.context.collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
-  const pgId = await t.context.collectionPgModel.create(t.context.testKnex, insertPgRecord);
-  const originalPgRecord = await t.context.collectionPgModel.get(
-    knex, { cumulus_id: pgId[0] }
+  const {
+    originalCollection,
+    originalPgRecord,
+  } = await createCollectionTestRecords(
+    t.context,
+    {
+      duplicateHandling: 'replace',
+      process: origProcess,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
   );
-  t.is(originalDynamoCollection.process, process);
-  t.is(originalPgRecord.process, process);
+
+  t.is(originalCollection.process, origProcess);
+  t.is(originalPgRecord.process, origProcess);
 
   const updatedCollection = {
     ...originalCollection,
@@ -284,7 +280,7 @@ test('PUT replaces an existing collection and correctly removes fields', async (
     version: originalCollection.version,
   });
 
-  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+  const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
     name: originalCollection.name,
     version: originalCollection.version,
   });
