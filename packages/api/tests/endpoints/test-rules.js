@@ -467,13 +467,13 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
     pgCollection,
   } = t.context;
 
-  const topic1 = randomId('sns');
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
 
   const rule = fakeRuleFactoryV2({
     state: 'ENABLED',
     rule: {
       type: 'sns',
-      value: topic1,
+      value: topic1.TopicArn,
     },
     collection: {
       name: pgCollection.name,
@@ -490,6 +490,8 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
 
   await post(expressRequest, response);
 
+  t.true(response.send.called);
+
   const dynamoRule = await ruleModel.get({ name: rule.name });
   const pgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: rule.name });
@@ -504,7 +506,7 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
   t.like(dynamoRule, {
     rule: {
       type: 'sns',
-      value: topic1,
+      value: topic1.TopicArn,
       arn: dynamoRule.rule.arn,
     },
   });
@@ -513,7 +515,7 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
     {
       rule: {
         type: 'sns',
-        value: topic1,
+        value: topic1.TopicArn,
         arn: dynamoRule.rule.arn,
       },
     }
@@ -523,7 +525,7 @@ test.serial('post() creates SNS rule with same trigger information in Dynamo/Pos
     enabled: true,
     type: 'sns',
     arn: dynamoRule.rule.arn,
-    value: topic1,
+    value: topic1.TopicArn,
   });
 });
 
