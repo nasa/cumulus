@@ -159,7 +159,8 @@ test.before(async (t) => {
   await ruleModel.createTable();
   t.context.ruleModel = ruleModel;
 
-  const ruleRecord = await ruleModel.create(t.context.testRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(t.context.testRule);
+  const ruleRecord = await ruleModel.create(ruleWithTrigger);
   await indexer.indexRule(esClient, ruleRecord, t.context.esIndex);
   t.context.testPgRule = await translateApiRuleToPostgresRule(ruleRecord, knex);
   t.context.rulePgModel.create(knex, t.context.testPgRule);
@@ -460,6 +461,180 @@ test('POST creates a rule in all data stores', async (t) => {
   t.like(esRecord, fetchedDynamoRecord);
 });
 
+test.serial('post() creates SNS rule with same trigger information in Dynamo/PostgreSQL', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic') }).promise();
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const dynamoRule = await ruleModel.get({ name: rule.name });
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+
+  t.truthy(dynamoRule.rule.arn);
+  t.like(dynamoRule, {
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+      arn: dynamoRule.rule.arn,
+    },
+  });
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sns',
+    arn: dynamoRule.rule.arn,
+    value: topic1.TopicArn,
+  });
+});
+
+test.serial('post() creates the same Kinesis rule with trigger information in Dynamo/PostgreSQL', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: kinesisArn1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const dynamoRule = await ruleModel.get({ name: rule.name });
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+
+  t.truthy(dynamoRule.rule.arn);
+  t.truthy(dynamoRule.rule.logEventArn);
+
+  t.like(dynamoRule, {
+    rule: {
+      type: 'kinesis',
+      value: kinesisArn1,
+    },
+  });
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'kinesis',
+    arn: dynamoRule.rule.arn,
+    value: kinesisArn1,
+    log_event_arn: dynamoRule.rule.logEventArn,
+  });
+});
+
+test.serial('post() creates the SQS rule with trigger information in Dynamo/PostgreSQL', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue1 = randomId('queue');
+
+  const stubbedRulesModel = new Rule({
+    SqsUtils: {
+      sqsQueueExists: () => Promise.resolve(true),
+    },
+    SqsClient: {
+      getQueueAttributes: () => ({
+        promise: () => Promise.resolve({
+          Attributes: {
+            RedrivePolicy: 'policy',
+            VisibilityTimeout: 10,
+          },
+        }),
+      }),
+    },
+  });
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queue1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expectedMeta = {
+    visibilityTimeout: 10,
+    retries: 3,
+  };
+
+  const expressRequest = {
+    body: rule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const dynamoRule = await ruleModel.get({ name: rule.name });
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+
+  t.like(dynamoRule, {
+    rule: {
+      type: 'sqs',
+      value: queue1,
+    },
+    meta: expectedMeta,
+  });
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sqs',
+    value: queue1,
+    meta: expectedMeta,
+  });
+});
+
 test('POST creates a rule in Dynamo and PG with correct timestamps', async (t) => {
   const { newRule } = t.context;
 
@@ -528,8 +703,10 @@ test('POST creates a rule that is enabled by default', async (t) => {
 
 test('POST returns a 409 response if record already exists', async (t) => {
   const { newRule, rulePgModel, testKnex } = t.context;
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
+  const dynamoRule = await ruleModel.create(ruleWithTrigger);
 
-  const newPgRule = await translateApiRuleToPostgresRule(newRule);
+  const newPgRule = await translateApiRuleToPostgresRule(dynamoRule);
   await rulePgModel.create(testKnex, newPgRule);
 
   const response = await request(app)
@@ -670,8 +847,8 @@ test.serial('post() does not write to Elasticsearch/PostgreSQL if writing to Dyn
   const { newRule, testKnex } = t.context;
 
   const failingRulesModel = {
+    exists: () => false,
     createRuleTrigger: () => Promise.resolve(newRule),
-    exists: () => Promise.resolve(false),
     create: () => {
       throw new Error('Rule error');
     },
@@ -745,6 +922,14 @@ test('PUT replaces a rule', async (t) => {
       provider: undefined,
     }
   );
+
+  const postgresRule = await translateApiRuleToPostgresRule(originalDynamoRule, t.context.testKnex);
+
+  await t.context.testKnex.transaction(async (trx) => {
+    await t.context.rulePgModel.create(trx, postgresRule);
+    const ruleWithTrigger = await ruleModel.createRuleTrigger(originalDynamoRule);
+    await ruleModel.create(ruleWithTrigger, originalDynamoRule.createdAt);
+  });
 
   const updateRule = {
     ...omit(originalDynamoRule, ['queueUrl', 'provider', 'collection']),

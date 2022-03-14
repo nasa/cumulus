@@ -132,7 +132,8 @@ test.serial('enabling a disabled SNS rule and passing rule.arn throws specific e
     state: 'DISABLED',
   });
 
-  const rule = await rulesModel.create(item);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(item);
+  const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.rule.value, snsTopicArn);
   t.falsy(rule.rule.arn);
@@ -221,28 +222,24 @@ test.serial('multiple rules using same SNS topic can be created and deleted', as
     Name: randomId('topic'),
   }).promise();
 
-  const firstRule = fakeRuleFactoryV2({
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRuleFactoryV2({
     rule: {
       type: 'sns',
       value: TopicArn,
     },
     workflow,
     state: 'ENABLED',
-  });
-
-  const secondRule = fakeRuleFactoryV2({
+  }));
+  const rule1 = await rulesModel.create(ruleWithTrigger);
+  const ruleWithTrigger2 = await rulesModel.createRuleTrigger(fakeRuleFactoryV2({
     rule: {
       type: 'sns',
       value: TopicArn,
     },
     workflow,
     state: 'ENABLED',
-  });
-
-  const firstRuleWithTrigger = await rulesModel.createRuleTrigger(firstRule);
-  const secondRuleWithTrigger = await rulesModel.createRuleTrigger(secondRule);
-  const rule1 = await rulesModel.create(firstRuleWithTrigger);
-  const rule2 = await rulesModel.create(secondRuleWithTrigger);
+  }));
+  const rule2 = await rulesModel.create(ruleWithTrigger2);
 
   // rules share the same subscription
   t.is(rule1.rule.arn, rule2.rule.arn);
@@ -273,15 +270,14 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
   const { snsTopicArn } = t.context;
   const lambdaStub = sinon.stub(awsServices.lambda(), 'removePermission').throws(error);
 
-  const item = fakeRuleFactoryV2({
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRuleFactoryV2({
     rule: {
       type: 'sns',
       value: snsTopicArn,
     },
     workflow,
     state: 'ENABLED',
-  });
-  const ruleWithTrigger = await rulesModel.createRuleTrigger(item);
+  }));
   const rule = await rulesModel.create(ruleWithTrigger);
 
   await t.throwsAsync(

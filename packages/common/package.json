@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "10.1.0",
+  "version": "10.1.1",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -41,12 +41,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/errors": "10.1.0",
-    "@cumulus/logger": "10.1.0",
+    "@cumulus/errors": "10.1.1",
+    "@cumulus/logger": "10.1.1",
     "ajv": "^6.12.3",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
+    "is-ip": "^3.1.0",
     "jsonpath-plus": "^3.0.0",
     "lodash": "^4.17.21",
     "node-forge": "^1.0.0",
