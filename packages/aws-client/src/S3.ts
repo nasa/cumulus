@@ -48,20 +48,6 @@ import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
-// export type GetObjectCreateReadStreamMethod = (params: GetObjectCommandInput) => {
-//   createReadStream: () => Readable
-// };
-
-// export type GetObjectPromiseMethod = (params: GetObjectCommandInput) => {
-//   promise: () => Promise<GetObjectOutput>
-// };
-
-// export type Object = Required<S3.Object>;
-
-// export interface ListObjectsV2Output extends S3.ListObjectsV2Output {
-//   Contents: Object[]
-// }
-
 const log = new Logger({ sender: 'aws-client/s3' });
 
 const buildDeprecationMessage = (
@@ -911,10 +897,6 @@ const createMultipartUpload = async (
       params.sourceKey
     );
   }
-
-  // if (!uploadParams.Bucket || !uploadParams.Key) {
-  //   throw new Error('error');
-  // }
 
   // Create a multi-part upload (copy) and get its UploadId
   const { UploadId } = await S3MultipartUploads.createMultipartUpload(
