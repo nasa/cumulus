@@ -1,6 +1,9 @@
 import * as querystring from 'querystring';
 import { URL } from 'url';
-import * as AWS from 'aws-sdk';
+// import * as AWS from 'aws-sdk';
+
+import { S3 } from '@aws-sdk/client-s3';
+
 import Logger from '@cumulus/logger';
 import { headObject, parseS3Uri } from './S3';
 import { awsClient } from './client';
@@ -14,10 +17,10 @@ const log = new Logger({ sender: '@cumulus/aws-client/S3ObjectStore' });
  *
  */
 class S3ObjectStore {
-  private readonly s3: AWS.S3;
+  private readonly s3: S3;
 
   constructor() {
-    this.s3 = awsClient(AWS.S3, '2006-03-01', { signatureVersion: 'v4' })();
+    this.s3 = awsClient(S3, '2006-03-01', { signatureVersion: 'v4' })();
   }
 
   /**
