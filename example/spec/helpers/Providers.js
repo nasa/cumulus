@@ -1,6 +1,7 @@
 'use strict';
 
 const pWaitFor = require('p-wait-for');
+const pRetry = require('p-retry');
 
 const providersApi = require('@cumulus/api-client/providers');
 const { listGranules } = require('@cumulus/api-client/granules');
