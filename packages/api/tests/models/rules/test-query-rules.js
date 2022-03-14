@@ -208,10 +208,12 @@ test.serial('queryRules returns correct rules for given state and type', async (
       state: 'DISABLED',
     }),
   ];
-  const rulesWithTriggers = await Promise.all(
-    onetimeRules.map((rule) => rulesModel.createRuleTrigger(rule))
+  await Promise.all(
+    onetimeRules.map(async (rule) => {
+      await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(rule);
+    })
   );
-  await Promise.all(rulesWithTriggers.map((rule) => rulesModel.create(rule)));
 
   const result = await rulesModel.queryRules({
     status: 'ENABLED',
@@ -323,20 +325,21 @@ test.serial('queryRules should look up sns-type rules which are associated with 
   ];
 
   const ruleWithTrigger1 = await rulesModel.createRuleTrigger(rules[0]);
+  const rule1 = await rulesModel.create(ruleWithTrigger1);
+
   const ruleWithTrigger2 = await rulesModel.createRuleTrigger(rules[1]);
-  await rulesModel.create(ruleWithTrigger1);
-  await rulesModel.create(ruleWithTrigger2);
-  console.log('\nhere');
+  const rule2 = await rulesModel.create(ruleWithTrigger2);
+
   const result = await rulesModel.queryRules({
     type: 'sns',
     name: collection.name,
     version: collection.version,
   });
   t.is(result.length, 1);
-  t.deepEqual(result[0], ruleWithTrigger1);
+  t.deepEqual(result[0], rule1);
   t.teardown(async () => {
-    await rulesModel.delete(ruleWithTrigger1);
-    await rulesModel.delete(ruleWithTrigger2);
+    await rulesModel.delete(rule1);
+    await rulesModel.delete(rule2);
     await awsServices.sns().deleteTopic({
       TopicArn,
     });

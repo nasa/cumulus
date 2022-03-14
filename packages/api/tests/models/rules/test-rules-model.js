@@ -16,6 +16,9 @@ const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
 
+const {
+  getSnsTriggerPermissionId,
+} = require('../../../lib/snsRuleHelpers');
 const models = require('../../../models');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
@@ -392,11 +395,7 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
   await rulesModel.create(ruleWithTrigger);
 
   const rule = await rulesModel.get({ name: snsRule.name });
-  t.teardown(async () => {
-    await rulesModel.delete(rule);
-    await awsServices.sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
-    await awsServices.sns().deleteTopic({ TopicArn: topic2.TopicArn }).promise();
-  });
+  t.teardown(() => rulesModel.deleteOldEventSourceMappings(rule));
 
   // update rule value
   const updates = {
@@ -406,6 +405,11 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
 
   const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
   const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
+  t.teardown(async () => {
+    await rulesModel.delete(updatedRule);
+    await awsServices.sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
+    await awsServices.sns().deleteTopic({ TopicArn: topic2.TopicArn }).promise();
+  });
 
   t.is(updatedRule.name, rule.name);
   t.not(updatedRule.rule.value, rule.rule.value);
@@ -443,7 +447,7 @@ test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', as
   t.is(logEventMappingsAfter.EventSourceMappings.length, 0);
 });
 
-test.serial('deleteOldEventSourceMappings() removes SNS source mappings', async (t) => {
+test.serial('deleteOldEventSourceMappings() removes SNS source mappings and permissions', async (t) => {
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
 
   // create rule trigger and rule
@@ -464,10 +468,23 @@ test.serial('deleteOldEventSourceMappings() removes SNS source mappings', async 
   const { subExists } = await rulesModel.checkForSnsSubscriptions(rule);
   t.true(subExists);
 
+  const { Policy } = await awsServices.lambda().getPolicy({
+    FunctionName: process.env.messageConsumer,
+  }).promise();
+  const { Statement } = JSON.parse(Policy);
+  t.true(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(rule)));
+
   await rulesModel.deleteOldEventSourceMappings(rule);
 
   const { subExists: subExists2 } = await rulesModel.checkForSnsSubscriptions(rule);
   t.false(subExists2);
+
+  await t.throwsAsync(
+    awsServices.lambda().getPolicy({
+      FunctionName: process.env.messageConsumer,
+    }).promise(),
+    { code: 'ResourceNotFoundException' }
+  );
 });
 
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {

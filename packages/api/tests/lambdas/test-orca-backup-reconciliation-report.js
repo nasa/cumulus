@@ -186,7 +186,7 @@ function fakeCollectionsAndGranules() {
 
 test.beforeEach(async (t) => {
   t.context.stackName = randomId('stack');
-  t.context.systemBucket = randomId('systembucket');
+  t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
 
   esAlias = randomId('esalias');
