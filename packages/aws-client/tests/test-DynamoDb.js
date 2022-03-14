@@ -78,11 +78,7 @@ test.serial('DynamoDb.get() throws general error from failure on client.get', as
   const { client } = t.context;
 
   const stub = sinon.stub(client, 'get')
-    .returns({
-      promise: () => {
-        throw new Error('fail');
-      },
-    });
+    .throws(new Error('fail'));
 
   try {
     await t.throwsAsync(
@@ -111,7 +107,7 @@ test.serial('DynamoDb.scan() properly returns all paginated results', async (t) 
     (item) => client.put({
       TableName: process.env.tableName,
       Item: item,
-    }).promise()
+    })
   ));
   t.teardown(() => Promise.all(items.map(
     (item) => client.delete({
@@ -119,7 +115,7 @@ test.serial('DynamoDb.scan() properly returns all paginated results', async (t) 
       Key: {
         hash: item.hash,
       },
-    }).promise()
+    })
   )));
 
   const response = await DynamoDb.scan({
@@ -142,7 +138,7 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
     (item) => client.put({
       TableName: process.env.tableName,
       Item: item,
-    }).promise()
+    })
   ));
   t.teardown(() => Promise.all(items.map(
     (item) => client.delete({
@@ -150,7 +146,7 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
       Key: {
         hash: item.hash,
       },
-    }).promise()
+    })
   )));
 
   let totalResults = [];
@@ -165,6 +161,7 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
       TableName: process.env.tableName,
     },
     processItemsFunc: testProcessItems,
+    dynamoDbClient: client,
   });
 
   t.is(totalResults.length, 10);
@@ -189,9 +186,7 @@ test.serial('DynamoDb.parallelScan() retries on DynamoDB scan failure', async (t
   });
 
   const fakeDynamoClient = {
-    scan: () => ({
-      promise: scanPromiseStub,
-    }),
+    scan: scanPromiseStub,
   };
 
   await DynamoDb.parallelScan({

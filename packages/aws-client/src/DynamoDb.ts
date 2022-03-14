@@ -37,31 +37,31 @@ import { improveStackTrace } from './utils';
  * @returns {Promise<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found
  */
-export const get = improveStackTrace(
-  async (params: {
+export const get = async (
+  params: {
     tableName: string,
     item: GetCommandInput['Key'],
     client: DynamoDBDocument,
     getParams?: object
-  }) => {
-    const {
-      client,
-      getParams = {},
-      item,
-      tableName,
-    } = params;
-
-    const getResponse = await client.get({
-      ...getParams,
-      TableName: tableName,
-      Key: item,
-    });
-
-    if (getResponse.Item) return getResponse.Item;
-
-    throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)} in ${tableName}`);
   }
-);
+) => {
+  const {
+    client,
+    getParams = {},
+    item,
+    tableName,
+  } = params;
+
+  const getResponse = await client.get({
+    ...getParams,
+    TableName: tableName,
+    Key: item,
+  });
+
+  if (getResponse.Item) return getResponse.Item;
+
+  throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)} in ${tableName}`);
+};
 
 /**
  * Call DynamoDb client scan
@@ -258,9 +258,13 @@ export async function deleteAndWaitForDynamoDbTableNotExists(
 ) {
   const dynamoDbClient = dynamodb();
   await dynamoDbClient.deleteTable(params);
-  await waitUntilTableNotExists({
-    client: dynamoDbClient,
-    minDelay: 1,
-    maxWaitTime: 3,
-  }, { TableName: params.TableName });
+  try {
+    await waitUntilTableNotExists({
+      client: dynamoDbClient,
+      minDelay: 1,
+      maxWaitTime: 3,
+    }, { TableName: params.TableName });
+  } catch (error) {
+    console.log(error);
+  }
 }
