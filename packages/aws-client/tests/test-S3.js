@@ -10,6 +10,7 @@ const delay = require('delay');
 const pTimeout = require('p-timeout');
 const { Readable } = require('stream');
 const { promisify } = require('util');
+
 const { UnparsableFileLocationError } = require('@cumulus/errors');
 
 const {
@@ -29,7 +30,7 @@ const {
   calculateObjectHash,
   getObjectReadStream,
   streamS3Upload,
-  getObject,
+  getObjectStreamContents,
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -53,7 +54,6 @@ const streamToString = (stream) => {
 
 const stageTestObjectToLocalStack = (bucket, body, key = randomString()) =>
   awsServices.s3().putObject({ Bucket: bucket, Key: key, Body: body })
-    .promise()
     .then(({ ETag }) => ({ ETag, Key: key }));
 
 test.before(async (t) => {
@@ -68,7 +68,6 @@ test.after.always(async (t) => {
 
 test('getTextObject() returns the contents of an S3 object', async (t) => {
   const { Bucket } = t.context;
-
   const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
 
   t.is(await getTextObject(Bucket, Key), 'asdf');
@@ -91,10 +90,10 @@ test('createBucket() creates a bucket', async (t) => {
 
   try {
     await t.notThrowsAsync(
-      awsServices.s3().headBucket({ Bucket: bucketName }).promise()
+      awsServices.s3().headBucket({ Bucket: bucketName })
     );
   } finally {
-    await awsServices.s3().deleteBucket({ Bucket: bucketName }).promise();
+    await awsServices.s3().deleteBucket({ Bucket: bucketName });
   }
 });
 
@@ -112,7 +111,7 @@ test('putFile() uploads a file to S3', async (t) => {
   }
 
   const fetchedFile = await getS3Object(t.context.Bucket, key);
-  t.is(fetchedFile.Body.toString(), 'asdf');
+  t.is(await getObjectStreamContents(fetchedFile.Body), 'asdf');
 });
 
 test('getS3Object() returns an existing S3 object', async (t) => {
@@ -121,13 +120,13 @@ test('getS3Object() returns an existing S3 object', async (t) => {
   const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
 
   const response = await getS3Object(Bucket, Key);
-  t.is(response.Body.toString(), 'asdf');
+  t.is(await getObjectStreamContents(response.Body), 'asdf');
 });
 
 test('getS3Object() immediately throws an exception if the requested bucket does not exist', async (t) => {
   const promisedGetS3Object = getS3Object(randomString(), 'asdf');
   const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
-  t.is(err.code, 'NoSuchBucket');
+  t.is(err.name, 'NoSuchBucket');
 });
 
 test('getS3Object() throws an exception if the requested key does not exist', async (t) => {
@@ -136,7 +135,7 @@ test('getS3Object() throws an exception if the requested key does not exist', as
   const err = await t.throwsAsync(
     getS3Object(Bucket, 'does-not-exist', { retries: 1 })
   );
-  t.is(err.code, 'NoSuchKey');
+  t.is(err.name, 'NoSuchKey');
 });
 
 test('getS3Object() immediately throws an exception if the requested key does not exist', async (t) => {
@@ -146,7 +145,7 @@ test('getS3Object() immediately throws an exception if the requested key does no
 
   const err = await t.throwsAsync(pTimeout(promisedGetS3Object, 5000));
 
-  t.is(err.code, 'NoSuchKey');
+  t.is(err.name, 'NoSuchKey');
 });
 
 test('getS3Object() will retry if the requested key does not exist', async (t) => {
@@ -155,11 +154,12 @@ test('getS3Object() will retry if the requested key does not exist', async (t) =
 
   const promisedGetS3Object = getS3Object(Bucket, Key, { retries: 5 });
   await delay(3000)
-    .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
+    .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }))
+    .catch(console.log);
 
   const response = await promisedGetS3Object;
 
-  t.is(response.Body.toString(), 'asdf');
+  t.is(await getObjectStreamContents(response.Body), 'asdf');
 });
 
 test('s3Join behaves as expected', (t) => {
@@ -188,7 +188,7 @@ test('listS3ObjectsV2 handles non-truncated case', async (t) => {
     Bucket,
     Key,
     Body: 'my-body',
-  }).promise()));
+  })));
 
   // List things from S3
   const result = await listS3ObjectsV2({ Bucket, MaxKeys: 5 });
@@ -208,7 +208,7 @@ test('listS3ObjectsV2 handles truncated case', async (t) => {
     Bucket,
     Key,
     Body: 'my-body',
-  }).promise()));
+  })));
 
   // List things from S3
   const result = await listS3ObjectsV2({ Bucket, MaxKeys: 2 });
@@ -237,7 +237,7 @@ test('downloadS3File resolves filepath if key is found', async (t) => {
   const Body = 'example';
 
   await createBucket(Bucket);
-  await awsServices.s3().putObject({ Bucket, Key: Key, Body: Body }).promise();
+  await awsServices.s3().putObject({ Bucket, Key: Key, Body: Body });
 
   const params = { Bucket, Key: Key };
   const filepath = await downloadS3File(params, path.join(tmpdir(), 'example'));
@@ -258,7 +258,7 @@ test('validateS3ObjectChecksum returns true for good checksum', async (t) => {
   const Body = 'example';
 
   await createBucket(Bucket);
-  await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
+  await awsServices.s3().putObject({ Bucket, Key, Body });
 
   const cksum = 148323542;
   const ret = await validateS3ObjectChecksum({
@@ -274,7 +274,7 @@ test('validateS3ObjectChecksum throws InvalidChecksum error on bad checksum', as
   const Body = 'example';
 
   await createBucket(Bucket);
-  await awsServices.s3().putObject({ Bucket, Key, Body }).promise();
+  await awsServices.s3().putObject({ Bucket, Key, Body });
 
   const cksum = 11111111111;
 
@@ -314,7 +314,7 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
 
   const promisedHeadObject = headObject(Bucket, Key, { retries: 5 });
   await delay(3000)
-    .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }).promise());
+    .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }));
 
   await t.notThrowsAsync(promisedHeadObject);
 });
@@ -324,7 +324,7 @@ test('getObjectReadStream() returns a readable stream for the requested object',
 
   const s3 = awsServices.s3();
 
-  const stream = getObjectReadStream({ s3, bucket: t.context.Bucket, key });
+  const stream = await getObjectReadStream({ s3, bucket: t.context.Bucket, key });
 
   const result = await streamToString(stream);
 
@@ -344,7 +344,7 @@ test('calculateObjectHash() calculates the correct hash', async (t) => {
       t.is(params.Key, key);
 
       return {
-        createReadStream: () => Readable.from(['asdf']),
+        Body: Readable.from(['asdf']),
       };
     },
   };
@@ -369,7 +369,7 @@ test('getObjectSize() returns the size of an object', async (t) => {
     Bucket,
     Key: key,
     Body: 'asdf',
-  }).promise();
+  });
 
   const objectSize = await getObjectSize({
     s3: awsServices.s3(),
@@ -395,19 +395,18 @@ test('streamS3Upload() uploads contents of stream to S3', async (t) => {
   await streamS3Upload(
     fs.createReadStream(sourceFile),
     {
-      Bucket: t.context.Bucket,
-      Key: key,
-      ContentType: 'plaintext',
+      params: {
+        Bucket: t.context.Bucket,
+        Key: key,
+        ContentType: 'plaintext',
+      },
     }
   );
-  const object = await getObject(
-    awsServices.s3(),
-    {
-      Bucket: t.context.Bucket,
-      Key: key,
-    }
+  const objectData = await getTextObject(
+    t.context.Bucket,
+    key
   );
-  t.is(object.Body.toString(), sourceData);
+  t.is(objectData, sourceData);
 });
 
 test('streamS3Upload() throws error if upload stream errors', async (t) => {
@@ -417,9 +416,11 @@ test('streamS3Upload() throws error if upload stream errors', async (t) => {
     streamS3Upload(
       fs.createReadStream(sourceFile),
       {
-        Bucket: t.context.Bucket,
-        Key: key,
-        ContentType: 'plaintext',
+        params: {
+          Bucket: t.context.Bucket,
+          Key: key,
+          ContentType: 'plaintext',
+        },
       }
     ),
     { message: /ENOENT: no such file or directory/ }

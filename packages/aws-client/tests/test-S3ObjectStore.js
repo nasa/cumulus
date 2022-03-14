@@ -8,7 +8,6 @@ const randomString = () => cryptoRandomString({ length: 10 });
 
 const stageTestObjectToLocalStack = (bucket, body, key = randomString()) =>
   s3().putObject({ Bucket: bucket, Key: key, Body: body })
-    .promise()
     .then(({ ETag }) => ({ ETag, Key: key }));
 
 test.before(async (t) => {

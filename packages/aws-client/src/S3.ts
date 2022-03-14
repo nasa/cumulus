@@ -11,7 +11,7 @@ import pWaitFor from 'p-wait-for';
 import TimeoutError from 'p-timeout';
 import pump from 'pump';
 import querystring from 'querystring';
-import { Readable, TransformOptions, PassThrough } from 'stream';
+import { Readable, TransformOptions } from 'stream';
 import { deprecate } from 'util';
 
 import {
@@ -159,7 +159,7 @@ export const headObject = (
       try {
         return await s3().headObject({ Bucket, Key });
       } catch (error) {
-        if (error.code === 'NotFound') throw error;
+        if (error.name === 'NotFound') throw error;
         throw new pRetry.AbortError(error);
       }
     },
@@ -177,7 +177,7 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
   headObject(params.Bucket, params.Key)
     .then(() => true)
     .catch((error) => {
-      if (error.code === 'NotFound') return false;
+      if (error.name === 'NotFound') return false;
       throw error;
     });
 
@@ -289,18 +289,12 @@ export const streamS3Upload = (
   uploadStream: Readable,
   uploadParams: UploadOptions
 ) => {
-  const pass = new PassThrough();
-  uploadStream.pipe(pass);
-
-  uploadStream.on('error', (error) => {
-    throw error;
-  });
-  pass.on('error', (error) => {
-    throw error;
-  });
-
   const parallelUploads3 = new Upload({
     ...uploadParams,
+    params: {
+      ...uploadParams.params,
+      Body: uploadStream,
+    },
     client: s3(),
   });
 
@@ -482,10 +476,10 @@ export const waitForObject = (
         return await getObject(s3Client, params);
       } catch (error) {
         // Retry if the object does not exist
-        if (error.code === 'NoSuchKey') throw error;
+        if (error.name === 'NoSuchKey') throw error;
 
         // Retry if the etag did not match
-        if (params.IfMatch && error.code === 'PreconditionFailed') throw error;
+        if (params.IfMatch && error.name === 'PreconditionFailed') throw error;
 
         // For any other error, fail without retrying
         throw new pRetry.AbortError(error);
@@ -525,18 +519,40 @@ export const getS3Object = deprecate(
 );
 
 /**
+ * Transform streaming response from S3 object to text content
+ *
+ * @param {Readable} objectReadStream - Readable stream of S3 object
+ * @returns {Promise<string>} the contents of the S3 object
+ */
+export const getObjectStreamContents = (
+  objectReadStream: Readable
+): Promise<string> => new Promise(
+  (resolve, reject) => {
+    try {
+      const responseDataChunks: Buffer[] = [];
+
+      objectReadStream.once('error', (error) => reject(error));
+      objectReadStream.on('data', (chunk) => responseDataChunks.push(chunk));
+
+      // Once the stream has no more data, join the chunks into a string and
+      // return the string
+      objectReadStream.once('end', () => resolve(responseDataChunks.join('')));
+    } catch (error) {
+      reject(error);
+    }
+  }
+);
+
+/**
  * Fetch the contents of an S3 object
  *
  * @param {string} bucket - the S3 object's bucket
  * @param {string} key - the S3 object's key
  * @returns {Promise<string>} the contents of the S3 object
  */
-export const getTextObject = (bucket: string, key: string) =>
-  getS3Object(bucket, key)
-    .then(({ Body }) => {
-      if (Body === undefined) return undefined;
-      return Body.toString();
-    });
+export const getTextObject = (bucket: string, key: string): Promise<string> =>
+  getObjectReadStream({ s3: s3(), bucket, key })
+    .then((objectReadStream) => getObjectStreamContents(objectReadStream));
 
 /**
  * Fetch JSON stored in an S3 object

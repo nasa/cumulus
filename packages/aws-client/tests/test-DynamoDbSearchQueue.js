@@ -35,7 +35,6 @@ test.afterEach.always(
   (t) =>
     awsServices.dynamodb()
       .deleteTable({ TableName: t.context.tableName })
-      .promise()
 );
 
 test.serial('DynamoDbSearchQueue.peek() returns the next item but does not remove it from the queue', async (t) => {
