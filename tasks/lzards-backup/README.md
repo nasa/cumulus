@@ -30,6 +30,8 @@ The following shows the minimal set of keys required for an input payload:
       "granuleId": "FakeGranule001",
       "dataType": "FakeGranuleType",
       "version": "006",
+      "provider": "FakeProvider",
+      "createdAt": 1647222436211,
       "files": [
         {
           "filename": "s3://fakeBucket1//path/to/granule1/foo.jpg",
@@ -79,6 +81,8 @@ Upon completion the lambda will return the following structure:
 - `body`       : body returned from the LZARDS API query
 - `filename`   : original s3 URI to the archived file
 - `granuleId`  : granuleId associated with the archival request
+- `provider`   : provider associated with the archival request
+- `createdAt`  : granule createdAt associated with the archival request
 - `status`     : 'status' of the request.   Will either be COMPLETED or FAILED
 - `statusCode` : status code returned from LZARDS (if applicable)
 
@@ -88,9 +92,11 @@ Example:
 "body": "{
   "id": 173
 }"
-"filename":"s3://bucket/granulename.dat"
-"granuleId":"FakeGranule2"
-"status": "COMPLETED"
+"filename":"s3://bucket/granulename.dat",
+"granuleId":"FakeGranule2",
+"provider": "FakeProvider",
+"createdAt": 1647222436211,
+"status": "COMPLETED",
 "statusCode": 201
 ```
 
