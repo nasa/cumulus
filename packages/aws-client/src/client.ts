@@ -1,6 +1,7 @@
 import AWS from 'aws-sdk';
-import { DynamoDB, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { inTestMode, testAwsClient } from './test-utils';
+
+import { AWSClientTypes } from './types';
 
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
@@ -18,8 +19,6 @@ const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
     return memo;
   };
 };
-
-type AWSClientTypes = DynamoDB | DynamoDBClient | AWS.Service | AWS.DynamoDB.DocumentClient;
 
 /**
  * Return a function which, when called, will return an AWS service object

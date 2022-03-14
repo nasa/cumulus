@@ -1,10 +1,8 @@
-import * as AWS from 'aws-sdk';
 import { ThrottlingException } from '@cumulus/errors';
-import { DynamoDB, DynamoDBClient } from '@aws-sdk/client-dynamodb';
+
+import { AWSClientTypes } from './types';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
-
-type AWSClientTypes = DynamoDB | DynamoDBClient | AWS.Service | AWS.DynamoDB.DocumentClient;
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
