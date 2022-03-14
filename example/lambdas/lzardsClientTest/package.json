@@ -20,7 +20,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "10.1.0",
-    "@cumulus/logger": "10.1.0"
+    "@cumulus/lzards-api-client": "10.1.1",
+    "@cumulus/logger": "10.1.1"
   }
 }

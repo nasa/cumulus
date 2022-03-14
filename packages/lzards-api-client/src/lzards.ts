@@ -1,5 +1,7 @@
 'use strict';
 
+import { LzardsApiGetRequest } from './types';
+
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { getLaunchpadToken } = require('@cumulus/launchpad-auth');
@@ -30,7 +32,12 @@ async function getAuthToken() {
  * @param {Object} params.searchParams -  object containing search parameters to pass to lzards
  * @returns {Promise<Object>} - resolves to the LZARDS return
  */
-async function sendGetRequestToLzards({ lzardsApiUri = process.env.lzards_api, searchParams }) {
+export async function sendGetRequestToLzards(
+  {
+    lzardsApiUri = process.env.lzards_api,
+    searchParams,
+  }: LzardsApiGetRequest
+) {
   if (!lzardsApiUri) {
     const errMsg = 'The lzards_api environment variable is not set';
     log.error(errMsg);
@@ -62,7 +69,3 @@ async function sendGetRequestToLzards({ lzardsApiUri = process.env.lzards_api, s
     throw error;
   }
 }
-
-module.exports = {
-  sendGetRequestToLzards,
-};

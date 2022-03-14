@@ -10,7 +10,7 @@ const fakeGetToLzards = sandbox.stub();
 const fakeGetRequiredEnvVar = sandbox.stub();
 const fakeGetSecretString = sandbox.stub();
 const fakeGetLaunchpadToken = sandbox.stub();
-const lzards = proxyquire('../../lib/lzards', {
+const lzards = proxyquire('../lzards', {
   got: {
     get: fakeGetToLzards,
   },
@@ -25,7 +25,7 @@ const lzards = proxyquire('../../lib/lzards', {
   },
 });
 
-const lzardsGetAuthToken = proxyquire('../../lib/lzards', {
+const lzardsGetAuthToken = proxyquire('../lzards', {
   got: {
     get: fakeGetToLzards,
   },
