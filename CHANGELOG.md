@@ -14,6 +14,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     allow this timeout to be user configurable
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+- **CUMULUS-2787**
+  - Added lzards API lib with general `submitGetRequestToLzards` method to @cumulus/api to support LZARDS reconciliation report
+
+### Changed
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to
+    support querying LZARDS for reconciliation reports
 
 ## [v10.1.1] 2022-03-04
 
@@ -552,8 +559,6 @@ of response and not the raw API endpoint response
   - Pulled `erasePostgresTables` method in `serve.js` implemented as part of CUMULUS-2644,
   and CUMULUS-2306 from the RDS-Phase-2 feature branch in support of CUMULUS-2644
   - Added `resetPostgresDb` method to support resetting between integration test suite runs
-- **CUMULUS-2787**
-  - Added lzards API lib with general `submitGetRequestToLzards` method to @cumulus/api to support LZARDS reconciliation report
 
 ### Changed
 
