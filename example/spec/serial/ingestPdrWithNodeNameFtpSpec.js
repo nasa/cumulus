@@ -10,9 +10,8 @@ const { s3, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { providers: providersApi } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
-const { getExecution } = require('@cumulus/api-client/executions');
 const { getPdr } = require('@cumulus/api-client/pdrs');
 
 const {
