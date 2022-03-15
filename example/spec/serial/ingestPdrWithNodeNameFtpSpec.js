@@ -396,7 +396,7 @@ describe('Ingesting from PDR', () => {
     });
 
     describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
-      it('the execution record is added to DynamoDB', async () => {
+      it('the execution record is added to PostgreSQL', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const record = await waitForApiStatus(
