@@ -408,7 +408,7 @@ describe('Ingesting from PDR', () => {
         }
       });
 
-      it('the pdr record is added to DynamoDB', async () => {
+      it('the pdr record is added to PostgreSQL', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const record = await waitForApiStatus(
