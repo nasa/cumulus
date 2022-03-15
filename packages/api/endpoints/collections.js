@@ -221,7 +221,7 @@ async function put(req, res) {
       await publishCollectionUpdateSnsMessage(apiPgCollection);
     });
   } catch (error) {
-    log.debug(`Failed to update collection with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
+    log.debug(`Failed to update collection with name ${name}, version ${version} and payload ${JSON.stringify(collection)} . Error: ${JSON.stringify(error)}`);
     throw error;
   }
 

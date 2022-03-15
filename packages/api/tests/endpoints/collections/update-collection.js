@@ -327,8 +327,8 @@ test.serial('PUT rollbacks Postgres record and does not write to Elasticsearch o
   );
 
   const fakeCollectionPgModel = {
-    upsert: () => Promise.reject(new Error('something bad')),
     get: () => Promise.resolve(fakeCollectionRecordFactory()),
+    upsert: () => Promise.reject(new Error('something bad')),
   };
 
   const updatedCollection = {
