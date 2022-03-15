@@ -402,7 +402,7 @@ describe('Ingesting from PDR', () => {
         else {
           const record = await waitForApiStatus(
             getExecution,
-            { arn: parsePdrExecutionArn },
+            { prefix: config.stackName, arn: parsePdrExecutionArn },
             'completed'
           );
           expect(record.status).toEqual('completed');
@@ -414,7 +414,7 @@ describe('Ingesting from PDR', () => {
         else {
           const record = await waitForApiStatus(
             getPdr,
-            { pdrName: pdrFilename },
+            { prefix: config.stackName, pdrName: pdrFilename },
             'completed'
           );
           expect(record.execution).toEqual(getExecutionUrl(parsePdrExecutionArn));
