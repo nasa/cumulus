@@ -13,6 +13,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { getPdr } = require('@cumulus/api-client/pdrs');
 
 const {
   addCollections,
@@ -412,7 +413,7 @@ describe('Ingesting from PDR', () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
           const record = await waitForApiStatus(
-            getExecution,
+            getPdr,
             { pdrName: pdrFilename },
             'completed'
           );
