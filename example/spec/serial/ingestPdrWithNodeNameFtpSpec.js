@@ -5,7 +5,6 @@
  * granule's provider using NODE_NAME with a provider that utilizes login credentials
  */
 
-const { Execution, Pdr } = require('@cumulus/api/models');
 const S3 = require('@cumulus/aws-client/S3');
 const { s3, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -13,6 +12,7 @@ const { providers: providersApi } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const {
   addCollections,
@@ -40,7 +40,7 @@ const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
 } = require('../helpers/granuleUtils');
 
-const { waitForApiStatus, waitForModelStatus } = require('../helpers/apiUtils');
+const { waitForApiStatus } = require('../helpers/apiUtils');
 const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
@@ -58,7 +58,6 @@ describe('Ingesting from PDR', () => {
   let addedCollection;
   let beforeAllFailed;
   let config;
-  let executionModel;
   let nodeNameProviderId;
   let parsePdrExecutionArn;
   let pdrFilename;
@@ -78,7 +77,6 @@ describe('Ingesting from PDR', () => {
       functionName = `${config.stackName}-populateTestLambda`;
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.PdrsTable = `${config.stackName}-PdrsTable`;
-      executionModel = new Execution();
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
       testSuffix = createTestSuffix(testId);
@@ -401,8 +399,8 @@ describe('Ingesting from PDR', () => {
       it('the execution record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const record = await waitForModelStatus(
-            executionModel,
+          const record = await waitForApiStatus(
+            getExecution,
             { arn: parsePdrExecutionArn },
             'completed'
           );
@@ -413,8 +411,8 @@ describe('Ingesting from PDR', () => {
       it('the pdr record is added to DynamoDB', async () => {
         if (beforeAllFailed) fail(beforeAllFailed);
         else {
-          const record = await waitForModelStatus(
-            new Pdr(),
+          const record = await waitForApiStatus(
+            getExecution,
             { pdrName: pdrFilename },
             'completed'
           );
