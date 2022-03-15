@@ -2,7 +2,6 @@
 
 const fs = require('fs-extra');
 const test = require('ava');
-const sinon = require('sinon');
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 
@@ -69,6 +68,7 @@ test.before(async () => {
     Runtime: 'nodejs12.x',
   }).promise();
   process.env.messageConsumer = lambda.FunctionName;
+  process.env.messageConsumerArn = lambda.FunctionArn;
 
   // create Rules table
   rulesModel = new models.Rule();
@@ -125,7 +125,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('Create rule trigger defaults rule state to ENABLED', async (t) => {
+test('createRuleTrigger() defaults rule state to ENABLED', async (t) => {
   const { onetimeRule } = t.context;
 
   // remove state from rule to be created
@@ -240,24 +240,24 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
   );
 });
 
-test.serial('Creating rule triggers for a kinesis type rule adds event mappings, creates rule', async (t) => {
+test.serial('createRuleTrigger() for a kinesis type rule adds event mappings', async (t) => {
   const { kinesisRule } = t.context;
 
   // create rule
-  const createdRule = await rulesModel.createRuleTrigger(kinesisRule);
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
   const kinesisEventMappings = await getKinesisEventMappings();
   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
 
   t.is(consumerEventMappings.length, 1);
   t.is(logEventMappings.length, 1);
-  t.is(consumerEventMappings[0].UUID, createdRule.rule.arn);
-  t.is(logEventMappings[0].UUID, createdRule.rule.logEventArn);
+  t.is(consumerEventMappings[0].UUID, ruleWithTrigger.rule.arn);
+  t.is(logEventMappings[0].UUID, ruleWithTrigger.rule.logEventArn);
 
-  t.is(createdRule.name, kinesisRule.name);
-  t.is(createdRule.rule.value, kinesisRule.rule.value);
-  t.false(createdRule.rule.arn === undefined);
-  t.false(createdRule.rule.logEventArn === undefined);
+  t.is(ruleWithTrigger.name, kinesisRule.name);
+  t.is(ruleWithTrigger.rule.value, kinesisRule.rule.value);
+  t.false(ruleWithTrigger.rule.arn === undefined);
+  t.false(ruleWithTrigger.rule.logEventArn === undefined);
 
   // clean up
   await deleteKinesisEventSourceMappings();
@@ -316,7 +316,7 @@ test.serial('Updating a kinesis type rule value results in new event source mapp
   // update rule value
   const updates = {
     name: rule.name,
-    rule: { type: rule.rule.type, value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2')}` },
+    rule: { type: rule.rule.type, value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}` },
   };
 
   const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
@@ -391,8 +391,9 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
     },
     state: 'ENABLED',
   });
-  const ruleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
-  await rulesModel.create(ruleWithTrigger);
+
+  const snsRuleWithTrigger = await rulesModel.createRuleTrigger(snsRule);
+  await rulesModel.create(snsRuleWithTrigger);
 
   const rule = await rulesModel.get({ name: snsRule.name });
   t.teardown(() => rulesModel.deleteOldEventSourceMappings(rule));
@@ -529,9 +530,8 @@ test.serial('Creating a kinesis type rule using existing event source mappings d
   await rulesModel.create(ruleWithTrigger);
   const rule = await rulesModel.get({ name: kinesisRule.name });
 
-  // create second rule trigger and rule
-  const newRuleWithTriggers = await rulesModel.createRuleTrigger(newKinesisRule);
-  await rulesModel.create(newRuleWithTriggers);
+  const newRuleWithTrigger = await rulesModel.createRuleTrigger(newKinesisRule);
+  await rulesModel.create(newRuleWithTrigger);
   const newRule = await rulesModel.get({ name: newKinesisRule.name });
 
   t.not(newRule.name, rule.name);
@@ -561,9 +561,8 @@ test.serial('It does not delete event source mappings if they exist for other ru
   const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
   await rulesModel.create(ruleWithTrigger);
   const rule = await rulesModel.get({ name: kinesisRule.name });
-
-  const newRuleWithTriggers = await rulesModel.createRuleTrigger(kinesisRuleTwo);
-  await rulesModel.create(newRuleWithTriggers);
+  const ruleWithTrigger2 = await rulesModel.createRuleTrigger(kinesisRuleTwo);
+  await rulesModel.create(ruleWithTrigger2);
   const ruleTwo = await rulesModel.get({ name: kinesisRuleTwo.name });
 
   // same event source mapping
@@ -574,8 +573,8 @@ test.serial('It does not delete event source mappings if they exist for other ru
   await rulesModel.delete(ruleTwo);
 
   // create third rule, it should use the existing event source mapping
-  const thirdRuleWithTriggers = await rulesModel.createRuleTrigger(kinesisRuleThree);
-  await rulesModel.create(thirdRuleWithTriggers);
+  const ruleWithTrigger3 = await rulesModel.createRuleTrigger(kinesisRuleThree);
+  await rulesModel.create(ruleWithTrigger3);
   const ruleThree = await rulesModel.get({ name: kinesisRuleThree.name });
   t.is(ruleThree.rule.arn, rule.rule.arn);
   t.is(ruleThree.rule.logEventArn, rule.rule.logEventArn);
@@ -586,50 +585,47 @@ test.serial('It does not delete event source mappings if they exist for other ru
   await deleteKinesisEventSourceMappings();
 });
 
-test.serial('Creating a rule trigger for a kinesis rule where an event source mapping already exists, but is not enabled, succeeds', async (t) => {
-  process.env.messageConsumer = randomString();
-
-  const item = fakeRuleFactoryV2({
+test.serial('Creating triggers for a kinesis rule where an event source mapping already exists, but is not enabled, succeeds', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const rule = fakeRuleFactoryV2({
     workflow,
     rule: {
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
   });
 
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      createEventSourceMapping: () => ({
-        promise: () => Promise.resolve({ UUID: randomString() }),
-      }),
-      deleteEventSourceMapping: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      updateEventSourceMapping: () => ({
-        promise: () => Promise.resolve({ UUID: randomString() }),
-      }),
-      listEventSourceMappings: () => ({
-        promise: () => Promise.resolve({
-          EventSourceMappings: [
-            {
-              UUID: randomString(),
-              EventSourceArn: item.rule.value,
-              FunctionArn: `arn:aws:lambda:us-west-2:000000000000:function:${process.env.messageConsumer}`,
-              State: 'Disabled',
-            },
-          ],
-        }),
-      }),
-    });
+  const params = {
+    EventSourceArn: rule.rule.value,
+    FunctionName: process.env.messageConsumer,
+    StartingPosition: 'TRIM_HORIZON',
+    Enabled: false,
+  };
+  await awsServices.lambda().createEventSourceMapping(params).promise();
+  t.teardown(() => deleteKinesisEventSourceMappings());
+
+  const mappings = await getKinesisEventMappings();
+  const messageConsumerSource = mappings.find(
+    (mapping) => mapping.EventSourceMappings.find(
+      (eventSourceMapping) =>
+        eventSourceMapping.FunctionArn === process.env.messageConsumerArn
+        && eventSourceMapping.EventSourceArn === kinesisArn
+    )
+  );
+  t.is(
+    messageConsumerSource.EventSourceMappings.length,
+    1
+  );
+  const [messageConsumerSourceMapping] = messageConsumerSource.EventSourceMappings;
+  t.is(messageConsumerSourceMapping.State, 'Disabled');
 
   try {
-    await rulesModel.createRuleTrigger(item);
+    const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+    await rulesModel.create(ruleWithTrigger);
     t.pass();
   } catch (error) {
     t.fail(error);
-  } finally {
-    lambdaStub.restore();
   }
 });
 

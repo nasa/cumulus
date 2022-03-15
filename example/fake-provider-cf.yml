@@ -108,7 +108,7 @@ Resources:
             #!/bin/bash -ex
 
             # Fetch the test data
-            (cd /tmp && git clone https://github.com/nasa/cumulus.git)
+            (cd / && mkdir cumulus && cd cumulus && git init && git remote add -f origin https://github.com/nasa/cumulus.git && git config core.sparseCheckout true && echo "packages/test-data" >> .git/info/sparse-checkout && git pull origin master)
 
             # Configure http
             yum install -y httpd
@@ -138,9 +138,9 @@ Resources:
             service httpd start
 
             # Stage http test data
-            cp /tmp/cumulus/packages/test-data/index.html /var/www/html/
-            rsync -a /tmp/cumulus/packages/test-data/pdrs /var/www/html/
-            rsync -a /tmp/cumulus/packages/test-data/granules /var/www/html/
+            cp /cumulus/packages/test-data/index.html /var/www/html/
+            rsync -a /cumulus/packages/test-data/pdrs /var/www/html/
+            rsync -a /cumulus/packages/test-data/granules /var/www/html/
 
             chown -R root:root /var/www/html
             find /var/www/html -type d -exec chmod 0755 {} \;
@@ -178,15 +178,15 @@ Resources:
             echo '${FtpPassword}' | passwd --stdin testuser
 
             # Stage ftp test data
-            rsync -a /tmp/cumulus/packages/test-data/pdrs /home/testuser/
-            rsync -a /tmp/cumulus/packages/test-data/granules /home/testuser/
+            rsync -a /cumulus/packages/test-data/pdrs /home/testuser/
+            rsync -a /cumulus/packages/test-data/granules /home/testuser/
 
             chown -R testuser:testuser /home/testuser
             find /home/testuser -type d -exec chmod 0700 {} \;
             find /home/testuser -type f -exec chmod 0600 {} \;
 
             # Cleanup
-            rm -rf /tmp/cumulus
+            rm -rf /cumulus
 
             chmod 0755 $(which aws)
 
