@@ -1,4 +1,3 @@
-import AWS from 'aws-sdk';
 import { inTestMode, testAwsClient } from './test-utils';
 
 import { AWSClientTypes } from './types';
