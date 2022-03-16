@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2864**
+  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
+    functions to not perform separate validation request
+
+## [v10.1.2] 2022-03-11
+
 ### Added
 
 - **CUMULUS-2859**
