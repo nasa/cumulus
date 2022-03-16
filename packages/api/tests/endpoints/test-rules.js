@@ -160,7 +160,8 @@ test.before(async (t) => {
   await ruleModel.createTable();
   t.context.ruleModel = ruleModel;
 
-  const ruleRecord = await ruleModel.create(t.context.testRule);
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(t.context.testRule);
+  const ruleRecord = await ruleModel.create(ruleWithTrigger);
   await indexer.indexRule(esClient, ruleRecord, t.context.esIndex);
   t.context.testPgRule = await translateApiRuleToPostgresRule(ruleRecord, knex);
   t.context.rulePgModel.create(knex, t.context.testPgRule);
@@ -761,8 +762,10 @@ test('POST creates a rule that is enabled by default', async (t) => {
 
 test('POST returns a 409 response if record already exists', async (t) => {
   const { newRule, rulePgModel, testKnex } = t.context;
+  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
+  const dynamoRule = await ruleModel.create(ruleWithTrigger);
 
-  const newPgRule = await translateApiRuleToPostgresRule(newRule);
+  const newPgRule = await translateApiRuleToPostgresRule(dynamoRule);
   await rulePgModel.create(testKnex, newPgRule);
 
   const response = await request(app)
@@ -903,8 +906,8 @@ test.serial('post() does not write to Elasticsearch/PostgreSQL if writing to Dyn
   const { newRule, testKnex } = t.context;
 
   const failingRulesModel = {
+    exists: () => false,
     createRuleTrigger: () => Promise.resolve(newRule),
-    exists: () => Promise.resolve(false),
     create: () => {
       throw new Error('Rule error');
     },

@@ -27,6 +27,8 @@ const commonRuleParams = {
   collection,
   provider: provider.id,
   workflow: randomId('workflow'),
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const kinesisRuleParams = {
@@ -174,6 +176,7 @@ test.before(async () => {
     kinesisRule5,
     disabledKinesisRule,
   ];
+
   await Promise.all(kinesisRules.map(async (rule) => {
     const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
     return rulesModel.create(ruleWithTrigger);
