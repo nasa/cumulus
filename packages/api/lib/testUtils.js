@@ -489,6 +489,15 @@ const createProviderTestRecords = async (context, providerParams) => {
   };
 };
 
+/*
+ * Creates rules for testing
+ *
+ * @param {object} context
+ * @param {PostgresRule} - Postgres Rule parameters
+ *
+ * @returns {Object}
+ *   Returns new object consisting of `originalApiRule`, `originalPgRecord, and `originalEsRecord`
+ */
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
@@ -506,7 +515,7 @@ const createRuleTestRecords = async (context, ruleParams) => {
   const [ruleCumulusId] = await rulePgModel.create(testKnex, pgRuleWithTrigger);
 
   const originalPgRecord = await rulePgModel.get(
-    testKnex, { cumulus_id: ruleCumulusId }
+    testKnex, { cumulus_id: ruleCumulusId.cumulus_id }
   );
   const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
   await indexRule(esClient, originalApiRule, process.env.ES_INDEX);

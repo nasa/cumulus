@@ -17,12 +17,12 @@ const {
   translateApiRuleToPostgresRuleRaw,
 } = require('@cumulus/db');
 
-const { createSqsQueues, fakeRuleFactoryV2 } = require('../../lib/testUtils');
-const { deleteRuleResources } = require('../../lib/rulesHelpers');
+const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
+const { deleteRuleResources } = require('../../../lib/rulesHelpers');
 
 const listRulesStub = sinon.stub();
 
-const rulesHelpers = proxyquire('../../lib/rulesHelpers', {
+const rulesHelpers = proxyquire('../../../lib/rulesHelpers', {
   '@cumulus/api-client/rules': {
     listRules: listRulesStub,
   },

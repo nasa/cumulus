@@ -7,22 +7,21 @@ const Logger = require('@cumulus/logger');
 const {
   createRejectableTransaction,
   getKnexClient,
-  RulePgModel,
-  translateApiRuleToPostgresRule,
-  translatePostgresRuleToApiRule,
-  translateApiRuleToPostgresRuleRaw,
   isCollisionError,
+  RulePgModel,
+  translateApiRuleToPostgresRuleRaw,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
 const {
+  createRuleTrigger,
   deleteRuleResources,
   invokeRerun,
   updateRuleTrigger,
 } = require('../lib/rulesHelpers');
-const models = require('../models');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
@@ -78,7 +77,6 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -91,22 +89,21 @@ async function post(req, res) {
   try {
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
+
     // Create rule trigger
-    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
-    const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, knex);
+    const ruleWithTrigger = await createRuleTrigger(apiRule);
+    const postgresRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
-        await rulePgModel.create(trx, postgresRule);
-        record = await ruleModel.create(ruleWithTrigger);
+        const [pgRecord] = await rulePgModel.create(trx, postgresRule);
+        record = await translatePostgresRuleToApiRule(pgRecord, knex);
         await indexRule(esClient, record, process.env.ES_INDEX);
       });
     } catch (innerError) {
       if (isCollisionError(innerError)) {
         return res.boom.conflict(`A record already exists for ${name}`);
       }
-      // Clean up DynamoDB record in case of any failure
-      await ruleModel.delete(apiRule);
       throw innerError;
     }
     return res.send({ message: 'Record saved', record });

@@ -17,6 +17,7 @@ const { ValidationError } = require('@cumulus/errors');
 
 const { listRules } = require('@cumulus/api-client/rules');
 const { removeNilProperties } = require('@cumulus/common/util');
+
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 const Rule = require('../models/rules');
@@ -468,11 +469,10 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
    */
 async function addRule(item, payload) {
   const name = `${process.env.stackName}-custom-${item.name}`;
-  const state = item.enabled ? 'ENABLED' : 'DISABLED';
   await CloudwatchEvents.putEvent(
     name,
     item.rule.value,
-    state,
+    item.state,
     'Rule created by cumulus-api'
   );
   const targetId = 'lambdaTarget';
@@ -492,18 +492,18 @@ async function addRule(item, payload) {
  * @returns {void}       - Returns if record is valid, throws error otherwise
  */
 function recordIsValid(rule) {
-  const error = new Error('The record has validation errors');
+  const error = new Error('The record has validation errors. ');
   error.name = 'SchemaValidationError';
   if (!rule.name) {
-    error.detail = 'Rule name is undefined.';
+    error.message += 'Rule name is undefined.';
     throw error;
   }
   if (!rule.workflow) {
-    error.detail = 'Rule workflow is undefined.';
+    error.message += 'Rule workflow is undefined.';
     throw error;
   }
   if (!rule.rule.type) {
-    error.detail = 'Rule type is undefined.';
+    error.message += 'Rule type is undefined.';
     throw error;
   }
 }

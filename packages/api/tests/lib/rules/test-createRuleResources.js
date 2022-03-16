@@ -41,6 +41,7 @@ const testDbName = randomString(12);
 
 process.env.messageConsumer = randomString();
 process.env.KinesisInboundEventLogger = randomString();
+process.env.invoke = randomString();
 const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
 const getKinesisEventMappings = async () => {
   const mappingPromises = eventLambdas.map((lambda) => {
@@ -143,6 +144,24 @@ test('Creating an invalid rule does not create workflow triggers', async (t) => 
     () => createRuleTrigger(rule),
     { name: 'ValidationError' }
   );
+});
+
+test('Creating a rule trigger for a onetime rule succeeds', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'onetime',
+    },
+    state: 'ENABLED',
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+  });
+
+  const onetimeRule = await createRuleTrigger(rule);
+
+  t.deepEqual(onetimeRule, rule);
 });
 
 test('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
@@ -384,6 +403,37 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     subscribeSpy.restore();
     addPermissionSpy.restore();
     await awsServices.sns().deleteTopic({ TopicArn }).promise();
+  });
+});
+
+test.serial('Creating a rule trigger for a scheduled rule succeeds', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'scheduled',
+      value: 'rate(1 min)',
+    },
+    state: 'ENABLED',
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+  });
+
+  const cloudwatchStub = sinon.stub(awsServices, 'cloudwatchevents')
+    .returns({
+      putRule: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      putTargets: () => ({
+        promise: () => Promise.resolve(),
+      }),
+    });
+  const scheduledRule = await createRuleTrigger(rule);
+  t.true(cloudwatchStub.called);
+  t.deepEqual(scheduledRule, rule);
+  t.teardown(() => {
+    cloudwatchStub.restore();
   });
 });
 
