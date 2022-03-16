@@ -546,7 +546,7 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
   t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
 });
 
-test.serial('writeGranulesFromMessage() saves granule records to Dynamo/PostgreSQL/Elasticsearch with same timestamps', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to Dynamo/PostgreSQL/Elasticsearch with same created at, updated at and timestamp', async (t) => {
   const {
     cumulusMessage,
     granuleModel,
@@ -575,12 +575,13 @@ test.serial('writeGranulesFromMessage() saves granule records to Dynamo/PostgreS
   );
 
   const esRecord = await t.context.esGranulesClient.get(granuleId);
-
+  t.is(granulePgRecord.timestamp.getTime(), dynamoRecord.timestamp);
   t.is(granulePgRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(granulePgRecord.updated_at.getTime(), dynamoRecord.updatedAt);
 
   t.is(granulePgRecord.created_at.getTime(), esRecord.createdAt);
   t.is(granulePgRecord.updated_at.getTime(), esRecord.updatedAt);
+  t.is(granulePgRecord.timestamp.getTime(), esRecord.timestamp);
 });
 
 test.serial('writeGranulesFromMessage() saves the same files to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
