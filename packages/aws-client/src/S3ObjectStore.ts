@@ -1,8 +1,7 @@
-import * as querystring from 'querystring';
 import { URL } from 'url';
-// import * as AWS from 'aws-sdk';
 
-import { S3 } from '@aws-sdk/client-s3';
+import { S3, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import Logger from '@cumulus/logger';
 import { headObject, parseS3Uri } from './S3';
@@ -21,6 +20,31 @@ class S3ObjectStore {
 
   constructor() {
     this.s3 = awsClient(S3, '2006-03-01', { signatureVersion: 'v4' })();
+  }
+
+  async getS3SignedUrlWithCustomQueryParams(
+    command: GetObjectCommand | HeadObjectCommand,
+    queryParams: { [key: string]: string }
+  ) {
+    const middlewareName = 'customQueryParams';
+    this.s3.middlewareStack.addRelativeTo(
+      (next: any) => (args: any) => {
+        const { request } = args;
+        request.query = {
+          ...queryParams,
+          ...request.query,
+        };
+        return next(args);
+      },
+      {
+        name: middlewareName,
+        relation: 'before',
+        toMiddleware: 'presignInterceptMiddleware',
+      }
+    );
+    const signedUrl = await getSignedUrl(this.s3, command);
+    this.s3.middlewareStack.remove(middlewareName);
+    return signedUrl;
   }
 
   /**
@@ -49,18 +73,12 @@ class S3ObjectStore {
 
     await headObject(Bucket, Key);
 
-    const req = this.s3.getObject({ Bucket, Key, ...options });
+    const command = new GetObjectCommand({ Bucket, Key, ...options });
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command, queryParams);
 
-    if (queryParams && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `${options ? '&' : '?'}${querystring.stringify(queryParams)}`; }));
-    }
+    log.debug(`Signed GetObject request URL: ${signedUrl}`);
 
-    // TypeScript doesn't recognize that req has a presign method.  It does.
-    const result = await (req as any).presign();
-
-    log.debug(`Signed GetObject request URL: ${result}`);
-
-    return result;
+    return signedUrl;
   }
 
   /**
@@ -87,18 +105,12 @@ class S3ObjectStore {
 
     const { Bucket, Key } = parseS3Uri(objectUrl);
 
-    const req = this.s3.headObject({ Bucket, Key, ...options });
+    const command = new HeadObjectCommand({ Bucket, Key, ...options });
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command, queryParams);
 
-    if (queryParams && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(queryParams)}`; }));
-    }
+    log.debug(`Signed HeadObject request URL: ${signedUrl}`);
 
-    // TypeScript doesn't recognize that req has a presign method.  It does.
-    const result = await (req as any).presign();
-
-    log.debug(`Signed HeadObject request URL: ${result}`);
-
-    return result;
+    return signedUrl;
   }
 }
 

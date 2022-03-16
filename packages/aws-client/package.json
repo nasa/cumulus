@@ -29,7 +29,6 @@
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
@@ -66,6 +65,7 @@
     "@aws-sdk/client-sts": "^3.53.0",
     "@aws-sdk/lib-dynamodb": "^3.53.0",
     "@aws-sdk/lib-storage": "^3.53.0",
+    "@aws-sdk/s3-request-presigner": "^3.53.0",
     "@aws-sdk/types": "^3.53.0",
     "@cumulus/checksum": "10.1.1",
     "@cumulus/errors": "10.1.1",
