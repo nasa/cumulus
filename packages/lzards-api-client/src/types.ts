@@ -1,4 +1,5 @@
-export interface LzardsApiGetRequest {
+export interface LzardsApiGetRequestParameters {
   lzardsApiUri?: string,
-  searchParams: object
+  searchParams: object,
+  getAuthTokenFunction?: Function,
 }

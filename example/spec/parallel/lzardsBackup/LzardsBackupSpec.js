@@ -19,7 +19,6 @@ describe('The Lzards Backup Task ', () => {
   let lzardsApiGetFunctionName;
   let functionConfig;
   let prefix;
-  let lzardsProvider;
   let ingestBucket;
   let ingestPath;
   let lzardsBackupOutput;
@@ -92,7 +91,6 @@ describe('The Lzards Backup Task ', () => {
             meta: {
               buckets: config.buckets,
               collection,
-              provider: lzardsProvider,
               stack: config.stackName,
             },
             payload: {

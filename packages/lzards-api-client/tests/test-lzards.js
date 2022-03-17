@@ -1,41 +1,36 @@
 'use strict';
 
 const test = require('ava');
-const proxyquire = require('proxyquire');
 const sinon = require('sinon');
+const got = require('got');
 const { randomId } = require('@cumulus/common/test-utils');
+const {
+  sendGetRequestToLzards,
+  getAuthToken,
+} = require('../lzards');
 
 const sandbox = sinon.createSandbox();
-const fakeGetToLzards = sandbox.stub();
-const fakeGetRequiredEnvVar = sandbox.stub();
-const fakeGetSecretString = sandbox.stub();
-const fakeGetLaunchpadToken = sandbox.stub();
-const lzards = proxyquire('../lzards', {
-  got: {
-    get: fakeGetToLzards,
-  },
-  '@cumulus/common/env': {
-    getRequiredEnvVar: fakeGetRequiredEnvVar,
-  },
-  '@cumulus/aws-client/SecretsManager': {
-    getSecretString: fakeGetSecretString,
-  },
-  '@cumulus/launchpad-auth': {
-    getLaunchpadToken: fakeGetLaunchpadToken,
-  },
-});
 
-const lzardsGetAuthToken = proxyquire('../lzards', {
-  got: {
-    get: fakeGetToLzards,
-  },
-  '@cumulus/aws-client/SecretsManager': {
-    getSecretString: fakeGetSecretString,
-  },
+const initializeEnvVars = () => {
+  process.env.lzards_api = 'fakeLzardsApi';
+  process.env.launchpad_api = 'fakeLaunchpadApi';
+  process.env.lzards_launchpad_certificate = 'fakeLaunchpadCertificate';
+  process.env.lzards_launchpad_passphrase_secret_name = 'fakeLzardsLaunchpadPassphraseSecretName';
+  process.env.system_bucket = 'fakeSystemBucket';
+  process.env.stackName = 'fakeStackName';
+};
+
+const resetEnvVars = () => {
+  initializeEnvVars();
+};
+
+test.before(() => {
+  initializeEnvVars();
 });
 
 test.afterEach.always(() => {
   sandbox.reset();
+  resetEnvVars();
 });
 
 test.after.always(() => {
@@ -44,43 +39,35 @@ test.after.always(() => {
 
 test.serial('sendGetRequestToLzards returns error status when lzards_api environment is not set',
   async (t) => {
+    delete process.env.lzards_api;
     const searchParams = {
       test: 1,
     };
 
-    await t.throwsAsync(lzards.sendGetRequestToLzards({ searchParams }),
-      { name: 'Error', message: 'The lzards_api environment variable is not set' });
+    await t.throwsAsync(sendGetRequestToLzards({ searchParams }),
+      { name: 'MissingRequiredEnvVarError', message: 'The lzards_api environment variable must be set' });
   });
 
 test.serial('sendGetRequestToLzards returns error status when searchParams are not provided',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
-    await t.throwsAsync(lzards.sendGetRequestToLzards({ }),
+    await t.throwsAsync(sendGetRequestToLzards({ }),
       { name: 'Error', message: 'The required searchParams is not provided or empty' });
   });
 
 test.serial('sendGetRequestToLzards returns error status when searchParams is empty',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
-    await t.throwsAsync(lzards.sendGetRequestToLzards({ searchParams: {} }),
+    await t.throwsAsync(sendGetRequestToLzards({ searchParams: {} }),
       { name: 'Error', message: 'The required searchParams is not provided or empty' });
   });
 
 test.serial('sendGetRequestToLzards sends request to lzards api',
   async (t) => {
-    process.env.lzards_api = 'fake_lzards_api';
     const granuleId = randomId('granId');
     const collection = randomId('collectionId');
     const fakeLaunchpadToken = 'fakeLaunchpadToken';
-    fakeGetRequiredEnvVar.resolves('fakeLaunchpadApi');
-    fakeGetSecretString.resolves('fakeSecretString');
-    fakeGetLaunchpadToken.resolves(fakeLaunchpadToken);
-    fakeGetToLzards.resolves({
-      statusCode: 200,
-      body: {
-        httpStatus: 200,
-      },
-    });
+    const fakeGetAuthToken = sinon.stub().resolves(fakeLaunchpadToken);
 
     const searchParams = {
       metadata: {
@@ -98,55 +85,44 @@ test.serial('sendGetRequestToLzards sends request to lzards api',
       },
     };
 
-    const response = await lzards.sendGetRequestToLzards({ searchParams });
+    sinon.replace(got, 'get', sinon.stub().resolves({ statusCode: 200 }));
 
-    t.true(fakeGetToLzards.calledWith(requestUrl, requestBody));
+    const response = await sendGetRequestToLzards(
+      {
+        searchParams,
+        getAuthTokenFunction: fakeGetAuthToken,
+      }
+    );
+
+    t.true(got.get.calledWith(requestUrl, requestBody));
     t.is(response.statusCode, 200);
   });
 
 test.serial('getAuthToken throws an error if launchpad_api environment variable is not present',
   async (t) => {
-    const searchParams = {
-      test: 1,
-    };
-    process.env.lzards_api = 'fake_lzards_api';
-    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ searchParams }),
+    delete process.env.launchpad_api;
+    await t.throwsAsync(getAuthToken(),
       { name: 'MissingRequiredEnvVarError', message: 'The launchpad_api environment variable must be set' });
   });
 
 test.serial('getAuthToken throws an error if lzards_launchpad_passphrase_secret_name environment variable is not present',
   async (t) => {
-    const searchParams = {
-      test: 1,
-    };
-    process.env.lzards_api = 'fake_lzards_api';
-    process.env.launchpad_api = 'fake_launchpad_api';
-    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ searchParams }),
+    delete process.env.lzards_launchpad_passphrase_secret_name;
+    await t.throwsAsync(getAuthToken(),
       { name: 'MissingRequiredEnvVarError', message: 'The lzards_launchpad_passphrase_secret_name environment variable must be set' });
   });
 
 test.serial('getAuthToken throws an error if lzards_launchpad_certificate environment variable is not present',
   async (t) => {
-    const searchParams = {
-      test: 1,
-    };
-    fakeGetSecretString.resolves('fakeSecretString');
-    process.env.lzards_api = 'fake_lzards_api';
-    process.env.launchpad_api = 'fake_launchpad_api';
-    process.env.lzards_launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
-    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ searchParams }),
+    delete process.env.lzards_launchpad_certificate;
+    const fakeGetSecretString = sinon.stub().resolves('fakeSecretString');
+    await t.throwsAsync(getAuthToken(fakeGetSecretString),
       { name: 'MissingRequiredEnvVarError', message: 'The lzards_launchpad_certificate environment variable must be set' });
   });
 
 test.serial('getAuthToken throws an error if getSecretString() fails to return secret',
   async (t) => {
-    const searchParams = {
-      test: 1,
-    };
-    fakeGetSecretString.resolves(undefined);
-    process.env.lzards_api = 'fake_lzards_api';
-    process.env.launchpad_api = 'fake_launchpad_api';
-    process.env.lzards_launchpad_passphrase_secret_name = 'fake_launchpad_passphrase_secret_name';
-    await t.throwsAsync(lzardsGetAuthToken.sendGetRequestToLzards({ searchParams }),
+    const fakeGetSecretString = sinon.stub().resolves(undefined);
+    await t.throwsAsync(getAuthToken(fakeGetSecretString),
       { name: 'Error', message: 'The value stored in "launchpad_passphrase_secret_name" must be defined' });
   });

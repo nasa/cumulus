@@ -1,6 +1,6 @@
 'use strict';
 
-import { LzardsApiGetRequest } from './types';
+import { LzardsApiGetRequestParameters } from './types';
 
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
@@ -11,14 +11,24 @@ const isEmpty = require('lodash/isEmpty');
 
 const log = new Logger({ sender: 'api/lib/lzards' });
 
-async function getAuthToken() {
+/**
+ * Retrieve Launchpad Auth Token
+ *
+ * @param {Function} getSecretStringFunction - function used to retrieve a secret from AWS
+ * @param {Function} getLaunchpadTokenFunction - function used to retrieve cached Launchpad token
+ * @returns {Promise<string>} - resolves to a Launchpad Token string
+ */
+export async function getAuthToken(
+  getSecretStringFunction = getSecretString,
+  getLaunchpadTokenFunction = getLaunchpadToken
+) {
   const api = getRequiredEnvVar('launchpad_api');
-  const passphrase = await getSecretString(getRequiredEnvVar('lzards_launchpad_passphrase_secret_name'));
+  const passphrase = await getSecretStringFunction(getRequiredEnvVar('lzards_launchpad_passphrase_secret_name'));
   if (!passphrase) {
     throw new Error('The value stored in "launchpad_passphrase_secret_name" must be defined');
   }
   const certificate = getRequiredEnvVar('lzards_launchpad_certificate');
-  const token = await getLaunchpadToken({
+  const token = await getLaunchpadTokenFunction({
     api, passphrase, certificate,
   });
   return token;
@@ -27,22 +37,19 @@ async function getAuthToken() {
 /**
  * Send GET request to LZARDS
  *
- * @param {Object} params
- * @param {string} params.lzardsApiUri - LZARDS endpoint url
- * @param {Object} params.searchParams -  object containing search parameters to pass to lzards
+ * @param {Object}   params
+ * @param {string}   params.lzardsApiUri - LZARDS endpoint url
+ * @param {Object}   params.searchParams -  object containing search parameters to pass to lzards
+ * @param {Function} params.getAuthTokenFunction - function used to get a launchpad auth token
  * @returns {Promise<Object>} - resolves to the LZARDS return
  */
 export async function sendGetRequestToLzards(
   {
-    lzardsApiUri = process.env.lzards_api,
     searchParams,
-  }: LzardsApiGetRequest
+    getAuthTokenFunction = getAuthToken,
+  }: LzardsApiGetRequestParameters
 ) {
-  if (!lzardsApiUri) {
-    const errMsg = 'The lzards_api environment variable is not set';
-    log.error(errMsg);
-    throw new Error(errMsg);
-  }
+  const lzardsApiUri = getRequiredEnvVar('lzards_api');
 
   if (!searchParams || isEmpty(searchParams)) {
     const errMsg = 'The required searchParams is not provided or empty';
@@ -50,11 +57,11 @@ export async function sendGetRequestToLzards(
     throw new Error(errMsg);
   }
 
-  const authToken = await getAuthToken();
+  const authToken = await getAuthTokenFunction();
 
   try {
     return await got.get(
-      `${lzardsApiUri}`,
+      lzardsApiUri,
       {
         searchParams,
         responseType: 'json',

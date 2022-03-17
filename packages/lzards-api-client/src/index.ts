@@ -1,1 +1,4 @@
-export { sendGetRequestToLzards } from './lzards';
+export {
+  sendGetRequestToLzards,
+  getAuthToken,
+} from './lzards';
