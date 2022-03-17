@@ -66,7 +66,6 @@ test.beforeEach(async (t) => {
     fakeExecutionRecordFactory({ status: 'completed' })
   );
   t.context.completedExecutionCumulusId = pgCompletedExecution.cumulus_id;
-
 });
 
 test.after.always(async (t) => {
@@ -319,7 +318,7 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
   const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
-   completedExecutionCumulusId
+    completedExecutionCumulusId
   );
   const granuleCumulusId = pgGranule.cumulus_id;
 
