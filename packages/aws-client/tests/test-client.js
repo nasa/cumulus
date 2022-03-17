@@ -109,27 +109,27 @@ test.serial('client does not memoize different services with same arguments', (t
 });
 
 test.serial('awsClient() respects configuration', (t) => {
-  class TestClient {
+  class TestService {
     constructor(options) {
       this.region = options.region;
       this.apiVersion = options.apiVersion;
     }
   }
 
-  const client = awsClient(TestClient, 'v1', { region: 'us-east-1' })();
+  const client = awsClient(TestService, 'v1', { region: 'us-east-1' })();
   t.is(client.region, 'us-east-1');
   t.is(client.apiVersion, 'v1');
 });
 
 test.serial('awsClient() respects override configuration', (t) => {
-  class TestClient {
+  class TestService {
     constructor(options) {
       this.region = options.region;
       this.apiVersion = options.apiVersion;
     }
   }
 
-  const client = awsClient(TestClient, 'v1', { region: 'us-east-1' })({
+  const client = awsClient(TestService, 'v1', { region: 'us-east-1' })({
     region: 'us-west-2',
   });
   t.is(client.region, 'us-west-2');
