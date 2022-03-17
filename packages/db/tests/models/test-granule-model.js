@@ -52,7 +52,7 @@ test.beforeEach(async (t) => {
 
   const [completedPgexecution] = await t.context.executionPgModel.create(
     t.context.knex,
-    fakeExecutionRecordFactory( { status: 'completed' })
+    fakeExecutionRecordFactory({ status: 'completed' })
   );
   t.context.completedExecutionCumulusId = completedPgexecution.cumulus_id;
 });

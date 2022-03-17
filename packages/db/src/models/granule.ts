@@ -17,10 +17,7 @@ function isRecordSelect(param: RecordSelect | PostgresGranuleUniqueColumns): par
   return (param as RecordSelect).cumulus_id !== undefined;
 }
 
-export default class GranulePgModel extends BasePgModel<
-  PostgresGranule,
-  PostgresGranuleRecord
-> {
+export default class GranulePgModel extends BasePgModel<PostgresGranule, PostgresGranuleRecord> {
   constructor() {
     super({
       tableName: TableNames.granules,
@@ -28,7 +25,7 @@ export default class GranulePgModel extends BasePgModel<
   }
 
   create(knexOrTransaction: Knex | Knex.Transaction, item: PostgresGranule) {
-    return super.create(knexOrTransaction, item, "*");
+    return super.create(knexOrTransaction, item, '*');
   }
 
   /**
@@ -46,7 +43,7 @@ export default class GranulePgModel extends BasePgModel<
   }
 
   async deleteExcluding(): Promise<never> {
-    throw new Error("deleteExcluding not implemented on granule class");
+    throw new Error('deleteExcluding not implemented on granule class');
   }
 
   /**
@@ -100,12 +97,12 @@ export default class GranulePgModel extends BasePgModel<
     executionPgModel: ExecutionPgModel,
     executionCumulusId: number,
     knexOrTrx: Knex | Knex.Transaction,
-    status: 'queued' | 'running',
+    status: 'queued' | 'running'
   ) {
     const queryBuilder = executionPgModel.queryBuilderSearch(knexOrTrx, {
       cumulus_id: executionCumulusId,
     });
-    if (status === "running") {
+    if (status === 'running') {
       queryBuilder.where('status', '!=', 'running');
     }
     return queryBuilder;
@@ -124,10 +121,10 @@ export default class GranulePgModel extends BasePgModel<
         )}`
       );
     }
-    if (granule.status === "running" || granule.status === "queued") {
+    if (granule.status === 'running' || granule.status === 'queued') {
       const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
-        .onConflict(["granule_id", "collection_cumulus_id"])
+        .onConflict(['granule_id', 'collection_cumulus_id'])
         .merge({
           status: granule.status,
           timestamp: granule.timestamp,
@@ -145,18 +142,24 @@ export default class GranulePgModel extends BasePgModel<
       // In reality, the only place where executionCumulusId should be
       // undefined is from the data migrations
       if (executionCumulusId) {
-        const exclusionClause = this._buildExclusionClause(executionPgModel, executionCumulusId, knexOrTrx, granule.status)
+        const exclusionClause = this._buildExclusionClause(
+          executionPgModel,
+          executionCumulusId,
+          knexOrTrx,
+          granule.status
+        );
         // Only do the upsert if there is no execution that matches the exclusionClause
-        // For running granules, this means the execution does not exist in a state other than 'running'
-        // For queued granules, this means that the execution does not exist at all
+        // For running granules, this means the execution does not exist in a state other
+        // than 'running'.  For queued granules, this means that the execution does not
+        // exist at all
         upsertQuery.whereNotExists(exclusionClause);
       }
-      upsertQuery.returning("*");
+      upsertQuery.returning('*');
       return await upsertQuery;
     }
     return await knexOrTrx(this.tableName)
       .insert(granule)
-      .onConflict(["granule_id", "collection_cumulus_id"])
+      .onConflict(['granule_id', 'collection_cumulus_id'])
       .merge()
       .where(
         knexOrTrx.raw(
@@ -165,7 +168,7 @@ export default class GranulePgModel extends BasePgModel<
           )})`
         )
       )
-      .returning("*");
+      .returning('*');
   }
 
   /**
@@ -189,7 +192,7 @@ export default class GranulePgModel extends BasePgModel<
     const sortFields = getSortFields(sortQueries);
     const granuleCumulusIdsArray = [granuleCumulusIds].flat();
     const granules = await knexOrTrx(this.tableName)
-      .whereIn("cumulus_id", granuleCumulusIdsArray)
+      .whereIn('cumulus_id', granuleCumulusIdsArray)
       .modify((queryBuilder) => {
         if (limit) queryBuilder.limit(limit);
         if (offset) queryBuilder.offset(offset);

@@ -361,7 +361,7 @@ test('BasePgModel.queryBuilderSearch returns an awaitable knex Builder object', 
   searchResponse.forEach((r) => {
     t.like(r, recordBody);
   });
-})
+});
 
 test('BasePgModel.search() returns an array of records', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
