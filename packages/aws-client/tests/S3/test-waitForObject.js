@@ -12,9 +12,7 @@ test('waitForObject() returns the requested object', async (t) => {
       t.is(params.Bucket, Bucket);
       t.is(params.Key, Key);
 
-      return {
-        promise: () => Promise.resolve('asdf'),
-      };
+      return Promise.resolve('asdf');
     },
   };
 
@@ -39,7 +37,7 @@ test('waitForObject() does not retry if the requested bucket does not exist', as
       const error = new Error('Bucket does not exist');
       error.code = 'NoSuchBucket';
 
-      return { promise: () => Promise.reject(error) };
+      return Promise.reject(error);
     },
   };
 
@@ -72,10 +70,10 @@ test('waitForObject() retries if the requested object does not exist', async (t)
         const error = new Error('Object does not exist');
         error.code = 'NoSuchKey';
 
-        return { promise: () => Promise.reject(error) };
+        return Promise.reject(error);
       }
 
-      return { promise: () => Promise.resolve('asdf') };
+      return Promise.resolve('asdf');
     },
   };
 
@@ -106,10 +104,10 @@ test('waitForObject() retries if the wrong etag was returned', async (t) => {
         const error = new Error('Incorrect etag');
         error.code = 'PreconditionFailed';
 
-        return { promise: () => Promise.reject(error) };
+        return Promise.reject(error);
       }
 
-      return { promise: () => Promise.resolve('asdf') };
+      return Promise.resolve('asdf');
     },
   };
 

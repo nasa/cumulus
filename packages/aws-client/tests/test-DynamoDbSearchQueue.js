@@ -5,6 +5,7 @@ const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 
 const awsServices = require('../services');
+const DynamoDb = require('../DynamoDb');
 const DynamoDbSearchQueue = require('../DynamoDbSearchQueue');
 
 const randomString = () => cryptoRandomString({ length: 10 });
@@ -12,7 +13,7 @@ const randomString = () => cryptoRandomString({ length: 10 });
 test.beforeEach(async (t) => {
   t.context.tableName = randomString();
 
-  await awsServices.dynamodb().createTable({
+  await DynamoDb.createAndWaitForDynamoDbTable({
     TableName: t.context.tableName,
     AttributeDefinitions: [
       { AttributeName: 'bucket', AttributeType: 'S' },
@@ -26,15 +27,11 @@ test.beforeEach(async (t) => {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5,
     },
-  }).promise();
-
-  return awsServices.dynamodb().waitFor('tableExists', { TableName: t.context.tableName }).promise();
+  });
 });
 
 test.afterEach.always(
-  (t) =>
-    awsServices.dynamodb()
-      .deleteTable({ TableName: t.context.tableName })
+  (t) => DynamoDb.deleteAndWaitForDynamoDbTableNotExists({ TableName: t.context.tableName })
 );
 
 test.serial('DynamoDbSearchQueue.peek() returns the next item but does not remove it from the queue', async (t) => {
@@ -47,7 +44,7 @@ test.serial('DynamoDbSearchQueue.peek() returns the next item but does not remov
       bucket: { S: bucket },
       key: { S: key },
     },
-  }).promise();
+  });
 
   const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
 
@@ -65,7 +62,7 @@ test.serial('DynamoDbSearchQueue.shift() returns the next object and removes it 
       bucket: { S: bucket },
       key: { S: key },
     },
-  }).promise();
+  });
 
   const queue = new DynamoDbSearchQueue({ TableName: t.context.tableName });
 
@@ -82,7 +79,7 @@ test.serial('DynamoDbSearchQueue can handle paging', async (t) => {
         bucket: { S: randomString() },
         key: { S: randomString() },
       },
-    }).promise()));
+    })));
 
   const queue = new DynamoDbSearchQueue({
     TableName: t.context.tableName,
@@ -109,7 +106,7 @@ test.serial('DynamoDbSearchQueue returns results with searchType set to "query"'
         bucket: { S: bucket },
         key: { S: randomString() },
       },
-    }).promise()));
+    })));
 
   const queue = new DynamoDbSearchQueue(
     {
