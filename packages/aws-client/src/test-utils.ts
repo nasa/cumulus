@@ -1,5 +1,6 @@
-import * as AWS from 'aws-sdk';
 import { ThrottlingException } from '@cumulus/errors';
+
+import { AWSClientTypes } from './types';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
@@ -70,7 +71,7 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+function localStackAwsClient<T extends AWSClientTypes>(
   Service: new (params: object) => T,
   options: object
 ) {
@@ -103,7 +104,7 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
  *
  * @private
  */
-export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export function testAwsClient<T extends AWSClientTypes>(
   Service: new (params: object) => T,
   options: object
 ): T {

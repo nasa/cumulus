@@ -1,4 +1,7 @@
 import * as AWS from 'aws-sdk';
+import {
+  DynamoDBDocument,
+} from '@aws-sdk/lib-dynamodb';
 import { dynamodbDocClient } from './services';
 
 type SearchType = 'scan' | 'query';
@@ -9,7 +12,7 @@ type SearchParams = AWS.DynamoDB.DocumentClient.ScanInput | AWS.DynamoDB.Documen
  * memory at once.  Handles paging.
  */
 class DynamoDbSearchQueue {
-  private readonly dynamodbDocClient: AWS.DynamoDB.DocumentClient;
+  private readonly dynamodbDocClient: DynamoDBDocument;
   private readonly searchType: SearchType;
   private readonly params: SearchParams;
   private items: Array<AWS.DynamoDB.DocumentClient.AttributeMap | null>;
@@ -94,13 +97,17 @@ class DynamoDbSearchQueue {
   async fetchItems() {
     let response;
     do {
-      response = await this.dynamodbDocClient[this.searchType](this.params).promise(); // eslint-disable-line no-await-in-loop, max-len
-      if (response.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
-    } while ((response.Items || []).length === 0 && response.LastEvaluatedKey);
+      if (this.searchType === 'scan') {
+        response = await this.dynamodbDocClient.scan(this.params); // eslint-disable-line no-await-in-loop, max-len
+      } else if (this.searchType === 'query') {
+        response = await this.dynamodbDocClient.query(this.params); // eslint-disable-line no-await-in-loop, max-len
+      }
+      if (response?.LastEvaluatedKey) this.params.ExclusiveStartKey = response.LastEvaluatedKey;
+    } while ((response?.Items || []).length === 0 && response?.LastEvaluatedKey);
 
-    this.items = (response.Items || []);
+    this.items = (response?.Items || []);
 
-    if (!response.LastEvaluatedKey) this.items.push(null);
+    if (!response?.LastEvaluatedKey) this.items.push(null);
   }
 }
 

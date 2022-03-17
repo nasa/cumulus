@@ -1,5 +1,8 @@
+import { DynamoDB } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
 import * as AWS from 'aws-sdk';
-import awsClient = require('./client');
+
+import awsClient from './client';
 
 export const apigateway = awsClient(AWS.APIGateway, '2015-07-09');
 export const ecs = awsClient(AWS.ECS, '2014-11-13');
@@ -11,9 +14,13 @@ export const sqs = awsClient(AWS.SQS, '2012-11-05');
 export const cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
 export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
-export const dynamodb = awsClient(AWS.DynamoDB, '2012-08-10');
+export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(AWS.DynamoDBStreams, '2012-08-10');
-export const dynamodbDocClient = awsClient(AWS.DynamoDB.DocumentClient, '2012-08-10');
+export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOptions?: object) =>
+  DynamoDBDocument.from(
+    awsClient(DynamoDB, '2012-08-10')(dynamoOptions),
+    docClientOptions
+  );
 export const sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 export const cf = awsClient(AWS.CloudFormation, '2010-05-15');
 export const sns = awsClient(AWS.SNS, '2010-03-31');

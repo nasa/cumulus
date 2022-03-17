@@ -5,10 +5,22 @@
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 import range from 'lodash/range';
-import { DocumentClient } from 'aws-sdk/lib/dynamodb/document_client';
+import {
+  waitUntilTableExists,
+  waitUntilTableNotExists,
+  CreateTableInput,
+  DeleteTableInput,
+  ScanInput,
+  ScanOutput,
+} from '@aws-sdk/client-dynamodb';
+import {
+  DynamoDBDocument,
+  GetCommandInput,
+  ScanCommandInput,
+} from '@aws-sdk/lib-dynamodb';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { dynamodb, dynamodbDocClient } from './services';
+import { dynamodb } from './services';
 import { improveStackTrace } from './utils';
 
 /**
@@ -19,37 +31,37 @@ import { improveStackTrace } from './utils';
  *
  * @param {Object} params
  * @param {string} params.tableName - Table name to read
- * @param {AWS.DynamoDB.DocumentClient.Key} params.item - Key identifying object to get
- * @param {AWS.DynamoDB.DocumentClient} params.client - Instance of a DynamoDb DocumentClient
+ * @param {GetCommandInput.Key} params.item - Key identifying object to get
+ * @param {DynamoDBDocument} params.client - Instance of a DynamoDb DocumentClient
  * @param {Object} params.getParams - Additional parameters for DocumentClient.get()
  * @returns {Promise<Object>}
  * @throws {RecordDoesNotExist} if a record cannot be found
  */
-export const get = improveStackTrace(
-  async (params: {
+export const get = async (
+  params: {
     tableName: string,
-    item: AWS.DynamoDB.DocumentClient.Key,
-    client: AWS.DynamoDB.DocumentClient,
+    item: GetCommandInput['Key'],
+    client: DynamoDBDocument,
     getParams?: object
-  }) => {
-    const {
-      client,
-      getParams = {},
-      item,
-      tableName,
-    } = params;
-
-    const getResponse = await client.get({
-      ...getParams,
-      TableName: tableName,
-      Key: item,
-    }).promise();
-
-    if (getResponse.Item) return getResponse.Item;
-
-    throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)} in ${tableName}`);
   }
-);
+) => {
+  const {
+    client,
+    getParams = {},
+    item,
+    tableName,
+  } = params;
+
+  const getResponse = await client.get({
+    ...getParams,
+    TableName: tableName,
+    Key: item,
+  });
+
+  if (getResponse.Item) return getResponse.Item;
+
+  throw new RecordDoesNotExist(`No record found for ${JSON.stringify(item)} in ${tableName}`);
+};
 
 /**
  * Call DynamoDb client scan
@@ -63,16 +75,16 @@ export const get = improveStackTrace(
 export const scan = improveStackTrace(
   async (params: {
     tableName: string,
-    client: AWS.DynamoDB.DocumentClient,
+    client: DynamoDBDocument,
     query?: {
       filter?: string,
-      names?: AWS.DynamoDB.DocumentClient.ExpressionAttributeNameMap,
-      values?: AWS.DynamoDB.DocumentClient.ExpressionAttributeValueMap,
+      names?: ScanInput['ExpressionAttributeNames'],
+      values?: ScanCommandInput['ExpressionAttributeValues'],
     },
     fields?: string,
     limit?: number,
     select: string,
-    startKey?: AWS.DynamoDB.DocumentClient.Key
+    startKey?: ScanInput['ExclusiveStartKey']
   }) => {
     const {
       client,
@@ -84,7 +96,7 @@ export const scan = improveStackTrace(
       tableName,
     } = params;
 
-    const scanParams: AWS.DynamoDB.DocumentClient.ScanInput = {
+    const scanParams: ScanInput = {
       TableName: tableName,
     };
 
@@ -115,7 +127,7 @@ export const scan = improveStackTrace(
       scanParams.ExclusiveStartKey = startKey;
     }
 
-    const response = await client.scan(scanParams).promise();
+    const response = await client.scan(scanParams);
 
     // recursively go through all the records
     if (response.LastEvaluatedKey) {
@@ -151,20 +163,20 @@ export const scan = improveStackTrace(
  * @param {Object} params
  * @param {number} params.totalSegments
  *   Total number of segments to divide table into for parallel scanning
- * @param {DocumentClient.ScanInput} params.scanParams
+ * @param {ScanInput} params.scanParams
  *   Params for the DynamoDB client scan operation
  *   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html
  * @param {function} params.processItemsFunc - Function used to process returned items by scan
- * @param {DocumentClient} [params.dynamoDbClient] - Instance of Dynamo DB document client
+ * @param {DynamoDBDocument} [params.dynamoDbClient] - Instance of Dynamo DB document client
  * @param {pRetry.Options} [params.retryOptions] - Retry options for scan operations
  * @returns {Promise}
  */
 export const parallelScan = async (
   params: {
     totalSegments: number,
-    scanParams: DocumentClient.ScanInput,
-    processItemsFunc: (items: DocumentClient.ItemList) => Promise<void>,
-    dynamoDbClient?: DocumentClient,
+    scanParams: ScanCommandInput,
+    processItemsFunc: (items: ScanOutput['Items']) => Promise<void>,
+    dynamoDbClient: DynamoDBDocument,
     retryOptions?: pRetry.Options,
   }
 ) => {
@@ -172,16 +184,16 @@ export const parallelScan = async (
     totalSegments,
     scanParams,
     processItemsFunc,
-    dynamoDbClient = dynamodbDocClient(),
+    dynamoDbClient,
     retryOptions,
   } = params;
 
   return await pMap(
     range(totalSegments),
     async (_, segmentIndex) => {
-      let exclusiveStartKey: DocumentClient.Key | undefined;
+      let exclusiveStartKey: ScanInput['ExclusiveStartKey'] | undefined;
 
-      const segmentScanParams: DocumentClient.ScanInput = {
+      const segmentScanParams: ScanInput = {
         ...scanParams,
         TotalSegments: totalSegments,
         Segment: segmentIndex,
@@ -193,7 +205,7 @@ export const parallelScan = async (
           Items = [],
           LastEvaluatedKey,
         } = await pRetry(
-          () => dynamoDbClient.scan(segmentScanParams).promise(),
+          () => dynamoDbClient.scan(segmentScanParams),
           retryOptions
         );
 
@@ -221,10 +233,14 @@ export const parallelScan = async (
  *
  * @static
  */
-export async function createAndWaitForDynamoDbTable(params: AWS.DynamoDB.CreateTableInput) {
-  const createTableResult = await dynamodb().createTable(params).promise();
-  await dynamodb().waitFor('tableExists', { TableName: params.TableName }).promise();
-
+export async function createAndWaitForDynamoDbTable(params: CreateTableInput) {
+  const dynamoDbClient = dynamodb();
+  const createTableResult = await dynamoDbClient.createTable(params);
+  await waitUntilTableExists({
+    client: dynamoDbClient,
+    minDelay: 1,
+    maxWaitTime: 3,
+  }, { TableName: params.TableName });
   return createTableResult;
 }
 
@@ -238,8 +254,13 @@ export async function createAndWaitForDynamoDbTable(params: AWS.DynamoDB.CreateT
  * @static
  */
 export async function deleteAndWaitForDynamoDbTableNotExists(
-  params: AWS.DynamoDB.DeleteTableInput
+  params: DeleteTableInput
 ) {
-  await dynamodb().deleteTable(params).promise();
-  return dynamodb().waitFor('tableNotExists', { TableName: params.TableName }).promise();
+  const dynamoDbClient = dynamodb();
+  await dynamoDbClient.deleteTable(params);
+  await waitUntilTableNotExists({
+    client: dynamoDbClient,
+    minDelay: 1,
+    maxWaitTime: 3,
+  }, { TableName: params.TableName });
 }

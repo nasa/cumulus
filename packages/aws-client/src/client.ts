@@ -1,5 +1,6 @@
 import AWS from 'aws-sdk';
 import { inTestMode, testAwsClient } from './test-utils';
+import { AWSClientTypes } from './types';
 
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
@@ -33,7 +34,7 @@ const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
  *
  * @private
  */
-const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+const awsClient = <T extends AWSClientTypes>(
   Service: new (params: object) => T,
   version?: string,
   serviceOptions?: object
