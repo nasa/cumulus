@@ -1,16 +1,25 @@
-import { inTestMode, testAwsClient } from './test-utils';
+import mem from 'mem';
+import { inTestMode, getLocalstackAwsClientOptions } from './test-utils';
 
 import { AWSClientTypes } from './types';
 
 export const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
 
-const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
-  let memo: T;
-  return (options) => {
-    if (!memo) memo = fn(options);
-    return memo;
-  };
+const buildServiceClient = (Service: any, options?: object) => {
+  if (inTestMode()) {
+    return new Service(getLocalstackAwsClientOptions(Service, options));
+  }
+  return new Service(options);
 };
+
+const getMemoizedClient = mem(buildServiceClient, {
+  cacheKey: (arguments_) => `${arguments_[0].name}${JSON.stringify(arguments_[1])}`,
+});
+
+const getServiceClient = <T extends AWSClientTypes>(
+  Service: new (params: object) => T,
+  options: object = {}
+) => (overrides?: object) => getMemoizedClient(Service, Object.assign(options, overrides));
 
 /**
  * Return a function which, when called, will return an AWS service object
@@ -31,15 +40,12 @@ export const awsClient = <T extends AWSClientTypes>(
   Service: new (params: object) => T,
   version?: string,
   serviceOptions?: object
-): (options?: object) => T => {
+): (params?: object) => T => {
   const options: { region: string, apiVersion?: string } = {
     region: getRegion(),
     ...serviceOptions,
   };
   if (version) options.apiVersion = version;
 
-  if (inTestMode()) {
-    return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
-  }
-  return memoize((o) => new Service(Object.assign(options, o)));
+  return getServiceClient(Service, options);
 };

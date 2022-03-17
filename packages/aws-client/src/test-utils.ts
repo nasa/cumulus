@@ -74,15 +74,14 @@ const getServiceIdentifer = (service: any) => service.serviceIdentifier || servi
  *
  * @private
  */
-function localStackAwsClient<T extends AWSClientTypes>(
+function localStackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
-  options: object
+  options: object = {}
 ) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
   }
 
-  // @ts-ignore
   const serviceIdentifier = getServiceIdentifer(Service);
   console.log(serviceIdentifier);
 
@@ -98,7 +97,7 @@ function localStackAwsClient<T extends AWSClientTypes>(
   console.log('localStackOptions', localStackOptions);
 
   if (serviceIdentifier === 'S3') localStackOptions.forcePathStyle = true;
-  return new Service(localStackOptions);
+  return localStackOptions;
 }
 
 /**
@@ -110,19 +109,18 @@ function localStackAwsClient<T extends AWSClientTypes>(
  *
  * @private
  */
-export function testAwsClient<T extends AWSClientTypes>(
+export function getLocalstackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
-  options: object
-): T {
+  options?: object
+): object {
   // @ts-ignore
   const serviceIdentifier = getServiceIdentifer(Service);
   console.log('serviceIdentifier', serviceIdentifier);
   if (localstackSupportedService(serviceIdentifier)) {
     console.log('supported');
-    return localStackAwsClient(Service, options);
+    return localStackAwsClientOptions(Service, options);
   }
-
-  return <T>{};
+  return {};
 }
 
 /**

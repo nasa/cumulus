@@ -8,7 +8,7 @@ import { awsClient } from './client';
 export const apigateway = awsClient(AWS.APIGateway, '2015-07-09');
 export const ecs = awsClient(AWS.ECS, '2014-11-13');
 export const ec2 = awsClient(AWS.EC2, '2016-11-15');
-export const s3 = awsClient(S3, '2006-03-01', { signatureVersion: 'v4' });
+export const s3 = awsClient(S3, '2006-03-01');
 export const kinesis = awsClient(AWS.Kinesis, '2013-12-02');
 export const lambda = awsClient(AWS.Lambda, '2015-03-31');
 export const sqs = awsClient(AWS.SQS, '2012-11-05');
