@@ -1,5 +1,6 @@
-import * as AWS from 'aws-sdk';
 import { ThrottlingException } from '@cumulus/errors';
+
+import { AWSClientTypes } from './types';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
@@ -70,9 +71,9 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+function localStackAwsClientOptions<T>(
   Service: new (params: object) => T,
-  options: object
+  options: object = {}
 ) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
@@ -89,9 +90,8 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
-  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
-
-  return new Service(localStackOptions);
+  if (serviceIdentifier === 'S3') localStackOptions.forcePathStyle = true;
+  return localStackOptions;
 }
 
 /**
@@ -103,17 +103,16 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
  *
  * @private
  */
-export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export function getLocalstackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
-  options: object
-): T {
+  options?: object
+): object {
   // @ts-ignore
   const serviceIdentifier = Service.serviceIdentifier;
   if (localstackSupportedService(serviceIdentifier)) {
-    return localStackAwsClient(Service, options);
+    return localStackAwsClientOptions(Service, options);
   }
-
-  return <T>{};
+  return {};
 }
 
 /**

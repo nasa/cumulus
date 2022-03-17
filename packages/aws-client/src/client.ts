@@ -1,5 +1,8 @@
 import AWS from 'aws-sdk';
-import { inTestMode, testAwsClient } from './test-utils';
+import mem from 'mem';
+
+import { inTestMode, getLocalstackAwsClientOptions } from './test-utils';
+import { AWSClientTypes } from './types';
 
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
@@ -10,13 +13,21 @@ const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION
 AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
 AWS.config.setPromisesDependency(Promise);
 
-const memoize = <T>(fn: (options?: object) => T): (options?: object) => T => {
-  let memo: T;
-  return (options) => {
-    if (!memo) memo = fn(options);
-    return memo;
-  };
+const buildServiceClient = (Service: any, options?: object) => {
+  if (inTestMode()) {
+    return new Service(getLocalstackAwsClientOptions(Service, options));
+  }
+  return new Service(options);
 };
+
+const getMemoizedClient = mem(buildServiceClient, {
+  cacheKey: (arguments_) => `${arguments_[0].name}${JSON.stringify(arguments_[1])}`,
+});
+
+const getServiceClient = <T extends AWSClientTypes>(
+  Service: new (params: object) => T,
+  options: object = {}
+) => (overrides?: object) => getMemoizedClient(Service, Object.assign(options, overrides));
 
 /**
  * Return a function which, when called, will return an AWS service object
@@ -37,7 +48,7 @@ const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
   Service: new (params: object) => T,
   version?: string,
   serviceOptions?: object
-): (options?: object) => T => {
+): (params?: object) => T => {
   const options: { region: string, apiVersion?: string } = {
     region: getRegion(),
     ...serviceOptions,
@@ -50,9 +61,9 @@ const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
       // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
       AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
     }
-    return memoize((o) => testAwsClient(Service, Object.assign(options, o)));
+    return getServiceClient(Service, options);
   }
-  return memoize((o) => new Service(Object.assign(options, o)));
+  return getServiceClient(Service, options);
 };
 
 export = awsClient;
