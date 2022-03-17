@@ -134,6 +134,7 @@ test.beforeEach(async (t) => {
   const execution = fakeExecutionRecordFactory({
     arn: t.context.executionArn,
     url: t.context.executionUrl,
+    status: 'completed',
   });
 
   t.context.collection = fakeCollectionRecordFactory();
@@ -274,7 +275,7 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
   );
 });
 
-test.serial('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
+test('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
   const {
     granule,
     executionCumulusId,
