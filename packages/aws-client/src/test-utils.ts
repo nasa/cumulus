@@ -1,6 +1,7 @@
 import { ThrottlingException } from '@cumulus/errors';
 
 import { AWSClientTypes } from './types';
+import { getServiceIdentifer } from './utils';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
@@ -13,6 +14,7 @@ const localStackPorts = {
   cloudwatchevents: 4566,
   cloudwatchlogs: 4566,
   dynamodb: 4566,
+  dynamodbclient: 4566,
   es: 4566,
   firehose: 4566,
   iam: 4566,
@@ -71,16 +73,15 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-function localStackAwsClient<T extends AWSClientTypes>(
+function localStackAwsClientOptions<T>(
   Service: new (params: object) => T,
-  options: object
+  options: object = {}
 ) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
   }
 
-  // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  const serviceIdentifier = getServiceIdentifer(Service);
 
   const localStackOptions: { [key: string ]: unknown } = {
     ...options,
@@ -90,9 +91,8 @@ function localStackAwsClient<T extends AWSClientTypes>(
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
-  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
-
-  return new Service(localStackOptions);
+  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.s3ForcePathStyle = true;
+  return localStackOptions;
 }
 
 /**
@@ -104,17 +104,16 @@ function localStackAwsClient<T extends AWSClientTypes>(
  *
  * @private
  */
-export function testAwsClient<T extends AWSClientTypes>(
+export function getLocalstackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
-  options: object
-): T {
+  options?: object
+): object {
   // @ts-ignore
   const serviceIdentifier = Service.serviceIdentifier;
   if (localstackSupportedService(serviceIdentifier)) {
-    return localStackAwsClient(Service, options);
+    return localStackAwsClientOptions(Service, options);
   }
-
-  return <T>{};
+  return {};
 }
 
 /**

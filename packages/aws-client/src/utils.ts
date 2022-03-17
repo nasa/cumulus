@@ -1,6 +1,9 @@
 import pRetry from 'p-retry';
 import { isThrottlingException } from '@cumulus/errors';
 
+export const getServiceIdentifer = (service: any) =>
+  service.serviceIdentifier || service.name;
+
 // Replace the stack of an error
 // Note: This mutates the error that was passed in.
 export const setErrorStack = (error: Error, newStack: string) => {
