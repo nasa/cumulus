@@ -253,8 +253,8 @@ export const generateGranuleApiRecord = async ({
   } = granule;
 
   const now = Date.now();
-  if (!updatedAt) { updatedAt = now; }
-  if (!timestamp) { timestamp = now; }
+  const actualUpdatedAt = updatedAt ?? now;
+  const actualTimestamp = timestamp ?? now;
 
   // Get CMR temporalInfo
   const temporalInfo = await getGranuleCmrTemporalInfo({
@@ -276,8 +276,8 @@ export const generateGranuleApiRecord = async ({
     error,
     published,
     createdAt: createdAt || workflowStartTime,
-    timestamp,
-    updatedAt,
+    timestamp: actualTimestamp,
+    updatedAt: actualUpdatedAt,
     duration,
     productVolume,
     timeToPreprocess,
