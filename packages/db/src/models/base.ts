@@ -103,6 +103,22 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
       .whereBetween('cumulus_id', [startId, startId + pageSize - 1]);
   }
 
+ /**
+   * Builds query to fetch mulitple items from postgres
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {Object} params - An object or any portion of an object of type RecordType
+   * @returns {Object} - Knex querybuilder object
+   */
+
+  queryBuilderSearch(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: Partial<RecordType>
+  ) {
+    return knexOrTransaction(this.tableName)
+    .where(params);
+  }
+
   /**
    * Fetches multiple items from Postgres
    *
@@ -114,8 +130,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ): Promise<RecordType[]> {
-    const records: Array<RecordType> = await knexOrTransaction(this.tableName)
-      .where(params);
+    const records: Array<RecordType> = await this.queryBuilderSearch(knexOrTransaction, params)
     return records;
   }
 
