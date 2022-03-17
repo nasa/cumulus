@@ -1830,7 +1830,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
     executionUrl,
     knex,
   } = t.context;
-
+  const timestamp = Date.now();
   const {
     newPgGranule,
     newDynamoGranule,
@@ -1858,6 +1858,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
     ...newDynamoGranule,
     status: 'completed',
     queryFields: newQueryFields,
+    timestamp,
   };
 
   await request(app)
@@ -1873,6 +1874,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
   t.deepEqual(actualGranule, {
     ...newDynamoGranule,
     status: 'completed',
+    timestamp,
     queryFields: newQueryFields,
     updatedAt: actualGranule.updatedAt,
     error: {},
@@ -1888,6 +1890,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
 
   t.deepEqual(actualPgGranule, {
     ...newPgGranule,
+    timestamp: new Date(timestamp),
     status: 'completed',
     query_fields: newQueryFields,
     updated_at: actualPgGranule.updated_at,
