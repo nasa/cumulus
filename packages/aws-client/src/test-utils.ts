@@ -14,6 +14,7 @@ const localStackPorts = {
   cloudwatchevents: 4566,
   cloudwatchlogs: 4566,
   dynamodb: 4566,
+  dynamodbclient: 4566,
   es: 4566,
   firehose: 4566,
   iam: 4566,
@@ -90,7 +91,7 @@ function localStackAwsClientOptions<T>(
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
-  if (serviceIdentifier === 'S3') localStackOptions.forcePathStyle = true;
+  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.s3ForcePathStyle = true;
   return localStackOptions;
 }
 

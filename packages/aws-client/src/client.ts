@@ -55,14 +55,12 @@ const awsClient = <T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
     ...serviceOptions,
   };
   if (version) options.apiVersion = version;
-
   if (inTestMode()) {
     // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
     if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
       // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
-      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodb';
+      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodbclient';
     }
-    return getServiceClient(Service, options);
   }
   return getServiceClient(Service, options);
 };
