@@ -1,6 +1,7 @@
 import { ThrottlingException } from '@cumulus/errors';
 
 import { AWSClientTypes } from './types';
+import { getServiceIdentifer } from './utils';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
@@ -79,8 +80,7 @@ function localStackAwsClientOptions<T>(
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
   }
 
-  // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  const serviceIdentifier = getServiceIdentifer(Service);
 
   const localStackOptions: { [key: string ]: unknown } = {
     ...options,

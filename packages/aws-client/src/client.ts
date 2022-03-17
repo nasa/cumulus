@@ -3,6 +3,7 @@ import mem from 'mem';
 
 import { inTestMode, getLocalstackAwsClientOptions } from './test-utils';
 import { AWSClientTypes } from './types';
+import { getServiceIdentifer } from './utils';
 
 const noop = () => {}; // eslint-disable-line lodash/prefer-noop
 
@@ -21,7 +22,7 @@ const buildServiceClient = (Service: any, options?: object) => {
 };
 
 const getMemoizedClient = mem(buildServiceClient, {
-  cacheKey: (arguments_) => `${arguments_[0].name}${JSON.stringify(arguments_[1])}`,
+  cacheKey: (arguments_) => `${getServiceIdentifer(arguments_[0])}${JSON.stringify(arguments_[1])}`,
 });
 
 const getServiceClient = <T extends AWSClientTypes>(

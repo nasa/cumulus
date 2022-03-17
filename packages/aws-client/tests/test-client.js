@@ -52,6 +52,7 @@ test.serial('client memoizes same service with no arguments correctly', (t) => {
   let count = 0;
   class FakeService {
     constructor() {
+      this.serviceIdentifier = this.name;
       count += 1;
     }
   }
@@ -66,6 +67,7 @@ test.serial('client memoizes same service with same arguments correctly', (t) =>
   // Use a different fake service name to avoid test interference
   class FakeService1 {
     constructor() {
+      this.serviceIdentifier = this.name;
       count += 1;
     }
   }
@@ -80,6 +82,7 @@ test.serial('client does not memoize service with different arguments', (t) => {
   // Use a different fake service name to avoid test interference
   class FakeService2 {
     constructor() {
+      this.serviceIdentifier = this.name;
       count += 1;
     }
   }
@@ -94,11 +97,13 @@ test.serial('client does not memoize different services with same arguments', (t
   // Use a different fake service name to avoid test interference
   class FooService {
     constructor() {
+      this.serviceIdentifier = this.name;
       count += 1;
     }
   }
   class BarService {
     constructor() {
+      this.serviceIdentifier = this.name;
       count += 1;
     }
   }
@@ -111,6 +116,7 @@ test.serial('client does not memoize different services with same arguments', (t
 test.serial('awsClient() respects configuration', (t) => {
   class TestService {
     constructor(options) {
+      this.serviceIdentifier = this.name;
       this.region = options.region;
       this.apiVersion = options.apiVersion;
     }
@@ -124,6 +130,7 @@ test.serial('awsClient() respects configuration', (t) => {
 test.serial('awsClient() respects override configuration', (t) => {
   class TestService {
     constructor(options) {
+      this.serviceIdentifier = this.name;
       this.region = options.region;
       this.apiVersion = options.apiVersion;
     }
