@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
 
+### Fixed
+
+- **CUMULUS-2849**
+  - Fixed AWS service client memoization logic in `@cumulus/aws-client`
+
 ## [v10.1.1] 2022-03-04
 
 ### Migration steps
