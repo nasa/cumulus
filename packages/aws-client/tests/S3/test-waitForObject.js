@@ -35,7 +35,7 @@ test('waitForObject() does not retry if the requested bucket does not exist', as
       callCount += 1;
 
       const error = new Error('Bucket does not exist');
-      error.code = 'NoSuchBucket';
+      error.name = 'NoSuchBucket';
 
       return Promise.reject(error);
     },
@@ -68,7 +68,7 @@ test('waitForObject() retries if the requested object does not exist', async (t)
 
       if (callCount === 1) {
         const error = new Error('Object does not exist');
-        error.code = 'NoSuchKey';
+        error.name = 'NoSuchKey';
 
         return Promise.reject(error);
       }
@@ -102,7 +102,7 @@ test('waitForObject() retries if the wrong etag was returned', async (t) => {
 
       if (callCount === 1) {
         const error = new Error('Incorrect etag');
-        error.code = 'PreconditionFailed';
+        error.name = 'PreconditionFailed';
 
         return Promise.reject(error);
       }
