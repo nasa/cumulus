@@ -150,9 +150,9 @@ export default class GranulePgModel extends BasePgModel<
         // For running granules, this means the execution does not exist in a state other than 'running'
         // For queued granules, this means that the execution does not exist at all
         upsertQuery.whereNotExists(exclusionClause);
-        upsertQuery.returning("*");
-        return await upsertQuery;
       }
+      upsertQuery.returning("*");
+      return await upsertQuery;
     }
     return await knexOrTrx(this.tableName)
       .insert(granule)
