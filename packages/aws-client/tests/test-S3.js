@@ -31,6 +31,7 @@ const {
   getObjectReadStream,
   streamS3Upload,
   getObjectStreamContents,
+  uploadS3FileStream,
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -425,4 +426,20 @@ test('streamS3Upload() throws error if upload stream errors', async (t) => {
     ),
     { message: /ENOENT: no such file or directory/ }
   );
+});
+
+test('uploadS3FileStream() respects S3 configuration parameters', async (t) => {
+  const readStream = fs.createReadStream('/dev/urandom', { end: 5 });
+  const key = cryptoRandomString({ length: 5 });
+  const contentType = 'application/json';
+  await uploadS3FileStream(
+    readStream,
+    t.context.Bucket,
+    key,
+    {
+      ContentType: contentType,
+    }
+  );
+  const object = await headObject(t.context.Bucket, key);
+  t.is(object.ContentType, 'application/json');
 });
