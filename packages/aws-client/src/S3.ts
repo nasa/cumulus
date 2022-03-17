@@ -711,8 +711,8 @@ export const uploadS3FileStream = (
   s3opts: Partial<PutObjectRequest> = {}
 ) =>
   promiseS3Upload({
-    ...s3opts,
     params: {
+      ...s3opts,
       Bucket: bucket,
       Key: key,
       Body: fileStream,
