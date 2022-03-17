@@ -63,7 +63,7 @@ test('Manager.createTable() creates the correct table', async (t) => {
     await manager.createTable();
     const describeTableResponse = await dynamodb().describeTable({
       TableName: tableName,
-    }).promise();
+    });
 
     t.is(describeTableResponse.Table.TableStatus, 'ACTIVE');
   } finally {
@@ -81,17 +81,17 @@ test('The Manager deleteTable method deletes the correct table', async (t) => {
   await manager.createTable();
   const describeTableResponse = await dynamodb().describeTable({
     TableName: tableName,
-  }).promise();
+  });
 
   t.is(describeTableResponse.Table.TableStatus, 'ACTIVE');
 
   await manager.deleteTable();
 
   try {
-    await dynamodb().describeTable({ TableName: tableName }).promise();
+    await dynamodb().describeTable({ TableName: tableName });
     t.fail();
   } catch (error) {
-    t.is(error.code, 'ResourceNotFoundException');
+    t.is(error.name, 'ResourceNotFoundException');
   }
 });
 
@@ -105,7 +105,7 @@ test('Manager.exists() returns true when a record exists', async (t) => {
     Item: {
       id: { S: id },
     },
-  }).promise();
+  });
 
   t.true(await manager.exists({ id }));
 });

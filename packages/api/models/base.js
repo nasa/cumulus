@@ -18,11 +18,11 @@ async function enableStream(tableName) {
     },
   };
 
-  await awsServices.dynamodb().updateTable(params).promise();
+  await awsServices.dynamodb().updateTable(params);
 
   await pWaitFor(
     async () =>
-      await awsServices.dynamodb().describeTable({ TableName: tableName }).promise()
+      await awsServices.dynamodb().describeTable({ TableName: tableName })
         .then((response) => response.TableStatus !== 'UPDATING'),
     { interval: 5 * 1000 }
   );
@@ -67,8 +67,7 @@ async function createTable(tableName, hash, range, attributes, indexes) {
     });
   }
 
-  const output = await awsServices.dynamodb().createTable(params).promise();
-  await awsServices.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+  const output = await DynamoDb.createAndWaitForDynamoDbTable(params);
 
   if (!inTestMode()) await enableStream(tableName);
 
@@ -76,11 +75,7 @@ async function createTable(tableName, hash, range, attributes, indexes) {
 }
 
 async function deleteTable(tableName) {
-  const output = await awsServices.dynamodb().deleteTable({
-    TableName: tableName,
-  }).promise();
-
-  await awsServices.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
+  const output = await DynamoDb.deleteAndWaitForDynamoDbTableNotExists({ TableName: tableName });
   return output;
 }
 
@@ -241,7 +236,7 @@ class Manager {
       params.RequestItems[this.tableName].AttributesToGet = attributes;
     }
 
-    return await this.dynamodbDocClient.batchGet(params).promise();
+    return await this.dynamodbDocClient.batchGet(params);
   }
 
   async batchWrite(deletes, puts = []) {
@@ -278,7 +273,7 @@ class Manager {
       },
     };
 
-    return await this.dynamodbDocClient.batchWrite(params).promise();
+    return await this.dynamodbDocClient.batchWrite(params);
   }
 
   addTimeStampsToItem(item) {
@@ -322,7 +317,7 @@ class Manager {
       await this.dynamodbDocClient.put({ // eslint-disable-line no-await-in-loop
         TableName: this.tableName,
         Item: itemsWithTimestamps[i],
-      }).promise();
+      });
     }
 
     // If the original item was an Array, return an Array.  If the original item
@@ -348,7 +343,7 @@ class Manager {
       Key: item,
     };
 
-    return await this.dynamodbDocClient.delete(params).promise();
+    return await this.dynamodbDocClient.delete(params);
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
@@ -402,7 +397,7 @@ class Manager {
       Key: itemKeys,
       ReturnValues: 'ALL_NEW',
       AttributeUpdates: attributeUpdates,
-    }).promise();
+    });
 
     return updateResponse.Attributes;
   }
