@@ -731,7 +731,7 @@ const writeGranuleFromApi = async (
     provider,
     error = {},
     createdAt = new Date().valueOf(),
-    updatedAt = new Date().valueOf(),
+    updatedAt,
     duration,
     productVolume,
     timeToPreprocess,

@@ -252,6 +252,10 @@ export const generateGranuleApiRecord = async ({
     createdAt,
   } = granule;
 
+  const now = Date.now();
+  if (!updatedAt) { updatedAt = now; }
+  if (!timestamp) { timestamp = now; }
+
   // Get CMR temporalInfo
   const temporalInfo = await getGranuleCmrTemporalInfo({
     granule,
