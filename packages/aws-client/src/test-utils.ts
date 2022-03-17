@@ -13,7 +13,8 @@ const localStackPorts = {
   cloudwatch: 4566,
   cloudwatchevents: 4566,
   cloudwatchlogs: 4566,
-  dynamodb: 4566,
+  DynamoDB: 4566,
+  DynamoDBClient: 4566,
   dynamodbclient: 4566,
   es: 4566,
   firehose: 4566,
@@ -108,8 +109,7 @@ export function getLocalstackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
   options?: object
 ): object {
-  // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  const serviceIdentifier = getServiceIdentifer(Service);
   if (localstackSupportedService(serviceIdentifier)) {
     return localStackAwsClientOptions(Service, options);
   }
