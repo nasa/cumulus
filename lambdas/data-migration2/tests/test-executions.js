@@ -411,7 +411,7 @@ test.serial('child execution migration fails if parent execution cannot be migra
     dynamodbDocClient().put({
       TableName: process.env.ExecutionsTable,
       Item: parentExecution,
-    }).promise(),
+    }),
     executionsModel.create(childExecution),
   ]);
   t.teardown(() => Promise.all([

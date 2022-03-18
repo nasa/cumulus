@@ -460,7 +460,7 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
     dynamodbDocClient().put({
       TableName: process.env.RulesTable,
       Item: fakeRule1,
-    }).promise(),
+    }),
     rulesModel.create(fakeRule2),
   ]);
   t.teardown(() => Promise.all([

@@ -37,7 +37,9 @@ const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
  * @throws {CumulusNoLockError}         -on 'lock' locking collision
  */
 async function lockOperation(operation, gitSHA, deployment, shouldLock) {
-  const mutex = new Mutex(dynamodbDocClient({ convertEmptyValues: true }), LOCK_TABLE_NAME);
+  const mutex = new Mutex(dynamodbDocClient({
+    marshallOptions: { convertEmptyValues: true },
+  }), LOCK_TABLE_NAME);
 
   if (operation === 'confirmLock') {
     const lockSHA = await mutex.checkMatchingSha(deployment, gitSHA);
