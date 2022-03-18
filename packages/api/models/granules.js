@@ -372,7 +372,11 @@ class Granule extends Manager {
   async storeGranule(granuleRecord) {
     logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
     const response = await this._validateAndStoreGranuleRecord(granuleRecord);
-    logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    if (response) {
+      logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+    } else {
+      logger.info(`Did not update granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} due to granule write constraints`);
+    }
     return response;
   }
 

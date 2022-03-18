@@ -140,7 +140,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         );
 
       // In reality, the only place where executionCumulusId should be
-      // undefined is from the data migrations
+      // undefined is from the data migrations OR a queued granule from reingest
       if (executionCumulusId) {
         const exclusionClause = this._buildExclusionClause(
           executionPgModel,

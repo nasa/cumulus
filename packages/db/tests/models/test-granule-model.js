@@ -384,7 +384,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     executionPgModel,
     granulePgModel,
     collectionCumulusId,
-    executionCumulusId,
+    completedExecutionCumulusId,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -392,7 +392,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, completedExecutionCumulusId);
 
   const [newExecution] = await executionPgModel.create(
     t.context.knex,
