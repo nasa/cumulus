@@ -275,7 +275,7 @@ test('writeFilesViaTransaction() throws error if any writes fail', async (t) => 
   );
 });
 
-test('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
+test.serial('_writeGranule will not allow a running status to replace a completed status for same execution', async (t) => {
   const {
     granule,
     executionCumulusId,
