@@ -143,7 +143,6 @@ test.beforeEach(async (t) => {
   t.context.completedExecutionCumulusId = completedPgExecution.cumulus_id;
   t.context.completedTestExecution = completedTestExecution;
 
-
   const providerPgModel = new ProviderPgModel();
   t.context.testProvider = fakeProviderRecordFactory();
 
