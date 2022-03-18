@@ -66,7 +66,7 @@ test.beforeEach(async (t) => {
   await t.context.dynamodbDocClient.put({
     TableName: t.context.dynamoTableName,
     Item: t.context.testAsyncOperation,
-  }).promise();
+  });
   await t.context.asyncOperationPgModel.create(
     t.context.testKnex,
     t.context.testAsyncOperationPgRecord
@@ -114,7 +114,7 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
     getParams: { ConsistentRead: true },
   });
 
-  t.is(result.$response.httpResponse.statusCode, 200);
+  t.is(result.$metadata.httpStatusCode, 200);
   t.like(asyncOperationPgRecord, {
     ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,
@@ -160,7 +160,7 @@ test('updateAsyncOperation updates records correctly when output is undefined', 
     getParams: { ConsistentRead: true },
   });
 
-  t.is(result.$response.httpResponse.statusCode, 200);
+  t.is(result.$metadata.httpStatusCode, 200);
   t.like(asyncOperationPgRecord, {
     ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,

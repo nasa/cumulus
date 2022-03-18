@@ -196,7 +196,7 @@ const writeAsyncOperationToDynamoDb = async (params) => {
     ExpressionAttributeNames,
     ExpressionAttributeValues,
     UpdateExpression,
-  }).promise();
+  });
 };
 
 /**
