@@ -15,6 +15,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
 
+### Changed
+
+- **CUMULUS-2849**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for DynamoDB requests:
+    - `@aws-sdk/client-dynamodb`
+    - `@aws-sdk/lib-dynamodb`
+    - `@aws-sdk/util-dynamodb`
+  - Updated code for compatibility with AWS SDK v3 Dynamo packages
+    - `@cumulus/api`
+    - `@cumulus/errors`
+    - `@cumulus/tf-inventory`
+    - `lambdas/data-migration2`
+    - `packages/api/ecs/async-operation`
+
 ### Fixed
 
 - **CUMULUS-2849**
