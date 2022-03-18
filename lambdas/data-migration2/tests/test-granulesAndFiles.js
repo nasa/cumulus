@@ -127,8 +127,22 @@ test.beforeEach(async (t) => {
     t.context.knex,
     testExecution
   );
+
   t.context.executionCumulusId = pgExecution.cumulus_id;
   t.context.testExecution = testExecution;
+
+  const completedTestExecution = fakeExecutionRecordFactory({
+    status: 'completed',
+  });
+
+  const [completedPgExecution] = await executionPgModel.create(
+    t.context.knex,
+    completedTestExecution
+  );
+
+  t.context.completedExecutionCumulusId = completedPgExecution.cumulus_id;
+  t.context.completedTestExecution = completedTestExecution;
+
 
   const providerPgModel = new ProviderPgModel();
   t.context.testProvider = fakeProviderRecordFactory();
@@ -447,13 +461,13 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
   const {
     knex,
     testCollection,
-    testExecution,
+    completedTestExecution,
   } = t.context;
 
   // Create a granule in the "running" status.
   const testGranule = generateTestGranule({
     collectionId: constructCollectionId(testCollection.name, testCollection.version),
-    execution: testExecution.url,
+    execution: completedTestExecution.url,
     updatedAt: Date.now() - 1000,
     status: 'running',
   });
@@ -464,7 +478,7 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
   );
 
   // We do not allow updates on granules where the status is "running"
-  // and a GranulesExecutions record has already been created to prevent out-of-order writes.
+  // and a completed execution record has already been created to prevent out-of-order writes.
   // Attempting to migrate this granule will cause the upsert to
   // return 0 rows and the migration will fail
   const newerGranule = {
