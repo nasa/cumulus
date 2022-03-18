@@ -1,5 +1,5 @@
 export interface LzardsApiGetRequestParameters {
   lzardsApiUri?: string,
   searchParams: object,
-  getAuthTokenFunction?: Function,
+  getAuthTokenFunction?: () => Promise<string>,
 }
