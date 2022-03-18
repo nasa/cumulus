@@ -2,8 +2,15 @@ import { Knex } from 'knex';
 import { Writable } from 'stream';
 import pMap from 'p-map';
 import cloneDeep from 'lodash/cloneDeep';
+import {
+  ScanCommandOutput,
+} from '@aws-sdk/lib-dynamodb';
+import {
+  NativeAttributeValue,
+} from '@aws-sdk/util-dynamodb';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
+import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import DynamoDbSearchQueue from '@cumulus/aws-client/DynamoDbSearchQueue';
 import { ApiFile } from '@cumulus/types/api/files';
 import {
@@ -54,7 +61,7 @@ const initializeGranulesAndFilesMigrationResult = (): GranulesAndFilesMigrationR
 /**
  * Migrate granules record from Dynamo to Postgres.
  *
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
+ * @param {Object} record
  *   Record from DynamoDB
  * @param {Knex.Transaction} trx - Knex transaction
  * @returns {Promise<any>}
@@ -64,7 +71,7 @@ const initializeGranulesAndFilesMigrationResult = (): GranulesAndFilesMigrationR
  *   - If the granule upsert effected 0 rows
  */
 export const migrateGranuleRecord = async (
-  record: AWS.DynamoDB.DocumentClient.AttributeMap,
+  record: { [key: string]: NativeAttributeValue },
   trx: Knex.Transaction
 ): Promise<number> => {
   const { name, version } = deconstructCollectionId(record.collectionId);
@@ -166,7 +173,7 @@ export const migrateFileRecord = async (
 /**
  * Migrate granule and files from DynamoDB to RDS
  * @param {Object} params
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ * @param {Object} params.dynamoRecord
  * @param {GranulesAndFilesMigrationSummary} params.granuleAndFileMigrationSummary
  * @param {Knex} params.knex
  * @param {number} params.loggingInterval
@@ -174,7 +181,7 @@ export const migrateFileRecord = async (
  * @returns {Promise<MigrationSummary>} - Migration summary for granules and files
  */
 export const migrateGranuleAndFilesViaTransaction = async (params: {
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  dynamoRecord: { [key: string]: NativeAttributeValue },
   granuleAndFilesMigrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number,
@@ -226,7 +233,7 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
 };
 
 const migrateGranuleDynamoRecords = async (
-  items: AWS.DynamoDB.DocumentClient.AttributeMap[],
+  items: ScanCommandOutput['Items'] = [],
   migrationResult: GranulesAndFilesMigrationResult,
   knex: Knex,
   loggingInterval: number,
@@ -407,6 +414,12 @@ export const migrateGranulesAndFiles = async (
     logger.info(`Starting parallel scan of granules with ${totalSegments} parallel segments`);
 
     await parallelScan({
+      dynamoDbClient: dynamodbDocClient({
+        marshallOptions: {
+          convertEmptyValues: true,
+          removeUndefinedValues: true,
+        },
+      }),
       totalSegments,
       scanParams: {
         TableName: granulesTable,

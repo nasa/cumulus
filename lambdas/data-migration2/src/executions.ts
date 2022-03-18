@@ -2,8 +2,12 @@ import { Knex } from 'knex';
 import pMap from 'p-map';
 import cloneDeep from 'lodash/cloneDeep';
 import { Writable } from 'stream';
+import {
+  ScanCommandOutput,
+} from '@aws-sdk/lib-dynamodb';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
+import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
@@ -73,7 +77,7 @@ export const migrateExecutionRecord = async (
 };
 
 const migrateExecutionDynamoRecords = async (
-  items: AWS.DynamoDB.DocumentClient.AttributeMap[],
+  items: ScanCommandOutput['Items'] = [],
   migrationResult: MigrationResult,
   knex: Knex,
   loggingInterval: number,
@@ -143,6 +147,12 @@ export const migrateExecutions = async (
   logger.info(`Starting parallel scan of executions with ${totalSegments} parallel segments`);
 
   await parallelScan({
+    dynamoDbClient: dynamodbDocClient({
+      marshallOptions: {
+        convertEmptyValues: true,
+        removeUndefinedValues: true,
+      },
+    }),
     totalSegments,
     scanParams: {
       TableName: executionsTable,
