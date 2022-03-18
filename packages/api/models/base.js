@@ -3,6 +3,8 @@
 const get = require('lodash/get');
 const Ajv = require('ajv');
 const pWaitFor = require('p-wait-for');
+const { marshall } = require('@aws-sdk/util-dynamodb');
+
 const awsServices = require('@cumulus/aws-client/services');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -158,7 +160,6 @@ class Manager {
     this.dynamodbDocClient = awsServices.dynamodbDocClient({
       marshallOptions: {
         convertEmptyValues: true,
-        removeUndefinedValues: true,
       },
     });
     this.removeAdditional = false;
@@ -359,6 +360,12 @@ class Manager {
 
     // Make sure that we don't update the key fields
     Object.keys(itemKeys).forEach((property) => delete actualUpdates[property]);
+    const marshalledKeys = {};
+    Object.keys(itemKeys).forEach((property) => {
+      marshalledKeys[property] = marshall({
+        [property]: itemKeys[property],
+      });
+    });
     // Make sure we don't delete required fields
     const optionalFieldsToDelete = fieldsToDelete.filter((f) =>
       !this.schema.required.includes(f));
@@ -385,9 +392,12 @@ class Manager {
     // Build the actual update request
     const attributeUpdates = {};
     Object.keys(actualUpdates).forEach((property) => {
+      const marshalledUpdate = marshall({
+        [property]: actualUpdates[property],
+      });
       attributeUpdates[property] = {
         Action: 'PUT',
-        Value: actualUpdates[property],
+        Value: marshalledUpdate[property],
       };
     });
 
@@ -399,7 +409,7 @@ class Manager {
     // Perform the update
     const updateResponse = await this.dynamodbDocClient.update({
       TableName: this.tableName,
-      Key: itemKeys,
+      Key: marshalledKeys,
       ReturnValues: 'ALL_NEW',
       AttributeUpdates: attributeUpdates,
     });

@@ -1179,7 +1179,7 @@ test.serial('updateGranuleStatusToFailed() throws error if record does not exist
   );
 });
 
-test.serial('updateGranuleStatus() updates granule status in the database', async (t) => {
+test.serial.only('updateGranuleStatus() updates granule status in the database', async (t) => {
   const {
     knex,
     collectionCumulusId,
