@@ -158,6 +158,7 @@ class Manager {
     this.dynamodbDocClient = awsServices.dynamodbDocClient({
       marshallOptions: {
         convertEmptyValues: true,
+        removeUndefinedValues: true,
       },
     });
     this.removeAdditional = false;

@@ -11,12 +11,12 @@ import {
   CreateTableInput,
   DeleteTableInput,
   ScanInput,
-  ScanOutput,
 } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocument,
   GetCommandInput,
   ScanCommandInput,
+  ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
@@ -175,7 +175,7 @@ export const parallelScan = async (
   params: {
     totalSegments: number,
     scanParams: ScanCommandInput,
-    processItemsFunc: (items: ScanOutput['Items']) => Promise<void>,
+    processItemsFunc: (items: ScanCommandOutput['Items']) => Promise<void>,
     dynamoDbClient: DynamoDBDocument,
     retryOptions?: pRetry.Options,
   }
