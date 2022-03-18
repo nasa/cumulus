@@ -165,7 +165,7 @@ test('getReadHeaders returns clientId and token for launchpad', (t) => {
   t.is(headers.Authorization, '12345');
 });
 
-test.serial.only('ingestUMMGranule() returns CMRInternalError when CMR is down', async (t) => {
+test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', async (t) => {
   const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc', clientId: 'client' });
 
   const ummgMetadata = { GranuleUR: 'asdf' };
