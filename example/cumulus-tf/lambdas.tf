@@ -178,23 +178,6 @@ resource "aws_secretsmanager_secret_version" "lzards_api_client_test_launchpad_p
   secret_string = var.launchpad_passphrase
 }
 
-data "aws_iam_policy_document" "lzards_api_client_test_processing_role_get_secrets" {
-  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
-  statement {
-    actions   = ["secretsmanager:GetSecretValue"]
-    resources = [
-      aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.arn,
-    ]
-  }
-}
-
-resource "aws_iam_role_policy" "lzards_api_client_test_processing_role_get_secrets" {
-  count  = length(var.launchpad_passphrase) == 0 ? 0 : 1
-  name   = "${var.prefix}_lzards_api_client_test_processing_role_get_secrets_policy"
-  role   = split("/", module.cumulus.lambda_processing_role_arn)[1]
-  policy = data.aws_iam_policy_document.lzards_api_client_test_processing_role_get_secrets[0].json
-}
-
 resource "aws_lambda_function" "lzards_api_client_test" {
   function_name    = "${var.prefix}-LzardsApiClientTest"
   filename         = "${path.module}/../lambdas/lzardsClientTest/dist/webpack/lambda.zip"
