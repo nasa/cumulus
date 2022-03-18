@@ -142,7 +142,7 @@ class Pdr extends Manager {
       updateParams.ConditionExpression += ' and (execution <> :execution OR progress < :progress)';
     }
     try {
-      const updateResponse = await this.dynamodbDocClient.update(updateParams).promise();
+      const updateResponse = await this.dynamodbDocClient.update(updateParams);
       logger.info(`Successfully wrote PDR ${pdrRecord.pdrName} to DynamoDB`);
       return updateResponse;
     } catch (error) {

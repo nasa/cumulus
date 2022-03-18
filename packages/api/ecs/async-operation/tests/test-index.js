@@ -45,7 +45,9 @@ test.before(async (t) => {
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  const dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
+  const dynamodbDocClient = awsServices.dynamodbDocClient({
+    marshallOptions: { convertEmptyValues: true },
+  });
   t.context.dynamodbDocClient = dynamodbDocClient;
 });
 

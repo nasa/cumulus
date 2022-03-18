@@ -611,7 +611,7 @@ class Granule extends Manager {
     }
 
     try {
-      return await this.dynamodbDocClient.update(updateParams).promise();
+      return await this.dynamodbDocClient.update(updateParams);
     } catch (error) {
       if (error.name && error.name.includes('ConditionalCheckFailedException')) {
         logger.error(`Did not process delayed event for granule: ${JSON.stringify(granuleRecord)}, cause:`, error);

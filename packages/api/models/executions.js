@@ -172,7 +172,7 @@ class Execution extends Manager {
       mutableFieldNames,
     });
 
-    await this.dynamodbDocClient.update(updateParams).promise();
+    await this.dynamodbDocClient.update(updateParams);
     logger.info(`Successfully wrote execution ${record.arn} to DynamoDB`);
   }
 
