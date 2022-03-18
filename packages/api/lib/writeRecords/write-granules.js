@@ -986,7 +986,6 @@ const updateGranuleStatusToQueued = async (params) => {
       knex,
       snsEventType: 'Update',
       esClient,
-      execution: undefined,
     });
 
     log.debug(`Updated granule status to queued, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
