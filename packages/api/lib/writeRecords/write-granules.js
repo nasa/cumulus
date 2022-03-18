@@ -195,7 +195,7 @@ const _writePostgresGranuleViaTransaction = async ({
   if (!upsertQueryResult[0]) {
     log.info(`
     Did not update ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
-    due to granule overwrite constraints, retraining original granule for cumulus_id ${pgGranule.cumulus_id}`);
+    due to granule overwrite constraints, retaining original granule for cumulus_id ${pgGranule.cumulus_id}`);
   } else {
     log.info(`
     Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
