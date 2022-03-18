@@ -155,7 +155,11 @@ class Manager {
     this.tableAttributes = params.tableAttributes;
     this.tableIndexes = params.tableIndexes;
     this.schema = params.schema;
-    this.dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
+    this.dynamodbDocClient = awsServices.dynamodbDocClient({
+      marshallOptions: {
+        convertEmptyValues: true,
+      },
+    });
     this.removeAdditional = false;
 
     this.validate = get(params, 'validate', true);
