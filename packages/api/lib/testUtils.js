@@ -10,12 +10,15 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
-  translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
-  translateApiRuleToPostgresRule,
-  translateApiPdrToPostgresPdr,
-  translateApiExecutionToPostgresExecution,
+  fakePdrRecordFactory,
+  fakeRuleRecordFactory,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  translateApiCollectionToPostgresCollection,
+  translateApiExecutionToPostgresExecution,
+  translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRuleRaw,
+  translatePostgresPdrToApiPdr,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -36,6 +39,7 @@ const {
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
+const { createRuleTrigger } = require('./rulesHelpers');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -485,28 +489,41 @@ const createProviderTestRecords = async (context, providerParams) => {
   };
 };
 
+/*
+ * Creates rules for testing
+ *
+ * @param {object} context
+ * @param {PostgresRule} - Postgres Rule parameters
+ *
+ * @returns {Object}
+ *   Returns new object consisting of `originalApiRule`, `originalPgRecord, and `originalEsRecord`
+ */
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
-    ruleModel,
     rulePgModel,
     esClient,
     esRulesClient,
   } = context;
-  const originalRule = fakeRuleFactoryV2(ruleParams);
 
-  const insertPgRecord = await translateApiRuleToPostgresRule(originalRule, testKnex);
-  const originalDynamoRule = await ruleModel.create(originalRule);
-  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
+  const originalRule = fakeRuleRecordFactory(ruleParams);
+  const apiRule = await translatePostgresRuleToApiRule(originalRule, testKnex);
+
+  const ruleWithTrigger = await createRuleTrigger(apiRule);
+  const pgRuleWithTrigger = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+
+  const [ruleCumulusId] = await rulePgModel.create(testKnex, pgRuleWithTrigger);
+
   const originalPgRecord = await rulePgModel.get(
-    testKnex, { cumulus_id: ruleCumulusId }
+    testKnex, { cumulus_id: ruleCumulusId.cumulus_id }
   );
-  await indexRule(esClient, originalRule, process.env.ES_INDEX);
+  const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+  await indexRule(esClient, originalApiRule, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );
   return {
-    originalDynamoRule,
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   };
@@ -515,39 +532,36 @@ const createRuleTestRecords = async (context, ruleParams) => {
 const createPdrTestRecords = async (context, pdrParams = {}) => {
   const {
     knex,
-    pdrModel,
     pdrPgModel,
     esClient,
     esPdrsClient,
-    testPgCollection,
-    testPgProvider,
+    collectionCumulusId,
+    providerCumulusId,
   } = context;
 
-  const originalPdr = fakePdrFactoryV2({
+  const insertPgRecord = fakePdrRecordFactory({
     ...pdrParams,
-    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
-    provider: testPgProvider.name,
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
   });
 
-  const pdrS3Key = `${process.env.stackName}/pdrs/${originalPdr.pdrName}`;
+  const pdrS3Key = `${process.env.stackName}/pdrs/${insertPgRecord.name}`;
   await s3PutObject({
     Bucket: process.env.system_bucket,
     Key: pdrS3Key,
     Body: randomString(),
   });
 
-  const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
-  const originalDynamoPdr = await pdrModel.create(originalPdr);
   const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pdrCumulusId }
   );
+  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
   const originalEsRecord = await esPdrsClient.get(
     originalPdr.pdrName
   );
   return {
-    originalDynamoPdr,
     originalPgRecord,
     originalEsRecord,
   };
