@@ -31,6 +31,7 @@ const {
 } = require('../lib/publishSnsMessageUtils');
 const models = require('../models');
 const { isBadRequestError } = require('../lib/errors');
+const { validateCollection } = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
@@ -179,7 +180,6 @@ async function post(req, res) {
  */
 async function put(req, res) {
   const {
-    collectionsModel = new models.Collection(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -187,9 +187,9 @@ async function put(req, res) {
 
   const { name, version } = req.params;
   const collection = req.body;
-  let dynamoRecord;
-  let oldCollection;
+  validateCollection(collection);
   let oldPgCollection;
+  let apiPgCollection;
 
   if (name !== collection.name || version !== collection.version) {
     return res.boom.badRequest('Expected collection name and version to be'
@@ -200,21 +200,11 @@ async function put(req, res) {
   try {
     oldPgCollection = await collectionPgModel.get(knex, { name, version });
   } catch (error) {
-    if (error.name !== 'RecordDoesNotExist') {
+    if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }
     return res.boom.notFound(`Collection '${name}' version '${version}' not found`);
   }
-
-  try {
-    oldCollection = await collectionsModel.get({ name, version });
-  } catch (error) {
-    if (error.name !== 'RecordDoesNotExist') {
-      throw error;
-    }
-    log.warn(`Dynamo record for Collection '${name}' version '${version}' not found, proceeding to update with postgresql record alone`);
-  }
-
   collection.updatedAt = Date.now();
   collection.createdAt = oldPgCollection.created_at.getTime();
 
@@ -222,22 +212,20 @@ async function put(req, res) {
 
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      await collectionPgModel.upsert(trx, postgresCollection);
-      dynamoRecord = await collectionsModel.create(collection);
+      const [pgCollection] = await collectionPgModel.upsert(trx, postgresCollection);
+
       // process.env.ES_INDEX is only used to isolate the index for
       // each unit test suite
-      await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
-      await publishCollectionUpdateSnsMessage(dynamoRecord);
+      apiPgCollection = translatePostgresCollectionToApiCollection(pgCollection);
+      await indexCollection(esClient, apiPgCollection, process.env.ES_INDEX);
+      await publishCollectionUpdateSnsMessage(apiPgCollection);
     });
   } catch (error) {
-    // Revert Dynamo record update if any write fails
-    if (oldCollection) {
-      await collectionsModel.create(oldCollection);
-    }
+    log.debug(`Failed to update collection with name ${name}, version ${version} and payload ${JSON.stringify(collection)} . Error: ${JSON.stringify(error)}`);
     throw error;
   }
 
-  return res.send(dynamoRecord);
+  return res.send(apiPgCollection);
 }
 
 /**

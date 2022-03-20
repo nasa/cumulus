@@ -30,6 +30,7 @@ function determineIntegrationTestStackName(cb) {
     'Nate Pauzenga': 'np-ci',
     'Danielle Peters': 'dop-ci',
     'Anthony Ortega': 'jao-ci',
+    vpnguye2: 'vkn-ci',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
