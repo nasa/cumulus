@@ -240,7 +240,7 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
   t.deepEqual(message.record, actualCollection);
 });
 
-test('PUT replaces an existing collection and correctly removes fields', async (t) => {
+test.serial('PUT replaces an existing collection and correctly removes fields', async (t) => {
   const origProcess = randomString();
 
   const {
@@ -302,7 +302,7 @@ test('PUT replaces an existing collection and correctly removes fields', async (
   });
 });
 
-test('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
+test.serial('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
   const knex = t.context.testKnex;
   const { originalCollection } = await createCollectionTestRecords(
     t.context,
