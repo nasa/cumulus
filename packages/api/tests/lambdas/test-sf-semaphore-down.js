@@ -82,7 +82,7 @@ const testTerminalEventMessage = async (t, status) => {
       key: queueUrl,
       semvalue: 1,
     },
-  }).promise();
+  });
 
   await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
