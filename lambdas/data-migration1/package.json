@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/data-migration1",
-  "version": "9.9.3",
+  "version": "9.9.4",
   "description": "A Lambda function used for doing data migrations",
   "license": "Apache-2.0",
   "engines": {
@@ -25,18 +25,18 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "9.9.3",
-    "@cumulus/aws-client": "9.9.3",
-    "@cumulus/common": "9.9.3",
-    "@cumulus/db": "9.9.3",
-    "@cumulus/errors": "9.9.3",
-    "@cumulus/logger": "9.9.3",
-    "@cumulus/types": "9.9.3",
+    "@cumulus/api": "9.9.4",
+    "@cumulus/aws-client": "9.9.4",
+    "@cumulus/common": "9.9.4",
+    "@cumulus/db": "9.9.4",
+    "@cumulus/errors": "9.9.4",
+    "@cumulus/logger": "9.9.4",
+    "@cumulus/types": "9.9.4",
     "knex": "0.95.11",
     "lodash": "^4.17.20",
     "pg": "^8.3.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "9.9.3"
+    "@cumulus/test-data": "9.9.4"
   }
 }
