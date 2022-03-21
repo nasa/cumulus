@@ -253,7 +253,7 @@ This secret should provide access to a PostgreSQL database provisioned on the cl
 
 To configure Cumulus you will need:
 
-- The AWS Secrets Manager ARN for the *user* Core will write with (e.g. `arn:aws:secretsmanager:AWS-REGION:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA` ) for use in configuring `rds_user_access_secret_arn`.
+- The AWS Secrets Manager ARN for the _user_ Core will write with (e.g. `arn:aws:secretsmanager:AWS-REGION:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA` ) for use in configuring `rds_user_access_secret_arn`.
 - (Optionally) The security group ID that provides access to the cluster to configure `rds_security_group`.
 
 ---
