@@ -14,6 +14,9 @@ test.beforeEach(async (t) => {
   t.context.manager = new Manager({
     tableName: t.context.tableName,
     tableHash,
+    schema: {
+      required: [],
+    },
   });
 
   await DynamoDb.createAndWaitForDynamoDbTable({
@@ -206,4 +209,54 @@ test('Manager._buildDocClientUpdateParams() only updates specified fields', (t) 
   t.is(actualParams.ExpressionAttributeNames['#prop3'], 'prop3');
   t.is(actualParams.ExpressionAttributeValues[':prop3'], 'value3');
   t.true(actualParams.UpdateExpression.includes('#prop3 = if_not_exists(#prop3, :prop3)'));
+});
+
+test('Manager.update() allows removing a single field', async (t) => {
+  const { manager } = t.context;
+
+  const itemKey = { id: randomString() };
+  const item = {
+    ...itemKey,
+    foo: 'bar',
+  };
+
+  await manager.dynamodbDocClient.put({
+    TableName: t.context.tableName,
+    Item: item,
+  });
+
+  const initialRecord = await manager.get(itemKey);
+  t.is(initialRecord.foo, 'bar');
+
+  await manager.update(itemKey, item, ['foo']);
+  const updatedRecord = await manager.get(itemKey);
+  t.false(Object.prototype.hasOwnProperty.call(updatedRecord, 'foo'));
+});
+
+test('Manager.update() allows removing multiple fields', async (t) => {
+  const { manager } = t.context;
+
+  const itemKey = { id: randomString() };
+  const item = {
+    ...itemKey,
+    foo: 'bar',
+    boo: 'baz',
+  };
+
+  await manager.dynamodbDocClient.put({
+    TableName: t.context.tableName,
+    Item: item,
+  });
+
+  const initialRecord = await manager.get(itemKey);
+  t.like(initialRecord, {
+    foo: 'bar',
+    boo: 'baz',
+  });
+
+  await manager.update(itemKey, item, ['foo', 'boo']);
+
+  const updatedRecord = await manager.get(itemKey);
+  t.false(Object.prototype.hasOwnProperty.call(updatedRecord, 'foo'));
+  t.false(Object.prototype.hasOwnProperty.call(updatedRecord, 'boo'));
 });

@@ -310,12 +310,12 @@ class Manager {
     // item, this returns an updated copy of the item.
     const itemsWithTimestamps = itemsArray.map((item) => this.addTimeStampsToItem(item));
 
-    if (this.validate) {
-      // Make sure that all of the items are valid
-      itemsWithTimestamps.forEach((item) => {
-        this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
-      });
-    }
+    // if (this.validate) {
+    //   // Make sure that all of the items are valid
+    //   itemsWithTimestamps.forEach((item) => {
+    //     this.constructor.recordIsValid(item, this.schema, this.removeAdditional);
+    //   });
+    // }
 
     // Suggested method of handling a loop containing an await, according to
     // https://codeburst.io/javascript-async-await-with-foreach-b6ba62bbf404
