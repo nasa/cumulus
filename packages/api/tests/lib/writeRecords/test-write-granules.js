@@ -40,7 +40,7 @@ const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtil
 const Granule = require('../../../models/granules');
 
 test.before(async (t) => {
-  process.env.GranulesTable = cryptoRandomString({ length: 10 });
+  process.env.GranulesTable = `write-granules-${cryptoRandomString({ length: 10 })}`;
 
   const fakeFileUtils = {
     buildDatabaseFiles: (params) => Promise.resolve(params.files),
@@ -1179,7 +1179,7 @@ test.serial('updateGranuleStatusToFailed() throws error if record does not exist
   );
 });
 
-test.serial.only('updateGranuleStatus() updates granule status in the database', async (t) => {
+test.serial('updateGranuleStatus() updates granule status in the database', async (t) => {
   const {
     knex,
     collectionCumulusId,

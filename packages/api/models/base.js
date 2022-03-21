@@ -3,7 +3,6 @@
 const get = require('lodash/get');
 const Ajv = require('ajv');
 const pWaitFor = require('p-wait-for');
-const { marshall } = require('@aws-sdk/util-dynamodb');
 
 const awsServices = require('@cumulus/aws-client/services');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
@@ -160,6 +159,7 @@ class Manager {
     this.dynamodbDocClient = awsServices.dynamodbDocClient({
       marshallOptions: {
         convertEmptyValues: true,
+        removeUndefinedValues: true,
       },
     });
     this.removeAdditional = false;
@@ -360,12 +360,7 @@ class Manager {
 
     // Make sure that we don't update the key fields
     Object.keys(itemKeys).forEach((property) => delete actualUpdates[property]);
-    const marshalledKeys = {};
-    Object.keys(itemKeys).forEach((property) => {
-      marshalledKeys[property] = marshall({
-        [property]: itemKeys[property],
-      });
-    });
+
     // Make sure we don't delete required fields
     const optionalFieldsToDelete = fieldsToDelete.filter((f) =>
       !this.schema.required.includes(f));
@@ -389,30 +384,15 @@ class Manager {
       );
     }
 
-    // Build the actual update request
-    const attributeUpdates = {};
-    Object.keys(actualUpdates).forEach((property) => {
-      const marshalledUpdate = marshall({
-        [property]: actualUpdates[property],
-      });
-      attributeUpdates[property] = {
-        Action: 'PUT',
-        Value: marshalledUpdate[property],
-      };
-    });
-
-    // Add keys to be deleted
-    optionalFieldsToDelete.forEach((property) => {
-      attributeUpdates[property] = { Action: 'DELETE' };
+    const updateParams = this._buildDocClientUpdateParams({
+      item: actualUpdates,
+      itemKey: itemKeys,
+      mutableFieldNames: Object.keys(actualUpdates),
+      fieldsToDelete: optionalFieldsToDelete,
     });
 
     // Perform the update
-    const updateResponse = await this.dynamodbDocClient.update({
-      TableName: this.tableName,
-      Key: marshalledKeys,
-      ReturnValues: 'ALL_NEW',
-      AttributeUpdates: attributeUpdates,
-    });
+    const updateResponse = await this.dynamodbDocClient.update(updateParams);
 
     return updateResponse.Attributes;
   }
@@ -453,18 +433,22 @@ class Manager {
    * @param {Object} params.item - The data item to be updated
    * @param {Object} params.itemKey
    *   Object containing the unique key(s) identifying the item
-   * @param {Array} params.mutableFieldNames
+   * @param {Array} [params.mutableFieldNames]
    *   Array of field names which should be mutable (updated even if there is an existing value)
+   * @param {Array} [params.fieldsToDelete]
+   *   Optional array of field names to delete
    * @returns {Object} - Parameters for dynamodbDocClient.update() operation
    */
   _buildDocClientUpdateParams({
     item,
     itemKey,
     mutableFieldNames = [],
+    fieldsToDelete = [],
   }) {
     const ExpressionAttributeNames = {};
     const ExpressionAttributeValues = {};
     const setUpdateExpressions = [];
+    let UpdateExpression = '';
 
     const itemKeyFieldNames = Object.keys(itemKey);
 
@@ -482,14 +466,22 @@ class Manager {
       }
     });
 
-    if (setUpdateExpressions.length === 0) return undefined;
+    if (setUpdateExpressions.length > 0) {
+      UpdateExpression += `SET ${setUpdateExpressions.join(', ')}`;
+    }
+
+    if (fieldsToDelete.length > 0) {
+      UpdateExpression += ` REMOVE ${fieldsToDelete.join(', ')}`;
+    }
+
+    if (UpdateExpression === '') return undefined;
 
     return {
       TableName: this.tableName,
       Key: itemKey,
       ExpressionAttributeNames,
       ExpressionAttributeValues,
-      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`,
+      UpdateExpression,
     };
   }
 }
