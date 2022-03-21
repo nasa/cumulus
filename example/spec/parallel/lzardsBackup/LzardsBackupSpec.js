@@ -145,6 +145,8 @@ describe('The Lzards Backup Task ', () => {
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
+    expect(backupStatus[0].provider).toBe(provider);
+    expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
   });
 
   describe('The Lzards API Client', () => {
