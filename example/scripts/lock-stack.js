@@ -81,7 +81,7 @@ lockOperation(...process.argv.slice(2, 6)).catch((error) => {
   process.exitCode = 100;
   if (error.code === 'CumulusNoLockError') {
     process.exitCode = 101;
-  } else if (error.name !== 'ConditionalCheckFailedException' || error.code !== 'CumulusLockError') {
+  } else if (!(error.name === 'ConditionalCheckFailedException' || error.code === 'CumulusLockError')) {
     process.exitCode = 1;
   }
 });
