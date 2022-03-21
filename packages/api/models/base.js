@@ -482,6 +482,7 @@ class Manager {
       ExpressionAttributeNames,
       ExpressionAttributeValues,
       UpdateExpression,
+      ReturnValues: 'ALL_NEW',
     };
   }
 }

@@ -211,6 +211,31 @@ test('Manager._buildDocClientUpdateParams() only updates specified fields', (t) 
   t.true(actualParams.UpdateExpression.includes('#prop3 = if_not_exists(#prop3, :prop3)'));
 });
 
+test('Manager.update() returns new fields', async (t) => {
+  const { manager } = t.context;
+
+  const itemKey = { id: randomString() };
+  const item = {
+    ...itemKey,
+    foo: 'bar',
+  };
+
+  await manager.create(item);
+
+  const initialRecord = await manager.get(itemKey);
+  t.like(initialRecord, {
+    foo: 'bar',
+  });
+
+  const updates = {
+    ...item,
+    foo: 'baz',
+    foo2: 'another-value',
+  };
+  const updatedRecord = await manager.update(itemKey, updates);
+  t.like(updatedRecord, updates);
+});
+
 test('Manager.update() allows removing a single field', async (t) => {
   const { manager } = t.context;
 
@@ -220,10 +245,7 @@ test('Manager.update() allows removing a single field', async (t) => {
     foo: 'bar',
   };
 
-  await manager.dynamodbDocClient.put({
-    TableName: t.context.tableName,
-    Item: item,
-  });
+  await manager.create(item);
 
   const initialRecord = await manager.get(itemKey);
   t.is(initialRecord.foo, 'bar');
@@ -243,10 +265,7 @@ test('Manager.update() allows removing multiple fields', async (t) => {
     boo: 'baz',
   };
 
-  await manager.dynamodbDocClient.put({
-    TableName: t.context.tableName,
-    Item: item,
-  });
+  await manager.create(item);
 
   const initialRecord = await manager.get(itemKey);
   t.like(initialRecord, {
