@@ -51,7 +51,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@aws-sdk/util-dynamodb": "^3.53.0",
     "@cumulus/api-client": "10.1.1",
     "@cumulus/async-operations": "10.1.1",
     "@cumulus/aws-client": "10.1.1",

@@ -327,8 +327,7 @@ test.serial('migrateRules re-migrates already migrated record if forceRulesMigra
     },
     provider: fakeProvider.id,
   });
-  const queueUrls = randomString();
-  fakeRule.queueUrl = queueUrls.queueUrl;
+  fakeRule.queueUrl = randomString();
 
   // This always sets updatedAt to Date.now()
   const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRule);
@@ -385,16 +384,14 @@ test.serial('migrateRules processes multiple rules', async (t) => {
     },
     provider: id,
   });
-  const queueUrls1 = randomString();
-  const queueUrls2 = randomString();
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
   await migrateFakeCollectionRecord(anotherFakeCollection, knex);
   await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateFakeProviderRecord(anotherFakeProvider, knex);
 
-  fakeRule1.queueUrl = queueUrls1.queueUrl;
-  fakeRule2.queueUrl = queueUrls2.queueUrl;
+  fakeRule1.queueUrl = randomString();
+  fakeRule2.queueUrl = randomString();
 
   const ruleWithTrigger1 = await rulesModel.createRuleTrigger(fakeRule1);
   const ruleWithTrigger2 = await rulesModel.createRuleTrigger(fakeRule2);
