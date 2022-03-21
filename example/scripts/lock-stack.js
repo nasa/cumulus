@@ -23,7 +23,7 @@ class CumulusNoLockError extends Error {
 }
 
 const LOCK_TABLE_NAME = 'cumulus-int-test-lock';
-const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
+const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hours
 
 /**
  * lockOperation
