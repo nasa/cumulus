@@ -143,10 +143,14 @@ describe('The Lzards Backup Task ', () => {
 
   it('has the expected backup information', () => {
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
+    const returnedCollection = JSON.parse(lzardsBackupOutput.Payload).meta.collection;
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
+    expect(backupStatus[0].granuleId).toBe('FakeGranule2');
     expect(backupStatus[0].provider).toBe(provider);
     expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
+    expect(returnedCollection.name).toBe(collection.name);
+    expect(returnedCollection.version).toBe(collection.version);
   });
 
   describe('The Lzards API Client', () => {
