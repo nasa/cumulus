@@ -103,7 +103,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       cumulus_id: executionCumulusId,
     });
     if (status === 'running') {
-      queryBuilder.where('status', '!=', 'running');
+      queryBuilder.whereIn('status', ExecutionPgModel.nonActiveStatuses);
     }
     return queryBuilder;
   }
