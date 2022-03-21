@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v9.9.4] 2021-03-22 [BACKPORT]
+
+### Changed
+
+- **CUMULUS-2868**
+  - Added iam:PassRole to step_policy
+    **keep undefined fields**
+
 ## [v9.9.3] 2021-02-17 [BACKPORT]
 
 - **CUMULUS-2853**
