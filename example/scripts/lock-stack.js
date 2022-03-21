@@ -79,9 +79,9 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
 lockOperation(...process.argv.slice(2, 6)).catch((error) => {
   console.dir(error);
   process.exitCode = 100;
-  if (error.name === 'CumulusNoLockError') {
+  if (error.code === 'CumulusNoLockError') {
     process.exitCode = 101;
-  } else if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(error.name)) {
+  } else if (error.name !== 'ConditionalCheckFailedException' || error.code !== 'CumulusLockError') {
     process.exitCode = 1;
   }
 });
