@@ -57,8 +57,8 @@ test.serial('client memoizes same service with no arguments correctly', (t) => {
     }
   }
 
-  client(FakeService, { foo: 'bar' })();
-  client(FakeService, { foo: 'bar' })();
+  client(FakeService)();
+  client(FakeService)();
   t.is(count, 1);
 });
 
@@ -72,12 +72,12 @@ test.serial('client memoizes same service with same arguments correctly', (t) =>
     }
   }
 
-  client(FakeService1, { foo: 'bar' })();
-  client(FakeService1, { foo: 'bar' })();
+  client(FakeService1)({ foo: 'bar' });
+  client(FakeService1)({ foo: 'bar' });
   t.is(count, 1);
 });
 
-test.serial('client does not memoize service with different arguments', (t) => {
+test.serial('client does not memoize same service with different versions', (t) => {
   let count = 0;
   // Use a different fake service name to avoid test interference
   class FakeService2 {
@@ -87,8 +87,23 @@ test.serial('client does not memoize service with different arguments', (t) => {
     }
   }
 
-  client(FakeService2, { foo: 'bar' })();
-  client(FakeService2, { foo: 'baz' })();
+  client(FakeService2, 'v1')();
+  client(FakeService2, 'v2')();
+  t.is(count, 2);
+});
+
+test.serial('client does not memoize service with different arguments', (t) => {
+  let count = 0;
+  // Use a different fake service name to avoid test interference
+  class FakeService3 {
+    constructor() {
+      this.serviceIdentifier = this.name;
+      count += 1;
+    }
+  }
+
+  client(FakeService3, { foo: 'bar' })();
+  client(FakeService3, { foo: 'baz' })();
   t.is(count, 2);
 });
 
@@ -108,8 +123,8 @@ test.serial('client does not memoize different services with same arguments', (t
     }
   }
 
-  client(FooService, { foo: 'bar' })();
-  client(BarService, { foo: 'bar' })();
+  client(FooService)({ foo: 'bar' });
+  client(BarService)({ foo: 'bar' });
   t.is(count, 2);
 });
 
