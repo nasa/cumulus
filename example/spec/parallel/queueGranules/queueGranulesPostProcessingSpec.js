@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/integration-tests');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecution, searchExecutionsByGranules } = require('@cumulus/api-client/executions');
 const { getGranule } = require('@cumulus/api-client/granules');
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
@@ -208,8 +208,17 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
           { prefix: config.stackName, granuleId: granule.granuleId },
           'completed'
         );
+
+        const executionSearchResult = await searchExecutionsByGranules({
+          prefix: config.stackName,
+          payload: {
+            granules: [record],
+          },
+        });
+        const [execution] = JSON.parse(executionSearchResult.body).results.filter((result) => result.arn === queuedLambdaOutput.payload.running[0]);
+
         expect(record.status).toEqual('completed');
-        expect(record.execution.replace(/https.*details\//, '')).toEqual(queuedLambdaOutput.payload.running[0]);
+        expect(execution.arn).toEqual(queuedLambdaOutput.payload.running[0]);
       })
     );
   });
