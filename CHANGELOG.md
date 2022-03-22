@@ -8,9 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- CVE-2022-2477
+  - Update node-forge to 1.3.0 in `@cumulus/common` to address CVE-2022-2477
 - **CUMULUS-2868**
-  - Added iam:PassRole to step_policy
-    **keep undefined fields**
+  - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
 
 ## [v9.9.3] 2021-02-17 [BACKPORT]
 
