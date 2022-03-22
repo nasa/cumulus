@@ -311,6 +311,8 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
     element that has a `Type` of either `"Update"` or `"Insert"`.  If neither are
     present, the granule's last update date falls back to the `"Create"` type
     provider date, or `undefined`, if none is present.
+- CVE-2022-2477
+  - Update node-forge to 1.3.0 in `@cumulus/common` to address CVE-2022-2477
 - **CUMULUS-2311** - RDS Migration Epic Phase 2
   - **CUMULUS_2641**
     - Update API granule schema to set productVolume as a string value
