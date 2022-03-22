@@ -26,6 +26,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Move File Config and Core Config validation logic for Postgres Collections from `api/models/collections.js` to `api/lib/utils.js`   
   - **CUMULUS-2813**
     - Removes creation and deletion of DynamoDB record from API endpoint POST /rules/
+  - **CUMULUS-2816**
+    - Removes addition of DynamoDB record from API endpoint POST /collections
 
 ### Added
 
