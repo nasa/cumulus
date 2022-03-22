@@ -385,6 +385,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Fixed async operation docker image to correctly update record status in
     Elasticsearch
   - Updated localAPI to set additional env variable, and fixed `GET /executions/status` response
+  - **CUMULUS-2877**
+    - Ensure database records receive a timestamp when writing granules.
 
 ## Unreleased
 

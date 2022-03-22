@@ -731,7 +731,7 @@ const writeGranuleFromApi = async (
     provider,
     error = {},
     createdAt = new Date().valueOf(),
-    updatedAt = new Date().valueOf(),
+    updatedAt,
     duration,
     productVolume,
     timeToPreprocess,
@@ -884,6 +884,7 @@ const writeGranulesFromMessage = async ({
       const duration = getWorkflowDuration(workflowStartTime, now);
       const status = getGranuleStatus(workflowStatus, granule);
       const updatedAt = now;
+      const timestamp = now;
 
       const apiGranuleRecord = await generateGranuleApiRecord({
         granule,
@@ -895,6 +896,7 @@ const writeGranulesFromMessage = async ({
         error,
         pdrName,
         workflowStatus,
+        timestamp,
         timeToArchive,
         timeToPreprocess,
         productVolume,
