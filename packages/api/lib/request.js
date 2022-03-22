@@ -91,9 +91,7 @@ function validateGranuleExecutionRequest(req, res, next) {
       }
       return true;
     });
-  }
-
-  if (payload.query
+  } else if (payload.query
     && !(process.env.METRICS_ES_HOST
         && process.env.METRICS_ES_USER
         && process.env.METRICS_ES_PASS)
