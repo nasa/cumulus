@@ -86,8 +86,10 @@ function localStackAwsClientOptions<T>(
 
   const localStackOptions: { [key: string ]: unknown } = {
     ...options,
-    accessKeyId: 'my-access-key-id',
-    secretAccessKey: 'my-secret-access-key',
+    credentials: {
+      accessKeyId: 'my-access-key-id',
+      secretAccessKey: 'my-secret-access-key',
+    },
     region: 'us-east-1',
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
