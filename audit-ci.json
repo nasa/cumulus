@@ -5,6 +5,6 @@
     "allowlist": [
         "underscore",
         "1067259",
-        "saml2-js"
+        "node-forge"
     ]
 }
