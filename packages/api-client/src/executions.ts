@@ -210,7 +210,7 @@ export const searchExecutionsByGranules = async (params: {
       path: '/executions/search-by-granules',
       body: JSON.stringify(payload),
     },
-    expectedStatusCodes: 202,
+    expectedStatusCodes: [202, 200],
   });
 };
 
