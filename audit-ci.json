@@ -4,6 +4,7 @@
     "retry-count": 20,
     "allowlist": [
         "underscore",
-        "1067259"
+        "1067259",
+        "saml2-js"
     ]
 }
