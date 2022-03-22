@@ -1,0 +1,283 @@
+const test = require('ava');
+
+const AWS = require('aws-sdk');
+const { DynamoDB } = require('@aws-sdk/client-dynamodb');
+
+const services = require('../services');
+const { localStackAwsClientOptions } = require('../test-utils');
+
+test('apigateway() service defaults to localstack in test mode', (t) => {
+  const apigateway = services.apigateway();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.APIGateway);
+  t.deepEqual(
+    apigateway.config.credentials,
+    credentials
+  );
+  t.is(apigateway.config.endpoint, endpoint);
+});
+
+test('cf() service defaults to localstack in test mode', (t) => {
+  const cf = services.cf();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.CloudFormation);
+  t.deepEqual(
+    cf.config.credentials,
+    credentials
+  );
+  t.is(cf.config.endpoint, endpoint);
+});
+
+test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
+  const cloudwatchevents = services.cloudwatchevents();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.CloudWatchEvents);
+  t.deepEqual(
+    cloudwatchevents.config.credentials,
+    credentials
+  );
+  t.is(cloudwatchevents.config.endpoint, endpoint);
+});
+
+test('cloudwatchlogs() service defaults to localstack in test mode', (t) => {
+  const cloudwatchlogs = services.cloudwatchlogs();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.CloudWatchLogs);
+  t.deepEqual(
+    cloudwatchlogs.config.credentials,
+    credentials
+  );
+  t.is(cloudwatchlogs.config.endpoint, endpoint);
+});
+
+test('cloudwatch() service defaults to localstack in test mode', (t) => {
+  const cloudwatch = services.cloudwatch();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.CloudWatch);
+  t.deepEqual(
+    cloudwatch.config.credentials,
+    credentials
+  );
+  t.is(cloudwatch.config.endpoint, endpoint);
+});
+
+test('dynamoDb() service defaults to localstack in test mode', async (t) => {
+  const dynamodb = services.dynamodb();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(DynamoDB);
+  t.deepEqual(
+    await dynamodb.config.credentials(),
+    credentials
+  );
+  const serviceConfigEndpoint = await dynamodb.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
+});
+
+test('dynamodbDocClient() service defaults to localstack in test mode', async (t) => {
+  const dynamodbDocClient = services.dynamodbDocClient();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(DynamoDB);
+  t.deepEqual(
+    await dynamodbDocClient.config.credentials(),
+    credentials
+  );
+  const serviceConfigEndpoint = await dynamodbDocClient.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
+});
+
+test('ecs() service defaults to localstack in test mode', (t) => {
+  const ecs = services.ecs();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.ECS);
+  t.deepEqual(
+    ecs.config.credentials,
+    credentials
+  );
+  t.is(ecs.config.endpoint, endpoint);
+});
+
+test('ec2() service defaults to localstack in test mode', (t) => {
+  const ec2 = services.ec2();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.EC2);
+  t.deepEqual(
+    ec2.config.credentials,
+    credentials
+  );
+  t.is(ec2.config.endpoint, endpoint);
+});
+
+test('es() service defaults to localstack in test mode', (t) => {
+  const es = services.es();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.ES);
+  t.deepEqual(
+    es.config.credentials,
+    credentials
+  );
+  t.is(es.config.endpoint, endpoint);
+});
+
+test('kinesis() service defaults to localstack in test mode', (t) => {
+  const kinesis = services.kinesis();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.Kinesis);
+  t.deepEqual(
+    kinesis.config.credentials,
+    credentials
+  );
+  t.is(kinesis.config.endpoint, endpoint);
+});
+
+test('kms() service defaults to localstack in test mode', (t) => {
+  const kms = services.kms();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.KMS);
+  t.deepEqual(
+    kms.config.credentials,
+    credentials
+  );
+  t.is(kms.config.endpoint, endpoint);
+});
+
+test('lambda() service defaults to localstack in test mode', (t) => {
+  const lambda = services.lambda();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.Lambda);
+  t.deepEqual(
+    lambda.config.credentials,
+    credentials
+  );
+  t.is(lambda.config.endpoint, endpoint);
+});
+
+test('s3() service defaults to localstack in test mode', (t) => {
+  const s3 = services.s3();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.S3);
+  t.deepEqual(
+    s3.config.credentials,
+    credentials
+  );
+  t.is(s3.config.endpoint, endpoint);
+});
+
+test('secretsManager() service defaults to localstack in test mode', (t) => {
+  const secretsManager = services.secretsManager();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.SecretsManager);
+  t.deepEqual(
+    secretsManager.config.credentials,
+    credentials
+  );
+  t.is(secretsManager.config.endpoint, endpoint);
+});
+
+test('sfn() service defaults to localstack in test mode', (t) => {
+  const sfn = services.sfn();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.StepFunctions);
+  t.deepEqual(
+    sfn.config.credentials,
+    credentials
+  );
+  t.is(sfn.config.endpoint, endpoint);
+});
+
+test('sns() service defaults to localstack in test mode', (t) => {
+  const sns = services.sns();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.SNS);
+  t.deepEqual(
+    sns.config.credentials,
+    credentials
+  );
+  t.is(sns.config.endpoint, endpoint);
+});
+
+test('sqs() service defaults to localstack in test mode', (t) => {
+  const sqs = services.sqs();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.SQS);
+  t.deepEqual(
+    sqs.config.credentials,
+    credentials
+  );
+  t.is(sqs.config.endpoint, endpoint);
+});
+
+test('sts() service defaults to localstack in test mode', (t) => {
+  const sts = services.sts();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.STS);
+  t.deepEqual(
+    sts.config.credentials,
+    credentials
+  );
+  t.is(sts.config.endpoint, endpoint);
+});
+
+test('systemsManager() service defaults to localstack in test mode', (t) => {
+  const systemsManager = services.systemsManager();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(AWS.SSM);
+  t.deepEqual(
+    systemsManager.config.credentials,
+    credentials
+  );
+  t.is(systemsManager.config.endpoint, endpoint);
+});

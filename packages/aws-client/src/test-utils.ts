@@ -16,6 +16,8 @@ const localStackPorts = {
   DynamoDB: 4566,
   DynamoDBClient: 4566,
   dynamodbclient: 4566,
+  ec2: 4566,
+  ecs: 4566,
   es: 4566,
   firehose: 4566,
   iam: 4566,
@@ -74,7 +76,7 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-function localStackAwsClientOptions<T>(
+export function localStackAwsClientOptions<T>(
   Service: new (params: object) => T,
   options: object = {}
 ) {
