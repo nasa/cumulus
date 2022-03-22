@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v9.9.4] 2021-03-22 [BACKPORT]
+
+### Changed
+
+- CVE-2022-2477
+  - Update node-forge to 1.3.0 in `@cumulus/common` to address CVE-2022-2477
+- **CUMULUS-2868**
+  - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+
 ## [v9.9.3] 2021-02-17 [BACKPORT]
 
 - **CUMULUS-2853**
@@ -5009,7 +5018,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.3...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v9.9.4...HEAD
+[v9.9.4]: https://github.com/nasa/cumulus/compare/v9.9.3...9.9.4
 [v9.9.3]: https://github.com/nasa/cumulus/compare/v9.9.2...9.9.3
 [v9.9.2]: https://github.com/nasa/cumulus/compare/v9.9.1...v9.9.2
 [v9.9.1]: https://github.com/nasa/cumulus/compare/v9.9.0...v9.9.1
