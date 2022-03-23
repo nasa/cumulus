@@ -134,6 +134,7 @@ test.beforeEach(async (t) => {
   const execution = fakeExecutionRecordFactory({
     arn: t.context.executionArn,
     url: t.context.executionUrl,
+    status: 'completed',
   });
 
   t.context.collection = fakeCollectionRecordFactory();

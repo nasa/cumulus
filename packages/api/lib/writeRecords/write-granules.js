@@ -192,10 +192,16 @@ const _writePostgresGranuleViaTransaction = async ({
     granuleRecord,
   });
 
-  log.info(`
+  if (!upsertQueryResult[0]) {
+    log.info(`
+    Did not update ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
+    due to granule overwrite constraints, retaining original granule for cumulus_id ${pgGranule.cumulus_id}`);
+  } else {
+    log.info(`
     Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
     to granule record with cumulus_id ${pgGranule.cumulus_id} in PostgreSQL
-  `);
+    `);
+  }
   return pgGranule;
 };
 /**
@@ -492,12 +498,13 @@ const _writeGranuleRecords = async (params) => {
       });
     });
     log.info(
-      `
-      Successfully wrote granule %j to PostgreSQL. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.
-      `,
+      `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.`,
       postgresGranuleRecord
     );
-    log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
+    log.info(
+      'Completed write operation to DynamoDb for granule %j',
+      apiGranuleRecord
+    );
     return pgGranule;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
