@@ -195,9 +195,12 @@ export const deleteExecution = async (params: {
 export const searchExecutionsByGranules = async (params: {
   prefix: string,
   payload: object,
+  query?: {
+    [key: string]: string | string[] | undefined
+  },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, payload, callback = invokeApi } = params;
+  const { query, prefix, payload, callback = invokeApi } = params;
 
   return await callback({
     prefix: prefix,
@@ -208,9 +211,10 @@ export const searchExecutionsByGranules = async (params: {
         'Content-Type': 'application/json',
       },
       path: '/executions/search-by-granules',
+      queryStringParameters: query,
       body: JSON.stringify(payload),
     },
-    expectedStatusCodes: [202, 200],
+    expectedStatusCodes: [200],
   });
 };
 

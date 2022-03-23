@@ -182,6 +182,8 @@ test('searchExecutionsByGranules calls the callback with the expected object and
     ],
   };
 
+  const query = { length: 5 };
+
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
@@ -191,9 +193,10 @@ test('searchExecutionsByGranules calls the callback with the expected object and
         'Content-Type': 'application/json',
       },
       path: '/executions/search-by-granules',
+      queryStringParameters: query,
       body: JSON.stringify(payload),
     },
-    expectedStatusCodes: [202, 200],
+    expectedStatusCodes: [200],
   };
 
   const callback = (configObject) => {
@@ -203,6 +206,7 @@ test('searchExecutionsByGranules calls the callback with the expected object and
   await t.notThrowsAsync(executionsApi.searchExecutionsByGranules({
     prefix: t.context.testPrefix,
     payload,
+    query,
     callback,
   }));
 });

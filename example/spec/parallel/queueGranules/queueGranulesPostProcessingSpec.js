@@ -213,9 +213,9 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
           prefix: config.stackName,
           payload: {
             granules: [record],
-            query: {
-              limit: 2,
-            },
+          },
+          query: {
+            limit: '2',
           },
         });
         const [execution] = JSON.parse(executionSearchResult.body).results.filter((result) => result.arn === queuedLambdaOutput.payload.running[0]);
