@@ -1,20 +1,23 @@
 # Data Persistence
 
-This module deploys data persistence resources, including DynamoDB tables and an Elasticsearch instance (which is optional).
+This module deploys data persistence resources, including DynamoDB tables, RDS database and tables, and an Elasticsearch instance (which is optional).
 
 ## Included resources
 
 - DynamoDB tables:
   - `AccessTokensTable`
-  - `AsyncOperationsTable`
-  - `CollectionsTable`
-  - `ExecutionsTable`
-  - `FilesTable`
-  - `GranulesTable`
-  - `PdrsTable`
-  - `ProvidersTable`
-  - `RulesTable`
   - `SemaphoresTable`
+- RDS database within the PostgreSQL-compatible cluster
+- RDS database tables:
+  - `async_operations`
+  - `collections`
+  - `executions`
+  - `files`
+  - `granules`
+  - `granules_executions`
+  - `pdrs`
+  - `providers`
+  - `rules`
 - Elasticsearch domain (with optional VPC configuration)
 - Cloudwatch alarm for Elasticsearch node count
 

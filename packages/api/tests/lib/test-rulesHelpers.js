@@ -1,16 +1,25 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
+const sinon = require('sinon');
+const proxyquire = require('proxyquire');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
-const rulesHelpers = rewire('../../lib/rulesHelpers');
 
-rulesHelpers.__set__('handleScheduleEvent', (payload) => payload);
+const listRulesStub = sinon.stub();
+
+const rulesHelpers = proxyquire('../../lib/rulesHelpers', {
+  '@cumulus/api-client/rules': {
+    listRules: listRulesStub,
+  },
+  '../lambdas/sf-scheduler': {
+    handleScheduleEvent: (payload) => payload,
+  },
+});
 
 let workflow;
 
@@ -35,10 +44,72 @@ test.before(async () => {
   ]);
 });
 
-test.after(async () => {
+test.afterEach(() => {
+  listRulesStub.reset();
+});
+
+test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   delete process.env.system_bucket;
   delete process.env.stackName;
+});
+
+test.serial('fetchRules invokes API to fetch rules', async (t) => {
+  const apiResults = [];
+  listRulesStub.callsFake(({ prefix }) => {
+    t.is(prefix, process.env.stackName);
+    return { body: JSON.stringify({ results: apiResults }) };
+  });
+  const rules = await rulesHelpers.fetchRules({});
+
+  t.deepEqual(rules, apiResults);
+  t.true(listRulesStub.calledOnce);
+});
+
+test.serial('fetchRules pages through results until reaching an empty list', async (t) => {
+  const rule1 = { name: 'rule-1' };
+  const rule2 = { name: 'rule-2' };
+  const firstCallArgs = {
+    prefix: process.env.stackName,
+    query: { page: 1 },
+  };
+  const secondCallArgs = {
+    prefix: process.env.stackName,
+    query: { page: 2 },
+  };
+  const thirdCallArgs = {
+    prefix: process.env.stackName,
+    query: { page: 3 },
+  };
+  listRulesStub.onFirstCall().callsFake((params) => {
+    t.deepEqual(params, firstCallArgs);
+    return { body: JSON.stringify({ results: [rule1] }) };
+  });
+  listRulesStub.onSecondCall().callsFake((params) => {
+    t.deepEqual(params, secondCallArgs);
+    return { body: JSON.stringify({ results: [rule2] }) };
+  });
+  listRulesStub.onThirdCall().callsFake((params) => {
+    t.deepEqual(params, thirdCallArgs);
+    return { body: JSON.stringify({ results: [] }) };
+  });
+
+  const expectedOutput = [rule1, rule2];
+  const actualOutput = await rulesHelpers.fetchRules({});
+
+  t.true(listRulesStub.calledThrice);
+  t.true(listRulesStub.withArgs(firstCallArgs).calledOnce);
+  t.true(listRulesStub.withArgs(secondCallArgs).calledOnce);
+  t.true(listRulesStub.withArgs(thirdCallArgs).calledOnce);
+  t.deepEqual(actualOutput, expectedOutput);
+});
+
+test.serial('fetchEnabledRules passes ENABLED state to listRules endpoint', async (t) => {
+  listRulesStub.callsFake((params) => {
+    t.is(params.query.state, 'ENABLED');
+    return { body: JSON.stringify({ results: [] }) };
+  });
+  await rulesHelpers.fetchEnabledRules();
 });
 
 test('filterRulesbyCollection returns rules with matching only collection name', (t) => {
@@ -99,6 +170,37 @@ test('filterRulesbyCollection returns all rules if no collection information is 
     rulesHelpers.filterRulesbyCollection([rule1, rule2], {}),
     [rule1, rule2]
   );
+});
+
+test('filterRulesByRuleParams filters on type', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'kinesis', sourceArn: randomString() } });
+
+  const ruleParamsToSelectRule1 = { type: 'sqs' };
+
+  const results = rulesHelpers.filterRulesByRuleParams([rule1, rule2], ruleParamsToSelectRule1);
+  t.deepEqual(results, [rule1]);
+});
+
+test('filterRulesByRuleParams filters on collection', (t) => {
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', sourceArn: randomString() } });
+
+  const ruleParamsToSelectRule1 = { ...rule1.collection };
+
+  const results = rulesHelpers.filterRulesByRuleParams([rule1, rule2], ruleParamsToSelectRule1);
+  t.deepEqual(results, [rule1]);
+});
+
+test('filterRulesByRuleParams filters on sourceArn', (t) => {
+  const desiredSourceArn = randomString();
+  const rule1 = fakeRuleFactoryV2({ rule: { type: 'sqs', value: desiredSourceArn } });
+  const rule2 = fakeRuleFactoryV2({ rule: { type: 'sqs', value: randomString() } });
+
+  const ruleParamsToSelectRule1 = { sourceArn: desiredSourceArn };
+
+  const results = rulesHelpers.filterRulesByRuleParams([rule1, rule2], ruleParamsToSelectRule1);
+  t.deepEqual(results, [rule1]);
 });
 
 test('getMaxTimeoutForRules returns correct max timeout', (t) => {
