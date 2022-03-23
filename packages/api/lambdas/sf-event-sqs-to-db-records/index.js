@@ -2,14 +2,15 @@
 
 const get = require('lodash/get');
 
-const AggregateError = require('aggregate-error');
-
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
 const {
   getKnexClient,
 } = require('@cumulus/db');
+const {
+  UnmetRequirementsError,
+} = require('@cumulus/errors');
 const {
   getMessageAsyncOperationId,
 } = require('@cumulus/message/AsyncOperations');
@@ -20,9 +21,6 @@ const {
   getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
-const Execution = require('../../models/executions');
-const Granule = require('../../models/granules');
-const Pdr = require('../../models/pdrs');
 
 const {
   getCollectionCumulusId,
@@ -47,27 +45,6 @@ const {
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
-const writeRecordsToDynamoDb = async ({
-  cumulusMessage,
-  granuleModel = new Granule(),
-  executionModel = new Execution(),
-  pdrModel = new Pdr(),
-}) => {
-  const results = await Promise.allSettled([
-    executionModel.storeExecutionFromCumulusMessage(cumulusMessage),
-    pdrModel.storePdrFromCumulusMessage(cumulusMessage),
-    granuleModel.storeGranulesFromCumulusMessage(cumulusMessage),
-  ]);
-  const failures = results.filter((result) => result.status === 'rejected');
-  if (failures.length > 0) {
-    const allFailures = failures.map((failure) => failure.reason);
-    const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some records to Dynamo', aggregateError);
-    throw aggregateError;
-  }
-  return results;
-};
-
 /**
  * Write records to data stores. Use conditional logic to write either to
  * DynamoDB only or to DynamoDB and RDS.
@@ -90,13 +67,7 @@ const writeRecords = async ({
   pdrModel,
 }) => {
   if (!isPostRDSDeploymentExecution(cumulusMessage)) {
-    log.info('Message is not for a post-RDS deployment execution. Writes will only be performed to DynamoDB and not RDS');
-    return writeRecordsToDynamoDb({
-      cumulusMessage,
-      granuleModel,
-      executionModel,
-      pdrModel,
-    });
+    log.info('Message is not for a post-RDS deployment execution.');
   }
 
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
@@ -129,17 +100,7 @@ const writeRecords = async ({
     messageParentExecutionArn,
     parentExecutionCumulusId,
   })) {
-    log.info('Could not satisfy requirements for execution RDS write. All writes will only be performed to DynamoDB and not RDS');
-    // If any requirements for writing executions to Postgres were not met,
-    // then PDR/granules should not be written to Postgres either since they
-    // reference executions, so bail out to writing execution/PDR/granule
-    // records to Dynamo.
-    return writeRecordsToDynamoDb({
-      cumulusMessage,
-      granuleModel,
-      executionModel,
-      pdrModel,
-    });
+    throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
 
   const executionCumulusId = await writeExecutionRecordFromMessage({
@@ -189,8 +150,7 @@ const handler = async (event) => {
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
-      log.fatal(`Writing message failed with error: ${error.name} ---- ${error.message}`);
-      log.fatal(`Writing message failed: ${JSON.stringify(message)}`);
+      log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
   }));

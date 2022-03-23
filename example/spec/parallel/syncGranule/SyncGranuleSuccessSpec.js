@@ -11,7 +11,6 @@ const {
   waitForTestExecutionStart,
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { Execution, Granule } = require('@cumulus/api/models');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -22,8 +21,10 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   loadConfig,
   templateFile,
@@ -40,7 +41,6 @@ const {
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 const { isReingestExecutionForGranuleId } = require('../../helpers/workflowUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'SyncGranule';
 const providersDir = './data/providers/s3/';
@@ -49,11 +49,9 @@ const collectionsDir = './data/collections/s3_MOD09GQ_006';
 describe('The Sync Granules workflow', () => {
   let collection;
   let config;
-  let executionModel;
   let expectedPayload;
   let expectedS3TagSet;
   let failingExecutionArn;
-  let granuleModel;
   let inputPayload;
   let lambdaStep;
   let provider;
@@ -69,7 +67,6 @@ describe('The Sync Granules workflow', () => {
     lambdaStep = new LambdaStep();
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
 
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -87,10 +84,6 @@ describe('The Sync Granules workflow', () => {
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
     const newCollectionId = constructCollectionId(collection.name, collection.version);
-
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    executionModel = new Execution();
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
     // populate collections, providers and test data
     await Promise.all([
@@ -198,7 +191,7 @@ describe('The Sync Granules workflow', () => {
   });
 
   describe('the SyncGranule Lambda function', () => {
-    let lambdaOutput = null;
+    let lambdaOutput;
     let files;
     let key1;
     let key2;
@@ -273,9 +266,12 @@ describe('The Sync Granules workflow', () => {
 
   describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution record is added to DynamoDB', async () => {
-      const record = await waitForModelStatus(
-        executionModel,
-        { arn: workflowExecution.executionArn },
+      const record = await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: workflowExecution.executionArn,
+        },
         'completed'
       );
       expect(record.status).toEqual('completed');
@@ -342,9 +338,12 @@ describe('The Sync Granules workflow', () => {
         });
       });
 
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: newGranuleId },
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
         'completed'
       );
 
@@ -369,8 +368,8 @@ describe('The Sync Granules workflow', () => {
   });
 
   describe('when a bad checksum is provided', () => {
-    let lambdaOutput = null;
-    let failingExecution = null;
+    let lambdaOutput;
+    let failingExecution;
 
     beforeAll(async () => {
       inputPayload.granules[0].files[0].checksum = 'badCheckSum01';

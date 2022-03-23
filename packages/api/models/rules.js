@@ -16,8 +16,8 @@ const { ValidationError } = require('@cumulus/errors');
 
 const Manager = require('./base');
 const { rule: ruleSchema } = require('./schemas');
-const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
 const { getSnsTriggerPermissionId } = require('../lib/snsRuleHelpers');
+const { isResourceNotFoundException, ResourceNotFoundError } = require('../lib/errors');
 
 class Rule extends Manager {
   constructor({
@@ -154,7 +154,7 @@ class Rule extends Manager {
   /**
    * Updates a rule item.
    *
-   * @param {Object} updatedRuleItem - the updated rule item
+   * @param {Object} updatedRuleItem - updated rule item
    * @param {Array<string>} [fieldsToDelete] - names of fields to delete from
    *    rule
    * @returns {Promise} the response from database updates
@@ -258,7 +258,7 @@ class Rule extends Manager {
     newRuleItem.createdAt = item.createdAt || Date.now();
     newRuleItem.updatedAt = item.updatedAt || Date.now();
 
-    // Validate rule before kicking off workflows or adding event source mappings
+    // Validate rule before kicking off workflows
     await this.constructor.recordIsValid(newRuleItem, this.schema, this.removeAdditional);
 
     // save
@@ -266,6 +266,7 @@ class Rule extends Manager {
   }
 
   async createRuleTrigger(ruleItem) {
+    // Initialize new rule object
     let newRuleItem = cloneDeep(ruleItem);
 
     // the default state is 'ENABLED'

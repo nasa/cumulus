@@ -29,3 +29,9 @@ test('isBadRequestError returns true for ValidationError', (t) => {
 test('isBadRequestError returns false for generic error', (t) => {
   t.false(isBadRequestError(new Error()));
 });
+
+test('isBadRequestError returns true for knex ValidationException errors', (t) => {
+  const error = new Error();
+  error.name = 'ValidationException';
+  t.true(isBadRequestError(error));
+});

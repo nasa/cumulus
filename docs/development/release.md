@@ -120,14 +120,14 @@ Lerna will handle updating the packages and all of the dependent package version
 
 **Note:** Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
 Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
-It's useful to use the search feature of your code editor or `grep` to see if there any references to the ***old*** package versions.
+It's useful to use the search feature of your code editor or `grep` to see if there any references to the **_old_** package versions.
 In bash shell you can run
 
 ```bash
 find . -name package.json -exec grep -nH "@cumulus/.*MAJOR\.MINOR\.PATCH.*" {} \;
 ```
 
-Verify that each of those is updated to the ***new*** `MAJOR.MINOR.PATCH` verion you are trying to release.
+Verify that each of those is updated to the **_new_** `MAJOR.MINOR.PATCH` verion you are trying to release.
 
 A similar search for alpha and beta versions should be run on the release version and any problems should be fixed.
 
@@ -240,7 +240,7 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 
 - Click `Create plan branch manually`.
 
-- Add the values in that list. Choose a display name that makes it *very* clear this is a deployment branch plan. `Release (minor version branch name)` seems to work well (e.g. `Release (1.2.x)`)).
+- Add the values in that list. Choose a display name that makes it _very_ clear this is a deployment branch plan. `Release (minor version branch name)` seems to work well (e.g. `Release (1.2.x)`)).
   - **Make sure** you enter the correct branch name (e.g. `release-1.2.x`).
 
 - **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build.

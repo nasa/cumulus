@@ -275,7 +275,7 @@ test.serial('get a Granule Inventory report with s3 signed url', async (t) => {
 });
 
 test.serial('get a report which exceeds maximum allowed payload size', async (t) => {
-  process.env.maxResponsePayloadSize = 150;
+  process.env.maxResponsePayloadSizeBytes = 150;
   await Promise.all(fakeReportRecords.slice(0, 2).map(async (record) => {
     const response = await request(app)
       .get(`/reconciliationReports/${record.name}`)

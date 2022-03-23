@@ -2,24 +2,22 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
-const { AsyncOperation } = require('@cumulus/api/models');
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner executing a failing lambda function', () => {
+  let asyncOperation;
   let asyncOperationId;
-  let asyncOperationModel;
   let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
   let beforeAllFailed = false;
   let cluster;
   let config;
-  let asyncOperation;
   let failFunctionName;
   let payloadKey;
   let taskArn;
@@ -30,12 +28,6 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
 
       asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
       failFunctionName = `${config.stackName}-AsyncOperationFail`;
-
-      asyncOperationModel = new AsyncOperation({
-        stackName: config.stackName,
-        systemBucket: config.bucket,
-        tableName: asyncOperationsTableName,
-      });
 
       // Find the ARN of the cluster
       cluster = await getClusterArn(config.stackName);
@@ -52,13 +44,16 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
         Key: payloadKey,
         Body: JSON.stringify([1, 2, 3]),
       }).promise();
-      await asyncOperationModel.create({
+
+      const asyncOperationObject = {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
         operationType: 'ES Index',
         status: 'RUNNING',
-      });
+      };
+
+      await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
 
       const runTaskResponse = await startECSTask({
         asyncOperationTaskDefinition,

@@ -21,6 +21,7 @@ const EXECUTION_LIST_LIMIT = 50;
  * @param {string} prefix - the name of the Cumulus stack
  * @param {Function} matcher - a predicate function that takes an execution and determines if this
  * is the execution that is being searched for
+ * @param {Object} [queryParameters] - Optional query parameters
  * @param {Object} [options]
  * @param {integer} [options.timeout=0] - the number of seconds to wait for a matching execution
  * to be found
@@ -46,7 +47,7 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
         let executions = JSON.parse(body);
         const { results } = executions;
         if (isNil(results)) {
-          throw new Error('Not Found');
+          throw new Error('API executions list was empty');
         }
 
         execution = results.find(matcher);
@@ -68,7 +69,7 @@ const findExecutionArn = async (prefix, matcher, queryParameters = { }, options 
         throw new pRetry.AbortError(error);
       }
 
-      if (isNil(execution)) throw new Error('Not Found');
+      if (isNil(execution)) throw new Error('Execution never found in API');
 
       return execution.arn;
     },

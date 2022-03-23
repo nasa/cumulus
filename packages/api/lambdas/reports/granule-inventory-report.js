@@ -5,9 +5,13 @@ const noop = require('lodash/noop');
 const Stream = require('stream');
 const Logger = require('@cumulus/logger');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { Granule } = require('../../models');
+const {
+  getGranulesByApiPropertiesQuery,
+  QuerySearchClient,
+  translatePostgresGranuleResultToApiGranule,
+} = require('@cumulus/db');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
-const { convertToDBScanGranuleSearchParams } = require('../../lib/reconciliationReport');
+const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
  * Builds a CSV file of all granules in the Cumulus DB
@@ -34,10 +38,19 @@ async function createGranuleInventoryReport(recReportParams) {
   ];
 
   const { reportKey, systemBucket } = recReportParams;
-  const searchParams = convertToDBScanGranuleSearchParams(recReportParams);
+  const searchParams = convertToDBGranuleSearchParams(recReportParams);
 
-  const granuleScanner = new Granule().granuleAttributeScan(searchParams);
-  let nextGranule = await granuleScanner.peek();
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+    recReportParams.knex,
+    searchParams,
+    ['collectionName', 'collectionVersion', 'granule_id']
+  );
+  const pgGranulesSearchClient = new QuerySearchClient(
+    granulesSearchQuery,
+    100 // arbitrary limit on how items are fetched at once
+  );
+
+  let nextGranule = await pgGranulesSearchClient.peek();
 
   const readable = new Stream.Readable({ objectMode: true });
   const pass = new Stream.PassThrough();
@@ -54,19 +67,24 @@ async function createGranuleInventoryReport(recReportParams) {
   });
 
   while (nextGranule) {
+    // eslint-disable-next-line no-await-in-loop
+    const apiGranule = await translatePostgresGranuleResultToApiGranule(
+      recReportParams.knex,
+      nextGranule
+    );
     readable.push({
-      granuleUr: nextGranule.granuleId,
-      collectionId: nextGranule.collectionId,
-      createdAt: new Date(nextGranule.createdAt).toISOString(),
-      startDateTime: nextGranule.beginningDateTime || '',
-      endDateTime: nextGranule.endingDateTime || '',
-      status: nextGranule.status,
-      updatedAt: new Date(nextGranule.updatedAt).toISOString(),
-      published: nextGranule.published,
-      provider: nextGranule.provider,
+      granuleUr: apiGranule.granuleId,
+      collectionId: apiGranule.collectionId,
+      createdAt: new Date(apiGranule.createdAt).toISOString(),
+      startDateTime: apiGranule.beginningDateTime || '',
+      endDateTime: apiGranule.endingDateTime || '',
+      status: apiGranule.status,
+      updatedAt: new Date(apiGranule.updatedAt).toISOString(),
+      published: apiGranule.published,
+      provider: apiGranule.provider,
     });
-    await granuleScanner.shift(); // eslint-disable-line no-await-in-loop
-    nextGranule = await granuleScanner.peek(); // eslint-disable-line no-await-in-loop
+    await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
+    nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
   }
   readable.push(null);
 

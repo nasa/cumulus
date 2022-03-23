@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs-extra');
-const { models: { Execution, Granule } } = require('@cumulus/api');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const {
   addCollections,
@@ -11,13 +10,12 @@ const {
   cleanupProviders,
   executionsApi: executionsApiTestUtils,
 } = require('@cumulus/integration-tests');
+const { getExecution } = require('@cumulus/api-client/executions');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
-const {
-  waitForModelStatus,
-} = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   createTimestampedTestId,
   createTestDataPath,
@@ -44,8 +42,6 @@ describe('The Ingest Granule failure workflow', () => {
 
   let beforeAllFailed = false;
   let config;
-  let executionModel;
-  let granuleModel;
   let inputPayload;
   let pdrFilename;
   let testDataFolder;
@@ -63,10 +59,6 @@ describe('The Ingest Granule failure workflow', () => {
       const provider = { id: `s3_provider${testSuffix}` };
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
-
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
 
       // populate collections, providers and test data
       await Promise.all([
@@ -157,9 +149,13 @@ describe('The Ingest Granule failure workflow', () => {
 
       // Wait for execution to be failed before getting execution record, so that
       // the record should have the correct status
-      await waitForModelStatus(
-        executionModel,
-        { arn: executionArn },
+
+      await waitForApiStatus(
+        getExecution,
+        {
+          prefix: config.stackName,
+          arn: executionArn,
+        },
         'failed'
       );
       execution = await executionsApiTestUtils.getExecution({
@@ -223,9 +219,12 @@ describe('The Ingest Granule failure workflow', () => {
     });
 
     it('fails the granule with an error object', async () => {
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId: inputPayload.granules[0].granuleId },
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: inputPayload.granules[0].granuleId,
+        },
         'failed'
       );
 
