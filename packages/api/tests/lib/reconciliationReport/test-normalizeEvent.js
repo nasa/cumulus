@@ -213,7 +213,7 @@ test('Invalid report type throws InvalidArgument error', (t) => {
 
   t.throws(() => normalizeEvent(inputEvent), {
     instanceOf: InvalidArgument,
-    message: `${reportType} is not a valid report type. Please use one of ["Granule Inventory","Granule Not Found","Internal","Inventory"].`,
+    message: new RegExp(`${reportType} is not a valid report type\. Please use one of .*`),
   });
 });
 

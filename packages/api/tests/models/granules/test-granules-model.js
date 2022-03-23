@@ -1,21 +1,16 @@
 'use strict';
 
 const test = require('ava');
-const pick = require('lodash/pick');
-const sortBy = require('lodash/sortBy');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
-const Lambda = require('@cumulus/aws-client/Lambda');
 const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const launchpad = require('@cumulus/launchpad-auth');
-const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
+const { randomString } = require('@cumulus/common/test-utils');
 const { CMR } = require('@cumulus/cmr-client');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { DefaultProvider } = require('@cumulus/common/key-pair-provider');
 
-const Rule = require('../../../models/rules');
 const Granule = require('../../../models/granules');
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 
@@ -453,122 +448,6 @@ test('scan() will translate old-style granule files into the new schema', async 
   );
 });
 
-test('getGranulesForCollection() only returns granules belonging to the specified collection', async (t) => {
-  const { granuleModel } = t.context;
-
-  const expectedGranule = fakeGranuleFactoryV2({ collectionId: 'good-collection' });
-
-  await granuleModel.create([
-    expectedGranule,
-    fakeGranuleFactoryV2({ collectionId: 'bad-collection' }),
-  ]);
-
-  const granules = await granuleModel.getGranulesForCollection('good-collection');
-
-  const { granuleId } = await granules.shift();
-  t.is(granuleId, expectedGranule.granuleId);
-  t.is(await granules.shift(), null);
-});
-
-test('getGranulesForCollection() sorts its results by granuleId', async (t) => {
-  const { granuleModel } = t.context;
-
-  const collectionId = randomString();
-  const granules = [
-    fakeGranuleFactoryV2({ collectionId }),
-    fakeGranuleFactoryV2({ collectionId }),
-  ];
-
-  await granuleModel.create(granules);
-
-  const granulesQueue = await granuleModel.getGranulesForCollection(collectionId);
-
-  const fetchedGranules = [
-    await granulesQueue.shift(),
-    await granulesQueue.shift(),
-  ];
-
-  t.is(await granulesQueue.shift(), null);
-
-  t.deepEqual(
-    fetchedGranules.map((g) => g.granuleId).sort(),
-    granules.map((g) => g.granuleId).sort()
-  );
-});
-
-test('getGranulesForCollection() filters by status', async (t) => {
-  const { granuleModel } = t.context;
-
-  const collectionId = randomString();
-  const expectedGranule = fakeGranuleFactoryV2({ collectionId, status: 'completed' });
-
-  await granuleModel.create([
-    expectedGranule,
-    fakeGranuleFactoryV2({ collectionId, status: 'failed' }),
-  ]);
-
-  const granules = await granuleModel.getGranulesForCollection(collectionId, 'completed');
-
-  const { granuleId } = await granules.shift();
-  t.is(granuleId, expectedGranule.granuleId);
-  t.is(await granules.shift(), null);
-});
-
-test('searchGranulesForCollection() returns matching granules ordered by granuleId', async (t) => {
-  const { granuleModel } = t.context;
-
-  const collectionId = randomString();
-  const provider = randomString();
-  const status = 'running';
-  const granules = [
-    fakeGranuleFactoryV2({ collectionId, provider, status }),
-    fakeGranuleFactoryV2({ collectionId, provider, status }),
-    fakeGranuleFactoryV2({ collectionId, provider, status: 'completed' }),
-    fakeGranuleFactoryV2({ collectionId, provider: randomString(), status: 'completed' }),
-  ];
-  await granuleModel.create(granules);
-
-  const fields = ['granuleId', 'collectionId', 'provider', 'createdAt', 'status'];
-
-  let searchParams = {
-    provider,
-    status,
-    updatedAt__from: Date.now() - 1000 * 30,
-    updatedAt__to: Date.now(),
-  };
-  let granulesQueue = await granuleModel
-    .searchGranulesForCollection(collectionId, searchParams, fields);
-
-  let fetchedGranules = await granulesQueue.empty();
-  t.is(fetchedGranules.length, 2);
-  const expectedGranules = granules.slice(0, 2).map((granule) => pick(granule, fields));
-  t.deepEqual(fetchedGranules, sortBy(expectedGranules, ['granuleId']));
-
-  // array parameters
-  searchParams = {
-    ...searchParams,
-    provider: [provider, randomId('provider')],
-    granuleId: granules[0].granuleId,
-  };
-  granulesQueue = await granuleModel
-    .searchGranulesForCollection(collectionId, searchParams, fields);
-
-  fetchedGranules = await granulesQueue.empty();
-  t.is(fetchedGranules.length, 1);
-  t.deepEqual(fetchedGranules[0], pick(granules[0], fields));
-
-  // test when no granule falls within the search parameter range
-  searchParams = {
-    provider,
-    status,
-    updatedAt__from: Date.now(),
-  };
-  granulesQueue = await granuleModel
-    .searchGranulesForCollection(collectionId, searchParams, fields);
-  fetchedGranules = await granulesQueue.empty();
-  t.is(fetchedGranules.length, 0);
-});
-
 test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
   const { granuleModel } = t.context;
 
@@ -709,36 +588,6 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
   }
 });
 
-test.serial(
-  'reingest pushes a message with the correct queueUrl',
-  async (t) => {
-    const { granuleModel } = t.context;
-    const updateStatusStub = sinon.stub(granuleModel, 'updateStatus');
-    const queueUrl = 'testqueueUrl';
-    const granule = {
-      execution: 'some/execution',
-      collectionId: constructCollectionId('MyCollection', '006'),
-      provider: 'someProvider',
-      queueUrl,
-    };
-    const fileExists = () => Promise.resolve(true);
-    const fileExistsStub = sinon.stub(s3Utils, 'fileExists').callsFake(fileExists);
-    const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
-
-    try {
-      await granuleModel.reingest(granule);
-      // Rule.buildPayload has its own unit tests to ensure the queue name
-      // is used properly, so just ensure that we pass the correct argument
-      // to that function.
-      t.is(buildPayloadSpy.args[0][0].queueUrl, queueUrl);
-    } finally {
-      fileExistsStub.restore();
-      buildPayloadSpy.restore();
-      updateStatusStub.restore();
-    }
-  }
-);
-
 test('_getMutableFieldNames() returns correct fields for running status', (t) => {
   const { granuleModel } = t.context;
 
@@ -768,69 +617,4 @@ test('_getMutableFieldNames() returns correct fields for completed status', (t) 
   const updateFields = granuleModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
-});
-
-test('applyWorkflow throws error if workflow argument is missing', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = {
-    granuleId: randomString(),
-  };
-
-  await t.throwsAsync(
-    granuleModel.applyWorkflow(granule),
-    {
-      instanceOf: TypeError,
-    }
-  );
-});
-
-test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2();
-  const workflow = randomString();
-  const lambdaPayload = {
-    payload: {
-      granules: [granule],
-    },
-  };
-
-  await granuleModel.create(granule);
-
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
-  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
-  t.teardown(() => {
-    buildPayloadStub.restore();
-    lambdaInvokeStub.restore();
-  });
-
-  await granuleModel.applyWorkflow(granule, workflow);
-
-  t.true(lambdaInvokeStub.called);
-  t.deepEqual(lambdaInvokeStub.args[0][1], lambdaPayload);
-});
-
-test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
-  const { granuleModel } = t.context;
-
-  const granule = fakeGranuleFactoryV2();
-  const workflow = randomString();
-  const queueUrl = randomString();
-
-  await granuleModel.create(granule);
-
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
-  const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
-  t.teardown(() => {
-    buildPayloadStub.restore();
-    lambdaInvokeStub.restore();
-  });
-
-  await granuleModel.applyWorkflow(granule, workflow, undefined, queueUrl);
-
-  t.true(buildPayloadStub.called);
-  t.like(buildPayloadStub.args[0][0], {
-    queueUrl,
-  });
 });

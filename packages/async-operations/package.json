@@ -32,6 +32,9 @@
     "@cumulus/db": "10.1.2",
     "@cumulus/errors": "10.1.2",
     "@cumulus/types": "10.1.2",
+    "@cumulus/es-client": "10.1.2",
+    "@cumulus/types": "10.1.2",
+    "knex": "0.95.15",
     "uuid": "8.3.2"
   },
   "devDependencies": {

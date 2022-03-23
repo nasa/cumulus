@@ -1,9 +1,17 @@
 'use strict';
 
+const pRetry = require('p-retry');
 const {
-  PdrPgModel,
   createRejectableTransaction,
+  PdrPgModel,
+  translatePostgresPdrToApiPdr,
 } = require('@cumulus/db');
+const {
+  upsertPdr,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
 const {
   getMessagePdrName,
   messageHasPdr,
@@ -11,6 +19,7 @@ const {
   getMessagePdrPANSent,
   getMessagePdrPANMessage,
   getPdrPercentCompletion,
+  generatePdrApiRecordFromMessage,
 } = require('@cumulus/message/PDRs');
 const {
   getMetaStatus,
@@ -18,6 +27,7 @@ const {
   getWorkflowDuration,
 } = require('@cumulus/message/workflows');
 const Logger = require('@cumulus/logger');
+const { publishPdrSnsMessage } = require('../../lib/publishSnsMessageUtils');
 
 const Pdr = require('../../models/pdrs');
 
@@ -53,35 +63,6 @@ const generatePdrRecord = ({
   };
 };
 
-/**
- * Get the cumulus ID from a query result or look it up in the database.
- *
- * For certain cases, such as an upsert query that matched no rows, an empty
- * database result is returned, so no cumulus ID will be returned. In those
- * cases, this function will lookup the PDR cumulus ID from the record.
- *
- * @param {Object} params
- * @param {Object} params.trx - A Knex transaction
- * @param {Object} params.queryResult - Query result
- * @param {Object} params.pdrRecord - A PDR record
- * @returns {Promise<number|undefined>} - Cumulus ID for the PDR record
- */
-const getPdrCumulusIdFromQueryResultOrLookup = async ({
-  queryResult = [],
-  pdrRecord,
-  trx,
-  pdrPgModel = new PdrPgModel(),
-}) => {
-  let pdrCumulusId = queryResult[0];
-  if (!pdrCumulusId) {
-    pdrCumulusId = await pdrPgModel.getRecordCumulusId(
-      trx,
-      { name: pdrRecord.name }
-    );
-  }
-  return pdrCumulusId;
-};
-
 const writePdrViaTransaction = async ({
   cumulusMessage,
   trx,
@@ -107,14 +88,42 @@ const writePdrViaTransaction = async ({
   // result from the query is empty so no cumulus_id will be returned.
   // But this function always needs to return a cumulus_id for the PDR
   // since it is used for writing granules
-  const pdrCumulusId = await getPdrCumulusIdFromQueryResultOrLookup({
-    trx,
-    queryResult,
-    pdrRecord,
-  });
+  const pdr = queryResult[0] || await pdrPgModel.get(trx, { name: pdrRecord.name });
 
-  logger.info(`Successfully upserted PDR ${pdrRecord.name} to PostgreSQL with cumulus_id ${pdrCumulusId}`);
-  return [pdrCumulusId];
+  logger.info(`Successfully upserted PDR ${pdrRecord.name} to PostgreSQL with cumulus_id ${pdr.cumulus_id}`);
+  return pdr;
+};
+
+const writePdrToDynamoAndEs = async (params) => {
+  const {
+    cumulusMessage,
+    pdrModel,
+    updatedAt = Date.now(),
+    esClient = await Search.es(),
+  } = params;
+  const pdrApiRecord = generatePdrApiRecordFromMessage(cumulusMessage, updatedAt);
+  if (!pdrApiRecord) {
+    return;
+  }
+  try {
+    await pdrModel.storePdr(pdrApiRecord, cumulusMessage);
+    await upsertPdr({
+      esClient,
+      updates: pdrApiRecord,
+      index: process.env.ES_INDEX,
+    });
+  } catch (error) {
+    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for PDR ${pdrApiRecord.pdrName}`);
+    // On error, delete the Dynamo record to ensure that all systems
+    // stay in sync
+    await pRetry(
+      async () => await pdrModel.delete({ pdrName: pdrApiRecord.pdrName }),
+      {
+        retries: 3,
+      }
+    );
+    throw error;
+  }
 };
 
 const writePdr = async ({
@@ -125,7 +134,9 @@ const writePdr = async ({
   knex,
   pdrModel = new Pdr(),
   updatedAt = Date.now(),
+  esClient,
 }) => {
+  let pgPdr;
   // If there is no PDR in the message, then there's nothing to do here, which is fine
   if (!messageHasPdr(cumulusMessage)) {
     return undefined;
@@ -136,9 +147,8 @@ const writePdr = async ({
   if (!providerCumulusId) {
     throw new Error('Provider reference is required for a PDR');
   }
-  return await createRejectableTransaction(knex, async (trx) => {
-    // eslint-disable-next-line camelcase
-    const [cumulus_id] = await writePdrViaTransaction({
+  const pdrCumulusId = await createRejectableTransaction(knex, async (trx) => {
+    pgPdr = await writePdrViaTransaction({
       cumulusMessage,
       collectionCumulusId,
       providerCumulusId,
@@ -146,15 +156,22 @@ const writePdr = async ({
       executionCumulusId,
       updatedAt,
     });
-    await pdrModel.storePdrFromCumulusMessage(cumulusMessage, updatedAt);
-    // eslint-disable-next-line camelcase
-    return cumulus_id;
+    await writePdrToDynamoAndEs({
+      cumulusMessage,
+      pdrModel,
+      updatedAt,
+      esClient,
+    });
+    return pgPdr.cumulus_id;
   });
+  const pdrToPublish = await translatePostgresPdrToApiPdr(pgPdr, knex);
+  await publishPdrSnsMessage(pdrToPublish);
+  return pdrCumulusId;
 };
 
 module.exports = {
   generatePdrRecord,
-  getPdrCumulusIdFromQueryResultOrLookup,
   writePdrViaTransaction,
   writePdr,
+  writePdrToDynamoAndEs,
 };

@@ -1,18 +1,22 @@
 'use strict';
 
+const fs = require('fs-extra');
+const path = require('path');
+
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
   FilePgModel,
   GranulePgModel,
   CollectionPgModel,
+  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
-
+const { indexGranule } = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // Postgres mock data factories
 const {
-  fakeGranuleRecordFactory,
   fakeCollectionRecordFactory,
 } = require('@cumulus/db/dist/test-utils');
 
@@ -23,29 +27,30 @@ const {
 // Dynamo mock data factories
 const {
   fakeGranuleFactoryV2,
-  fakeCollectionFactory,
-} = require('./testUtils');
+} = require('../../lib/testUtils');
 
-const models = require('../models');
+const models = require('../../models');
+
+const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
 /**
  * Helper for creating a granule, a parent collection,
  * and files belonging to that granule (in S3 and Postgres)
- * @param {Knex} dbClient - Knex client
- * @param {number} collectionId - collectionId for the granule's parent collection
- * @param {number} collectionCumulusId - cumulus_id for the granule's parent collection
- * @param {boolean} published - if the granule should be marked published to CMR
+ *
+ * @param {Object} params
+ * @param {Knex} params.dbClient - Knex client
+ * @param {number} params.collectionId - collectionId for the granule's parent collection
+ * @param {number} params.collectionCumulusId - cumulus_id for the granule's parent collection
+ * @param {boolean} params.published - if the granule should be marked published to CMR
  * @returns {Object} fake granule object
  */
 async function createGranuleAndFiles({
   dbClient,
   collectionId,
   collectionCumulusId,
-  published = false,
+  esClient,
+  granuleParams = { published: false },
 }) {
-  let newCollectionId;
-  let newCollectionCumulusId;
-
   const s3Buckets = {
     protected: {
       name: randomId('protected'),
@@ -70,23 +75,10 @@ async function createGranuleAndFiles({
 
   const collectionName = randomString(5);
   const collectionVersion = randomString(3);
-
-  // If a collectionId for a Dynamo Collection was not passed,
-  // create one to use for the Granule creation
-  if (!collectionId) {
-    const testCollection = fakeCollectionFactory({
-      name: collectionName,
-      version: collectionVersion,
-    });
-
-    const collectionDynamoModel = new models.Collection();
-    const dynamoCollection = await collectionDynamoModel.create(testCollection);
-
-    newCollectionId = constructCollectionId(
-      dynamoCollection.name,
-      dynamoCollection.version
-    );
-  }
+  const newCollectionId = constructCollectionId(
+    collectionName,
+    collectionVersion
+  );
 
   // If a cumulus_id for a Collection was not passed,
   // create one to use for the Granule creation
@@ -97,11 +89,13 @@ async function createGranuleAndFiles({
     });
 
     const collectionPgModel = new CollectionPgModel();
-    [newCollectionCumulusId] = await collectionPgModel.create(
+    await collectionPgModel.create(
       dbClient,
       testPgCollection
     );
   }
+
+  const granuleCollectionId = collectionId || newCollectionId;
 
   const files = [
     {
@@ -110,55 +104,54 @@ async function createGranuleAndFiles({
       key: `${randomString(5)}/${granuleId}.hdf`,
     },
     {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
       bucket: s3Buckets.public.name,
       fileName: `${granuleId}.jpg`,
       key: `${randomString(5)}/${granuleId}.jpg`,
     },
   ];
 
-  const newGranule = fakeGranuleFactoryV2(
-    {
-      granuleId: granuleId,
-      status: 'failed',
-      published: published,
-      collectionId: collectionId || newCollectionId,
-    }
-  );
-
-  newGranule.files = files;
-
   // Add files to S3
-  await Promise.all(newGranule.files.map((file) => s3PutObject({
+  await Promise.all(files.map((file) => s3PutObject({
     Bucket: file.bucket,
     Key: file.key,
     Body: `test data ${randomString()}`,
   })));
 
-  // create a new Dynamo granule
-  await granuleModel.create(newGranule);
+  const metadataFile = {
+    bucket: s3Buckets.protected.name,
+    fileName: `${granuleId}.cmr.xml`,
+    key: `${randomString(5)}/${granuleId}.cmr.xml`,
+  };
+  await s3PutObject({
+    Bucket: metadataFile.bucket,
+    Key: metadataFile.key,
+    Body: metadataFileFixture,
+  });
+  files.push(metadataFile);
 
-  // create a new Postgres granule
-  const newPGGranule = fakeGranuleRecordFactory(
+  const newGranule = fakeGranuleFactoryV2(
     {
-      granule_id: granuleId,
+      granuleId: granuleId,
       status: 'failed',
-      collection_cumulus_id: collectionCumulusId || newCollectionCumulusId,
-      published: published,
+      collectionId: granuleCollectionId,
+      ...granuleParams,
+      files,
     }
   );
 
-  const [granuleCumulusId] = await granulePgModel.create(dbClient, newPGGranule);
+  // create a new Dynamo granule
+  const dynamoGranule = await granuleModel.create(newGranule);
+  await indexGranule(esClient, dynamoGranule, process.env.ES_INDEX);
+
+  // create a new Postgres granule
+  const newPgGranule = await translateApiGranuleToPostgresGranule(dynamoGranule, dbClient);
+  const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
 
   // create Postgres files
   await Promise.all(
     files.map((f) => {
       const pgFile = {
-        granule_cumulus_id: granuleCumulusId,
+        granule_cumulus_id: pgGranule.cumulus_id,
         bucket: f.bucket,
         file_name: f.fileName,
         key: f.key,
@@ -168,9 +161,16 @@ async function createGranuleAndFiles({
     })
   );
 
+  const esGranulesClient = new Search(
+    {},
+    'granule',
+    process.env.ES_INDEX
+  );
+
   return {
-    newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: granuleCumulusId }),
+    newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
     newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
+    esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,
     s3Buckets: s3Buckets,
   };
