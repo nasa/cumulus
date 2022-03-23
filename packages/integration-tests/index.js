@@ -329,6 +329,39 @@ const loadProvider = async (params = {}) =>
     .then((provider) => buildProvider({ ...params, provider }));
 
 /**
+ *  Returns true if provider exists, false otherwise
+ * @param {string} stackName
+ * @param {string} id
+ * @returns {boolean}
+ */
+const providerExists = async (stackName, id) => {
+  let response;
+  const exists = await pRetry(
+    async () => {
+      try {
+        response = await providersApi.getProvider({
+          prefix: stackName,
+          providerId: id,
+          pRetryOptions: {
+            retries: 0,
+          },
+        });
+      } catch (error) {
+        if (error.statusCode === 404) {
+          console.log(`Error: ${error}. Failed to get provider with ID ${id}`);
+          return false;
+        }
+        throw error;
+      }
+      if (response.statusCode === 200) return true;
+      return false;
+    },
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  );
+  return exists;
+};
+
+/**
  * add providers to database.
  *
  * @param {string} stackName - Cloud formation stack name
@@ -358,8 +391,13 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 
   await Promise.all(
     completeProviders.map(async (provider) => {
-      await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
-      await providersApi.createProvider({ prefix: stackName, provider: provider });
+      if (await providerExists(stackName, provider.id)) {
+        await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+      }
+      await providersApi.createProvider({
+        prefix: stackName,
+        provider: provider,
+      });
     })
   );
 
@@ -393,13 +431,13 @@ async function deleteProviders(stackName, bucketName, providers, postfix) {
 }
 
 /**
- * Delete all collections listed from a collections directory
+ * Delete all providers listed from a providers directory
  *
  * @param {string} stackName - CloudFormation stack name
  * @param {string} bucket - S3 internal bucket name
- * @param {string} providersDirectory - the directory of collection json files
+ * @param {string} providersDirectory - the directory of providers json files
  * @param {string} postfix - string that was appended to provider id
- * @returns {number} - number of deleted collections
+ * @returns {number} - number of deleted providers
  */
 async function cleanupProviders(stackName, bucket, providersDirectory, postfix) {
   // setProcessEnvironment is not needed by this function, but other code

@@ -304,6 +304,15 @@ data "aws_iam_policy_document" "ecs_task_role_policy" {
       var.rds_user_access_secret_arn
     ]
   }
+
+  statement {
+    actions = ["sns:Publish"]
+    resources = [
+      aws_sns_topic.report_executions_topic.arn,
+      aws_sns_topic.report_granules_topic.arn,
+      aws_sns_topic.report_pdrs_topic.arn
+    ]
+  }
 }
 
 resource "aws_iam_role_policy" "ecs_task_role_policy" {

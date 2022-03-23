@@ -14,6 +14,9 @@ module "postgres_migration_async_operation" {
   ecs_execution_role_arn = aws_iam_role.ecs_execution_role.arn
   ecs_task_role_arn = aws_iam_role.ecs_task_role.arn
 
+  elasticsearch_hostname              = var.elasticsearch_hostname
+  elasticsearch_security_group_id     = var.elasticsearch_security_group_id
+
   lambda_subnet_ids          = var.lambda_subnet_ids
 
   prefix                     = var.prefix
@@ -24,8 +27,6 @@ module "postgres_migration_async_operation" {
   rds_user_access_secret_arn             = var.rds_user_access_secret_arn
 
   system_bucket              = var.system_bucket
-
   tags                       = var.tags
-
   vpc_id                     = var.vpc_id
 }
