@@ -8,6 +8,11 @@ data "aws_ecr_repository" "cumulus_test_ingest_process" {
   name = "cumulus-test-ingest-process"
 }
 
+data "aws_ecr_image" "cumulus_test_ingest_process" {
+  repository_name = "cumulus-test-ingest-process"
+  image_tag       = var.cumulus_test_ingest_image_version
+}
+
 module "python_test_ingest_processing_service" {
   source = "../../tf-modules/cumulus_ecs_service"
 
@@ -17,7 +22,7 @@ module "python_test_ingest_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "${data.aws_ecr_repository.cumulus_test_ingest_process.repository_url}:${var.cumulus_test_ingest_image_version}"
+  image                                 = "${data.aws_ecr_repository.cumulus_test_ingest_process.name}:${var.cumulus_test_ingest_image_version}@${data.aws_ecr_image.cumulus_test_ingest_process.image_digest}"
 
   cpu                = 400
   memory_reservation = 700
