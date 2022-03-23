@@ -10,10 +10,12 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { lambda } = require('@cumulus/aws-client/services');
 const { putFile } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Lzards Backup Task ', () => {
   let beforeAllFailed = false;
+  let granuleId;
   let collection;
   let FunctionName;
   let lzardsApiGetFunctionName;
@@ -42,6 +44,7 @@ describe('The Lzards Backup Task ', () => {
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
       }).promise();
+      granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
       // Create the collection
@@ -63,6 +66,8 @@ describe('The Lzards Backup Task ', () => {
           ],
         }
       );
+
+      console.log(`generated collection: ${JSON.stringify(collection)}`);
 
       const Payload = JSON.stringify({
         cma: {
@@ -96,7 +101,7 @@ describe('The Lzards Backup Task ', () => {
             payload: {
               granules: [
                 {
-                  granuleId: 'FakeGranule2',
+                  granuleId,
                   dataType: collection.name,
                   version: collection.version,
                   provider,
@@ -143,14 +148,13 @@ describe('The Lzards Backup Task ', () => {
 
   it('has the expected backup information', () => {
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
-    const returnedCollection = JSON.parse(lzardsBackupOutput.Payload).meta.collection;
+    console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
-    expect(backupStatus[0].granuleId).toBe('FakeGranule2');
+    expect(backupStatus[0].granuleId).toBe(granuleId);
     expect(backupStatus[0].provider).toBe(provider);
     expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
-    expect(returnedCollection.name).toBe(collection.name);
-    expect(returnedCollection.version).toBe(collection.version);
+    expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
   });
 
   describe('The Lzards API Client', () => {
@@ -177,7 +181,7 @@ describe('The Lzards Backup Task ', () => {
         const lzardsGetPayload = JSON.stringify({
           searchParams: {
             'metadata[collection]': `${collection.name}___${collection.version}`,
-            'metadata[granuleId]': 'FakeGranule2',
+            'metadata[granuleId]': granuleId,
           },
         });
 
@@ -190,7 +194,7 @@ describe('The Lzards Backup Task ', () => {
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(1);
-        expect(payload.items[0].metadata.granuleId).toBe('FakeGranule2');
+        expect(payload.items[0].metadata.granuleId).toBe(granuleId);
         expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
         expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
       }
@@ -229,7 +233,7 @@ describe('The Lzards Backup Task ', () => {
         const lzardsGetPayload = JSON.stringify({
           searchParams: {
             'metadata[collection]': 'notBackedUpCollectionName',
-            'metadata[granuleId]': 'FakeGranule2',
+            'metadata[granuleId]': granuleId,
           },
         });
 
