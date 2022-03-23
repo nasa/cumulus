@@ -8,6 +8,11 @@ data "aws_ecr_repository" "cumulus_process_activity" {
   name = "cumulus-process-activity"
 }
 
+data "aws_ecr_image" "cumulus_process_activity" {
+  repository_name = "cumulus-process-activity"
+  image_tag       = var.cumulus_process_activity_version
+}
+
 module "python_processing_service" {
   source = "../../tf-modules/cumulus_ecs_service"
 
@@ -17,7 +22,7 @@ module "python_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
+  image                                 = "${data.aws_ecr_repository.cumulus_process_activity.name}:${var.cumulus_process_activity_version}@${data.aws_ecr_image.cumulus_process_activity.image_digest}"
 
   cpu                = 400
   memory_reservation = 700
