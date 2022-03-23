@@ -16,8 +16,10 @@ migration notes from prior releases:
 
 #### Migration steps
 
+##### **After deploying the `data-persistence` module, but before deploying the main `cumulus` module**
+
 - Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
-out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
+out of sync with records in DynamoDB. , in order to bring the records into sync, re-run the
 [previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
 `{"forceRulesMigration": true}`:
 
@@ -25,6 +27,8 @@ out of sync with records in DynamoDB. In order to bring the records into sync, r
 aws lambda invoke --function-name $PREFIX-data-migration1 \
   --payload $(echo '{"forceRulesMigration": true}' | base64) $OUTFILE
 ```
+
+##### As part of the `cumulus` deployment
 
 - Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
 - (Optional) Update the `task-config` for all workflows that use the `sync-granule` task to include `workflowStartTime` set to
