@@ -16,6 +16,7 @@ export interface HandlerEvent {
 export type MakeBackupFileRequestResult = {
   statusCode?: number
   granuleId: string,
+  collectionId: string,
   filename: string,
   provider: string,
   createdAt: number,

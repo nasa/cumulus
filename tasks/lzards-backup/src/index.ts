@@ -223,13 +223,18 @@ export const makeBackupFileRequest = async (params: {
     });
     if (statusCode !== 201) {
       log.error(`${granuleId}: Request failed - LZARDS api returned ${statusCode}: ${JSON.stringify(body)}`);
-      return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), provider, createdAt, body, status: 'FAILED' };
+      return {
+        statusCode, granuleId, collectionId, filename: buildS3Uri(file.bucket, file.key), provider, createdAt, body, status: 'FAILED',
+      };
     }
-    return { statusCode, granuleId, filename: buildS3Uri(file.bucket, file.key), provider, createdAt, body, status: 'COMPLETED' };
+    return {
+      statusCode, granuleId, collectionId, filename: buildS3Uri(file.bucket, file.key), provider, createdAt, body, status: 'COMPLETED',
+    };
   } catch (error) {
     log.error(`${granuleId}: LZARDS request failed: ${error}`);
     return {
       granuleId,
+      collectionId,
       filename: buildS3Uri(file.bucket, file.key),
       provider,
       createdAt,
