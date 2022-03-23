@@ -414,6 +414,92 @@ test.serial('POST with non-matching granuleId regex returns 400 bad request resp
   t.true(res.body.message.includes('granuleId "badregex" cannot validate "filename"'));
 });
 
+test.serial('POST with non-matching group granuleIdExtraction regex returns 400 bad request response', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    granuleIdExtraction: '1234',
+    sampleFileName: '1234',
+  });
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(res.status, 400);
+  t.true(res.body.message.includes('granuleIdExtraction regex "1234" does not return a matched group when applied to sampleFileName "1234"'));
+});
+
+test.serial('POST with unmatched file.checksumFor returns 400 bad request response', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+      checksumFor: '^1234$',
+    }],
+  });
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(res.status, 400);
+  t.true(res.body.message.includes('checksumFor \'^1234$\' does not match any file regex'));
+});
+
+test.serial('POST with file.checksumFor matching multiple files returns 400 bad request response', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+    },
+    {
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename2',
+    },
+    {
+      bucket: 'bucket',
+      regex: '^file.*$',
+      sampleFileName: 'filename3',
+      checksumFor: '^.*$',
+    }],
+  });
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(res.status, 400);
+  t.true(res.body.message.includes('checksumFor \'^.*$\' matches multiple file regexes'));
+});
+
+test.serial('POST with file.checksumFor matching its own file returns 400 bad request response', async (t) => {
+  const newCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+      checksumFor: '^.*$',
+    }],
+  });
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(res.status, 400);
+  t.true(res.body.message.includes('checksumFor \'^.*$\' cannot be used to validate itself'));
+});
+
 test.serial('POST does not write to Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
   const collection = fakeCollectionFactory();
 
