@@ -105,7 +105,7 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
-  t.context.dynamoDbClient = dynamodbDocClient({
+  t.context.dynamodbDocClient = dynamodbDocClient({
     marshallOptions: {
       convertEmptyValues: true,
       removeUndefinedValues: true,
@@ -403,7 +403,7 @@ test.serial('migrateExecutionRecord recursively migrates grandparent executions'
 });
 
 test.serial('child execution migration fails if parent execution cannot be migrated', async (t) => {
-  const { knex, executionPgModel, dynamoDbClient } = t.context;
+  const { knex, executionPgModel } = t.context;
 
   const parentExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
@@ -416,7 +416,7 @@ test.serial('child execution migration fails if parent execution cannot be migra
   await Promise.all([
     // Have to use Dynamo client directly because creating
     // via model won't allow creation of an invalid record
-    dynamoDbClient.put({
+    t.context.dynamodbDocClient.put({
       TableName: process.env.ExecutionsTable,
       Item: parentExecution,
     }),
