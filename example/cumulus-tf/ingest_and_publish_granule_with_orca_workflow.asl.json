@@ -290,7 +290,6 @@
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
             "etags": "{$.meta.file_etags}",
-            "skipMetadataValidation": true,
             "cumulus_message": {
               "outputs": [
                 {
