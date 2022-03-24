@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Added
+
+- **CUMULUS-2860**
+  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+
+### Changed
+
+- **CUMULUS-2864**
+  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
+    functions to not perform separate validation request
+
 ## Unreleased RDS Phase 2
 
 ### Notable changes
@@ -390,20 +403,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2877**
     - Ensure database records receive a timestamp when writing granules.
 
-## Unreleased
-
-### Changed
-
-- **CUMULUS-2864**
-  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
-    functions to not perform separate validation request
-
 ## [v10.1.2] 2022-03-11
-
-### Added
-
-- **CUMULUS-2860**
-  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
 
 ### Added
 
@@ -5745,7 +5745,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.2...HEAD
+[v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
