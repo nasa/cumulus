@@ -4,9 +4,6 @@ import cloneDeep from 'lodash/cloneDeep';
 import {
   ScanCommandOutput,
 } from '@aws-sdk/lib-dynamodb';
-import {
-  NativeAttributeValue,
-} from '@aws-sdk/util-dynamodb';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
 import { dynamodbDocClient } from '@cumulus/aws-client/services';
@@ -32,11 +29,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
 /**
  * Migrate PDR record from Dynamo to RDS.
  *
-<<<<<<< HEAD
  * @param {Object} dynamoPDR
-=======
- * @param {ApiPdrRecord} dynamoPDR
->>>>>>> master
  *   PDR Record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
@@ -44,7 +37,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
  * @throws {PostgresUpdateFailed} if the upsert effected 0 rows
  */
 export const migratePdrRecord = async (
-  dynamoPDR: { [key: string]: NativeAttributeValue },
+  dynamoPDR: ApiPdrRecord,
   knex: Knex
 ): Promise<void> => {
   const pdrPgModel = new PdrPgModel();
