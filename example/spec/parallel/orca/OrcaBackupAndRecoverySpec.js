@@ -22,7 +22,7 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
-const { buildAndStartWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
