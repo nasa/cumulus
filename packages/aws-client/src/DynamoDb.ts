@@ -26,7 +26,7 @@ import { improveStackTrace } from './utils';
 /**
  * Call DynamoDb client get
  *
- * See [DocumentClient.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#get-property)
+ * See [DocumentClient.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_lib_dynamodb.html)
  * for descriptions of `params` and the return data.
  *
  * @param {Object} params
@@ -66,7 +66,7 @@ export const get = async (
 /**
  * Call DynamoDb client scan
  *
- * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property)
+ * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_lib_dynamodb.html)
  * for descriptions of `params` and the return data.
  *
  * @param {Object} params
@@ -158,7 +158,7 @@ export const scan = improveStackTrace(
  * Do a parallel scan of DynamoDB table using a document client.
  *
  * See https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan.
- * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property).
+ * See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_lib_dynamodb.html).
  *
  * @param {Object} params
  * @param {number} params.totalSegments
@@ -228,7 +228,7 @@ export const parallelScan = async (
  * Create a DynamoDB table and then wait for the table to exist
  *
  * @param {Object} params - the same params that you would pass to AWS.createTable
- *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property
+ *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-dynamodb/classes/dynamodb.html#createtable
  * @returns {Promise<Object>} the output of the createTable call
  *
  * @static
@@ -248,7 +248,7 @@ export async function createAndWaitForDynamoDbTable(params: CreateTableInput) {
  * Delete a DynamoDB table and then wait for the table to not exist
  *
  * @param {Object} params - the same params that you would pass to AWS.deleteTable
- *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#deleteTable-property
+ *   See https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-dynamodb/classes/dynamodb.html#deletetable
  * @returns {Promise}
  *
  * @static
