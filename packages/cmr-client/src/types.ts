@@ -1,4 +1,4 @@
-export type ConceptType = 'collections' | 'granules';
+export type ConceptType = 'collection' | 'collections' | 'granule' | 'granules';
 
 export interface CMRResponseBody {
 

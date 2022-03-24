@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Added
+
+- **CUMULUS-2860**
+  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+
+### Changed
+
+- **CUMULUS-2864**
+  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
+    functions to not perform separate validation request
+
 ## Unreleased RDS Phase 2
 
 ### Notable changes
@@ -390,14 +403,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2877**
     - Ensure database records receive a timestamp when writing granules.
 
-## Unreleased
-
 ## [v10.1.2] 2022-03-11
-
-### Added
-
-- **CUMULUS-2860**
-  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
 
 ### Added
 
