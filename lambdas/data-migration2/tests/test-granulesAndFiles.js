@@ -64,7 +64,7 @@ const generateTestGranule = (params) => ({
     fakeFile(),
   ],
   error: {},
-  productVolume: 1119742,
+  productVolume: '1119742',
   timeToPreprocess: 0,
   beginningDateTime: dateString,
   endingDateTime: dateString,
@@ -115,7 +115,7 @@ test.beforeEach(async (t) => {
   );
   t.context.collectionPgModel = collectionPgModel;
   t.context.testCollection = testCollection;
-  t.context.collectionCumulusId = collectionResponse[0];
+  t.context.collectionCumulusId = collectionResponse[0].cumulus_id;
 
   const executionPgModel = new ExecutionPgModel();
   t.context.executionUrl = cryptoRandomString({ length: 5 });
@@ -123,11 +123,25 @@ test.beforeEach(async (t) => {
     url: t.context.executionUrl,
   });
 
-  [t.context.executionCumulusId] = await executionPgModel.create(
+  const [pgExecution] = await executionPgModel.create(
     t.context.knex,
     testExecution
   );
+
+  t.context.executionCumulusId = pgExecution.cumulus_id;
   t.context.testExecution = testExecution;
+
+  const completedTestExecution = fakeExecutionRecordFactory({
+    status: 'completed',
+  });
+
+  const [completedPgExecution] = await executionPgModel.create(
+    t.context.knex,
+    completedTestExecution
+  );
+
+  t.context.completedExecutionCumulusId = completedPgExecution.cumulus_id;
+  t.context.completedTestExecution = completedTestExecution;
 
   const providerPgModel = new ProviderPgModel();
   t.context.testProvider = fakeProviderRecordFactory();
@@ -200,7 +214,7 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
       duration: testGranule.duration,
       time_to_archive: testGranule.timeToArchive,
       time_to_process: testGranule.timeToPreprocess,
-      product_volume: testGranule.productVolume.toString(),
+      product_volume: testGranule.productVolume,
       error: testGranule.error,
       cmr_link: testGranule.cmrLink,
       pdr_cumulus_id: pdrCumulusId,
@@ -264,7 +278,8 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
 
   const testFile = testGranule.files[0];
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -284,6 +299,7 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
       file_size: testFile.size.toString(),
       file_name: testFile.fileName,
       source: testFile.source,
+      type: testFile.type,
     }
   );
 });
@@ -304,7 +320,8 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
   testGranule.files = [testFile];
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   await migrateFileRecord(testFile, granuleCumulusId, knex);
 
   const record = await filePgModel.get(
@@ -327,6 +344,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
       file_size: null,
       file_name: testFile.fileName,
       source: null,
+      type: null,
     }
   );
 });
@@ -442,13 +460,13 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
   const {
     knex,
     testCollection,
-    testExecution,
+    completedTestExecution,
   } = t.context;
 
   // Create a granule in the "running" status.
   const testGranule = generateTestGranule({
     collectionId: constructCollectionId(testCollection.name, testCollection.version),
-    execution: testExecution.url,
+    execution: completedTestExecution.url,
     updatedAt: Date.now() - 1000,
     status: 'running',
   });
@@ -459,7 +477,7 @@ test.serial('migrateGranuleRecord throws error if upsert does not return any row
   );
 
   // We do not allow updates on granules where the status is "running"
-  // and a GranulesExecutions record has already been created to prevent out-of-order writes.
+  // and a completed execution record has already been created to prevent out-of-order writes.
   // Attempting to migrate this granule will cause the upsert to
   // return 0 rows and the migration will fail
   const newerGranule = {
@@ -530,9 +548,11 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.path;
   delete testFile.size;
   delete testFile.source;
+  delete testFile.type;
 
   const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
-  const [granuleCumulusId] = await granulePgModel.create(knex, granule);
+  const [pgGranule] = await granulePgModel.create(knex, granule);
+  const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
   });
@@ -552,6 +572,7 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
       file_name: null,
       source: null,
       path: null,
+      type: null,
     }
   );
 });

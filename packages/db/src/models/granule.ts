@@ -5,7 +5,7 @@ import { TableNames } from '../tables';
 import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
 
 import { BasePgModel } from './base';
-import { GranulesExecutionsPgModel } from './granules-executions';
+import { ExecutionPgModel } from './execution';
 import { translateDateToUTC } from '../lib/timestamp';
 import { getSortFields } from '../lib/sort';
 
@@ -24,6 +24,10 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     });
   }
 
+  create(knexOrTransaction: Knex | Knex.Transaction, item: PostgresGranule) {
+    return super.create(knexOrTransaction, item, '*');
+  }
+
   /**
    * Deletes the item from Postgres
    *
@@ -35,9 +39,11 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTransaction: Knex | Knex.Transaction,
     params: PostgresGranuleUniqueColumns | { cumulus_id: number }
   ): Promise<number> {
-    return await knexOrTransaction(this.tableName)
-      .where(params)
-      .del();
+    return await knexOrTransaction(this.tableName).where(params).del();
+  }
+
+  async deleteExcluding(): Promise<never> {
+    throw new Error('deleteExcluding not implemented on granule class');
   }
 
   /**
@@ -77,20 +83,43 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   ): Promise<PostgresGranuleRecord> {
     if (!isRecordSelect(params)) {
       if (!(params.granule_id && params.collection_cumulus_id)) {
-        throw new InvalidArgument(`Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(params)})`);
+        throw new InvalidArgument(
+          `Cannot find granule, must provide either granule_id and collection_cumulus_id or cumulus_id: params(${JSON.stringify(
+            params
+          )})`
+        );
       }
     }
     return super.get(knexOrTransaction, params);
+  }
+
+  _buildExclusionClause(
+    executionPgModel: ExecutionPgModel,
+    executionCumulusId: number,
+    knexOrTrx: Knex | Knex.Transaction,
+    status: 'queued' | 'running'
+  ) {
+    const queryBuilder = executionPgModel.queryBuilderSearch(knexOrTrx, {
+      cumulus_id: executionCumulusId,
+    });
+    if (status === 'running') {
+      queryBuilder.whereIn('status', ExecutionPgModel.nonActiveStatuses);
+    }
+    return queryBuilder;
   }
 
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
     granule: PostgresGranule,
     executionCumulusId?: number,
-    granulesExecutionsPgModel = new GranulesExecutionsPgModel()
+    executionPgModel = new ExecutionPgModel()
   ) {
     if (!granule.created_at) {
-      throw new Error(`To upsert granule record must have 'created_at' set: ${JSON.stringify(granule)}`);
+      throw new Error(
+        `To upsert granule record must have 'created_at' set: ${JSON.stringify(
+          granule
+        )}`
+      );
     }
     if (granule.status === 'running' || granule.status === 'queued') {
       const upsertQuery = knexOrTrx(this.tableName)
@@ -102,32 +131,44 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           updated_at: granule.updated_at,
           created_at: granule.created_at,
         })
-        .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`));
-
-      // In reality, the only place where executionCumulusId should be
-      // undefined is from the data migrations
-      if (executionCumulusId) {
-        // Only do the upsert if there IS NOT already a record associating
-        // the granule to this execution. If there IS already a record
-        // linking this granule to this execution, then this upsert query
-        // will not affect any rows.
-        upsertQuery.whereNotExists(
-          granulesExecutionsPgModel.search(
-            knexOrTrx,
-            { execution_cumulus_id: executionCumulusId }
+        .where(
+          knexOrTrx.raw(
+            `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(
+              granule.created_at
+            )})`
           )
         );
-      }
 
-      upsertQuery.returning('cumulus_id');
+      // In reality, the only place where executionCumulusId should be
+      // undefined is from the data migrations OR a queued granule from reingest
+      if (executionCumulusId) {
+        const exclusionClause = this._buildExclusionClause(
+          executionPgModel,
+          executionCumulusId,
+          knexOrTrx,
+          granule.status
+        );
+        // Only do the upsert if there is no execution that matches the exclusionClause
+        // For running granules, this means the execution does not exist in a state other
+        // than 'running'.  For queued granules, this means that the execution does not
+        // exist at all
+        upsertQuery.whereNotExists(exclusionClause);
+      }
+      upsertQuery.returning('*');
       return await upsertQuery;
     }
     return await knexOrTrx(this.tableName)
       .insert(granule)
       .onConflict(['granule_id', 'collection_cumulus_id'])
       .merge()
-      .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`))
-      .returning('cumulus_id');
+      .where(
+        knexOrTrx.raw(
+          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(
+            granule.created_at
+          )})`
+        )
+      )
+      .returning('*');
   }
 
   /**
@@ -145,7 +186,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   async searchByCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
     granuleCumulusIds: Array<number> | number,
-    params: { limit: number, offset: number }
+    params: { limit: number; offset: number }
   ): Promise<Array<PostgresGranuleRecord>> {
     const { limit, offset, ...sortQueries } = params || {};
     const sortFields = getSortFields(sortQueries);
@@ -156,11 +197,13 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         if (limit) queryBuilder.limit(limit);
         if (offset) queryBuilder.offset(offset);
         if (sortFields.length >= 1) {
-          sortFields.forEach((sortObject: { [key: string]: { order: string } }) => {
-            const sortField = Object.keys(sortObject)[0];
-            const { order } = sortObject[sortField];
-            queryBuilder.orderBy(sortField, order);
-          });
+          sortFields.forEach(
+            (sortObject: { [key: string]: { order: string } }) => {
+              const sortField = Object.keys(sortObject)[0];
+              const { order } = sortObject[sortField];
+              queryBuilder.orderBy(sortField, order);
+            }
+          );
         }
       });
     return granules;

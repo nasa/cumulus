@@ -10,8 +10,9 @@ const {
 } = require('@cumulus/integration-tests');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
-const { Execution, Granule } = require('@cumulus/api/models');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+const { deleteExecution, getExecution, searchExecutionsByGranules } = require('@cumulus/api-client/executions');
+const { getGranule } = require('@cumulus/api-client/granules');
+
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -25,7 +26,7 @@ const {
 const {
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const workflowName = 'QueueGranulesPassthrough';
 const providersDir = './data/providers/s3/';
@@ -35,8 +36,6 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
   let beforeAllFailed;
   let collection;
   let config;
-  let executionModel;
-  let granuleModel;
   let inputPayload;
   let lambdaStep;
   let provider;
@@ -52,7 +51,6 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
       lambdaStep = new LambdaStep();
 
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
 
       const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -67,7 +65,6 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
       provider = { id: `s3_provider${testSuffix}` };
 
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      executionModel = new Execution();
       process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
       // populate collections, providers and test data
@@ -187,14 +184,14 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
   describe('the reporting lambda has received the CloudWatch step function event and', () => {
     it('the execution records are added to the database', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
-      const queuedRecord = await waitForModelStatus(
-        executionModel,
-        { arn: workflowExecution.executionArn },
+      const queuedRecord = await waitForApiStatus(
+        getExecution,
+        { prefix: config.stackName, arn: workflowExecution.executionArn },
         'completed'
       );
-      const childWorkflowRecord = await waitForModelStatus(
-        executionModel,
-        { arn: queuedLambdaOutput.payload.running[0] },
+      const childWorkflowRecord = await waitForApiStatus(
+        getExecution,
+        { prefix: config.stackName, arn: queuedLambdaOutput.payload.running[0] },
         'completed'
       );
       expect(queuedRecord.status).toEqual('completed');
@@ -206,13 +203,25 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
     if (beforeAllFailed) fail('beforeAll() failed');
     await Promise.all(
       inputPayload.granules.map(async (granule) => {
-        const record = await waitForModelStatus(
-          granuleModel,
-          { granuleId: granule.granuleId },
+        const record = await waitForApiStatus(
+          getGranule,
+          { prefix: config.stackName, granuleId: granule.granuleId },
           'completed'
         );
+
+        const executionSearchResult = await searchExecutionsByGranules({
+          prefix: config.stackName,
+          payload: {
+            granules: [record],
+          },
+          query: {
+            limit: '2',
+          },
+        });
+        const [execution] = JSON.parse(executionSearchResult.body).results.filter((result) => result.arn === queuedLambdaOutput.payload.running[0]);
+
         expect(record.status).toEqual('completed');
-        expect(record.execution.replace(/https.*details\//, '')).toEqual(queuedLambdaOutput.payload.running[0]);
+        expect(execution.arn).toEqual(queuedLambdaOutput.payload.running[0]);
       })
     );
   });

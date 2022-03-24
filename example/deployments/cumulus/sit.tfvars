@@ -31,6 +31,7 @@ s3_replicator_config = {
   target_prefix = ""
 }
 system_bucket="cumulus-sit-internal"
+ftp_host_configuration_bucket = "cumulus-sit-internal"
 
 csdap_client_id = "csdap client id "
 csdap_client_password = "csdap client password"

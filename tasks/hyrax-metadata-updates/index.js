@@ -328,10 +328,12 @@ const updateGranule = (config) => async (granule) => {
   const hyraxUrl = await generateHyraxUrl(config, metadataObject, isUmmG);
   const updatedMetadata = addHyraxUrl(metadataObject, isUmmG, hyraxUrl);
   // Validate updated metadata via CMR
-  if (isUmmG) {
-    await validateUMMG(JSON.parse(updatedMetadata), metadataFileName, config.cmr.provider);
-  } else {
-    await validate('granule', updatedMetadata, metadataFileName, config.cmr.provider);
+  if (!config.skipMetadataValidation) {
+    if (isUmmG) {
+      await validateUMMG(JSON.parse(updatedMetadata), metadataFileName, config.cmr.provider);
+    } else {
+      await validate('granule', updatedMetadata, metadataFileName, config.cmr.provider);
+    }
   }
   // Write back out to S3 in the same location
   const { ETag: newEtag } = await s3PutObject({

@@ -23,6 +23,11 @@ variable "region" {
   default     = "us-east-1"
 }
 
+variable "prefix" {
+  type = string
+  description = "'prefix' for the deployment ecosystem (Core deployment, data persistence deployment, etc)"
+}
+
 variable "vpc_id" {
   description = "VPC ID for the Cumulus Deployment"
   type        = string

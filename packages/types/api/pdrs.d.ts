@@ -22,3 +22,7 @@ export interface ApiPdr {
   duration?: number,
   updatedAt?: number,
 }
+
+export interface ApiPdrRecord extends ApiPdr {
+  updatedAt: number
+}

@@ -80,6 +80,9 @@ export const fakeCollectionRecordFactory = (
     regex: 'fake-regex',
     sampleFileName: 'file.txt',
   }]),
+  meta: { foo: 'bar' },
+  created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 

@@ -15,6 +15,7 @@ const isDynamoValidationException = (error) => error.name === 'ValidationExcepti
 
 const isBadRequestError = (error) =>
   error.name === 'SchemaValidationError'
+  || error.name === 'ValidationException'
   || error instanceof ValidationError
   || isPostgresValidationError(error)
   || isDynamoValidationException(error);

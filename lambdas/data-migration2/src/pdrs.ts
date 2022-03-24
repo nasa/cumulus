@@ -21,6 +21,7 @@ import {
   RecordDoesNotExist,
   PostgresUpdateFailed,
 } from '@cumulus/errors';
+import { ApiPdrRecord } from '@cumulus/types/api/pdrs';
 
 import { MigrationResult, ParallelScanMigrationParams } from '@cumulus/types/migration';
 
@@ -31,7 +32,11 @@ const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
 /**
  * Migrate PDR record from Dynamo to RDS.
  *
+<<<<<<< HEAD
  * @param {Object} dynamoPDR
+=======
+ * @param {ApiPdrRecord} dynamoPDR
+>>>>>>> master
  *   PDR Record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
@@ -91,7 +96,7 @@ export const migratePdrDynamoRecords = async (
         logger.info(`Batch of ${loggingInterval} PDR records processed, ${updatedResult.total_dynamo_db_records} total`);
       }
       try {
-        await migratePdrRecord(dynamoPDR, knex);
+        await migratePdrRecord(<ApiPdrRecord>dynamoPDR, knex);
         updatedResult.migrated += 1;
       } catch (error) {
         if (error instanceof RecordAlreadyMigrated) {

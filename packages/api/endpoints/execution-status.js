@@ -9,10 +9,10 @@ const {
   getApiGranuleExecutionCumulusIdsByExecution,
   getKnexClient,
   GranulePgModel,
+  ExecutionPgModel,
   CollectionPgModel,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const models = require('../models');
 
 /**
  * fetchRemote fetches remote message from S3
@@ -67,17 +67,17 @@ async function getEventDetails(event) {
  */
 async function get(req, res) {
   const arn = req.params.arn;
-  const knex = await getKnexClient();
+  const knex = await getKnexClient({ env: process.env });
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
   let isInDatabase = true;
   let mappedGranules;
 
   // get the execution information from database
   let response;
-  const e = new models.Execution();
   try {
-    response = await e.get({ arn });
+    response = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       isInDatabase = false;
@@ -124,6 +124,15 @@ async function get(req, res) {
     status.execution.granules = mappedGranules;
     return res.send(status);
   }
+
+  // get the execution information from database
+  try {
+    response = await executionPgModel.get(knex, { arn });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
+    }
+  }
   if (!isInDatabase) {
     return res.boom.notFound('Execution not found in API or database');
   }
@@ -134,11 +143,11 @@ async function get(req, res) {
     stateMachineArn: getStateMachineArnFromExecutionArn(response.arn),
     name: response.name,
     status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
-    startDate: new Date(response.createdAt),
-    stopDate: new Date(response.createdAt + response.duration * 1000),
+    startDate: response.created_at,
+    stopDate: new Date(response.created_at.getTime() + response.duration * 1000),
     granules: mappedGranules,
-    ...{ input: JSON.stringify(response.originalPayload) },
-    ...{ output: JSON.stringify(response.finalPayload) },
+    ...(response.original_payload && { input: JSON.stringify(response.original_payload) }),
+    ...(response.final_payload && { output: JSON.stringify(response.final_payload) }),
   };
   return res.send({ warning, execution });
 }
