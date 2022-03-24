@@ -55,6 +55,11 @@
       "default": false,
       "type": "boolean"
     },
+    "skipMetadataValidation": {
+      "description": "Option to skip metadata validation",
+      "default": false,
+      "type": "boolean"
+    },
     "etags": {
       "type": "object",
       "description": "map of s3URIs to ETags"

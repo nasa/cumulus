@@ -4,7 +4,6 @@ const fs = require('fs-extra');
 const get = require('lodash/get');
 const pRetry = require('p-retry');
 
-const { Granule } = require('@cumulus/api/models');
 const {
   deleteS3Object,
   parseS3Uri,
@@ -23,8 +22,8 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
-const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { buildAndStartWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
+const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
   waitForGranuleRecordsInList,
@@ -57,7 +56,6 @@ describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
   let config;
-  let granuleModel;
   let inputPayload;
   let provider;
   let testDataFolder;
@@ -76,7 +74,6 @@ describe('The S3 Ingest Granules workflow', () => {
     provider = { id: `s3_provider${testSuffix}` };
 
     process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    granuleModel = new Granule();
 
     // populate collections, providers and test data
     await Promise.all([
@@ -100,9 +97,12 @@ describe('The S3 Ingest Granules workflow', () => {
       config.stackName, config.bucket, workflowName, collection, provider, inputPayload
     );
 
-    await waitForModelStatus(
-      granuleModel,
-      { granuleId: inputPayload.granules[0].granuleId },
+    await waitForApiStatus(
+      getGranule,
+      {
+        prefix: config.stackName,
+        granuleId: inputPayload.granules[0].granuleId,
+      },
       'completed'
     );
   });
@@ -193,9 +193,12 @@ describe('The S3 Ingest Granules workflow', () => {
       const output = JSON.parse(asyncOperation.output);
       expect(output).toEqual([granuleId]);
 
-      await waitForModelStatus(
-        granuleModel,
-        { granuleId },
+      await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId,
+        },
         'completed'
       );
       await waitForGranuleRecordsInList(config.stackName, [granuleId]);

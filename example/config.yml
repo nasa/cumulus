@@ -20,6 +20,9 @@ mvd-dev-tf:
 jl-tf:
   bucket: jl-test-integration-internal
 
+jl-rds-tf:
+  bucket: jl-test-integration-internal
+
 kk2-tf:
   bucket: kk2-tf-internal
 
@@ -53,5 +56,11 @@ jtran-int-tf:
 jtran-tf:
   bucket: jtran-internal
 
+vkn-ci-tf:
+  bucket: vkn-ci-tf-internal 
+
+vkn-tf:
+  bucket: vkn-tf-internal
+  
 np:
   bucket: npauzenga-internal
