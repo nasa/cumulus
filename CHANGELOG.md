@@ -394,6 +394,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2860**
+  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+
+### Added
+
 - **CUMULUS-2859**
   - Update `postgres-db-migration` lambda timeout to default 900 seconds
   - Add `db_migration_lambda_timeout` variable to `data-persistence` module to
