@@ -1,3 +1,18 @@
+resource "aws_ssm_parameter" "dynamo_table_names" {
+  name = "${var.prefix}-dynamo-table-names"
+  type = "String"
+  value = jsonencode({
+    AccessTokensTable          = var.dynamo_tables.access_tokens.name
+    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
+    CollectionsTable           = var.dynamo_tables.collections.name
+    ExecutionsTable            = var.dynamo_tables.executions.name
+    GranulesTable              = var.dynamo_tables.granules.name
+    PdrsTable                  = var.dynamo_tables.pdrs.name
+    ProvidersTable             = var.dynamo_tables.providers.name
+    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+    RulesTable                 = var.dynamo_tables.rules.name
+  })
+}
 locals {
   api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
   api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
@@ -26,6 +41,7 @@ locals {
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
+      collection_sns_topic_arn         = aws_sns_topic.report_collections_topic.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment
       CMR_HOST                         = var.cmr_custom_host
@@ -40,6 +56,7 @@ locals {
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
       dynamoTableNameString            = local.dynamo_table_namestring
+      dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
       EARTHDATA_CLIENT_PASSWORD        = var.urs_client_password
@@ -48,6 +65,8 @@ locals {
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname
       ES_INDEX_SHARDS                  = var.es_index_shards
+      granule_sns_topic_arn            = aws_sns_topic.report_granules_topic.arn
+      execution_sns_topic_arn          = aws_sns_topic.report_executions_topic.arn
       idleTimeoutMillis                = var.rds_connection_timing_configuration.idleTimeoutMillis
       IDP_LOGIN                        = var.saml_idp_login
       IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn

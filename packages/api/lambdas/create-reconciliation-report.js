@@ -5,25 +5,30 @@ const keyBy = require('lodash/keyBy');
 const pickBy = require('lodash/pickBy');
 const camelCase = require('lodash/camelCase');
 const moment = require('moment');
-const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
+
 const { buildS3Uri, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const S3ListObjectsV2Queue = require('@cumulus/aws-client/S3ListObjectsV2Queue');
 const { s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const Logger = require('@cumulus/logger');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const { CMRSearchConceptQueue } = require('@cumulus/cmr-client');
 const { constructOnlineAccessUrl, getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const {
+  getFilesAndGranuleInfoQuery,
+  getKnexClient,
+  QuerySearchClient,
+} = require('@cumulus/db');
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
+const Logger = require('@cumulus/logger');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
 const { createGranuleInventoryReport } = require('./reports/granule-inventory-report');
-const GranuleFilesCache = require('../lib/GranuleFilesCache');
+const { createOrcaBackupReconciliationReport } = require('./reports/orca-backup-reconciliation-report');
 const { ReconciliationReport } = require('../models');
 const { errorify, filenamify } = require('../lib/utils');
 const {
@@ -46,23 +51,6 @@ const isDataBucket = (bucketConfig) => ['private', 'public', 'protected'].includ
 const linkingFilesToGranules = (reportType) => reportType === 'Granule Not Found';
 
 /**
- * return the queue of the files for a given bucket,
- * the items should be ordered by the range key which is the bucket 'key' attribute
- *
- * @param {string} bucket - bucket name
- * @returns {Array<Object>} the files' queue for a given bucket
- */
-const createSearchQueueForBucket = (bucket) => new DynamoDbSearchQueue(
-  {
-    TableName: GranuleFilesCache.cacheTableName(),
-    ExpressionAttributeNames: { '#b': 'bucket' },
-    ExpressionAttributeValues: { ':bucket': bucket },
-    FilterExpression: '#b = :bucket',
-  },
-  'scan'
-);
-
-/**
  * Checks to see if any of the included reportParams contains a value that
  * would turn a Cumulus Vs CMR collection comparison into a one way report.
  *
@@ -78,6 +66,19 @@ function isOneWayCollectionReport(reportParams) {
     'providers',
   ].some((e) => !!reportParams[e]);
 }
+
+/**
+ * Decide whether we compare all found S3 objects with the database or not.
+
+ * @param {Object} reportParams
+ * @returns {boolean} True, when the bucket comparison should only be done from
+ *                    the database to objects found on s3.
+ */
+const isOneWayBucketReport = (reportParams) => [
+  'providers',
+  'granuleIds',
+  'collectionIds',
+].some((testParam) => !!reportParams[testParam]);
 
 /**
  * Checks to see if any of the included reportParams contains a value that
@@ -169,85 +170,107 @@ async function fetchESCollections(recReportParams) {
 
 /**
  * Verify that all objects in an S3 bucket contain corresponding entries in
- * DynamoDB, and that there are no extras in either S3 or DynamoDB
+ * PostgreSQL, and that there are no extras in either S3 or PostgreSQL
  *
  * @param {string} Bucket - the bucket containing files to be reconciled
  * @param {Object} recReportParams - input report params.
  * @returns {Promise<Object>} a report
  */
 async function createReconciliationReportForBucket(Bucket, recReportParams) {
-  log.info(`createReconciliationReportForBucket(S3 vs. Dynamo): ${Bucket}: ${JSON.stringify(recReportParams)}`);
+  const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
+  const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
+  const oneWayBucketReport = isOneWayBucketReport(recReportParams);
+  if (oneWayBucketReport) log.debug('Creating one way report, reconciliation report will not report objects only in S3');
+
+  const query = getFilesAndGranuleInfoQuery({
+    knex: recReportParams.knex,
+    searchParams: { bucket: Bucket },
+    sortColumns: ['key'],
+    granuleColumns: ['granule_id'],
+    collectionIds: recReportParams.collectionIds,
+    providers: recReportParams.providers,
+    granuleIds: recReportParams.granuleIds,
+  });
+
+  const pgFileSearchClient = new QuerySearchClient(query, 100);
+
+  log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
   let okCount = 0;
   const onlyInS3 = [];
-  const onlyInDynamoDb = [];
+  const onlyInDb = [];
   const okCountByGranule = {};
   try {
-    const s3ObjectsQueue = new S3ListObjectsV2Queue({ Bucket });
-    const dynamoDbFilesLister = createSearchQueueForBucket(Bucket);
-    const linkFilesAndGranules = linkingFilesToGranules(recReportParams.reportType);
-
-    let [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len
-    while (nextS3Object && nextDynamoDbItem) {
+    log.info('Comparing PostgreSQL to S3');
+    let [nextS3Object, nextPgItem] = await Promise.all([
+      s3ObjectsQueue.peek(),
+      pgFileSearchClient.peek(),
+    ]);
+    while (nextS3Object && nextPgItem) {
       const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-      const nextDynamoDbUri = buildS3Uri(Bucket, nextDynamoDbItem.key);
+      const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
 
-      if (linkFilesAndGranules && !okCountByGranule[nextDynamoDbItem.granuleId]) {
-        okCountByGranule[nextDynamoDbItem.granuleId] = 0;
+      if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
+        okCountByGranule[nextPgItem.granule_id] = 0;
       }
 
-      if (nextS3Uri < nextDynamoDbUri) {
-        // Found an item that is only in S3 and not in DynamoDB
-        onlyInS3.push(nextS3Uri);
+      if (nextS3Uri < nextPgFileUri) {
+        // Found an item that is only in S3 and not in PostgreSQL
+        if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
         s3ObjectsQueue.shift();
-      } else if (nextS3Uri > nextDynamoDbUri) {
-        // Found an item that is only in DynamoDB and not in S3
-        const dynamoDbItem = await dynamoDbFilesLister.shift(); // eslint-disable-line no-await-in-loop, max-len
-        onlyInDynamoDb.push({
-          uri: buildS3Uri(Bucket, dynamoDbItem.key),
-          granuleId: dynamoDbItem.granuleId,
+      } else if (nextS3Uri > nextPgFileUri) {
+        // Found an item that is only in PostgreSQL and not in S3
+        const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
+        onlyInDb.push({
+          uri: buildS3Uri(Bucket, pgItem.key),
+          granuleId: pgItem.granule_id,
         });
       } else {
-        // Found an item that is in both S3 and DynamoDB
+        // Found an item that is in both S3 and PostgreSQL
         okCount += 1;
         if (linkFilesAndGranules) {
-          okCountByGranule[nextDynamoDbItem.granuleId] += 1;
+          okCountByGranule[nextPgItem.granule_id] += 1;
         }
         s3ObjectsQueue.shift();
-        dynamoDbFilesLister.shift();
+        pgFileSearchClient.shift();
       }
 
-      [nextS3Object, nextDynamoDbItem] = await Promise.all([s3ObjectsQueue.peek(), dynamoDbFilesLister.peek()]); // eslint-disable-line max-len, no-await-in-loop
+      // eslint-disable-next-line no-await-in-loop
+      [nextS3Object, nextPgItem] = await Promise.all([
+        s3ObjectsQueue.peek(),
+        pgFileSearchClient.peek(),
+      ]);
     }
 
     // Add any remaining S3 items to the report
-    while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
-      const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-      onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+    if (!oneWayBucketReport) {
+      while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
+        const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+        onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+      }
     }
 
-    // Add any remaining DynamoDB items to the report
-    /* eslint-disable no-await-in-loop */
-    while (await dynamoDbFilesLister.peek()) {
-      const dynamoDbItem = await dynamoDbFilesLister.shift();
-      onlyInDynamoDb.push({
-        uri: buildS3Uri(Bucket, dynamoDbItem.key),
-        granuleId: dynamoDbItem.granuleId,
+    // Add any remaining PostgreSQL items to the report
+    while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
+      const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
+      onlyInDb.push({
+        uri: buildS3Uri(Bucket, pgItem.key),
+        granuleId: pgItem.granule_id,
       });
     }
-    /* eslint-enable no-await-in-loop */
+    log.info('Compare PostgreSQL to S3 completed');
   } catch (error) {
     log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}`);
     log.error(errorify(error));
     throw error;
   }
   log.info(`createReconciliationReportForBucket ${Bucket} returning `
-            + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
-            + `onlyInDynamoDb: ${onlyInDynamoDb.length}, `
-            + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
+           + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
+           + `onlyInDb: ${onlyInDb.length}, `
+           + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
   return {
     okCount,
     onlyInS3,
-    onlyInDynamoDb,
+    onlyInDb,
     okCountByGranule,
   };
 }
@@ -539,7 +562,7 @@ async function reconciliationReportForGranules(params) {
       [nextDbItem, nextCmrItem] = await Promise.all([esGranulesIterator.peek(), cmrGranulesIterator.peek()]); // eslint-disable-line max-len, no-await-in-loop
     }
 
-    // Add any remaining DynamoDB items to the report
+    // Add any remaining ES/PostgreSQL items to the report
     while (await esGranulesIterator.peek()) { // eslint-disable-line no-await-in-loop
       const dbItem = await esGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       granulesReport.onlyInCumulus.push({
@@ -649,6 +672,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {string} recReportParams.stackName - the name of the CUMULUS stack
  * @param {moment} recReportParams.startTimestamp - beginning report datetime ISO timestamp
  * @param {string} recReportParams.systemBucket - the name of the CUMULUS system bucket
+ * @param {Knex} recReportParams.knex - Database client for interacting with PostgreSQL database
  * @returns {Promise<null>} a Promise that resolves when the report has been
  *   uploaded to S3
  */
@@ -658,6 +682,7 @@ async function createReconciliationReport(recReportParams) {
     stackName,
     systemBucket,
     location,
+    knex,
   } = recReportParams;
   log.info(`createReconciliationReport (${JSON.stringify(recReportParams)})`);
   // Fetch the bucket names to reconcile
@@ -674,7 +699,7 @@ async function createReconciliationReport(recReportParams) {
     okCount: 0,
     okCountByGranule: {},
     onlyInS3: [],
-    onlyInDynamoDb: [],
+    onlyInDb: [],
   };
 
   const reportFormatCumulusCmr = {
@@ -702,7 +727,7 @@ async function createReconciliationReport(recReportParams) {
     // Create a report for each bucket
 
     const promisedBucketReports = dataBuckets.map(
-      (bucket) => createReconciliationReportForBucket(bucket, recReportParams)
+      (bucket) => createReconciliationReportForBucket(bucket, recReportParams, knex)
     );
 
     const bucketReports = await Promise.all(promisedBucketReports);
@@ -711,8 +736,8 @@ async function createReconciliationReport(recReportParams) {
     bucketReports.forEach((bucketReport) => {
       report.filesInCumulus.okCount += bucketReport.okCount;
       report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
-      report.filesInCumulus.onlyInDynamoDb = report.filesInCumulus.onlyInDynamoDb.concat(
-        bucketReport.onlyInDynamoDb
+      report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
+        bucketReport.onlyInDb
       );
 
       if (linkingFilesToGranules(recReportParams.reportType)) {
@@ -756,7 +781,6 @@ async function createReconciliationReport(recReportParams) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
- *   DynamoDB
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
@@ -779,13 +803,26 @@ async function processRequest(params) {
   await reconciliationReportModel.create(reportRecord);
   log.info(`Report added to database as pending: ${JSON.stringify(reportRecord)}.`);
 
+  const env = params.env ? params.env : process.env;
+  const knex = await getKnexClient(env);
+  const concurrency = env.CONCURRENCY || 3;
+
   try {
-    const recReportParams = { ...params, createStartTime, reportKey, reportType };
+    const recReportParams = {
+      ...params,
+      createStartTime,
+      reportKey,
+      reportType,
+      knex,
+      concurrency,
+    };
     log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
     if (reportType === 'Internal') {
       await createInternalReconciliationReport(recReportParams);
     } else if (reportType === 'Granule Inventory') {
       await createGranuleInventoryReport(recReportParams);
+    } else if (reportType === 'ORCA Backup') {
+      await createOrcaBackupReconciliationReport(recReportParams);
     } else {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);

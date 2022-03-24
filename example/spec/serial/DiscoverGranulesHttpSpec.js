@@ -11,15 +11,13 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
+const { waitForApiStatus } = require('../helpers/apiUtils');
 const {
   loadConfig,
   createTimestampedTestId,
   createTestSuffix,
 } = require('../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
-const {
-  waitForApiStatus,
-} = require('../helpers/apiUtils');
 const { waitForGranuleAndDelete } = require('../helpers/granuleUtils');
 
 const workflowName = 'DiscoverGranules';

@@ -33,6 +33,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       launchpad_api                    = var.launchpad_api
       launchpad_certificate            = var.launchpad_certificate
       launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.api_launchpad_passphrase.name
+      orca_api_uri                     = var.orca_api_uri
     }
   }
   tags = var.tags
@@ -41,7 +42,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = local.lambda_security_group_ids
+      security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
 }

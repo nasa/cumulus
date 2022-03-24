@@ -43,6 +43,8 @@ const kinesisRule1 = {
   ...kinesisRuleParams,
   name: 'testRule1',
   state: 'ENABLED',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 // if the state is not provided, it will be set to default value 'ENABLED'
@@ -50,6 +52,8 @@ const kinesisRule2 = {
   ...commonRuleParams,
   ...kinesisRuleParams,
   name: 'testRule2',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const kinesisRule3 = {
@@ -61,6 +65,8 @@ const kinesisRule3 = {
   },
   name: 'testRule3',
   state: 'ENABLED',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const kinesisRule4 = {
@@ -71,6 +77,8 @@ const kinesisRule4 = {
     type: 'kinesis',
     value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis4_')}`,
   },
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const kinesisRule5 = {
@@ -85,6 +93,8 @@ const kinesisRule5 = {
     type: 'kinesis',
     value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis5_')}`,
   },
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 const disabledKinesisRule = {
@@ -92,6 +102,8 @@ const disabledKinesisRule = {
   ...kinesisRuleParams,
   name: 'disabledRule',
   state: 'DISABLED',
+  createdAt: Date.now(),
+  updatedAt: Date.now(),
 };
 
 test.before(async () => {
@@ -165,12 +177,10 @@ test.before(async () => {
     disabledKinesisRule,
   ];
 
-  await Promise.all(
-    kinesisRules.map(async (rule) => {
-      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
-      await rulesModel.create(ruleWithTrigger);
-    })
-  );
+  await Promise.all(kinesisRules.map(async (rule) => {
+    const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+    return rulesModel.create(ruleWithTrigger);
+  }));
 });
 
 test.after.always(async () => {
@@ -203,8 +213,8 @@ test.serial('queryRules returns correct rules for given state and type', async (
   ];
   await Promise.all(
     onetimeRules.map(async (rule) => {
-      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
-      await rulesModel.create(ruleWithTrigger);
+      await rulesModel.createRuleTrigger(rule);
+      await rulesModel.create(rule);
     })
   );
 
@@ -238,12 +248,10 @@ test.serial('queryRules defaults to returning only ENABLED rules', async (t) => 
     }),
   ];
 
-  await Promise.all(
-    rules.map(async (rule) => {
-      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
-      await rulesModel.create(ruleWithTrigger);
-    })
+  const rulesWithTriggers = await Promise.all(
+    rules.map((rule) => rulesModel.createRuleTrigger(rule))
   );
+  await Promise.all(rulesWithTriggers.map((rule) => rulesModel.create(rule)));
 
   const results = await rulesModel.queryRules({
     type: 'onetime',
@@ -277,12 +285,10 @@ test.serial('queryRules should look up sns-type rules which are associated with 
       state: 'DISABLED',
     }),
   ];
-  const createdRules = await Promise.all(
-    rules.map(async (rule) => {
-      const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
-      return rulesModel.create(ruleWithTrigger);
-    })
-  );
+  const createdRules = await Promise.all(rules.map(async (rule) => {
+    const ruleWithTrigger = await rulesModel.createRuleTrigger(rule);
+    return rulesModel.create(ruleWithTrigger);
+  }));
 
   const result = await rulesModel.queryRules({
     type: 'sns',
@@ -323,6 +329,7 @@ test.serial('queryRules should look up sns-type rules which are associated with 
 
   const ruleWithTrigger1 = await rulesModel.createRuleTrigger(rules[0]);
   const rule1 = await rulesModel.create(ruleWithTrigger1);
+
   const ruleWithTrigger2 = await rulesModel.createRuleTrigger(rules[1]);
   const rule2 = await rulesModel.create(ruleWithTrigger2);
 

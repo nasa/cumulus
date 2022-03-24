@@ -5,6 +5,10 @@ const get = require('lodash/get');
 
 const { sfn } = require('@cumulus/aws-client/services');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
+const Logger = require('@cumulus/logger');
+const {
+  buildExecutionArn,
+} = require('@cumulus/message/Executions');
 const {
   getMaximumExecutions,
 } = require('@cumulus/message/Queue');
@@ -14,6 +18,8 @@ const {
   decrementQueueSemaphore,
   incrementQueueSemaphore,
 } = require('../lib/SemaphoreUtils');
+
+const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-starter' });
 
 /**
  * Starts a new stepfunction with the given payload
@@ -33,6 +39,12 @@ function dispatch(queueUrl, message) {
 
   // Set this value to the queue actually read by this Lambda
   input.cumulus_meta.queueUrl = queueUrl;
+
+  const executionArn = buildExecutionArn(
+    input.cumulus_meta.state_machine,
+    input.cumulus_meta.execution_name
+  );
+  logger.info(`Starting execution ARN ${executionArn} from queue ${queueUrl}`);
 
   return sfn().startExecution({
     stateMachineArn: input.cumulus_meta.state_machine,

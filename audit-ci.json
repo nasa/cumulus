@@ -2,5 +2,9 @@
     "high": true,
     "pass-enoaudit": true,
     "retry-count": 20,
-    "allowlist": []
+    "allowlist": [
+        "underscore",
+        "1067259",
+        "node-forge"
+    ]
 }
