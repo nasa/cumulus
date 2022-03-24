@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "10.1.2",
+  "version": "11.0.0",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
@@ -48,9 +48,9 @@
     "@aws-sdk/lib-dynamodb": "^3.53.0",
     "@aws-sdk/types": "^3.53.0",
     "aws-sdk": "^2.585.0",
-    "@cumulus/checksum": "10.1.2",
-    "@cumulus/errors": "10.1.2",
-    "@cumulus/logger": "10.1.2",
+    "@cumulus/checksum": "11.0.0",
+    "@cumulus/errors": "11.0.0",
+    "@cumulus/logger": "11.0.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.21",
     "mem": "^8.0.2",
