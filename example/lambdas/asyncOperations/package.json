@@ -1,6 +1,10 @@
 {
   "name": "@cumulus/test-async-operations",
+<<<<<<< HEAD
   "version": "11.0.0",
+=======
+  "version": "10.1.2",
+>>>>>>> master
   "description": "AsyncOperations Test Lambda",
   "main": "index.js",
   "private": true,

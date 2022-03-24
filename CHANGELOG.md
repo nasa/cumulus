@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2860**
+  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+
+### Changed
+
+- **CUMULUS-2864**
+  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
+    functions to not perform separate validation request
+
 ## [v11.0.0] 2022-03-24 [STABLE]
 
 ### v9.9->v11.0 MIGRATION NOTES
@@ -5759,8 +5770,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
+<<<<<<< HEAD
 [unreleased]: https://github.com/nasa/cumulus/compare/v11.0.0...HEAD
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
+=======
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.2...HEAD
+>>>>>>> master
 [v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
