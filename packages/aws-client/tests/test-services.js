@@ -113,6 +113,27 @@ test('dynamodbDocClient() service defaults to localstack in test mode', async (t
   );
 });
 
+test('dynamodbstreams() service defaults to localstack in test mode', async (t) => {
+  const dynamodbstreams = services.dynamodbstreams();
+  const {
+    credentials,
+    endpoint,
+  } = localStackAwsClientOptions(DynamoDB);
+  t.deepEqual(
+    await dynamodbstreams.config.credentials(),
+    credentials
+  );
+  const serviceConfigEndpoint = await dynamodbstreams.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
+});
+
 test('ecs() service defaults to localstack in test mode', (t) => {
   const ecs = services.ecs();
   const {
