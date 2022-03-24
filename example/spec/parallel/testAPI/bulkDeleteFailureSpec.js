@@ -1,39 +1,76 @@
 'use strict';
 
-const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const Granule = require('@cumulus/api/models/granules');
+const { fakeGranuleFactoryV2, fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
-const granules = require('@cumulus/api-client/granules');
 const { ecs } = require('@cumulus/aws-client/services');
 const {
   getClusterArn,
+  loadCollection,
 } = require('@cumulus/integration-tests');
-const { isValidAsyncOperationId, loadConfig } = require('../../helpers/testUtils');
+const {
+  bulkDeleteGranules,
+  createGranule,
+  deleteGranule,
+  updateGranule,
+} = require('@cumulus/api-client/granules');
+const { createCollection, deleteCollection } = require('@cumulus/api-client/collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const { createExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { isValidAsyncOperationId, loadConfig, createTimestampedTestId } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
   let postBulkDeleteBody;
+  let collection;
   let config;
   let clusterArn;
+  let execution;
+  let granule;
   let taskArn;
   let beforeAllSucceeded = false;
+  let prefix;
 
   // Published granule will fail to delete unless override for bulk
   // delete request is specified
-  const granule = fakeGranuleFactoryV2({ published: true });
 
   beforeAll(async () => {
     config = await loadConfig();
+    prefix = config.stackName;
+
+    const testId = createTimestampedTestId(prefix, 'bulkDeleteFailureSpec');
 
     // Figure out what cluster we're using
     clusterArn = await getClusterArn(config.stackName);
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    const granulesModel = new Granule();
-    await granulesModel.create(granule);
+    // Create execution
+    execution = fakeExecutionFactoryV2();
+    await createExecution({
+      prefix,
+      body: execution,
+    });
 
-    postBulkDeleteResponse = await granules.bulkDeleteGranules({
+    // Create the collection
+    const fakeCollection = await loadCollection({
+      filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
+      postfix: testId,
+    });
+    const collectionResponse = await createCollection({ prefix, collection: fakeCollection });
+    collection = JSON.parse(collectionResponse.body).record;
+
+    // Create granule
+    granule = fakeGranuleFactoryV2({
+      published: true,
+      execution: execution.execution,
+      collectionId: constructCollectionId(collection.name, collection.version),
+    });
+    await createGranule({
+      prefix,
+      body: granule,
+    });
+
+    postBulkDeleteResponse = await bulkDeleteGranules({
       prefix: config.stackName,
       body: {
         ids: [granule.granuleId],
@@ -55,6 +92,22 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     if (postBulkDeleteBody.id) {
       await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
     }
+    // mark granule as unpublished to allow delete
+    await updateGranule({
+      prefix,
+      body: {
+        ...granule,
+        published: false,
+      },
+    });
+
+    await deleteGranule({ prefix, granuleId: granule.granuleId });
+    await deleteCollection({
+      prefix,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+    await deleteExecution({ prefix, executionArn: execution.arn });
   });
 
   it('returns a status code of 202', () => {

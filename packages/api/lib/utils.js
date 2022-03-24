@@ -21,6 +21,21 @@ function filenamify(fileName) {
 }
 
 /**
+ * Returns the name and version of a collection based on
+ * the collectionId used in elasticsearch indexing
+ *
+ * @param {string} collectionId - collectionId used in elasticsearch index
+ * @returns {Object} name and version as object
+ */
+function deconstructCollectionId(collectionId) {
+  const [name, version] = collectionId.split('___');
+  return {
+    name,
+    version,
+  };
+}
+
+/**
  * Ensures that the exception is returned as an object
  *
  * @param {*} exception - the exception
@@ -80,10 +95,11 @@ function findCaseInsensitiveValue(obj, keyArg) {
 }
 
 module.exports = {
+  deconstructCollectionId,
+  parseException,
   errorify,
   extractDate,
   filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
-  parseException,
 };

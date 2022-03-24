@@ -18,6 +18,7 @@ const {
   fakeExecutionFactory,
   fakeFileFactory,
   fakeProviderFactory,
+  fakeReconciliationReportFactory,
 } = require('../../lib/testUtils');
 const GranuleFilesCache = require('../../lib/GranuleFilesCache');
 
@@ -42,6 +43,7 @@ process.env.GranulesTable = randomString();
 process.env.PdrsTable = randomString();
 process.env.ProvidersTable = randomString();
 process.env.RulesTable = randomString();
+process.env.ReconciliationReportsTable = randomString();
 
 const buildDynamoStreamRecord = ({
   eventName, tableName, keys, oldImage, newImage,
@@ -119,10 +121,23 @@ const buildGranuleRecord = ({ type, oldGranule, newGranule }) => {
   });
 };
 
+const buildReconciliationReportRecord = ({ type, oldReport, newReport }) => {
+  const name = type === 'REMOVE' ? oldReport.name : newReport.name;
+
+  return buildDynamoStreamRecord({
+    eventName: type,
+    tableName: process.env.ReconciliationReportsTable,
+    keys: { name },
+    oldImage: oldReport,
+    newImage: newReport,
+  });
+};
+
 let collectionModel;
 let executionModel;
 let granuleModel;
 let ruleModel;
+let reconciliationReportModel;
 
 test.before(async (t) => {
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
@@ -132,12 +147,14 @@ test.before(async (t) => {
   granuleModel = new models.Granule();
   executionModel = new models.Execution();
   ruleModel = new models.Rule();
+  reconciliationReportModel = new models.ReconciliationReport();
 
   await Promise.all([
     collectionModel.createTable(),
     executionModel.createTable(),
     granuleModel.createTable(),
     ruleModel.createTable(),
+    reconciliationReportModel.createTable(),
   ]);
 
   // bootstrap the esIndex
@@ -154,6 +171,7 @@ test.after.always(async () => {
   await granuleModel.deleteTable();
   await executionModel.deleteTable();
   await ruleModel.deleteTable();
+  await reconciliationReportModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
@@ -211,6 +229,7 @@ test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
 
 test('getTableIndexDetails() returns the correct function name and index type', (t) => {
   t.deepEqual(getTableIndexDetails(process.env.CollectionsTable), {
+    deleteFnName: 'deleteCollection',
     indexFnName: 'indexCollection',
     indexType: 'collection',
   });
@@ -237,7 +256,7 @@ test('performDelete() deletes a record from ES', async (t) => {
   const indexedRecord = await providerIndex.get(provider.id);
   t.is(indexedRecord.id, provider.id);
 
-  await performDelete(esClient, 'provider', provider.id);
+  await performDelete('deleteProvider', esClient, 'provider', provider.id);
   const deletedRecord = await providerIndex.get(provider.id);
   t.is(deletedRecord.detail, 'Record not found');
 });
@@ -393,4 +412,49 @@ test.serial('The db-indexer does not throw an exception when execution fails', a
       },
     })(() => handler({ Records: [insertRecord] }))
   );
+});
+
+test.serial('Create, Update, and Delete reconciliation report succeeds in DynamoDB and Elasticsearch', async (t) => {
+  const { esAlias } = t.context;
+
+  const fakeReport = fakeReconciliationReportFactory();
+
+  const insertRecord = buildReconciliationReportRecord({
+    type: 'INSERT',
+    newReport: fakeReport,
+  });
+
+  // Fake the lambda trigger
+  await handler({ Records: [insertRecord] });
+
+  const recordIndex = new Search({}, 'reconciliationReport', esAlias);
+  let indexedRecord = await recordIndex.get(fakeReport.name);
+
+  console.log(indexedRecord);
+  t.is(indexedRecord.name, fakeReport.name);
+
+  // Modify the record
+  const modifyRecord = buildReconciliationReportRecord({
+    type: 'MODIFY',
+    oldReport: fakeReport,
+    newReport: { ...fakeReport, status: 'failed' },
+  });
+
+  // Fake the lambda trigger
+  await handler({ Records: [modifyRecord] });
+
+  indexedRecord = await recordIndex.get(fakeReport.name);
+  t.is(indexedRecord.status, 'failed');
+
+  // Delete the record
+  const removeRecord = buildReconciliationReportRecord({
+    type: 'REMOVE',
+    oldReport: { ...fakeReport, status: 'failed' },
+  });
+
+  // fake the lambda trigger
+  await handler({ Records: [removeRecord] });
+
+  indexedRecord = await recordIndex.get(fakeReport.name);
+  t.is(indexedRecord.detail, 'Record not found');
 });

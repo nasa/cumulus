@@ -51,7 +51,7 @@ Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/mas
 
 Please note:
 
-- While *connection* configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
+- While _connection_ configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
 - There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
 
 #### Provider Configuration
@@ -79,7 +79,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |protocol|string|Yes|The protocol for this provider.  Must be `http` for this provider type |
 |host|string|Yes|The host to pull data from (e.g. `nasa.gov`)
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
-|password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|password|string|_Only if username is specified_|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |port|integer|No|Port to connect to the provider on.   Defaults to `80`|
 |allowedRedirects|string[]|No|Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.
 |certificateUri|string|No|SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate
@@ -93,7 +93,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |protocol|string|Yes|The protocol for this provider.  Must be `https` for this provider type |
 |host|string|Yes|The host to pull data from (e.g. `nasa.gov`) |
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
-|password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|password|string|_Only if username is specified_|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |port|integer|No|Port to connect to the provider on.   Defaults to `443` |
 |allowedRedirects|string[]|No|Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.
 |certiciateUri|string|No|SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate
@@ -134,6 +134,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 
 <details>
   <summary><b>Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/blob/master/example/data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json)</b></summary>
+
 |Key  |Value  |Required  |Description|
 |:---:|:-----:|:--------:|-----------|
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
@@ -159,6 +160,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
 |url_path|`"${collectionShortName}/{substring(file.fileName, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
 |checksumFor|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|No|If this is a checksum file, set `checksumFor` to the `regex` of the target file.|
+
 </details>
 
 ### Rules

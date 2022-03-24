@@ -17,12 +17,13 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { getQueueNameFromUrl } = require('@cumulus/aws-client/SQS');
 
-const { handler } = require('../../lambdas/sqs-message-consumer');
 const { fakeRuleFactoryV2, createSqsQueues, getSqsQueueMessageCounts } = require('../../lib/testUtils');
-const Rule = require('../../models/rules');
 const rulesHelpers = require('../../lib/rulesHelpers');
 
-process.env.RulesTable = `RulesTable_${randomString()}`;
+const {
+  handler,
+} = require('../../lambdas/sqs-message-consumer');
+
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 
@@ -30,14 +31,13 @@ const workflow = randomString();
 const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
 const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
 
-let rulesModel;
 const event = { messageLimit: 10, timeLimit: 100 };
 
 async function createRulesAndQueues(ruleMeta, queueMaxReceiveCount) {
   const queues = await Promise.all(range(2).map(
     () => createSqsQueues(randomString(), queueMaxReceiveCount)
   ));
-  let rules = [
+  const rules = [
     fakeRuleFactoryV2({
       workflow,
       rule: {
@@ -70,17 +70,10 @@ async function createRulesAndQueues(ruleMeta, queueMaxReceiveCount) {
       state: 'DISABLED',
     }),
   ];
-  rules = await Promise.all(
-    rules.map((rule) => rulesModel.create(rule))
-  );
   return { rules, queues };
 }
 
-async function cleanupRulesAndQueues(rules, queues) {
-  await Promise.all(
-    rules.map((rule) => rulesModel.delete(rule))
-  );
-
+async function cleanupQueues(queues) {
   // Delete queueName for each object in list
   queues.forEach((q) => delete q.queueName);
 
@@ -93,9 +86,6 @@ async function cleanupRulesAndQueues(rules, queues) {
 }
 
 test.before(async () => {
-  // create Rules table
-  rulesModel = new Rule();
-  await rulesModel.createTable();
   await createBucket(process.env.system_bucket);
 
   await Promise.all([
@@ -113,17 +103,17 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  // cleanup table
-  await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.beforeEach((t) => {
   t.context.queueMessageStub = sinon.stub(rulesHelpers, 'queueMessageForRule');
+  t.context.fetchRulesStub = sinon.stub(rulesHelpers, 'fetchRules').returns([]);
 });
 
 test.afterEach.always((t) => {
   t.context.queueMessageStub.restore();
+  t.context.fetchRulesStub.restore();
 });
 
 test.serial('processQueues does nothing when there is no message', async (t) => {
@@ -135,19 +125,8 @@ test.serial('processQueues does nothing when there is no message', async (t) => 
 
 test.serial('processQueues does nothing when queue does not exist', async (t) => {
   const { queueMessageStub } = t.context;
-  const validateSqsRuleStub = sinon.stub(Rule.prototype, 'validateAndUpdateSqsRule')
-    .callsFake((item) => Promise.resolve(item));
-  await rulesModel.create(fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sqs',
-      value: 'non-existent-queue',
-    },
-    state: 'ENABLED',
-  }));
   await handler(event);
   t.is(queueMessageStub.notCalled, true);
-  t.teardown(() => validateSqsRuleStub.restore());
 });
 
 test.serial('processQueues does nothing when no rule matches collection in message', async (t) => {
@@ -158,7 +137,7 @@ test.serial('processQueues does nothing when no rule matches collection in messa
     name: randomId('col'),
     version: '1.0.0',
   };
-  const rule = await rulesModel.create(fakeRuleFactoryV2({
+  const rule = fakeRuleFactoryV2({
     collection: {
       name: 'different-collection',
       version: '1.2.3',
@@ -169,7 +148,8 @@ test.serial('processQueues does nothing when no rule matches collection in messa
       value: queue.queueUrl,
     },
     state: 'ENABLED',
-  }));
+  });
+  t.context.fetchRulesStub.returns([rule]);
 
   await SQS.sendSQSMessage(
     queue.queueUrl,
@@ -179,13 +159,17 @@ test.serial('processQueues does nothing when no rule matches collection in messa
 
   t.is(queueMessageStub.notCalled, true);
   t.teardown(async () => {
-    await cleanupRulesAndQueues([rule], [queue]);
+    await cleanupQueues([queue]);
   });
 });
 
 test.serial('processQueues processes messages from the ENABLED sqs rule', async (t) => {
   const { queueMessageStub } = t.context;
   const { rules, queues } = await createRulesAndQueues();
+  t.context.fetchRulesStub.callsFake((params) => {
+    t.deepEqual(params, { type: 'sqs', state: 'ENABLED' });
+    return rules.filter((rule) => rule.state === 'ENABLED');
+  });
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(rules[1], sinon.match.any, sinon.match.any);
 
@@ -230,7 +214,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   // in this test, workflow executions are stubbed
   t.is(numberOfMessages.numberOfMessagesNotVisible, 2);
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });
 
@@ -244,6 +228,7 @@ test.serial('messages are retried the correct number of times based on the rule 
     { visibilityTimeout, retries: 1 },
     queueMaxReceiveCount
   );
+  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
 
   const queueMessageFromEnabledRuleStub = queueMessageStub
     .withArgs(rules[1], sinon.match.any, sinon.match.any);
@@ -279,7 +264,7 @@ test.serial('messages are retried the correct number of times based on the rule 
   t.is(numberOfMessagesDLQ.numberOfMessagesAvailable, 2);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });
 
@@ -296,8 +281,8 @@ test.serial('SQS message consumer queues workflow for rule when there is no even
     state: 'ENABLED',
     workflow,
   });
+  t.context.fetchRulesStub.returns([rule]);
 
-  const createdRule = await rulesModel.create(rule);
   await SQS.sendSQSMessage(
     queue.queueUrl,
     { foo: 'bar' }
@@ -309,7 +294,7 @@ test.serial('SQS message consumer queues workflow for rule when there is no even
   t.is(queueMessageStub.callCount, 1);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues([createdRule], [queue]);
+    await cleanupQueues([queue]);
   });
 });
 
@@ -350,8 +335,8 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
       workflow,
     }),
   ];
+  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
 
-  await Promise.all(rules.map((rule) => rulesModel.create(rule)));
   await SQS.sendSQSMessage(
     queue.queueUrl,
     { collection } // include collection in message
@@ -363,13 +348,17 @@ test.serial('SQS message consumer queues correct number of workflows for rules m
   t.is(queueMessageStub.callCount, 1);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, [queue]);
+    await cleanupQueues([queue]);
   });
 });
 
 test.serial('processQueues archives messages from the ENABLED sqs rule only', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
+  t.context.fetchRulesStub.callsFake((params) => {
+    t.deepEqual(params, { type: 'sqs', state: 'ENABLED' });
+    return rules.filter((rule) => rule.state === 'ENABLED');
+  });
   const message = { testdata: randomString() };
 
   // Send message to ENABLED queue
@@ -408,13 +397,14 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
   }));
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });
 
 test.serial('processQueues archives multiple messages', async (t) => {
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
+  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
 
   // Send message to ENABLED queue
   const messages = await Promise.all(
@@ -441,6 +431,6 @@ test.serial('processQueues archives multiple messages', async (t) => {
   items.every(itemExists);
 
   t.teardown(async () => {
-    await cleanupRulesAndQueues(rules, queues);
+    await cleanupQueues(queues);
   });
 });

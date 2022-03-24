@@ -26,6 +26,7 @@ async function waitForApiRecord(getMethod, params, matchParams, retryConfig = {}
       if (!isMatch(record, matchParams)) {
         throw new Error(`Record ${JSON.stringify(record)} did not match expected ${JSON.stringify(matchParams)}`);
       }
+
       return record;
     },
     {
@@ -53,35 +54,8 @@ async function waitForApiStatus(getMethod, params, status, retryConfig = {}) {
   );
 }
 
-/**
- * Check a record for a particular set of statuses and retry until the record gets that status
- * This is to mitigate issues where a workflow completes, but there is a lag between
- * the workflow end, cloudwatch event sqs message, and database update
- *
- * @param {Object} model - model from api/models
- * @param {Object} params - params to pass to model.get
- * @param {string[] | string} status - status to wait for
- */
-async function waitForModelStatus(model, params, status) {
-  return await pRetry(
-    async () => {
-      const record = await model.get(params);
-      const checkStatus = [status].flat();
-      if (!checkStatus.includes(record.status)) {
-        throw new Error(`Record status ${record.status}. Expect status ${checkStatus}`);
-      }
-
-      return record;
-    },
-    {
-      maxTimeout: 60 * 1000,
-    }
-  );
-}
-
 module.exports = {
   setDistributionApiEnvVars,
   waitForApiRecord,
   waitForApiStatus,
-  waitForModelStatus,
 };

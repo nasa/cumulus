@@ -100,8 +100,8 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
     state: 'ENABLED',
   });
 
-  const ruleWithTrigger = await rulesModel.createRuleTrigger(item);
-  const rule = await rulesModel.create(ruleWithTrigger);
+  const rule = await rulesModel.createRuleTrigger(item);
+  await rulesModel.create(rule);
 
   t.is(rule.rule.value, snsTopicArn);
   t.truthy(rule.rule.arn);
