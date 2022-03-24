@@ -37,10 +37,6 @@
     "pg": "^8.3.0"
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@cumulus/test-data": "11.0.0"
-=======
-    "@cumulus/test-data": "10.1.2"
->>>>>>> master
   }
 }
