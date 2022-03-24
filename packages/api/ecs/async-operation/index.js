@@ -212,20 +212,17 @@ const revertAsyncOperationWriteToDynamoDb = async (params) => {
   return await dynamodbDocClient().update({
     TableName: env.asyncOperationsTable,
     Key: { id: env.asyncOperationId },
-    AttributeUpdates: {
-      status: {
-        Action: 'PUT',
-        Value: status,
-      },
-      output: {
-        Action: 'DELETE',
-      },
-      updatedAt: {
-        Action: 'DELETE',
-      },
+    UpdateExpression: 'SET #status = :status REMOVE #output, #updatedAt',
+    ExpressionAttributeNames: {
+      '#status': 'status',
+      '#output': 'output',
+      '#updatedAt': 'updatedAt',
+    },
+    ExpressionAttributeValues: {
+      ':status': status,
     },
     ReturnValues: 'ALL_NEW',
-  }).promise();
+  });
 };
 
 const writeAsyncOperationToEs = async (params) => {
