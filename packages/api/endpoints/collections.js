@@ -29,7 +29,10 @@ const {
   publishCollectionUpdateSnsMessage,
 } = require('../lib/publishSnsMessageUtils');
 const { isBadRequestError } = require('../lib/errors');
-const { validateCollection } = require('../lib/utils');
+const {
+  validateCollection,
+  collectionConfigStore,
+} = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
@@ -123,6 +126,7 @@ async function post(req, res) {
     return res.boom.badRequest(`Field name and/or version is missing in Collection payload ${JSON.stringify(collection)}`);
   }
   validateCollection(collection);
+  await collectionConfigStore().put(name, version, collection);
 
   collection.updatedAt = Date.now();
   collection.createdAt = Date.now();

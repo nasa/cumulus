@@ -3,6 +3,7 @@
 const get = require('lodash/get');
 const isObject = require('lodash/isObject');
 const pick = require('lodash/pick');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 
 function replacer(key, value) {
@@ -147,6 +148,13 @@ const validateCollection = (collection) => {
   validateCollectionFilesConfig(collection);
 };
 
+function collectionConfigStore() {
+  return new CollectionConfigStore(
+    process.env.system_bucket,
+    process.env.stackName
+  );
+}
+
 module.exports = {
   deconstructCollectionId,
   errorify,
@@ -155,4 +163,5 @@ module.exports = {
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
   validateCollection,
+  collectionConfigStore,
 };

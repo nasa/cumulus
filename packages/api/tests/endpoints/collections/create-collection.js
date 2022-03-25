@@ -41,6 +41,7 @@ const {
 const assertions = require('../../../lib/assertions');
 const { post } = require('../../../endpoints/collections');
 const { buildFakeExpressResponse } = require('../utils');
+const { collectionConfigStore } = require('../../../lib/utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
@@ -237,6 +238,30 @@ test.serial('POST creates a new collection in all data stores with correct times
   // Records have the same timestamps
   t.is(collectionPgRecord.created_at.getTime(), esRecord.createdAt);
   t.is(collectionPgRecord.updated_at.getTime(), esRecord.updatedAt);
+});
+
+test.serial('POST creates collection configuration store via name and version', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
+  await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const fetchedPgRecord = await t.context.collectionPgModel.get(
+    t.context.testKnex,
+    {
+      name: newCollection.name,
+      version: newCollection.version,
+    }
+  );
+
+  t.is(fetchedPgRecord.name, newCollection.name);
+  t.is(fetchedPgRecord.version, newCollection.version);
+
+  t.truthy(await collectionConfigStore().get(fetchedPgRecord.name, fetchedPgRecord.version));
 });
 
 test.serial('POST without a name returns a 400 error', async (t) => {
