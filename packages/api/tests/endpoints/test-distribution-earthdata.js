@@ -102,7 +102,7 @@ test.before(async () => {
   const authorizationUrl = `https://${randomId('host')}.com/${randomId('path')}`;
   const fileKey = randomId('key');
   const fileLocation = `${protectedBucket}/${fileKey}`;
-  const s3Endpoint = getLocalstackEndpoint('s3');
+  const s3Endpoint = getLocalstackEndpoint('S3');
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
   const getUserInfoResponse = { foo: 'bar', uid: getAccessTokenResponse.username };
@@ -182,7 +182,7 @@ test.serial('An authenticated request for a file returns a redirect to S3', asyn
     .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(307);
 
-  restoreHeadObjectStub();
+  t.teardown(() => restoreHeadObjectStub());
 
   validateDefaultHeaders(t, response);
 
@@ -207,7 +207,7 @@ test.serial('A request for a file with a valid bearer token returns a redirect t
     .set('Authorization', `Bearer ${randomId('token')}`)
     .expect(307);
 
-  restoreHeadObjectStub();
+  t.teardown(() => restoreHeadObjectStub());
   t.is(response.status, 307);
   validateDefaultHeaders(t, response);
 
@@ -246,7 +246,7 @@ test.serial('An authenticated request for a file from private bucket returns a r
     .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(307);
 
-  restoreHeadObjectStub();
+  t.teardown(() => restoreHeadObjectStub());
   validateDefaultHeaders(t, response);
 
   const redirectLocation = new URL(response.headers.location);
@@ -269,7 +269,7 @@ test.serial('An authenticated request for a file from private bucket returns err
     .set('Cookie', [`accessToken=${accessTokenCookie}`])
     .expect(403);
 
-  restoreHeadObjectStub();
+  t.teardown(() => restoreHeadObjectStub());
 
   t.true(JSON.stringify(response.error).includes('Could not access data'));
   t.true(JSON.stringify(response.error).includes('This data is not currently available'));

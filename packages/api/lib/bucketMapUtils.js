@@ -4,6 +4,7 @@ const jsyaml = require('js-yaml');
 const paths = require('deepdash/paths');
 const log = require('@cumulus/common/log');
 const { s3 } = require('@cumulus/aws-client/services');
+const { getObjectStreamContents } = require('@cumulus/aws-client/S3');
 
 /**
  * get the bucket map yaml file from s3
@@ -22,7 +23,7 @@ async function getYamlFile(bucket, key) {
       Key: key,
     });
 
-    return jsyaml.load(mapFile.Body.toString());
+    return jsyaml.load(await getObjectStreamContents(mapFile.Body));
   } catch (error) {
     log.error('Had trouble getting yaml file', error);
     throw new Error('Could not get yaml');
