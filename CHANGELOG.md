@@ -4,7 +4,46 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased RDS Phase 2
+## Unreleased
+
+### Added
+
+- **CUMULUS-2860**
+  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+
+### Changed
+
+- **CUMULUS-2864**
+  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
+    functions to not perform separate validation request
+
+## [v11.0.0] 2022-03-24 [STABLE]
+
+### v9.9->v11.0 MIGRATION NOTES
+
+Release v11.0 is a maintenance release series, replacing v9.9.   If you are
+upgrading to or past v11 from v9.9.x to this release, please pay attention to the following
+migration notes from prior releases:
+
+#### Migration steps
+
+##### **After deploying the `data-persistence` module, but before deploying the main `cumulus` module**
+
+- Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
+out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
+[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+`{"forceRulesMigration": true}`:
+
+```shell
+aws lambda invoke --function-name $PREFIX-data-migration1 \
+  --payload $(echo '{"forceRulesMigration": true}' | base64) $OUTFILE
+```
+
+##### As part of the `cumulus` deployment
+
+- Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
+- (Optional) Update the `task-config` for all workflows that use the `sync-granule` task to include `workflowStartTime` set to
+`{$.cumulus_meta.workflow_start_time}`. See [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/sync_granule_workflow.asl.json#L9) for an example.
 
 ### Notable changes
 
@@ -390,7 +429,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2877**
     - Ensure database records receive a timestamp when writing granules.
 
-## Unreleased
+## [v10.1.2] 2022-03-11
 
 ### Added
 
@@ -682,7 +721,6 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 this is a backport and patch release on the 9.9.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
-
 
 - **CUMULUS-2853**
   - Move OAUTH_PROVIDER to lambda env variables to address regression in 9.9.2/CUMULUS-2275
@@ -5738,7 +5776,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.1.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.0.0...HEAD
+[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
+[v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
