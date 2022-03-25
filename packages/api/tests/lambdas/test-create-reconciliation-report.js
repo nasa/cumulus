@@ -17,6 +17,8 @@ const {
   buildS3Uri,
   parseS3Uri,
   recursivelyDeleteS3Bucket,
+  getJsonS3Object,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
@@ -99,13 +101,13 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
     Bucket: systemBucket,
     Key: getDistributionBucketMapKey(stackName),
     Body: JSON.stringify(distributionMap),
-  }).promise();
+  });
 
   return await awsServices.s3().putObject({
     Bucket: systemBucket,
     Key: getBucketsConfigKey(stackName),
     Body: JSON.stringify(bucketsConfig),
-  }).promise();
+  });
 }
 
 // Expect files to have bucket and key properties
@@ -179,16 +181,16 @@ async function storeGranulesToElasticsearch(granules) {
 }
 
 async function fetchCompletedReport(reportRecord) {
-  return await awsServices.s3()
-    .getObject(parseS3Uri(reportRecord.location))
-    .then((response) => response.Body.toString())
-    .then(JSON.parse);
+  const { Bucket, Key } = parseS3Uri(reportRecord.location);
+  return await getJsonS3Object(Bucket, Key);
 }
 
 async function fetchCompletedReportString(reportRecord) {
+  // const { Bucket, Key } = parseS3Uri(reportRecord.location);
+  // return await getJsonS3Object(Bucket, Key);
   return await awsServices.s3()
     .getObject(parseS3Uri(reportRecord.location))
-    .then((response) => response.Body.toString());
+    .then((response) => getObjectStreamContents(response.Body));
 }
 
 /**
