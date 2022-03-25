@@ -18,6 +18,7 @@ const {
   s3GetObjectTagging,
   s3TagSetToQueryString,
   waitForObject,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
@@ -263,7 +264,7 @@ async function getXMLMetadataAsString(xmlFilePath, etag) {
     throw new errors.XmlMetaFileNotFound('XML Metadata file not provided');
   }
   const obj = await getObjectByFilename(xmlFilePath, etag);
-  return obj.Body.toString();
+  return getObjectStreamContents(obj.Body);
 }
 
 /**
@@ -286,7 +287,7 @@ async function parseXmlString(xml) {
  */
 async function metadataObjectFromCMRJSONFile(cmrFilename, etag) {
   const obj = await getObjectByFilename(cmrFilename, etag);
-  return JSON.parse(obj.Body.toString());
+  return JSON.parse(await getObjectStreamContents(obj.Body));
 }
 
 /**
@@ -664,11 +665,13 @@ async function uploadUMMGJSONCMRFile(metadataObject, cmrFile) {
   const tags = await s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = s3TagSetToQueryString(tags.TagSet);
   return promiseS3Upload({
-    Bucket: cmrFile.bucket,
-    Key: getS3KeyOfFile(cmrFile),
-    Body: JSON.stringify(metadataObject),
-    Tagging: tagsQueryString,
-    ContentType: 'application/json',
+    params: {
+      Bucket: cmrFile.bucket,
+      Key: getS3KeyOfFile(cmrFile),
+      Body: JSON.stringify(metadataObject),
+      Tagging: tagsQueryString,
+      ContentType: 'application/json',
+    },
   });
 }
 
@@ -818,11 +821,13 @@ async function uploadEcho10CMRFile(xml, cmrFile) {
   const tags = await s3GetObjectTagging(cmrFile.bucket, getS3KeyOfFile(cmrFile));
   const tagsQueryString = s3TagSetToQueryString(tags.TagSet);
   return promiseS3Upload({
-    Bucket: cmrFile.bucket,
-    Key: getS3KeyOfFile(cmrFile),
-    Body: xml,
-    Tagging: tagsQueryString,
-    ContentType: 'application/xml',
+    params: {
+      Bucket: cmrFile.bucket,
+      Key: getS3KeyOfFile(cmrFile),
+      Body: xml,
+      Tagging: tagsQueryString,
+      ContentType: 'application/xml',
+    },
   });
 }
 /**

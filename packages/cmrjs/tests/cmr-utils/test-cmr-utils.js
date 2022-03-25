@@ -15,6 +15,8 @@ const {
   recursivelyDeleteS3Bucket,
   s3GetObjectTagging,
   s3TagSetToQueryString,
+  getObjectStreamContents,
+  getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { CMR } = require('@cumulus/cmr-client');
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
@@ -414,17 +416,19 @@ test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving ta
   try {
     const fakeXmlString = '<Granule>fake-granule</Granule>';
     await promiseS3Upload({
-      Bucket: cmrFile.bucket,
-      Key: cmrFile.key,
-      Body: fakeXmlString,
-      Tagging: 'tagA=iamtag1&tagB=iamtag2',
+      params: {
+        Bucket: cmrFile.bucket,
+        Key: cmrFile.key,
+        Body: fakeXmlString,
+        Tagging: 'tagA=iamtag1&tagB=iamtag2',
+      },
     });
 
     const newXmlString = '<Granule>new-granule</Granule>';
     await uploadEcho10CMRFile(newXmlString, cmrFile);
 
     const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key);
-    t.is(s3Obj.Body.toString(), newXmlString);
+    t.is(await getObjectStreamContents(s3Obj.Body), newXmlString);
     t.is(s3Obj.ContentType, 'application/xml');
 
     const tags = await s3GetObjectTagging(cmrFile.bucket, cmrFile.key);
@@ -439,21 +443,23 @@ test.serial('uploadUMMGJSONCMRFile uploads CMR File to S3 correctly, preserving 
     bucket: 'ummg-file-bucket',
     key: 'metadata.cmr.json',
   };
-  await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
+  await s3().createBucket({ Bucket: cmrFile.bucket });
   try {
     const fakeMetadataObject = { fake: 'data' };
     await promiseS3Upload({
-      Bucket: cmrFile.bucket,
-      Key: cmrFile.key,
-      Body: JSON.stringify(fakeMetadataObject),
-      Tagging: 'tagA=iamtag1&tagB=iamtag2',
+      params: {
+        Bucket: cmrFile.bucket,
+        Key: cmrFile.key,
+        Body: JSON.stringify(fakeMetadataObject),
+        Tagging: 'tagA=iamtag1&tagB=iamtag2',
+      },
     });
 
     const newFakeMetaObj = { newFake: 'granule' };
     await uploadUMMGJSONCMRFile(newFakeMetaObj, cmrFile);
 
     const s3Obj = await getS3Object(cmrFile.bucket, cmrFile.key);
-    t.is(s3Obj.Body.toString(), JSON.stringify(newFakeMetaObj));
+    t.deepEqual(await getJsonS3Object(cmrFile.bucket, cmrFile.key), newFakeMetaObj);
     t.is(s3Obj.ContentType, 'application/json');
 
     const tags = await s3GetObjectTagging(cmrFile.bucket, cmrFile.key);
