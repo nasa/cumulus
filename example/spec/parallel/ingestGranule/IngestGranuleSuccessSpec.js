@@ -114,8 +114,6 @@ describe('The S3 Ingest Granules workflow', () => {
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
   const collectionDupeHandling = 'error';
-  const now = new Date().getTime();
-  const tenMinutesAgo = now - (1000 * 60 * 10);
 
   let beforeAllError;
   let collection;
@@ -453,11 +451,12 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('adds LZARDS backup output', () => {
-      const expectedCollectionId = constructCollectionId(collection.name, collection.version);
-      console.log(`lambdaOutput: ${JSON.stringify(lambdaOutput.meta.backupStatus)}`);
+      const dataType = lambdaOutput.meta.input_granules[0].dataType;
+      const version = lambdaOutput.meta.input_granules[0].version;
+      const expectedCollectionId = constructCollectionId(dataType, version);
       expect(true, lambdaOutput.meta.backupStatus.every((file) => file.status === 'COMPLETED'));
-      expect(lambdaOutput.meta.backupStatus[0].provider).toBe(provider);
-      expect(lambdaOutput.meta.backupStatus[0].createdAt).toBe(tenMinutesAgo);
+      expect(lambdaOutput.meta.backupStatus[0].provider).toBe(provider.id);
+      expect(lambdaOutput.meta.backupStatus[0].createdAt).toBe(lambdaOutput.meta.input_granules[0].createdAt);
       expect(lambdaOutput.meta.backupStatus[0].collectionId).toBe(expectedCollectionId);
     });
   });
