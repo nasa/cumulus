@@ -410,7 +410,7 @@ test.serial('uploadEcho10CMRFile uploads CMR File to S3 correctly, preserving ta
     bucket: 'echo10filebucket',
     key: 'metadata.cmr.xml',
   };
-  await s3().createBucket({ Bucket: cmrFile.bucket }).promise();
+  await s3().createBucket({ Bucket: cmrFile.bucket });
   try {
     const fakeXmlString = '<Granule>fake-granule</Granule>';
     await promiseS3Upload({

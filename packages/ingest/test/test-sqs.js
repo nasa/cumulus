@@ -72,7 +72,7 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
     Key: key,
-  }).promise();
+  });
 
   t.deepEqual(body, JSON.parse(item.Body));
 });

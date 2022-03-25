@@ -54,7 +54,7 @@ const getTextObject = async (bucket: string, key: string) => {
   const { Body } = await s3.getObject({
     Bucket: bucket,
     Key: key,
-  }).promise();
+  });
 
   return Body ? Body.toString() : undefined;
 };

@@ -510,7 +510,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   const listObjectsResponse = await s3().listObjects({
     Bucket: secondBucket,
     Prefix: testPrefix,
-  }).promise();
+  });
   t.is(listObjectsResponse.Contents.length, 1);
   t.is(listObjectsResponse.Contents[0].Key, key);
 
