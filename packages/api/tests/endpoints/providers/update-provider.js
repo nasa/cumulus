@@ -188,13 +188,11 @@ test('PUT updates existing provider and correctly removes fields', async (t) => 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const originalDynamoProvider = await providerModel.get({ id });
   const originalPostgresProvider = await t.context.providerPgModel.get(
     t.context.testKnex,
     { name: id }
   );
 
-  t.is(originalDynamoProvider.globalConnectionLimit, globalConnectionLimit);
   t.is(originalPostgresProvider.global_connection_limit, globalConnectionLimit);
 
   const updatedProvider = {
@@ -210,13 +208,11 @@ test('PUT updates existing provider and correctly removes fields', async (t) => 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const actualProvider = await providerModel.get({ id });
   const actualPostgresProvider = await t.context.providerPgModel.get(
     t.context.testKnex,
     { name: id }
   );
 
-  t.is(actualProvider.globalConnectionLimit, undefined);
   t.is(actualPostgresProvider.global_connection_limit, null);
 });
 
