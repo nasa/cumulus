@@ -35,12 +35,12 @@ test.before(async () => {
       Bucket: process.env.system_bucket,
       Key: workflowfile,
       Body: '{}',
-    }).promise(),
+    }),
     awsServices.s3().putObject({
       Bucket: process.env.system_bucket,
       Key: templateFile,
       Body: '{}',
-    }).promise(),
+    }),
   ]);
 });
 

@@ -9,8 +9,7 @@ function getS3ReportsKeys(systemBucket, stackName) {
   return s3().listObjectsV2({
     Bucket: systemBucket,
     Prefix: reportsPrefix(stackName),
-  }).promise()
-    .then((response) => response.Contents.map((o) => o.Key));
+  }).then((response) => response.Contents.map((o) => o.Key));
 }
 
 // get list of reconciliation reports in s3 and add them to the new database table

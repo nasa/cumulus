@@ -38,9 +38,11 @@ test.before(async () => {
   await Promise.all(workflowList.map((wf) => {
     const workflowsListKey = `${process.env.stackName}/workflows/${wf.name}.json`;
     return promiseS3Upload({
-      Bucket: testBucketName,
-      Key: workflowsListKey,
-      Body: JSON.stringify(wf),
+      params: {
+        Bucket: testBucketName,
+        Key: workflowsListKey,
+        Body: JSON.stringify(wf),
+      },
     });
   }));
 

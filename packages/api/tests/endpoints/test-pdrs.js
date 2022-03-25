@@ -63,7 +63,7 @@ const uploadPdrToS3 = (bucket, pdrName, pdrBody) =>
     Bucket: bucket,
     Key: pdrS3Key(pdrName),
     Body: pdrBody,
-  }).promise();
+  });
 
 // create all the variables needed across this test
 const testDbName = `pdrs_${cryptoRandomString({ length: 10 })}`;
