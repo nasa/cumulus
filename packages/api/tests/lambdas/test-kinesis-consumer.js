@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const proxyquire = require('proxyquire');
 
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
@@ -54,7 +54,7 @@ const kinesisRule = {
   state: 'ENABLED',
   rule: {
     type: 'kinesis',
-    value: 'test-kinesisarn',
+    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
   },
 };
 

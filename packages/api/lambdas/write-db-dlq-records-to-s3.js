@@ -7,35 +7,7 @@ const log = require('@cumulus/common/log');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
-
-/**
- * Unwrap dead letter Cumulus message, which may be wrapped in a
- * States cloudwatch event, which is wrapped in an SQS message.
- *
- * @param {Object} messageBody - received SQS message
- * @returns {Object} the cumulus message or nearest available object
- */
-function unwrapDeadLetterCumulusMessage(messageBody) {
-  try {
-    if (messageBody.cumulus_meta !== undefined) return messageBody;
-    if (messageBody.body !== undefined || messageBody.Body !== undefined) {
-      // SQS message case
-      const unwrappedMessageBody = parseSQSMessageBody(messageBody);
-      return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
-    }
-    if (messageBody.detail !== undefined) {
-      // AWS States event case
-      const { input, output } = messageBody.detail;
-      const unwrappedMessageBody = JSON.parse(output || input);
-      return unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
-    }
-    // indeterminate, possibly malformed case
-    return messageBody;
-  } catch (error) {
-    log.error('Falling back to storing wrapped message after encountering unwrap error', error);
-    return messageBody;
-  }
-}
+const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 
 function determineExecutionName(cumulusMessageObject) {
   try {
@@ -52,7 +24,7 @@ async function handler(event) {
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     const messageBody = parseSQSMessageBody(sqsMessage);
-    const cumulusMessageObject = unwrapDeadLetterCumulusMessage(messageBody);
+    const cumulusMessageObject = await unwrapDeadLetterCumulusMessage(messageBody);
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;

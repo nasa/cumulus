@@ -16,7 +16,6 @@ const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
-  conceptExists,
   getOnlineResources,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
@@ -541,13 +540,10 @@ describe('The S3 Ingest Granules workflow', () => {
         if (subTestSetupError) fail(subTestSetupError);
       });
 
-      it('publishes the granule metadata to CMR', async () => {
+      it('publishes the granule metadata to CMR', () => {
         if (subTestSetupError) fail(subTestSetupError);
         if (beforeAllError) fail(beforeAllError);
-        const result = await conceptExists(granule.cmrLink);
-
         expect(granule.published).toEqual(true);
-        expect(result).not.toEqual(false);
       });
 
       it('updates the CMR metadata online resources with the final metadata location', () => {

@@ -49,6 +49,7 @@ const Collections = require('@cumulus/integration-test/Collections');
     * [createCollection(prefix, [overrides])](#exp_module_Collections--createCollection) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
         * [~addCustomUrlPathToCollectionFiles(collection, customFilePath)](#module_Collections--createCollection..addCustomUrlPathToCollectionFiles) ⇒ <code>Array.&lt;Object&gt;</code>
         * [~buildCollection(params)](#module_Collections--createCollection..buildCollection) ⇒ <code>Object</code>
+        * [~collectionExists(stackName, collection)](#module_Collections--createCollection..collectionExists) ⇒ <code>boolean</code>
         * [~addCollection(stackName, collection)](#module_Collections--createCollection..addCollection) ⇒ <code>Promise.&lt;undefined&gt;</code>
         * [~addCollections(stackName, bucketName, dataDirectory, [postfix], [customFilePath], [duplicateHandling])](#module_Collections--createCollection..addCollections) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
 
@@ -119,6 +120,18 @@ updated with the postfix.
 | params.duplicateHandling | <code>string</code> | duplicate handling setting |
 | params.postfix | <code>string</code> | a string to be appended to the end of the   name |
 
+<a name="module_Collections--createCollection..collectionExists"></a>
+
+#### createCollection~collectionExists(stackName, collection) ⇒ <code>boolean</code>
+Returns true if collection exists. False otherwise.
+
+**Kind**: inner method of [<code>createCollection</code>](#exp_module_Collections--createCollection)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| stackName | <code>string</code> | the prefix of the Cumulus stack |
+| collection | <code>Object</code> | a Cumulus collection |
+
 <a name="module_Collections--createCollection..addCollection"></a>
 
 #### createCollection~addCollection(stackName, collection) ⇒ <code>Promise.&lt;undefined&gt;</code>
@@ -157,12 +170,12 @@ const Executions = require('@cumulus/integration-test/Executions');
 ```
 
 * [Executions](#module_Executions)
-    * [findExecutionArn(prefix, matcher, [options])](#exp_module_Executions--findExecutionArn) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
+    * [findExecutionArn(prefix, matcher, [queryParameters], [options])](#exp_module_Executions--findExecutionArn) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
     * [getExecutionWithStatus(params)](#exp_module_Executions--getExecutionWithStatus) ⇒ <code>Promise.&lt;Object&gt;</code> ⏏
 
 <a name="exp_module_Executions--findExecutionArn"></a>
 
-### findExecutionArn(prefix, matcher, [options]) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
+### findExecutionArn(prefix, matcher, [queryParameters], [options]) ⇒ <code>Promise.&lt;string&gt;</code> ⏏
 Find the execution ARN matching the `matcher` function
 
 **Kind**: Exported function  
@@ -172,6 +185,7 @@ Find the execution ARN matching the `matcher` function
 | --- | --- | --- | --- |
 | prefix | <code>string</code> |  | the name of the Cumulus stack |
 | matcher | <code>function</code> |  | a predicate function that takes an execution and determines if this is the execution that is being searched for |
+| [queryParameters] | <code>Object</code> |  | Optional query parameters |
 | [options] | <code>Object</code> |  |  |
 | [options.timeout] | <code>integer</code> | <code>0</code> | the number of seconds to wait for a matching execution to be found |
 

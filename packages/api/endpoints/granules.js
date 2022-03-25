@@ -4,6 +4,12 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
+const Logger = require('@cumulus/logger');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const {
+  RecordDoesNotExist,
+} = require('@cumulus/errors');
+
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -14,12 +20,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const {
-  RecordDoesNotExist,
-} = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
-const Logger = require('@cumulus/logger');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');

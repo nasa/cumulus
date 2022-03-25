@@ -4,10 +4,9 @@ const isEqual = require('lodash/isEqual');
 const omit = require('lodash/omit');
 
 const { removeNilProperties } = require('@cumulus/common/util');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const Logger = require('@cumulus/logger');
 
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const log = new Logger({ sender: '@api/lambdas/create-reconciliation-report' });
 
 /**
@@ -150,6 +149,38 @@ function convertToDBGranuleSearchParams(params) {
 }
 
 /**
+ * convert to es search parameters using createdAt for report time range
+ *
+ * @param {Object} params - request params to convert to Elasticsearch params
+ * @returns {Object} object of desired parameters formated for Elasticsearch.
+ */
+function convertToESGranuleSearchParamsWithCreatedAtRange(params) {
+  const searchParamsWithUpdatedAt = convertToESGranuleSearchParams(params);
+  const searchParamsWithCreatedAt = {
+    createdAt__from: searchParamsWithUpdatedAt.updatedAt__from,
+    createdAt__to: searchParamsWithUpdatedAt.updatedAt__to,
+    ...omit(searchParamsWithUpdatedAt, ['updatedAt__from', 'updatedAt__to']),
+  };
+  return removeNilProperties(searchParamsWithCreatedAt);
+}
+
+/**
+ *
+ * @param {Object} params - request params to convert to orca params
+ * @returns {Object} object of desired parameters formated for orca
+ */
+function convertToOrcaGranuleSearchParams(params) {
+  const { collectionIds, granuleIds, providers, startTimestamp, endTimestamp } = params;
+  return removeNilProperties({
+    startTimestamp: dateToValue(startTimestamp),
+    endTimestamp: dateToValue(endTimestamp) || Date.now(),
+    collectionId: collectionIds,
+    granuleId: granuleIds,
+    providerId: providers,
+  });
+}
+
+/**
  * create initial report header
  *
  * @param {Object} recReportParams - params
@@ -259,6 +290,8 @@ module.exports = {
   convertToDBGranuleSearchParams,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
+  convertToESGranuleSearchParamsWithCreatedAtRange,
+  convertToOrcaGranuleSearchParams,
   filterDBCollections,
   initialReportHeader,
   searchParamsForCollectionIdArray,

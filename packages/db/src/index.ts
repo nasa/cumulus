@@ -84,7 +84,6 @@ export {
   translatePostgresProviderToApiProvider,
 } from './translate/providers';
 export {
-  translateApiRuleToPostgresRule,
   translatePostgresRuleToApiRule,
   translateApiRuleToPostgresRuleRaw,
 } from './translate/rules';

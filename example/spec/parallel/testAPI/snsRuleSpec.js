@@ -11,6 +11,7 @@ const {
   removeRuleAddedParams,
 } = require('@cumulus/integration-tests');
 
+const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteRule,
@@ -179,13 +180,14 @@ describe('The SNS-type rule', () => {
 
     it('creates a policy when it is created in an enabled state', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      const { Policy } = await lambda().getPolicy({
+      const response = await lambda().getPolicy({
         FunctionName: consumerName,
       }).promise();
+      const { Policy } = response;
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
 
-      expect(statementSids).toContain(`${ruleName}Permission`);
+      expect(statementSids).toContain(getSnsTriggerPermissionId(createdRule.record));
     });
   });
 
@@ -347,7 +349,7 @@ describe('The SNS-type rule', () => {
       const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
       const { Statement } = JSON.parse(Policy);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBeGreaterThan(0);
-      expect(Statement.some((s) => s.Sid === expectedStatementId)).toBeTrue();
+      expect(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(putRule))).toBeTrue();
     });
   });
 

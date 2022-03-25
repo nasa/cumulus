@@ -343,6 +343,26 @@ test('BasePgModel.delete() works with knex transaction', async (t) => {
   t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId }));
 });
 
+test('BasePgModel.queryBuilderSearch returns an awaitable knex Builder object', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const recordBody = { info };
+
+  await Promise.all([
+    knex(tableName).insert(recordBody),
+    knex(tableName).insert(recordBody),
+    knex(tableName).insert(recordBody),
+  ]);
+
+  const queryBuilderSearchResult = basePgModel.queryBuilderSearch(knex, recordBody);
+  queryBuilderSearchResult.limit(2);
+  const searchResponse = await queryBuilderSearchResult;
+  t.is(searchResponse.length, 2);
+  searchResponse.forEach((r) => {
+    t.like(r, recordBody);
+  });
+});
+
 test('BasePgModel.search() returns an array of records', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });

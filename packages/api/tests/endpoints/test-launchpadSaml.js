@@ -30,7 +30,7 @@ process.env.OAUTH_PROVIDER = 'launchpad';
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.stackName = randomId('stackname');
 process.env.TOKEN_SECRET = randomId('token_secret');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('bucket');
 process.env.LAUNCHPAD_METADATA_URL = 'http://example.com/launchpad.idp.xml';
 
 const { app } = require('../../app');
@@ -205,9 +205,9 @@ test.serial(
   'launchpadPublicCertificate throws error with missing bucket.',
   async (t) => {
     const stub = sinon.stub(got, 'get').callsFake(() => gotLaunchpadMetadataResponse);
-    await t.throwsAsync(launchpadPublicCertificate('s3://badBucket/location'), {
+    await t.throwsAsync(launchpadPublicCertificate('s3://bad-bucket/location'), {
       instanceOf: Error,
-      message: 'Cumulus could not find Launchpad public xml metadata at s3://badBucket/location',
+      message: 'Cumulus could not find Launchpad public xml metadata at s3://bad-bucket/location',
     });
     stub.restore();
   }
