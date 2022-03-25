@@ -11,8 +11,27 @@ import pWaitFor from 'p-wait-for';
 import TimeoutError from 'p-timeout';
 import pump from 'pump';
 import querystring from 'querystring';
-import { Readable, TransformOptions, PassThrough } from 'stream';
+import { Readable, TransformOptions } from 'stream';
 import { deprecate } from 'util';
+
+import {
+  CopyObjectCommandInput,
+  CreateMultipartUploadRequest,
+  DeleteObjectRequest,
+  GetObjectCommandInput,
+  GetObjectOutput,
+  HeadObjectOutput,
+  ListObjectsRequest,
+  ListObjectsV2Output,
+  ListObjectsV2Request,
+  ObjectCannedACL,
+  PutObjectCommandInput,
+  PutObjectRequest,
+  S3,
+  Tag,
+  Tagging,
+} from '@aws-sdk/client-s3';
+import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
 import {
   generateChecksumFromStream,
@@ -28,20 +47,6 @@ import * as S3MultipartUploads from './lib/S3MultipartUploads';
 import { s3 } from './services';
 import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
-
-export type GetObjectCreateReadStreamMethod = (params: AWS.S3.GetObjectRequest) => {
-  createReadStream: () => Readable
-};
-
-export type GetObjectPromiseMethod = (params: AWS.S3.GetObjectRequest) => {
-  promise: () => Promise<AWS.S3.GetObjectOutput>
-};
-
-export type Object = Required<AWS.S3.Object>;
-
-export interface ListObjectsV2Output extends AWS.S3.ListObjectsV2Output {
-  Contents: Object[]
-}
 
 const log = new Logger({ sender: 'aws-client/s3' });
 
@@ -119,8 +124,8 @@ export const buildS3Uri = (bucket: string, key: string) =>
 * @param {Array<Object>} tagset - S3 TagSet array
 * @returns {string} tags query string
 */
-export const s3TagSetToQueryString = (tagset: AWS.S3.TagSet) =>
-  tagset.map(({ Key, Value }) => `${Key}=${Value}`).join('&');
+export const s3TagSetToQueryString = (tagset: Tagging['TagSet']) =>
+  tagset?.map(({ Key, Value }) => `${Key}=${Value}`).join('&');
 
 /**
  * Delete an object from S3
@@ -131,7 +136,7 @@ export const s3TagSetToQueryString = (tagset: AWS.S3.TagSet) =>
  */
 export const deleteS3Object = improveStackTrace(
   (bucket: string, key: string) =>
-    s3().deleteObject({ Bucket: bucket, Key: key }).promise()
+    s3().deleteObject({ Bucket: bucket, Key: key })
 );
 
 /**
@@ -144,20 +149,22 @@ export const deleteS3Object = improveStackTrace(
 *   By default, retries will not be performed
 * @returns {Promise} returns response from `S3.headObject` as a promise
 **/
-export const headObject = improveStackTrace(
-  (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
-    pRetry(
-      async () => {
-        try {
-          return await s3().headObject({ Bucket, Key }).promise();
-        } catch (error) {
-          if (error.code === 'NotFound') throw error;
-          throw new pRetry.AbortError(error);
-        }
-      },
-      { maxTimeout: 10000, ...retryOptions }
-    )
-);
+export const headObject = (
+  Bucket: string,
+  Key: string,
+  retryOptions: pRetry.Options = { retries: 0 }
+) =>
+  pRetry(
+    async () => {
+      try {
+        return await s3().headObject({ Bucket, Key });
+      } catch (error) {
+        if (error.name === 'NotFound') throw error;
+        throw new pRetry.AbortError(error);
+      }
+    },
+    { maxTimeout: 10000, ...retryOptions }
+  );
 
 /**
  * Test if an object exists in S3
@@ -170,7 +177,7 @@ export const s3ObjectExists = (params: { Bucket: string, Key: string }) =>
   headObject(params.Bucket, params.Key)
     .then(() => true)
     .catch((error) => {
-      if (error.code === 'NotFound') return false;
+      if (error.name === 'NotFound') return false;
       throw error;
     });
 
@@ -217,13 +224,12 @@ export const waitForObjectToExist = async (params: {
 *
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * promise of the object being put
+* @returns {Promise}
 **/
-export const s3PutObject = improveStackTrace(
-  (params: AWS.S3.PutObjectRequest) => s3().putObject({
-    ACL: 'private',
-    ...params,
-  }).promise()
-);
+export const s3PutObject = (params: PutObjectCommandInput) => s3().putObject({
+  ACL: 'private',
+  ...params,
+});
 
 /**
  * Upload a file to S3
@@ -246,56 +252,88 @@ export const putFile = (bucket: string, key: string, filename: string) =>
 * @param {Object} params - same params as https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property
 * @returns {Promise} promise of the object being copied
 **/
-export const s3CopyObject = improveStackTrace(
-  (params: AWS.S3.CopyObjectRequest) => s3().copyObject({
-    TaggingDirective: 'COPY',
-    ...params,
-  }).promise()
-);
+export const s3CopyObject = (params: CopyObjectCommandInput) => s3().copyObject({
+  TaggingDirective: 'COPY',
+  ...params,
+});
 
 /**
  * Upload data to S3
  *
- * Note: This is equivalent to calling `aws.s3().upload(params).promise()`
+ * see https://github.com/aws/aws-sdk-js-v3/tree/main/lib/lib-storage
  *
- * @param {Object} params - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
- * @returns {Promise} see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @param {UploadOptions} params
+ * @returns {Promise}
  */
-export const promiseS3Upload = improveStackTrace(
-  (params: AWS.S3.PutObjectRequest) => s3().upload(params).promise()
-);
+export const promiseS3Upload = (params: Omit<UploadOptions, 'client'>) => {
+  const parallelUploads = new Upload({
+    ...params,
+    client: s3(),
+  });
+
+  parallelUploads.on('httpUploadProgress', (progress) => {
+    log.info(progress);
+  });
+
+  return parallelUploads.done();
+};
 
 /**
  * Upload data to S3 using a stream
  *
- * We are not using `s3.upload().promise()` due to errors observed in testing
- * with uncaught exceptions. By creating our own promise, we can ensure any
- * errors from the streams or upload cause this promise to reject.
- *
  * @param {Readable} uploadStream - Stream of data to upload
- * @param {Object} uploadParams - see [S3.upload()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#upload-property)
+ * @param {Object} uploadParams
  * @returns {Promise}
  */
 export const streamS3Upload = (
   uploadStream: Readable,
-  uploadParams: AWS.S3.PutObjectRequest
-) => new Promise((resolve, reject) => {
-  const pass = new PassThrough();
-  uploadStream.pipe(pass);
-
-  uploadStream.on('error', reject);
-  pass.on('error', reject);
-
-  return s3().upload({
+  uploadParams: UploadOptions
+) => {
+  const parallelUploads3 = new Upload({
     ...uploadParams,
-    Body: pass,
-  }, (err, uploadResponse) => {
-    if (err) {
-      return reject(err);
-    }
-    return resolve(uploadResponse);
+    params: {
+      ...uploadParams.params,
+      Body: uploadStream,
+    },
+    client: s3(),
   });
-});
+
+  parallelUploads3.on('httpUploadProgress', (progress) => {
+    log.info(progress);
+  });
+
+  return parallelUploads3.done();
+};
+
+/**
+ * Get a readable stream for an S3 object
+ *
+ * @param {Object} params
+ * @param {S3} params.s3 - an S3 instance
+ * @param {string} params.bucket - the bucket of the requested object
+ * @param {string} params.key - the key of the requested object
+ * @returns {Promise<Readable>}
+ */
+export const getObjectReadStream = async (params: {
+  s3: S3,
+  bucket: string,
+  key: string
+}): Promise<Readable> => {
+  // eslint-disable-next-line no-shadow
+  const { s3: s3Client, bucket, key } = params;
+
+  const response: GetObjectOutput = await s3Client.getObject({ Bucket: bucket, Key: key });
+
+  if (!response.Body) {
+    throw new Error(`Could not get object for bucket ${bucket} and key ${key}`);
+  }
+
+  if (!(response.Body instanceof Readable)) {
+    throw new TypeError('Unknown object stream type.');
+  }
+
+  return response.Body;
+};
 
 /**
  * Downloads the given s3Obj to the given filename in a streaming manner
@@ -304,20 +342,28 @@ export const streamS3Upload = (
  * @param {string} filepath - The filepath of the file that is downloaded
  * @returns {Promise<string>} returns filename if successful
  */
-export const downloadS3File = (
-  s3Obj: AWS.S3.GetObjectRequest,
+export const downloadS3File = async (
+  s3Obj: GetObjectCommandInput,
   filepath: string
 ): Promise<string> => {
+  if (!s3Obj.Bucket || !s3Obj.Key) {
+    throw new Error('Bucket and Key are required');
+  }
+
   const fileWriteStream = fs.createWriteStream(filepath);
 
-  return new Promise((resolve, reject) => {
-    const objectReadStream = s3().getObject(s3Obj).createReadStream();
+  const objectStream = await getObjectReadStream({
+    bucket: s3Obj.Bucket,
+    key: s3Obj.Key,
+    s3: s3(),
+  });
 
-    pump(objectReadStream, fileWriteStream, (err) => {
+  return new Promise(
+    (resolve, reject) => pump(objectStream, fileWriteStream, (err) => {
       if (err) reject(err);
       else resolve(filepath);
-    });
-  });
+    })
+  );
 };
 
 /**
@@ -326,16 +372,12 @@ export const downloadS3File = (
  * @param {Object} params
  * @param {string} params.bucket
  * @param {string} params.key
- * @param {AWS.S3} params.s3 - an S3 client instance
+ * @param {S3} params.s3 - an S3 client instance
  * @returns {Promise<number|undefined>} object size, in bytes
  */
 export const getObjectSize = async (
   params: {
-    s3: {
-      headObject: (params: { Bucket: string, Key: string }) => {
-        promise: () => Promise<{ ContentLength?: number }>
-      }
-    },
+    s3: S3,
     bucket: string,
     key: string
   }
@@ -346,7 +388,7 @@ export const getObjectSize = async (
   const headObjectResponse = await s3Client.headObject({
     Bucket: bucket,
     Key: key,
-  }).promise();
+  });
 
   return headObjectResponse.ContentLength;
 };
@@ -356,18 +398,21 @@ export const getObjectSize = async (
 *
 * @param {string} bucket - name of bucket
 * @param {string} key - key for object (filepath + filename)
-* @returns {Promise<AWS.S3.GetObjectTaggingOutput>} the promised response from `S3.getObjectTagging`
+* @returns {Promise<GetObjectTaggingOutput>} the promised response from `S3.getObjectTagging`
 **/
-export const s3GetObjectTagging = improveStackTrace(
-  (bucket: string, key: string) =>
-    s3().getObjectTagging({ Bucket: bucket, Key: key }).promise()
-);
+export const s3GetObjectTagging = (bucket: string, key: string) =>
+  s3().getObjectTagging({ Bucket: bucket, Key: key });
 
 const getObjectTags = async (bucket: string, key: string) => {
   const taggingResponse = await s3GetObjectTagging(bucket, key);
 
-  return taggingResponse.TagSet.reduce(
-    (acc, { Key, Value }) => ({ ...acc, [Key]: Value }),
+  return taggingResponse?.TagSet?.reduce(
+    (accumulator, { Key, Value }: Tag) => {
+      if (Key && Value) {
+        return { ...accumulator, [Key]: Value };
+      }
+      return accumulator;
+    },
     {}
   );
 };
@@ -384,17 +429,15 @@ const getObjectTaggingString = async (bucket: string, key: string) => {
 *
 * @param {string} Bucket - name of bucket
 * @param {string} Key - key for object (filepath + filename)
-* @param {Object} Tagging - tagging object
+* @param {Object} ObjectTagging - tagging object
 * @returns {Promise} returns response from `S3.getObjectTagging` as a promise
 **/
-export const s3PutObjectTagging = improveStackTrace(
-  (Bucket: string, Key: string, Tagging: AWS.S3.Tagging) =>
-    s3().putObjectTagging({
-      Bucket,
-      Key,
-      Tagging,
-    }).promise()
-);
+export const s3PutObjectTagging = (Bucket: string, Key: string, ObjectTagging: Tagging) =>
+  s3().putObjectTagging({
+    Bucket,
+    Key,
+    Tagging: ObjectTagging,
+  });
 
 /**
  * Gets an object from S3.
@@ -402,41 +445,41 @@ export const s3PutObjectTagging = improveStackTrace(
  * @example
  * const obj = await getObject(s3(), { Bucket: 'b', Key: 'k' })
  *
- * @param {AWS.S3} s3Client - an `AWS.S3` instance
- * @param {AWS.S3.GetObjectRequest} params - parameters object to pass through
- *   to `AWS.S3.getObject()`
- * @returns {Promise<AWS.S3.GetObjectOutput>} response from `AWS.S3.getObject()`
+ * @param {S3} s3Client - an `S3` instance
+ * @param {GetObjectCommandInput} params - parameters object to pass through
+ *   to `S3.getObject()`
+ * @returns {Promise<GetObjectOutput>} response from `S3.getObject()`
  *   as a Promise
  */
 export const getObject = (
-  s3Client: { getObject: GetObjectPromiseMethod },
-  params: AWS.S3.GetObjectRequest
-): Promise<AWS.S3.GetObjectOutput> => s3Client.getObject(params).promise();
+  s3Client: S3,
+  params: GetObjectCommandInput
+): Promise<GetObjectOutput> => s3Client.getObject(params);
 
 /**
  * Get an object from S3, waiting for it to exist and, if specified, have the
  * correct ETag.
  *
- * @param {AWS.S3} s3Client
- * @param {AWS.S3.GetObjectRequest} params
+ * @param {S3} s3Client
+ * @param {GetObjectCommandInput} params
  * @param {pRetry.Options} [retryOptions={}]
- * @returns {Promise<AWS.S3.GetObjectOutput>}
+ * @returns {Promise<GetObjectOutput>}
  */
 export const waitForObject = (
-  s3Client: { getObject: GetObjectPromiseMethod },
-  params: AWS.S3.GetObjectRequest,
+  s3Client: S3,
+  params: GetObjectCommandInput,
   retryOptions: pRetry.Options = {}
-): Promise<AWS.S3.GetObjectOutput> =>
+): Promise<GetObjectOutput> =>
   pRetry(
     async () => {
       try {
         return await getObject(s3Client, params);
       } catch (error) {
         // Retry if the object does not exist
-        if (error.code === 'NoSuchKey') throw error;
+        if (error.name === 'NoSuchKey') throw error;
 
         // Retry if the etag did not match
-        if (params.IfMatch && error.code === 'PreconditionFailed') throw error;
+        if (params.IfMatch && error.name === 'PreconditionFailed') throw error;
 
         // For any other error, fail without retrying
         throw new pRetry.AbortError(error);
@@ -458,23 +501,46 @@ export const waitForObject = (
  * @deprecated
  */
 export const getS3Object = deprecate(
-  improveStackTrace(
-    (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
-      waitForObject(
-        s3(),
-        { Bucket, Key },
-        {
-          maxTimeout: 10000,
-          onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
-          ...retryOptions,
-        }
-      )
-  ),
+  (Bucket: string, Key: string, retryOptions: pRetry.Options = { retries: 0 }) =>
+    waitForObject(
+      s3(),
+      { Bucket, Key },
+      {
+        maxTimeout: 10000,
+        onFailedAttempt: (err) => log.debug(`getS3Object('${Bucket}', '${Key}') failed with ${err.retriesLeft} retries left: ${err.message}`),
+        ...retryOptions,
+      }
+    ),
   buildDeprecationMessage(
     '@cumulus/aws-client/S3.getS3Object',
     '2.0.1',
     '@cumulus/aws-client/S3.getObject or @cumulus/aws-client/S3.waitForObject'
   )
+);
+
+/**
+ * Transform streaming response from S3 object to text content
+ *
+ * @param {Readable} objectReadStream - Readable stream of S3 object
+ * @returns {Promise<string>} the contents of the S3 object
+ */
+export const getObjectStreamContents = (
+  objectReadStream: Readable
+): Promise<string> => new Promise(
+  (resolve, reject) => {
+    try {
+      const responseDataChunks: Buffer[] = [];
+
+      objectReadStream.once('error', (error) => reject(error));
+      objectReadStream.on('data', (chunk) => responseDataChunks.push(chunk));
+
+      // Once the stream has no more data, join the chunks into a string and
+      // return the string
+      objectReadStream.once('end', () => resolve(responseDataChunks.join('')));
+    } catch (error) {
+      reject(error);
+    }
+  }
 );
 
 /**
@@ -484,12 +550,9 @@ export const getS3Object = deprecate(
  * @param {string} key - the S3 object's key
  * @returns {Promise<string>} the contents of the S3 object
  */
-export const getTextObject = (bucket: string, key: string) =>
-  getS3Object(bucket, key)
-    .then(({ Body }) => {
-      if (Body === undefined) return undefined;
-      return Body.toString();
-    });
+export const getTextObject = (bucket: string, key: string): Promise<string> =>
+  getObjectReadStream({ s3: s3(), bucket, key })
+    .then((objectReadStream) => getObjectStreamContents(objectReadStream));
 
 /**
  * Fetch JSON stored in an S3 object
@@ -512,26 +575,6 @@ export const putJsonS3Object = (bucket: string, key: string, data: any) =>
   });
 
 /**
- * Get a readable stream for an S3 object
- *
- * @param {Object} params
- * @param {AWS.S3} params.s3 - an AWS.S3 instance
- * @param {string} params.bucket - the bucket of the requested object
- * @param {string} params.key - the key of the requested object
- * @returns {Readable}
- */
-export const getObjectReadStream = (params: {
-  s3: { getObject: GetObjectCreateReadStreamMethod },
-  bucket: string,
-  key: string
-}) => {
-  // eslint-disable-next-line no-shadow
-  const { s3: s3Client, bucket, key } = params;
-
-  return s3Client.getObject({ Bucket: bucket, Key: key }).createReadStream();
-};
-
-/**
 * Check if a file exists in an S3 object
 *
 * @param {string} bucket - name of the S3 bucket
@@ -540,7 +583,7 @@ export const getObjectReadStream = (params: {
 **/
 export const fileExists = async (bucket: string, key: string) => {
   try {
-    return await s3().headObject({ Key: key, Bucket: bucket }).promise();
+    return await s3().headObject({ Key: key, Bucket: bucket });
   } catch (error) {
     // if file is not return false
     if (error.stack.match(/(NotFound)/) || error.stack.match(/(NoSuchBucket)/)) {
@@ -550,39 +593,6 @@ export const fileExists = async (bucket: string, key: string) => {
   }
 };
 
-export const downloadS3Files = async (
-  s3Objs: AWS.S3.GetObjectRequest[],
-  dir: string,
-  s3opts: Partial<AWS.S3.GetObjectRequest> = {}
-) => {
-  // Scrub s3Ojbs to avoid errors from the AWS SDK
-  const scrubbedS3Objs = s3Objs.map((s3Obj) => ({
-    Bucket: s3Obj.Bucket,
-    Key: s3Obj.Key,
-  }));
-  let i = 0;
-  const n = s3Objs.length;
-  log.info(`Starting download of ${n} keys to ${dir}`);
-  const promiseDownload = (s3Obj: AWS.S3.GetObjectRequest) => {
-    const filename = path.join(dir, path.basename(s3Obj.Key));
-    const file = fs.createWriteStream(filename);
-    const opts = Object.assign(s3Obj, s3opts);
-    return new Promise((resolve, reject) => {
-      s3().getObject(opts)
-        .createReadStream()
-        .pipe(file)
-        .on('finish', () => {
-          log.info(`Progress: [${i} of ${n}] s3://${s3Obj.Bucket}/${s3Obj.Key} -> ${filename}`);
-          i += 1;
-          return resolve(s3Obj.Key);
-        })
-        .on('error', reject);
-    });
-  };
-
-  return await pMap(scrubbedS3Objs, promiseDownload, { concurrency: S3_RATE_LIMIT });
-};
-
 /**
  * Delete files from S3
  *
@@ -590,9 +600,9 @@ export const downloadS3Files = async (
  * @returns {Promise} A promise that resolves to an Array of the data returned
  *   from the deletion operations
  */
-export const deleteS3Files = async (s3Objs: AWS.S3.DeleteObjectRequest[]) => await pMap(
+export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap(
   s3Objs,
-  (s3Obj) => s3().deleteObject(s3Obj).promise(),
+  (s3Obj) => s3().deleteObject(s3Obj),
   { concurrency: S3_RATE_LIMIT }
 );
 
@@ -604,8 +614,8 @@ export const deleteS3Files = async (s3Objs: AWS.S3.DeleteObjectRequest[]) => awa
 **/
 export const recursivelyDeleteS3Bucket = improveStackTrace(
   async (bucket: string) => {
-    const response = await s3().listObjects({ Bucket: bucket }).promise();
-    const s3Objects: AWS.S3.DeleteObjectRequest[] = (response.Contents || []).map((o) => {
+    const response = await s3().listObjects({ Bucket: bucket });
+    const s3Objects: DeleteObjectRequest[] = (response.Contents || []).map((o) => {
       if (!o.Key) throw new Error(`Unable to determine S3 key of ${JSON.stringify(o)}`);
 
       return {
@@ -615,7 +625,7 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
     });
 
     await deleteS3Files(s3Objects);
-    return await s3().deleteBucket({ Bucket: bucket }).promise();
+    return await s3().deleteBucket({ Bucket: bucket });
   }
 );
 
@@ -639,7 +649,7 @@ export const uploadS3Files = async (
   files: Array<string | FileInfo>,
   defaultBucket: string,
   keyPath: string | ((x: string) => string),
-  s3opts: Partial<AWS.S3.PutObjectRequest> = {}
+  s3opts: Partial<PutObjectRequest> = {}
 ) => {
   let i = 0;
   const n = files.length;
@@ -667,10 +677,12 @@ export const uploadS3Files = async (
     }
 
     await promiseS3Upload({
-      Bucket: bucket,
-      Key: key,
-      Body: fs.createReadStream(filename),
       ...s3opts,
+      params: {
+        Bucket: bucket,
+        Key: key,
+        Body: fs.createReadStream(filename),
+      },
     });
 
     i += 1;
@@ -696,13 +708,15 @@ export const uploadS3FileStream = (
   fileStream: Readable,
   bucket: string,
   key: string,
-  s3opts: Partial<AWS.S3.PutObjectRequest> = {}
+  s3opts: Partial<PutObjectRequest> = {}
 ) =>
   promiseS3Upload({
-    Bucket: bucket,
-    Key: key,
-    Body: fileStream,
-    ...s3opts,
+    params: {
+      ...s3opts,
+      Bucket: bucket,
+      Key: key,
+      Body: fileStream,
+    },
   });
 
 /**
@@ -723,12 +737,12 @@ export const listS3Objects = async (
   skipFolders: boolean = true
 ) => {
   log.info(`Listing objects in s3://${bucket}`);
-  const params: AWS.S3.ListObjectsRequest = {
+  const params: ListObjectsRequest = {
     Bucket: bucket,
   };
   if (prefix) params.Prefix = prefix;
 
-  const data = await s3().listObjects(params).promise();
+  const data = await s3().listObjects(params);
   let contents = data.Contents || [];
   if (skipFolders) {
     // Filter out any references to folders
@@ -736,8 +750,6 @@ export const listS3Objects = async (
   }
   return contents;
 };
-
-export type ListS3ObjectsV2Result = Promise<Object[]>;
 
 /**
  * Fetch complete list of S3 objects
@@ -756,27 +768,25 @@ export type ListS3ObjectsV2Result = Promise<Object[]>;
  * @static
  */
 export const listS3ObjectsV2 = async (
-  params: AWS.S3.ListObjectsV2Request
-): ListS3ObjectsV2Result => {
+  params: ListObjectsV2Request
+): Promise<ListObjectsV2Output['Contents']> => {
   // Fetch the first list of objects from S3
-  let listObjectsResponse = <ListObjectsV2Output>(
-    await s3().listObjectsV2(params).promise()
-  );
+  let listObjectsResponse = await s3().listObjectsV2(params);
 
-  let discoveredObjects = listObjectsResponse.Contents;
+  let discoveredObjects = listObjectsResponse.Contents ?? [];
 
   // Keep listing more objects from S3 until we have all of them
   while (listObjectsResponse.IsTruncated) {
     // eslint-disable-next-line no-await-in-loop
-    listObjectsResponse = <ListObjectsV2Output>(await s3().listObjectsV2(
+    listObjectsResponse = (await s3().listObjectsV2(
       // Update the params with a Continuation Token
       {
 
         ...params,
         ContinuationToken: listObjectsResponse.NextContinuationToken,
       }
-    ).promise());
-    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents);
+    ));
+    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents ?? []);
   }
 
   return discoveredObjects;
@@ -786,7 +796,7 @@ export const listS3ObjectsV2 = async (
  * Calculate the cryptographic hash of an S3 object
  *
  * @param {Object} params
- * @param {AWS.S3} params.s3 - an AWS.S3 instance
+ * @param {S3} params.s3 - an S3 instance
  * @param {string} params.algorithm - `cksum`, or an algorithm listed in
  *   `openssl list -digest-algorithms`
  * @param {string} params.bucket
@@ -794,7 +804,7 @@ export const listS3ObjectsV2 = async (
  */
 export const calculateObjectHash = async (
   params: {
-    s3: { getObject: GetObjectCreateReadStreamMethod },
+    s3: S3,
     algorithm: string,
     bucket: string,
     key: string
@@ -803,7 +813,7 @@ export const calculateObjectHash = async (
   // eslint-disable-next-line no-shadow
   const { algorithm, bucket, key, s3: s3Client } = params;
 
-  const stream = getObjectReadStream({
+  const stream = await getObjectReadStream({
     s3: s3Client,
     bucket,
     key,
@@ -833,7 +843,7 @@ export const validateS3ObjectChecksum = async (params: {
   options: TransformOptions
 }) => {
   const { algorithm, bucket, key, expectedSum, options } = params;
-  const fileStream = getObjectReadStream({ s3: s3(), bucket, key });
+  const fileStream = await getObjectReadStream({ s3: s3(), bucket, key });
   if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
     return true;
   }
@@ -867,7 +877,7 @@ export const getFileBucketAndKey = (pathParams: string): [string, string] => {
  * @returns {Promise}
  */
 export const createBucket = (Bucket: string) =>
-  s3().createBucket({ Bucket }).promise();
+  s3().createBucket({ Bucket });
 
 /**
  * Create multiple S3 buckets
@@ -883,14 +893,14 @@ const createMultipartUpload = async (
   params: {
     sourceBucket: string,
     sourceKey: string,
-    destinationBucket: string,
-    destinationKey: string,
-    ACL?: AWS.S3.ObjectCannedACL,
+    destinationBucket: CreateMultipartUploadRequest['Bucket'],
+    destinationKey: CreateMultipartUploadRequest['Key'],
+    ACL?: ObjectCannedACL,
     copyTags?: boolean,
-    contentType?: AWS.S3.ContentType
+    contentType?: CreateMultipartUploadRequest['ContentType']
   }
 ) => {
-  const uploadParams: AWS.S3.CreateMultipartUploadRequest = {
+  const uploadParams: CreateMultipartUploadRequest = {
     Bucket: params.destinationBucket,
     Key: params.destinationKey,
     ACL: params.ACL,
@@ -961,7 +971,7 @@ const uploadPartCopy = async (
  * @param {string} params.sourceKey
  * @param {string} params.destinationBucket
  * @param {string} params.destinationKey
- * @param {AWS.S3.HeadObjectOutput} [params.sourceObject]
+ * @param {S3.HeadObjectOutput} [params.sourceObject]
  *   Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property
  * @param {string} [params.ACL] - an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl)
  * @param {boolean} [params.copyTags=false]
@@ -975,8 +985,8 @@ export const multipartCopyObject = async (
     sourceKey: string,
     destinationBucket: string,
     destinationKey: string,
-    sourceObject?: AWS.S3.HeadObjectOutput,
-    ACL?: AWS.S3.ObjectCannedACL,
+    sourceObject?: HeadObjectOutput,
+    ACL?: ObjectCannedACL,
     copyTags?: boolean,
     chunkSize?: number
   }
@@ -1074,7 +1084,7 @@ export const moveObject = async (
     sourceKey: string,
     destinationBucket: string,
     destinationKey: string,
-    ACL?: AWS.S3.ObjectCannedACL,
+    ACL?: ObjectCannedACL,
     copyTags?: boolean,
     chunkSize?: number
   }

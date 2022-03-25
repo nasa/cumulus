@@ -26,7 +26,7 @@ const localStackPorts = {
   lambda: 4566,
   redshift: 4566,
   route53: 4566,
-  s3: 4566,
+  S3: 4566,
   secretsmanager: 4566,
   ses: 4566,
   sns: 4566,
@@ -96,7 +96,7 @@ export function localStackAwsClientOptions<T>(
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
-  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.s3ForcePathStyle = true;
+  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.forcePathStyle = true;
   return localStackOptions;
 }
 

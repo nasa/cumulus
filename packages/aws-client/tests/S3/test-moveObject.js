@@ -10,6 +10,7 @@ const {
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3PutObject,
+  getObjectStreamContents,
 } = require('../../S3');
 
 const MB = 1024 * 1024;
@@ -52,7 +53,7 @@ test('moveObject() copies the source file to the destination', async (t) => {
 
   const copiedObject = await getS3Object(destinationBucket, destinationKey);
 
-  t.is(copiedObject.Body.toString(), 'asdf');
+  t.is(await getObjectStreamContents(copiedObject.Body), 'asdf');
 });
 
 test('moveObject() deletes the source file', async (t) => {
