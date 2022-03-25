@@ -110,7 +110,7 @@ test.before(async () => {
   const fileKey = randomId('key');
 
   const fileLocation = `${protectedBucket}/${fileKey}`;
-  const s3Endpoint = getLocalstackEndpoint('s3');
+  const s3Endpoint = getLocalstackEndpoint('S3');
 
   const getAccessTokenResponse = fakeAccessTokenFactory();
   const getUserInfoResponse = { foo: 'bar', username: getAccessTokenResponse.username };
