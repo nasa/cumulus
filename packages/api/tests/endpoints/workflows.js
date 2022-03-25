@@ -34,7 +34,7 @@ let jwtAuthToken;
 test.before(async () => {
   testBucketName = process.env.system_bucket;
 
-  await s3().createBucket({ Bucket: testBucketName }).promise();
+  await s3().createBucket({ Bucket: testBucketName });
   await Promise.all(workflowList.map((wf) => {
     const workflowsListKey = `${process.env.stackName}/workflows/${wf.name}.json`;
     return promiseS3Upload({
@@ -52,7 +52,7 @@ test.before(async () => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  await s3().createBucket({ Bucket: testBucketName }).promise();
+  await s3().createBucket({ Bucket: testBucketName });
 });
 
 test.after.always(async () => {

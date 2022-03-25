@@ -63,7 +63,7 @@ let esAlias;
 let esIndex;
 let esClient;
 
-const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 const testDbName = `create_rec_reports_${cryptoRandomString({ length: 10 })}`;
 
 function createDistributionBucketMapFromBuckets(buckets) {
@@ -118,7 +118,7 @@ async function storeFilesToS3(files) {
 
   return await pMap(
     putObjectParams,
-    async (params) => await awsServices.s3().putObject(params).promise(),
+    async (params) => await awsServices.s3().putObject(params),
     { concurrency: 10 }
   );
 }
@@ -180,14 +180,14 @@ async function storeGranulesToElasticsearch(granules) {
 
 async function fetchCompletedReport(reportRecord) {
   return await awsServices.s3()
-    .getObject(parseS3Uri(reportRecord.location)).promise()
+    .getObject(parseS3Uri(reportRecord.location))
     .then((response) => response.Body.toString())
     .then(JSON.parse);
 }
 
 async function fetchCompletedReportString(reportRecord) {
   return await awsServices.s3()
-    .getObject(parseS3Uri(reportRecord.location)).promise()
+    .getObject(parseS3Uri(reportRecord.location))
     .then((response) => response.Body.toString());
 }
 
@@ -369,7 +369,7 @@ test.beforeEach(async (t) => {
   t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
 
-  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
+  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
   await new models.Collection().createTable();

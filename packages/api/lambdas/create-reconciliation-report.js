@@ -719,7 +719,7 @@ async function createReconciliationReport(recReportParams) {
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report, undefined, 2),
-  }).promise();
+  });
 
   // Internal consistency check S3 vs Cumulus DBs
   // --------------------------------------------

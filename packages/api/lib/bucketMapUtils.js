@@ -20,7 +20,7 @@ async function getYamlFile(bucket, key) {
     const mapFile = await s3().getObject({
       Bucket: bucket,
       Key: key,
-    }).promise();
+    });
 
     return jsyaml.load(mapFile.Body.toString());
   } catch (error) {

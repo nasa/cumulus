@@ -30,7 +30,7 @@ async function run(_options) {
   };
 
   const addedItems = await Promise.all(s3filesNotInDb.map(async (s3Report) => {
-    const s3Response = await s3().getObject(parseS3Uri(s3Report)).promise();
+    const s3Response = await s3().getObject(parseS3Uri(s3Report));
     const report = JSON.parse(s3Response.Body.toString());
     const reportRecord = {
       name: `inventoryReport-${moment.utc(report.reportStartTime).format('YYYYMMDDTHHmmssSSS')}`,

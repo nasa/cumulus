@@ -32,7 +32,7 @@ test.before(async () => {
 
   await collectionsModel.createTable();
   await ruleModel.createTable();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 });
 
 test.after.always(async () => {

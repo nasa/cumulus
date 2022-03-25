@@ -94,7 +94,7 @@ test.before(async (t) => {
   );
 
   // create a fake bucket
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   t.context.pdrModel = new models.Pdr();
   await t.context.pdrModel.createTable();
@@ -393,7 +393,7 @@ test.serial('DELETE a pdr', async (t) => {
   // create a new pdr
 
   const key = `${process.env.stackName}/pdrs/${originalPgRecord.name}`;
-  await awsServices.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' }).promise();
+  await awsServices.s3().putObject({ Bucket: process.env.system_bucket, Key: key, Body: 'test data' });
 
   const response = await request(app)
     .delete(`/pdrs/${originalPgRecord.name}`)

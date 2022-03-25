@@ -94,7 +94,7 @@ function searchEs(type, index, limit = 10) {
 test.before(async (t) => {
   t.context.esIndices = [];
 
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
   await reconciliationReportModel.createTable();
 
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;

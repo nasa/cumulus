@@ -88,7 +88,7 @@ function validateRedirectToGetAuthorizationCode(t, response) {
 }
 
 function stubHeadObject() {
-  headObjectStub = sinon.stub(s3(), 'headObject').returns({ promise: () => Promise.resolve() });
+  headObjectStub = sinon.stub(s3(), 'headObject').resolves();
 }
 
 function restoreHeadObjectStub() {

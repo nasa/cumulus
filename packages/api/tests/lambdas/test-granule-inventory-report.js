@@ -59,7 +59,6 @@ test.beforeEach(async (t) => {
   process.env.system_bucket = t.context.systemBucket;
   await s3()
     .createBucket({ Bucket: t.context.systemBucket })
-    .promise()
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 });
 

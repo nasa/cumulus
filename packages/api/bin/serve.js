@@ -132,7 +132,7 @@ async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   console.log(process.env.ES_HOST);
   await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
-  await s3().createBucket({ Bucket: bucket }).promise();
+  await s3().createBucket({ Bucket: bucket });
 
   const { TopicArn } = await sns().createTopic({ Name: randomId('topicName') }).promise();
   process.env.collection_sns_topic_arn = TopicArn;

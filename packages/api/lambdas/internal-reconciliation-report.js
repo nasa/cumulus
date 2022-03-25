@@ -411,7 +411,7 @@ async function createInternalReconciliationReport(recReportParams) {
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report, undefined, 2),
-  }).promise();
+  });
 
   const [collectionsReport, granulesReport] = await Promise.all([
     internalRecReportForCollections(recReportParams),
