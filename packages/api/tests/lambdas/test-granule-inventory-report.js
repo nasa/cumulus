@@ -5,7 +5,7 @@ const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 
 const { s3 } = require('@cumulus/aws-client/services');
-const { getObject } = require('@cumulus/aws-client/S3');
+const { getObject, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
@@ -100,7 +100,7 @@ test.serial('Writes a file containing all granules to S3.', async (t) => {
     Key: reportKey,
   });
 
-  const reportData = reportOnS3.Body.toString();
+  const reportData = await getObjectStreamContents(reportOnS3.Body);
 
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published"';
   t.true(reportData.includes(header));
@@ -178,7 +178,7 @@ test.serial('Writes a file containing a filtered set of granules to S3.', async 
     Key: reportKey,
   });
 
-  const reportData = reportOnS3.Body.toString();
+  const reportData = await getObjectStreamContents(reportOnS3.Body);
   const reportArray = reportData.split('\n');
   const reportHeader = reportArray.slice(0, 1)[0];
   const reportRows = reportArray.slice(1, reportArray.length);
