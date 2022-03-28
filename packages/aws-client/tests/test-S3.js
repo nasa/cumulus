@@ -32,6 +32,7 @@ const {
   streamS3Upload,
   getObjectStreamContents,
   uploadS3FileStream,
+  deleteS3Objects,
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -96,6 +97,28 @@ test('createBucket() creates a bucket', async (t) => {
   } finally {
     await awsServices.s3().deleteBucket({ Bucket: bucketName });
   }
+});
+
+test.serial('deleteS3Objects() returns the contents of an S3 object', async (t) => {
+  const { Bucket } = t.context;
+  const { Key: key1 } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const { Key: key2 } = await stageTestObjectToLocalStack(Bucket, 'foobar');
+
+  const objects1 = await listS3ObjectsV2({
+    Bucket,
+  });
+  t.is(objects1.length, 2);
+
+  await deleteS3Objects({
+    client: awsServices.s3(),
+    bucket: Bucket,
+    keys: [key1, key2],
+  });
+
+  const objects2 = await listS3ObjectsV2({
+    Bucket,
+  });
+  t.is(objects2.length, 0);
 });
 
 test('putFile() uploads a file to S3', async (t) => {

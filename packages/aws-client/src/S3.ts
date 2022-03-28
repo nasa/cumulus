@@ -30,6 +30,7 @@ import {
   S3,
   Tag,
   Tagging,
+  DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -49,6 +50,8 @@ import { inTestMode } from './test-utils';
 import { improveStackTrace } from './utils';
 
 const log = new Logger({ sender: 'aws-client/s3' });
+
+export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObjectOutput>;
 
 const buildDeprecationMessage = (
   name: string,
@@ -132,12 +135,25 @@ export const s3TagSetToQueryString = (tagset: Tagging['TagSet']) =>
  *
  * @param {string} bucket - bucket where the object exists
  * @param {string} key - key of the object to be deleted
- * promise of the object being deleted
+ * @returns {Promise} promise of the object being deleted
  */
-export const deleteS3Object = improveStackTrace(
-  (bucket: string, key: string) =>
-    s3().deleteObject({ Bucket: bucket, Key: key })
-);
+export const deleteS3Object = (bucket: string, key: string) =>
+  s3().deleteObject({ Bucket: bucket, Key: key });
+
+export const deleteS3Objects = (params: {
+  client: S3,
+  bucket: string,
+  keys: string[],
+}) => {
+  const { bucket, client, keys } = params;
+  const deleteObjectsCommand = new DeleteObjectsCommand({
+    Bucket: bucket,
+    Delete: {
+      Objects: keys.map((key) => ({ Key: key })),
+    },
+  });
+  return client.send(deleteObjectsCommand);
+};
 
 /**
 * Get an object header from S3
@@ -315,14 +331,14 @@ export const streamS3Upload = (
  * @returns {Promise<Readable>}
  */
 export const getObjectReadStream = async (params: {
-  s3: S3,
+  s3: { getObject: GetObjectMethod },
   bucket: string,
   key: string
 }): Promise<Readable> => {
   // eslint-disable-next-line no-shadow
   const { s3: s3Client, bucket, key } = params;
 
-  const response: GetObjectOutput = await s3Client.getObject({ Bucket: bucket, Key: key });
+  const response = await s3Client.getObject({ Bucket: bucket, Key: key });
 
   if (!response.Body) {
     throw new Error(`Could not get object for bucket ${bucket} and key ${key}`);
@@ -811,7 +827,7 @@ export const listS3ObjectsV2 = async (
  */
 export const calculateObjectHash = async (
   params: {
-    s3: S3,
+    s3: { getObject: GetObjectMethod },
     algorithm: string,
     bucket: string,
     key: string
