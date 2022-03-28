@@ -1,6 +1,11 @@
 import { URL } from 'url';
 
-import { S3, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3';
+import {
+  S3,
+  GetObjectCommand,
+  HeadObjectCommand,
+  GetObjectCommandInput,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import Logger from '@cumulus/logger';
@@ -59,7 +64,7 @@ class S3ObjectStore {
    */
   async signGetObject(
     objectUrl: string,
-    options: { [key: string]: string } = {},
+    options: Partial<GetObjectCommandInput> = {},
     queryParams: { [key: string]: string }
   ): Promise<string> {
     log.info(`Executing signGetObject with objectUrl: ${objectUrl}, options: ${JSON.stringify(options)}, queryParams: ${JSON.stringify(queryParams)}`);
