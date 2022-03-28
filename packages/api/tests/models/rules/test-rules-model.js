@@ -18,6 +18,7 @@ const { ValidationError } = require('@cumulus/errors');
 const {
   getSnsTriggerPermissionId,
 } = require('../../../lib/snsRuleHelpers');
+const { ResourceNotFoundError } = require('../../../lib/errors');
 const models = require('../../../models');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
@@ -396,7 +397,9 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
   await rulesModel.create(snsRuleWithTrigger);
 
   const rule = await rulesModel.get({ name: snsRule.name });
-  t.teardown(() => rulesModel.deleteOldEventSourceMappings(rule));
+  // do cleanup before `updateRuleTrigger` to avoid localstack bug.
+  // see https://github.com/localstack/localstack/issues/5762.
+  await rulesModel.deleteOldEventSourceMappings(rule);
 
   // update rule value
   const updates = {
@@ -406,6 +409,7 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
 
   const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
   const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
+
   t.teardown(async () => {
     await rulesModel.delete(updatedRule);
     await awsServices.sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
