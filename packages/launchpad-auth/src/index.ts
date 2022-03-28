@@ -5,12 +5,15 @@
  */
 
 import pick from 'lodash/pick';
+import { Readable } from 'stream';
+
 import { s3 } from '@cumulus/aws-client/services';
 import {
   getObject,
   s3Join,
   s3ObjectExists,
   s3PutObject,
+  getObjectStreamContents,
 } from '@cumulus/aws-client/S3';
 import Logger from '@cumulus/logger';
 
@@ -60,8 +63,10 @@ async function getValidLaunchpadTokenFromS3(): Promise<string | undefined> {
   let token;
   if (keyExists) {
     const s3object = await getObject(s3(), s3location);
-    if (s3object?.Body) {
-      const launchpadToken = <TokenObject>JSON.parse(s3object.Body.toString());
+    if (s3object.Body && s3object.Body instanceof Readable) {
+      const launchpadToken = <TokenObject>JSON.parse(
+        await getObjectStreamContents(s3object.Body)
+      );
       const now = Date.now();
       const tokenExpirationInMs = (
         launchpadToken.session_maxtimeout + launchpadToken.session_starttime

@@ -1,9 +1,14 @@
 import { URL } from 'url';
 import got from 'got';
+import { Readable } from 'stream';
 
 import Logger from '@cumulus/logger';
 import { s3 } from '@cumulus/aws-client/services';
-import { getObject, s3ObjectExists } from '@cumulus/aws-client/S3';
+import {
+  getObject,
+  s3ObjectExists,
+  getObjectStreamBuffers,
+} from '@cumulus/aws-client/S3';
 
 import {
   LaunchpadTokenParams,
@@ -73,11 +78,16 @@ class LaunchpadToken {
       Bucket: bucket,
       Key: `${stackName}/crypto/${this.certificate}`,
     });
-    // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
-    // request header
-    const pfx = pfxObject?.Body;
 
-    return <Buffer>pfx;
+    let buffers;
+
+    if (pfxObject.Body && pfxObject.Body instanceof Readable) {
+      // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
+      // request header
+      buffers = await getObjectStreamBuffers(pfxObject.Body);
+    }
+
+    return buffers;
   }
 
   /**
