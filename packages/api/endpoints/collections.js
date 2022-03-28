@@ -125,11 +125,13 @@ async function post(req, res) {
   if (!name || !version) {
     return res.boom.badRequest(`Field name and/or version is missing in Collection payload ${JSON.stringify(collection)}`);
   }
-  validateCollection(collection);
-  await collectionConfigStore().put(name, version, collection);
 
   collection.updatedAt = Date.now();
   collection.createdAt = Date.now();
+
+  validateCollection(collection);
+  await collectionConfigStore().put(name, version, collection);
+
   let translatedCollection;
   try {
     const dbRecord = translateApiCollectionToPostgresCollection(collection);
@@ -279,6 +281,15 @@ async function del(req, res) {
     }
     throw error;
   }
+
+  try {
+    if (await collectionConfigStore().get(name, version)) {
+      await collectionConfigStore().delete(name, version);
+    }
+  } catch (error) {
+    log.debug(`Failed to delete collection config store with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
+  }
+
   return res.send({ message: 'Record deleted' });
 }
 
