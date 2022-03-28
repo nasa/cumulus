@@ -71,7 +71,7 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
     const s3Object = await getS3Object(Bucket, Key);
     launchpadMetatdataXML = await getObjectStreamContents(s3Object.Body);
   } catch (error) {
-    if (error.code === 'NoSuchKey' || error.code === 'NoSuchBucket') {
+    if (error.name === 'NoSuchKey' || error.name === 'NoSuchBucket') {
       error.message = `Cumulus could not find Launchpad public xml metadata at ${launchpadPublicMetadataPath}`;
     }
     throw error;
