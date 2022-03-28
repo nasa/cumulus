@@ -22,7 +22,7 @@ module "python_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "${data.aws_ecr_repository.cumulus_process_activity.name}:${var.cumulus_process_activity_version}@${data.aws_ecr_image.cumulus_process_activity.image_digest}"
+  image                                 = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
 
   cpu                = 400
   memory_reservation = 700

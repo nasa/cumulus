@@ -22,7 +22,8 @@ module "python_test_ingest_processing_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "${data.aws_ecr_repository.cumulus_test_ingest_process.name}:${var.cumulus_test_ingest_image_version}@${data.aws_ecr_image.cumulus_test_ingest_process.image_digest}"
+  image                                 = "${data.aws_ecr_repository.cumulus_test_ingest_process.repository_url}:${var.cumulus_test_ingest_image_version}"
+
 
   cpu                = 400
   memory_reservation = 700
