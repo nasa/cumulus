@@ -518,15 +518,9 @@ export const getS3Object = deprecate(
   )
 );
 
-/**
- * Transform streaming response from S3 object to text content
- *
- * @param {Readable} objectReadStream - Readable stream of S3 object
- * @returns {Promise<string>} the contents of the S3 object
- */
-export const getObjectStreamContents = (
+export const getObjectStreamBuffers = (
   objectReadStream: Readable
-): Promise<string> => new Promise(
+): Promise<Buffer[]> => new Promise(
   (resolve, reject) => {
     try {
       const responseDataChunks: Buffer[] = [];
@@ -536,12 +530,25 @@ export const getObjectStreamContents = (
 
       // Once the stream has no more data, join the chunks into a string and
       // return the string
-      objectReadStream.once('end', () => resolve(responseDataChunks.join('')));
+      objectReadStream.once('end', () => resolve(responseDataChunks));
     } catch (error) {
       reject(error);
     }
   }
 );
+
+/**
+ * Transform streaming response from S3 object to text content
+ *
+ * @param {Readable} objectReadStream - Readable stream of S3 object
+ * @returns {Promise<string>} the contents of the S3 object
+ */
+export const getObjectStreamContents = async (
+  objectReadStream: Readable
+): Promise<string> => {
+  const buffers = await getObjectStreamBuffers(objectReadStream);
+  return buffers.join('');
+};
 
 /**
  * Fetch the contents of an S3 object
