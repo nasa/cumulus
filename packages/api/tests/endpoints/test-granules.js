@@ -1284,7 +1284,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       t.is(message.reason, 'Failed to move granule');
       t.deepEqual(message.granule, newGranule);
       t.is(message.errors.length, 1);
-      t.is(message.errors[0].code, 'NoSuchBucket');
+      t.is(message.errors[0].name, 'NoSuchBucket');
 
       const actualGranuleFileRecord = sortBy(message.granuleFilesRecords, ['key']);
       const expectedGranuleFileRecord = [
