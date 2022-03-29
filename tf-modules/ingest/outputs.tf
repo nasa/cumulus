@@ -8,7 +8,7 @@ output "add_missing_file_checksums_task" {
 output "discover_granules_task" {
   value = {
     task_arn           = aws_lambda_function.discover_granules_task.arn
-    last_modified_date = aws_lambda_function.discover_granules.last_modified
+    last_modified_date = aws_lambda_function.discover_granules_task.last_modified
   }
 }
 
