@@ -36,7 +36,7 @@ test('S3ObjectStore.signHeadObject() returns a signed url', async (t) => {
   t.regex(signedUrl, new RegExp(`${Bucket}/${Key}?.*X-Amz-Algorithm.*X-Amz-Credential.*X-Amz-Date.*X-Amz-Expires.*X-Amz-Signature.*X-Amz-SignedHeaders.*`));
 });
 
-test('S3ObjectStore.signGetObject returns a signed url with params', async (t) => {
+test.only('S3ObjectStore.signGetObject returns a signed url with params', async (t) => {
   const store = new S3ObjectStore();
   const { Bucket } = t.context;
   const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
@@ -44,12 +44,12 @@ test('S3ObjectStore.signGetObject returns a signed url with params', async (t) =
   t.regex(signedUrl, new RegExp(`${Bucket}/${Key}?.*A-userid=joe.*X-Amz-Algorithm.*X-Amz-Credential.*X-Amz-Date.*X-Amz-Expires.*X-Amz-Signature.*X-Amz-SignedHeaders.*`));
 });
 
-test('S3ObjectStore.signHeadObject() returns a signed url with params', async (t) => {
+test.only('S3ObjectStore.signHeadObject() returns a signed url with params', async (t) => {
   const store = new S3ObjectStore();
   const { Bucket } = t.context;
   const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
-  const signedUrl = await store.signHeadObject(`s3://${Bucket}/${Key}`, {}, { 'A-userid': 'joe' });
-  t.regex(signedUrl, new RegExp(`${Bucket}/${Key}?.*A-userid=joe.*X-Amz-Algorithm.*X-Amz-Credential.*X-Amz-Date.*X-Amz-Expires.*X-Amz-Signature.*X-Amz-SignedHeaders.*`));
+  const signedUrl = await store.signHeadObject(`s3://${Bucket}/${Key}`, {}, { 'A-userid': 'user' });
+  t.regex(signedUrl, new RegExp(`${Bucket}/${Key}?.*A-userid=user.*X-Amz-Algorithm.*X-Amz-Credential.*X-Amz-Date.*X-Amz-Expires.*X-Amz-Signature.*X-Amz-SignedHeaders.*`));
 });
 
 test('S3ObjectStore.signGetObject throws TypeError when URL is not valid', async (t) => {
