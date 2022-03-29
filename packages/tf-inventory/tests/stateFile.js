@@ -102,9 +102,11 @@ test('getStateFileDeploymentInfo lists correct resources', async (t) => {
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
   await promiseS3Upload({
-    Bucket: bucket,
-    Key: key,
-    Body: state,
+    params: {
+      Bucket: bucket,
+      Key: key,
+      Body: state,
+    },
   });
 
   const resources = await stateFile.getStateFileDeploymentInfo(`${bucket}/${key}`);
@@ -130,9 +132,11 @@ test('listResourcesForFile lists resources', async (t) => {
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
   await promiseS3Upload({
-    Bucket: bucket,
-    Key: key,
-    Body: state,
+    params: {
+      Bucket: bucket,
+      Key: key,
+      Body: state,
+    },
   });
 
   const resources = await stateFile.listResourcesForFile(`${bucket}/${key}`);
