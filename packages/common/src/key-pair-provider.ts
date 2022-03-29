@@ -3,9 +3,9 @@
  * differing mechanisms for dealing with encryption keys.
  */
 
-import noop from 'lodash/noop';
-import AWS from 'aws-sdk';
 import forge from 'node-forge';
+import { Readable } from 'stream';
+import { S3, S3ClientConfig } from '@aws-sdk/client-s3';
 
 import { deprecate } from './util';
 import { inTestMode } from './test-utils';
@@ -24,29 +24,45 @@ const getLocalStackHost = () => {
   return process.env.LOCALSTACK_HOST;
 };
 
-const buildS3Client = () => {
+export const buildS3Client = () => {
   const region = process.env.AWS_DEFAULT_REGION ?? 'us-east-1';
-  AWS.config.update({ region });
 
-  // Workaround upload hangs. See: https://github.com/andrewrk/node-s3-client/issues/74'
-  // @ts-expect-error
-  AWS.util.update(AWS.S3.prototype, { addExpect100Continue: noop });
-  AWS.config.setPromisesDependency(Promise);
-
-  const options: AWS.S3.Types.ClientConfiguration = {
+  const options: S3ClientConfig = {
     apiVersion: '2006-03-01',
+    region,
   };
 
   if (inTestMode()) {
-    options.accessKeyId = 'my-access-key-id';
     options.endpoint = `http://${getLocalStackHost()}:4566`;
     options.region = 'us-east-1';
-    options.s3ForcePathStyle = true;
-    options.secretAccessKey = 'my-secret-access-key';
+    options.forcePathStyle = true;
+    options.credentials = {
+      accessKeyId: 'my-access-key-id',
+      secretAccessKey: 'my-secret-access-key',
+    };
   }
 
-  return new AWS.S3(options);
+  return new S3(options);
 };
+
+export const getObjectStreamContents = (
+  objectReadStream: Readable
+): Promise<string> => new Promise(
+  (resolve, reject) => {
+    try {
+      const responseDataChunks: Buffer[] = [];
+
+      objectReadStream.once('error', (error) => reject(error));
+      objectReadStream.on('data', (chunk) => responseDataChunks.push(chunk));
+
+      // Once the stream has no more data, join the chunks into a string and
+      // return the string
+      objectReadStream.once('end', () => resolve(responseDataChunks.join('')));
+    } catch (error) {
+      reject(error);
+    }
+  }
+);
 
 const getTextObject = async (bucket: string, key: string) => {
   const s3 = buildS3Client();
@@ -56,10 +72,15 @@ const getTextObject = async (bucket: string, key: string) => {
     Key: key,
   });
 
-  return Body ? Body.toString() : undefined;
+  let data;
+  if (Body && Body instanceof Readable) {
+    data = await getObjectStreamContents(Body);
+  }
+
+  return data;
 };
 
-const retrieveKey = async (
+export const retrieveKey = async (
   keyId: string,
   bucket = process.env.system_bucket,
   stack = process.env.stackName
