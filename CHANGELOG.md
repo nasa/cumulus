@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2860**
   - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
 - **CUMULUS-2870**
-  - Added `last_modified_date` as output to `hello_world_task` in Terraform `ingest` module.
+  - Added `last_modified_date` as output to all tasks in Terraform `ingest` module.
 
 ### Changed
 
