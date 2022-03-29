@@ -41,7 +41,7 @@ describe('When I create a scheduled rule with an executionNamePrefix via the Cum
 
       executionNamePrefix = randomId('prefix');
 
-      const testId = createTimestampedTestId(config.stackName, 'Rule');
+      const testId = createTimestampedTestId(config.stackName, 'SchedRulePrefix');
       testSuffix = createTestSuffix(testId);
       scheduledRuleName = timestampedName('SRWEP');
       scheduledHelloWorldRule = {

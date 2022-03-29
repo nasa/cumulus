@@ -4,12 +4,35 @@ const fs = require('fs');
 const moment = require('moment');
 const path = require('path');
 const merge = require('lodash/merge');
+const { v4: uuidv4 } = require('uuid');
 
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
-const { putJsonS3Object } = require('@cumulus/aws-client/S3');
-const { translateApiRuleToPostgresRule } = require('@cumulus/db');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
+const {
+  translateApiCollectionToPostgresCollection,
+  translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRule,
+  translateApiPdrToPostgresPdr,
+  translateApiExecutionToPostgresExecution,
+  translateApiAsyncOperationToPostgresAsyncOperation,
+} = require('@cumulus/db');
+const {
+  indexCollection,
+  indexProvider,
+  indexRule,
+  indexPdr,
+  indexAsyncOperation,
+  indexExecution,
+  deleteExecution,
+} = require('@cumulus/es-client/indexer');
+const {
+  constructCollectionId,
+} = require('@cumulus/message/Collections');
+const {
+  buildExecutionArn,
+  getExecutionUrlFromArn,
+} = require('@cumulus/message/Executions');
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
@@ -65,12 +88,12 @@ function fakeGranuleFactory(status = 'completed') {
     version: randomId('vers'),
     collectionId: constructCollectionId('fakeCollection', 'v1'),
     status,
-    execution: randomId('execution'),
+    execution: getExecutionUrlFromArn(randomId('execution')),
     createdAt: Date.now(),
     updatedAt: Date.now(),
     published: true,
     cmrLink: 'example.com',
-    productVolume: 100,
+    productVolume: '100',
     duration: 0,
   };
 }
@@ -153,6 +176,7 @@ function fakePdrFactoryV2(params = {}) {
     provider: 'fakeProvider',
     status: 'completed',
     createdAt: Date.now(),
+    progress: 0,
   };
 
   return { ...pdr, ...params };
@@ -165,11 +189,15 @@ function fakePdrFactoryV2(params = {}) {
  * @returns {Object} fake execution object
  */
 function fakeExecutionFactoryV2(params = {}) {
+  const stateMachineArn = randomId('stateMachine');
+  const executionName = randomId('name');
+  const executionArn = buildExecutionArn(stateMachineArn, executionName);
+  const executionUrl = getExecutionUrlFromArn(executionArn);
   const execution = {
-    arn: randomId('arn'),
+    arn: executionArn,
     duration: 180.5,
-    name: randomId('name'),
-    execution: randomId('execution'),
+    name: executionName,
+    execution: executionUrl,
     parentArn: randomId('parentArn'),
     error: { test: 'error' },
     status: 'completed',
@@ -206,13 +234,15 @@ function fakeExecutionFactory(status = 'completed', type = 'fakeWorkflow') {
 function fakeAsyncOperationFactory(params = {}) {
   const asyncOperation = {
     taskArn: randomId('arn'),
-    id: randomId('id'),
+    id: uuidv4(),
     description: randomId('description'),
     operationType: 'ES Index',
     status: 'SUCCEEDED',
     createdAt: Date.now() - 180.5 * 1000,
     updatedAt: Date.now(),
-    output: randomId('output'),
+    output: JSON.stringify({
+      key: randomId('output'),
+    }),
   };
 
   return { ...asyncOperation, ...params };
@@ -291,7 +321,7 @@ function fakeCumulusMessageFactory(params = {}) {
   return merge({
     cumulus_meta: {
       workflow_start_time: 122,
-      cumulus_version: '7.1.0',
+      cumulus_version: '9.2.0',
       state_machine: randomId('arn:aws:states:us-east-1:1234:stateMachine:'),
       execution_name: randomId('cumulus-execution-name'),
     },
@@ -307,6 +337,26 @@ function fakeCumulusMessageFactory(params = {}) {
       granules: [fakeGranuleFactoryV2()],
     },
   }, params);
+}
+
+function fakeOrcaGranuleFactory(options = {}) {
+  return {
+    providerId: randomId('providerId'),
+    collectionId: 'fakeCollection___v1',
+    id: randomId('id'),
+    createdAt: Date.now(),
+    ingestDate: Date.now(),
+    lastUpdate: Date.now(),
+    files: [
+      {
+        name: randomId('name'),
+        cumulusArchiveLocation: randomId('cumulusArchiveLocation'),
+        orcaArchiveLocation: randomId('orcaArchiveLocation'),
+        keyPath: randomId('keyPath'),
+      },
+    ],
+    ...options,
+  };
 }
 
 const setAuthorizedOAuthUsers = (users) =>
@@ -396,26 +446,207 @@ async function getSqsQueueMessageCounts(queueUrl) {
   };
 }
 
+const createCollectionTestRecords = async (context, collectionParams) => {
+  const {
+    testKnex,
+    collectionModel,
+    collectionPgModel,
+    esClient,
+    esCollectionClient,
+  } = context;
+  const originalCollection = fakeCollectionFactory(collectionParams);
+
+  const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
+  await collectionModel.create(originalCollection);
+  const [pgCollection] = await collectionPgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await collectionPgModel.get(
+    testKnex, { cumulus_id: pgCollection.cumulus_id }
+  );
+  await indexCollection(esClient, originalCollection, process.env.ES_INDEX);
+  const originalEsRecord = await esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
+  return {
+    originalCollection,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const createProviderTestRecords = async (context, providerParams) => {
+  const {
+    testKnex,
+    providerModel,
+    providerPgModel,
+    esClient,
+    esProviderClient,
+  } = context;
+  const originalProvider = fakeProviderFactory(providerParams);
+
+  const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
+  await providerModel.create(originalProvider);
+  const [providerCumulusId] = await providerPgModel.create(testKnex, insertPgRecord);
+  const originalPgRecord = await providerPgModel.get(
+    testKnex, { cumulus_id: providerCumulusId }
+  );
+  await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
+  const originalEsRecord = await esProviderClient.get(
+    originalProvider.id
+  );
+  return {
+    originalProvider,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
     ruleModel,
     rulePgModel,
+    esClient,
+    esRulesClient,
   } = context;
   const originalRule = fakeRuleFactoryV2(ruleParams);
 
-  const ruleWithTrigger = await ruleModel.createRuleTrigger(originalRule);
-  const originalDynamoRule = await ruleModel.create(ruleWithTrigger);
+  const dynamoRuleWithTrigger = await ruleModel.createRuleTrigger(originalRule);
+  const originalDynamoRule = await ruleModel.create(dynamoRuleWithTrigger);
   const insertPgRecord = await translateApiRuleToPostgresRule(originalDynamoRule, testKnex);
 
   const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId }
   );
+  await indexRule(esClient, originalDynamoRule, process.env.ES_INDEX);
+  const originalEsRecord = await esRulesClient.get(
+    originalRule.name
+  );
   return {
     originalDynamoRule,
     originalPgRecord,
+    originalEsRecord,
   };
+};
+
+const createPdrTestRecords = async (context, pdrParams = {}) => {
+  const {
+    knex,
+    pdrModel,
+    pdrPgModel,
+    esClient,
+    esPdrsClient,
+    testPgCollection,
+    testPgProvider,
+  } = context;
+
+  const originalPdr = fakePdrFactoryV2({
+    ...pdrParams,
+    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
+    provider: testPgProvider.name,
+  });
+
+  const pdrS3Key = `${process.env.stackName}/pdrs/${originalPdr.pdrName}`;
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: pdrS3Key,
+    Body: randomString(),
+  });
+
+  const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
+  const originalDynamoPdr = await pdrModel.create(originalPdr);
+  const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const originalPgRecord = await pdrPgModel.get(
+    knex, { cumulus_id: pdrCumulusId }
+  );
+  await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
+  const originalEsRecord = await esPdrsClient.get(
+    originalPdr.pdrName
+  );
+  return {
+    originalDynamoPdr,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const createExecutionTestRecords = async (context, executionParams = {}) => {
+  const {
+    knex,
+    executionModel,
+    executionPgModel,
+    esClient,
+    esExecutionsClient,
+  } = context;
+
+  const originalExecution = fakeExecutionFactoryV2(executionParams);
+  const insertPgRecord = await translateApiExecutionToPostgresExecution(originalExecution, knex);
+  const originalDynamoExecution = await executionModel.create(originalExecution);
+  const [pgExecution] = await executionPgModel.create(knex, insertPgRecord);
+  const executionCumulusId = pgExecution.cumulus_id;
+  const originalPgRecord = await executionPgModel.get(
+    knex, { cumulus_id: executionCumulusId }
+  );
+  await indexExecution(esClient, originalExecution, process.env.ES_INDEX);
+  const originalEsRecord = await esExecutionsClient.get(
+    originalExecution.arn
+  );
+  return {
+    originalDynamoExecution,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const createAsyncOperationTestRecords = async (context) => {
+  const {
+    knex,
+    asyncOperationModel,
+    asyncOperationPgModel,
+    esClient,
+    esAsyncOperationClient,
+  } = context;
+
+  const originalAsyncOperation = fakeAsyncOperationFactory();
+  const insertPgRecord = await translateApiAsyncOperationToPostgresAsyncOperation(
+    originalAsyncOperation,
+    knex
+  );
+  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
+  const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
+    knex,
+    insertPgRecord
+  );
+  const originalPgRecord = await asyncOperationPgModel.get(
+    knex, { cumulus_id: asyncOperationCumulusId }
+  );
+  await indexAsyncOperation(esClient, originalAsyncOperation, process.env.ES_INDEX);
+  const originalEsRecord = await esAsyncOperationClient.get(
+    originalAsyncOperation.id
+  );
+  return {
+    originalDynamoAsyncOperation,
+    originalPgRecord,
+    originalEsRecord,
+  };
+};
+
+const cleanupExecutionTestRecords = async (context, { arn }) => {
+  const {
+    knex,
+    executionModel,
+    executionPgModel,
+    esClient,
+    esIndex,
+  } = context;
+
+  await executionModel.delete({ arn });
+  await executionPgModel.delete(knex, { arn });
+  await deleteExecution({
+    esClient,
+    arn,
+    index: esIndex,
+  });
 };
 
 module.exports = {
@@ -435,11 +666,18 @@ module.exports = {
   fakeRuleFactoryV2,
   fakeFileFactory,
   fakeProviderFactory,
+  fakeOrcaGranuleFactory,
   fakeReconciliationReportFactory,
   getSqsQueueMessageCounts,
   getWorkflowList,
   isLocalApi,
   testEndpoint,
   setAuthorizedOAuthUsers,
+  createCollectionTestRecords,
+  createProviderTestRecords,
   createRuleTestRecords,
+  createPdrTestRecords,
+  createExecutionTestRecords,
+  cleanupExecutionTestRecords,
+  createAsyncOperationTestRecords,
 };

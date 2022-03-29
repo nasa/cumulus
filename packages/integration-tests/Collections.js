@@ -9,6 +9,7 @@
  */
 
 const isString = require('lodash/isString');
+const pRetry = require('p-retry');
 
 const CollectionsApi = require('@cumulus/api-client/collections');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -97,18 +98,61 @@ const buildRandomizedCollection = (overrides = {}) => ({
 });
 
 /**
+ * Returns true if collection exists. False otherwise.
+ *
+ * @param {string} stackName - the prefix of the Cumulus stack
+ * @param {Object} collection - a Cumulus collection
+ * @returns {boolean}
+ */
+const collectionExists = async (stackName, collection) => {
+  let response;
+  const exists = await pRetry(
+    async () => {
+      try {
+        response = await CollectionsApi.getCollection({
+          prefix: stackName,
+          collectionName: collection.name,
+          collectionVersion: collection.version,
+          pRetryOptions: {
+            retries: 0,
+          },
+        });
+      } catch (error) {
+        if (error.statusCode === 404) {
+          console.log(`Error: ${error}. Failed to get collection ${JSON.stringify(collection)}`);
+          return false;
+        }
+        throw error;
+      }
+      if (response.statusCode === 200) {
+        return true;
+      }
+      return false;
+    },
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  );
+  return exists;
+};
+
+/**
  * Add a new collection to Cumulus
  *
  * @param {string} stackName - the prefix of the Cumulus stack
  * @param {Object} collection - a Cumulus collection
  * @returns {Promise<undefined>}
  */
-const addCollection = async (stackName, collection) => {
-  await CollectionsApi.deleteCollection({
-    prefix: stackName,
-    collectionName: collection.name,
-    collectionVersion: collection.version,
-  });
+const addCollection = async (
+  stackName,
+  collection
+) => {
+  const exists = await collectionExists(stackName, collection);
+  if (exists) {
+    await CollectionsApi.deleteCollection({
+      prefix: stackName,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+  }
   const response = await CollectionsApi.createCollection({ prefix: stackName, collection });
   if (response.statusCode !== 200) {
     throw new Error(`Collections API did not return 200: ${JSON.stringify(response)}`);

@@ -33,7 +33,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('CollectionPgModel.upsert() creates new collection', async (t) => {
+test.serial('CollectionPgModel.upsert() creates new collection', async (t) => {
   const {
     knex,
     collectionPgModel,
@@ -47,11 +47,12 @@ test('CollectionPgModel.upsert() creates new collection', async (t) => {
     {
       ...collectionRecord,
       files: JSON.parse(collectionRecord.files),
+      meta: collectionRecord.meta,
     }
   );
 });
 
-test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
+test.serial('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
   const {
     knex,
     collectionPgModel,
@@ -75,6 +76,7 @@ test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
     {
       ...updatedCollection,
       files: JSON.parse(updatedCollection.files),
+      meta: collectionRecord.meta,
     }
   );
 });

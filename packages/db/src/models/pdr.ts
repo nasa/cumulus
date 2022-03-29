@@ -32,14 +32,14 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
           qb.where(knexOrTrx.raw(`${this.tableName}.execution_cumulus_id != EXCLUDED.execution_cumulus_id`))
             .orWhere(knexOrTrx.raw(`${this.tableName}.progress < EXCLUDED.progress`));
         })
-        .returning('cumulus_id');
+        .returning('*');
     }
     return await knexOrTrx(this.tableName)
       .insert(pdr)
       .onConflict('name')
       .merge()
       .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
-      .returning('cumulus_id');
+      .returning('*');
   }
 }
 

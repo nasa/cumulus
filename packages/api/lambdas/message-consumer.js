@@ -5,9 +5,13 @@ const get = require('lodash/get');
 const set = require('lodash/set');
 const { sns } = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
-const Rule = require('../models/rules');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
-const { lookupCollectionInEvent, queueMessageForRule } = require('../lib/rulesHelpers');
+const {
+  fetchEnabledRules,
+  filterRulesByRuleParams,
+  lookupCollectionInEvent,
+  queueMessageForRule,
+} = require('../lib/rulesHelpers');
 
 /**
  * `validateMessage` validates an event as being valid for creating a workflow.
@@ -72,7 +76,7 @@ async function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) 
       // We couldn't publish the record to the fallback Topic, so we will log
       // and throw the original error.  Kinesis polling will pick up this
       // record again and retry.
-      log.error(`Failed to publish record to fallback topic: ${record}`);
+      log.error(`Failed to publish record to fallback topic: ${JSON.stringify(record)}`);
       log.error(`original error: ${error}`);
       log.error(`subsequent error: ${snsError}`);
       throw error;
@@ -92,16 +96,17 @@ async function handleProcessRecordError(error, record, fromSNS, isKinesisRetry) 
  *        If false, the record is from a Kinesis stream and any errors
  *        encountered will cause the record to be published to a fallback SNS
  *        topic for further attempts at processing.
+ * @param {Array<Object>} enabledRules - Array of all enabled rules in Cumulus API
  * @returns {[Promises]} Array of promises. Each promise is resolved when a
  * message is queued for all associated kinesis rules.
  */
-function processRecord(record, fromSNS) {
+async function processRecord(record, fromSNS, enabledRules) {
   let eventObject;
   let isKinesisRetry = false;
   let parsed = record;
   let validationSchema;
   let originalMessageSource;
-  let ruleParam = {};
+  let ruleParams = {};
 
   if (fromSNS) {
     parsed = JSON.parse(record.Sns.Message);
@@ -110,7 +115,7 @@ function processRecord(record, fromSNS) {
     // normal SNS notification - not a Kinesis fallback
     eventObject = parsed;
     originalMessageSource = 'sns';
-    ruleParam = {
+    ruleParams = {
       type: originalMessageSource,
       ...lookupCollectionInEvent(eventObject),
       sourceArn: get(record, 'Sns.TopicArn'),
@@ -128,31 +133,29 @@ function processRecord(record, fromSNS) {
       const dataString = Buffer.from(kinesisObject.data, 'base64').toString();
       eventObject = JSON.parse(dataString);
       // standard case (collection object), or CNM case
-      ruleParam = {
+      ruleParams = {
         type: originalMessageSource,
         ...lookupCollectionInEvent(eventObject),
         sourceArn: get(parsed, 'eventSourceARN'),
       };
     } catch (error) {
-      log.error('Caught error parsing JSON:');
-      log.error(error);
+      log.error('Caught error parsing JSON:', error);
       // TODO (out of scope): does it make sense to attempt retrying bad JSON?
       return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
     }
   }
 
-  const rulesModel = new Rule();
-  return validateMessage(eventObject, originalMessageSource, validationSchema)
-    .then(() => rulesModel.queryRules(ruleParam))
-    .then((rules) => Promise.all(rules.map((rule) => {
-      if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParam.sourceArn);
+  try {
+    await validateMessage(eventObject, originalMessageSource, validationSchema);
+    const applicableRules = await filterRulesByRuleParams(enabledRules, ruleParams);
+    return await Promise.all(applicableRules.map((rule) => {
+      if (originalMessageSource === 'sns') set(rule, 'meta.snsSourceArn', ruleParams.sourceArn);
       return queueMessageForRule(rule, eventObject);
-    })))
-    .catch((error) => {
-      log.error('Caught error in processRecord:');
-      log.error(error);
-      return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
-    });
+    }));
+  } catch (error) {
+    log.error('Caught error in processRecord:', error);
+    return handleProcessRecordError(error, record, isKinesisRetry, fromSNS);
+  }
 }
 
 /**
@@ -166,10 +169,13 @@ function processRecord(record, fromSNS) {
  * @returns {(error|string)} Success message or error
  */
 function handler(event, context, cb) {
-  const fromSns = event.Records[0].EventSource === 'aws:sns';
   const records = event.Records;
 
-  return Promise.all(records.map((r) => processRecord(r, fromSns)))
+  // fetch enabled rules from the API and cache in memory so we don't need a ton of DB connections
+  return fetchEnabledRules()
+    .then((rules) => Promise.all(records.map(
+      (record) => processRecord(record, (record.EventSource === 'aws:sns'), rules)
+    )))
     .then((results) => cb(null, results.filter((r) => r !== undefined)))
     .catch((error) => {
       cb(error);

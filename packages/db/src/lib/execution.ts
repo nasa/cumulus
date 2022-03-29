@@ -4,6 +4,8 @@ import { ExecutionPgModel } from '../models/execution';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { TableNames } from '../tables';
 
+import { PostgresExecutionRecord } from '../types/execution';
+
 const Logger = require('@cumulus/logger');
 
 const { getKnexClient } = require('../connection');
@@ -13,6 +15,50 @@ export interface ArnRecord {
 }
 
 const log = new Logger({ sender: '@cumulus/db/lib/execution' });
+
+/**
+ * Returns execution info sorted by most recent first for an input
+ * Granule Cumulus ID.
+ *
+ * @param {Object} params
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {Array<string>} params.executionColumns - Columns to return from executions table
+ * @param {number} params.granuleCumulusId - The primary ID for a Granule
+ * @param {number} [params.limit] - limit to number of executions to query
+ * @returns {Promise<Partial<PostgresExecutionRecord>[]>}
+ *   Array of arn objects with the most recent first.
+ */
+export const getExecutionInfoByGranuleCumulusId = async ({
+  knexOrTransaction,
+  granuleCumulusId,
+  executionColumns = ['arn'],
+  limit,
+}: {
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleCumulusId: number,
+  executionColumns: string[],
+  limit?: number
+}): Promise<Partial<PostgresExecutionRecord>[]> => {
+  const knexQuery = knexOrTransaction(TableNames.executions)
+    .column(executionColumns.map((column) => `${TableNames.executions}.${column}`))
+    .where(`${TableNames.granules}.cumulus_id`, granuleCumulusId)
+    .join(
+      TableNames.granulesExecutions,
+      `${TableNames.executions}.cumulus_id`,
+      `${TableNames.granulesExecutions}.execution_cumulus_id`
+    )
+    .join(
+      TableNames.granules,
+      `${TableNames.granules}.cumulus_id`,
+      `${TableNames.granulesExecutions}.granule_cumulus_id`
+    )
+    .orderBy(`${TableNames.executions}.timestamp`, 'desc');
+  if (limit) {
+    knexQuery.limit(limit);
+  }
+  return await knexQuery;
+};
 
 /**
  * Returns a list of executionArns sorted by most recent first, for an input
@@ -86,6 +132,7 @@ export const executionArnsFromGranuleIdsAndWorkflowNames = (
  *
  * @param {string} granuleId -  granuleIds
  * @param {string} workflowName - workflow name
+ * @param {Knex} testKnex - knex for testing
  * @returns {Promise<string>} - most recent exectutionArn for input parameters.
  * @throws {RecordNotFound}
  */
