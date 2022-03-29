@@ -42,7 +42,7 @@
     "p-limit": "^1.2.0"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "11.0.0",
+    "@cumulus/aws-client": "11.1.0-alpha1",
     "@cumulus/test-data": "11.0.0",
     "p-each-series": "^2.1.0"
   }

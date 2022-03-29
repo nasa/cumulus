@@ -29,7 +29,7 @@
     "@aws-sdk/lib-dynamodb": "^3.53.0",
     "@aws-sdk/util-dynamodb": "^3.53.0",
     "@cumulus/api": "11.0.0",
-    "@cumulus/aws-client": "11.0.0",
+    "@cumulus/aws-client": "11.1.0-alpha1",
     "@cumulus/common": "11.0.0",
     "@cumulus/db": "11.0.0",
     "@cumulus/errors": "11.0.0",
