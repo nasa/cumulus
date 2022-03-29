@@ -261,7 +261,7 @@ test.serial('POST creates collection configuration store via name and version', 
   t.is(fetchedPgRecord.name, newCollection.name);
   t.is(fetchedPgRecord.version, newCollection.version);
 
-  t.truthy(await collectionConfigStore().get(fetchedPgRecord.name, fetchedPgRecord.version));
+  t.like(await collectionConfigStore().get(fetchedPgRecord.name, fetchedPgRecord.version), newCollection);
 });
 
 test.serial('POST without a name returns a 400 error', async (t) => {
