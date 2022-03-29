@@ -81,8 +81,8 @@ test.beforeEach(async (t) => {
   t.context.key = `${t.context.testPrefix}/${t.context.fileName}`;
 
   await Promise.all([
-    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.destBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.internalBucket }),
+    s3().createBucket({ Bucket: t.context.destBucket }),
   ]);
 
   const { granulePgModel, filePgModel, internalBucket, key } = t.context;

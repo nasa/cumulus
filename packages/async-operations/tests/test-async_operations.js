@@ -52,7 +52,7 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
 
   systemBucket = randomString();
-  await s3().createBucket({ Bucket: systemBucket }).promise();
+  await s3().createBucket({ Bucket: systemBucket });
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;

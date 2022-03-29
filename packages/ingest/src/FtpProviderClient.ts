@@ -237,10 +237,12 @@ class FtpProviderClient implements ProviderClient {
     readable.pipe(pass);
 
     const s3Params = {
-      Bucket: destinationBucket,
-      Key: destinationKey,
-      Body: pass,
-      ContentType: lookupMimeType(destinationKey),
+      params: {
+        Bucket: destinationBucket,
+        Key: destinationKey,
+        Body: pass,
+        ContentType: lookupMimeType(destinationKey),
+      },
     };
 
     try {

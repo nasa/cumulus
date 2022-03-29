@@ -237,7 +237,7 @@ test('HttpsProviderClient.sync() copies remote file to s3 with correct content-t
   const destinationKey = 'syncedFile.json';
 
   try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await s3().createBucket({ Bucket: destinationBucket });
     const { s3uri, etag } = await t.context.httpsProviderClient.sync({
       fileRemotePath: publicFile,
       destinationBucket,
@@ -439,7 +439,7 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to same host/
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.json';
   try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await s3().createBucket({ Bucket: destinationBucket });
     await httpsProviderClient.sync({
       fileRemotePath: protectedFile, destinationBucket, destinationKey,
     });
@@ -471,7 +471,7 @@ test('HttpsProviderClient.sync() supports basic auth with redirect to same host/
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.hdf';
   try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await s3().createBucket({ Bucket: destinationBucket });
     await httpsProviderClient.sync({
       fileRemotePath: protectedFile2,
       destinationBucket,
@@ -503,7 +503,7 @@ test.serial('HttpsProviderClient.sync() supports basic auth with redirect to dif
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.hdf';
   try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await s3().createBucket({ Bucket: destinationBucket });
     await httpsProviderClient.sync({
       fileRemotePath: fakeDataServerProtectedFile,
       destinationBucket,
@@ -535,7 +535,7 @@ test.serial('HttpsProviderClient.sync() supports basic auth with redirect to dif
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.hdf';
   try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await s3().createBucket({ Bucket: destinationBucket });
     await httpsProviderClient.sync({
       fileRemotePath: fakeDataServerProtectedFile2,
       destinationBucket,
@@ -568,7 +568,7 @@ test('HttpsProviderClient.sync() fails on redirect to different host if allowedR
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.hdf';
   try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await s3().createBucket({ Bucket: destinationBucket });
     await t.throwsAsync(
       httpsProviderClient.sync({
         fileRemotePath: protectedFile2,
@@ -599,7 +599,7 @@ test('HttpsProviderClient.sync() fails on redirect to different host if redirect
   const destinationBucket = randomString();
   const destinationKey = 'syncedFile.hdf';
   try {
-    await s3().createBucket({ Bucket: destinationBucket }).promise();
+    await s3().createBucket({ Bucket: destinationBucket });
     try {
       await httpsProviderClient.sync({
         fileRemotePath: protectedFile2,
