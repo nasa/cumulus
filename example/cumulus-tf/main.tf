@@ -69,12 +69,6 @@ data "aws_ssm_parameter" "ecs_image_id" {
 data "aws_ecr_repository" "async_operation" {
   name = "async_operations"
 }
-
-data "aws_ecr_image" "async_operation" {
-  repository_name = "async_operations"
-  image_tag       = var.async_operation_image_version
-}
-
 module "cumulus" {
   source = "../../tf-modules/cumulus"
 

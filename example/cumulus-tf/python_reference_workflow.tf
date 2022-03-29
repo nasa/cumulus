@@ -7,12 +7,6 @@ resource "aws_sfn_activity" "ecs_task_python_processing_service" {
 data "aws_ecr_repository" "cumulus_process_activity" {
   name = "cumulus-process-activity"
 }
-
-data "aws_ecr_image" "cumulus_process_activity" {
-  repository_name = "cumulus-process-activity"
-  image_tag       = var.cumulus_process_activity_version
-}
-
 module "python_processing_service" {
   source = "../../tf-modules/cumulus_ecs_service"
 
