@@ -17,7 +17,7 @@ export interface SftpClientConfig {
 
 export interface SyncToS3Response {
   s3uri: string,
-  etag: string
+  etag?: string
 }
 
 export interface ListItem {
