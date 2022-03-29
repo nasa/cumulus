@@ -6,12 +6,12 @@ const awsServices = require('@cumulus/aws-client/services');
 const SQS = require('@cumulus/aws-client/SQS');
 const { randomString } = require('@cumulus/common/test-utils');
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
-const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
   s3PutObject,
+  getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 
 const { archiveSqsMessageToS3, deleteArchivedMessageFromS3, getS3KeyForArchivedMessage } = require('../sqs');
@@ -69,12 +69,8 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
 
   await archiveSqsMessageToS3(queues.queueUrl, receivedMessage[0]);
 
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  });
-
-  t.deepEqual(body, JSON.parse(item.Body));
+  const s3data = await getJsonS3Object(process.env.system_bucket, key);
+  t.deepEqual(body, s3data);
 });
 
 test.serial('archiveSqsMessageToS3 does not archive message if queueName cannot be derived from queueUrl', async (t) => {

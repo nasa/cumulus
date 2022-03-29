@@ -112,9 +112,11 @@ test.beforeEach(async (t) => {
   t.context.configBucket = randomString();
   await s3().createBucket({ Bucket: t.context.configBucket });
   await promiseS3Upload({
-    Bucket: t.context.configBucket,
-    Key: 'certificate.pem',
-    Body: t.context.server.caCert,
+    params: {
+      Bucket: t.context.configBucket,
+      Key: 'certificate.pem',
+      Body: t.context.server.caCert,
+    },
   });
 
   t.context.httpsProviderClient = new HttpProviderClient({
