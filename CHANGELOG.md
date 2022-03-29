@@ -14,6 +14,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     allow this timeout to be user configurable
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+- **CUMULUS-2870**
+  - Added `last_modified_date` as output to `hello_world_task` in Terraform `ingest` module.
+
+### Changed
+
+- **CUMULUS-2870**
+  - Updated `hello_world_service` module to pass in `lastModified` parameter in command list to trigger a Terraform state change when the `hello_world_task` is modified.
 
 ## [v10.1.1] 2022-03-04
 

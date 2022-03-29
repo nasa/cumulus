@@ -98,7 +98,6 @@ module "cumulus" {
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
 
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
-  // async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}@${data.aws_ecr_image.async_operation.image_digest}"
 
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? local.subnet_ids : var.ecs_cluster_instance_subnet_ids

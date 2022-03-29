@@ -31,7 +31,8 @@ output "files_to_granules_task" {
 
 output "hello_world_task" {
   value = {
-    task_arn = aws_lambda_function.hello_world_task.arn
+    task_arn           = aws_lambda_function.hello_world_task.arn
+    last_modified_date = aws_lambda_function.hello_world_task.last_modified
   }
 }
 
