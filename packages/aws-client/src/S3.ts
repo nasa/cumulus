@@ -281,7 +281,9 @@ export const s3CopyObject = (params: CopyObjectCommandInput) => s3().copyObject(
  * @param {UploadOptions} params
  * @returns {Promise}
  */
-export const promiseS3Upload = (params: Omit<UploadOptions, 'client'>) => {
+export const promiseS3Upload = async (
+  params: Omit<UploadOptions, 'client'>
+): Promise<{ ETag?: string, [key: string]: any }> => {
   const parallelUploads = new Upload({
     ...params,
     client: s3(),
@@ -291,7 +293,8 @@ export const promiseS3Upload = (params: Omit<UploadOptions, 'client'>) => {
     log.info(progress);
   });
 
-  return parallelUploads.done();
+  const result = await parallelUploads.done();
+  return result;
 };
 
 /**
@@ -1107,7 +1110,7 @@ export const moveObject = async (
     sourceKey: string,
     destinationBucket: string,
     destinationKey: string,
-    ACL?: ObjectCannedACL,
+    ACL?: string,
     copyTags?: boolean,
     chunkSize?: number
   }
@@ -1117,7 +1120,7 @@ export const moveObject = async (
     sourceKey: params.sourceKey,
     destinationBucket: params.destinationBucket,
     destinationKey: params.destinationKey,
-    ACL: params.ACL,
+    ACL: <ObjectCannedACL>params.ACL,
     copyTags: isBoolean(params.copyTags) ? params.copyTags : true,
     chunkSize: params.chunkSize,
   });

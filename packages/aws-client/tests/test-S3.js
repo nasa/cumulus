@@ -33,6 +33,7 @@ const {
   getObjectStreamContents,
   uploadS3FileStream,
   deleteS3Objects,
+  promiseS3Upload,
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -465,4 +466,16 @@ test('uploadS3FileStream() respects S3 configuration parameters', async (t) => {
   );
   const object = await headObject(t.context.Bucket, key);
   t.is(object.ContentType, 'application/json');
+});
+
+test('promiseS3Upload() works and returns expected parameters', async (t) => {
+  const Key = cryptoRandomString({ length: 5 });
+  const result = await promiseS3Upload({
+    params: {
+      Bucket: t.context.Bucket,
+      Key,
+      Body: cryptoRandomString({ length: 5 }),
+    },
+  });
+  t.truthy(result.ETag);
 });
