@@ -510,7 +510,7 @@ test.serial('del() deletes a collection and removes its configuration store via 
     name: newCollection.name,
     version: newCollection.version,
   }));
-  t.truthy(await collectionConfigStore().get(newCollection.name, newCollection.version));
+  t.like(await collectionConfigStore().get(newCollection.name, newCollection.version), newCollection);
 
   await request(app)
     .delete(`/collections/${newCollection.name}/${newCollection.version}`)
