@@ -34,6 +34,7 @@ const {
   uploadS3FileStream,
   deleteS3Objects,
   promiseS3Upload,
+  fileExists,
 } = require('../S3');
 const awsServices = require('../services');
 
@@ -478,4 +479,24 @@ test('promiseS3Upload() works and returns expected parameters', async (t) => {
     },
   });
   t.truthy(result.ETag);
+});
+
+test('fileExists() correctly returns head object response for existing file', async (t) => {
+  const { Bucket } = t.context;
+
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  const fileExistsResponse = await fileExists(Bucket, Key);
+  const headObjectResponse = await headObject(Bucket, Key);
+  t.deepEqual(
+    headObjectResponse,
+    {
+      ...fileExistsResponse,
+      $metadata: headObjectResponse.$metadata,
+    }
+  );
+});
+
+test('fileExists() correctly returns false for non-existent file', async (t) => {
+  const { Bucket } = t.context;
+  t.false(await fileExists(Bucket, randomString()));
 });
