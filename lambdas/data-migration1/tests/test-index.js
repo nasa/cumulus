@@ -1,6 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
- const { v4: uuidv4 } = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const AsyncOperation = require('@cumulus/api/models/async-operation');
 const Collection = require('@cumulus/api/models/collections');
@@ -127,7 +127,7 @@ test.serial('handler migrates async operations, collections, providers, rules', 
   };
 
   const fakeAsyncOperation = {
-    id: uuid(),
+    id: uuidv4(),
     description: 'unittest async operation',
     operationType: 'ES Index',
     output: '{ "output": "test" }',
