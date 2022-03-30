@@ -1,6 +1,5 @@
 'use strict';
 
-const omit = require('lodash/omit');
 const router = require('express-promise-router')();
 const {
   InvalidRegexError,
@@ -18,6 +17,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { Search } = require('@cumulus/es-client/search');
 const {
   indexCollection,
@@ -29,7 +29,6 @@ const {
   publishCollectionDeleteSnsMessage,
   publishCollectionUpdateSnsMessage,
 } = require('../lib/publishSnsMessageUtils');
-const models = require('../models');
 const { isBadRequestError } = require('../lib/errors');
 const { validateCollection } = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
@@ -113,50 +112,51 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    collectionsModel = new models.Collection(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    collectionConfigStore = new CollectionConfigStore(
+      process.env.system_bucket,
+      process.env.stackName
+    ),
   } = req.testContext || {};
 
   const collection = req.body || {};
-  const { name, version } = collection;
 
+  const { name, version } = collection;
   if (!name || !version) {
-    return res.boom.badRequest('Field name and/or version is missing');
+    return res.boom.badRequest(`Field name and/or version is missing in Collection payload ${JSON.stringify(collection)}`);
   }
 
   collection.updatedAt = Date.now();
   collection.createdAt = Date.now();
 
+  validateCollection(collection);
+
+  let translatedCollection;
   try {
-    let dynamoRecord;
     const dbRecord = translateApiCollectionToPostgresCollection(collection);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
         const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
-        const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
-        dynamoRecord = await collectionsModel.create(
-          omit(collection, 'dataType')
-        );
+        translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
         // process.env.ES_INDEX is only used to isolate the index for
         // each unit test suite
-        await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
+        await indexCollection(esClient, translatedCollection, process.env.ES_INDEX);
         await publishCollectionCreateSnsMessage(translatedCollection);
       });
+      await collectionConfigStore.put(name, version, translatedCollection);
     } catch (innerError) {
       if (isCollisionError(innerError)) {
         return res.boom.conflict(`A record already exists for name: ${name}, version: ${version}`);
       }
-      // Clean up DynamoDB collection record in case of any failure
-      await collectionsModel.delete(collection);
       throw innerError;
     }
 
     return res.send({
       message: 'Record saved',
-      record: dynamoRecord,
+      record: translatedCollection,
     });
   } catch (error) {
     if (
@@ -166,7 +166,7 @@ async function post(req, res) {
     ) {
       return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to create collection:', error);
+    log.error(`Error occurred while trying to create collection: ${JSON.stringify(collection)}`, error);
     return res.boom.badImplementation(error.message);
   }
 }
@@ -240,6 +240,10 @@ async function del(req, res) {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    collectionConfigStore = new CollectionConfigStore(
+      process.env.system_bucket,
+      process.env.stackName
+    ),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -283,6 +287,9 @@ async function del(req, res) {
     }
     throw error;
   }
+
+  await collectionConfigStore.delete(name, version);
+
   return res.send({ message: 'Record deleted' });
 }
 
