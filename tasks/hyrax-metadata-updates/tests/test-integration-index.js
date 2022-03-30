@@ -8,7 +8,6 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 const fs = require('fs');
 const xml2js = require('xml2js');
-const pickAll = require('lodash/fp/pickAll');
 
 const xmlParseOptions = {
   ignoreAttrs: true,
@@ -25,6 +24,7 @@ const {
   promiseS3Upload,
   parseS3Uri,
   getObject,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const { isCMRFile } = require('@cumulus/cmrjs');
 const { InvalidArgument, ValidationError } = require('@cumulus/errors');
@@ -39,9 +39,11 @@ const generatePath = HyraxMetadataUpdate.__get__('generatePath');
 const getCollectionEntry = HyraxMetadataUpdate.__get__('getCollectionEntry');
 
 const preconditionFailedSelector = {
-  code: 'PreconditionFailed',
-  statusCode: 412,
+  name: 'PreconditionFailed',
   message: 'At least one of the pre-conditions you specified did not hold',
+  $response: {
+    statusCode: 412,
+  },
 };
 
 const { hyraxMetadataUpdate } = proxyquire(
@@ -121,19 +123,23 @@ test.after.always(async () => {
 
 async function uploadFilesXml(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
-    Bucket: bucket,
-    Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.xml')
-      ? fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key,
+    params: {
+      Bucket: bucket,
+      Key: parseS3Uri(file).Key,
+      Body: file.endsWith('.cmr.xml')
+        ? fs.createReadStream('tests/data/echo10in.xml') : parseS3Uri(file).Key,
+    },
   })));
 }
 
 async function uploadFilesJson(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
-    Bucket: bucket,
-    Key: parseS3Uri(file).Key,
-    Body: file.endsWith('.cmr.json')
-      ? fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key,
+    params: {
+      Bucket: bucket,
+      Key: parseS3Uri(file).Key,
+      Body: file.endsWith('.cmr.json')
+        ? fs.createReadStream('tests/data/umm-gin.json') : parseS3Uri(file).Key,
+    },
   })));
 }
 
@@ -228,7 +234,8 @@ async function verifyUpdatedMetadata({
   }
   // We do this dance because formatting.
   const expectedString = isUMMG ? normalizeBody(expectedBody) : expectedBody;
-  const actualString = isUMMG ? normalizeBody(actual.Body.toString()) : actual.Body.toString();
+  const actualBody = await getObjectStreamContents(actual.Body);
+  const actualString = isUMMG ? normalizeBody(actualBody) : actualBody;
 
   t.is(actualString, expectedString);
 
@@ -278,7 +285,7 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
     const expectedBodyPath = 'tests/data/echo10out.xml';
     const expected = fs.readFileSync(expectedBodyPath, 'utf8');
 
-    t.is(actual.Body.toString(), expected.trim('\n'));
+    t.is(await getObjectStreamContents(actual.Body), expected.trim('\n'));
 
     await verifyUpdatedMetadata({
       metadataFile,
@@ -327,7 +334,7 @@ test.serial('Test updating ECHO10 metadata file in S3 with no etags config', asy
     const expectedBodyPath = 'tests/data/echo10out.xml';
     const expected = fs.readFileSync(expectedBodyPath, 'utf8');
 
-    t.is(actual.Body.toString(), expected.trim('\n'));
+    t.is(await getObjectStreamContents(actual.Body), expected.trim('\n'));
 
     await verifyUpdatedMetadata({
       metadataFile,
@@ -409,16 +416,20 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     // Upload dummy file to force retries in hyraxMetadataUpdate
     // because ETag is not initially matched.
     await promiseS3Upload({
-      Bucket: bucket,
-      Key: metadataFile.key,
-      Body: 'foo',
+      params: {
+        Bucket: bucket,
+        Key: metadataFile.key,
+        Body: 'foo',
+      },
     });
 
     const granulesPromise = hyraxMetadataUpdate(e);
     await delay(3000).then(promiseS3Upload({
-      Bucket: bucket,
-      Key: metadataFile.key,
-      Body: fs.createReadStream('tests/data/echo10in.xml'),
+      params: {
+        Bucket: bucket,
+        Key: metadataFile.key,
+        Body: fs.createReadStream('tests/data/echo10in.xml'),
+      },
     }));
     const output = await granulesPromise;
     await validateOutput(t, output);
@@ -458,8 +469,10 @@ test.serial('hyraxMetadataUpdate fails with PreconditionFailure when metadata wi
 
     const error = await t.throwsAsync(hyraxMetadataUpdate(e));
 
-    t.deepEqual(pickAll(Object.keys(preconditionFailedSelector), error),
-      preconditionFailedSelector);
+    t.like(
+      error,
+      preconditionFailedSelector
+    );
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
