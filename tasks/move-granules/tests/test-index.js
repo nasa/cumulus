@@ -41,9 +41,11 @@ async function uploadFiles(files, bucket) {
     }
 
     return promiseS3Upload({
-      Bucket: bucket,
-      Key: parseS3Uri(file).Key,
-      Body: body,
+      params: {
+        Bucket: bucket,
+        Key: parseS3Uri(file).Key,
+        Body: body,
+      },
     });
   }));
 }
@@ -270,9 +272,11 @@ test.serial('Should overwrite files.', async (t) => {
   }];
 
   const uploadParams = {
-    Bucket: t.context.stagingBucket,
-    Key: sourceKey,
-    Body: 'Something',
+    params: {
+      Bucket: t.context.stagingBucket,
+      Key: sourceKey,
+      Body: 'Something',
+    },
   };
 
   t.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
@@ -304,9 +308,11 @@ test.serial('Should overwrite files.', async (t) => {
   t.log(`CUMULUS-970 debugging: start s3 upload. params: ${JSON.stringify(uploadParams)}`);
 
   await promiseS3Upload({
-    Bucket: t.context.stagingBucket,
-    Key: sourceKey,
-    Body: content,
+    params: {
+      Bucket: t.context.stagingBucket,
+      Key: sourceKey,
+      Body: content,
+    },
   });
 
   t.log(`CUMULUS-970 debugging: start move granules. params: ${JSON.stringify(newPayload)}`);
@@ -449,7 +455,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
   t.deepEqual(
     renamedHdfFileInfo,
-    { ...existingHdfFileInfo, LastModified: renamedHdfFileInfo.LastModified }
+    {
+      ...existingHdfFileInfo,
+      LastModified: renamedHdfFileInfo.LastModified,
+      $metadata: renamedHdfFileInfo.$metadata,
+    }
   );
 
   // new hdf file is moved to destination
