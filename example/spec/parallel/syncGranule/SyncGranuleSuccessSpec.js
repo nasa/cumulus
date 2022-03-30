@@ -221,7 +221,7 @@ describe('The Sync Granules workflow', () => {
             ...expectedPayload.granules[0],
             sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
             createdAt: lambdaOutput.payload.granules[0].createdAt,
-            provider,
+            provider: provider.id,
           },
         ],
       };
@@ -235,7 +235,7 @@ describe('The Sync Granules workflow', () => {
           ...expectedPayload.granules[0],
           sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
           createdAt: lambdaOutput.payload.granules[0].createdAt,
-          provider,
+          provider: provider.id,
         },
       ];
 
