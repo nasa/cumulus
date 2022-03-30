@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2864**
   - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
     functions to not perform separate validation request
+- **CUMULUS-2703**
+  - Updated `ORCA Backup` reconciliation report to report `cumulusFilesCount` and `orcaFilesCount`
 
 ## [v11.0.0] 2022-03-24 [STABLE]
 
