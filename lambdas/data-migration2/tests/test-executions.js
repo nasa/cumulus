@@ -563,7 +563,7 @@ test.serial('migrateExecutions writes errors to S3 object', async (t) => {
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
     Key: key,
-  }).promise();
+  });
   const errors = JSON.parse(item.Body.toString()).errors;
   const expectedResult = /RecordDoesNotExist/;
 
@@ -606,8 +606,7 @@ test.serial('migrateExecutions correctly delimits errors written to S3 object', 
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
     Key: key,
-  }).promise();
-  console.log(item.Body.toString());
+  });
   const errors = JSON.parse(item.Body.toString()).errors;
   const expectedResult = /RecordDoesNotExist/;
 

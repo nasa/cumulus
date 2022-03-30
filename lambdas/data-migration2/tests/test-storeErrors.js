@@ -52,7 +52,7 @@ test.serial('storeErrors stores file on s3', async (t) => {
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
     Key: key,
-  }).promise();
+  });
   t.deepEqual(item.Body.toString(), message);
 });
 
