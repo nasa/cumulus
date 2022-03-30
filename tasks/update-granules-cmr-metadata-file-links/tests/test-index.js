@@ -26,10 +26,12 @@ function cmrReadStream(file) {
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => promiseS3Upload({
-    Bucket: bucket,
-    Key: parseS3Uri(file).Key,
-    Body: !(file.endsWith('.cmr.xml') || file.endsWith('.cmr.json'))
-      ? parseS3Uri(file).Key : cmrReadStream(file),
+    params: {
+      Bucket: bucket,
+      Key: parseS3Uri(file).Key,
+      Body: !(file.endsWith('.cmr.xml') || file.endsWith('.cmr.json'))
+        ? parseS3Uri(file).Key : cmrReadStream(file),
+    },
   })));
 }
 

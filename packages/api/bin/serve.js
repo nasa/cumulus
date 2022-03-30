@@ -61,17 +61,21 @@ async function createTable(Model, tableName) {
 async function populateBucket(bucket, stackName) {
   // upload workflow files
   const workflowPromises = workflowList.map((obj) => promiseS3Upload({
-    Bucket: bucket,
-    Key: `${stackName}/workflows/${obj.name}.json`,
-    Body: JSON.stringify(obj),
+    params: {
+      Bucket: bucket,
+      Key: `${stackName}/workflows/${obj.name}.json`,
+      Body: JSON.stringify(obj),
+    },
   }));
 
   // upload workflow template
   const workflow = `${stackName}/workflow_template.json`;
   const templatePromise = promiseS3Upload({
-    Bucket: bucket,
-    Key: workflow,
-    Body: JSON.stringify({}),
+    params: {
+      Bucket: bucket,
+      Key: workflow,
+      Body: JSON.stringify({}),
+    },
   });
   await Promise.all([...workflowPromises, templatePromise]);
 }
