@@ -89,7 +89,7 @@ async function updateAndUploadTestFileToBucket(params) {
     Key: `${prefix}/${key}`,
     Body: data,
     ContentType: mime.lookup(key) || undefined,
-  }).promise();
+  });
 }
 
 /**
@@ -139,13 +139,13 @@ async function deleteFolder(bucket, folder) {
   const l = await s3().listObjectsV2({
     Bucket: bucket,
     Prefix: folder,
-  }).promise();
+  });
 
   await Promise.all(l.Contents.map((item) =>
     s3().deleteObject({
       Bucket: bucket,
       Key: item.Key,
-    }).promise()));
+    })));
 }
 
 /**

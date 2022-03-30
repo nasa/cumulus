@@ -98,7 +98,7 @@ describe('The TestPythonProcessing workflow', () => {
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } })));
 
       console.log('Start SuccessExecution');
       workflowExecutionArn = await buildAndStartWorkflow(
@@ -162,7 +162,7 @@ describe('The TestPythonProcessing workflow', () => {
     const dataFile = granuleResult.files.find((f) => f.key.match('.hdf$'));
     const dataStream = await s3().getObject({ Bucket: dataFile.bucket, Key: dataFile.key }).createReadStream();
     const dataHash = await hasha.fromStream(dataStream, { algorithm: 'md5', encoding: 'hex' });
-    const md5FileContent = await s3().getObject({ Bucket: md5File.bucket, Key: md5File.key }).promise();
+    const md5FileContent = await s3().getObject({ Bucket: md5File.bucket, Key: md5File.key });
 
     expect(dataHash).toEqual(md5FileContent.Body.toString());
   });
