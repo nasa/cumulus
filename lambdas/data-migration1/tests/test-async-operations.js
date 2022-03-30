@@ -1,7 +1,7 @@
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const test = require('ava');
-const uuid = require('uuid/v4');
+ const { v4: uuidv4 } = require('uuid/v4');
 
 const AsyncOperation = require('@cumulus/api/models/async-operation');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
