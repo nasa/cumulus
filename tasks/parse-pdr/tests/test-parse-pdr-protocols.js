@@ -38,7 +38,7 @@ test.beforeEach(async (t) => {
     },
   };
 
-  await s3().createBucket({ Bucket: t.context.payload.config.bucket }).promise();
+  await s3().createBucket({ Bucket: t.context.payload.config.bucket });
 
   const collectionConfig = {
     name: 'MOD09GQ',
@@ -221,14 +221,14 @@ test.serial('Parse a PDR from an S3 provider', async (t) => {
   await validateInput(t, t.context.payload.input);
   await validateConfig(t, t.context.payload.config);
 
-  await s3().createBucket({ Bucket: t.context.payload.config.provider.host }).promise();
+  await s3().createBucket({ Bucket: t.context.payload.config.provider.host });
 
   try {
     await s3().putObject({
       Bucket: t.context.payload.config.provider.host,
       Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
       Body: streamTestData('pdrs/MOD09GQ.PDR'),
-    }).promise();
+    });
 
     const output = await parsePdr(t.context.payload);
 
@@ -310,13 +310,13 @@ test.serial('Empty FILE_ID value in PDR, parse-pdr throws error', async (t) => {
   await validateInput(t, t.context.payload.input);
   await validateConfig(t, t.context.payload.config);
 
-  await s3().createBucket({ Bucket: t.context.payload.config.provider.host }).promise();
+  await s3().createBucket({ Bucket: t.context.payload.config.provider.host });
 
   await s3().putObject({
     Bucket: t.context.payload.config.provider.host,
     Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
     Body: streamTestData('pdrs/MOD09GQ-without-file-id-value.PDR'),
-  }).promise();
+  });
 
   await t.throwsAsync(
     () => parsePdr(t.context.payload),
@@ -336,13 +336,13 @@ test.serial('Missing FILE_ID in PDR, parse-pdr throws error', async (t) => {
   await validateInput(t, t.context.payload.input);
   await validateConfig(t, t.context.payload.config);
 
-  await s3().createBucket({ Bucket: t.context.payload.config.provider.host }).promise();
+  await s3().createBucket({ Bucket: t.context.payload.config.provider.host });
 
   await s3().putObject({
     Bucket: t.context.payload.config.provider.host,
     Key: `${t.context.payload.input.pdr.path}/${t.context.payload.input.pdr.name}`,
     Body: streamTestData('pdrs/MOD09GQ-without-file-id.PDR'),
-  }).promise();
+  });
 
   await t.throwsAsync(
     () => parsePdr(t.context.payload),

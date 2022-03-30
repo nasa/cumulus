@@ -48,7 +48,7 @@ test.beforeEach(async (t) => {
     t.context.stackName
   );
 
-  await s3().createBucket({ Bucket: t.context.internalBucket }).promise();
+  await s3().createBucket({ Bucket: t.context.internalBucket });
 
   t.context.queueUrl = await createQueue(randomString());
 

@@ -119,10 +119,10 @@ test.beforeEach(async (t) => {
   t.context.systemBucket = randomId('system');
   t.context.stackName = 'moveGranulesTestStack';
   await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.protectedBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.systemBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.stagingBucket }),
+    s3().createBucket({ Bucket: t.context.publicBucket }),
+    s3().createBucket({ Bucket: t.context.protectedBucket }),
+    s3().createBucket({ Bucket: t.context.systemBucket }),
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
@@ -322,7 +322,7 @@ test.serial('Should overwrite files.', async (t) => {
 
   t.log(`CUMULUS-970 debugging: start list objects. params: ${JSON.stringify({ Bucket: t.context.publicBucket })}`);
 
-  const objects = await s3().listObjects({ Bucket: t.context.publicBucket }).promise();
+  const objects = await s3().listObjects({ Bucket: t.context.publicBucket });
 
   t.log('CUMULUS-970 debugging: list objects complete');
 
@@ -432,7 +432,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   const params = {
     Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody,
   };
-  await s3().putObject(params).promise();
+  await s3().putObject(params);
 
   output = await moveGranules(newPayload);
   const currentFileKeys = output.granules[0].files.map((f) => f.key);
@@ -462,7 +462,7 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
   await uploadFiles(filesToUpload, t.context.stagingBucket);
 
   params.Body = randomString();
-  await s3().putObject(params).promise();
+  await s3().putObject(params);
 
   output = await moveGranules(newPayload);
   const lastFileKeys = output.granules[0].files.map((f) => f.key);
@@ -509,7 +509,7 @@ test.serial('When duplicateHandling is "skip", does not overwrite or create new.
   const params = {
     Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody,
   };
-  await s3().putObject(params).promise();
+  await s3().putObject(params);
 
   output = await moveGranules(newPayload);
   const currentFileKeys = output.granules[0].files.map((f) => f.key);
@@ -569,7 +569,7 @@ async function granuleFilesOverwrittenTest(t, newPayload) {
   const params = {
     Bucket: t.context.stagingBucket, Key: parseS3Uri(inputHdfFile).Key, Body: updatedBody,
   };
-  await s3().putObject(params).promise();
+  await s3().putObject(params);
 
   output = await moveGranules(newPayload);
   const currentFileKeys = output.granules[0].files.map((f) => f.key);

@@ -163,7 +163,7 @@ function buildPayload(t) {
 async function setupS3(t, isUmmG) {
   t.context.stagingBucket = randomId('staging');
 
-  await s3().createBucket({ Bucket: t.context.stagingBucket }).promise();
+  await s3().createBucket({ Bucket: t.context.stagingBucket });
 
   const filename = isUmmG ? 'payload-json.json' : 'payload-xml.json';
   const payloadPath = path.join(__dirname, 'data', filename);

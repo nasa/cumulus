@@ -28,8 +28,8 @@ test.beforeEach(async (t) => {
   t.context.internalBucket = randomId('internal-bucket');
   t.context.destBucket = randomId('dest-bucket');
   await Promise.all([
-    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.destBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.internalBucket }),
+    s3().createBucket({ Bucket: t.context.destBucket }),
   ]);
 });
 

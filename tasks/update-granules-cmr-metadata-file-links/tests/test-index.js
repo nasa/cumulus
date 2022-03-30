@@ -73,10 +73,10 @@ test.beforeEach(async (t) => {
   t.context.systemBucket = randomId('system');
   t.context.stackName = randomString();
   await Promise.all([
-    s3().createBucket({ Bucket: t.context.stagingBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.publicBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.protectedBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.systemBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.stagingBucket }),
+    s3().createBucket({ Bucket: t.context.publicBucket }),
+    s3().createBucket({ Bucket: t.context.protectedBucket }),
+    s3().createBucket({ Bucket: t.context.systemBucket }),
   ]);
   process.env.system_bucket = t.context.systemBucket;
   process.env.stackName = t.context.stackName;
