@@ -1057,13 +1057,11 @@ test.serial('migrateGranulesAndFiles writes errors to S3 object', async (t) => {
 
   await migrateGranulesAndFiles(process.env, knex, {}, '123');
   // Check that error file exists in S3
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  });
-
-  console.log(item.Body.toString());
-  const errors = JSON.parse(item.Body.toString()).errors;
+  const errorReportJson = await s3Utils.getJsonS3Object(
+    process.env.system_bucket,
+    key
+  );
+  const { errors } = errorReportJson;
   const expectedResult = /RecordDoesNotExist/;
 
   t.is(errors.length, 2);
@@ -1102,12 +1100,11 @@ test.serial('migrateGranulesAndFiles correctly delimits errors written to S3 obj
 
   await migrateGranulesAndFiles(process.env, knex, {}, '123');
   // Check that error file exists in S3
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  });
-
-  const errors = JSON.parse(item.Body.toString()).errors;
+  const errorReportJson = await s3Utils.getJsonS3Object(
+    process.env.system_bucket,
+    key
+  );
+  const { errors } = errorReportJson;
   const expectedResult = /RecordDoesNotExist/;
 
   t.is(errors.length, 1);

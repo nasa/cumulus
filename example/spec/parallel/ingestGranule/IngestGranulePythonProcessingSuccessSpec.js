@@ -7,6 +7,7 @@ const pRetry = require('p-retry');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { s3 } = require('@cumulus/aws-client/services');
+const { getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
   addCollections,
   api: apiTestUtils,
@@ -164,7 +165,7 @@ describe('The TestPythonProcessing workflow', () => {
     const dataHash = await hasha.fromStream(dataStream, { algorithm: 'md5', encoding: 'hex' });
     const md5FileContent = await s3().getObject({ Bucket: md5File.bucket, Key: md5File.key });
 
-    expect(dataHash).toEqual(md5FileContent.Body.toString());
+    expect(dataHash).toEqual(await getObjectStreamContents(md5FileContent.Body));
   });
 
   it('completes execution with success status', async () => {

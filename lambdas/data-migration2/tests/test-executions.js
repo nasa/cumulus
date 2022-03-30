@@ -33,6 +33,7 @@ const {
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
+  getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
@@ -560,11 +561,11 @@ test.serial('migrateExecutions writes errors to S3 object', async (t) => {
   await migrateExecutions(process.env, t.context.knex, {}, '123');
 
   // Check that error file exists in S3
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  });
-  const errors = JSON.parse(item.Body.toString()).errors;
+  const errorReportJson = await getJsonS3Object(
+    process.env.system_bucket,
+    key
+  );
+  const { errors } = errorReportJson;
   const expectedResult = /RecordDoesNotExist/;
 
   t.is(errors.length, 2);
@@ -603,11 +604,11 @@ test.serial('migrateExecutions correctly delimits errors written to S3 object', 
   await migrateExecutions(process.env, t.context.knex, {}, '123');
 
   // Check that error file exists in S3
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: key,
-  });
-  const errors = JSON.parse(item.Body.toString()).errors;
+  const errorReportJson = await getJsonS3Object(
+    process.env.system_bucket,
+    key
+  );
+  const { errors } = errorReportJson;
   const expectedResult = /RecordDoesNotExist/;
 
   t.is(errors.length, 2);

@@ -9,6 +9,7 @@ const { Stream } = require('stream');
 const {
   createBucket,
   recursivelyDeleteS3Bucket,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 
@@ -53,7 +54,7 @@ test.serial('storeErrors stores file on s3', async (t) => {
     Bucket: process.env.system_bucket,
     Key: key,
   });
-  t.deepEqual(item.Body.toString(), message);
+  t.deepEqual(await getObjectStreamContents(item.Body), message);
 });
 
 test.serial('createErrorFileWriteStream returns write streams and string', (t) => {
