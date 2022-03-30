@@ -217,20 +217,26 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
 });
 
 test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult on LZARDS failure', async (t) => {
+  const { fakeBucket1 } = t.context;
   const lzardsPostMethod = () => Promise.resolve({
     body: 'failure body',
     statusCode: 404,
   });
   const roleCreds = { fake: 'creds_object' };
-  const bucket = 'fakeFileBucket';
   const key = 'fakeFilename';
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
 
   const file = {
-    bucket,
+    bucket: fakeBucket1,
     key,
   };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
@@ -247,7 +253,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
 
   const expected = {
     body: 'failure body',
-    filename: `s3://${file.bucket}/${file.key}`,
+    filename: `s3://${fakeBucket1}/${file.key}`,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
     statusCode: 404,
@@ -257,17 +263,23 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
 });
 
 test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult on other failure', async (t) => {
+  const { fakeBucket1 } = t.context;
   const lzardsPostMethod = () => Promise.reject(new Error('DANGER WILL ROBINSON'));
   const roleCreds = { fake: 'creds_object' };
-  const bucket = 'fakeFileBucket';
   const key = 'fakeFilename';
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
 
   const file = {
-    bucket,
+    bucket: fakeBucket1,
     key,
   };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const granuleId = 'fakeGranuleId';
 
   let actual = await index.makeBackupFileRequest({
@@ -284,7 +296,7 @@ test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult 
 
   const expected = {
     body: '{"name":"Error"}',
-    filename: `s3://${file.bucket}/${file.key}`,
+    filename: `s3://${fakeBucket1}/${file.key}`,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
   };
@@ -487,14 +499,36 @@ test.serial('postRequestToLzards throws if provider is not set ', async (t) => {
 });
 
 test.serial('generateDirectS3Url generates an v4 accessURL', async (t) => {
+  const { fakeBucket1 } = t.context;
+  const file = {
+    bucket: fakeBucket1,
+    key: cryptoRandomString({ length: 10 }),
+  };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const actual = await index.generateDirectS3Url({
-    Bucket: 'foo',
-    Key: 'bar',
+    Bucket: file.bucket,
+    Key: file.key,
   });
   t.regex(actual, /X-Amz-Algorithm=AWS4-HMAC-SHA256/);
 });
 
 test.serial('generateDirectS3Url generates a signed URL using passed credentials', async (t) => {
+  const { fakeBucket1 } = t.context;
+  const file = {
+    bucket: fakeBucket1,
+    key: cryptoRandomString({ length: 10 }),
+  };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const actual = await index.generateDirectS3Url({
     usePassedCredentials: true,
     roleCreds: {
@@ -504,8 +538,8 @@ test.serial('generateDirectS3Url generates a signed URL using passed credentials
         SessionToken: 'FAKEToken',
       },
     },
-    Bucket: 'foo',
-    Key: 'bar',
+    Bucket: file.bucket,
+    Key: file.key,
   });
   t.regex(actual, /X-Amz-Credential=FAKEId/);
 });
@@ -545,7 +579,7 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
   t.true(index.generateCloudfrontUrl.calledOnce);
 });
 
-test.serial.only('backupGranulesToLzards returns the expected payload', async (t) => {
+test.serial('backupGranulesToLzards returns the expected payload', async (t) => {
   const { fakeBucket1, fakeBucket2 } = t.context;
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
