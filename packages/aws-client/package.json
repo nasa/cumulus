@@ -61,6 +61,10 @@
     "p-retry": "^4.2.0",
     "p-timeout": "^4.1.0",
     "p-wait-for": "^3.2.0",
-    "pump": "^3.0.0"
+    "pump": "^3.0.0",
+    "uuid": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^8.0.0"
   }
 }

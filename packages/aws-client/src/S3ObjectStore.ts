@@ -1,5 +1,5 @@
-import mem from 'mem';
 import { URL } from 'url';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   S3,
@@ -20,45 +20,13 @@ const log = new Logger({ sender: '@cumulus/aws-client/S3ObjectStore' });
 
 type QueryParams = { [key: string]: string };
 
-// const s3QueryParamsMiddleware = (
-//   next: Function,
-//   args: any,
-//   s3ObjectStore: S3ObjectStore
-// ) => {
-//   const { request } = args;
-//   request.query = {
-//     ...s3ObjectStore.getQueryParams(),
-//     ...request.query,
-//   };
-//   return next(args);
-// };
-
-const addS3QueryParamsMiddleware = (
-  s3: S3,
-  middlewareName: string,
-  s3ObjectStore: S3ObjectStore
-) => {
-  s3.middlewareStack.addRelativeTo(
-    (next: any) => (args: any) => s3ObjectStore.s3QueryParamsMiddleware(next, args),
-    {
-      name: middlewareName,
-      relation: 'before',
-      toMiddleware: 'presignInterceptMiddleware',
-    }
-  );
-};
-
-const addMemoizedS3QueryParamsMiddleware = mem(addS3QueryParamsMiddleware, {
-  // use the middlewareName as the cache key
-  cacheKey: (arguments_) => arguments_[1],
-});
-
 /**
  * Class to use when interacting with S3
  *
  */
 class S3ObjectStore {
   private readonly s3: S3;
+  private readonly middlewareName: string;
   private queryParams: QueryParams;
 
   constructor(config?: Partial<S3ClientConfig>) {
@@ -67,21 +35,7 @@ class S3ObjectStore {
     })(config);
 
     this.queryParams = {};
-
-    const middlewareName = 'customQueryParams';
-    addMemoizedS3QueryParamsMiddleware(this.s3, middlewareName, this);
-  }
-
-  s3QueryParamsMiddleware(
-    next: Function,
-    args: any
-  ) {
-    const { request } = args;
-    request.query = {
-      ...this.getQueryParams(),
-      ...request.query,
-    };
-    return next(args);
+    this.middlewareName = `customQueryParams${uuidv4()}`;
   }
 
   getQueryParams() {
@@ -92,14 +46,28 @@ class S3ObjectStore {
     this.queryParams = queryParams;
   }
 
-  // async getS3SignedUrlWithCustomQueryParams(
-  //   command: GetObjectCommand | HeadObjectCommand
-  // ) {
-  //   // const middlewareName = 'customQueryParams';
-  //   const signedUrl = await getSignedUrl(this.s3, command);
-  //   // this.s3.middlewareStack.remove(middlewareName);
-  //   return signedUrl;
-  // }
+  async getS3SignedUrlWithCustomQueryParams(
+    command: GetObjectCommand | HeadObjectCommand
+  ) {
+    this.s3.middlewareStack.addRelativeTo(
+      (next: any) => (args: any) => {
+        const { request } = args;
+        request.query = {
+          ...this.getQueryParams(),
+          ...request.query,
+        };
+        return next(args);
+      },
+      {
+        name: this.middlewareName,
+        relation: 'before',
+        toMiddleware: 'presignInterceptMiddleware',
+      }
+    );
+    const signedUrl = await getSignedUrl(this.s3, command);
+    this.s3.middlewareStack.remove(this.middlewareName);
+    return signedUrl;
+  }
 
   /**
    * Returns an HTTPS URL that can be used to perform a GET on the given object
@@ -130,7 +98,7 @@ class S3ObjectStore {
     const command = new GetObjectCommand({ Bucket, Key, ...options });
 
     this.setQueryParams(queryParams);
-    const signedUrl = await getSignedUrl(this.s3, command);
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command);
 
     log.debug(`Signed GetObject request URL: ${signedUrl}`);
 
@@ -163,7 +131,7 @@ class S3ObjectStore {
 
     const command = new HeadObjectCommand({ Bucket, Key, ...options });
     this.setQueryParams(queryParams);
-    const signedUrl = await getSignedUrl(this.s3, command);
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command);
 
     log.debug(`Signed HeadObject request URL: ${signedUrl}`);
 
