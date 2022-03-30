@@ -18,7 +18,7 @@ import awsClient from './client';
 
 const log = new Logger({ sender: '@cumulus/aws-client/S3ObjectStore' });
 
-type QueryParams = { [key: string]: string };
+type QueryParams = { [key: string]: number | string };
 
 /**
  * Class to use when interacting with S3
