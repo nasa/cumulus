@@ -30,7 +30,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
-
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const AccessToken = require('../../../models/access-tokens');
 const {
   createFakeJwtAuthToken,
@@ -41,7 +41,6 @@ const {
 const assertions = require('../../../lib/assertions');
 const { post } = require('../../../endpoints/collections');
 const { buildFakeExpressResponse } = require('../utils');
-const { collectionConfigStore } = require('../../../lib/utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.UsersTable = randomString();
@@ -243,7 +242,7 @@ test.serial('POST creates a new collection in all data stores with correct times
 test.serial('POST creates collection configuration store via name and version', async (t) => {
   const newCollection = fakeCollectionFactory();
 
-  await request(app)
+  const res = await request(app)
     .post('/collections')
     .send(newCollection)
     .set('Accept', 'application/json')
@@ -261,7 +260,12 @@ test.serial('POST creates collection configuration store via name and version', 
   t.is(fetchedPgRecord.name, newCollection.name);
   t.is(fetchedPgRecord.version, newCollection.version);
 
-  t.like(await collectionConfigStore().get(fetchedPgRecord.name, fetchedPgRecord.version), newCollection);
+  const collectionConfigStore = new CollectionConfigStore(
+    process.env.system_bucket,
+    process.env.stackName
+  );
+  t.deepEqual(await collectionConfigStore.get(fetchedPgRecord.name, fetchedPgRecord.version),
+    res.body.record);
 });
 
 test.serial('POST without a name returns a 400 error', async (t) => {

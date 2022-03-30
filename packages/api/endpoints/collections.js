@@ -17,6 +17,7 @@ const {
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { Search } = require('@cumulus/es-client/search');
 const {
   indexCollection,
@@ -29,10 +30,7 @@ const {
   publishCollectionUpdateSnsMessage,
 } = require('../lib/publishSnsMessageUtils');
 const { isBadRequestError } = require('../lib/errors');
-const {
-  validateCollection,
-  collectionConfigStore,
-} = require('../lib/utils');
+const { validateCollection } = require('../lib/utils');
 const insertMMTLinks = require('../lib/mmt');
 
 const log = new Logger({ sender: '@cumulus/api/collections' });
@@ -117,6 +115,10 @@ async function post(req, res) {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    collectionConfigStore = new CollectionConfigStore(
+      process.env.system_bucket,
+      process.env.stackName
+    ),
   } = req.testContext || {};
 
   const collection = req.body || {};
@@ -130,7 +132,6 @@ async function post(req, res) {
   collection.createdAt = Date.now();
 
   validateCollection(collection);
-  await collectionConfigStore().put(name, version, collection);
 
   let translatedCollection;
   try {
@@ -145,6 +146,7 @@ async function post(req, res) {
         await indexCollection(esClient, translatedCollection, process.env.ES_INDEX);
         await publishCollectionCreateSnsMessage(translatedCollection);
       });
+      await collectionConfigStore.put(name, version, translatedCollection);
     } catch (innerError) {
       if (isCollisionError(innerError)) {
         return res.boom.conflict(`A record already exists for name: ${name}, version: ${version}`);
@@ -238,6 +240,10 @@ async function del(req, res) {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    collectionConfigStore = new CollectionConfigStore(
+      process.env.system_bucket,
+      process.env.stackName
+    ),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -282,13 +288,7 @@ async function del(req, res) {
     throw error;
   }
 
-  try {
-    if (await collectionConfigStore().get(name, version)) {
-      await collectionConfigStore().delete(name, version);
-    }
-  } catch (error) {
-    log.debug(`Failed to delete collection config store with name ${name} and version ${version}. Error: ${JSON.stringify(error)}`);
-  }
+  await collectionConfigStore.delete(name, version);
 
   return res.send({ message: 'Record deleted' });
 }
