@@ -102,10 +102,12 @@ test.beforeEach(async (t) => {
   // save collection in internal/stackName/collections/collectionId
   const key = `${process.env.stackName}/collections/${collection.name}___${Number.parseInt(collection.version, 10)}.json`;
   await promiseS3Upload({
-    Bucket: t.context.internalBucketName,
-    Key: key,
-    Body: JSON.stringify(collection),
-    ACL: 'public-read',
+    params: {
+      Bucket: t.context.internalBucketName,
+      Key: key,
+      Body: JSON.stringify(collection),
+      ACL: 'public-read',
+    },
   });
 
   t.context.event.config.downloadBucket = t.context.internalBucketName;
@@ -821,7 +823,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     const renamedFileInfo = await headObject(filesRenamed[0].bucket, filesRenamed[0].key);
     t.deepEqual(
       renamedFileInfo,
-      { ...existingFileInfo, LastModified: renamedFileInfo.LastModified }
+      {
+        ...existingFileInfo,
+        LastModified: renamedFileInfo.LastModified,
+        $metadata: renamedFileInfo.$metadata,
+      }
     );
 
     const newerContent = randomString();
@@ -911,7 +917,10 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     const currentFileInfo = await headObject(
       currentFile.bucket, currentFile.key
     );
-    t.deepEqual(existingFileInfo, currentFileInfo);
+    t.deepEqual(currentFileInfo, {
+      ...existingFileInfo,
+      $metadata: currentFileInfo.$metadata,
+    });
   } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
