@@ -35,7 +35,6 @@ const {
   recursivelyDeleteS3Bucket,
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
 
 const {
   migrateExecutionRecord,

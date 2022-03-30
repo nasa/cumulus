@@ -28,7 +28,6 @@ const {
   createRejectableTransaction,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
-const { s3 } = require('@cumulus/aws-client/services');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
