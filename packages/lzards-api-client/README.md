@@ -5,7 +5,7 @@ A Node.js client to NASA's Level Zero and Repositories Data Store (LZARDS) API.
 ## Usage
 
 ```bash
-npm install @cumulus/api-client
+npm install @cumulus/lzards-api-client
 ```
 
 ### Example
