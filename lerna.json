@@ -7,7 +7,7 @@
     "example/scripts/*",
     "lambdas/*",
     "packages/*",
-    "packages/api/ecs/async-operation",
+    "docker/ecs/async-operation",
     "tasks/*",
     "tf-modules/*"
   ],
