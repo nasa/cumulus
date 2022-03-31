@@ -33,12 +33,13 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
-
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const { AccessToken } = require('../../../models');
 const {
-  createFakeJwtAuthToken,
-  setAuthorizedOAuthUsers,
   createCollectionTestRecords,
+  createFakeJwtAuthToken,
+  fakeCollectionFactory,
+  setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
 const { del } = require('../../../endpoints/collections');
@@ -354,7 +355,7 @@ test.serial('Attempting to delete a collection with an associated rule returns a
   t.true(response.body.message.includes('Cannot delete collection with associated rules'));
 });
 
-test.serial('Attempting to delete a collection with an associated rule does not delete the provider', async (t) => {
+test.serial('Attempting to delete a collection with an associated rule does not delete the collection', async (t) => {
   const {
     collectionPgModel,
     rulePgModel,
@@ -492,4 +493,100 @@ test.serial('del() does not remove from PostgreSQL or publish SNS message if rem
   }).promise();
 
   t.is(Messages, undefined);
+});
+
+test.serial('del() deletes a collection and removes its configuration store via name and version', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
+  const collectionConfigStore = new CollectionConfigStore(
+    process.env.system_bucket,
+    process.env.stackName
+  );
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.true(await t.context.collectionPgModel.exists(t.context.testKnex, {
+    name: newCollection.name,
+    version: newCollection.version,
+  }));
+
+  t.deepEqual(await collectionConfigStore.get(newCollection.name, newCollection.version),
+    res.body.record);
+
+  const expressRequest = {
+    params: {
+      name: newCollection.name,
+      version: newCollection.version,
+    },
+    body: newCollection,
+    testContext: {
+      collectionConfigStore,
+    },
+  };
+  const response = buildFakeExpressResponse();
+  await del(expressRequest, response);
+
+  t.false(await t.context.collectionPgModel.exists(t.context.testKnex, {
+    name: newCollection.name,
+    version: newCollection.version,
+  }));
+  // If the collection was successfully deleted from the config store, we
+  // expect attempting to get it from the config store to throw an exception.
+  await t.throwsAsync(
+    () => collectionConfigStore.get(newCollection.name, newCollection.version),
+    { message: new RegExp(`${constructCollectionId(newCollection.name, newCollection.version)}`) }
+  );
+});
+
+test.serial('del() does not throw exception when attempting to delete a collection configuration store that does not exist', async (t) => {
+  const newCollection = fakeCollectionFactory();
+
+  const collectionConfigStore = new CollectionConfigStore(
+    process.env.system_bucket,
+    process.env.stackName
+  );
+
+  const res = await request(app)
+    .post('/collections')
+    .send(newCollection)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.true(await t.context.collectionPgModel.exists(t.context.testKnex, {
+    name: newCollection.name,
+    version: newCollection.version,
+  }));
+
+  t.deepEqual(await collectionConfigStore.get(newCollection.name, newCollection.version),
+    res.body.record);
+
+  await collectionConfigStore.delete(newCollection.name, newCollection.version);
+
+  const expressRequest = {
+    params: {
+      name: newCollection.name,
+      version: newCollection.version,
+    },
+    body: newCollection,
+    testContext: {
+      collectionConfigStore,
+    },
+  };
+  const response = buildFakeExpressResponse();
+  await del(expressRequest, response);
+
+  t.false(await t.context.collectionPgModel.exists(t.context.testKnex, {
+    name: newCollection.name,
+    version: newCollection.version,
+  }));
+  await t.throwsAsync(
+    () => collectionConfigStore.get(newCollection.name, newCollection.version),
+    { message: new RegExp(`${constructCollectionId(newCollection.name, newCollection.version)}`) }
+  );
 });
