@@ -14,18 +14,42 @@ The Docker container expects a number of environment variables to be set:
 * asyncOperationId - the ID of the AsyncOperation record
 
 The built image is deployed to
-https://hub.docker.com/r/cumuluss/async-operation/
+<https://hub.docker.com/r/cumuluss/async-operation/>
 
 ## Logs
 
 Logs will be output to `${stackName}-${OperationName}EcsLogs`
 
-## Building and Deploying Docker images
+## Building and pushing Docker images
 
-Run the following commands. Replace `<build-number>` with the next build number.
+For the following commands, replace `<build-number>` with the next build number. You can find the latest build number at <https://hub.docker.com/r/cumuluss/async-operation/tags>. Currently we are
+just using a regular number as the build number (e.g. `41`) and not a semver string
+(e.g. `1.0.0`).
+
+To build a new docker image:
 
 `docker build -t cumuluss/async-operation:<build-number> .`
 
+To push the new image to Dockerhub, you will need to log in to Docker using your credentials:
+
+`docker login`
+
+Then you can push the new image to Dockerhub:
+
 `docker push cumuluss/async-operation:<build-number>`
 
-To use the new version of the image, you must update the configuration for the AsyncOperation ECS task to point to the new version.
+### Pushing images to ECR
+
+We also keep a copy of this Docker image in the AWS ECR service in order to work around
+limits on how many times an image can be pulled from Dockerhub.
+
+```shell
+docker tag cumuluss/async-operation:<build-number> <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/async_operations:<build-number>
+```
+
+Then you will need to follow the [AWS documentation to log in to ECR for your account from the command line](https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html#cli-authenticate-registry).
+
+## Updating Cumulus deployment configuration
+
+Once you have built a new image, you should configure the Cumulus Terraform module to use that new
+image by updating the `async_operation_image` variable in the [`variables.tf` file for the `cumulus` module](../../../../tf-modules/cumulus/variables.tf).
