@@ -1,22 +1,28 @@
 const test = require('ava');
 
 const AWS = require('aws-sdk');
+const { ApiGatewayV2Client } = require('@aws-sdk/client-apigatewayv2');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 
 const services = require('../services');
 const { localStackAwsClientOptions } = require('../test-utils');
 
-test('apigateway() service defaults to localstack in test mode', (t) => {
+test('apigateway() service defaults to localstack in test mode', async (t) => {
   const apigateway = services.apigateway();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.APIGateway);
+  } = localStackAwsClientOptions(ApiGatewayV2Client);
   t.deepEqual(
-    apigateway.config.credentials,
+    await apigateway.config.credentials(),
     credentials
   );
-  t.is(apigateway.config.endpoint, endpoint);
+  const apiGatewayServiceConfig = await apigateway.config.endpoint();
+  const endpointConfig = new URL(endpoint);
+
+  t.is(apiGatewayServiceConfig.port, Number(endpointConfig.port));
+  t.is(apiGatewayServiceConfig.hostname, endpointConfig.hostname);
+  t.is(apiGatewayServiceConfig.protocol, endpointConfig.protocol);
 });
 
 test('cf() service defaults to localstack in test mode', (t) => {

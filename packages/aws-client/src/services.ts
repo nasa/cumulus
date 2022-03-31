@@ -1,3 +1,4 @@
+import { ApiGatewayV2Client } from '@aws-sdk/client-apigatewayv2';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
 import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
@@ -5,7 +6,7 @@ import * as AWS from 'aws-sdk';
 
 import awsClient from './client';
 
-export const apigateway = awsClient(AWS.APIGateway, '2015-07-09');
+export const apigateway = awsClient(ApiGatewayV2Client, '2015-07-09');
 export const ecs = awsClient(AWS.ECS, '2014-11-13');
 export const ec2 = awsClient(AWS.EC2, '2016-11-15');
 export const s3 = awsClient(AWS.S3, '2006-03-01');
