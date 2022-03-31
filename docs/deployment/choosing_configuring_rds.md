@@ -1,6 +1,6 @@
 ---
-id: configure_rds_serverless
-title: Recommended configuration for Aurora RDS Serverless database cluster
+id: choosing_configuring_rds
+title: Choosing and configuration your RDS database
 hide_title: false
 ---
 
@@ -57,10 +57,19 @@ records to the database, so a "scaling point" will never be reached. This is whe
 "autoscaling timeout" setting becomes important. The "autoscaling timeout" is the amount of time
 that Aurora will wait to find a "scaling point" before giving up.
 
-So with the above recommended settings, we are telling Aurora to only wait for a scaling point for
-1 minute and that if a scaling point cannot be found in that time, then we should **force the database to scale anyway**. These settings effectively make the Aurora Serverless database scale
-as quickly as possible in response to increased database load.
+So with the above recommended settings, we are telling Aurora to only wait for a "scaling point"
+for 1 minute and that if a "scaling point" cannot be found in that time, then we should
+**force the database to scale anyway**. These settings effectively make the Aurora Serverless database scale as quickly as possible in response to increased database load.
 
 With forced scaling on databases, there is a consequence that some running queries or transactions
 may be dropped. However, Cumulus write operations are written with automatic retry logic, so any
 write operations that failed due to database scaling should be retried succesfully.
+
+### Cumulus Serverless RDS cluster module
+
+Cumulus provides a Terraform module that will deploy an Aurora Serverless RDS cluster. If you are
+using this module to create your RDS cluster, you can configure the autoscaling timeout action,
+the cluster minimum and maximum capacity, and more as seen in the [supported variables for the module](https://github.com/nasa/cumulus/blob/6f104a89457be453809825ac2b4ac46985239365/tf-modules/cumulus-rds-tf/variables.tf).
+
+Unfortunately, Terraform currently doesn't allow specifying the autoscaling timeout itself, so
+that value will have to be manually configured in the AWS console or CLI.
