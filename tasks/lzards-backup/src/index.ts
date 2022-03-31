@@ -326,16 +326,19 @@ export const generateAccessCredentials = async () => {
   return roleCreds as AWS.STS.AssumeRoleResponse;
 };
 
-export const backupGranulesToLzards = async (event: HandlerEvent) => {
+export const backupGranulesToLzards = async (
+  event: HandlerEvent,
+  getAuthTokenFunction = getAuthToken
+) => {
   // Given an array of granules, submit each file for backup.
   log.warn(`Running backup on ${JSON.stringify(event)}`);
   const roleCreds = await generateAccessCredentials();
-  const authToken = await getAuthToken();
+  const authToken = await getAuthTokenFunction();
 
   const backupConfig = {
     ...event.config,
-    roleCreds,
     authToken,
+    roleCreds,
   };
 
   const backupPromises = (event.input.granules.map(

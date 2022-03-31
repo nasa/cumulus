@@ -1,5 +1,6 @@
 const test = require('ava');
 const omit = require('lodash/omit');
+const lzardsApiClient = require('@cumulus/lzards-api-client');
 
 const sandbox = require('sinon').createSandbox();
 const proxyquire = require('proxyquire');
@@ -584,7 +585,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const fakePayload = {
     input: {
@@ -644,7 +645,7 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, fakeGetAuthToken);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -682,7 +683,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const fakePayload = {
     input: {
@@ -711,7 +712,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, fakeGetAuthToken);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [],
@@ -728,7 +729,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const fakePayload = {
     input: {
@@ -763,7 +764,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, fakeGetAuthToken);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -792,7 +793,7 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -822,5 +823,5 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   process.env.lzards_api = 'fakeApi';
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
-  await t.throwsAsync(index.backupGranulesToLzards(fakePayload));
+  await t.throwsAsync(index.backupGranulesToLzards(fakePayload, fakeGetAuthToken));
 });
