@@ -17,11 +17,12 @@ The built image is deployed to
 https://hub.docker.com/r/cumuluss/async-operation/
 
 ## Logs
+
 Logs will be output to `${stackName}-${OperationName}EcsLogs`
 
-## Building and Deploying
+## Building and Deploying Docker images
 
-Run the following commands. Replace <build-number> with the next build number.
+Run the following commands. Replace `<build-number>` with the next build number.
 
 `docker build -t cumuluss/async-operation:<build-number> .`
 
