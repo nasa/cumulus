@@ -63,7 +63,8 @@ docker push <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/async_operations:<b
 
 ## Updating Cumulus deployment configuration
 
-Once you have built a new image, you should configure the Cumulus Terraform module to use that new
-image by updating the `async_operation_image` variable in the [`variables.tf` file for the `cumulus` module](../../../../tf-modules/cumulus/variables.tf) to match the new `<build-number>`.
+Once you have built a new image, you should configure the Cumulus Terraform module to use that new image by updating the `async_operation_image` variable in the
+[`variables.tf` file for the `cumulus` module](../../../../tf-modules/cumulus/variables.tf)
+to match the new `<build-number>`.
 
 You should also update the `async_operation_image_version` in [`variables.tf` for our example Cumulus deployment](../../../../example/cumulus-tf/variables.tf) that is used to pull the images from ECR.
