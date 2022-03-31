@@ -7,9 +7,7 @@ import { Context } from 'aws-lambda';
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { getCollection } from '@cumulus/api-client/collections';
-import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { getRequiredEnvVar } from '@cumulus/common/env';
-import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
 import { buildS3Uri } from '@cumulus/aws-client/S3';
 import { CollectionRecord } from '@cumulus/types/api/collections';
@@ -20,11 +18,11 @@ import {
   fetchDistributionBucketMap,
 } from '@cumulus/distribution-utils';
 
+import { getAuthToken } from '@cumulus/lzards-api-client';
 import {
   ChecksumError,
   CollectionNotDefinedError,
   CollectionInvalidRegexpError,
-  GetAuthTokenError,
   InvalidUrlTypeError,
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
@@ -326,19 +324,6 @@ export const generateAccessCredentials = async () => {
   };
   const roleCreds = await sts().assumeRole(params).promise();
   return roleCreds as AWS.STS.AssumeRoleResponse;
-};
-
-export const getAuthToken = async () => {
-  const api = getRequiredEnvVar('launchpad_api');
-  const passphrase = await getSecretString(getRequiredEnvVar('launchpad_passphrase_secret_name'));
-  if (!passphrase) {
-    throw new GetAuthTokenError('The value stored in "launchpad_passphrase_secret_name" must be defined');
-  }
-  const certificate = getRequiredEnvVar('launchpad_certificate');
-  const token = await getLaunchpadToken({
-    api, passphrase, certificate,
-  });
-  return token;
 };
 
 export const backupGranulesToLzards = async (event: HandlerEvent) => {
