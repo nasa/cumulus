@@ -7,6 +7,7 @@ const uniqWith = require('lodash/uniqWith');
 const awsClients = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
+const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const {
@@ -170,7 +171,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     updatedFiles,
     moveGranuleErrors,
   } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, granulesModel, destinations });
-  await granulesModel.cmrUtils.reconcileCMRMetadata({
+  await CmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
     updatedFiles,
     distEndpoint,

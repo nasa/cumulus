@@ -230,6 +230,8 @@ async function put(req, res) {
     knexOrTransaction: knex,
   });
 
+  log.info(`PUT request "action": ${action}`);
+
   if (action === 'reingest') {
     const apiCollection = translatePostgresCollectionToApiCollection(pgCollection);
     let targetExecution;
@@ -305,6 +307,7 @@ async function put(req, res) {
       apiGranule,
       body.destinations
     );
+    log.info(`existing files at destination: ${JSON.stringify(filesAtDestination)}`);
 
     if (filesAtDestination.length > 0) {
       const filenames = filesAtDestination.map((file) => file.fileName);
