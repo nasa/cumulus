@@ -3,8 +3,6 @@ resource "aws_sfn_activity" "ecs_task_hello_world" {
   tags = local.tags
 }
 
-
-
 data "aws_ecr_repository" "ecs_task_image" {
   name = "cumulus-ecs-task"
 }
@@ -16,12 +14,12 @@ module "hello_world_service" {
   name   = "HelloWorld"
   tags   = local.tags
 
-  cluster_arn                           = module.cumulus.ecs_cluster_arn
+  cluster_name                          = module.cumulus.ecs_cluster_name
   desired_count                         = 1
   image                                 = "${data.aws_ecr_repository.ecs_task_image.repository_url}:${var.ecs_task_image_version}"
 
-  cpu                = 400
-  memory_reservation = 700
+  cpu                = 100
+  memory_reservation = 256
 
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name

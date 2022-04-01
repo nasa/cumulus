@@ -150,6 +150,18 @@ output "lambda_processing_role_name" {
   value = aws_iam_role.lambda_processing.name
 }
 
+output "ecs_execution_role_arn" {
+  value = aws_iam_role.ecs_execution_role.arn
+}
+
+output "ecs_task_role_arn" {
+  value = aws_iam_role.ecs_task_role.arn
+}
+
+output "ecs_cluster_instance_role_arn" {
+  value = aws_iam_role.ecs_cluster_instance.arn
+}
+
 output "scaling_role_arn" {
   value = module.ingest.scaling_role_arn
 }

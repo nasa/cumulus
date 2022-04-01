@@ -11,16 +11,21 @@ data "aws_ecr_repository" "cumulus_process_activity" {
 module "python_processing_service" {
   source = "../../tf-modules/cumulus_ecs_service"
 
+  use_fargate = true
+  execution_role_arn = module.cumulus.ecs_execution_role_arn
+  task_role_arn = module.cumulus.ecs_cluster_instance_role_arn
+  subnet_ids = local.subnet_ids
+
   prefix = var.prefix
   name   = "PythonProcess"
   tags   = local.tags
 
-  cluster_arn                           = module.cumulus.ecs_cluster_arn
+  cluster_name                          = module.cumulus.ecs_cluster_name
   desired_count                         = 1
   image                                 = "${data.aws_ecr_repository.cumulus_process_activity.repository_url}:${var.cumulus_process_activity_version}"
 
-  cpu                = 400
-  memory_reservation = 700
+  cpu                = 256
+  memory_reservation = 1024
 
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name

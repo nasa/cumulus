@@ -1,7 +1,6 @@
 # Required
-
-variable "cluster_arn" {
-  description = "ARN of an ECS cluster"
+variable "cluster_name" {
+  description = "Name of an ECS cluster"
   type = string
 }
 
@@ -22,6 +21,38 @@ variable "prefix" {
 
 # Optional
 
+variable "fargate_max_capacity" {
+  type = number
+  default = 2
+}
+
+variable "fargate_min_capacity" {
+  type = number
+  default = 1
+}
+
+variable "subnet_ids" {
+  description = "Subnet IDs for fargate tasks"
+  type        = list(string)
+  default     = null
+}
+variable "use_fargate" {
+  description = "true/false if the task should use Fargate.  False will use EC2"
+  type = bool
+  default = false
+}
+
+variable "execution_role_arn" {
+  description = "execution role ARN to execution the service tasks as a service"
+  type = string
+  default = null
+}
+
+variable "task_role_arn" {
+  description = "task role ARN to execution the service tasks as a service"
+  type = string
+  default = null
+}
 variable "alarms" {
   description = "Configuration for Cloudwatch alarms to monitor ECS, keyed by alarm name"
   type    = map(object({ comparison_operator = string, metric_name = string, threshold = number }))
