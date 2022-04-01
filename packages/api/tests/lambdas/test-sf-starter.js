@@ -253,7 +253,7 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
       key: queueUrl,
       semvalue: maxExecutions,
     },
-  }).promise();
+  });
 
   await t.throwsAsync(
     () => incrementAndDispatch(queueUrl, { Body: createWorkflowMessage(queueUrl, maxExecutions) }),
@@ -272,7 +272,7 @@ test('handleThrottledEvent starts 0 executions when priority semaphore is at max
       key: queueUrl,
       semvalue: maxExecutions,
     },
-  }).promise();
+  });
 
   const message = createWorkflowMessage(queueUrl, maxExecutions);
 
@@ -300,7 +300,7 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
       key: queueUrl,
       semvalue: initialSemValue,
     },
-  }).promise();
+  });
 
   const message = createWorkflowMessage(queueUrl, maxExecutions);
 

@@ -104,6 +104,13 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+
+  t.context.dynamodbDocClient = dynamodbDocClient({
+    marshallOptions: {
+      convertEmptyValues: true,
+      removeUndefinedValues: true,
+    },
+  });
 });
 
 test.afterEach.always(async (t) => {
@@ -409,10 +416,10 @@ test.serial('child execution migration fails if parent execution cannot be migra
   await Promise.all([
     // Have to use Dynamo client directly because creating
     // via model won't allow creation of an invalid record
-    dynamodbDocClient().put({
+    t.context.dynamodbDocClient.put({
       TableName: process.env.ExecutionsTable,
       Item: parentExecution,
-    }).promise(),
+    }),
     executionsModel.create(childExecution),
   ]);
   t.teardown(() => Promise.all([

@@ -82,7 +82,7 @@ const testTerminalEventMessage = async (t, status) => {
       key: queueUrl,
       semvalue: 1,
     },
-  }).promise();
+  });
 
   await handleSemaphoreDecrementTask(
     createCloudwatchEventMessage({
@@ -215,7 +215,7 @@ test('sfSemaphoreDown lambda decrements semaphore for s3-stored event message', 
       key: queueUrl,
       semvalue: 1,
     },
-  }).promise();
+  });
 
   const stubReturn = createExecutionMessage(queueUrl);
   const pullStepFunctionStub = sinon.stub(stepFunctions, 'pullStepFunctionEvent');

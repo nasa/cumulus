@@ -387,7 +387,7 @@ test.serial('migratePdrs processes all non-failing records', async (t) => {
     dynamodbDocClient().put({
       TableName: process.env.PdrsTable,
       Item: testPdr,
-    }).promise(),
+    }),
     pdrsModel.create(anotherPdr),
   ]);
   t.teardown(() => Promise.all([

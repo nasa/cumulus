@@ -28,7 +28,7 @@ async function backup(table, region = 'us-east-1', folder = 'backups') {
     dynoParams.accessKeyId = 'my-access-key-id';
     dynoParams.secretAccessKey = 'my-secret-access-key';
     dynoParams.region = 'us-east-1';
-    dynoParams.endpoint = getLocalstackEndpoint('dynamodb');
+    dynoParams.endpoint = getLocalstackEndpoint('DynamoDB');
   }
 
   const dyno = Dyno(dynoParams);

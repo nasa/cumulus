@@ -391,7 +391,7 @@ test.serial('migrateProviders processes all non-failing records', async (t) => {
     dynamodbDocClient().put({
       TableName: process.env.ProvidersTable,
       Item: fakeProvider1,
-    }).promise(),
+    }),
     providersModel.create(fakeProvider2),
   ]);
   t.teardown(() => Promise.all([

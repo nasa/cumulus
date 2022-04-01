@@ -281,7 +281,7 @@ test.serial('migrateCollections processes all non-failing records', async (t) =>
     dynamodbDocClient().put({
       TableName: process.env.CollectionsTable,
       Item: fakeCollection1,
-    }).promise(),
+    }),
     collectionsModel.create(fakeCollection2),
   ]);
   t.teardown(() => Promise.all([
