@@ -38,7 +38,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "11.0.0",
+    "@cumulus/aws-client": "11.1.0-alpha1",
     "@cumulus/logger": "11.0.0",
     "p-retry": "^2.0.0"
   },

@@ -20,7 +20,7 @@
     "test": "../../../../node_modules/.bin/ava"
   },
   "dependencies": {
-    "@cumulus/aws-client": "11.0.0",
+    "@cumulus/aws-client": "11.1.0-alpha1",
     "@cumulus/db": "11.0.0",
     "@cumulus/es-client": "11.0.0",
     "@cumulus/logger": "11.0.0",

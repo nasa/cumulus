@@ -18,7 +18,7 @@ const DEFAULT_DEPLOYMENT_REGEX = /.*\/(.*)\/(data-persistence.*|cumulus.*)\/terr
  */
 async function getStateFilesFromTable(tableName) {
   try {
-    const tableInfo = await aws.dynamodb().describeTable({ TableName: tableName }).promise();
+    const tableInfo = await aws.dynamodb().describeTable({ TableName: tableName });
 
     // Check that the table holds state files and actually has items
     if (tableInfo.Table.AttributeDefinitions[0].AttributeName === 'LockID'
@@ -60,7 +60,7 @@ async function getStateFilesFromTable(tableName) {
  * the form bucket/key
  */
 async function listTfStateFiles() {
-  let tables = await aws.dynamodb().listTables().promise();
+  let tables = await aws.dynamodb().listTables({});
   let tablesComplete = false;
   let stateFiles = [];
 
@@ -77,7 +77,7 @@ async function listTfStateFiles() {
     } else {
       tables = await aws.dynamodb().listTables({
         ExclusiveStartTableName: tables.LastEvaluatedTableName,
-      }).promise();
+      });
     }
   }
   /* eslint-enable no-await-in-loop */
