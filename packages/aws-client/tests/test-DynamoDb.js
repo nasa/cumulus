@@ -4,14 +4,15 @@ const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash/range');
 const cryptoRandomString = require('crypto-random-string');
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const DynamoDb = require('../DynamoDb');
 const awsServices = require('../services');
 
 test.before(async () => {
-  process.env.tableName = `table${cryptoRandomString({ length: 10 })}`;
+  process.env.tableName = `DynamoDb${cryptoRandomString({ length: 10 })}`;
 
-  await awsServices.dynamodb().createTable({
+  await DynamoDb.createAndWaitForDynamoDbTable({
     TableName: process.env.tableName,
     AttributeDefinitions: [
       { AttributeName: 'hash', AttributeType: 'S' },
@@ -23,7 +24,7 @@ test.before(async () => {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5,
     },
-  }).promise();
+  });
 });
 
 test.beforeEach((t) => {
@@ -31,7 +32,7 @@ test.beforeEach((t) => {
 });
 
 test.after.always(
-  () => awsServices.dynamodb().deleteTable({ TableName: process.env.tableName }).promise()
+  () => DynamoDb.deleteAndWaitForDynamoDbTableNotExists({ TableName: process.env.tableName })
 );
 
 test('DynamoDb.get() returns an existing item', async (t) => {
@@ -45,7 +46,7 @@ test('DynamoDb.get() returns an existing item', async (t) => {
   await client.put({
     TableName: process.env.tableName,
     Item: item,
-  }).promise();
+  });
 
   const response = await DynamoDb.get({
     tableName: process.env.tableName,
@@ -77,11 +78,7 @@ test.serial('DynamoDb.get() throws general error from failure on client.get', as
   const { client } = t.context;
 
   const stub = sinon.stub(client, 'get')
-    .returns({
-      promise: () => {
-        throw new Error('fail');
-      },
-    });
+    .throws(new Error('fail'));
 
   try {
     await t.throwsAsync(
@@ -110,7 +107,7 @@ test.serial('DynamoDb.scan() properly returns all paginated results', async (t) 
     (item) => client.put({
       TableName: process.env.tableName,
       Item: item,
-    }).promise()
+    })
   ));
   t.teardown(() => Promise.all(items.map(
     (item) => client.delete({
@@ -118,7 +115,7 @@ test.serial('DynamoDb.scan() properly returns all paginated results', async (t) 
       Key: {
         hash: item.hash,
       },
-    }).promise()
+    })
   )));
 
   const response = await DynamoDb.scan({
@@ -141,7 +138,7 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
     (item) => client.put({
       TableName: process.env.tableName,
       Item: item,
-    }).promise()
+    })
   ));
   t.teardown(() => Promise.all(items.map(
     (item) => client.delete({
@@ -149,7 +146,7 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
       Key: {
         hash: item.hash,
       },
-    }).promise()
+    })
   )));
 
   let totalResults = [];
@@ -164,6 +161,7 @@ test.serial('DynamoDb.parallelScan() properly returns all results', async (t) =>
       TableName: process.env.tableName,
     },
     processItemsFunc: testProcessItems,
+    dynamoDbClient: client,
   });
 
   t.is(totalResults.length, 10);
@@ -188,9 +186,7 @@ test.serial('DynamoDb.parallelScan() retries on DynamoDB scan failure', async (t
   });
 
   const fakeDynamoClient = {
-    scan: () => ({
-      promise: scanPromiseStub,
-    }),
+    scan: scanPromiseStub,
   };
 
   await DynamoDb.parallelScan({

@@ -47,7 +47,7 @@
     "@cumulus/api": "11.0.0",
     "@cumulus/api-client": "11.0.0",
     "@cumulus/async-operations": "11.0.0",
-    "@cumulus/aws-client": "11.0.0",
+    "@cumulus/aws-client": "11.1.0-alpha1",
     "@cumulus/checksum": "11.0.0",
     "@cumulus/cmr-client": "11.0.0",
     "@cumulus/cmrjs": "11.0.0",

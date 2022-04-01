@@ -1,8 +1,12 @@
 import { Knex } from 'knex';
 import pMap from 'p-map';
 import cloneDeep from 'lodash/cloneDeep';
+import {
+  ScanCommandOutput,
+} from '@aws-sdk/lib-dynamodb';
 
 import { parallelScan } from '@cumulus/aws-client/DynamoDb';
+import { dynamodbDocClient } from '@cumulus/aws-client/services';
 import Logger from '@cumulus/logger';
 import {
   PdrPgModel,
@@ -25,7 +29,7 @@ const logger = new Logger({ sender: '@cumulus/data-migration/pdrs' });
 /**
  * Migrate PDR record from Dynamo to RDS.
  *
- * @param {ApiPdrRecord} dynamoPDR
+ * @param {Object} dynamoPDR
  *   PDR Record from DynamoDB
  * @param {Knex} knex - Knex client for writing to RDS database
  * @returns {Promise<number>} - Cumulus ID for record
@@ -48,7 +52,7 @@ export const migratePdrRecord = async (
     }
   }
 
-  const isExistingRecordNewer = existingRecord
+  const isExistingRecordNewer = existingRecord && dynamoPDR.updatedAt
     && existingRecord.updated_at >= new Date(dynamoPDR.updatedAt);
 
   if (isExistingRecordNewer) {
@@ -69,7 +73,7 @@ export const migratePdrRecord = async (
 };
 
 export const migratePdrDynamoRecords = async (
-  items: AWS.DynamoDB.DocumentClient.AttributeMap[],
+  items: ScanCommandOutput['Items'] = [],
   migrationResult: MigrationResult,
   knex: Knex,
   loggingInterval: number,
@@ -122,6 +126,12 @@ export const migratePdrs = async (
   logger.info(`Starting parallel scan of PDRs with ${totalSegments} parallel segments`);
 
   await parallelScan({
+    dynamoDbClient: dynamodbDocClient({
+      marshallOptions: {
+        convertEmptyValues: true,
+        removeUndefinedValues: true,
+      },
+    }),
     totalSegments,
     scanParams: {
       TableName: pdrsTable,

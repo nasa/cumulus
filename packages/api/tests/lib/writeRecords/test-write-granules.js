@@ -58,7 +58,7 @@ const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtil
 const Granule = require('../../../models/granules');
 
 test.before(async (t) => {
-  process.env.GranulesTable = cryptoRandomString({ length: 10 });
+  process.env.GranulesTable = `write-granules-${cryptoRandomString({ length: 10 })}`;
 
   const fakeFileUtils = {
     buildDatabaseFiles: (params) => Promise.resolve(params.files),
