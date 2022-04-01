@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2860**
   - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+- **CUMULUS-NONE**
+  - Added documentation on choosing and configuring RDS at `deployment/choosing_configuring_rds`.
 
 ### Changed
 
