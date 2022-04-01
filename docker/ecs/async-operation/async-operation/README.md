@@ -1,9 +1,11 @@
 # async-operation Docker image
 
-This image is intended for use with the AsyncOperation model. It will download
-an AWS Lambda function from AWS, download a payload from S3, execute the lambda
-function (inside the Docker container), then update the RDS database record for the
-AsyncOperation with the result of the lambda function.
+This image is intended for use with the AsyncOperation model. It will:
+
+1. Eownload an AWS Lambda function from AWS
+2. Download a payload from S3
+3. Execute the lambda function (inside the Docker container)
+4. Update the RDS database record for the AsyncOperation with the result of the lambda function.
 
 The Docker container expects a number of environment variables to be set:
 
@@ -22,11 +24,12 @@ Logs will be output to `${stackName}-${OperationName}EcsLogs`
 
 ## Building and pushing Docker images
 
-For the following commands, replace `<build-number>` with the next build number. You can find the latest build number at <https://hub.docker.com/r/cumuluss/async-operation/tags>. Currently we are
-just using a regular number as the build number (e.g. `41`) and not a semver string
-(e.g. `1.0.0`).
+For the following commands, replace `<build-number>` with the next build number. You can
+find the latest build number at <https://hub.docker.com/r/cumuluss/async-operation/tags>.
+Currently we are using a regular number as the build number (e.g. `41`) and not a semantic
+versioning string (e.g. `1.0.0`).
 
-To build a new docker image:
+To build a new Docker image:
 
 `docker build -t cumuluss/async-operation:<build-number> .`
 
