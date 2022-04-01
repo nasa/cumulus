@@ -6,14 +6,14 @@
     "NASA",
     "Cumulus"
   ],
-  "homepage": "https://github.com/nasa/cumulus/tree/master/docker/ecs/async-operation#readme",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/api/ecs/async-operation#readme",
   "bugs": "https://bugs.earthdata.nasa.gov/projects/CUMULUS/issues",
   "license": "Apache-2.0",
   "author": "Cumulus Authors",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus.git",
-    "directory": "docker/ecs/async-operation"
+    "directory": "packages/api/ecs/async-operation"
   },
   "scripts": {
     "test:coverage": "../../../../node_modules/.bin/nyc true",
