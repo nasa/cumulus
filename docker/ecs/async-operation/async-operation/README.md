@@ -2,7 +2,7 @@
 
 This image is intended for use with the AsyncOperation model. It will:
 
-1. Eownload an AWS Lambda function from AWS
+1. Download an AWS Lambda function from AWS
 2. Download a payload from S3
 3. Execute the lambda function (inside the Docker container)
 4. Update the RDS database record for the AsyncOperation with the result of the lambda function.
