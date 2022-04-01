@@ -34,11 +34,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "10.1.1",
-    "@cumulus/common": "10.1.1",
-    "@cumulus/errors": "10.1.1",
-    "@cumulus/launchpad-auth": "10.1.1",
-    "@cumulus/logger": "10.1.1",
+    "@cumulus/aws-client": "11.0.0",
+    "@cumulus/common": "11.0.0",
+    "@cumulus/errors": "11.0.0",
+    "@cumulus/launchpad-auth": "11.0.0",
+    "@cumulus/logger": "11.0.0",
     "got": "^11.7.0",
     "lodash": "^4.17.21"
   }
