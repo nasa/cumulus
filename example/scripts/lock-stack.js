@@ -23,7 +23,7 @@ class CumulusNoLockError extends Error {
 }
 
 const LOCK_TABLE_NAME = 'cumulus-int-test-lock';
-const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
+const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hours
 
 /**
  * lockOperation
@@ -37,7 +37,9 @@ const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hourst
  * @throws {CumulusNoLockError}         -on 'lock' locking collision
  */
 async function lockOperation(operation, gitSHA, deployment, shouldLock) {
-  const mutex = new Mutex(dynamodbDocClient({ convertEmptyValues: true }), LOCK_TABLE_NAME);
+  const mutex = new Mutex(dynamodbDocClient({
+    marshallOptions: { convertEmptyValues: true },
+  }), LOCK_TABLE_NAME);
 
   if (operation === 'confirmLock') {
     const lockSHA = await mutex.checkMatchingSha(deployment, gitSHA);
@@ -79,7 +81,7 @@ lockOperation(...process.argv.slice(2, 6)).catch((error) => {
   process.exitCode = 100;
   if (error.code === 'CumulusNoLockError') {
     process.exitCode = 101;
-  } else if (!['ConditionalCheckFailedException', 'CumulusLockError'].includes(error.code)) {
+  } else if (!(error.name === 'ConditionalCheckFailedException' || error.code === 'CumulusLockError')) {
     process.exitCode = 1;
   }
 });

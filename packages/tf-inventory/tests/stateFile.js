@@ -11,13 +11,14 @@ const getStateFilesFromTable = stateFile.__get__('getStateFilesFromTable');
 const extractDeploymentName = stateFile.__get__('extractDeploymentName');
 const listClusterEC2Instances = stateFile.__get__('listClusterEC2Instances');
 
+const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const aws = require('@cumulus/aws-client/services');
 const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
-async function createTable(tableName, attributeDefs, keySchema) {
-  await aws.dynamodb().createTable({
+function createTable(tableName, attributeDefs, keySchema) {
+  return DynamoDb.createAndWaitForDynamoDbTable({
     TableName: tableName,
     AttributeDefinitions: attributeDefs,
     KeySchema: keySchema,
@@ -25,9 +26,7 @@ async function createTable(tableName, attributeDefs, keySchema) {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5,
     },
-  }).promise();
-
-  return aws.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+  });
 }
 
 test('getStateFilesFromTable returns empty array if it is not a table containing state files', async (t) => {
@@ -36,12 +35,12 @@ test('getStateFilesFromTable returns empty array if it is not a table containing
   await aws.dynamodb().putItem({
     TableName: tableName,
     Item: { bucket: { S: 'bucket' } },
-  }).promise();
+  });
   const stateFiles = await getStateFilesFromTable(tableName);
 
   t.deepEqual([], stateFiles);
 
-  await aws.dynamodb().deleteTable({ TableName: tableName }).promise();
+  await aws.dynamodb().deleteTable({ TableName: tableName });
 });
 
 test('getStateFilesFromTable returns empty array if there are no items in the table', async (t) => {
@@ -51,7 +50,7 @@ test('getStateFilesFromTable returns empty array if there are no items in the ta
 
   t.deepEqual([], stateFiles);
 
-  await aws.dynamodb().deleteTable({ TableName: tableName }).promise();
+  await aws.dynamodb().deleteTable({ TableName: tableName });
 });
 
 test('getStateFilesFromTable returns state files without checksum extension', async (t) => {
@@ -61,13 +60,13 @@ test('getStateFilesFromTable returns state files without checksum extension', as
   await aws.dynamodb().putItem({
     TableName: tableName,
     Item: { LockID: { S: 'cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate.md5' } },
-  }).promise();
+  });
 
   const stateFiles = await getStateFilesFromTable(tableName);
 
   t.deepEqual(['cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate'], stateFiles);
 
-  await aws.dynamodb().deleteTable({ TableName: tableName }).promise();
+  await aws.dynamodb().deleteTable({ TableName: tableName });
 });
 
 test('listTfStateFiles lists state files only', async (t) => {
@@ -77,7 +76,7 @@ test('listTfStateFiles lists state files only', async (t) => {
   await aws.dynamodb().putItem({
     TableName: stateFileTableName,
     Item: { LockID: { S: 'cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate.md5' } },
-  }).promise();
+  });
 
   const noStateFileTableName = randomString();
   await createTable(noStateFileTableName, [{ AttributeName: 'bucket', AttributeType: 'S' }], [{ AttributeName: 'bucket', KeyType: 'HASH' }]);
@@ -85,14 +84,14 @@ test('listTfStateFiles lists state files only', async (t) => {
   await aws.dynamodb().putItem({
     TableName: noStateFileTableName,
     Item: { bucket: { S: 'bucket' } },
-  }).promise();
+  });
 
   const stateFiles = await stateFile.listTfStateFiles();
 
   t.deepEqual(['cumulus-tfstate/tf-deployment/cumulus/terraform.tfstate'], stateFiles);
 
-  await aws.dynamodb().deleteTable({ TableName: stateFileTableName }).promise();
-  await aws.dynamodb().deleteTable({ TableName: noStateFileTableName }).promise();
+  await aws.dynamodb().deleteTable({ TableName: stateFileTableName });
+  await aws.dynamodb().deleteTable({ TableName: noStateFileTableName });
 });
 
 test('getStateFileDeploymentInfo lists correct resources', async (t) => {

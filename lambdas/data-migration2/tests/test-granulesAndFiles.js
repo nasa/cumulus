@@ -916,7 +916,7 @@ test.serial('migrateGranulesAndFiles processes all non-failing granule records a
     dynamodbDocClient().put({
       TableName: process.env.GranulesTable,
       Item: testGranule,
-    }).promise(),
+    }),
     granulesModel.create(testGranule2),
   ]);
 
