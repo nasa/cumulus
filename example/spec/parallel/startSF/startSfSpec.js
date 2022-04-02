@@ -329,7 +329,7 @@ describe('the sf-starter lambda function', () => {
           Key: {
             key: maxQueueUrl,
           },
-        }).promise(),
+        }),
       ]);
     });
 
@@ -370,7 +370,7 @@ describe('the sf-starter lambda function', () => {
           Key: {
             key: maxQueueUrl,
           },
-        }).promise();
+        });
         expect(semItem.Item.semvalue).toBe(0);
       });
     });

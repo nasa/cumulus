@@ -1210,6 +1210,10 @@ describe('The S3 Ingest Granules workflow', () => {
             Key: destinationKey,
           });
 
+          // Sanity check
+          const fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
+          expect(fileExists).toBe(true);
+
           let moveGranuleResponseError;
           try {
             await moveGranule({
@@ -1218,6 +1222,7 @@ describe('The S3 Ingest Granules workflow', () => {
               destinations,
             });
           } catch (error) {
+            console.log('moveGranuleResponseError %j', moveGranuleResponseError);
             moveGranuleResponseError = error;
           }
 

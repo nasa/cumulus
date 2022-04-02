@@ -42,7 +42,7 @@ test.serial('batchUpdate() can create a file record', async (t) => {
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
     Key: { bucket: file.bucket, key: file.key },
-  }).promise();
+  });
 
   t.is(get(getResponse, 'Item.granuleId'), file.granuleId);
 });
@@ -57,7 +57,7 @@ test.serial('batchUpdate() can update an existing a file record', async (t) => {
   await dynamodbDocClient().put({
     TableName: process.env.FilesTable,
     Item: originalFile,
-  }).promise();
+  });
 
   const updatedFile = { ...originalFile, granuleId: randomString() };
 
@@ -66,7 +66,7 @@ test.serial('batchUpdate() can update an existing a file record', async (t) => {
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
     Key: { bucket: updatedFile.bucket, key: updatedFile.key },
-  }).promise();
+  });
 
   t.is(get(getResponse, 'Item.granuleId'), updatedFile.granuleId);
 });
@@ -81,14 +81,14 @@ test.serial('batchUpdate() can delete a file record', async (t) => {
   await dynamodbDocClient().put({
     TableName: process.env.FilesTable,
     Item: file,
-  }).promise();
+  });
 
   await GranuleFilesCache.batchUpdate({ deletes: [file] });
 
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
     Key: { bucket: file.bucket, key: file.key },
-  }).promise();
+  });
 
   t.is(getResponse.Item, undefined);
 });
@@ -207,7 +207,7 @@ test.serial('batchUpdate() will ignore extra fields in a put', async (t) => {
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
     Key: { bucket: file.bucket, key: file.key },
-  }).promise();
+  });
 
   t.deepEqual(
     getResponse.Item,
@@ -231,7 +231,7 @@ test.serial('batchUpdate() will ignore extra fields in a delete', async (t) => {
   const getResponse = await dynamodbDocClient().get({
     TableName: process.env.FilesTable,
     Key: { bucket: file.bucket, key: file.key },
-  }).promise();
+  });
 
   t.is(getResponse.Item, undefined);
 });
@@ -252,7 +252,7 @@ test.serial('batchUpdate() can handle more than 25 updates', async (t) => {
       const getResponse = await dynamodbDocClient().get({
         TableName: process.env.FilesTable,
         Key: { bucket: file.bucket, key: file.key },
-      }).promise();
+      });
 
       t.is(get(getResponse, 'Item.granuleId'), file.granuleId);
     })
