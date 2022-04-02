@@ -5,6 +5,7 @@
     "allowlist": [
         "underscore",
         "1067259",
-        "node-forge"
+        "node-forge",
+        "minimist"
     ]
 }
