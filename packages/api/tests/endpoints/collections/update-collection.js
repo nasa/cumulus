@@ -261,22 +261,9 @@ test.serial('PUT replaces an existing collection and correctly removes fields', 
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await t.context.collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
-
   const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
     name: originalCollection.name,
     version: originalCollection.version,
-  });
-
-  t.like(actualCollection, {
-    ...originalCollection,
-    duplicateHandling: 'error',
-    process: undefined,
-    createdAt: originalCollection.createdAt,
-    updatedAt: actualCollection.updatedAt,
   });
 
   t.deepEqual(actualPgCollection, {
@@ -288,7 +275,7 @@ test.serial('PUT replaces an existing collection and correctly removes fields', 
   });
 });
 
-test.serial('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
+test.serial('PUT replaces an existing collection in PG with correct timestamps', async (t) => {
   const knex = t.context.testKnex;
   const { originalCollection } = await createCollectionTestRecords(
     t.context,
@@ -313,11 +300,6 @@ test.serial('PUT replaces an existing collection in Dynamo and PG with correct t
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await t.context.collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
-
   const actualPgCollection = await t.context.collectionPgModel.get(knex, {
     name: originalCollection.name,
     version: originalCollection.version,
@@ -330,12 +312,7 @@ test.serial('PUT replaces an existing collection in Dynamo and PG with correct t
   // Endpoint logic will set an updated timestamp and ignore the value from the request
   // body, so value on actual records should be different (greater) than the value
   // sent in the request body
-  t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
   // createdAt timestamp from original record should have been preserved
-  t.is(actualCollection.createdAt, originalCollection.createdAt);
-  // PG and Dynamo records have the same timestamps
-  t.is(actualPgCollection.created_at.getTime(), actualCollection.createdAt);
-  t.is(actualPgCollection.updated_at.getTime(), actualCollection.updatedAt);
   t.is(actualPgCollection.created_at.getTime(), updatedEsRecord.createdAt);
   t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
