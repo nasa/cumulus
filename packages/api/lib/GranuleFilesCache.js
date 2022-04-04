@@ -18,6 +18,7 @@ const get = require('lodash/get');
 const pick = require('lodash/pick');
 const pMap = require('p-map');
 const noop = require('lodash/noop');
+const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
 
 /**
@@ -52,7 +53,7 @@ const validateDeleteFile = (file) => {
 const batchWriteItems = (items) =>
   dynamodbDocClient().batchWrite({
     RequestItems: { [cacheTableName()]: items },
-  }).promise();
+  });
 
 /**
  * Perform a bulk-update of the Granule Files cache table.
@@ -132,7 +133,7 @@ const createCacheTable = async () => {
     throw new Error('This function is for use in tests only');
   }
 
-  await dynamodb().createTable({
+  await DynamoDb.createAndWaitForDynamoDbTable({
     TableName: cacheTableName(),
     AttributeDefinitions: [
       { AttributeName: 'bucket', AttributeType: 'S' },
@@ -143,12 +144,7 @@ const createCacheTable = async () => {
       { AttributeName: 'key', KeyType: 'RANGE' },
     ],
     BillingMode: 'PAY_PER_REQUEST',
-  }).promise();
-
-  await dynamodb().waitFor(
-    'tableExists',
-    { TableName: cacheTableName() }
-  ).promise();
+  });
 };
 
 /**
@@ -160,7 +156,7 @@ const deleteCacheTable = async () => {
     throw new Error('This function is for use in tests only');
   }
 
-  await dynamodb().deleteTable({ TableName: cacheTableName() }).promise()
+  await dynamodb().deleteTable({ TableName: cacheTableName() })
     .catch(noop);
 };
 
@@ -176,7 +172,7 @@ const getGranuleId = async (bucket, key) => {
   const getResponse = await dynamodbDocClient().get({
     TableName: cacheTableName(),
     Key: { bucket, key },
-  }).promise();
+  });
 
   return getResponse.Item ? getResponse.Item.granuleId : undefined;
 };
@@ -193,7 +189,7 @@ const put = async (file) => {
   await dynamodbDocClient().put({
     TableName: cacheTableName(),
     Item: file,
-  }).promise();
+  });
 };
 
 /**
@@ -207,7 +203,7 @@ const del = async ({ bucket, key }) => {
   await dynamodbDocClient().delete({
     TableName: cacheTableName(),
     Key: { bucket, key },
-  }).promise();
+  });
 };
 
 module.exports = {

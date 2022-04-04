@@ -87,6 +87,10 @@ async function post(req, res) {
   const name = apiRule.name;
 
   try {
+    if (await ruleModel.exists(name)) {
+      return res.boom.conflict(`A record already exists for ${name}`);
+    }
+
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
 

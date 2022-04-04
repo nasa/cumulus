@@ -25,7 +25,7 @@ class Semaphore {
         ExpressionAttributeNames: { '#key': 'key' },
         ExpressionAttributeValues: { ':key': key },
       };
-      await this.docClient.put(params).promise();
+      await this.docClient.put(params);
     } catch (error) {
       // Only re-throw errors that are not conditional check failures. A
       // conditional check failure here means that a row tracking the semaphore
@@ -115,7 +115,7 @@ class Semaphore {
     }
 
     try {
-      await this.docClient.update(updateParams).promise();
+      await this.docClient.update(updateParams);
     } catch (error) {
       // If count > 0 and this is a conditional check exception, then the
       // operation failed because it would have exceeded the maximum, so

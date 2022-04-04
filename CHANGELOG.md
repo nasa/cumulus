@@ -54,6 +54,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2860**
   - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+- **CUMULUS-NONE**
+  - Added documentation on choosing and configuring RDS at `deployment/choosing_configuring_rds`.
 
 ### Changed
 
@@ -483,6 +485,25 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
     allow this timeout to be user configurable
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+
+### Changed
+
+- **CUMULUS-2849**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for DynamoDB requests:
+    - `@aws-sdk/client-dynamodb`
+    - `@aws-sdk/lib-dynamodb`
+    - `@aws-sdk/util-dynamodb`
+  - Updated code for compatibility with AWS SDK v3 Dynamo packages
+    - `@cumulus/api`
+    - `@cumulus/errors`
+    - `@cumulus/tf-inventory`
+    - `lambdas/data-migration2`
+    - `packages/api/ecs/async-operation`
+
+### Fixed
+
+- **CUMULUS-2849**
+  - Fixed AWS service client memoization logic in `@cumulus/aws-client`
 
 ## [v10.1.1] 2022-03-04
 
