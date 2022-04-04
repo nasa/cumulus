@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+- **CUMULUS-2903**
+  - The minimum supported version for all Cumulus packages is now Node 14.19.1
 ### Added
 
 - **CUMULUS-2860**
