@@ -571,7 +571,7 @@ test('POST returns a 400 response if rule name is invalid', async (t) => {
 
 test('POST returns a 400 response if rule name does not exist', async (t) => {
   const { newRule } = t.context;
-  newRule.name = undefined;
+  newRule.name = '';
 
   const response = await request(app)
     .post('/rules')
@@ -661,7 +661,6 @@ test.serial('post() does not write to Elasticsearch if writing to PostgreSQL fai
   const dbRecords = await t.context.rulePgModel
     .search(t.context.testKnex, { name: newRule.name });
 
-  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
   t.is(dbRecords.length, 0);
   t.false(await t.context.esRulesClient.exists(
     newRule.name
@@ -686,8 +685,6 @@ test.serial('post() does not write to PostgreSQL if writing to Elasticsearch fai
   const response = buildFakeExpressResponse();
 
   await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
   const dbRecords = await t.context.rulePgModel
     .search(t.context.testKnex, { name: newRule.name });
