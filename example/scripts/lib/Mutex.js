@@ -24,7 +24,7 @@ class Mutex {
         key: key,
       },
     };
-    const record = await this.docClient.get(params).promise();
+    const record = await this.docClient.get(params);
     if (record.Item) {
       return (gitSHA === record.Item.sha ? 'match' : record.Item.sha);
     }
@@ -59,7 +59,7 @@ class Mutex {
         ':expire': now,
       },
     };
-    return await this.docClient.put(params).promise();
+    return await this.docClient.put(params);
   }
 
   /**
@@ -86,7 +86,7 @@ class Mutex {
 
     let deleteResult;
     try {
-      deleteResult = await this.docClient.delete(params).promise();
+      deleteResult = await this.docClient.delete(params);
     } catch (error) {
       const shaCheck = await this.checkMatchingSha(key, gitSHA);
       if (!['match', 'noLock'].includes(shaCheck)) {
