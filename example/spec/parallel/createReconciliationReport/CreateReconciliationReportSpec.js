@@ -898,10 +898,16 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(granules.orcaCount).toBe(1);
       // 4 from publishedGranule (all except .jpg, .jpg2), 1 from dbGranule (.met)
       expect(granules.okFilesCount).toBe(5);
+      // all 5 from publishedGranule, all 5 from dbGranule
+      expect(granules.cumulusFilesCount).toBe(10);
+      // 4 from publishedGranule (except .met)
+      expect(granules.orcaFilesCount).toBe(4);
       expect(granules.conflictFilesCount).toBe(6);
       expect(granules.onlyInCumulus.length).toBe(1);
       expect(granules.onlyInCumulus[0].granuleId).toBe(dbGranuleId);
       expect(granules.onlyInCumulus[0].okFilesCount).toBe(1);
+      expect(granules.onlyInCumulus[0].cumulusFilesCount).toBe(5);
+      expect(granules.onlyInCumulus[0].orcaFilesCount).toBe(0);
       expect(granules.onlyInCumulus[0].conflictFiles.length).toBe(4);
       expect(granules.onlyInCumulus[0].conflictFiles.filter((file) => file.fileName.endsWith('.met')).length).toBe(0);
       expect(granules.onlyInOrca.length).toBe(0);
@@ -910,6 +916,9 @@ describe('When there are granule differences and granule reconciliation is run',
       }
       expect(granules.withConflicts.length).toBe(1);
       expect(granules.withConflicts[0].granuleId).toBe(publishedGranuleId);
+      expect(granules.withConflicts[0].okFilesCount).toBe(4);
+      expect(granules.withConflicts[0].cumulusFilesCount).toBe(5);
+      expect(granules.withConflicts[0].orcaFilesCount).toBe(4);
       expect(granules.withConflicts[0].conflictFiles.length).toBe(2);
       expect(granules.withConflicts[0].conflictFiles.filter(
         (file) => file.fileName.endsWith('.jpg') || file.fileName.endsWith('.jpg2')
