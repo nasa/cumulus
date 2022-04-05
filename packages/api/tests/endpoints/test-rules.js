@@ -42,6 +42,7 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
   createRuleTestRecords,
+  createSqsQueues,
 } = require('../../lib/testUtils');
 const { post, put, del } = require('../../endpoints/rules');
 
@@ -1225,106 +1226,95 @@ test.serial('put() creates the same updated Kinesis rule in PostgreSQL/Elasticse
   });
 });
 
-// test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async (t) => {
-//   const {
-//     pgProvider,
-//     pgCollection,
-//   } = t.context;
+test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
 
-//   const queue1 = randomId('queue');
-//   const queue2 = randomId('queue');
+  const queue1 = randomId('queue');
+  const queue2 = randomId('queue');
 
-//   const stubbedRulesModel = new Rule({
-//     SqsUtils: {
-//       sqsQueueExists: () => Promise.resolve(true),
-//     },
-//     SqsClient: {
-//       getQueueAttributes: () => ({
-//         promise: () => Promise.resolve({
-//           Attributes: {
-//             RedrivePolicy: 'policy',
-//             VisibilityTimeout: 10,
-//           },
-//         }),
-//       }),
-//     },
-//   });
+  const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
+  const { queueUrl: queueUrl2 } = await createSqsQueues(queue2);
 
-//   const {
-//     originalPgRecord,
-//     originalEsRecord,
-//   } = await createRuleTestRecords(
-//     {
-//       ...t.context,
-//       ruleModel: stubbedRulesModel,
-//     },
-//     {
-//       workflow,
-//       name: randomId('rule'),
-//       state: 'ENABLED',
-//       type: 'sqs',
-//       queue_url: queue1,
-//       collection: {
-//         name: pgCollection.name,
-//         version: pgCollection.version,
-//       },
-//       provider: pgProvider.name,
-//     }
-//   );
+  const stubbedRulesModel = new Rule();
 
-//   const expectedMeta = {
-//     visibilityTimeout: 10,
-//     retries: 3,
-//   };
-//   console.log(`originalPgRecord: ${JSON.stringify(originalPgRecord)}`);
-//   console.log(`originalEsRecord: ${JSON.stringify(originalEsRecord)}`);
-//   t.deepEqual(originalPgRecord.meta, expectedMeta);
-//   t.deepEqual(originalEsRecord.meta, expectedMeta);
+  const {
+    originalPgRecord,
+    originalEsRecord,
+  } = await createRuleTestRecords(
+    {
+      ...t.context,
+      ruleModel: stubbedRulesModel,
+    },
+    {
+      workflow,
+      name: randomId('rule'),
+      state: 'ENABLED',
+      type: 'sqs',
+      value: queueUrl1,
+      collection: {
+        name: pgCollection.name,
+        version: pgCollection.version,
+      },
+      provider: pgProvider.name,
+    }
+  );
 
-//   const updateRule = {
-//     ...originalPgRecord,
-//     rule: {
-//       type: 'sqs',
-//       value: queue2,
-//     },
-//   };
-//   const expressRequest = {
-//     params: {
-//       name: originalPgRecord.name,
-//     },
-//     body: updateRule,
-//     testContext: {
-//       ruleModel: stubbedRulesModel,
-//     },
-//   };
-//   const response = buildFakeExpressResponse();
-//   await put(expressRequest, response);
+  const expectedMeta = {
+    visibilityTimeout: 300,
+    retries: 3,
+  };
+  console.log(`originalPgRecord: ${JSON.stringify(originalPgRecord)}`);
+  console.log(`originalEsRecord: ${JSON.stringify(originalEsRecord)}`);
+  t.deepEqual(originalPgRecord.meta, expectedMeta);
+  t.deepEqual(originalEsRecord.meta, expectedMeta);
 
-//   const updatedPgRule = await t.context.rulePgModel
-//     .get(t.context.testKnex, { name: updateRule.name });
-//   const updatedEsRule = await t.context.esRulesClient.get(
-//     updateRule.name
-//   );
+  const updateRule = {
+    ...originalPgRecord,
+    rule: {
+      type: 'sqs',
+      value: queueUrl2,
+    },
+  };
+  const expressRequest = {
+    params: {
+      name: originalPgRecord.name,
+    },
+    body: updateRule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+  const response = buildFakeExpressResponse();
+  await put(expressRequest, response);
 
-//   t.deepEqual(
-//     updatedEsRule,
-//     {
-//       ...originalEsRecord,
-//       updatedAt: updatedEsRule.updatedAt,
-//       timestamp: updatedEsRule.timestamp,
-//       rule: {
-//         type: 'sqs',
-//         value: queue2,
-//       },
-//     }
-//   );
-//   t.deepEqual(updatedPgRule, {
-//     ...originalPgRecord,
-//     updated_at: updatedPgRule.updated_at,
-//     type: 'sqs',
-//     value: queue2,
-//   });
-// });
+  const updatedPgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: updateRule.name });
+  const updatedEsRule = await t.context.esRulesClient.get(
+    updateRule.name
+  );
+
+  t.deepEqual(
+    updatedEsRule,
+    {
+      ...originalEsRecord,
+      updatedAt: updatedEsRule.updatedAt,
+      timestamp: updatedEsRule.timestamp,
+      rule: {
+        type: 'sqs',
+        value: queueUrl2,
+      },
+    }
+  );
+  t.deepEqual(updatedPgRule, {
+    ...originalPgRecord,
+    updated_at: updatedPgRule.updated_at,
+    type: 'sqs',
+    value: queueUrl2,
+  });
+});
 
 test.serial('put() keeps initial trigger information if writing to PostgreSQL fails', async (t) => {
   const {
