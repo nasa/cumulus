@@ -59,7 +59,7 @@ As part of the work on the RDS Phase 2 feature, it was decided to re-add the
 granule file `type` property on the file table (detailed reasoning
 https://wiki.earthdata.nasa.gov/pages/viewpage.action?pageId=219186829).  This
 change was implemented as part of CUMULUS-2672/CUMULUS-2673, however granule
-records ingested prior to v11 *not* have the file.type property stored in the
+records ingested prior to v11 will *not* have the file.type property stored in the
 PostGreSQL database, and on installation of v11 API calls to get granule.files
 will not return this value. We anticipate most users are impacted by this issue.
 
@@ -73,7 +73,7 @@ aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
 ```
 
 You should note that this will *only* move files for granule records in
-postgres.  **If you have not completed the phase 1 data migration or
+PostgreSQL.  **If you have not completed the phase 1 data migration or
 have granule records in dynamo that are not in PostgreSQL, the migration will
 report failure for both the DynamoDB granule and all the associated files and the file
 records will not be updated**.
