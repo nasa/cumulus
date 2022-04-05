@@ -1000,7 +1000,7 @@ test.serial('migrateGranulesAndFiles throws if migrateAndOverwrite and migrateOn
   );
 });
 
-test.serial('migrateGranulesAndFiles reports failures if GranuleMigrationParams.migrateOnlyFiles is set to true and the granules were not previous', async (t) => {
+test.serial('migrateGranulesAndFiles reports failures if GranuleMigrationParams.migrateOnlyFiles is set to true and the granules were not previously migrated', async (t) => {
   const {
     knex,
     testGranule,
