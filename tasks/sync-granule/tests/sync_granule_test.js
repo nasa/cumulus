@@ -1,5 +1,6 @@
 'use strict';
 
+const sinon = require('sinon');
 const path = require('path');
 const test = require('ava');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -11,7 +12,6 @@ const {
   s3Join,
   promiseS3Upload,
   headObject,
-  parseS3Uri,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const errors = require('@cumulus/errors');
@@ -70,9 +70,9 @@ async function prepareS3DownloadEvent(t) {
 async function getFilesMetadata(files) {
   const getFileRequests = files.map(async (f) => {
     const s3list = await listS3ObjectsV2(
-      { Bucket: f.bucket, Prefix: parseS3Uri(f.filename).Key }
+      { Bucket: f.bucket, Prefix: f.key }
     );
-    const s3object = s3list.filter((s3file) => s3file.Key === parseS3Uri(f.filename).Key);
+    const s3object = s3list.filter((s3file) => s3file.Key === f.key);
 
     return {
       filename: f.filename,
@@ -195,12 +195,19 @@ test.serial('download Granule from FTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
-  t.is(
-    output.granules[0].files[0].filename,
-    `s3://${t.context.internalBucketName}/${keypath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`
-  );
-  t.truthy(output.granules[0].files[0].url_path);
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+
+  const expected = {
+    bucket: t.context.internalBucketName,
+    key,
+    size: 1098034,
+    source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'CKSUM',
+    type: 'data',
+  };
+  t.deepEqual(output.granules[0].files[0], expected);
 });
 
 test.serial('download Granule from HTTP endpoint', async (t) => {
@@ -215,8 +222,6 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  const granuleFilename = t.context.event.input.granules[0].files[0].name;
-
   const output = await syncGranule(t.context.event);
 
   await validateOutput(t, output);
@@ -224,11 +229,19 @@ test.serial('download Granule from HTTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
-  t.is(
-    output.granules[0].files[0].filename,
-    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
-  );
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+
+  const expected = {
+    bucket: t.context.internalBucketName,
+    key,
+    size: 1098034,
+    source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'CKSUM',
+    type: 'data',
+  };
+  t.deepEqual(output.granules[0].files[0], expected);
 });
 
 test.serial('verify that all returned granules have sync_granule_duration set', async (t) => {
@@ -270,8 +283,6 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  const granuleFilename = t.context.event.input.granules[0].files[0].name;
-
   const output = await syncGranule(t.context.event);
 
   await validateOutput(t, output);
@@ -279,16 +290,24 @@ test.serial('download Granule from SFTP endpoint', async (t) => {
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
-  t.is(
-    output.granules[0].files[0].filename,
-    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
-  );
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const expected = {
+    bucket: t.context.internalBucketName,
+    key,
+    size: 1098034,
+    source: '/granules/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'CKSUM',
+    type: 'data',
+  };
+  t.deepEqual(output.granules[0].files[0], expected);
+
   t.is(
     true,
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${granuleFilename}`,
+      Key: key,
     })
   );
 });
@@ -355,15 +374,22 @@ test.serial('download granule from S3 provider with checksum and data file in an
   t.is(output.granules.length, 1);
   t.is(output.granules[0].files.length, 1);
   const config = t.context.event.config;
-  const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
-  t.is(
-    output.granules[0].files[0].filename,
-    `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
-  );
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+  const expected = {
+    bucket: t.context.internalBucketName,
+    key,
+    size: 1098034,
+    source: `${granuleFilePath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`,
+    fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+    checksum: '1435712144',
+    checksumType: 'cksum',
+    type: 'data',
+  };
+  t.deepEqual(output.granules[0].files[0], expected);
   t.true(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${granuleFileName}`,
+      Key: key,
     })
   );
 });
@@ -400,16 +426,23 @@ test.serial('download granule from S3 provider', async (t) => {
     t.is(output.granules.length, 1);
     t.is(output.granules[0].files.length, 1);
     const config = t.context.event.config;
-    const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
-    t.is(
-      output.granules[0].files[0].filename,
-      `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
-    );
+    const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`;
+    const expected = {
+      bucket: t.context.internalBucketName,
+      key,
+      size: 1098034,
+      source: `${granuleFilePath}/MOD09GQ.A2017224.h27v08.006.2017227165029.hdf`,
+      fileName: 'MOD09GQ.A2017224.h27v08.006.2017227165029.hdf',
+      checksum: '1435712144',
+      checksumType: 'CKSUM',
+      type: 'data',
+    };
+    t.deepEqual(output.granules[0].files[0], expected);
     t.is(
       true,
       await s3ObjectExists({
         Bucket: t.context.internalBucketName,
-        Key: `${keypath}/${granuleFileName}`,
+        Key: key,
       })
     );
   } finally {
@@ -436,31 +469,33 @@ test.serial('download granule with checksum in file from an HTTP endpoint', asyn
   await validateConfig(t, config);
   await validateInput(t, input);
 
-  const granuleFilename = input.granules[0].files[0].name;
   const checksumFilename = input.granules[0].files[1].name;
-  const { name, version } = config.collection;
-  const collectionId = constructCollectionId(name, version);
-  const keypath = `file-staging/${config.stack}/${collectionId}`;
   const output = await syncGranule(event);
 
   await validateOutput(t, output);
 
+  const key = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}/20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2`;
+  const expected = {
+    bucket: t.context.internalBucketName,
+    key,
+    size: 25895363,
+    source: '/granules/20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2',
+    fileName: '20160115-MODIS_T-JPL-L2P-T2016015000000.L2_LAC_GHRSST_N-v01.nc.bz2',
+    checksumType: 'md5',
+    checksum: 'e627cab0d185ed31394f597d524d762d',
+  };
   t.is(output.granules.length, 1);
-  t.is(output.granules[0].files.length, 1);
-  t.is(
-    output.granules[0].files[0].filename,
-    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
-  );
+  t.deepEqual(output.granules[0].files[0], expected);
   t.true(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${granuleFilename}`,
+      Key: key,
     })
   );
   t.false(
     await s3ObjectExists({
       Bucket: t.context.internalBucketName,
-      Key: `${keypath}/${checksumFilename}`,
+      Key: `${path.dirname(key)}/${checksumFilename}`,
     })
   );
 });
@@ -494,10 +529,10 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
   const collectionId = constructCollectionId(name, version);
   const keypath = `file-staging/${config.stack}/${collectionId}`;
   const granuleFile = output.granules[0].files.find(
-    (file) => file.filename.endsWith(granuleFilename)
+    (file) => file.key.endsWith(granuleFilename)
   );
   const checksumFile = output.granules[0].files.find(
-    (file) => file.filename.endsWith(checksumFilename)
+    (file) => file.key.endsWith(checksumFilename)
   );
 
   t.is(output.granules.length, 1);
@@ -505,12 +540,12 @@ test.serial('download granule as well as checksum file from an HTTP endpoint', a
   t.truthy(granuleFile);
   t.truthy(checksumFile);
   t.is(
-    granuleFile.filename,
-    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+    `${granuleFile.bucket}/${granuleFile.key}`,
+    `${t.context.internalBucketName}/${keypath}/${granuleFilename}`
   );
   t.is(
-    checksumFile.filename,
-    `s3://${t.context.internalBucketName}/${keypath}/${checksumFilename}`
+    `${checksumFile.bucket}/${checksumFile.key}`,
+    `${t.context.internalBucketName}/${keypath}/${checksumFilename}`
   );
   t.true(
     await s3ObjectExists({
@@ -584,11 +619,73 @@ test.serial('validate file properties', async (t) => {
   const config = t.context.event.config;
   const keypath = `file-staging/${config.stack}/${config.collection.name}___${Number.parseInt(config.collection.version, 10)}`;
   t.is(
-    output.granules[0].files[0].filename,
-    `s3://${t.context.internalBucketName}/${keypath}/${granuleFilename}`
+    `${output.granules[0].files[0].bucket}/${output.granules[0].files[0].key}`,
+    `${t.context.internalBucketName}/${keypath}/${granuleFilename}`
   );
-  t.is(output.granules[0].files[0].url_path, 'file-example/');
-  t.is(output.granules[0].files[1].url_path, 'collection-example/');
+});
+
+test.serial('when workflow_start_time is provided, then createdAt is set to workflow_start_time', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const workflowStartTime = 1636334502146;
+  t.context.event.config.workflowStartTime = workflowStartTime;
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, workflowStartTime);
+  });
+});
+
+test.serial('when workflow_start_time is NOT provided, then createdAt is set to Date.now()', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const now = Date.now();
+
+  const nowStub = sinon.stub(Date, 'now').returns(now);
+  t.teardown(() => nowStub.restore());
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
+  });
+});
+
+test.serial('when workflow_start_time is a future time then override with Date.now()', async (t) => {
+  t.context.event.config.provider = {
+    id: 'MODAPS',
+    protocol: 'http',
+    host: '127.0.0.1',
+    port: 3030,
+  };
+  const now = Date.now();
+  // Thu Nov 13 2284 20:55:02 to ensure sufficiently in the future
+  const workflowStartTime = 9936334502146;
+  t.context.event.config.workflowStartTime = workflowStartTime;
+
+  const nowStub = sinon.stub(Date, 'now').returns(now);
+  t.teardown(() => nowStub.restore());
+
+  const output = await syncGranule(t.context.event);
+
+  t.is(output.granules.length, 1);
+  output.granules.forEach((g) => {
+    t.true(Number.isInteger(g.createdAt));
+    t.is(g.createdAt, now);
+  });
 });
 
 test.serial('attempt to download file from non-existent path - throw error', async (t) => {
@@ -677,9 +774,9 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
 
     await validateOutput(t, output);
 
-    const existingFile = output.granules[0].files[0].filename;
+    const existingFile = output.granules[0].files[0];
     const existingFileInfo = await headObject(
-      parseS3Uri(existingFile).Bucket, parseS3Uri(existingFile).Key
+      existingFile.bucket, existingFile.key
     );
 
     const newContent = randomString();
@@ -704,18 +801,24 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     t.is(output.granules[0].files.length, 2);
 
     let filesNotRenamed = output.granules[0].files
-      .filter((f) => path.basename(parseS3Uri(f.filename).Key) === granuleFileName);
+      .filter((f) => path.basename(f.key) === granuleFileName);
     t.is(filesNotRenamed.length, 1);
-    t.true(filesNotRenamed[0].duplicate_found);
+
+    t.is(
+      output.granuleDuplicates[output.granules[0].granuleId].files.length,
+      1
+    );
+    t.is(
+      output.granuleDuplicates[output.granules[0].granuleId].files[0].key,
+      output.granules[0].files[0].key
+    );
 
     let filesRenamed = output.granules[0].files
-      .filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${granuleFileName}.v`));
+      .filter((f) => path.basename(f.key).startsWith(`${granuleFileName}.v`));
     t.is(filesRenamed.length, 1);
-    t.falsy(filesRenamed[0].duplicate_found);
+    t.false(output.granuleDuplicates[output.granules[0].granuleId].files.includes(filesRenamed[0]));
 
-    const renamedFileInfo = await headObject(
-      parseS3Uri(filesRenamed[0].filename).Bucket, parseS3Uri(filesRenamed[0].filename).Key
-    );
+    const renamedFileInfo = await headObject(filesRenamed[0].bucket, filesRenamed[0].key);
     t.deepEqual(
       renamedFileInfo,
       { ...existingFileInfo, LastModified: renamedFileInfo.LastModified }
@@ -743,11 +846,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     t.is(output.granules[0].files.length, 3);
 
     filesNotRenamed = output.granules[0].files
-      .filter((f) => path.basename(parseS3Uri(f.filename).Key) === granuleFileName);
+      .filter((f) => path.basename(f.key) === granuleFileName);
     t.is(filesNotRenamed.length, 1);
 
     filesRenamed = output.granules[0].files
-      .filter((f) => path.basename(parseS3Uri(f.filename).Key).startsWith(`${granuleFileName}.v`));
+      .filter((f) => path.basename(f.key).startsWith(`${granuleFileName}.v`));
     t.is(filesRenamed.length, 2);
   } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
@@ -770,9 +873,9 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
 
     await validateOutput(t, output);
 
-    const existingFile = output.granules[0].files[0].filename;
+    const existingFile = output.granules[0].files[0];
     const existingFileInfo = await headObject(
-      parseS3Uri(existingFile).Bucket, parseS3Uri(existingFile).Key
+      existingFile.bucket, existingFile.key
     );
 
     const newContent = randomString();
@@ -795,11 +898,18 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 1);
-    t.true(output.granules[0].files[0].duplicate_found);
+    t.is(
+      output.granuleDuplicates[output.granules[0].granuleId].files.length,
+      1
+    );
+    t.is(
+      output.granuleDuplicates[output.granules[0].granuleId].files[0].key,
+      output.granules[0].files[0].key
+    );
 
-    const currentFile = output.granules[0].files[0].filename;
+    const currentFile = output.granules[0].files[0];
     const currentFileInfo = await headObject(
-      parseS3Uri(currentFile).Bucket, parseS3Uri(currentFile).Key
+      currentFile.bucket, currentFile.key
     );
     t.deepEqual(existingFileInfo, currentFileInfo);
   } finally {
@@ -852,13 +962,18 @@ async function granuleFilesOverwrittenTest(t) {
     await validateOutput(t, output);
 
     t.is(output.granules[0].files.length, 1);
-    t.true(output.granules[0].files[0].duplicate_found);
+    t.is(
+      output.granuleDuplicates[output.granules[0].granuleId].files.length,
+      1
+    );
+    t.is(
+      output.granuleDuplicates[output.granules[0].granuleId].files[0].key,
+      output.granules[0].files[0].key
+    );
 
     const currentFileInfo = (await getFilesMetadata(output.granules[0].files))[0];
     t.is(currentFileInfo.size, randomString().length);
-    t.true(currentFileInfo.LastModified > existingFileInfo.LastModified);
-
-    t.true(output.granules[0].files[0].duplicate_found);
+    t.true(currentFileInfo.LastModified >= existingFileInfo.LastModified);
   } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
@@ -916,8 +1031,8 @@ test.serial('download multiple granules from S3 provider to staging directory', 
         const keypath = `${config.fileStagingDir}/${config.stack}/${collectionId}`;
         const granuleFileName = t.context.event.input.granules[i].files[j].name;
         t.is(
-          output.granules[i].files[j].filename,
-          `s3://${t.context.internalBucketName}/${keypath}/${granuleFileName}`
+          `${output.granules[i].files[j].bucket}/${output.granules[i].files[j].key}`,
+          `${t.context.internalBucketName}/${keypath}/${granuleFileName}`
         );
 
         t.true(

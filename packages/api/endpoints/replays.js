@@ -1,10 +1,15 @@
 'use strict';
 
+const Logger = require('@cumulus/logger');
 const router = require('express-promise-router')();
 const asyncOperations = require('@cumulus/async-operations');
+const { getQueueUrlByName } = require('@cumulus/aws-client/SQS');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const AsyncOperation = require('../models/async-operation');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
+
+const logger = new Logger({ sender: '@cumulus/api/replays' });
 /**
  * Start an AsyncOperation that will perform kinesis message replay
  *
@@ -33,6 +38,7 @@ async function startKinesisReplayAsyncOperation(req, res) {
     description: 'Kinesis Replay',
     dynamoTableName: asyncOperationModel.tableName,
     knexConfig: process.env,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ManualConsumerLambda,
     operationType: 'Kinesis Replay',
     payload,
@@ -43,6 +49,46 @@ async function startKinesisReplayAsyncOperation(req, res) {
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
-router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
+async function startSqsMessagesReplay(req, res) {
+  const tableName = process.env.AsyncOperationsTable;
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
 
-module.exports = router;
+  const payload = req.body;
+  logger.debug(`Payload is ${JSON.stringify(payload)}`);
+
+  if (!payload.queueName) {
+    return res.boom.badRequest('queueName is required for SQS messages replay');
+  }
+
+  try {
+    await getQueueUrlByName(payload.queueName);
+  } catch (error) {
+    return res.boom.badRequest(`Could not retrieve queue URL for ${payload.queueName}. Unable to process message. Error ${error}`);
+  }
+
+  const asyncOperation = await asyncOperations.startAsyncOperation({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    description: 'SQS Replay',
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.ReplaySqsMessagesLambda,
+    operationType: 'SQS Replay',
+    payload,
+    stackName,
+    systemBucket,
+    useLambdaEnvironmentVariables: true,
+  }, AsyncOperation);
+  return res.status(202).send({ asyncOperationId: asyncOperation.id });
+}
+
+router.post('/', startKinesisReplayAsyncOperation, asyncOperationEndpointErrorHandler);
+router.post('/sqs', startSqsMessagesReplay, asyncOperationEndpointErrorHandler);
+
+module.exports = {
+  startKinesisReplayAsyncOperation,
+  startSqsMessagesReplay,
+  router,
+};

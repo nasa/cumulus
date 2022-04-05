@@ -11,6 +11,7 @@ const { createIndex } = require('@cumulus/es-client/indexer');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
 const models = require('../models');
+const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -210,6 +211,8 @@ async function indexFromDatabase(req, res) {
   } = req.testContext || {};
   const esClient = await Search.es();
   const indexName = req.body.indexName || timestampedIndexName();
+  const { postgresResultPageSize, postgresConnectionPoolSize, esRequestConcurrency } = req.body;
+
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const tableName = process.env.AsyncOperationsTable;
@@ -223,23 +226,17 @@ async function indexFromDatabase(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.IndexFromDatabaseLambda,
     description: 'Elasticsearch index from database',
     operationType: 'ES Index',
     payload: {
       indexName,
-      tables: {
-        collectionsTable: process.env.CollectionsTable,
-        executionsTable: process.env.ExecutionsTable,
-        granulesTable: process.env.GranulesTable,
-        pdrsTable: process.env.PdrsTable,
-        providersTable: process.env.ProvidersTable,
-        reconciliationReportsTable: process.env.ReconciliationReportsTable,
-        rulesTable: process.env.RulesTable,
-        asyncOperationsTable: process.env.AsyncOperationsTable,
-      },
+      reconciliationReportsTable: process.env.ReconciliationReportsTable,
       esHost: process.env.ES_HOST,
-      esRequestConcurrency: process.env.ES_CONCURRENCY,
+      esRequestConcurrency: esRequestConcurrency || process.env.ES_CONCURRENCY,
+      postgresResultPageSize,
+      postgresConnectionPoolSize,
     },
     stackName,
     systemBucket,

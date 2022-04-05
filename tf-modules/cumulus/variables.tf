@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:32"
+  default = "cumuluss/async-operation:42"
 }
 
 variable "cmr_client_id" {
@@ -100,6 +100,12 @@ variable "elasticsearch_security_group_id" {
   default     = ""
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
   type        = string
@@ -157,6 +163,18 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client"
+  type        = map(string)
+  default     = {}
+}
+
 variable "archive_api_port" {
   description = "Port number that should be used for archive API requests"
   type        = number
@@ -166,7 +184,7 @@ variable "archive_api_port" {
 variable "archive_api_reserved_concurrency" {
   description = "Reserved Concurrency for the API lambda function"
   type = number
-  default = 8
+  default = 15
 }
 
 variable "archive_api_users" {
@@ -188,7 +206,7 @@ variable "bucket_map_key" {
 }
 
 variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
   default     = null
 }
@@ -215,6 +233,12 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type        = list(object({ id = string, url = string }))
   default     = []
+}
+
+variable "default_s3_multipart_chunksize_mb" {
+  description = "default S3 multipart upload chunk size in MB"
+  type = number
+  default = 256
 }
 
 variable "deploy_distribution_s3_credentials_endpoint" {
@@ -395,6 +419,12 @@ variable "oauth_user_group" {
   default     = "N/A"
 }
 
+variable "orca_api_uri" {
+  description = "ORCA API gateway URL. Excludes the resource path"
+  type        = string
+  default     = null
+}
+
 variable "permissions_boundary_arn" {
   description = "The ARN of an IAM permissions boundary to use when creating IAM policies"
   type        = string
@@ -407,10 +437,16 @@ variable "private_archive_api_gateway" {
   default     = true
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type        = bool
-  default     = false
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "saml_entity_id" {
@@ -545,10 +581,8 @@ variable "ecs_custom_sg_ids" {
   default = []
 }
 
-variable "ecs_custom_sg_ids" {
-  description = "Add extra/custom security group to ECS cluster"
-  type = list(string)
-  default = [""]
-
+variable "deploy_cumulus_distribution" {
+  description = "If true, does not deploy the TEA distribution API"
+  type        = bool
+  default     = false
 }
-

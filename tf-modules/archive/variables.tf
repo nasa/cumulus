@@ -61,6 +61,16 @@ variable "ecs_cluster_name" {
   type = string
 }
 
+variable "ecs_execution_role" {
+  description = "Object containing name and ARN of IAM role for initializing ECS tasks"
+  type = object({ name = string, arn = string})
+}
+
+variable "ecs_task_role" {
+  description = "Object containing name and ARN of IAM role for running ECS tasks"
+  type = object({ name = string, arn = string})
+}
+
 variable "elasticsearch_domain_arn" {
   type    = string
   default = null
@@ -164,7 +174,7 @@ variable "buckets" {
 }
 
 variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
   default     = null
 }
@@ -182,6 +192,18 @@ variable "cmr_oauth_provider" {
 variable "cmr_page_size" {
   type    = number
   default = 50
+}
+
+variable "cmr_search_client_config" {
+  description = "Configuration parameters for CMR search client for cumulus tasks"
+  type        = map(string)
+  default     = {}
+}
+
+variable "elasticsearch_client_config" {
+  description = "Configuration parameters for Elasticsearch client for cumulus tasks"
+  type        = map(string)
+  default     = {}
 }
 
 variable "es_request_concurrency" {
@@ -235,15 +257,27 @@ variable "oauth_user_group" {
   default = "N/A"
 }
 
+variable "orca_api_uri" {
+  description = "ORCA API gateway URL. Excludes the resource path"
+  type        = string
+  default     = null
+}
+
 variable "private_archive_api_gateway" {
   type = bool
   default = true
 }
 
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type    = bool
-  default = false
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "saml_entity_id" {

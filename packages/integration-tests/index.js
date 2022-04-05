@@ -22,14 +22,13 @@ const {
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
-const RulesModel = require('@cumulus/api/models/rules');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
+const rulesApi = require('@cumulus/api-client/rules');
 const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
-const rulesApi = require('./api/rules');
 const executionsApi = require('./api/executions');
 const granulesApi = require('./api/granules');
 const api = require('./api/api');
@@ -75,12 +74,10 @@ async function waitForAsyncOperationStatus({
   let operation;
   return await pRetry(
     async () => {
-      const response = await asyncOperationsApi.getAsyncOperation({
+      operation = await asyncOperationsApi.getAsyncOperation({
         prefix: stackName,
         asyncOperationId: id,
       });
-
-      operation = JSON.parse(response.body);
 
       if (operation.status === status) return operation;
       throw new Error(`AsyncOperationStatus on ${JSON.stringify(operation)} Never Reached desired state ${status}.`);
@@ -332,6 +329,39 @@ const loadProvider = async (params = {}) =>
     .then((provider) => buildProvider({ ...params, provider }));
 
 /**
+ *  Returns true if provider exists, false otherwise
+ * @param {string} stackName
+ * @param {string} id
+ * @returns {boolean}
+ */
+const providerExists = async (stackName, id) => {
+  let response;
+  const exists = await pRetry(
+    async () => {
+      try {
+        response = await providersApi.getProvider({
+          prefix: stackName,
+          providerId: id,
+          pRetryOptions: {
+            retries: 0,
+          },
+        });
+      } catch (error) {
+        if (error.statusCode === 404) {
+          console.log(`Error: ${error}. Failed to get provider with ID ${id}`);
+          return false;
+        }
+        throw error;
+      }
+      if (response.statusCode === 200) return true;
+      return false;
+    },
+    { retries: 5, minTimeout: 2000, maxTimeout: 2000 }
+  );
+  return exists;
+};
+
+/**
  * add providers to database.
  *
  * @param {string} stackName - Cloud formation stack name
@@ -361,8 +391,13 @@ async function addProviders(stackName, bucketName, dataDirectory, s3Host, postfi
 
   await Promise.all(
     completeProviders.map(async (provider) => {
-      await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
-      await providersApi.createProvider({ prefix: stackName, provider: provider });
+      if (await providerExists(stackName, provider.id)) {
+        await providersApi.deleteProvider({ prefix: stackName, providerId: provider.id });
+      }
+      await providersApi.createProvider({
+        prefix: stackName,
+        provider: provider,
+      });
     })
   );
 
@@ -396,13 +431,13 @@ async function deleteProviders(stackName, bucketName, providers, postfix) {
 }
 
 /**
- * Delete all collections listed from a collections directory
+ * Delete all providers listed from a providers directory
  *
  * @param {string} stackName - CloudFormation stack name
  * @param {string} bucket - S3 internal bucket name
- * @param {string} providersDirectory - the directory of collection json files
+ * @param {string} providersDirectory - the directory of providers json files
  * @param {string} postfix - string that was appended to provider id
- * @returns {number} - number of deleted collections
+ * @returns {number} - number of deleted providers
  */
 async function cleanupProviders(stackName, bucket, providersDirectory, postfix) {
   // setProcessEnvironment is not needed by this function, but other code
@@ -434,7 +469,7 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
   // race condition
   return await pMap(
     rules,
-    (rule) => {
+    async (rule) => {
       if (postfix) {
         rule.name += replace(postfix, /-/g, '_');
         rule.collection.name += postfix;
@@ -449,9 +484,14 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
         ...config,
       }));
 
-      const rulesmodel = new RulesModel();
       console.log(`adding rule ${JSON.stringify(templatedRule)}`);
-      return rulesmodel.create(templatedRule);
+
+      const response = await rulesApi.postRule({
+        prefix: stackName,
+        rule: templatedRule,
+      });
+      const { record } = JSON.parse(response.body);
+      return record;
     },
     { concurrency: 1 }
   );
@@ -467,17 +507,6 @@ async function addRulesWithPostfix(config, dataDirectory, overrides, postfix) {
  */
 function addRules(config, dataDirectory, overrides) {
   return addRulesWithPostfix(config, dataDirectory, overrides);
-}
-
-/**
- * deletes a rule by name
- *
- * @param {string} name - name of the rule to delete.
- * @returns {Promise.<dynamodbDocClient.delete>} - superclass delete promise
- */
-async function _deleteOneRule(name) {
-  const rulesModel = new RulesModel();
-  return await rulesModel.get({ name }).then((item) => rulesModel.delete(item));
 }
 
 /**
@@ -525,7 +554,10 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 
   await pMap(
     rules,
-    (rule) => _deleteOneRule(postfix ? `${rule.name}${postfix}` : rule.name),
+    (rule) => rulesApi.deleteRule({
+      prefix: stackName,
+      ruleName: postfix ? `${rule.name}${postfix}` : rule.name,
+    }),
     { concurrency: process.env.CONCURRENCY || 3 }
   );
 

@@ -19,10 +19,12 @@ variable "rds_security_group" {
 
 variable "subnet_ids" {
   type = list(string)
+  default = null
 }
 
 variable "vpc_id" {
   type = string
+  default = null
 }
 
 # Optional
@@ -61,15 +63,32 @@ variable "rds_user_password" {
   type = string
   default = ""
 }
-
-variable "rds_connection_heartbeat" {
-  description = "If true, send a query to verify database connection is live on connection creation and retry on initial connection timeout.  Set to false if not using serverless RDS"
-  type    = bool
-  default = true
+variable "rds_connection_timing_configuration" {
+  description = "Cumulus rds connection timeout retry timing object -- these values map to knex.js's internal use of  https://github.com/vincit/tarn.js/ for connection acquisition"
+  type = map(number)
+  default = {
+      acquireTimeoutMillis: 90000
+      createRetryIntervalMillis: 30000,
+      createTimeoutMillis: 20000,
+      idleTimeoutMillis: 1000,
+      reapIntervalMillis: 1000,
+  }
 }
 
 variable "tags" {
   description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)
   default     = {}
+}
+
+variable "vpc_tag_name" {
+  description = "Tag name to use for looking up VPC"
+  type = string
+  default = "Application VPC"
+}
+
+variable "subnets_tag_name" {
+  description = "Tag name to use for looking up VPC subnets"
+  type = string
+  default = "Private application us-east-1a *"
 }

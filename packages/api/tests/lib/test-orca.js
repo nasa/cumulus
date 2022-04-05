@@ -6,19 +6,25 @@ const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
+process.env.orca_api_uri = 'fake_orca_api_uri';
 const sandbox = sinon.createSandbox();
-const fakeListRequests = sandbox.stub();
-
+const fakePostToOrca = sandbox.stub();
 const orca = proxyquire('../../lib/orca', {
-  '@cumulus/api-client/orca': { listRequests: fakeListRequests },
+  got: {
+    post: fakePostToOrca,
+  },
 });
 
 const recoveryRequestFactory = (options) => (
   {
     granule_id: options.granuleId || randomId('granuleId'),
-    object_key: randomId('objectKey'),
-    job_type: 'restore',
-    job_status: options.status || 'inprogress',
+    files: options.files
+    || [
+      {
+        file_name: randomId('file_name'),
+        status: options.status || 'inprogress',
+      },
+    ],
   });
 
 test.afterEach.always(() => {
@@ -33,10 +39,13 @@ test.serial(
   'getOrcaRecoveryStatusByGranuleId returns undefined status when orca endpoint returns error',
   async (t) => {
     const granuleId = randomId('granId');
-    fakeListRequests.resolves({
+    fakePostToOrca.resolves({
       statusCode: 400,
-      error: 'Bad Request',
-      message: 'Function not found: prefix_request_status, please check if orca is deployed',
+      body: {
+        httpStatus: 400,
+        error: 'Bad Request',
+        message: 'Function not found: prefix_request_status, please check if orca is deployed',
+      },
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
     t.is(status, undefined);
@@ -47,10 +56,13 @@ test.serial(
   'getOrcaRecoveryStatusByGranuleId returns undefined status when recovery request for granule is not found',
   async (t) => {
     const granuleId = randomId('granId');
-    const recoveryRequests = [];
-    fakeListRequests.resolves({
-      statusCode: 200,
-      body: JSON.stringify(recoveryRequests),
+    fakePostToOrca.resolves({
+      statusCode: 404,
+      body: {
+        httpStatus: 404,
+        errorType: 'NotFound',
+        message: 'No granules found',
+      },
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
     t.is(status, undefined);
@@ -61,14 +73,24 @@ test.serial(
   'getOrcaRecoveryStatusByGranuleId returns running status when files are still in progress',
   async (t) => {
     const granuleId = randomId('granId');
-    const recoveryRequests = [
-      recoveryRequestFactory({ granuleId, status: 'complete' }),
-      recoveryRequestFactory({ granuleId, status: 'inprogress' }),
-      recoveryRequestFactory({ granuleId, status: 'error' }),
+    const files = [
+      {
+        file_name: randomId('file_name'),
+        status: 'success',
+      },
+      {
+        file_name: randomId('file_name'),
+        status: 'pending',
+      },
+      {
+        file_name: randomId('file_name'),
+        status: 'failed',
+      },
     ];
-    fakeListRequests.resolves({
+    const recoveryRequests = recoveryRequestFactory({ granuleId, files });
+    fakePostToOrca.resolves({
       statusCode: 200,
-      body: JSON.stringify(recoveryRequests),
+      body: recoveryRequests,
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
     t.is(status, 'running');
@@ -76,16 +98,23 @@ test.serial(
 );
 
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns running status when files are complete',
+  'getOrcaRecoveryStatusByGranuleId returns completed status when files are success',
   async (t) => {
     const granuleId = randomId('granId');
-    const recoveryRequests = [
-      recoveryRequestFactory({ granuleId, status: 'complete' }),
-      recoveryRequestFactory({ granuleId, status: 'complete' }),
+    const files = [
+      {
+        file_name: randomId('file_name'),
+        status: 'success',
+      },
+      {
+        file_name: randomId('file_name'),
+        status: 'success',
+      },
     ];
-    fakeListRequests.resolves({
+    const recoveryRequests = recoveryRequestFactory({ granuleId, files });
+    fakePostToOrca.resolves({
       statusCode: 200,
-      body: JSON.stringify(recoveryRequests),
+      body: recoveryRequests,
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
     t.is(status, 'completed');
@@ -93,16 +122,23 @@ test.serial(
 );
 
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns running status when file restore has error',
+  'getOrcaRecoveryStatusByGranuleId returns failed status when file restore has error',
   async (t) => {
     const granuleId = randomId('granId');
-    const recoveryRequests = [
-      recoveryRequestFactory({ granuleId, status: 'complete' }),
-      recoveryRequestFactory({ granuleId, status: 'error' }),
+    const files = [
+      {
+        file_name: randomId('file_name'),
+        status: 'success',
+      },
+      {
+        file_name: randomId('file_name'),
+        status: 'failed',
+      },
     ];
-    fakeListRequests.resolves({
+    const recoveryRequests = recoveryRequestFactory({ granuleId, files });
+    fakePostToOrca.resolves({
       statusCode: 200,
-      body: JSON.stringify(recoveryRequests),
+      body: recoveryRequests,
     });
     const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
     t.is(status, 'failed');
@@ -118,20 +154,38 @@ test.serial(
         fakeGranuleFactoryV2({ granuleId: granuleIds[0] }),
         fakeGranuleFactoryV2({ granuleId: granuleIds[1] })],
     };
-    const recoveryRequestsGranule1 = [
-      recoveryRequestFactory({ granuleId: granuleIds[0], status: 'inprogress' }),
-      recoveryRequestFactory({ granuleId: granuleIds[0], status: 'inprogress' }),
+    const filesForGranule1 = [
+      {
+        file_name: randomId('file_name'),
+        status: 'pending',
+      },
+      {
+        file_name: randomId('file_name'),
+        status: 'staged',
+      },
     ];
-
-    const recoveryRequestsGranule2 = [
-      recoveryRequestFactory({ granuleId: granuleIds[1], status: 'complete' }),
-      recoveryRequestFactory({ granuleId: granuleIds[1], status: 'error' }),
+    const filesForGranule2 = [
+      {
+        file_name: randomId('file_name'),
+        status: 'success',
+      },
+      {
+        file_name: randomId('file_name'),
+        status: 'failed',
+      },
     ];
+    const recoveryRequestsGranule1 = recoveryRequestFactory({
+      granuleId: granuleIds[0], files: filesForGranule1,
+    });
 
-    fakeListRequests.onCall(0)
-      .returns({ statusCode: 200, body: JSON.stringify(recoveryRequestsGranule1) });
-    fakeListRequests.onCall(1)
-      .returns({ statusCode: 200, body: JSON.stringify(recoveryRequestsGranule2) });
+    const recoveryRequestsGranule2 = recoveryRequestFactory({
+      granuleId: granuleIds[1], files: filesForGranule2,
+    });
+
+    fakePostToOrca.onCall(0)
+      .returns({ statusCode: 200, body: recoveryRequestsGranule1 });
+    fakePostToOrca.onCall(1)
+      .returns({ statusCode: 200, body: recoveryRequestsGranule2 });
 
     const updatedResponse = await orca.addOrcaRecoveryStatus(inputResponse);
     const granules = updatedResponse.results;

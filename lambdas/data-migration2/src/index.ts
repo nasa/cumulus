@@ -32,6 +32,15 @@ export const handler = async (
       migrationSummary.executions = executionsMigrationResult;
     }
 
+    if (migrationsToRun.includes('pdrs')) {
+      const pdrsMigrationResult = await migratePdrs(
+        env,
+        knex,
+        event.pdrMigrationParams
+      );
+      migrationSummary.pdrs = pdrsMigrationResult;
+    }
+
     if (migrationsToRun.includes('granules')) {
       const { granulesResult, filesResult } = await migrateGranulesAndFiles(
         env,
@@ -40,15 +49,6 @@ export const handler = async (
       );
       migrationSummary.granules = granulesResult;
       migrationSummary.files = filesResult;
-    }
-
-    if (migrationsToRun.includes('pdrs')) {
-      const pdrsMigrationResult = await migratePdrs(
-        env,
-        knex,
-        event.pdrMigrationParams
-      );
-      migrationSummary.pdrs = pdrsMigrationResult;
     }
 
     const summary: MigrationSummary = {

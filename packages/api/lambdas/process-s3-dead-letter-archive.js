@@ -5,6 +5,7 @@ const log = require('@cumulus/common/log');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
+const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
 
@@ -29,6 +30,8 @@ async function processDeadLetterArchive({
 }) {
   let listObjectsResponse;
   let continuationToken;
+  let allSuccessKeys = [];
+  const allFailedKeys = [];
   /* eslint-disable no-await-in-loop */
   do {
     listObjectsResponse = await s3().listObjectsV2({
@@ -41,19 +44,25 @@ async function processDeadLetterArchive({
     const deadLetterObjects = listObjectsResponse.Contents;
     const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
-        const cumulusMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
+        const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
+        const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
         try {
           await writeRecordsFunction({ cumulusMessage, knex });
           return deadLetterObject.Key;
         } catch (error) {
           log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
+          allFailedKeys.push(deadLetterObject.Key);
           throw error;
         }
       }
     ));
-    const keysToDelete = promises.filter(
+
+    const successfullyProcessedKeys = promises.filter(
       (prom) => prom.status === 'fulfilled'
-    ).map((prom) => ({ Key: prom.value }));
+    ).map((prom) => prom.value);
+    allSuccessKeys = allSuccessKeys.concat(successfullyProcessedKeys);
+
+    const keysToDelete = successfullyProcessedKeys.map((key) => ({ Key: key }));
     if (keysToDelete.length > 0) {
       await s3().deleteObjects({
         Bucket: bucket,
@@ -64,6 +73,11 @@ async function processDeadLetterArchive({
     }
   } while (listObjectsResponse.IsTruncated);
   /* eslint-enable no-await-in-loop */
+  // Lambda run as an async operation must have a return
+  return {
+    processingSucceededKeys: allSuccessKeys,
+    processingFailedKeys: allFailedKeys,
+  };
 }
 
 /**

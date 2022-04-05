@@ -1,15 +1,22 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { BasePgModel } from './base';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresCollection, PostgresCollectionRecord } from '../types/collection';
 
 class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollectionRecord> {
   constructor() {
     super({
-      tableName: tableNames.collections,
+      tableName: TableNames.collections,
     });
+  }
+
+  create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    item: PostgresCollection
+  ) {
+    return super.create(knexOrTransaction, item, '*');
   }
 
   upsert(
@@ -20,7 +27,7 @@ class CollectionPgModel extends BasePgModel<PostgresCollection, PostgresCollecti
       .insert(collection)
       .onConflict(['name', 'version'])
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
   }
 }
 

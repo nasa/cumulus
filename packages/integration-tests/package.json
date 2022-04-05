@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "9.2.0",
+  "version": "11.0.0",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
@@ -20,6 +20,7 @@
   "scripts": {
     "build": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack",
     "build-docs": "../../node_modules/.bin/jsdoc2md --template README.hbs Collections.js Executions.js Granules.js Providers.js Rules.js > README.md",
+    "clean": "rm -rf dist",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test"
@@ -27,15 +28,16 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "9.2.0",
-    "@cumulus/api-client": "9.2.0",
-    "@cumulus/aws-client": "9.2.0",
-    "@cumulus/cmr-client": "9.2.0",
-    "@cumulus/cmrjs": "9.2.0",
-    "@cumulus/common": "9.2.0",
-    "@cumulus/launchpad-auth": "9.2.0",
-    "@cumulus/message": "9.2.0",
-    "@cumulus/oauth-client": "9.2.0",
+    "@cumulus/api": "11.0.0",
+    "@cumulus/api-client": "11.0.0",
+    "@cumulus/aws-client": "11.1.0-alpha1",
+    "@cumulus/cmr-client": "11.0.0",
+    "@cumulus/cmrjs": "11.0.0",
+    "@cumulus/common": "11.0.0",
+    "@cumulus/launchpad-auth": "11.0.0",
+    "@cumulus/logger": "11.0.0",
+    "@cumulus/message": "11.0.0",
+    "@cumulus/oauth-client": "11.0.0",
     "aws-sdk": "^2.585.0",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
@@ -46,8 +48,8 @@
     "handlebars": "^4.0.11",
     "js-yaml": "^3.13.1",
     "jsonwebtoken": "^8.5.1",
-    "lodash": "^4.17.20",
-    "moment": "2.27.0",
+    "lodash": "^4.17.21",
+    "moment": "2.29.1",
     "p-map": "^2.1.0",
     "p-retry": "^2.0.0",
     "p-wait-for": "^2.0.1",

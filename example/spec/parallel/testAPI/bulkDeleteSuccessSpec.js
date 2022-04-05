@@ -3,17 +3,20 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const granules = require('@cumulus/api-client/granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { ecs } = require('@cumulus/aws-client/services');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const {
+  s3PutObject,
+  getJsonS3Object,
+  waitForObjectToExist,
+} = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
-  api: apiTestUtils,
   getClusterArn,
 } = require('@cumulus/integration-tests');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
@@ -35,6 +38,7 @@ describe('POST /granules/bulkDelete', () => {
   let config;
   let clusterArn;
   let prefix;
+  let timestampBeforeCall;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -102,6 +106,17 @@ describe('POST /granules/bulkDelete', () => {
 
         // Ingest the granule the first time
         const testExecutionId = randomId('test-execution-');
+        const granuleToDelete = {
+          granuleId,
+          dataType: collection.name,
+          version: collection.version,
+          files: [
+            {
+              name: filename,
+              path: sourcePath,
+            },
+          ],
+        };
         ingestGranuleRule = await createOneTimeRule(
           prefix,
           {
@@ -113,19 +128,7 @@ describe('POST /granules/bulkDelete', () => {
             provider: provider.id,
             payload: {
               testExecutionId,
-              granules: [
-                {
-                  granuleId,
-                  dataType: collection.name,
-                  version: collection.version,
-                  files: [
-                    {
-                      name: filename,
-                      path: sourcePath,
-                    },
-                  ],
-                },
-              ],
+              granules: [granuleToDelete],
             },
           }
         );
@@ -137,7 +140,10 @@ describe('POST /granules/bulkDelete', () => {
             const executionId = get(execution, 'originalPayload.testExecutionId');
             return executionId === ingestGranuleRule.payload.testExecutionId;
           },
-          { timestamp__from: ingestTime },
+          {
+            timestamp__from: ingestTime,
+            'originalPayload.testExecutionId': ingestGranuleRule.payload.testExecutionId,
+          },
           { timeout: 30 }
         );
 
@@ -152,6 +158,7 @@ describe('POST /granules/bulkDelete', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
 
+        timestampBeforeCall = Date.now();
         postBulkDeleteResponse = await granules.bulkDeleteGranules(
           {
             prefix,
@@ -165,13 +172,13 @@ describe('POST /granules/bulkDelete', () => {
         postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
         // Query the AsyncOperation API to get the task ARN
-        const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation(
+        const asyncOperation = await getAsyncOperation(
           {
             prefix,
-            id: postBulkDeleteBody.id,
+            asyncOperationId: postBulkDeleteBody.id,
           }
         );
-        ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
+        ({ taskArn } = asyncOperation);
         beforeAllSucceeded = true;
       } catch (error) {
         console.log(error);
@@ -224,21 +231,18 @@ describe('POST /granules/bulkDelete', () => {
     it('returns an Async Operation Id', () => {
       expect(beforeAllSucceeded).toBeTrue();
       expect(isValidAsyncOperationId(postBulkDeleteBody.id)).toBeTrue();
+      console.log(`Bulk delete async operation id: ${postBulkDeleteBody.id}`);
     });
 
     it('creates an AsyncOperation', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
-      const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+      const asyncOperation = await getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id,
+        asyncOperationId: postBulkDeleteBody.id,
       });
 
-      expect(getAsyncOperationResponse.statusCode).toEqual(200);
-
-      const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-      expect(getAsyncOperationBody.id).toEqual(postBulkDeleteBody.id);
+      expect(asyncOperation.id).toEqual(postBulkDeleteBody.id);
     });
 
     it('runs an ECS task', async () => {
@@ -264,24 +268,45 @@ describe('POST /granules/bulkDelete', () => {
         }
       ).promise();
 
-      const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+      const asyncOperation = await getAsyncOperation({
         prefix,
-        id: postBulkDeleteBody.id,
+        asyncOperationId: postBulkDeleteBody.id,
       });
-
-      const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-      expect(getAsyncOperationResponse.statusCode).toEqual(200);
-      expect(getAsyncOperationBody.status).toEqual('SUCCEEDED');
+      expect(asyncOperation.status).toEqual('SUCCEEDED');
 
       let output;
       try {
-        output = JSON.parse(getAsyncOperationBody.output);
+        output = JSON.parse(asyncOperation.output);
       } catch (error) {
-        throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+        throw new SyntaxError(`asyncOperation.output is not valid JSON: ${asyncOperation.output}`);
       }
 
       expect(output).toEqual({ deletedGranules: [granuleId] });
+    });
+
+    it('publishes a record to the granules reporting SNS topic on behalf of the deleted granule', async () => {
+      expect(beforeAllSucceeded).toBeTrue();
+      const granuleKey = `${config.stackName}/test-output/${granuleId}-${ingestedGranule.status}-Delete.output`;
+      await expectAsync(waitForObjectToExist({
+        bucket: config.bucket,
+        key: granuleKey,
+      })).toBeResolved();
+      const savedEvent = await getJsonS3Object(config.bucket, granuleKey);
+      const message = JSON.parse(savedEvent.Records[0].Sns.Message);
+
+      const expectedGranuleAfterDeletion = {
+        ...ingestedGranule,
+        published: false,
+        updatedAt: message.record.updatedAt,
+        productionDateTime: message.record.productionDateTime,
+        beginningDateTime: message.record.beginningDateTime,
+        lastUpdateDateTime: message.record.lastUpdateDateTime,
+      };
+      delete expectedGranuleAfterDeletion.cmrLink;
+
+      expect(message.event).toEqual('Delete');
+      expect(message.record).toEqual(expectedGranuleAfterDeletion);
+      expect(message.deletedAt).toBeGreaterThan(timestampBeforeCall);
     });
   });
 });

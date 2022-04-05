@@ -59,6 +59,11 @@ test.serial('The publish-executions Lambda function takes a DynamoDB stream even
   await handler(event);
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  t.teardown(
+    async () => await Promise.all(Messages.map(
+      ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+    ))
+  );
 
   t.is(Messages.length, 1);
 
@@ -100,6 +105,11 @@ test.serial('The publish-executions Lambda function takes a DynamoDB stream even
     MaxNumberOfMessages: 2,
     WaitTimeSeconds: 10,
   }).promise();
+  t.teardown(
+    async () => await Promise.all(Messages.map(
+      ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
+    ))
+  );
 
   t.is(Messages.length, 2);
 });

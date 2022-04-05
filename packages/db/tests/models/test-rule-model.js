@@ -6,9 +6,8 @@ const {
   fakeRuleRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `rule_${cryptoRandomString({ length: 10 })}`;
 
@@ -70,5 +69,41 @@ test('RulePgModel.upsert() overwrites a rule record', async (t) => {
       name: ruleRecord.name,
     }),
     updatedRule
+  );
+});
+
+test('RulePgModel.upsert() overwrites a rule record and deletes fields', async (t) => {
+  const {
+    knex,
+    rulePgModel,
+    ruleRecord,
+  } = t.context;
+
+  ruleRecord.queue_url = 'queue-url';
+
+  await rulePgModel.create(knex, ruleRecord);
+  const initialRule = await rulePgModel.get(knex, {
+    name: ruleRecord.name,
+  });
+  t.is(initialRule.queue_url, 'queue-url');
+
+  const ruleUpdates = {
+    ...ruleRecord,
+    queue_url: undefined,
+    value: cryptoRandomString({ length: 5 }),
+  };
+
+  await rulePgModel.upsert(knex, ruleUpdates);
+
+  const actualRule = await rulePgModel.get(knex, {
+    name: ruleRecord.name,
+  });
+
+  t.like(
+    actualRule,
+    {
+      ...ruleUpdates,
+      queue_url: null,
+    }
   );
 });

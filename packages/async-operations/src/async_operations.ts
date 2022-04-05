@@ -1,34 +1,48 @@
-import { ECS } from 'aws-sdk';
+import { ECS, Lambda } from 'aws-sdk';
+import { Knex } from 'knex';
+
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
 import {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
   AsyncOperationPgModel,
+  createRejectableTransaction,
 } from '@cumulus/db';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
 import type { PromiseResult } from 'aws-sdk/lib/request';
 
-import type { AsyncOperationModelClass } from './types';
+import type {
+  AsyncOperationModelClass,
+  AsyncOperationPgModelObject,
+} from './types';
 
-const { EcsStartTaskError } = require('@cumulus/errors');
+const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
+const {
+  indexAsyncOperation,
+} = require('@cumulus/es-client/indexer');
+const {
+  Search,
+} = require('@cumulus/es-client/search');
 
 type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
 
-export const getLambdaEnvironmentVariables = async (
+export const getLambdaConfiguration = async (
   functionName: string
-): Promise<EnvironmentVariables[]> => {
-  const lambdaConfig = await lambda().getFunctionConfiguration({
-    FunctionName: functionName,
-  }).promise();
+): Promise<Lambda.FunctionConfiguration> => lambda().getFunctionConfiguration({
+  FunctionName: functionName,
+}).promise();
 
-  return Object.entries(lambdaConfig?.Environment?.Variables ?? {}).map((obj) => ({
+export const getLambdaEnvironmentVariables = (
+  configuration: Lambda.FunctionConfiguration
+): EnvironmentVariables[] => Object.entries(configuration?.Environment?.Variables ?? {}).map(
+  (obj) => ({
     name: obj[0],
     value: obj[1],
-  }));
-};
+  })
+);
 
 /**
  * Start an ECS task for the async operation.
@@ -36,6 +50,8 @@ export const getLambdaEnvironmentVariables = async (
  * @param {Object} params
  * @param {string} params.asyncOperationTaskDefinition - ARN for the task definition
  * @param {string} params.cluster - ARN for the ECS cluster to use for the task
+ * @param {string} params.callerlambdaName
+ *   Environment variable for Lambda name that is initiating the ECS task
  * @param {string} params.lambdaName
  *   Environment variable for Lambda name that will be run by the ECS task
  * @param {string} params.id - the Async operation ID
@@ -51,6 +67,7 @@ export const getLambdaEnvironmentVariables = async (
 export const startECSTask = async ({
   asyncOperationTaskDefinition,
   cluster,
+  callerLambdaName,
   lambdaName,
   id,
   payloadBucket,
@@ -60,6 +77,7 @@ export const startECSTask = async ({
 }: {
   asyncOperationTaskDefinition: string,
   cluster: string,
+  callerLambdaName: string,
   lambdaName: string,
   id: string,
   payloadBucket: string,
@@ -75,15 +93,25 @@ export const startECSTask = async ({
   ] as EnvironmentVariables[];
   let taskVars = envVars;
 
+  const callerLambdaConfig = await getLambdaConfiguration(callerLambdaName);
+
   if (useLambdaEnvironmentVariables) {
-    const lambdaVars = await getLambdaEnvironmentVariables(lambdaName);
+    const lambdaConfig = await getLambdaConfiguration(lambdaName);
+    const lambdaVars = getLambdaEnvironmentVariables(lambdaConfig);
     taskVars = envVars.concat(lambdaVars);
   }
 
   return ecs().runTask({
     cluster,
     taskDefinition: asyncOperationTaskDefinition,
-    launchType: 'EC2',
+    launchType: 'FARGATE',
+    networkConfiguration: {
+      awsvpcConfiguration: {
+        subnets: callerLambdaConfig?.VpcConfig?.SubnetIds ?? [],
+        assignPublicIp: 'DISABLED',
+        securityGroups: callerLambdaConfig?.VpcConfig?.SecurityGroupIds ?? [],
+      },
+    },
     overrides: {
       containerOverrides: [
         {
@@ -93,6 +121,53 @@ export const startECSTask = async ({
       ],
     },
   }).promise();
+};
+
+export const createAsyncOperation = async (
+  params: {
+    createObject: ApiAsyncOperation,
+    stackName: string,
+    systemBucket: string,
+    dynamoTableName: string,
+    knexConfig?: NodeJS.ProcessEnv,
+    esClient?: object,
+    asyncOperationPgModel?: AsyncOperationPgModelObject
+  },
+  AsyncOperation: AsyncOperationModelClass
+): Promise<Partial<ApiAsyncOperation>> => {
+  const {
+    createObject,
+    stackName,
+    systemBucket,
+    dynamoTableName,
+    knexConfig = process.env,
+    esClient = await Search.es(),
+    asyncOperationPgModel = new AsyncOperationPgModel(),
+  } = params;
+
+  const asyncOperationModel = new AsyncOperation({
+    stackName,
+    systemBucket,
+    tableName: dynamoTableName,
+  });
+
+  const knex = await getKnexClient({ env: knexConfig });
+  let createdAsyncOperation: ApiAsyncOperation | undefined;
+
+  try {
+    return await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
+      const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
+      await asyncOperationPgModel.create(trx, pgCreateObject);
+      createdAsyncOperation = await asyncOperationModel.create(createObject);
+      await indexAsyncOperation(esClient, createObject, process.env.ES_INDEX);
+      return createdAsyncOperation;
+    });
+  } catch (error) {
+    if (createdAsyncOperation) {
+      await asyncOperationModel.delete({ id: createdAsyncOperation.id });
+    }
+    throw error;
+  }
 };
 
 /**
@@ -106,6 +181,7 @@ export const startECSTask = async ({
  * @param {string} params.dynamoTableName - the dynamo async operations table to
  * write records to
  * @param {Object} params.knexConfig - Object with Knex configuration keys
+ * @param {string} params.callerLambdaName - the name of the Lambda initiating the ECS task
  * @param {string} params.lambdaName - the name of the Lambda task to be run
  * @param {string} params.operationType - the type of async operation to run
  * @param {Object|Array} params.payload - the event to be passed to the lambda task.
@@ -120,20 +196,23 @@ export const startECSTask = async ({
  * @returns {Promise<Object>} - an AsyncOperation record
  * @memberof AsyncOperation
  */
-export const startAsyncOperation = async (params: {
-  asyncOperationTaskDefinition: string,
-  cluster: string,
-  description: string,
-  dynamoTableName: string,
-  knexConfig?: NodeJS.ProcessEnv,
-  lambdaName: string,
-  operationType: AsyncOperationType,
-  payload: unknown,
-  stackName: string,
-  systemBucket: string,
-  useLambdaEnvironmentVariables?: boolean,
-  startEcsTaskFunc?: () => StartEcsTaskReturnType
-}, AsyncOperation: AsyncOperationModelClass
+export const startAsyncOperation = async (
+  params: {
+    asyncOperationTaskDefinition: string,
+    cluster: string,
+    description: string,
+    dynamoTableName: string,
+    knexConfig?: NodeJS.ProcessEnv,
+    callerLambdaName: string,
+    lambdaName: string,
+    operationType: AsyncOperationType,
+    payload: unknown,
+    stackName: string,
+    systemBucket: string,
+    useLambdaEnvironmentVariables?: boolean,
+    startEcsTaskFunc?: () => StartEcsTaskReturnType
+  },
+  AsyncOperation: AsyncOperationModelClass
 ): Promise<Partial<ApiAsyncOperation>> => {
   const {
     description,
@@ -142,9 +221,14 @@ export const startAsyncOperation = async (params: {
     systemBucket,
     stackName,
     dynamoTableName,
+    callerLambdaName,
     knexConfig = process.env,
     startEcsTaskFunc = startECSTask,
   } = params;
+
+  if (!callerLambdaName) {
+    throw new MissingRequiredArgument(`callerLambdaName must be specified to start new async operation, received: ${callerLambdaName}`);
+  }
 
   const id = uuidv4();
   // Store the payload to S3
@@ -171,28 +255,22 @@ export const startAsyncOperation = async (params: {
     );
   }
 
-  const asyncOperationModel = new AsyncOperation({
-    stackName,
-    systemBucket,
-    tableName: dynamoTableName,
-  });
-  const asyncOperationPgModel = new AsyncOperationPgModel();
-
-  const knex = await getKnexClient({ env: knexConfig });
-  return knex.transaction(async (trx) => {
-    const createObject: ApiAsyncOperation = {
-      id,
-      status: 'RUNNING',
-      taskArn: runTaskResponse?.tasks?.[0].taskArn,
-      description,
-      operationType,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
-
-    await asyncOperationPgModel.create(trx, pgCreateObject);
-    return asyncOperationModel.create(createObject);
-  });
+  return createAsyncOperation(
+    {
+      createObject: {
+        id,
+        status: 'RUNNING',
+        taskArn: runTaskResponse?.tasks?.[0].taskArn,
+        description,
+        operationType,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      },
+      stackName,
+      systemBucket,
+      dynamoTableName,
+      knexConfig,
+    },
+    AsyncOperation
+  );
 };

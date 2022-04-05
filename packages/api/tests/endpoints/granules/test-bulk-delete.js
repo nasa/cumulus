@@ -9,7 +9,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const {
@@ -24,6 +24,9 @@ let jwtAuthToken;
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
+const { bulkDelete } = require('../../../endpoints/granules');
+const { buildFakeExpressResponse } = require('../utils');
+
 test.before(async () => {
   process.env.AsyncOperationsTable = randomString();
   process.env.AsyncOperationTaskDefinition = randomString();
@@ -34,6 +37,7 @@ test.before(async () => {
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
   process.env.GranulesTable = randomString();
+  process.env.granule_sns_topic_arn = randomString();
   process.env.METRICS_ES_HOST = randomString();
   process.env.METRICS_ES_USER = randomString();
   process.env.METRICS_ES_PASS = randomString();
@@ -46,6 +50,7 @@ test.before(async () => {
   process.env.launchpad_api = randomString();
   process.env.launchpad_certificate = randomString();
   process.env.launchpad_passphrase_secret_name = randomString();
+  process.env.ES_HOST = randomString();
 
   await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
 
@@ -114,6 +119,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_provider: process.env.cmr_provider,
       cmr_username: process.env.cmr_username,
       GranulesTable: process.env.GranulesTable,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       launchpad_api: process.env.launchpad_api,
       launchpad_certificate: process.env.launchpad_certificate,
       launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -122,11 +128,38 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       stackName: process.env.stackName,
       system_bucket: process.env.system_bucket,
+      ES_HOST: process.env.ES_HOST,
     },
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
+});
+
+test.serial('bulkDelete() uses correct caller lambda function name', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
+
+  const body = {
+    ids: expectedIds,
+    forceRemoveFromCmr: true,
+  };
+
+  const functionName = randomId('lambda');
+
+  await bulkDelete(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+      body,
+    },
+    buildFakeExpressResponse()
+  );
+
+  t.is(asyncOperationStartStub.getCall(0).firstArg.callerLambdaName, functionName);
 });
 
 test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and ES query', async (t) => {
@@ -170,6 +203,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_provider: process.env.cmr_provider,
       cmr_username: process.env.cmr_username,
       GranulesTable: process.env.GranulesTable,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       launchpad_api: process.env.launchpad_api,
       launchpad_certificate: process.env.launchpad_certificate,
       launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -178,6 +212,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       stackName: process.env.stackName,
       system_bucket: process.env.system_bucket,
+      ES_HOST: process.env.ES_HOST,
     },
   });
   Object.keys(payload.envVars).forEach((envVarKey) => {

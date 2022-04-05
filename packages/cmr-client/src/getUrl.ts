@@ -22,12 +22,13 @@ export function getCmrHost({
     return cmrHost;
   }
   switch (cmrEnvironment) {
+    case 'PROD':
     case 'OPS':
-      return 'cmr.earthdata.nasa.gov';
+      return 'https://cmr.earthdata.nasa.gov';
     case 'UAT':
-      return 'cmr.uat.earthdata.nasa.gov';
+      return 'https://cmr.uat.earthdata.nasa.gov';
     case 'SIT':
-      return 'cmr.sit.earthdata.nasa.gov';
+      return 'https://cmr.sit.earthdata.nasa.gov';
     default:
       throw new TypeError(`Invalid CMR environment: ${cmrEnvironment}`);
   }
@@ -40,7 +41,7 @@ export function getBucketAccessUrl({
   host?: string,
   cmrEnv?: string,
 }): string {
-  return `https://${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/access-control/s3-buckets/`;
+  return `${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/access-control/s3-buckets/`;
 }
 
 export function getIngestUrl({
@@ -52,7 +53,7 @@ export function getIngestUrl({
   cmrEnv?: string,
   provider: string,
 }): string {
-  return `https://${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/ingest/providers/${provider}/`;
+  return `${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/ingest/providers/${provider}/`;
 }
 
 export function getSearchUrl({
@@ -62,7 +63,7 @@ export function getSearchUrl({
   host?: string,
   cmrEnv?: string,
 } = {}): string {
-  return `https://${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/search/`;
+  return `${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/search/`;
 }
 
 export function getTokenUrl({
@@ -72,7 +73,7 @@ export function getTokenUrl({
   host?: string,
   cmrEnv?: string,
 } = {}): string {
-  return `https://${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/legacy-services/rest/tokens`;
+  return `${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/legacy-services/rest/tokens`;
 }
 
 export function getValidateUrl({
@@ -84,5 +85,5 @@ export function getValidateUrl({
   cmrEnv?: string,
   provider: string,
 }): string {
-  return `https://${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/ingest/providers/${provider}/validate/`;
+  return `${getCmrHost({ cmrEnvironment: cmrEnv, cmrHost: host })}/ingest/providers/${provider}/validate/`;
 }

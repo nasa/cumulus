@@ -4,7 +4,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isMatch = require('lodash/isMatch');
 const replace = require('lodash/replace');
-const { getJsonS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   getQueueUrlByName,
 } = require('@cumulus/aws-client/SQS');
@@ -34,8 +34,8 @@ const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 
 const {
   waitForApiRecord,
+  waitForApiStatus,
 } = require('../../helpers/apiUtils');
-
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -134,8 +134,8 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     record.product.files[0].uri = replace(
       record.product.files[0].uri,
-      /cumulus-test-data\/pdrs/g,
-      testDataFolder
+      /<replace-bucket>\/cumulus-test-data\/pdrs/g,
+      `${testConfig.bucket}/${testDataFolder}`
     );
     record.provider += testSuffix;
     record.collection += testSuffix;
@@ -156,9 +156,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           dataType: record.collection,
           files: [
             {
+              source_bucket: testConfig.bucket,
               name: recordFile.name,
               type: recordFile.type,
-              bucket: parseS3Uri(recordFile.uri).Bucket,
+              bucket: testConfig.bucket,
               path: testDataFolder,
               url_path: recordFile.uri,
               size: recordFile.size,
@@ -174,14 +175,18 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     filePrefix = `file-staging/${testConfig.stackName}/${record.collection}___000`;
 
     const fileDataWithFilename = {
-      ...fileData,
-      filename: `s3://${testConfig.buckets.private.name}/${filePrefix}/${recordFile.name}`,
       bucket: testConfig.buckets.private.name,
-      fileStagingDir: filePrefix,
+      key: `${filePrefix}/${recordFile.name}`,
+      fileName: recordFile.name,
       size: fileData.size,
+      type: recordFile.type,
+      checksumType: recordFile.checksumType,
+      checksum: recordFile.checksum,
+      source: `${testDataFolder}/${recordFile.name}`,
     };
 
     expectedSyncGranulesPayload = {
+      granuleDuplicates: {},
       granules: [
         {
           granuleId: granuleId,
@@ -314,15 +319,13 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
       });
 
       it('records both the original and the final payload', async () => {
-        const executionRecord = await waitForApiRecord(
+        const executionRecord = await waitForApiStatus(
           getExecution,
           {
             prefix: testConfig.stackName,
             arn: workflowExecution.executionArn,
           },
-          {
-            status: 'completed',
-          }
+          'completed'
         );
         expect(executionRecord.originalPayload).toEqual(startStep.payload);
         expect(executionRecord.finalPayload).toEqual(endStep.payload);
@@ -343,10 +346,10 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             {
               ...expectedSyncGranulesPayload.granules[0],
               sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+              createdAt: lambdaOutput.payload.granules[0].createdAt,
             },
           ],
         };
-        updatedExpectedPayload.granules[0].files[0].url_path = lambdaOutput.payload.granules[0].files[0].url_path;
         expect(lambdaOutput.payload).toEqual(updatedExpectedPayload);
       });
     });

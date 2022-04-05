@@ -1,14 +1,14 @@
-import { getKnexClient } from '@cumulus/db';
+import {
+  getKnexClient,
+  migrationDir,
+} from '@cumulus/db';
 
-import * as path from 'path';
 export type Command = 'latest' | 'rollback';
 
 export interface HandlerEvent {
   command?: Command,
   env?: NodeJS.ProcessEnv
 }
-
-export const migrationDir = path.join(__dirname, 'migrations');
 
 export const handler = async (event: HandlerEvent): Promise<void> => {
   let knex;

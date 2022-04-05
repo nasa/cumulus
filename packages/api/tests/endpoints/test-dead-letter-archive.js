@@ -15,11 +15,14 @@ const models = require('../../models');
 
 const { app } = require('../../app');
 
+const { postRecoverCumulusMessages } = require('../../endpoints/dead-letter-archive');
+const { buildFakeExpressResponse } = require('./utils');
+
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
   AsyncOperationsTable: randomId('asyncOperationsTable'),
-  system_bucket: randomId('systemBucket'),
+  system_bucket: randomId('system'),
   stackName: randomId('stackName'),
   TOKEN_SECRET: randomId('tokenSecret'),
 };
@@ -38,6 +41,7 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
   const asyncOperationId = randomId('asyncOperationId');
+  t.context.asyncOperationId = asyncOperationId;
   t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
     new Promise((resolve) => resolve({ id: asyncOperationId }))
   );
@@ -71,7 +75,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     .send(body)
     .expect(202);
   // expect a returned async operation ID
-  t.truthy(response.body.id);
+  t.is(response.body.id, t.context.asyncOperationId);
   const {
     lambdaName,
     cluster,
@@ -98,7 +102,7 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     .send({})
     .expect(202);
   // expect a returned async operation ID
-  t.truthy(response.body.id);
+  t.is(response.body.id, t.context.asyncOperationId);
   const {
     lambdaName,
     cluster,
@@ -106,6 +110,39 @@ test.serial('POST /deadLetterArchive/recoverCumulusMessages starts an async-oper
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
+  t.is(lambdaName, process.env.MigrationCountToolLambda);
+  t.is(cluster, process.env.EcsCluster);
+  t.is(description, 'Dead-Letter Processor ECS Run');
+  t.deepEqual(payload, {
+    bucket: undefined,
+    path: undefined,
+  });
+});
+
+test.serial('postRecoverCumulusMessages() uses correct caller lambda function name', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+
+  const functionName = randomId('lambda');
+  await postRecoverCumulusMessages(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+    },
+    buildFakeExpressResponse()
+  );
+
+  const {
+    lambdaName,
+    cluster,
+    description,
+    payload,
+    callerLambdaName,
+  } = asyncOperationStartStub.args[0][0];
+  t.true(asyncOperationStartStub.calledOnce);
+  t.is(callerLambdaName, functionName);
   t.is(lambdaName, process.env.MigrationCountToolLambda);
   t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Dead-Letter Processor ECS Run');

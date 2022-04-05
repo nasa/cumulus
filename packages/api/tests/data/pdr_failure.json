@@ -4,10 +4,10 @@
     "message_source": "sfn",
     "workflow_start_time": 1519154426234,
     "execution_name": "c807fea5-8a27-4084-9f37-93d610a7ebfe",
-    "system_bucket": "cumulus-devseed-internal"
+    "system_bucket": "cumulus-test-sandbox-internal"
   },
   "meta": {
-    "template": "s3://cumulus-devseed-internal/lpdaac-cumulus/workflow_template.json",
+    "template": "s3://cumulus-test-sandbox-internal/lpdaac-cumulus/workflow_template.json",
     "status": "failed",
     "workflow_name": "ParsePdr",
     "queues": {

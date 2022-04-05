@@ -11,10 +11,14 @@ const {
 // https://www.postgresql.org/docs/10/errcodes-appendix.html
 const isPostgresValidationError = (error) => ['22', '23'].includes((error.code || '').substring(0, 2));
 
+const isDynamoValidationException = (error) => error.name === 'ValidationException';
+
 const isBadRequestError = (error) =>
   error.name === 'SchemaValidationError'
+  || error.name === 'ValidationException'
   || error instanceof ValidationError
-  || isPostgresValidationError(error);
+  || isPostgresValidationError(error)
+  || isDynamoValidationException(error);
 
 const isResourceNotFoundException = (error) =>
   error.code === 'ResourceNotFoundException';

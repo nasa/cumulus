@@ -4,8 +4,9 @@ const cryptoRandomString = require('crypto-random-string');
 
 const test = require('ava');
 const sinon = require('sinon');
-
 const omit = require('lodash/omit');
+
+const { v4: uuidv4 } = require('uuid');
 const { ecs, lambda, s3 } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 // eslint-disable-next-line node/no-unpublished-require
@@ -16,13 +17,20 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   AsyncOperationPgModel,
+  migrationDir,
 } = require('@cumulus/db');
-const { EcsStartTaskError } = require('@cumulus/errors');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../../lambdas/db-migration');
-
-const { getLambdaEnvironmentVariables, startAsyncOperation } = require('../dist/async_operations');
+const { EcsStartTaskError, MissingRequiredArgument } = require('@cumulus/errors');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
+const {
+  getLambdaConfiguration,
+  getLambdaEnvironmentVariables,
+  createAsyncOperation,
+  startAsyncOperation,
+} = require('../dist/async_operations');
 
 const dynamoTableName = 'notUsedDynamoTableName';
 
@@ -46,6 +54,15 @@ test.before(async (t) => {
   systemBucket = randomString();
   await s3().createBucket({ Bucket: systemBucket }).promise();
 
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+  t.context.esAsyncOperationsClient = new Search(
+    {},
+    'asyncOperation',
+    t.context.esIndex
+  );
+
   // Set up the mock ECS client
   ecsClient = ecs();
   ecsClient.runTask = (params) => {
@@ -58,23 +75,51 @@ test.before(async (t) => {
     };
   };
 
-  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
-    promise: () => Promise.resolve({
-      Environment: {
-        Variables: {
-          ES_HOST: 'es-host',
-          AsyncOperationsTable: 'async-operations-table',
-        },
+  t.context.functionConfig = {
+    Environment: {
+      Variables: {
+        ES_HOST: 'es-host',
+        AsyncOperationsTable: 'async-operations-table',
       },
-    }),
+    },
+  };
+
+  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
+    promise: () => Promise.resolve(t.context.functionConfig),
   });
 
+  t.context.createSpy = sinon.spy((record) => Promise.resolve(record));
+  t.context.deleteSpy = sinon.spy(() => true);
+  t.context.stubbedAsyncOperationsModel = class {
+    create = t.context.createSpy;
+
+    delete = t.context.deleteSpy;
+  };
+
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
+});
+
+test.beforeEach((t) => {
+  t.context.id = uuidv4();
+  t.context.createObject = {
+    id: t.context.id,
+    status: 'RUNNING',
+    taskArn: cryptoRandomString({ length: 5 }),
+    description: 'testing',
+    operationType: 'ES Index',
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+});
+
+test.afterEach.always((t) => {
+  t.context.createSpy.resetHistory();
 });
 
 test.after.always(async (t) => {
   sinon.restore();
   await recursivelyDeleteS3Bucket(systemBucket);
+  await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -98,6 +143,7 @@ test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
@@ -130,6 +176,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
 
   const asyncOperationTaskDefinition = randomString();
   const cluster = randomString();
+  const callerLambdaName = randomString();
   const lambdaName = randomString();
   const payload = { x: randomString() };
   const stackName = randomString();
@@ -138,6 +185,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
     asyncOperationTaskDefinition,
     cluster,
     lambdaName,
+    callerLambdaName,
     description: randomString(),
     operationType: 'ES Index',
     payload,
@@ -150,7 +198,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
 
   t.is(stubbedEcsRunTaskParams.cluster, cluster);
   t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
-  t.is(stubbedEcsRunTaskParams.launchType, 'EC2');
+  t.is(stubbedEcsRunTaskParams.launchType, 'FARGATE');
 
   const environmentOverrides = {};
   stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
@@ -178,6 +226,7 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
   await t.throwsAsync(startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
@@ -193,10 +242,6 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
 });
 
 test('startAsyncOperation calls Dynamo model create method', async (t) => {
-  const createSpy = sinon.spy(() => true);
-  const stubbedAsyncOperationsModel = class {
-    create = createSpy;
-  };
   const stackName = randomString();
   const description = randomString();
   const taskArn = randomString();
@@ -208,6 +253,7 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
   const result = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description,
     operationType: 'ES Index',
@@ -216,9 +262,9 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
     dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  }, stubbedAsyncOperationsModel);
+  }, t.context.stubbedAsyncOperationsModel);
 
-  const spyCall = createSpy.getCall(0).args[0];
+  const spyCall = t.context.createSpy.getCall(0).args[0];
 
   const expected = {
     description,
@@ -227,12 +273,15 @@ test('startAsyncOperation calls Dynamo model create method', async (t) => {
     taskArn,
   };
 
-  t.true(result);
+  t.like(result, {
+    ...expected,
+    id: spyCall.id,
+  });
   t.deepEqual(omit(spyCall, ['id', 'createdAt', 'updatedAt']), expected);
   t.truthy(spyCall.id);
 });
 
-test.serial('The startAsyncOperation writes records to the databases', async (t) => {
+test.serial('The startAsyncOperation writes records to all data stores', async (t) => {
   const createSpy = sinon.spy((createObject) => createObject);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -250,6 +299,7 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description,
     operationType,
@@ -277,10 +327,19 @@ test.serial('The startAsyncOperation writes records to the databases', async (t)
     omit(asyncOperationPgRecord, omitList),
     translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
   );
+  const esRecord = await t.context.esAsyncOperationsClient.get(id);
+  t.deepEqual(
+    await t.context.esAsyncOperationsClient.get(id),
+    {
+      ...asyncOpDynamoSpyRecord,
+      _id: esRecord._id,
+      timestamp: esRecord.timestamp,
+    }
+  );
   t.deepEqual(omit(asyncOpDynamoSpyRecord, ['createdAt', 'updatedAt']), omit(expected, ['createdAt', 'updatedAt']));
 });
 
-test.serial('The startAsyncOperation writes records to the databases with correct timestamps', async (t) => {
+test.serial('The startAsyncOperation writes records with correct timestamps', async (t) => {
   const createSpy = sinon.spy((createObject) => createObject);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
@@ -298,6 +357,7 @@ test.serial('The startAsyncOperation writes records to the databases with correc
   const { id } = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description,
     operationType,
@@ -315,6 +375,10 @@ test.serial('The startAsyncOperation writes records to the databases with correc
   );
   t.is(asyncOperationPgRecord.created_at.getTime(), asyncOpDynamoSpyRecord.createdAt);
   t.is(asyncOperationPgRecord.updated_at.getTime(), asyncOpDynamoSpyRecord.updatedAt);
+
+  const esRecord = await t.context.esAsyncOperationsClient.get(id);
+  t.is(esRecord.createdAt, asyncOpDynamoSpyRecord.createdAt);
+  t.is(esRecord.updatedAt, asyncOpDynamoSpyRecord.updatedAt);
 });
 
 test.serial('The startAsyncOperation method returns the newly-generated record', async (t) => {
@@ -334,6 +398,7 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
   const results = await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
@@ -347,8 +412,42 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
   t.is(results.taskArn, taskArn);
 });
 
-test('getLambdaEnvironmentVariables returns expected environment variables', async (t) => {
-  const vars = await getLambdaEnvironmentVariables('name');
+test.serial('The startAsyncOperation method throws error if callerLambdaName parameter is missing', async (t) => {
+  const stubbedAsyncOperationsModel = class {
+    create = sinon.stub();
+  };
+
+  stubbedEcsRunTaskParams = {};
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn: randomString() }],
+    failures: [],
+  };
+
+  await t.throwsAsync(
+    startAsyncOperation({
+      asyncOperationTaskDefinition: randomString(),
+      cluster: randomString,
+      lambdaName: randomString,
+      description: randomString(),
+      operationType: 'ES Index',
+      payload: { x: randomString() },
+      stackName: randomString,
+      dynamoTableName: dynamoTableName,
+      knexConfig: knexConfig,
+      systemBucket,
+      useLambdaEnvironmentVariables: true,
+    }, stubbedAsyncOperationsModel),
+    { instanceOf: MissingRequiredArgument }
+  );
+});
+
+test('getLambdaConfiguration returns expected configuration', async (t) => {
+  const config = await getLambdaConfiguration('name');
+  t.deepEqual(config, t.context.functionConfig);
+});
+
+test('getLambdaEnvironmentVariables returns expected environment variables', (t) => {
+  const vars = getLambdaEnvironmentVariables(t.context.functionConfig);
 
   t.deepEqual(new Set(vars), new Set([
     { name: 'ES_HOST', value: 'es-host' },
@@ -372,6 +471,7 @@ test.serial('ECS task params contain lambda environment variables when useLambda
   await startAsyncOperation({
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
+    callerLambdaName: randomString(),
     lambdaName: randomString(),
     description: randomString(),
     operationType: 'ES Index',
@@ -390,4 +490,98 @@ test.serial('ECS task params contain lambda environment variables when useLambda
 
   t.is(environmentOverrides.ES_HOST, 'es-host');
   t.is(environmentOverrides.AsyncOperationsTable, 'async-operations-table');
+});
+
+test.serial('createAsyncOperation() does not write to Elasticsearch/DynamoDB if writing to PostgreSQL fails', async (t) => {
+  const { id, createObject } = t.context;
+
+  const fakeAsyncOpPgModel = {
+    create: () => {
+      throw new Error('something bad');
+    },
+  };
+
+  const createParams = {
+    knex: t.context.testKnex,
+    asyncOperationPgModel: fakeAsyncOpPgModel,
+    createObject,
+  };
+  await t.throwsAsync(
+    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    { message: 'something bad' }
+  );
+
+  t.false(t.context.createSpy.called);
+  const dbRecords = await t.context.asyncOperationPgModel
+    .search(t.context.testKnex, { id });
+  t.is(dbRecords.length, 0);
+  t.false(await t.context.esAsyncOperationsClient.exists(
+    id
+  ));
+});
+
+test.serial('createAsyncOperation() does not write to Elasticsearch/PostgreSQL if writing to DynamoDB fails', async (t) => {
+  const { id, createObject } = t.context;
+
+  const fakeCreate = () => {
+    throw new Error('something bad');
+  };
+  const fakeCreateSpy = sinon.spy(fakeCreate);
+  const deleteSpy = sinon.spy();
+  class fakeAsyncOperationsModel {
+    create(record) {
+      return fakeCreateSpy(record);
+    }
+
+    delete(record) {
+      deleteSpy(record);
+    }
+  }
+
+  const createParams = {
+    knex: t.context.testKnex,
+    createObject,
+  };
+  await t.throwsAsync(
+    createAsyncOperation(createParams, fakeAsyncOperationsModel),
+    { message: 'something bad' }
+  );
+
+  t.true(fakeCreateSpy.threw());
+  // Not called because no record was ever created
+  t.false(deleteSpy.called);
+  const dbRecords = await t.context.asyncOperationPgModel
+    .search(t.context.testKnex, { id });
+  t.is(dbRecords.length, 0);
+  t.false(await t.context.esAsyncOperationsClient.exists(
+    id
+  ));
+});
+
+test.serial('createAsyncOperation() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
+  const { id, createObject } = t.context;
+  const fakeEsClient = {
+    index: () => {
+      throw new Error('ES something bad');
+    },
+  };
+
+  const createParams = {
+    knex: t.context.testKnex,
+    createObject,
+    esClient: fakeEsClient,
+  };
+  await t.throwsAsync(
+    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    { message: 'ES something bad' }
+  );
+
+  t.true(t.context.createSpy.called);
+  t.true(t.context.deleteSpy.calledWith({ id: createObject.id }));
+  const dbRecords = await t.context.asyncOperationPgModel
+    .search(t.context.testKnex, { id });
+  t.is(dbRecords.length, 0);
+  t.false(await t.context.esAsyncOperationsClient.exists(
+    id
+  ));
 });

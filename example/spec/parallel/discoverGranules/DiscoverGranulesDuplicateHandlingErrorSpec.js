@@ -149,13 +149,14 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         { timeout: 30 }
       );
     } catch (error) {
-      beforeAllFailed = true;
-      throw error;
+      console.log('ingestGranuleRule.payload.testExecutionId', ingestGranuleRule.payload.testExecutionId);
+      console.log('discoverGranulesRule.payload.testExecutionId', discoverGranulesRule.payload.testExecutionId);
+      beforeAllFailed = error;
     }
   });
 
   it('fails the DiscoverGranules workflow', async () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllFailed) fail(beforeAllFailed);
     else {
       const execution = await getExecutionWithStatus({
         prefix,

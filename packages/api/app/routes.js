@@ -1,6 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const Logger = require('@cumulus/logger');
 
 const { defaultErrorHandler } = require('./middleware');
 
@@ -29,40 +30,43 @@ const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
 
+const log = new Logger('@cumulus/api/routes');
+
 let token = require('../endpoints/token');
 let { ensureAuthorized } = require('./auth');
 if (process.env.FAKE_AUTH === 'true') {
+  log.warn('Disabling auth for test');
   token = require('./testAuth'); // eslint-disable-line global-require
   ensureAuthorized = token.ensureAuthorized;
 }
 
 // dead letters endpoint
-router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive);
+router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive.router);
 
 //migrationCounts endpoint
-router.use('/migrationCounts', ensureAuthorized, migrationCounts);
+router.use('/migrationCounts', ensureAuthorized, migrationCounts.router);
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections.router);
 
 // granules endpoints
-router.use('/granules', ensureAuthorized, granules);
+router.use('/granules', ensureAuthorized, granules.router);
 
 // granule csv endpoints
 router.use('/granule-csv', ensureAuthorized, granuleCsv);
 
 // provider endpoints
-router.use('/providers', ensureAuthorized, providers);
+router.use('/providers', ensureAuthorized, providers.router);
 
 // pdr endpoints
-router.use('/pdrs', ensureAuthorized, pdrs);
+router.use('/pdrs', ensureAuthorized, pdrs.router);
 
 // rules endpoints
 router.use('/rules', ensureAuthorized, rules.router);
 
 // executions endpoints
 router.use('/executions/status', ensureAuthorized, executionStatus);
-router.use('/executions', ensureAuthorized, executions);
+router.use('/executions', ensureAuthorized, executions.router);
 
 // async operation endpoint
 router.use('/asyncOperations', ensureAuthorized, asyncOperations.router);
@@ -77,10 +81,10 @@ router.use('/logs', ensureAuthorized, logs);
 router.use('/orca', ensureAuthorized, orca);
 
 // reconciliationReports endpoint
-router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports);
+router.use('/reconciliationReports', ensureAuthorized, reconcilliationReports.router);
 
 // replays endpoint
-router.use('/replays', ensureAuthorized, replays);
+router.use('/replays', ensureAuthorized, replays.router);
 
 // schemas endpoint
 router.use('/schemas', ensureAuthorized, schemas);
@@ -97,6 +101,7 @@ router.use('/workflows', ensureAuthorized, workflows);
 
 // OAuth Token endpoints
 if (launchpadProtectedAuth()) {
+  log.info('Using SAML auth');
   // SAML SSO
   router.get('/saml/login', launchpadSaml.login);
   router.post('/saml/auth', launchpadSaml.auth);
@@ -104,6 +109,7 @@ if (launchpadProtectedAuth()) {
   // disabled for now
   router.post('/refresh', launchpadSaml.refreshEndpoint);
 } else {
+  log.info('Using token authentication');
   router.get('/token', token.tokenEndpoint);
   router.post('/refresh', token.refreshEndpoint);
 }

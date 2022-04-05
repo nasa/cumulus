@@ -21,8 +21,6 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString, randomId, randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
 
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
-const { Granule } = require('@cumulus/api/models');
 const {
   addCollections,
   addProviders,
@@ -35,10 +33,16 @@ const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { getCollections } = require('@cumulus/api-client/collections');
-const { getGranule } = require('@cumulus/api-client/granules');
+const {
+  createGranule,
+  getGranule,
+  updateGranule,
+} = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
 
-const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
+const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 const {
   loadConfig,
   uploadTestDataToBucket,
@@ -51,13 +55,16 @@ const { removeCollectionAndAllDependencies } = require('../../helpers/Collection
 const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
-const { waitForModelStatus } = require('../../helpers/apiUtils');
+const { buildAndExecuteWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
+
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
 const onlyCMRCollection = { name: 'L2_HR_PIXC', version: '1' };
 
 const granuleRegex = '^MYD13Q1\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+
+const ingestWithOrcaWorkflowName = 'IngestAndPublishGranuleWithOrca';
 
 async function findProtectedBucket(systemBucket, stackName) {
   const bucketsConfig = new BucketsConfig(
@@ -78,6 +85,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   ];
   await removeCollectionAndAllDependencies({ prefix: config.stackName, collection });
   // populate collections, providers and test data
+  console.log('\nXXX Completed removing collection and all dependencies');
   await Promise.all([
     uploadTestDataToBucket(config.bucket, s3data, testDataFolder),
     addCollections(config.stackName, config.bucket, collectionsDir),
@@ -145,9 +153,12 @@ const createActiveCollection = async (prefix, sourceBucket) => {
 
   ingestGranuleExecutionArn = workflowExecution.executionArn;
 
-  await waitForModelStatus(
-    new Granule(),
-    { granuleId: inputPayload.granules[0].granuleId },
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix,
+      granuleId: inputPayload.granules[0].granuleId,
+    },
     'completed'
   );
 
@@ -163,8 +174,9 @@ const createActiveCollection = async (prefix, sourceBucket) => {
 };
 
 // ingest a granule and publish if requested
-async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true) {
-  const workflowName = publish ? 'IngestAndPublishGranule' : 'IngestGranule';
+async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publish = true, isOrcaIncluded = true) {
+  const ingestAndPublishWorkflow = isOrcaIncluded ? ingestWithOrcaWorkflowName : 'IngestAndPublishGranule';
+  const workflowName = publish ? ingestAndPublishWorkflow : 'IngestGranule';
   const provider = { id: `s3_provider${testSuffix}` };
 
   const inputPayloadJson = fs.readFileSync(
@@ -186,9 +198,12 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
 
   ingestAndPublishGranuleExecutionArns.push(executionArn);
 
-  await waitForModelStatus(
-    new Granule(),
-    { granuleId: inputPayload.granules[0].granuleId },
+  await waitForApiStatus(
+    getGranule,
+    {
+      prefix: config.stackName,
+      granuleId: inputPayload.granules[0].granuleId,
+    },
     'completed'
   );
 
@@ -220,11 +235,12 @@ async function ingestGranuleToCMR(cmrClient) {
 }
 
 // update granule file which matches the regex
-async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
+async function updateGranuleFile(prefix, granule, regex, replacement) {
+  const { granuleId, files } = granule;
   console.log(`update granule file: ${granuleId} regex ${regex} to ${replacement}`);
   let originalGranuleFile;
   let updatedGranuleFile;
-  const updatedFiles = granuleFiles.map((file) => {
+  const updatedFiles = files.map((file) => {
     const updatedFile = cloneDeep(file);
     if (file.fileName.match(regex)) {
       originalGranuleFile = file;
@@ -234,7 +250,13 @@ async function updateGranuleFile(granuleId, granuleFiles, regex, replacement) {
     updatedFile.key = updatedFile.key.replace(regex, replacement);
     return updatedFile;
   });
-  await (new Granule()).update({ granuleId: granuleId }, { files: updatedFiles });
+  await updateGranule({
+    prefix,
+    body: {
+      ...granule,
+      files: updatedFiles,
+    },
+  });
   return { originalGranuleFile, updatedGranuleFile };
 }
 
@@ -285,9 +307,10 @@ describe('When there are granule differences and granule reconciliation is run',
   let dbGranuleId;
   let extraCumulusCollection;
   let extraFileInDb;
+  let extraGranuleInDb;
   let extraS3Object;
   let granuleBeforeUpdate;
-  let granuleModel;
+  let isOrcaIncluded = true;
   let originalGranuleFile;
   let protectedBucket;
   let publishedGranuleId;
@@ -295,15 +318,23 @@ describe('When there are granule differences and granule reconciliation is run',
   let testSuffix;
   let updatedGranuleFile;
   const ingestTime = Date.now() - 1000 * 30;
+  const startTimestamp = moment.utc().format();
 
   beforeAll(async () => {
     try {
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
+
+      // check if orca is deployed
+      const stateMachineName = `${config.stackName}-${ingestWithOrcaWorkflowName}`;
+      isOrcaIncluded = await stateMachineExists(stateMachineName);
+      if (!isOrcaIncluded) {
+        console.log(`${stateMachineName} doesn't exist, will skip the orca reconciliation report tests...`);
+      }
+
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
 
       process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
       process.env.CMR_ENVIRONMENT = 'UAT';
@@ -317,15 +348,6 @@ describe('When there are granule differences and granule reconciliation is run',
       extraS3Object = { Bucket: protectedBucket, Key: randomString() };
       await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
 
-      // Write an extra file to the DynamoDB Files table
-      extraFileInDb = {
-        bucket: protectedBucket,
-        key: randomString(),
-        granuleId: randomString(),
-      };
-      process.env.FilesTable = `${config.stackName}-FilesTable`;
-      await GranuleFilesCache.put(extraFileInDb);
-
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
 
       const testId = createTimestampedTestId(config.stackName, 'CreateReconciliationReport');
@@ -336,15 +358,34 @@ describe('When there are granule differences and granule reconciliation is run',
       await setupCollectionAndTestData(config, testSuffix, testDataFolder);
       console.log('XXX Completed for setupCollectionAndTestData');
 
+      // Write an extra file to the DynamoDB Files table
+      extraFileInDb = {
+        bucket: protectedBucket,
+        key: randomString(),
+      };
+      extraGranuleInDb = {
+        granuleId: randomId('extra-granule'),
+        collectionId,
+        status: 'completed',
+        files: [extraFileInDb],
+      };
+      await createGranule({
+        prefix: config.stackName,
+        body: extraGranuleInDb,
+      });
+
       [
         publishedGranuleId,
         dbGranuleId,
         cmrGranule,
       ] = await Promise.all([
-        ingestAndPublishGranule(config, testSuffix, testDataFolder),
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, true, isOrcaIncluded),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
         ingestGranuleToCMR(cmrClient),
       ]);
+
+      console.log('dbGranuleId', dbGranuleId);
+      console.log('publishedGranuleId', publishedGranuleId);
 
       console.log('XXXXX Waiting for collections in list');
       const collectionIds = [
@@ -362,9 +403,14 @@ describe('When there are granule differences and granule reconciliation is run',
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
-      console.log('XXXXX Waiting for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
-      ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, 'jpg2'));
-      console.log('XXXXX Completed for updateGranuleFile(publishedGranuleId, granuleBeforeUpdate.files, /jpg$/, \'jpg2\'))');
+      console.log(`XXXXX Waiting for updateGranuleFile(${publishedGranuleId})`);
+      ({ originalGranuleFile, updatedGranuleFile } = await updateGranuleFile(
+        config.stackName,
+        granuleBeforeUpdate,
+        /jpg$/,
+        'jpg2'
+      ));
+      console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
         getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
@@ -413,6 +459,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       inventoryReportAsyncOperationId = responseBody.id;
+      console.log('inventoryReportAsyncOperationId', inventoryReportAsyncOperationId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -446,30 +493,32 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.status).toBe('SUCCESS');
     });
 
-    it('generates a report showing cumulus files that are in S3 but not in the DynamoDB Files table', () => {
+    it('generates a filtered report, omitting files that are in S3 but not in the Cumulus files table', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraS3ObjectUri = buildS3Uri(extraS3Object.Bucket, extraS3Object.Key);
-      expect(report.filesInCumulus.onlyInS3).toContain(extraS3ObjectUri);
+      expect(report.filesInCumulus.onlyInS3).not.toContain(extraS3ObjectUri);
+      expect(report.filesInCumulus.onlyInS3.length).toBe(0);
     });
 
-    it('generates a report showing cumulus files that are in the DynamoDB Files table but not in S3', () => {
+    it('generates a report showing cumulus files that are in the Cumulus files table but not in S3', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraFileUri = buildS3Uri(extraFileInDb.bucket, extraFileInDb.key);
-      const extraDbUris = report.filesInCumulus.onlyInDynamoDb.map((i) => i.uri);
+      const extraDbUris = report.filesInCumulus.onlyInDb.map((i) => i.uri);
       expect(extraDbUris).toContain(extraFileUri);
     });
 
-    it('generates a report showing number of collections that are in both Cumulus and CMR', () => {
+    it('generates a filtered report showing requested collections that are in both Cumulus and CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // MYD13Q1___006 is in both Cumulus and CMR
-      expect(report.collectionsInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
+      expect(report.collectionsInCumulusCmr.okCount).toBe(1);
     });
 
-    it('generates a report showing collections that are in Cumulus but not in CMR', () => {
+    it('generates a filtered report showing requested collections that are in Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const extraCollection = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
       expect(report.collectionsInCumulusCmr.onlyInCumulus).toContain(extraCollection);
       expect(report.collectionsInCumulusCmr.onlyInCumulus).not.toContain(collectionId);
+      expect(report.collectionsInCumulusCmr.onlyInCumulus.length).toBe(1);
     });
 
     it('generates a report showing the amount of files that match broken down by Granule', () => {
@@ -488,18 +537,19 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(report.collectionsInCumulusCmr.onlyInCmr).not.toContain(collectionId);
     });
 
-    it('generates a report showing number of granules that are in both Cumulus and CMR', () => {
+    it('generates a filtered report showing number of granules that are in both Cumulus and CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // published granule should in both Cumulus and CMR
-      expect(report.granulesInCumulusCmr.okCount).toBeGreaterThanOrEqual(1);
+      expect(report.granulesInCumulusCmr.okCount).toBe(1);
     });
 
-    it('generates a report showing granules that are in the Cumulus but not in CMR', () => {
+    it('generates a filtered report showing granules that are in the Cumulus but not in CMR', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       // ingested (not published) granule should only in Cumulus
       const cumulusGranuleIds = report.granulesInCumulusCmr.onlyInCumulus.map((gran) => gran.granuleId);
       expect(cumulusGranuleIds).toContain(dbGranuleId);
       expect(cumulusGranuleIds).not.toContain(publishedGranuleId);
+      expect(report.granulesInCumulusCmr.onlyInCumulus.length).toBe(2);
     });
 
     it('generates a report showing granules that are in the CMR but not in Cumulus', () => {
@@ -581,6 +631,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const request = {
         reportType: 'Internal',
         reportName: randomId('InternalReport'),
+        startTimestamp,
         endTimestamp: moment.utc().format(),
         collectionId,
         granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
@@ -593,6 +644,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       internalReportAsyncOperationId = responseBody.id;
+      console.log('internalReportAsyncOperationId', internalReportAsyncOperationId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -684,6 +736,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const request = {
         reportType: 'Granule Inventory',
         reportName: randomId('granuleInventory'),
+        startTimestamp,
         endTimestamp: moment.utc().format(),
         collectionId,
         status: 'completed',
@@ -697,6 +750,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       const responseBody = JSON.parse(response.body);
       granuleInventoryAsyncOpId = responseBody.id;
+      console.log('granuleInventoryAsyncOpId', granuleInventoryAsyncOpId);
       expect(responseBody.operationType).toBe('Reconciliation Report');
     });
 
@@ -779,15 +833,155 @@ describe('When there are granule differences and granule reconciliation is run',
     });
   });
 
+  describe('Create an ORCA Backup Reconciliation Report to monitor ORCA backup discrepancies', () => {
+    // report record in db and report in s3
+    let reportRecord;
+    let report;
+    let orcaReportAsyncOperationId;
+
+    afterAll(async () => {
+      if (!isOrcaIncluded) return;
+      if (orcaReportAsyncOperationId) {
+        await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: orcaReportAsyncOperationId });
+      }
+    });
+
+    it('generates an async operation through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const request = {
+        reportType: 'ORCA Backup',
+        reportName: randomId('OrcaBackupReport'),
+        startTimestamp,
+        endTimestamp: moment.utc().format(),
+        collectionId,
+        granuleId: [publishedGranuleId, dbGranuleId, randomId('granuleId')],
+        provider: [randomId('provider'), `s3_provider${testSuffix}`],
+      };
+      const response = await reconciliationReportsApi.createReconciliationReport({
+        prefix: config.stackName,
+        request,
+      });
+
+      const responseBody = JSON.parse(response.body);
+      orcaReportAsyncOperationId = responseBody.id;
+      console.log('orcaReportAsyncOperationId', orcaReportAsyncOperationId);
+      expect(responseBody.operationType).toBe('Reconciliation Report');
+    });
+
+    it('generates reconciliation report through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      let asyncOperation;
+      try {
+        asyncOperation = await waitForAsyncOperationStatus({
+          id: orcaReportAsyncOperationId,
+          status: 'SUCCEEDED',
+          stackName: config.stackName,
+          retryOptions: {
+            retries: 60,
+            factor: 1.08,
+          },
+        });
+      } catch (error) {
+        fail(error);
+      }
+      reportRecord = JSON.parse(asyncOperation.output);
+    });
+
+    it('fetches a reconciliation report through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
+      report = JSON.parse(reportContent);
+      console.log(`ORCA Backup report ${reportContent}`);
+      expect(report.reportType).toBe('ORCA Backup');
+      expect(report.status).toBe('SUCCESS');
+    });
+
+    it('generates a report showing number of granules that are in Cumulus and ORCA', () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const granules = report.granules;
+      expect(granules).toBeTruthy();
+      expect(granules.okCount).toBe(0);
+      // publishedGranule, dbGranule
+      expect(granules.cumulusCount).toBe(2);
+      // publishedGranule
+      expect(granules.orcaCount).toBe(1);
+      // 4 from publishedGranule (all except .jpg, .jpg2), 1 from dbGranule (.met)
+      expect(granules.okFilesCount).toBe(5);
+      // all 5 from publishedGranule, all 5 from dbGranule
+      expect(granules.cumulusFilesCount).toBe(10);
+      // 4 from publishedGranule (except .met)
+      expect(granules.orcaFilesCount).toBe(4);
+      expect(granules.conflictFilesCount).toBe(6);
+      expect(granules.onlyInCumulus.length).toBe(1);
+      expect(granules.onlyInCumulus[0].granuleId).toBe(dbGranuleId);
+      expect(granules.onlyInCumulus[0].okFilesCount).toBe(1);
+      expect(granules.onlyInCumulus[0].cumulusFilesCount).toBe(5);
+      expect(granules.onlyInCumulus[0].orcaFilesCount).toBe(0);
+      expect(granules.onlyInCumulus[0].conflictFiles.length).toBe(4);
+      expect(granules.onlyInCumulus[0].conflictFiles.filter((file) => file.fileName.endsWith('.met')).length).toBe(0);
+      expect(granules.onlyInOrca.length).toBe(0);
+      if (granules.withConflicts.length !== 0) {
+        console.log(`XXXX withConflicts ${JSON.stringify(granules.withConflicts)}`);
+      }
+      expect(granules.withConflicts.length).toBe(1);
+      expect(granules.withConflicts[0].granuleId).toBe(publishedGranuleId);
+      expect(granules.withConflicts[0].okFilesCount).toBe(4);
+      expect(granules.withConflicts[0].cumulusFilesCount).toBe(5);
+      expect(granules.withConflicts[0].orcaFilesCount).toBe(4);
+      expect(granules.withConflicts[0].conflictFiles.length).toBe(2);
+      expect(granules.withConflicts[0].conflictFiles.filter(
+        (file) => file.fileName.endsWith('.jpg') || file.fileName.endsWith('.jpg2')
+      ).length).toBe(2);
+    });
+
+    it('deletes a reconciliation report through the Cumulus API', async () => {
+      if (!isOrcaIncluded) pending();
+      if (beforeAllFailed) fail(beforeAllFailed);
+      await reconciliationReportsApi.deleteReconciliationReport({
+        prefix: config.stackName,
+        name: reportRecord.name,
+      });
+
+      const parsed = parseS3Uri(reportRecord.location);
+      const exists = await fileExists(parsed.Bucket, parsed.Key);
+      expect(exists).toBeFalse();
+
+      let responseError;
+      try {
+        await reconciliationReportsApi.getReconciliationReport({
+          prefix: config.stackName,
+          name: reportRecord.name,
+        });
+      } catch (error) {
+        responseError = error;
+      }
+
+      expect(responseError.statusCode).toBe(404);
+      expect(JSON.parse(responseError.apiMessage).message).toBe(`No record found for ${reportRecord.name}`);
+    });
+    // TODO delete granule from ORCA when the API is available
+  });
+
   afterAll(async () => {
     const activeCollectionId = constructCollectionId(extraCumulusCollection.name, extraCumulusCollection.version);
+
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
-    await granuleModel.update({ granuleId: publishedGranuleId }, { files: granuleBeforeUpdate.files });
+    await updateGranule({
+      prefix: config.stackName,
+      body: {
+        granuleId: publishedGranuleId,
+        ...granuleBeforeUpdate,
+      },
+    });
+
     const cleanupResults = await Promise.allSettled([
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection: extraCumulusCollection }),
-      removeCollectionAndAllDependencies({ prefix: config.stackName, collection: collection }),
+      removeCollectionAndAllDependencies({ prefix: config.stackName, collection }),
       s3().deleteObject(extraS3Object).promise(),
-      GranuleFilesCache.del(extraFileInDb),
       deleteFolder(config.bucket, testDataFolder),
       cmrClient.deleteGranule(cmrGranule),
     ]);

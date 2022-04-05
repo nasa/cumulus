@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { getKnexConfig, getKnexClient } from '@cumulus/db';
 
@@ -42,7 +42,6 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     knex = await getKnexClient({
       env: {
         databaseCredentialSecretArn: event.rootLoginSecret,
-        dbHeartBeat: process.env.dbHeartBeat,
       },
       secretsManager,
     });

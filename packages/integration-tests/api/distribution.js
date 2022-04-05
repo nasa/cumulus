@@ -6,10 +6,13 @@ const got = require('got');
 const jwt = require('jsonwebtoken');
 
 const CloudFormation = require('@cumulus/aws-client/CloudFormation');
+const Logger = require('@cumulus/logger');
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const SecretsManager = require('@cumulus/aws-client/SecretsManager');
 
 const { getEarthdataAccessToken } = require('./EarthdataLogin');
+
+const log = new Logger({ sender: '@cumulus/api/distribution' });
 
 async function invokeDistributionApiLambda(path, headers) {
   const lambda = new Lambda();
@@ -273,7 +276,14 @@ async function getDistributionApiRedirect(filepath, headers) {
     filepath,
     headers
   );
-  return payload.headers.location || payload.headers.Location;
+  try {
+    return payload.headers.location || payload.headers.Location;
+  } catch (error) {
+    log.error(error);
+    log.debug(`No redirect location found in headers ${JSON.stringify(payload.headers)}`);
+    log.debug(`full payload: ${JSON.stringify(payload)}`);
+    throw error;
+  }
 }
 
 module.exports = {

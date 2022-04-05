@@ -3,30 +3,26 @@
 const router = require('express-promise-router')();
 
 const {
+  createRejectableTransaction,
   getKnexClient,
+  isCollisionError,
   ProviderPgModel,
-  tableNames,
   translateApiProviderToPostgresProvider,
+  translatePostgresProviderToApiProvider,
   validateProviderHost,
 } = require('@cumulus/db');
-const { inTestMode } = require('@cumulus/common/test-utils');
 const {
-  ApiCollisionError,
   RecordDoesNotExist,
   ValidationError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
-const { addToLocalES, indexProvider } = require('@cumulus/es-client/indexer');
+const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const Provider = require('../models/providers');
 const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
-
 const log = new Logger({ sender: '@cumulus/api/providers' });
-
-// Postgres error codes:
-// https://www.postgresql.org/docs/10/errcodes-appendix.html
-const isCollisionError = (error) => (error instanceof ApiCollisionError || error.code === '23505');
 
 /**
  * List all providers
@@ -55,27 +51,18 @@ async function list(req, res) {
  */
 async function get(req, res) {
   const id = req.params.id;
+  const knex = await getKnexClient({ env: process.env });
+  const providerPgModel = new ProviderPgModel();
 
-  const providerModel = new Provider();
   let result;
   try {
-    result = await providerModel.get({ id });
+    const providerRecord = await providerPgModel.get(knex, { name: id });
+    result = translatePostgresProviderToApiProvider(providerRecord);
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) return res.boom.notFound('Provider not found.');
+    if (error instanceof RecordDoesNotExist) return res.boom.notFound(`Provider ${id} not found.`);
+    throw error;
   }
-  delete result.password;
-  return res.send(result);
-}
-
-async function throwIfDynamoRecordExists(providerModel, id) {
-  try {
-    await providerModel.get({ id });
-    throw new ApiCollisionError(`Dynamo record id ${id} exists`);
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
+  return res.send(removeNilProperties(result));
 }
 
 /**
@@ -86,38 +73,45 @@ async function throwIfDynamoRecordExists(providerModel, id) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function post(req, res) {
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const apiProvider = req.body;
 
   apiProvider.updatedAt = Date.now();
   apiProvider.createdAt = Date.now();
 
   const id = apiProvider.id;
-  const providerModel = new Provider();
-  const knex = await getKnexClient({ env: process.env });
-  const providerPgModel = new ProviderPgModel();
+
   try {
     let record;
     if (!apiProvider.id) {
       throw new ValidationError('Provider records require an id');
     }
-    await throwIfDynamoRecordExists(providerModel, id);
+
     const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
-    await knex.transaction(async (trx) => {
-      await providerPgModel.create(trx, postgresProvider);
-      record = await providerModel.create(apiProvider);
-    });
-
-    if (inTestMode()) {
-      await addToLocalES(record, indexProvider);
+    try {
+      await createRejectableTransaction(knex, async (trx) => {
+        await providerPgModel.create(trx, postgresProvider);
+        record = await providerModel.create(apiProvider);
+        await indexProvider(esClient, record, process.env.ES_INDEX);
+      });
+    } catch (innerError) {
+      // Clean up DynamoDB record in case of any failure
+      await providerModel.delete(apiProvider);
+      throw innerError;
     }
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (isCollisionError(error)) {
       return res.boom.conflict(`A record already exists for ${id}`);
     }
-
     if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
     }
@@ -133,7 +127,16 @@ async function post(req, res) {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put({ params: { id }, body }, res) {
+async function put(req, res) {
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { params: { id }, body } = req;
+
   const apiProvider = body;
 
   if (id !== apiProvider.id) {
@@ -142,34 +145,47 @@ async function put({ params: { id }, body }, res) {
     );
   }
 
-  const knex = await getKnexClient();
-  const providerModel = new Provider();
-  const providerPgModel = new ProviderPgModel();
-
   let oldProvider;
+  let oldPgProvider;
+
+  try {
+    oldPgProvider = await providerPgModel.get(knex, { name: id });
+  } catch (error) {
+    if (error.name !== 'RecordDoesNotExist') {
+      throw error;
+    }
+    return res.boom.notFound(
+      `Postgres provider with name/id '${id}' not found`
+    );
+  }
+
   try {
     oldProvider = await providerModel.get({ id });
   } catch (error) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
     }
-    return res.boom.notFound(
-      `Provider with ID '${id}' not found`
-    );
+    log.warn(`Dynamo record for Provider ${id} not found, proceeding to update with PostgreSQL record alone`);
   }
+
   apiProvider.updatedAt = Date.now();
-  apiProvider.createdAt = oldProvider.createdAt;
+  apiProvider.createdAt = oldPgProvider.created_at.getTime();
 
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
-  await knex.transaction(async (trx) => {
-    await providerPgModel.upsert(trx, postgresProvider);
-    record = await providerModel.create(apiProvider);
-  });
-
-  if (inTestMode()) {
-    await addToLocalES(record, indexProvider);
+  try {
+    await createRejectableTransaction(knex, async (trx) => {
+      await providerPgModel.upsert(trx, postgresProvider);
+      record = await providerModel.create(apiProvider);
+      await indexProvider(esClient, record, process.env.ES_INDEX);
+    });
+  } catch (innerError) {
+    // Revert Dynamo record update if any write fails
+    if (oldProvider) {
+      await providerModel.create(oldProvider);
+    }
+    throw innerError;
   }
 
   return res.send(record);
@@ -183,22 +199,64 @@ async function put({ params: { id }, body }, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
-  const providerModel = new Provider();
-  const knex = await getKnexClient({ env: process.env });
+  const {
+    providerModel = new Provider(),
+    providerPgModel = new ProviderPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { id } = req.params;
+  const esProvidersClient = new Search(
+    {},
+    'provider',
+    process.env.ES_INDEX
+  );
+
+  let existingProvider;
+  try {
+    await providerPgModel.get(knex, { name: id });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (!(await esProvidersClient.exists(id))) {
+        log.info('Provider does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info('Provider does not exist in PostgreSQL, it only exists in Elasticsearch. Proceeding with deletion');
+    } else {
+      throw error;
+    }
+  }
 
   try {
-    await knex.transaction(async (trx) => {
-      await trx(tableNames.providers).where({ name: req.params.id }).del();
-      await providerModel.delete({ id: req.params.id });
-      if (inTestMode()) {
-        const esClient = await Search.es(process.env.ES_HOST);
-        await esClient.delete({
-          id: req.params.id,
-          type: 'provider',
+    // Save DynamoDB provider in case delete fails and need to recreate
+    existingProvider = await providerModel.get({ id });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  try {
+    try {
+      await createRejectableTransaction(knex, async (trx) => {
+        await providerPgModel.delete(trx, { name: id });
+        await providerModel.delete({ id });
+        await deleteProvider({
+          esClient,
+          id,
           index: process.env.ES_INDEX,
-        }, { ignore: [404] });
+          ignore: [404],
+        });
+      });
+    } catch (innerError) {
+      // Delete is idempotent, so there may not be a DynamoDB
+      // record to recreate
+      if (existingProvider) {
+        await providerModel.create(existingProvider);
       }
-    });
+      throw innerError;
+    }
     return res.send({ message: 'Record deleted' });
   } catch (error) {
     if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
@@ -221,4 +279,9 @@ router.delete('/:id', del);
 router.post('/', post);
 router.get('/', list);
 
-module.exports = router;
+module.exports = {
+  del,
+  post,
+  put,
+  router,
+};

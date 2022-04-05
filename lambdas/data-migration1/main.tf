@@ -100,13 +100,17 @@ resource "aws_lambda_function" "data_migration1" {
 
   environment {
     variables = {
-      databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      acquireTimeoutMillis                  = var.rds_connection_timing_configuration.acquireTimeoutMillis
       AsyncOperationsTable = var.dynamo_tables.async_operations.name
       CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable = var.dynamo_tables.providers.name
-      RulesTable = var.dynamo_tables.rules.name
-      dbHeartBeat = var.rds_connection_heartbeat
+      createRetryIntervalMillis             = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis                   = var.rds_connection_timing_configuration.createTimeoutMillis
+      databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      idleTimeoutMillis                     = var.rds_connection_timing_configuration.idleTimeoutMillis
       provider_kms_key_id = var.provider_kms_key_id
+      ProvidersTable = var.dynamo_tables.providers.name
+      reapIntervalMillis                    = var.rds_connection_timing_configuration.reapIntervalMillis
+      RulesTable = var.dynamo_tables.rules.name
     }
   }
 

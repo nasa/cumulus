@@ -104,7 +104,6 @@ The following variables were added to the Cumulus module
 
 - `rds_security_group`
 - `rds_user_access_secret_arn`
-- `rds_connection_heartbeat`
 
 For reference on how to set these values, see our template-deploy repo: <https://github.com/nasa/cumulus-template-deploy/tree/master/cumulus-tf>
 
@@ -171,7 +170,7 @@ Also, each run of these data migration will write a timestamped log of any error
 | executionMigrationParams.writeConcurrency | number | The maximum number of execution records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 10
 | executionMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
 | granuleMigrationParams | Object | Options for the granules data migration | `{}`
-| granuleMigrationParams.collectionId | string | A collection ID (e.g. `collection___1`) from granule DynamoDB records. If a `collectionId` is provided, then only granules for that collection will be migrated | none
+| granuleMigrationParams.collectionId | string | A collection ID (e.g. `shortname___version`) from granule DynamoDB records. If a `collectionId` is provided, then only granules for that collection will be migrated | none
 | granuleMigrationParams.granuleId | string | A specific granule ID from a DynamoDB record to select for migration. If a `granuleId` and `collectionId` are provided, the `collectionId` will be ignored. | none
 | granuleMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for granules data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
 | granuleMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
@@ -185,7 +184,7 @@ Also, each run of these data migration will write a timestamped log of any error
 
 ### 6. Run validation tool
 
-We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](./../lambdas/postgres-migration-count-tool/README.md)
+We have provided a validation tool which provides a report regarding your data migration. For more information about this tool, refer to the [Postgres Migration Count Tool README](https://github.com/nasa/cumulus/blob/master/lambdas/postgres-migration-count-tool/README.md).
 
 This tool can be run in the following two ways:
 

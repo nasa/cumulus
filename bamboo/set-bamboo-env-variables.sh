@@ -35,8 +35,7 @@ declare -a param_list=(
   "bamboo_SECRET_LAUNCHPAD_PASSPHRASE"
   "bamboo_SECRET_METRICS_ES_PASS"
   "bamboo_SECRET_NPM_TOKEN"
-  "bamboo_SECRET_ORCA_DATABASE_APP_USER_PASSWORD"
-  "bamboo_SECRET_ORCA_POSTGRES_USER_PASSWORD"
+  "bamboo_SECRET_ORCA_DATABASE_USER_PASSWORD"
   "bamboo_SECRET_PROVIDER_FTP_PORT"
   "bamboo_SECRET_PROVIDER_HTTP_PORT"
   "bamboo_SECRET_RDS_ADMIN_ACCESS_SECRET_ARN"
@@ -49,6 +48,7 @@ declare -a param_list=(
   "bamboo_SKIP_AUDIT"
   "bamboo_SKIP_INTEGRATION_TESTS"
   "bamboo_SKIP_NPM_PUBLISH"
+  "bamboo_SKIP_CHANGELOG"
   "bamboo_TFSTATE_BUCKET"
   "bamboo_TFSTATE_LOCK_TABLE"
   "bamboo_USE_CACHED_BOOTSTRAP"
@@ -99,6 +99,12 @@ fi
 echo export BRANCH="$BRANCH" >> .bamboo_env_vars
 
 
+## SKIP CL eval if current branch is equal to the PR branch
+if [[ $BRANCH == "$PR_BRANCH" ]]; then
+   export SKIP_CHANGELOG=true
+   echo export SKIP_CHANGELOG=true >> .bamboo_env_vars
+fi
+
 ## If tag matching the current ref is a version tag, set
 GIT_TAG=$(git describe --exact-match HEAD 2>/dev/null | sed -n '1p')
 export GIT_TAG
@@ -131,15 +137,14 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export RDS_SECURITY_GROUP=$bamboo_SECRET_SIT_RDS_SECURITY_GROUP
   export RDS_ADMIN_ACCESS_SECRET_ARN=$bamboo_SECRET_SIT_RDS_ADMIN_ACCESS_SECRET_ARN
   export PDR_NODE_NAME_PROVIDER_BUCKET=$bamboo_SIT_PDR_NODE_NAME_PROVIDER_BUCKET
-  export ORCA_POSTGRES_USER_PASSWORD=$bamboo_SECRET_SIT_ORCA_POSTGRES_USER_PASSWORD
-  export ORCA_DATABASE_APP_USER_PASSWORD=$bamboo_SECRET_SIT_ORCA_DATABASE_APP_USER_PASSWORD
+  export ORCA_DATABASE_USER_PASSWORD=$bamboo_SECRET_SIT_ORCA_DATABASE_USER_PASSWORD
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 
 # Target master by default.
 # Update with appropriate conditional
 # when creating a feature branch.
-export PR_BRANCH=master
+export PR_BRANCH='master'
 
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the

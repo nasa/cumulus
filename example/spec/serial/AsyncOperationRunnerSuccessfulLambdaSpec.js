@@ -2,24 +2,23 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { createAsyncOperation, deleteAsyncOperation, listAsyncOperations } = require('@cumulus/api-client/asyncOperations');
+const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   getClusterArn,
   waitForAsyncOperationStatus,
 } = require('@cumulus/integration-tests');
-const { AsyncOperation } = require('@cumulus/api/models');
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner executing a successful lambda function', () => {
   let asyncOperation;
   let asyncOperationId;
-  let asyncOperationModel;
   let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
-  let beforeAllFailed = false;
+  let beforeAllError = false;
   let cluster;
   let config;
   let payloadKey;
@@ -32,12 +31,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
 
       asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
       successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
-
-      asyncOperationModel = new AsyncOperation({
-        stackName: config.stackName,
-        systemBucket: config.bucket,
-        tableName: asyncOperationsTableName,
-      });
 
       // Find the ARN of the cluster
       cluster = await getClusterArn(config.stackName);
@@ -55,32 +48,27 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         Body: JSON.stringify([1, 2, 3]),
       }).promise();
 
-      await asyncOperationModel.create({
-        id: asyncOperationId,
-        taskArn: randomString(),
+      const asyncOperationObject = {
         description: 'Some description',
         operationType: 'ES Index',
+        id: asyncOperationId,
+        taskArn: randomString(),
         status: 'RUNNING',
-      });
+      };
 
-      const runTaskResponse = await ecs().runTask({
+      await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
+      console.log('Async Operation ID: %s', asyncOperationId);
+
+      const runTaskResponse = await startECSTask({
+        asyncOperationTaskDefinition,
         cluster,
-        taskDefinition: asyncOperationTaskDefinition,
-        launchType: 'EC2',
-        overrides: {
-          containerOverrides: [
-            {
-              name: 'AsyncOperation',
-              environment: [
-                { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: successFunctionName },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
-              ],
-            },
-          ],
-        },
-      }).promise();
+        callerLambdaName: `${config.stackName}-ApiEndpoints`,
+        lambdaName: successFunctionName,
+        id: asyncOperationId,
+        payloadBucket: config.bucket,
+        payloadKey,
+        dynamoTableName: asyncOperationsTableName,
+      });
 
       const failures = get(runTaskResponse, 'failures', []);
       if (failures.length > 0) {
@@ -103,20 +91,38 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         stackName: config.stackName,
       });
     } catch (error) {
-      beforeAllFailed = true;
+      beforeAllError = true;
       throw error;
     }
   });
 
   it('updates the status field to "SUCCEEDED"', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+    if (beforeAllError) fail(beforeAllError);
     else expect(asyncOperation.status).toEqual('SUCCEEDED');
   });
 
-  it('updates the output field in DynamoDB', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
+  it('updates the output field', () => {
+    if (beforeAllError) fail(beforeAllError);
     else {
       const parsedOutput = JSON.parse(asyncOperation.output);
+      expect(parsedOutput).toEqual([1, 2, 3]);
+    }
+  });
+
+  it('returns the updated record from GET /asyncOperations', async () => {
+    if (beforeAllError) fail(beforeAllError);
+    else {
+      const response = await listAsyncOperations({
+        prefix: config.stackName,
+        query: {
+          id: asyncOperationId,
+        },
+      });
+      const { results } = JSON.parse(response.body);
+      expect(results.length).toEqual(1);
+      const [record] = results;
+      expect(record.status).toEqual('SUCCEEDED');
+      const parsedOutput = JSON.parse(record.output);
       expect(parsedOutput).toEqual([1, 2, 3]);
     }
   });

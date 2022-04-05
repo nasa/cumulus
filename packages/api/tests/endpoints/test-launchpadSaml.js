@@ -30,7 +30,7 @@ process.env.OAUTH_PROVIDER = 'launchpad';
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.stackName = randomId('stackname');
 process.env.TOKEN_SECRET = randomId('token_secret');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('bucket');
 process.env.LAUNCHPAD_METADATA_URL = 'http://example.com/launchpad.idp.xml';
 
 const { app } = require('../../app');
@@ -44,6 +44,10 @@ const xmlMetadataFixture = fs.readFileSync(
   `${__dirname}/fixtures/launchpad-sbx-metadata.xml`,
   'utf8'
 );
+const xmlMetadataFixtureV2 = fs.readFileSync(
+  `${__dirname}/fixtures/launchpad-prod-metadata.xml`,
+  'utf8'
+);
 const badMetadataFixture = fs.readFileSync(
   `${__dirname}/fixtures/bad-metadata.xml`,
   'utf8'
@@ -52,11 +56,15 @@ const goodMetadataFile = {
   key: 'valid-metadata.xml',
   content: xmlMetadataFixture,
 };
+const goodMetadataFileV2 = {
+  key: 'valid-metadataV2.xml',
+  content: xmlMetadataFixtureV2,
+};
 const badMetadataFile = {
   key: 'bad-metadata.xml',
   content: badMetadataFixture,
 };
-const testFiles = [goodMetadataFile, badMetadataFile];
+const testFiles = [goodMetadataFile, goodMetadataFileV2, badMetadataFile];
 
 const certificate = require('./fixtures/_certificateFixture');
 
@@ -160,6 +168,17 @@ test.serial(
 );
 
 test.serial(
+  'launchpadPublicCertificate returns a certificate from valid file with different namespace prefix.',
+  async (t) => {
+    const parsedCertificate = await launchpadPublicCertificate(
+      `s3://${testBucketName}/valid-metadataV2.xml`
+    );
+
+    t.deepEqual(parsedCertificate, certificate);
+  }
+);
+
+test.serial(
   'launchpadPublicCertificate throws error with invalid file.',
   async (t) => {
     await t.throwsAsync(
@@ -186,9 +205,9 @@ test.serial(
   'launchpadPublicCertificate throws error with missing bucket.',
   async (t) => {
     const stub = sinon.stub(got, 'get').callsFake(() => gotLaunchpadMetadataResponse);
-    await t.throwsAsync(launchpadPublicCertificate('s3://badBucket/location'), {
+    await t.throwsAsync(launchpadPublicCertificate('s3://bad-bucket/location'), {
       instanceOf: Error,
-      message: 'Cumulus could not find Launchpad public xml metadata at s3://badBucket/location',
+      message: 'Cumulus could not find Launchpad public xml metadata at s3://bad-bucket/location',
     });
     stub.restore();
   }

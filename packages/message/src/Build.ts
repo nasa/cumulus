@@ -10,9 +10,9 @@
  */
 
 import merge from 'lodash/merge';
+
 import { Message } from '@cumulus/types';
 import { v4 as uuidv4 } from 'uuid';
-
 import {
   WorkflowMessageTemplate,
   WorkflowMessageTemplateCumulusMeta,

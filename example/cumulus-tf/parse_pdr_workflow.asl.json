@@ -53,7 +53,8 @@
             "internalBucket": "{$.meta.buckets.internal.name}",
             "stackName": "{$.meta.stack}",
             "granuleIngestWorkflow": "${ingest_workflow_name}",
-            "queueUrl": "${start_sf_queue_url}"
+            "queueUrl": "${start_sf_queue_url}",
+            "preferredQueueBatchSize": "{$.meta.queueBatchSize}"
           }
         }
       },

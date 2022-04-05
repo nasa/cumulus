@@ -19,7 +19,11 @@ resource "aws_lambda_function" "provision_database" {
   timeout          = 500
   environment {
     variables = {
-      dbHeartBeat = var.rds_connection_heartbeat
+      acquireTimeoutMillis      = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis       = var.rds_connection_timing_configuration.createTimeoutMillis
+      idleTimeoutMillis         = var.rds_connection_timing_configuration.idleTimeoutMillis
+      reapIntervalMillis        = var.rds_connection_timing_configuration.reapIntervalMillis
     }
   }
 
@@ -108,9 +112,13 @@ data "aws_iam_policy_document" "db_provision" {
 }
 
 data "aws_lambda_invocation" "provision_database" {
-  depends_on    = [aws_lambda_function.provision_database]
+  depends_on    = [
+    aws_lambda_function.provision_database,
+    aws_iam_role.db_provision
+  ]
   function_name = aws_lambda_function.provision_database.function_name
-  input = jsonencode({ prefix = var.prefix,
+  input = jsonencode({
+    prefix = var.prefix,
     rootLoginSecret    = var.rds_admin_access_secret_arn,
     userLoginSecret    = aws_secretsmanager_secret.db_credentials.name
     dbPassword         = var.rds_user_password

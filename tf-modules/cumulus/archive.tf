@@ -5,6 +5,8 @@ module "archive" {
 
   api_url = var.archive_api_url
 
+  elasticsearch_client_config = var.elasticsearch_client_config
+
   deploy_to_ngap = var.deploy_to_ngap
 
   permissions_boundary_arn = var.permissions_boundary_arn
@@ -24,6 +26,15 @@ module "archive" {
   system_bucket     = var.system_bucket
   buckets           = var.buckets
 
+  ecs_task_role      = {
+    name = aws_iam_role.ecs_task_role.name,
+    arn  = aws_iam_role.ecs_task_role.arn,
+  }
+  ecs_execution_role = {
+    name = aws_iam_role.ecs_execution_role.name,
+    arn  = aws_iam_role.ecs_execution_role.arn,
+  }
+
   vpc_id            = var.vpc_id
   lambda_subnet_ids = var.lambda_subnet_ids
 
@@ -34,10 +45,13 @@ module "archive" {
   cmr_username       = var.cmr_username
   cmr_password       = var.cmr_password
   cmr_custom_host    = var.cmr_custom_host
+  cmr_search_client_config = var.cmr_search_client_config
 
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
+
+  orca_api_uri       = var.orca_api_uri
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
@@ -87,7 +101,7 @@ module "archive" {
 
   rds_security_group = var.rds_security_group
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
-  rds_connection_heartbeat = var.rds_connection_heartbeat
+  rds_connection_timing_configuration    = var.rds_connection_timing_configuration
   postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
   postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
 

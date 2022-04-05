@@ -40,6 +40,7 @@ module.exports = {
     publishExecutions: './lambdas/publish-executions.js',
     publishGranules: './lambdas/publish-granules.js',
     publishPdrs: './lambdas/publish-pdrs.js',
+    replaySqsMessages: './lambdas/replay-sqs-messages.js',
     sfEventSqsToDbRecords: './lambdas/sf-event-sqs-to-db-records/index.js',
     sfScheduler: './lambdas/sf-scheduler.js',
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
@@ -70,7 +71,9 @@ module.exports = {
         }
       ]
     }),
-    new IgnorePlugin(new RegExp(`^(${ignoredPackages.join('|')})$`)),
+    new IgnorePlugin({
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
+    }),
   ],
   output: {
     libraryTarget: 'commonjs2',
@@ -103,6 +106,9 @@ module.exports = {
       {
         test: /\.html$/i,
         loader: 'html-loader',
+        options: {
+          esModule: false
+        },
       },
     ],
   },

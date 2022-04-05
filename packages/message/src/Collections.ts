@@ -2,6 +2,8 @@
 
 import { Message } from '@cumulus/types';
 
+export const collectionIdSeparator = '___';
+
 /**
  * Utility functions for generating collection information or parsing collection information
  * from a Cumulus message
@@ -27,7 +29,7 @@ type CollectionInfo = {
  * @alias module:Collections
  */
 export const constructCollectionId = (name: string, version: string) =>
-  `${name}___${version}`;
+  `${name}${collectionIdSeparator}${version}`;
 
 /**
  * Returns the name and version of a collection based on
@@ -35,13 +37,26 @@ export const constructCollectionId = (name: string, version: string) =>
  *
  * @param {string} collectionId - collectionId used in elasticsearch index
  * @returns {Object} name and version as object
+ *
+ * @alias module:Collections
  */
 export const deconstructCollectionId = (collectionId: string) => {
-  const [name, version] = collectionId.split('___');
-  return {
-    name,
-    version,
-  };
+  let name;
+  let version;
+  try {
+    const last = collectionId.lastIndexOf(collectionIdSeparator);
+    name = collectionId.substring(0, last);
+    version = collectionId.substring(last + collectionIdSeparator.length);
+    if (name && version) {
+      return {
+        name,
+        version,
+      };
+    }
+  } catch (error) {
+    // do nothing, error thrown below
+  }
+  throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
 };
 
 /**

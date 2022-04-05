@@ -42,7 +42,7 @@ process.env.AsyncOperationsTable = randomId('asyncOperationsTable');
 process.env.ReconciliationReportsTable = randomId('recReportsTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systemBucket');
+process.env.system_bucket = randomId('bucket');
 process.env.invokeReconcileLambda = randomId('invokeReconcileLambda');
 process.env.AsyncOperationTaskDefinition = randomId('asyncOpTaskDefinition');
 process.env.EcsCluster = randomId('ecsCluster');
@@ -51,7 +51,12 @@ process.env.EcsCluster = randomId('ecsCluster');
 const {
   app,
 } = require('../../app');
+const {
+  createReport,
+} = require('../../endpoints/reconciliation-reports');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
+
+const { buildFakeExpressResponse } = require('./utils');
 
 let esClient;
 const esIndex = randomId('esindex');
@@ -270,7 +275,7 @@ test.serial('get a Granule Inventory report with s3 signed url', async (t) => {
 });
 
 test.serial('get a report which exceeds maximum allowed payload size', async (t) => {
-  process.env.maxResponsePayloadSize = 150;
+  process.env.maxResponsePayloadSizeBytes = 150;
   await Promise.all(fakeReportRecords.slice(0, 2).map(async (record) => {
     const response = await request(app)
       .get(`/reconciliationReports/${record.name}`)
@@ -343,6 +348,7 @@ test.serial('create a report starts an async operation', async (t) => {
     t.true(stub.calledWith({
       asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
       cluster: process.env.EcsCluster,
+      callerLambdaName: undefined,
       lambdaName: process.env.invokeReconcileLambda,
       description: 'Create Reconciliation Report',
       operationType: 'Reconciliation Report',
@@ -356,6 +362,46 @@ test.serial('create a report starts an async operation', async (t) => {
   } finally {
     stub.restore();
   }
+});
+
+test.serial('createReport() uses correct caller lambda function name', async (t) => {
+  const functionName = randomId('lambda');
+  const id = randomId('id');
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const tableName = process.env.AsyncOperationsTable;
+
+  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({
+    id,
+  });
+  t.teardown(() => stub.restore());
+
+  await createReport(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+      body: {},
+    },
+    buildFakeExpressResponse()
+  );
+
+  t.true(stub.calledWith({
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    cluster: process.env.EcsCluster,
+    callerLambdaName: functionName,
+    lambdaName: process.env.invokeReconcileLambda,
+    description: 'Create Reconciliation Report',
+    operationType: 'Reconciliation Report',
+    payload: normalizeEvent({}),
+    useLambdaEnvironmentVariables: true,
+    stackName,
+    systemBucket,
+    dynamoTableName: tableName,
+    knexConfig: process.env,
+  }));
 });
 
 test.serial('POST returns a 500 when failing to create an async operation', async (t) => {

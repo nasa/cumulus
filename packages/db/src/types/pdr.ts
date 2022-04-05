@@ -1,9 +1,11 @@
+import { PdrStatus } from '@cumulus/types/api/pdrs';
+
 export interface PostgresPdr {
-  status: string
+  status: PdrStatus
   name: string
   collection_cumulus_id: number
   provider_cumulus_id: number
-  execution_cumulus_id?: number,
+  execution_cumulus_id?: number
   progress?: number
   pan_sent?: boolean
   pan_message?: string

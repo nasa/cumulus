@@ -11,10 +11,10 @@ const {
   generateLocalTestDb,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  tableNames,
+  TableNames,
+  migrationDir,
+  createRejectableTransaction,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
@@ -30,30 +30,31 @@ test.before(async (t) => {
   t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollectionRecordFactory()
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   t.context.executionPgModel = new ExecutionPgModel();
 });
 
 test.beforeEach(async (t) => {
-  const [executionCumulusId] = await t.context.executionPgModel.create(
+  const [pgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
     fakeExecutionRecordFactory()
   );
-  t.context.executionCumulusId = executionCumulusId;
-  const [granuleCumulusId] = await t.context.granulePgModel.create(
+  t.context.executionCumulusId = pgExecution.cumulus_id;
+  const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: t.context.collectionCumulusId,
     })
   );
-  t.context.granuleCumulusId = granuleCumulusId;
+  t.context.granuleCumulusId = pgGranule.cumulus_id;
   t.context.joinRecord = {
-    execution_cumulus_id: executionCumulusId,
-    granule_cumulus_id: Number(granuleCumulusId),
+    execution_cumulus_id: t.context.executionCumulusId,
+    granule_cumulus_id: Number(t.context.granuleCumulusId),
   };
 });
 
@@ -73,9 +74,9 @@ test('GranulesExecutionsPgModel.create() creates a new granule/execution join re
 
   t.plan(1);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    const records = await trx(tableNames.granulesExecutions).where(joinRecord);
+    const records = await trx(TableNames.granulesExecutions).where(joinRecord);
     t.is(
       records.length,
       1
@@ -92,7 +93,7 @@ test('GranulesExecutionsPgModel.exists() correctly returns true', async (t) => {
 
   t.plan(1);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
     t.true(
       await granulesExecutionsPgModel.exists(trx, joinRecord)
@@ -108,7 +109,7 @@ test.serial('GranulesExecutionsPgModel.exists() correctly returns false', async 
 
   t.plan(1);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     t.false(
       await granulesExecutionsPgModel.exists(trx, {
         execution_cumulus_id: 5,
@@ -127,9 +128,9 @@ test('GranulesExecutionsPgModel.upsert() creates a new granule/execution join re
 
   t.plan(1);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.upsert(trx, joinRecord);
-    const records = await trx(tableNames.granulesExecutions).where(joinRecord);
+    const records = await trx(TableNames.granulesExecutions).where(joinRecord);
     t.is(
       records.length,
       1
@@ -146,7 +147,7 @@ test('GranulesExecutionsPgModel.upsert() overwrites a new granule/execution join
 
   t.plan(2);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.upsert(trx, joinRecord);
     t.true(await granulesExecutionsPgModel.exists(trx, joinRecord));
     await granulesExecutionsPgModel.upsert(trx, joinRecord);
@@ -165,12 +166,13 @@ test('GranulesExecutionsPgModel.search() returns all granule/execution join reco
 
   t.plan(1);
 
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    const [newExecutionCumulusId] = await executionPgModel.create(
+    const [newExecution] = await executionPgModel.create(
       trx,
       fakeExecutionRecordFactory()
     );
+    const newExecutionCumulusId = newExecution.cumulus_id;
 
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
@@ -198,12 +200,13 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() returns correct valu
     joinRecord,
   } = t.context;
   let newExecutionCumulusId;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    [newExecutionCumulusId] = await executionPgModel.create(
+    const [pgExecution] = await executionPgModel.create(
       trx,
       fakeExecutionRecordFactory()
     );
+    newExecutionCumulusId = pgExecution.cumulus_id;
 
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
@@ -225,12 +228,13 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transac
     executionCumulusId,
     joinRecord,
   } = t.context;
-  await knex.transaction(async (trx) => {
+  await createRejectableTransaction(knex, async (trx) => {
     await granulesExecutionsPgModel.create(trx, joinRecord);
-    const [newExecutionCumulusId] = await executionPgModel.create(
+    const [newExecution] = await executionPgModel.create(
       trx,
       fakeExecutionRecordFactory()
     );
+    const newExecutionCumulusId = newExecution.cumulus_id;
 
     await granulesExecutionsPgModel.create(trx, {
       ...joinRecord,
@@ -242,4 +246,21 @@ test('GranulesExecutionsPgModel.searchByGranuleCumulusIds() works with a transac
 
     t.deepEqual(results.sort(), [executionCumulusId, newExecutionCumulusId].sort());
   });
+});
+
+test('GranulesExecutionsPgModel.delete() correctly deletes records', async (t) => {
+  const {
+    knex,
+    granulesExecutionsPgModel,
+    joinRecord,
+  } = t.context;
+
+  let actual;
+  await createRejectableTransaction(knex, async (trx) => {
+    await granulesExecutionsPgModel.create(trx, joinRecord);
+    await granulesExecutionsPgModel.delete(trx, joinRecord);
+    actual = await granulesExecutionsPgModel.search(trx, joinRecord);
+  });
+
+  t.deepEqual(actual, []);
 });

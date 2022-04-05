@@ -1,10 +1,41 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const { listRequests } = require('@cumulus/api-client/orca');
+const got = require('got');
 
 const Logger = require('@cumulus/logger');
 const log = new Logger({ sender: 'api/lib/orca' });
+
+/**
+ * post request to ORCA
+ *
+ * @param {Object} params
+ * @param {string} params.orcaApiUri - orca endpoint url
+ * @param {string} params.path - path of the request
+ * @param {Object} params.body - body of the request
+ * @returns {Promise<Object>} - resolves to the ORCA return
+ */
+async function postRequestToOrca({ orcaApiUri = process.env.orca_api_uri, path, body }) {
+  if (!orcaApiUri) {
+    const errMsg = 'The orca_api_uri environment variable is not set';
+    log.error(errMsg);
+    throw new Error(errMsg);
+  }
+
+  try {
+    return await got.post(
+      `${orcaApiUri}/${path}`,
+      {
+        json: body || {},
+        responseType: 'json',
+        throwHttpErrors: false,
+      }
+    );
+  } catch (error) {
+    log.error('postRequestToOrca encountered error:', error);
+    throw error;
+  }
+}
 
 /**
  * get recovery status for a given granule
@@ -18,9 +49,9 @@ const log = new Logger({ sender: 'api/lib/orca' });
 const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
   let response;
   try {
-    response = await listRequests({
-      prefix: process.env.stackName,
-      query: { granuleId },
+    response = await postRequestToOrca({
+      path: 'recovery/granules',
+      body: { granuleId },
     });
   } catch (error) {
     log.error('Unable to get orca recovery status');
@@ -28,20 +59,20 @@ const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
     return undefined;
   }
 
-  if (response.statusCode !== 200) {
-    log.error(`Unable to get orca recovery status for ${granuleId}, listRequests failed: ${JSON.stringify(response)}`);
+  const { statusCode, body } = response;
+  if (statusCode !== 200) {
+    log.error(`Unable to get orca recovery status for ${granuleId}, ORCA api returned ${statusCode}: ${JSON.stringify(body)}`);
     return undefined;
   }
 
-  const requests = JSON.parse(response.body);
-  const jobStatuses = requests.map((request) => request.job_status);
-
+  const jobStatuses = (body.files || []).map((file) => file.status);
+  // file status may be 'pending', 'staged', 'success', or 'failed'
   let recoveryStatus = 'failed';
   if (jobStatuses.length === 0) {
     recoveryStatus = undefined;
-  } else if (jobStatuses.filter((jobStatus) => jobStatus !== 'complete').length === 0) {
+  } else if (jobStatuses.filter((jobStatus) => jobStatus !== 'success').length === 0) {
     recoveryStatus = 'completed';
-  } else if (jobStatuses.filter((jobStatus) => !['complete', 'error'].includes(jobStatus)).length > 0) {
+  } else if (jobStatuses.filter((jobStatus) => !['success', 'failed'].includes(jobStatus)).length > 0) {
     recoveryStatus = 'running';
   }
   return recoveryStatus;
@@ -67,4 +98,5 @@ const addOrcaRecoveryStatus = async (inputResponse) => {
 module.exports = {
   addOrcaRecoveryStatus,
   getOrcaRecoveryStatusByGranuleId,
+  postRequestToOrca,
 };

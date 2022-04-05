@@ -1,17 +1,19 @@
 'use strict';
 
 const isEqual = require('lodash/isEqual');
-const isInteger = require('lodash/isInteger');
 const isNil = require('lodash/isNil');
 const uniqWith = require('lodash/uniqWith');
 
 const awsClients = require('@cumulus/aws-client/services');
-const s3Utils = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
+const s3Utils = require('@cumulus/aws-client/S3');
+const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   generateMoveFileParams,
   moveGranuleFile,
+  getNameOfFile,
 } = require('@cumulus/ingest/granule');
 
 const {
@@ -20,12 +22,13 @@ const {
   getKnexClient,
   GranulePgModel,
 } = require('@cumulus/db');
+const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
-const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
+
 const translateGranule = async (
   granule,
   fileUtils = FileUtils
@@ -56,51 +59,21 @@ const getExecutionProcessingTimeInfo = ({
   return processingTimeInfo;
 };
 
-/* eslint-disable camelcase */
-
-const getGranuleTimeToPreprocess = ({
-  sync_granule_duration = 0,
-} = {}) => sync_granule_duration / 1000;
-
-const getGranuleTimeToArchive = ({
-  post_to_cmr_duration = 0,
-} = {}) => post_to_cmr_duration / 1000;
-
-/* eslint-enable camelcase */
-
-/**
- * Calculate granule product volume, which is the sum of the file
- * sizes in bytes
- *
- * @param {Array<Object>} granuleFiles - array of granule files
- * @returns {Integer} - sum of granule file sizes in bytes
- */
-function getGranuleProductVolume(granuleFiles = []) {
-  return granuleFiles
-    .map((f) => f.size)
-    .filter(isInteger)
-    .reduce((x, y) => x + y, 0);
-}
-
-const renameProperty = (from, to, obj) => {
-  const newObj = { ...obj, [to]: obj[from] };
-  delete newObj[from];
-  return newObj;
-};
-
 /**
 * Move granule 'file' S3 Objects and update Postgres/Dynamo/CMR metadata with new locations
 *
-* @param {Object} params                       - params object
-* @param {Object} params.apiGranule            - API 'granule' object to move
-* @param {Object} params.granulesModel         - DynamoDB granules model instance
-* @param {Object} params.destinations          - 'Destinations' API object ()
-* @param {Object} params.granulePgModel        - parameter override, used for unit testing
-* @param {Object} params.collectionPgModel     - parameter override, used for unit testing
-* @param {Object} params.filesPgModel          - parameter override, used for unit testing
-* @param {Object} params.dbClient              - parameter override, used for unit testing
-* @returns {{updatedFiles, moveGranuleErrors}} - Object containing an 'updated' files object
-* with current file key values and an error object containing a set of Promise.allSettled errors
+* @param {Object} params                                - params object
+* @param {Object} params.apiGranule                     - API 'granule' object to move
+* @param {Object} params.granulesModel                  - DynamoDB granules model instance
+* @param {Object} params.destinations                   - 'Destinations' API object ()
+* @param {Object} params.granulePgModel                 - parameter override, used for unit testing
+* @param {Object} params.collectionPgModel              - parameter override, used for unit testing
+* @param {Object} params.filesPgModel                   - parameter override, used for unit testing
+* @param {Object} params.esClient                       - parameter override, used for unit testing
+* @param {Object} params.dbClient                       - parameter override, used for unit testing
+* @returns {Promise<Object>} - Object containing an 'updated'
+*  files object with current file key values and an error object containing a set of
+*  Promise.allSettled errors
 */
 async function moveGranuleFilesAndUpdateDatastore(params) {
   const {
@@ -111,48 +84,33 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     collectionPgModel = new CollectionPgModel(),
     filesPgModel = new FilePgModel(),
     dbClient = await getKnexClient(),
+    esClient = await Search.es(),
   } = params;
-  let postgresCumulusGranuleId;
-  let writeToPostgres = true;
 
-  try {
-    const { name, version } = deconstructCollectionId(apiGranule.collectionId);
-    postgresCumulusGranuleId = await granulePgModel.getRecordCumulusId(dbClient, {
-      granule_id: apiGranule.granuleId,
-      collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
-        dbClient,
-        { name, version }
-      ),
-    });
-  } catch (error) {
-    // If the granule or associated record hasn't been migrated yet
-    // run the 'original' dynamo update
-    if (error.name !== 'RecordDoesNotExist') {
-      throw error;
-    }
-    log.info(`Granule ${JSON.stringify(apiGranule)} has not been migrated yet, updating DynamoDb records only`);
-    writeToPostgres = false;
-  }
-
+  const { name, version } = deconstructCollectionId(apiGranule.collectionId);
+  const postgresCumulusGranuleId = await granulePgModel.getRecordCumulusId(dbClient, {
+    granule_id: apiGranule.granuleId,
+    collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+      dbClient,
+      { name, version }
+    ),
+  });
   const updatedFiles = [];
   const moveFileParams = generateMoveFileParams(apiGranule.files, destinations);
   const moveFilePromises = moveFileParams.map(async (moveFileParam) => {
     const { file } = moveFileParam;
     try {
-      // Update the datastores, then move files
       await dbClient.transaction(async (trx) => {
         const updatedFile = await moveGranuleFile(
           moveFileParam,
           filesPgModel,
           trx,
-          postgresCumulusGranuleId,
-          writeToPostgres
+          postgresCumulusGranuleId
         );
-        updatedFiles.push(renameProperty('name', 'fileName', updatedFile));
+        updatedFiles.push(updatedFile);
       });
-      // Add updated file to postgresDatabase
     } catch (error) {
-      updatedFiles.push(file);
+      updatedFiles.push({ ...file, fileName: getNameOfFile(file) });
       log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
@@ -166,6 +124,16 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       files: updatedFiles,
     }
   );
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: {
+      ...apiGranule,
+      files: updatedFiles,
+    },
+    index: process.env.ES_INDEX,
+  });
+
   const filteredResults = moveResults.filter((r) => r.status === 'rejected');
   const moveGranuleErrors = filteredResults.map((error) => error.reason);
 
@@ -197,15 +165,13 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     .reduce(
       (acc, { name, type }) => ({ ...acc, [name]: type }),
       {}
-    );
-
-  const distributionBucketMap = await fetchDistributionBucketMap();
+    ); const distributionBucketMap = await fetchDistributionBucketMap();
 
   const {
     updatedFiles,
     moveGranuleErrors,
   } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, granulesModel, destinations });
-  await granulesModel.cmrUtils.reconcileCMRMetadata({
+  await CmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
     updatedFiles,
     distEndpoint,
@@ -344,8 +310,5 @@ module.exports = {
   getExecutionProcessingTimeInfo,
   getGranulesForPayload,
   getGranuleIdsForPayload,
-  getGranuleTimeToArchive,
-  getGranuleTimeToPreprocess,
-  getGranuleProductVolume,
   moveGranuleFilesAndUpdateDatastore,
 };

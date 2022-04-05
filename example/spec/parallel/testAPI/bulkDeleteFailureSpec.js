@@ -1,40 +1,76 @@
 'use strict';
 
-const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const Granule = require('@cumulus/api/models/granules');
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
-const granules = require('@cumulus/api-client/granules');
+const { fakeGranuleFactoryV2, fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
+const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs } = require('@cumulus/aws-client/services');
 const {
-  api: apiTestUtils,
   getClusterArn,
+  loadCollection,
 } = require('@cumulus/integration-tests');
-const { isValidAsyncOperationId, loadConfig } = require('../../helpers/testUtils');
+const {
+  bulkDeleteGranules,
+  createGranule,
+  deleteGranule,
+  updateGranule,
+} = require('@cumulus/api-client/granules');
+const { createCollection, deleteCollection } = require('@cumulus/api-client/collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const { createExecution, deleteExecution } = require('@cumulus/api-client/executions');
+const { isValidAsyncOperationId, loadConfig, createTimestampedTestId } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete with a failed bulk delete operation', () => {
   let postBulkDeleteResponse;
   let postBulkDeleteBody;
+  let collection;
   let config;
   let clusterArn;
+  let execution;
+  let granule;
   let taskArn;
   let beforeAllSucceeded = false;
+  let prefix;
 
   // Published granule will fail to delete unless override for bulk
   // delete request is specified
-  const granule = fakeGranuleFactoryV2({ published: true });
 
   beforeAll(async () => {
     config = await loadConfig();
+    prefix = config.stackName;
+
+    const testId = createTimestampedTestId(prefix, 'bulkDeleteFailureSpec');
 
     // Figure out what cluster we're using
     clusterArn = await getClusterArn(config.stackName);
     if (!clusterArn) throw new Error('Unable to find ECS cluster');
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-    const granulesModel = new Granule();
-    await granulesModel.create(granule);
+    // Create execution
+    execution = fakeExecutionFactoryV2();
+    await createExecution({
+      prefix,
+      body: execution,
+    });
 
-    postBulkDeleteResponse = await granules.bulkDeleteGranules({
+    // Create the collection
+    const fakeCollection = await loadCollection({
+      filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
+      postfix: testId,
+    });
+    const collectionResponse = await createCollection({ prefix, collection: fakeCollection });
+    collection = JSON.parse(collectionResponse.body).record;
+
+    // Create granule
+    granule = fakeGranuleFactoryV2({
+      published: true,
+      execution: execution.execution,
+      collectionId: constructCollectionId(collection.name, collection.version),
+    });
+    await createGranule({
+      prefix,
+      body: granule,
+    });
+
+    postBulkDeleteResponse = await bulkDeleteGranules({
       prefix: config.stackName,
       body: {
         ids: [granule.granuleId],
@@ -43,11 +79,11 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
 
     // Query the AsyncOperation API to get the task ARN
-    const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+    const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id,
+      asyncOperationId: postBulkDeleteBody.id,
     });
-    ({ taskArn } = JSON.parse(getAsyncOperationResponse.body));
+    ({ taskArn } = asyncOperation);
 
     beforeAllSucceeded = true;
   });
@@ -56,6 +92,22 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     if (postBulkDeleteBody.id) {
       await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkDeleteBody.id });
     }
+    // mark granule as unpublished to allow delete
+    await updateGranule({
+      prefix,
+      body: {
+        ...granule,
+        published: false,
+      },
+    });
+
+    await deleteGranule({ prefix, granuleId: granule.granuleId });
+    await deleteCollection({
+      prefix,
+      collectionName: collection.name,
+      collectionVersion: collection.version,
+    });
+    await deleteExecution({ prefix, executionArn: execution.arn });
   });
 
   it('returns a status code of 202', () => {
@@ -71,16 +123,12 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
   it('creates an AsyncOperation', async () => {
     expect(beforeAllSucceeded).toBeTrue();
 
-    const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+    const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id,
+      asyncOperationId: postBulkDeleteBody.id,
     });
 
-    expect(getAsyncOperationResponse.statusCode).toEqual(200);
-
-    const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-    expect(getAsyncOperationBody.id).toEqual(postBulkDeleteBody.id);
+    expect(asyncOperation.id).toEqual(postBulkDeleteBody.id);
   });
 
   it('runs an ECS task', async () => {
@@ -106,21 +154,18 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
       }
     ).promise();
 
-    const getAsyncOperationResponse = await apiTestUtils.getAsyncOperation({
+    const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,
-      id: postBulkDeleteBody.id,
+      asyncOperationId: postBulkDeleteBody.id,
     });
 
-    const getAsyncOperationBody = JSON.parse(getAsyncOperationResponse.body);
-
-    expect(getAsyncOperationResponse.statusCode).toEqual(200);
-    expect(getAsyncOperationBody.status).toEqual('TASK_FAILED');
+    expect(asyncOperation.status).toEqual('TASK_FAILED');
 
     let output;
     try {
-      output = JSON.parse(getAsyncOperationBody.output);
+      output = JSON.parse(asyncOperation.output);
     } catch (error) {
-      throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${getAsyncOperationBody.output}`);
+      throw new SyntaxError(`getAsyncOperationBody.output is not valid JSON: ${asyncOperation.output}`);
     }
 
     expect(output.name).toBe('AggregateError');

@@ -16,6 +16,7 @@ const { getExecution } = require('@cumulus/api-client/executions');
 const {
   sfn,
 } = require('@cumulus/aws-client/services');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 
 const { waitForApiStatus } = require('./apiUtils');
 
@@ -273,9 +274,28 @@ async function buildAndStartWorkflow(
   buildWorkflow(stackName, bucketName, workflowName, collection, provider, payload, meta);
   return startWorkflow(stackName, bucketName, workflowName, workflowMsg);
 }
+
+async function stateMachineExists(stateMachineName) {
+  const sfnList = await sfn().listStateMachines({ maxResults: 1 }).promise();
+  const stateMachines = get(sfnList, 'stateMachines', []);
+  if (stateMachines.length !== 1) {
+    console.log('No state machine found');
+    return false;
+  }
+  const stateMachineArn = stateMachines[0].stateMachineArn.replace(stateMachines[0].name, stateMachineName);
+  try {
+    await StepFunctions.describeStateMachine({ stateMachineArn });
+  } catch (error) {
+    if (error.code === 'StateMachineDoesNotExist') return false;
+    throw error;
+  }
+  return true;
+}
+
 module.exports = {
   testWorkflow,
   buildAndStartWorkflow,
   buildAndExecuteWorkflow,
   isReingestExecutionForGranuleId,
+  stateMachineExists,
 };

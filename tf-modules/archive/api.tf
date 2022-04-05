@@ -13,19 +13,35 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
     RulesTable                 = var.dynamo_tables.rules.name
   })
 }
-
 locals {
   api_port_substring        = var.api_port == null ? "" : ":${var.api_port}"
   api_id                    = var.deploy_to_ngap ? aws_api_gateway_rest_api.api[0].id : aws_api_gateway_rest_api.api_outside_ngap[0].id
   api_uri                   = var.api_url == null ? "https://${local.api_id}.execute-api.${data.aws_region.current.name}.amazonaws.com${local.api_port_substring}/${var.api_gateway_stage}/" : var.api_url
   api_redirect_uri          = "${local.api_uri}token"
+  dynamo_table_namestring   = jsonencode({
+    AccessTokensTable          = var.dynamo_tables.access_tokens.name
+    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
+    CollectionsTable           = var.dynamo_tables.collections.name
+    ExecutionsTable            = var.dynamo_tables.executions.name
+    GranulesTable              = var.dynamo_tables.granules.name
+    PdrsTable                  = var.dynamo_tables.pdrs.name
+    ProvidersTable             = var.dynamo_tables.providers.name
+    ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
+    RulesTable                 = var.dynamo_tables.rules.name
+  })
   api_env_variables = {
+        auth_mode                      = "public"
+        api_config_secret_id           = aws_secretsmanager_secret_version.api_config.arn
+        OAUTH_PROVIDER                   = var.oauth_provider
+  }
+  api_secret_env_variables = {
+      acquireTimeoutMillis             = var.rds_connection_timing_configuration.acquireTimeoutMillis
       API_BASE_URL                     = local.api_uri
       ASSERT_ENDPOINT                  = var.saml_assertion_consumer_service
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
-      auth_mode                        = "public"
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
+      collection_sns_topic_arn         = aws_sns_topic.report_collections_topic.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment
       CMR_HOST                         = var.cmr_custom_host
@@ -33,11 +49,13 @@ locals {
       cmr_password_secret_name         = length(var.cmr_password) == 0 ? null : aws_secretsmanager_secret.api_cmr_password.name
       cmr_provider                     = var.cmr_provider
       cmr_username                     = var.cmr_username
+      createRetryIntervalMillis        = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis              = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn      = var.rds_user_access_secret_arn
-      dbHeartBeat                      = var.rds_connection_heartbeat
       DeadLetterProcessingLambda       = aws_lambda_function.process_dead_letter_archive.arn
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       distributionApiId                = var.distribution_api_id
+      dynamoTableNameString            = local.dynamo_table_namestring
       dynamoTableNamesParameterName    = aws_ssm_parameter.dynamo_table_names.name
       EARTHDATA_BASE_URL               = replace(var.urs_url, "//*$/", "/") # Makes sure there's one and only one trailing slash
       EARTHDATA_CLIENT_ID              = var.urs_client_id
@@ -47,6 +65,9 @@ locals {
       ES_CONCURRENCY                   = var.es_request_concurrency
       ES_HOST                          = var.elasticsearch_hostname
       ES_INDEX_SHARDS                  = var.es_index_shards
+      granule_sns_topic_arn            = aws_sns_topic.report_granules_topic.arn
+      execution_sns_topic_arn          = aws_sns_topic.report_executions_topic.arn
+      idleTimeoutMillis                = var.rds_connection_timing_configuration.idleTimeoutMillis
       IDP_LOGIN                        = var.saml_idp_login
       IndexFromDatabaseLambda          = aws_lambda_function.index_from_database.arn
       invoke                           = var.schedule_sf_function_arn
@@ -64,18 +85,30 @@ locals {
       METRICS_ES_HOST                  = var.metrics_es_host
       METRICS_ES_PASS                  = var.metrics_es_password
       METRICS_ES_USER                  = var.metrics_es_username
-      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
       MigrationAsyncOperationLambda    = var.postgres_migration_async_operation_function_arn
-      OAUTH_PROVIDER                   = var.oauth_provider
+      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
       oauth_user_group                 = var.oauth_user_group
+      orca_api_uri                     = var.orca_api_uri
       protected_buckets                = join(",", local.protected_buckets)
       provider_kms_key_id              = aws_kms_key.provider_kms_key.key_id
       public_buckets                   = join(",", local.public_buckets)
+      reapIntervalMillis               = var.rds_connection_timing_configuration.reapIntervalMillis
+      ReplaySqsMessagesLambda          = aws_lambda_function.replay_sqs_messages.arn
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
       TOKEN_REDIRECT_ENDPOINT          = local.api_redirect_uri
       TOKEN_SECRET                     = var.token_secret
     }
+}
+
+resource "aws_secretsmanager_secret" "api_config" {
+  name_prefix = "${var.prefix}-api-config"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "api_config" {
+  secret_id = aws_secretsmanager_secret.api_config.id
+  secret_string = jsonencode(local.api_secret_env_variables)
 }
 
 resource "aws_cloudwatch_log_group" "private_api" {

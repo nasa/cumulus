@@ -7,8 +7,8 @@ permissions_boundary_arn = "arn:aws:iam::12345:policy/NGAPShRoleBoundary"
 prefix                   = "PREFIX"
 buckets = {
   glacier = {
-    name = "PREFIX-glacier"
-    type = "glacier"
+    name = "PREFIX-orca"
+    type = "orca"
   },
   internal = {
     name = "PREFIX-internal"
@@ -57,15 +57,18 @@ cmr_oauth_provider = "earthdata"
 archive_api_port = 8000
 private_archive_api_gateway = true
 
+rds_admin_access_secret_arn = "arn:aws:secretsmanager:us-east-1:12345:secret:secret-name"
 # ORCA Configuration
-database_app_user_pw = "password"
-postgres_user_pw     = "password"
+orca_db_user_password  = "password"
+orca_default_bucket    = "PREFIX-orca"
 
 # CSDAP configuration for cumulus distribution
 csdap_client_id = "csdap client id "
 csdap_client_password = "csdap client password"
 ## url for uat: "https://auth.csdap.uat.earthdatacloud.nasa.gov"
 csdap_host_url = "csdap host url"
+
+deploy_cumulus_distribution = true
 
 # Optional. Uncomment if using Cumulus Distribution.
 # toggle this after deployed to put the correct port in. (and hosts and config)
@@ -121,7 +124,3 @@ additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
 */
-
-# Optional - @cumulus/db will optionally run a 'heartbeat' query and retry if
-# a knexTimeout occurs
-rds_connection_heartbeat = false

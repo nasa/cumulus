@@ -51,7 +51,7 @@ Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/mas
 
 Please note:
 
-- While *connection* configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
+- While _connection_ configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
 - There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
 
 #### Provider Configuration
@@ -79,8 +79,10 @@ The Provider configuration is defined by a JSON object that takes different conf
 |protocol|string|Yes|The protocol for this provider.  Must be `http` for this provider type |
 |host|string|Yes|The host to pull data from (e.g. `nasa.gov`)
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
-|password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|password|string|_Only if username is specified_|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |port|integer|No|Port to connect to the provider on.   Defaults to `80`|
+|allowedRedirects|string[]|No|Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.
+|certificateUri|string|No|SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate
 
 ##### https
 
@@ -91,8 +93,10 @@ The Provider configuration is defined by a JSON object that takes different conf
 |protocol|string|Yes|The protocol for this provider.  Must be `https` for this provider type |
 |host|string|Yes|The host to pull data from (e.g. `nasa.gov`) |
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
-|password|string|*Only if username is specified*|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
+|password|string|_Only if username is specified_|Configured password for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
 |port|integer|No|Port to connect to the provider on.   Defaults to `443` |
+|allowedRedirects|string[]|No|Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.
+|certiciateUri|string|No|SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate
 
 ##### ftp
 
@@ -117,6 +121,8 @@ The Provider configuration is defined by a JSON object that takes different conf
 |username|string|No|Username to use to connect to the sftp server.|
 |password|string|No|Password to use to connect to the sftp server. |
 |port|integer|No|Port to connect to the provider on.  Defaults to `22`
+|privateKey|string|No|filename assumed to be in s3://bucketInternal/stackName/crypto
+|cmKeyId|string|No|AWS KMS Customer Master Key arn or alias
 
 </details>
 
@@ -128,6 +134,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 
 <details>
   <summary><b>Break down of [s3_MOD09GQ_006.json](https://github.com/nasa/cumulus/blob/master/example/data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json)</b></summary>
+
 |Key  |Value  |Required  |Description|
 |:---:|:-----:|:--------:|-----------|
 |name |`"MOD09GQ"`|Yes|The name attribute designates the name of the collection. This is the name under which the collection will be displayed on the dashboard|
@@ -141,7 +148,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |ignoreFilesConfigForDiscovery|`false` (default)|No|By default, during discovery only files that match one of the regular expressions in this collection's `files` attribute (see above) are ingested.  Setting this to `true` will ignore the `files` attribute during discovery, meaning that all files for a granule (i.e., all files with filenames matching `granuleIdExtraction`) will be ingested even when they don't match a regular expression in the `files` attribute at _discovery_ time.  (NOTE: this attribute does not appear in the example file, but is listed here for completeness.)
 |process|`"modis"`|No|Example options for this are found in the ChooseProcess step definition in [the IngestAndPublish workflow definition](https://github.com/nasa/cumulus/tree/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)|
 |meta|`<JSON Object>` of MetaData for the collection|No|MetaData for the collection. This metadata will be available to workflows for this collection via the [Cumulus Message Adapter](workflows/input_output.md).
-|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.name, 0, 3)}"`|No|Filename without extension|
+|url_path|`"{cmrMetadata.Granule.Collection.ShortName}/`<br/>`{substring(file.fileName, 0, 3)}"`|No|Filename without extension|
 
 #### files-object
 
@@ -151,8 +158,9 @@ The Provider configuration is defined by a JSON object that takes different conf
 |sampleFileName|`MOD09GQ.A2017025.h21v00.006.2017034065104.hdf"`|Yes|Filename used to validate the provided regex|
 |type|`"data"`|No|Value to be assigned to the Granule File Type. CNM types are used by Cumulus CMR steps, non-CNM values will be treated as 'data' type.  Currently only utilized in DiscoverGranules task|
 |bucket|`"internal"`|Yes|Name of the bucket where the file will be stored|
-|url_path|`"${collectionShortName}/{substring(file.name, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
+|url_path|`"${collectionShortName}/{substring(file.fileName, 0, 3)}"`|No|Folder used to save the granule in the bucket. Defaults to the collection `url_path`|
 |checksumFor|`"^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}\\.hdf$"`|No|If this is a checksum file, set `checksumFor` to the `regex` of the target file.|
+
 </details>
 
 ### Rules

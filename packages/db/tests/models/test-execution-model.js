@@ -11,9 +11,9 @@ const {
   destroyLocalTestDb,
   GranulePgModel,
   GranulesExecutionsPgModel,
+  migrationDir,
+  createRejectableTransaction,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `execution_${cryptoRandomString({ length: 10 })}`;
 
@@ -161,6 +161,28 @@ test('ExecutionPgModel.upsert() will not allow a running execution to replace a 
   );
 });
 
+test('ExecutionPgModel.create() will not allow an execution with an original_payload that is an array to be written', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+
+  executionRecord.original_payload = ['test1', 'test2'];
+  await t.throwsAsync(executionPgModel.create(knex, executionRecord));
+});
+
+test('ExecutionPgModel.create() will not allow an execution with an final_payload that is an array to be written', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+
+  executionRecord.final_payload = ['test1', 'test2'];
+  await t.throwsAsync(executionPgModel.create(knex, executionRecord));
+});
+
 test('ExecutionPgModel.delete() deletes execution and granule/execution join records', async (t) => {
   const {
     knex,
@@ -171,22 +193,24 @@ test('ExecutionPgModel.delete() deletes execution and granule/execution join rec
     executionRecord,
   } = t.context;
 
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollectionRecordFactory()
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
-  const [granuleCumulusId] = await granulePgModel.create(knex, fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
+  const [pgGranule] = await granulePgModel.create(knex, fakeGranuleRecordFactory({
+    collection_cumulus_id: t.context.collectionCumulusId,
   }));
+  const granuleCumulusId = pgGranule.cumulus_id;
 
-  const [executionCumulusId] = await knex.transaction(async (trx) => {
-    const executionCreateResponse = await executionPgModel.create(trx, executionRecord);
+  const executionCumulusId = await createRejectableTransaction(knex, async (trx) => {
+    const [executionCreateResponse] = await executionPgModel.create(trx, executionRecord);
     await granulesExecutionsPgModel.create(trx, {
-      execution_cumulus_id: executionCreateResponse[0],
+      execution_cumulus_id: executionCreateResponse.cumulus_id,
       granule_cumulus_id: granuleCumulusId,
     });
-    return executionCreateResponse;
+    return executionCreateResponse.cumulus_id;
   });
 
   t.true(
@@ -205,7 +229,8 @@ test('ExecutionPgModel.delete() deletes execution and granule/execution join rec
     )
   );
 
-  await knex.transaction(
+  await createRejectableTransaction(
+    knex,
     (trx) => executionPgModel.delete(
       trx,
       executionRecord
@@ -235,13 +260,15 @@ test('ExecutionPgModel.searchByCumulusIds() returns correct values', async (t) =
     executionPgModel,
     executionRecord,
   } = t.context;
-  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
-  let executionCumulusId1;
-  let executionCumulusId2;
-  await knex.transaction(async (trx) => {
-    [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
-    [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
+  const executionRecords = [fakeExecutionRecordFactory(), executionRecord];
+  let execution1;
+  let execution2;
+  await createRejectableTransaction(knex, async (trx) => {
+    [execution1] = await executionPgModel.create(trx, executionRecords[0]);
+    [execution2] = await executionPgModel.create(trx, executionRecords[1]);
   });
+  const executionCumulusId1 = execution1.cumulus_id;
+  const executionCumulusId2 = execution2.cumulus_id;
 
   const results = await executionPgModel
     .searchByCumulusIds(knex, [executionCumulusId1, executionCumulusId2]);
@@ -255,10 +282,12 @@ test('ExecutionPgModel.searchByCumulusIds() works with a transaction', async (t)
     executionPgModel,
     executionRecord,
   } = t.context;
-  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
-  await knex.transaction(async (trx) => {
-    const [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
-    const [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
+  const executionRecords = [fakeExecutionRecordFactory(), executionRecord];
+  await createRejectableTransaction(knex, async (trx) => {
+    const [execution1] = await executionPgModel.create(trx, executionRecords[0]);
+    const [execution2] = await executionPgModel.create(trx, executionRecords[1]);
+    const executionCumulusId1 = execution1.cumulus_id;
+    const executionCumulusId2 = execution2.cumulus_id;
 
     const results = await executionPgModel
       .searchByCumulusIds(trx, [executionCumulusId1, executionCumulusId2]);
@@ -272,10 +301,12 @@ test('ExecutionPgModel.searchByCumulusIds() supports pagination', async (t) => {
     executionPgModel,
     executionRecord,
   } = t.context;
-  const executionRecords = [executionRecord, fakeExecutionRecordFactory()];
-  await knex.transaction(async (trx) => {
-    const [executionCumulusId1] = await executionPgModel.create(trx, executionRecords[0]);
-    const [executionCumulusId2] = await executionPgModel.create(trx, executionRecords[1]);
+  const executionRecords = [fakeExecutionRecordFactory(), executionRecord];
+  await createRejectableTransaction(knex, async (trx) => {
+    const [execution1] = await executionPgModel.create(trx, executionRecords[0]);
+    const [execution2] = await executionPgModel.create(trx, executionRecords[1]);
+    const executionCumulusId1 = execution1.cumulus_id;
+    const executionCumulusId2 = execution2.cumulus_id;
 
     const firstPage = await executionPgModel
       .searchByCumulusIds(trx, [executionCumulusId1, executionCumulusId2], { limit: 1, offset: 0 });
@@ -285,5 +316,34 @@ test('ExecutionPgModel.searchByCumulusIds() supports pagination', async (t) => {
     t.like(firstPage[0], executionRecords[0]);
     t.is(secondPage.length, 1);
     t.like(secondPage[0], executionRecords[1]);
+  });
+});
+
+test('ExecutionPgModel.searchByCumulusIds() supports sorting', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+  } = t.context;
+  const executionRecords = [
+    fakeExecutionRecordFactory({ status: 'running' }),
+    fakeExecutionRecordFactory({ status: 'running' }),
+    fakeExecutionRecordFactory({ status: 'failed' }),
+    fakeExecutionRecordFactory({ status: 'running' }),
+    fakeExecutionRecordFactory({ status: 'completed' }),
+  ];
+
+  await createRejectableTransaction(knex, async (trx) => {
+    const executionCumulusIds = await Promise.all(executionRecords
+      .map(async (executionRecord) => {
+        const [pgExecution] = await executionPgModel.create(trx, executionRecord);
+        return pgExecution.cumulus_id;
+      }));
+
+    const results = await executionPgModel
+      .searchByCumulusIds(trx, executionCumulusIds.flat(), { sort_by: 'status', order: 'desc' });
+
+    // first 3 results should have 'running' status
+    t.is(results[3].status, 'failed');
+    t.is(results[4].status, 'completed');
   });
 });
