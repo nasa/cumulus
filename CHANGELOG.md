@@ -45,6 +45,49 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 - (Optional) Update the `task-config` for all workflows that use the `sync-granule` task to include `workflowStartTime` set to
 `{$.cumulus_meta.workflow_start_time}`. See [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/sync_granule_workflow.asl.json#L9) for an example.
 
+##### After the `cumulus` deployment
+
+As part of the work in the RDS Phase 2 feature set, it was decided to re-add the granule file `type` property on the file table ( detailed reasoning https://wiki.earthdata.nasa.gov/pages/viewpage.action?pageId=219186829).  This change was implemented as part of CUMULUS-2672/CUMULUS-2673, however Phase 1 granule records will *not* have the file.type property if they were migrated prior to v11.
+
+We anticipate most users are impacted by this.   Users that are impacted by
+these changes should re-run the granule migration lambda to *only* migrate
+granule file records:
+
+```shell
+PAYLOAD=$(echo '{"migrationsList": ["granules"], "granuleMigrationParams": {"migrateOnlyFiles": "true"}}' | base64)
+aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
+--payload $PAYLOAD $OUTFILE
+```
+
+You should note that this will *only* move files for granule records in
+postgres.  IF for some reason you have not completed the phase 1 data migration/
+have granule records in dynamo that are not in postgres, these granules will
+report failure for the dynamo granule and all the associated files.
+
+If you wish, instead to do a full granule and file migration, you may instead
+opt to run with the `migrateAndOverwrite` option instead, this will re-run a
+full granule/files migration and overwrite all values in the RDS database from
+what is in DynamoDB:
+
+```shell
+PAYLOAD=$(echo '{"migrationsList": ["granules"], "granuleMigrationParams": {"migrateAndOverwrite": "true"}}' | base64)
+aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
+--payload $PAYLOAD $OUTFILE
+```
+
+*Please note*: Since this data migration is copying all of your granule data
+from DynamoDB to PostgreSQL, it can take multiple hours (or even days) to run,
+depending on how much data you have and how much parallelism you configure the
+migration to use. In general, the more parallelism you configure the migration
+to use, the faster it will go, but the higher load it will put on your
+PostgreSQL database. Excessive database load can cause database outages and
+result in data loss/recovery scenarios. Thus, the parallelism settings for the
+migration are intentionally set by default to conservative values but are
+configurable.      If this impacts only some of your data products you may want
+to consider using other `granuleMigrationParams`.
+
+Please see [the second data migration docs](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#5-run-the-second-data-migration) for more on this tool if you are unfamiliar with the various options.
+
 ### Notable changes
 
 - **CUMULUS-2703**

@@ -20,9 +20,10 @@ import { envUtils } from '@cumulus/common';
 import Logger from '@cumulus/logger';
 
 import {
+  InvalidArgument,
+  PostgresUpdateFailed,
   RecordAlreadyMigrated,
   RecordDoesNotExist,
-  PostgresUpdateFailed,
 } from '@cumulus/errors';
 import {
   GranuleMigrationParams,
@@ -57,6 +58,7 @@ const initializeGranulesAndFilesMigrationResult = (): GranulesAndFilesMigrationR
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} record
  *   Record from DynamoDB
  * @param {Knex.Transaction} trx - Knex transaction
+ * @param {Object} migrationParams
  * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated}
  *   - If record was already migrated
@@ -65,8 +67,13 @@ const initializeGranulesAndFilesMigrationResult = (): GranulesAndFilesMigrationR
  */
 export const migrateGranuleRecord = async (
   record: AWS.DynamoDB.DocumentClient.AttributeMap,
-  trx: Knex.Transaction
+  trx: Knex.Transaction,
+  migrationParams: {
+    migrateAndOverwrite: string,
+    migrateOnlyFiles: string
+  } = { migrateAndOverwrite: 'false', migrateOnlyFiles: 'false' }
 ): Promise<number> => {
+  const { migrateAndOverwrite, migrateOnlyFiles } = migrationParams;
   const { name, version } = deconstructCollectionId(record.collectionId);
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();
@@ -96,22 +103,37 @@ export const migrateGranuleRecord = async (
 
   let existingRecord;
 
-  try {
-    existingRecord = await granulePgModel.get(trx, {
-      granule_id: record.granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
+  if (migrateAndOverwrite !== 'true') {
+    let recordCheckError;
+    try {
+      existingRecord = await granulePgModel.get(trx, {
+        granule_id: record.granuleId,
+        collection_cumulus_id: collectionCumulusId,
+      });
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
+      recordCheckError = error;
+    }
+
+    if (migrateOnlyFiles === 'true') {
+      if (!existingRecord) {
+        throw recordCheckError;
+      }
+      return existingRecord.cumulus_id;
+    }
+
+    const isExistingRecordNewer = existingRecord
+      && existingRecord.updated_at >= new Date(record.updatedAt);
+
+    if (isExistingRecordNewer) {
+      throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
     }
   }
 
-  const isExistingRecordNewer = existingRecord
-    && existingRecord.updated_at >= new Date(record.updatedAt);
-
-  if (isExistingRecordNewer) {
-    throw new RecordAlreadyMigrated(`Granule ${record.granuleId} was already migrated, skipping`);
+  if (migrateOnlyFiles === 'true') {
+    throw new InvalidArgument('Invalid migration parameters detected, migrateOnlyFiles cannot be set to true if migrateAndOverwrite is also set to true');
   }
 
   const granule = await translateApiGranuleToPostgresGranule(record, trx);
@@ -180,13 +202,17 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
   knex: Knex,
   loggingInterval: number,
   errorLogWriteStream: Writable,
+  migrateAndOverwrite: string,
+  migrateOnlyFiles: string,
 }): Promise<GranulesAndFilesMigrationResult> => {
   const {
     dynamoRecord,
+    errorLogWriteStream,
     granuleAndFilesMigrationResult,
     knex,
     loggingInterval,
-    errorLogWriteStream,
+    migrateAndOverwrite,
+    migrateOnlyFiles,
   } = params;
   const files = dynamoRecord.files ?? [];
   const migrationResult = granuleAndFilesMigrationResult
@@ -202,7 +228,10 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
 
   try {
     await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
-      const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx);
+      const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx, {
+        migrateAndOverwrite,
+        migrateOnlyFiles,
+      });
       return await Promise.all(files.map(
         (file : ApiFile) => migrateFileRecord(file, granuleCumulusId, trx)
       ));
@@ -232,7 +261,9 @@ const migrateGranuleDynamoRecords = async (
   knex: Knex,
   loggingInterval: number,
   writeConcurrency: number,
-  errorLogWriteStream: Writable
+  errorLogWriteStream: Writable,
+  migrateAndOverwrite: string,
+  migrateOnlyFiles: string
 ) => {
   const updatedResult = migrationResult;
   await pMap(
@@ -244,6 +275,8 @@ const migrateGranuleDynamoRecords = async (
         knex,
         loggingInterval,
         errorLogWriteStream,
+        migrateAndOverwrite,
+        migrateOnlyFiles,
       });
       updatedResult.granulesResult = result.granulesResult;
       updatedResult.filesResult = result.filesResult;
@@ -339,6 +372,8 @@ export const queryAndMigrateGranuleDynamoRecords = async ({
       knex,
       loggingInterval,
       errorLogWriteStream: jsonWriteStream,
+      migrateAndOverwrite: granuleMigrationParams.migrateAndOverwrite || 'false',
+      migrateOnlyFiles: granuleMigrationParams.migrateOnlyFiles || 'false',
     });
     migrationResult.granulesResult = result.granulesResult;
     migrationResult.filesResult = result.filesResult;
@@ -379,10 +414,15 @@ export const migrateGranulesAndFiles = async (
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
   const stackName = envUtils.getRequiredEnvVar('stackName', env);
 
+  const migrateAndOverwrite = granuleMigrationParams.migrateAndOverwrite ?? 'false';
+  const migrateOnlyFiles = granuleMigrationParams.migrateOnlyFiles ?? 'false';
   const loggingInterval = granuleMigrationParams.loggingInterval ?? 100;
   const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 10;
   const granulesAndFilesMigrationResult = initializeGranulesAndFilesMigrationResult();
 
+  if (migrateAndOverwrite === 'true' && migrateOnlyFiles === 'true') {
+    throw new InvalidArgument('Invalid migration parameters detected, migrateOnlyFiles cannot be set to true if migrateAndOverwrite is also set to true');
+  }
   const migrationName = 'granulesAndFiles';
   const {
     errorFileWriteStream,
@@ -419,7 +459,9 @@ export const migrateGranulesAndFiles = async (
         knex,
         loggingInterval,
         writeConcurrency,
-        jsonWriteStream
+        jsonWriteStream,
+        migrateAndOverwrite,
+        migrateOnlyFiles
       ),
     });
     logger.info(`Finished parallel scan of granules with ${totalSegments} parallel segments.`);
