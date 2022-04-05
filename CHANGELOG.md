@@ -96,7 +96,9 @@ migration are intentionally set by default to conservative values but are
 configurable.      If this impacts only some of your data products you may want
 to consider using other `granuleMigrationParams`.
 
-Please see [the second data migration docs](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#5-run-the-second-data-migration) for more on this tool if you are unfamiliar with the various options.
+Please see [the second data migration
+docs](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#5-run-the-second-data-migration)
+for more on this tool if you are unfamiliar with the various options.
 
 ### Notable changes
 
