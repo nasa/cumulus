@@ -2,18 +2,17 @@
 
 const uuidv4 = require('uuid/v4');
 
-const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
+const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
-const { AsyncOperation } = require('@cumulus/api/models');
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
 const { loadConfig } = require('../helpers/testUtils');
 
 describe('The AsyncOperation task runner running a non-existent lambda function', () => {
   let asyncOperation;
   let asyncOperationId;
-  let asyncOperationModel;
   let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
   let beforeAllFailed = false;
@@ -26,12 +25,6 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       config = await loadConfig();
 
       asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
-
-      asyncOperationModel = new AsyncOperation({
-        stackName: config.stackName,
-        systemBucket: config.bucket,
-        tableName: asyncOperationsTableName,
-      });
 
       // Find the ARN of the cluster
       cluster = await getClusterArn(config.stackName);
@@ -47,32 +40,26 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
         Body: JSON.stringify([1, 2, 3]),
       }).promise();
 
-      await asyncOperationModel.create({
+      const asyncOperationObject = {
         id: asyncOperationId,
         taskArn: randomString(),
         description: 'Some description',
         operationType: 'ES Index',
         status: 'RUNNING',
-      });
+      };
 
-      const runTaskResponse = await ecs().runTask({
+      await createAsyncOperation({ prefix: config.stackName, asyncOperation: asyncOperationObject });
+
+      const runTaskResponse = await startECSTask({
+        asyncOperationTaskDefinition,
         cluster,
-        taskDefinition: asyncOperationTaskDefinition,
-        launchType: 'EC2',
-        overrides: {
-          containerOverrides: [
-            {
-              name: 'AsyncOperation',
-              environment: [
-                { name: 'asyncOperationId', value: asyncOperationId },
-                { name: 'asyncOperationsTable', value: asyncOperationsTableName },
-                { name: 'lambdaName', value: 'notARealFunction' },
-                { name: 'payloadUrl', value: `s3://${config.bucket}/${payloadKey}` },
-              ],
-            },
-          ],
-        },
-      }).promise();
+        callerLambdaName: `${config.stackName}-ApiEndpoints`,
+        lambdaName: 'notARealFunction',
+        id: asyncOperationId,
+        payloadBucket: config.bucket,
+        payloadKey,
+        dynamoTableName: asyncOperationsTableName,
+      });
 
       const taskArn = runTaskResponse.tasks[0].taskArn;
 

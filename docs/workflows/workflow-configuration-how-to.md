@@ -8,14 +8,24 @@ hide_title: false
 
 ### Bucket configuration
 
-Buckets configured in your deployment for the `cumulus` module's inputs will ultimately become part of the workflow configuration. The `type` property of a bucket relies on the how that bucket will be used:
+Buckets configured in your deployment for the `cumulus` module's inputs will
+ultimately become part of the workflow configuration. The `type` property of a
+bucket describes how that bucket will be used:
 
 * `public` indicates a completely public bucket.
-* `internal` type is for system use.
-* `protected` buckets are for any information that should be behind an Earthdata Login authentication.
+* `internal` type is for Cumulus system use.
+* `protected` buckets are for any information that should be behind either
+  Earthdata Login (if using TEA for distribution) or Cognito authentication (if
+  using the Cumulus Distribution API for distribution)
 * `private` buckets are for private data.
+* Any other type is allowed and the bucket will be configured with limited IAM
+   privileges used by your system but not directly related to your ingest and
+   distribution.  For example, your glacier backup bucket could have a type
+   `orca` or `recovery` and it would be accessible to Cumulus but not part
+   of the ingest/distrubution system.
 
-Consider the following `buckets` configuration variable for the `cumulus` module for all following examples:
+Consider the following `buckets` configuration variable for the `cumulus`
+module for all following examples:
 
 ```tcl
 buckets =  {
@@ -38,6 +48,14 @@ buckets =  {
   protected-2 = {
     name = "sample-protected-bucket-2",
     type = "protected"
+  },
+  dashboard = {
+    name = "dashboard-bucket",
+    type = "dashboard"
+  },
+  glacier = {
+     name = "glacier-backup-bucket",
+     type = "orca"
   }
 }
 ```
@@ -200,10 +218,32 @@ This url path with be assigned as the collection shortname, `"MOD09GQ"`.
 To take a subset of any given metadata, use the option `substring`.
 
 ```json
-"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.name, 0, 3)}"
+"url_path": "{cmrMetadata.Granule.Collection.ShortName}/{substring(file.fileName, 0, 3)}"
 ```
 
 This example will populate to `"MOD09GQ/MOD"`
+
+In addition to `substring`, several datetime-specific functions are available, which can parse a datetime string in the metadata and extract a certain part of it:
+
+```json
+"url_path": "{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}"
+```
+
+or
+
+```json
+ "url_path": "{dateFormat(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime, YYYY-MM-DD[T]HH[:]mm[:]ss)}"
+```
+
+The following functions are implemented:
+
+* `extractYear` - returns the year, formatted as YYYY
+* `extractMonth` - returns the month, formatted as MM
+* `extractDate` - returns the day of the month, formatted as DD
+* `extractHour` - returns the hour in 24-hour format, with no leading zero
+* `dateFormat` - takes a second argument describing how to format the date, and
+  passes the metadata date string and the format argument to
+  [moment().format()](https://momentjs.com/docs/#/displaying/format/)
 
 Note: the move-granules step needs to be in the workflow for this template to be populated and the file moved. This `cmrMetadata` or CMR granule XML needs to have been generated and stored on S3. From there any field could be retrieved and used for a url_path.
 

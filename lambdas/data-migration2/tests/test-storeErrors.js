@@ -29,7 +29,7 @@ test.after.always(async () => {
 });
 
 test.serial('storeErrors stores file on s3', async (t) => {
-  const file = 'message';
+  const file = `message_${cryptoRandomString({ length: 5 })}.txt`;
   const migrationName = 'classification';
   const filename = `data-migration2-${migrationName}-errors`;
   const key = `${process.env.stackName}/${filename}-0123.json`;
@@ -37,6 +37,9 @@ test.serial('storeErrors stores file on s3', async (t) => {
   const writeStream = fs.createWriteStream(file);
   const message = 'test message';
   writeStream.end(message);
+
+  const streamFinished = promisify(finished);
+  await streamFinished(writeStream);
 
   await storeErrors({
     bucket: process.env.system_bucket,
@@ -54,7 +57,7 @@ test.serial('storeErrors stores file on s3', async (t) => {
 });
 
 test.serial('createErrorFileWriteStream returns write streams and string', (t) => {
-  const migrationName = 'test-migration-name';
+  const migrationName = `test-migration-name-${cryptoRandomString({ length: 5 })}`;
   const timestamp = new Date().toISOString();
   const expectedFilePath = `${migrationName}ErrorLog-${timestamp}.json`;
 
@@ -76,7 +79,7 @@ test.serial('createErrorFileWriteStream returns write streams and string', (t) =
 });
 
 test.serial('closeErrorFileWriteStream closes write stream', async (t) => {
-  const filepath = 'test';
+  const filepath = `test_${cryptoRandomString({ length: 5 })}.txt`;
   const errorFileWriteStream = fs.createWriteStream(filepath);
   const jsonWriteStream = JSONStream.stringify();
   await t.notThrowsAsync(closeErrorWriteStreams({ errorFileWriteStream, jsonWriteStream }));

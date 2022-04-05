@@ -1,7 +1,10 @@
 'use strict';
 
-const { migrationDir } = require('../lambdas/db-migration');
-const { getKnexClient, localStackConnectionEnv } = require('../packages/db');
+const {
+  getKnexClient,
+  localStackConnectionEnv,
+  migrationDir,
+} = require('../packages/db');
 
 (async () => {
   const db = await getKnexClient({

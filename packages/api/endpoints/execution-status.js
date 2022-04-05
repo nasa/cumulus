@@ -5,7 +5,14 @@ const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executi
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const models = require('../models');
+const {
+  getApiGranuleExecutionCumulusIdsByExecution,
+  getKnexClient,
+  GranulePgModel,
+  ExecutionPgModel,
+  CollectionPgModel,
+  translatePostgresGranuleToApiGranule,
+} = require('@cumulus/db');
 
 /**
  * fetchRemote fetches remote message from S3
@@ -60,6 +67,43 @@ async function getEventDetails(event) {
  */
 async function get(req, res) {
   const arn = req.params.arn;
+  const knex = await getKnexClient({ env: process.env });
+  const granulePgModel = new GranulePgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  let isInDatabase = true;
+  let mappedGranules;
+
+  // get the execution information from database
+  let response;
+  try {
+    response = await executionPgModel.get(knex, { arn });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      isInDatabase = false;
+    }
+  }
+
+  if (isInDatabase) {
+    // include associated granules
+    const granuleCumulusIds = await getApiGranuleExecutionCumulusIdsByExecution(knex, [response]);
+    const granules = await granulePgModel.searchByCumulusIds(knex, granuleCumulusIds);
+    const apiGranules = await Promise.all(granules
+      .map(async (pgGranule) => {
+        const pgCollection = await collectionPgModel.get(
+          knex,
+          { cumulus_id: pgGranule.collection_cumulus_id }
+        );
+
+        return await translatePostgresGranuleToApiGranule({
+          granulePgRecord: pgGranule,
+          collectionPgRecord: pgCollection,
+          knexOrTransaction: knex,
+        });
+      }));
+    mappedGranules = apiGranules.map((granule) =>
+      ({ granuleId: granule.granuleId, collectionId: granule.collectionId }));
+  }
 
   // if the execution exists in SFN API, retrieve its information, if not, get from database
   if (await StepFunctions.executionExists(arn)) {
@@ -77,18 +121,20 @@ async function get(req, res) {
       updatedEvents.push(getEventDetails(sfEvent));
     }
     status.executionHistory.events = await Promise.all(updatedEvents);
+    status.execution.granules = mappedGranules;
     return res.send(status);
   }
 
   // get the execution information from database
-  let response;
-  const e = new models.Execution();
   try {
-    response = await e.get({ arn });
+    response = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('Execution not found in API or database');
+      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
     }
+  }
+  if (!isInDatabase) {
+    return res.boom.notFound('Execution not found in API or database');
   }
 
   const warning = 'Execution does not exist in Step Functions API';
@@ -97,10 +143,11 @@ async function get(req, res) {
     stateMachineArn: getStateMachineArnFromExecutionArn(response.arn),
     name: response.name,
     status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
-    startDate: new Date(response.createdAt),
-    stopDate: new Date(response.createdAt + response.duration * 1000),
-    ...{ input: JSON.stringify(response.originalPayload) },
-    ...{ output: JSON.stringify(response.finalPayload) },
+    startDate: response.created_at,
+    stopDate: new Date(response.created_at.getTime() + response.duration * 1000),
+    granules: mappedGranules,
+    ...(response.original_payload && { input: JSON.stringify(response.original_payload) }),
+    ...(response.final_payload && { output: JSON.stringify(response.final_payload) }),
   };
   return res.send({ warning, execution });
 }

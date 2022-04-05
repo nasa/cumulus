@@ -70,7 +70,8 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
     actions = [
       "dynamodb:GetItem",
       "dynamodb:Scan",
-      "dynamodb:PutItem"
+      "dynamodb:PutItem",
+      "dynamodb:DeleteItem"
     ]
     resources = [for k, v in var.dynamo_tables : v.arn]
   }
@@ -90,10 +91,20 @@ data "aws_iam_policy_document" "postgres_migration_async_operation_policy" {
     resources = [for k, v in var.dynamo_tables : "${v.arn}/stream/*"]
   }
 
-    statement {
+  statement {
     actions = ["secretsmanager:GetSecretValue"]
     resources = [
       var.rds_user_access_secret_arn
+    ]
+  }
+
+  statement {
+    actions = [
+      "iam:PassRole"
+    ]
+    resources = [
+      var.ecs_execution_role_arn,
+      var.ecs_task_role_arn
     ]
   }
 }

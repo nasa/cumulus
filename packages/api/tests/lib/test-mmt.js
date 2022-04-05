@@ -181,6 +181,7 @@ test('buildMMTLink creates expected links', (t) => {
     { env: 'UAT', expected: 'https://mmt.uat.earthdata.nasa.gov/collections/' },
     { env: 'SIT', expected: 'https://mmt.sit.earthdata.nasa.gov/collections/' },
     { env: 'OPS', expected: 'https://mmt.earthdata.nasa.gov/collections/' },
+    { env: 'PROD', expected: 'https://mmt.earthdata.nasa.gov/collections/' },
   ];
 
   tests.forEach((aTest) => {

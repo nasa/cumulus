@@ -12,6 +12,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const { collections, granules, providers } = require('@cumulus/api-client');
 const { randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { api: apiTestUtils } = require('@cumulus/integration-tests');
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
@@ -66,14 +67,14 @@ const testBeginTime = new Date(Date.now() - 60000);
 jasmine.DEFAULT_TIMEOUT_INTERVAL = process.env.LOAD_TEST_TIMEOUT || 4200000;
 
 const checkGranuleCount = async (granuleCollection, config, count) => {
-  console.log(`Using collection ${granuleCollection.name}___${granuleCollection.version}`);
+  console.log(`Using collection ${constructCollectionId(granuleCollection.name, granuleCollection.version)}`);
   let prevGranuleFilesCount;
   let granuleFiles = [];
   try {
     await pWaitFor(async () => {
       prevGranuleFilesCount = granuleFiles.length;
       granuleFiles = await listS3ObjectsV2({
-        Prefix: `${granuleCollection.name}___${granuleCollection.version}`,
+        Prefix: constructCollectionId(granuleCollection.name, granuleCollection.version),
         Bucket: config.buckets.protected.name,
       });
       console.log(`Ingested granules found: ${granuleFiles.length}`);
@@ -183,7 +184,7 @@ describe('The Ingest Load Test', () => {
 
     console.log('Bulk deletion succeeded!');
 
-    await providers.deleteProvider({ prefix: stackName, provider: provider.id });
+    await providers.deleteProvider({ prefix: stackName, providerId: provider.id });
     const deleteCollectionsPromises = testCollections.map((collection) => collections.deleteCollection({
       prefix: stackName,
       collectionName: collection.name,

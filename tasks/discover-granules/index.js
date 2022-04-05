@@ -1,11 +1,13 @@
 'use strict';
 
 const curry = require('lodash/curry');
+const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const isBoolean = require('lodash/isBoolean');
-const Logger = require('@cumulus/logger');
 const map = require('lodash/map');
 const pick = require('lodash/pick');
+const pMap = require('p-map');
+const Logger = require('@cumulus/logger');
 const granules = require('@cumulus/api-client/granules');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
@@ -229,17 +231,22 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
  * error:              Duplicates encountered will result in a thrown error
  * replace, version:   Duplicates will be ignored
  *
- * @param {string[]} granuleIds - Array of granuleIds to filter
- * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ * @param {Object} params - params object
+ * @param {string[]} params.granuleIds - Array of granuleIds to filter
+ * @param {string} params.duplicateHandling - flag that defines this function's behavior
+ *                                            (see description)
+ * @param {number} params.concurrency - limitation on max concurrent granules
+ *                                      to check for duplicates
  *
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
  */
-const filterDuplicates = async (granuleIds, duplicateHandling) => {
-  const keysPromises = granuleIds.map((key) =>
-    checkGranuleHasNoDuplicate(key, duplicateHandling));
-
-  const filteredKeys = await Promise.all(keysPromises);
-  return filteredKeys.filter(Boolean);
+const filterDuplicates = async ({ granuleIds, duplicateHandling, concurrency }) => {
+  const checkResults = await pMap(
+    granuleIds,
+    (key) => checkGranuleHasNoDuplicate(key, duplicateHandling),
+    { concurrency }
+  );
+  return checkResults.filter(Boolean);
 };
 
 /**
@@ -249,18 +256,26 @@ const filterDuplicates = async (granuleIds, duplicateHandling) => {
  * error:              Duplicates encountered will result in a thrown error
  * replace, version:   Duplicates will be ignored
  *
- * @param {Object} filesByGranuleId - Object with granuleId for keys with an array of
+ * @param {Object} params - params object
+ * @param {Object} params.filesByGranuleId - Object with granuleId for keys with an array of
  *                                    matching files for each
  *
- * @param {string} duplicateHandling - flag that defines this function's behavior (see description)
+ * @param {string} params.duplicateHandling - flag that defines this function's behavior
+ *                                            (see description)
+ * @param {number} params.concurrency - granule duplicate filtering max concurrency
+ *                                      (`skip` or `error` handling only)
  *
  * @returns {Object} returns filesByGranuleId with applicable duplciates removed
  */
-const handleDuplicates = async (filesByGranuleId, duplicateHandling) => {
+const handleDuplicates = async ({ filesByGranuleId, duplicateHandling, concurrency }) => {
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
-    const filteredKeys = await filterDuplicates(Object.keys(filesByGranuleId), duplicateHandling);
+    const filteredKeys = await filterDuplicates({
+      granuleIds: Object.keys(filesByGranuleId),
+      duplicateHandling,
+      concurrency,
+    });
     return pick(filesByGranuleId, filteredKeys);
   }
   if (['replace', 'version'].includes(duplicateHandling)) {
@@ -291,7 +306,11 @@ const discoverGranules = async ({ config }) => {
   );
 
   const duplicateHandling = config.duplicateGranuleHandling || 'replace';
-  filesByGranuleId = await handleDuplicates(filesByGranuleId, duplicateHandling);
+  filesByGranuleId = await handleDuplicates({
+    filesByGranuleId,
+    duplicateHandling,
+    concurrency: get(config, 'concurrency', 3),
+  });
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
 

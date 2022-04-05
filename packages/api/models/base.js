@@ -3,6 +3,7 @@
 const get = require('lodash/get');
 const Ajv = require('ajv');
 const pWaitFor = require('p-wait-for');
+
 const awsServices = require('@cumulus/aws-client/services');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -18,11 +19,11 @@ async function enableStream(tableName) {
     },
   };
 
-  await awsServices.dynamodb().updateTable(params).promise();
+  await awsServices.dynamodb().updateTable(params);
 
   await pWaitFor(
     async () =>
-      await awsServices.dynamodb().describeTable({ TableName: tableName }).promise()
+      await awsServices.dynamodb().describeTable({ TableName: tableName })
         .then((response) => response.TableStatus !== 'UPDATING'),
     { interval: 5 * 1000 }
   );
@@ -67,8 +68,7 @@ async function createTable(tableName, hash, range, attributes, indexes) {
     });
   }
 
-  const output = await awsServices.dynamodb().createTable(params).promise();
-  await awsServices.dynamodb().waitFor('tableExists', { TableName: tableName }).promise();
+  const output = await DynamoDb.createAndWaitForDynamoDbTable(params);
 
   if (!inTestMode()) await enableStream(tableName);
 
@@ -76,11 +76,7 @@ async function createTable(tableName, hash, range, attributes, indexes) {
 }
 
 async function deleteTable(tableName) {
-  const output = await awsServices.dynamodb().deleteTable({
-    TableName: tableName,
-  }).promise();
-
-  await awsServices.dynamodb().waitFor('tableNotExists', { TableName: tableName }).promise();
+  const output = await DynamoDb.deleteAndWaitForDynamoDbTableNotExists({ TableName: tableName });
   return output;
 }
 
@@ -160,7 +156,12 @@ class Manager {
     this.tableAttributes = params.tableAttributes;
     this.tableIndexes = params.tableIndexes;
     this.schema = params.schema;
-    this.dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
+    this.dynamodbDocClient = awsServices.dynamodbDocClient({
+      marshallOptions: {
+        convertEmptyValues: true,
+        removeUndefinedValues: true,
+      },
+    });
     this.removeAdditional = false;
 
     this.validate = get(params, 'validate', true);
@@ -241,7 +242,7 @@ class Manager {
       params.RequestItems[this.tableName].AttributesToGet = attributes;
     }
 
-    return await this.dynamodbDocClient.batchGet(params).promise();
+    return await this.dynamodbDocClient.batchGet(params);
   }
 
   async batchWrite(deletes, puts = []) {
@@ -278,7 +279,7 @@ class Manager {
       },
     };
 
-    return await this.dynamodbDocClient.batchWrite(params).promise();
+    return await this.dynamodbDocClient.batchWrite(params);
   }
 
   addTimeStampsToItem(item) {
@@ -322,7 +323,7 @@ class Manager {
       await this.dynamodbDocClient.put({ // eslint-disable-line no-await-in-loop
         TableName: this.tableName,
         Item: itemsWithTimestamps[i],
-      }).promise();
+      });
     }
 
     // If the original item was an Array, return an Array.  If the original item
@@ -348,7 +349,7 @@ class Manager {
       Key: item,
     };
 
-    return await this.dynamodbDocClient.delete(params).promise();
+    return await this.dynamodbDocClient.delete(params);
   }
 
   async update(itemKeys, updates = {}, fieldsToDelete = []) {
@@ -359,6 +360,7 @@ class Manager {
 
     // Make sure that we don't update the key fields
     Object.keys(itemKeys).forEach((property) => delete actualUpdates[property]);
+
     // Make sure we don't delete required fields
     const optionalFieldsToDelete = fieldsToDelete.filter((f) =>
       !this.schema.required.includes(f));
@@ -382,27 +384,15 @@ class Manager {
       );
     }
 
-    // Build the actual update request
-    const attributeUpdates = {};
-    Object.keys(actualUpdates).forEach((property) => {
-      attributeUpdates[property] = {
-        Action: 'PUT',
-        Value: actualUpdates[property],
-      };
-    });
-
-    // Add keys to be deleted
-    optionalFieldsToDelete.forEach((property) => {
-      attributeUpdates[property] = { Action: 'DELETE' };
+    const updateParams = this._buildDocClientUpdateParams({
+      item: actualUpdates,
+      itemKey: itemKeys,
+      mutableFieldNames: Object.keys(actualUpdates),
+      fieldsToDelete: optionalFieldsToDelete,
     });
 
     // Perform the update
-    const updateResponse = await this.dynamodbDocClient.update({
-      TableName: this.tableName,
-      Key: itemKeys,
-      ReturnValues: 'ALL_NEW',
-      AttributeUpdates: attributeUpdates,
-    }).promise();
+    const updateResponse = await this.dynamodbDocClient.update(updateParams);
 
     return updateResponse.Attributes;
   }
@@ -443,18 +433,22 @@ class Manager {
    * @param {Object} params.item - The data item to be updated
    * @param {Object} params.itemKey
    *   Object containing the unique key(s) identifying the item
-   * @param {Array} params.mutableFieldNames
+   * @param {Array} [params.mutableFieldNames]
    *   Array of field names which should be mutable (updated even if there is an existing value)
+   * @param {Array} [params.fieldsToDelete]
+   *   Optional array of field names to delete
    * @returns {Object} - Parameters for dynamodbDocClient.update() operation
    */
   _buildDocClientUpdateParams({
     item,
     itemKey,
     mutableFieldNames = [],
+    fieldsToDelete = [],
   }) {
     const ExpressionAttributeNames = {};
     const ExpressionAttributeValues = {};
     const setUpdateExpressions = [];
+    let UpdateExpression = '';
 
     const itemKeyFieldNames = Object.keys(itemKey);
 
@@ -472,14 +466,23 @@ class Manager {
       }
     });
 
-    if (setUpdateExpressions.length === 0) return undefined;
+    if (setUpdateExpressions.length > 0) {
+      UpdateExpression += `SET ${setUpdateExpressions.join(', ')}`;
+    }
+
+    if (fieldsToDelete.length > 0) {
+      UpdateExpression += ` REMOVE ${fieldsToDelete.join(', ')}`;
+    }
+
+    if (UpdateExpression === '') return undefined;
 
     return {
       TableName: this.tableName,
       Key: itemKey,
       ExpressionAttributeNames,
       ExpressionAttributeValues,
-      UpdateExpression: `SET ${setUpdateExpressions.join(', ')}`,
+      UpdateExpression,
+      ReturnValues: 'ALL_NEW',
     };
   }
 }

@@ -8,6 +8,7 @@ const {
 const { s3, sqs } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const queue = require('../queue');
 
 test.beforeEach(async (t) => {
@@ -78,7 +79,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
 
   try {
     output = await queue.enqueueGranuleIngestMessage({
-      granule,
+      granules: [granule],
       queueUrl,
       granuleIngestWorkflow: workflow,
       provider,
@@ -138,7 +139,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
 
   try {
     output = await queue.enqueueGranuleIngestMessage({
-      granule,
+      granules: [granule],
       queueUrl,
       granuleIngestWorkflow: workflow,
       provider,
@@ -210,7 +211,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
 
   try {
     await queue.enqueueGranuleIngestMessage({
-      granule,
+      granules: [granule],
       queueUrl,
       granuleIngestWorkflow: workflow,
       provider,
@@ -246,14 +247,14 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
     granuleId: randomId(),
     dataType: collection.name,
     version: collection.version,
-    collectionId: `${collection.name}___${collection.version}`,
+    collectionId: constructCollectionId(collection.name, collection.version),
     files: [],
   };
 
   const executionNamePrefix = randomId('prefix');
 
   await queue.enqueueGranuleIngestMessage({
-    granule,
+    granules: [granule],
     queueUrl,
     granuleIngestWorkflow: workflow,
     provider,

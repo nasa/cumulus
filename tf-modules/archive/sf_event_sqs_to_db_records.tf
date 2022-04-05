@@ -1,7 +1,7 @@
 locals {
   # Pulled out into a local to prevent cyclic dependencies
   # between the IAM role, queue and lambda function.
-  sf_event_sqs_lambda_timeout = 60
+  sf_event_sqs_lambda_timeout = (var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
 }
 
 resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
@@ -14,6 +14,7 @@ resource "aws_iam_role" "sf_event_sqs_to_db_records_lambda" {
 data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
   statement {
     actions = [
+      "dynamodb:DeleteItem",
       "dynamodb:GetItem",
       "dynamodb:PutItem",
       "dynamodb:UpdateItem"
@@ -111,6 +112,16 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
     ]
     resources = [var.rds_user_access_secret_arn]
   }
+
+  statement {
+    actions   = ["sns:Publish"]
+    resources = [
+      aws_sns_topic.report_executions_topic.arn,
+      aws_sns_topic.report_granules_topic.arn,
+      aws_sns_topic.report_pdrs_topic.arn
+    ]
+  }
+
 }
 
 resource "aws_iam_role_policy" "sf_event_sqs_to_db_records_lambda_role_policy" {
@@ -156,7 +167,7 @@ resource "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {
   name                       = "${var.prefix}-sfEventSqsToDbRecordsDeadLetterQueue"
   receive_wait_time_seconds  = 20
   message_retention_seconds  = 1209600
-  visibility_timeout_seconds = 60
+  visibility_timeout_seconds = (local.sf_event_sqs_lambda_timeout * 6)
   tags                       = var.tags
 }
 
@@ -168,7 +179,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   handler          = "index.handler"
   runtime          = "nodejs12.x"
   timeout          = local.sf_event_sqs_lambda_timeout
-  memory_size      = 512
+  memory_size      = 1024
 
   dead_letter_config {
     target_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
@@ -176,12 +187,21 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
-      GranulesTable   = var.dynamo_tables.granules.name
-      PdrsTable       = var.dynamo_tables.pdrs.name
-      DeadLetterQueue = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
-      databaseCredentialSecretArn = var.rds_user_access_secret_arn
+      acquireTimeoutMillis           = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis      = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis            = var.rds_connection_timing_configuration.createTimeoutMillis
+      databaseCredentialSecretArn    = var.rds_user_access_secret_arn
+      DeadLetterQueue                = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
+      ExecutionsTable                = var.dynamo_tables.executions.name
+      execution_sns_topic_arn        = aws_sns_topic.report_executions_topic.arn
+      GranulesTable                  = var.dynamo_tables.granules.name
+      granule_sns_topic_arn          = aws_sns_topic.report_granules_topic.arn
+      idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
+      pdr_sns_topic_arn              = aws_sns_topic.report_pdrs_topic.arn
+      PdrsTable                      = var.dynamo_tables.pdrs.name
       RDS_DEPLOYMENT_CUMULUS_VERSION = "9.0.0"
+      reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
+      ES_HOST                        = var.elasticsearch_hostname
     }
   }
 
@@ -189,10 +209,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
     for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
     content {
       subnet_ids = var.lambda_subnet_ids
-      security_group_ids = compact([
-        aws_security_group.no_ingress_all_egress[0].id,
-        var.rds_security_group
-      ])
+      security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
 

@@ -13,6 +13,7 @@ const {
   generateLocalTestDb,
   destroyLocalTestDb,
   AsyncOperationPgModel,
+  migrationDir,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated } = require('@cumulus/errors');
 
@@ -20,9 +21,6 @@ const {
   migrateAsyncOperationRecord,
   migrateAsyncOperations,
 } = require('../dist/lambda/async-operations');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
@@ -91,7 +89,7 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
       ...fakeAsyncOp,
       operation_type: fakeAsyncOp.operationType,
       task_arn: fakeAsyncOp.taskArn,
-      output: JSON.parse(fakeAsyncOp.output),
+      output: { output: JSON.parse(fakeAsyncOp.output) },
       created_at: new Date(fakeAsyncOp.createdAt),
       updated_at: new Date(fakeAsyncOp.updatedAt),
     },
@@ -100,8 +98,8 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
 });
 
 test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation record where record.output is an array', async (t) => {
-  const output = { output: '[\"string\",\"test-string"]' };
-  const fakeAsyncOp = generateFakeAsyncOperation(output);
+  const output = '[\"string\",\"test-string"]';
+  const fakeAsyncOp = generateFakeAsyncOperation({ output });
   await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
 
   const createdRecord = await t.context.knex.queryBuilder()
@@ -116,7 +114,7 @@ test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation recor
       ...fakeAsyncOp,
       operation_type: fakeAsyncOp.operationType,
       task_arn: fakeAsyncOp.taskArn,
-      output: JSON.parse(fakeAsyncOp.output),
+      output: { output: JSON.parse(fakeAsyncOp.output) },
       created_at: new Date(fakeAsyncOp.createdAt),
       updated_at: new Date(fakeAsyncOp.updatedAt),
     },
@@ -236,7 +234,7 @@ test.serial('migrateAsyncOperations processes all non-failing records', async (t
     dynamodbDocClient().put({
       TableName: process.env.AsyncOperationsTable,
       Item: fakeAsyncOp1,
-    }).promise(),
+    }),
     asyncOperationsModel.create(fakeAsyncOp2),
   ]);
   t.teardown(() => Promise.all([
@@ -256,4 +254,29 @@ test.serial('migrateAsyncOperations processes all non-failing records', async (t
     {}
   );
   t.is(records.length, 1);
+});
+
+test.serial('migrateAsyncOperationRecord correctly migrates asyncOperation record where record.output is a string', async (t) => {
+  const output = 'some-string';
+  const fakeAsyncOp = generateFakeAsyncOperation({ output });
+  await migrateAsyncOperationRecord(fakeAsyncOp, t.context.knex);
+
+  const createdRecord = await t.context.knex.queryBuilder()
+    .select()
+    .table('async_operations')
+    .where({ id: fakeAsyncOp.id })
+    .first();
+
+  t.deepEqual(
+    omit(createdRecord, ['cumulus_id']),
+    omit({
+      ...fakeAsyncOp,
+      operation_type: fakeAsyncOp.operationType,
+      task_arn: fakeAsyncOp.taskArn,
+      output: { output: fakeAsyncOp.output },
+      created_at: new Date(fakeAsyncOp.createdAt),
+      updated_at: new Date(fakeAsyncOp.updatedAt),
+    },
+    ['createdAt', 'updatedAt', 'operationType', 'taskArn'])
+  );
 });

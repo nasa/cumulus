@@ -19,6 +19,7 @@ able to make use of the large number of publicly available modules on the [Terra
 * [ECS service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
 * [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution)
 * [Thin Egress App](./thin_egress_app)
+* [Cumulus Distribution App](./cumulus-distribution)
 * [Workflow](https://github.com/nasa/cumulus/tree/master/tf-modules/workflow)
 
 ## Adding components to your Terraform deployment
@@ -73,4 +74,4 @@ documentation:
 The recommended approach for handling remote state with Cumulus is to use the [S3 backend](https://www.terraform.io/docs/backends/types/s3.html).
 This backend stores state in S3 and uses a DynamoDB table for locking.
 
-See the deployment documentation for a [walkthrough of creating resources for your remote state using an S3 backend](README.md#create-resources-for-terraform-state).
+See the deployment documentation for a [walk-through of creating resources for your remote state using an S3 backend](README.md#create-resources-for-terraform-state).

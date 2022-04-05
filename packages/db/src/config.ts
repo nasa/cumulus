@@ -1,5 +1,5 @@
 import AWS from 'aws-sdk';
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { envUtils } from '@cumulus/common';
 
@@ -10,6 +10,10 @@ export const localStackConnectionEnv = {
   PG_DATABASE: 'postgres',
   PG_PORT: '5432',
 };
+
+export const isKnexDebugEnabled = (
+  env: NodeJS.ProcessEnv = {}
+) => env.KNEX_DEBUG === 'true';
 
 export const getSecretConnectionConfig = async (
   SecretId: string,
@@ -127,7 +131,7 @@ export const getKnexConfig = async ({
   const knexConfig: Knex.Config = {
     client: 'pg',
     connection: await getConnectionConfig({ env, secretsManager }),
-    debug: env.KNEX_DEBUG === 'true',
+    debug: isKnexDebugEnabled(env),
     asyncStackTraces: env.KNEX_ASYNC_STACK_TRACES === 'true',
     pool: {
       min: 0,
@@ -136,12 +140,17 @@ export const getKnexConfig = async ({
       // ts-ignore as https://github.com/knex/knex/blob/master/types/index.d.ts#L1886
       // is improperly typed.
       //@ts-ignore
-      createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '60000', 10),
+      acquireTimeoutMillis: Number.parseInt(env.acquireTimeoutMillis ?? '90000', 10),
+      createRetryIntervalMillis: Number.parseInt(env.createRetryIntervalMillis ?? '30000', 10),
+      createTimeoutMillis: Number.parseInt(env.createTimeoutMillis ?? '20000', 10),
+      destroyTimeoutMillis: Number.parseInt(env.destroyTimeoutMillis ?? '5000', 10),
+      reapIntervalMillis: Number.parseInt(env.reapIntervalMillis ?? '1000', 10),
+      propagateCreateError: false,
     },
   };
 
-  knexConfig.acquireConnectionTimeout = env.knexAcquireConnectionTimeout
-    ? Number(env.knexAcquireConnectionTimeout)
+  knexConfig.acquireConnectionTimeout = env.acquireTimeoutMillis
+    ? Number(env.acquireTimeoutMillis + 1000)
     : 60000;
 
   if (env.migrationDir) {

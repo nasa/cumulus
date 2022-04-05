@@ -4,6 +4,7 @@
  * This interface describes a Provider object in postgres compatible format that
  * is ready for write to Cumulus's postgres database instance
  */
+
 export interface PostgresProvider {
   certificate_uri?: string | null,
   cm_key_id?: string | null,
@@ -13,11 +14,12 @@ export interface PostgresProvider {
   host: string,
   name: string,
   password?: string,
-  port?: number| null,
+  port?: number | null,
   private_key?: string | null,
   protocol: string,
   updated_at?: Date | null,
   username?: string | null,
+  allowed_redirects?: string[]
 }
 
 /**
@@ -30,5 +32,5 @@ export interface PostgresProvider {
 export interface PostgresProviderRecord extends PostgresProvider {
   cumulus_id: number,
   created_at: Date,
-  updated_at: Date,
+  updated_at: Date
 }

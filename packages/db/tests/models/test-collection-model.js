@@ -6,9 +6,8 @@ const {
   fakeCollectionRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('../../dist');
-
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
 
@@ -34,7 +33,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('CollectionPgModel.upsert() creates new collection', async (t) => {
+test.serial('CollectionPgModel.upsert() creates new collection', async (t) => {
   const {
     knex,
     collectionPgModel,
@@ -48,11 +47,12 @@ test('CollectionPgModel.upsert() creates new collection', async (t) => {
     {
       ...collectionRecord,
       files: JSON.parse(collectionRecord.files),
+      meta: collectionRecord.meta,
     }
   );
 });
 
-test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
+test.serial('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
   const {
     knex,
     collectionPgModel,
@@ -76,6 +76,7 @@ test('CollectionPgModel.upsert() overwrites a collection record', async (t) => {
     {
       ...updatedCollection,
       files: JSON.parse(updatedCollection.files),
+      meta: collectionRecord.meta,
     }
   );
 });

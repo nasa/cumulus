@@ -1,17 +1,17 @@
-import Knex from 'knex';
+import { Knex } from 'knex';
 
 import { isRecordDefined } from '../database';
-import { tableNames } from '../tables';
+import { TableNames } from '../tables';
 
 import { PostgresGranuleExecution } from '../types/granule-execution';
 
 export default class GranulesExecutionsPgModel {
-  readonly tableName: tableNames;
+  readonly tableName: TableNames;
 
   // can't extend base class because type for this data doesn't contain
   // a cumulus_id property
   constructor() {
-    this.tableName = tableNames.granulesExecutions;
+    this.tableName = TableNames.granulesExecutions;
   }
 
   async create(
@@ -57,6 +57,37 @@ export default class GranulesExecutionsPgModel {
       .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
       .groupBy('execution_cumulus_id');
     return granuleExecutions.map((granuleExecution) => granuleExecution.execution_cumulus_id);
+  }
+
+  /**
+   * Get granule_cumulus_id column values from the execution_cumulus_id
+   *
+   * @param {Knex | Knex.Transaction} knexOrTransaction -
+   *  DB client or transaction
+   * @param {number | Array<number>} executionCumulusIds -
+   * single execution_cumulus_id or array of execution_cumulus_ids
+   * @returns {Promise<Array<number>>} An array of granule_cumulus_ids
+   */
+  async searchByExecutionCumulusIds(
+    knexOrTransaction: Knex | Knex.Transaction,
+    executionCumulusIds: Array<number> | number
+  ): Promise<Array<number>> {
+    const executionCumulusIdsArray = [executionCumulusIds].flat();
+    const granuleExecutions: Array<PostgresGranuleExecution> =
+      await knexOrTransaction(this.tableName)
+        .select('granule_cumulus_id')
+        .whereIn('execution_cumulus_id', executionCumulusIdsArray)
+        .groupBy('granule_cumulus_id');
+    return granuleExecutions.map((granuleExecution) => granuleExecution.granule_cumulus_id);
+  }
+
+  async delete(
+    knexTransaction: Knex.Transaction,
+    params: Partial<PostgresGranuleExecution>
+  ): Promise<number> {
+    return await knexTransaction(this.tableName)
+      .where(params)
+      .del();
   }
 
   search(

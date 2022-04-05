@@ -1,3 +1,5 @@
+const get = require('lodash/get');
+
 const log = require('@cumulus/common/log');
 
 const {
@@ -89,25 +91,28 @@ function validateGranuleExecutionRequest(req, res, next) {
       }
       return true;
     });
-  }
-
-  if (payload.query
+  } else {
+    if (payload.query
     && !(process.env.METRICS_ES_HOST
         && process.env.METRICS_ES_USER
         && process.env.METRICS_ES_PASS)
-  ) {
-    return res.boom.badRequest('ELK Metrics stack not configured');
+    ) {
+      return res.boom.badRequest('ELK Metrics stack not configured');
+    }
+    if (payload.query && !payload.index) {
+      return res.boom.badRequest('Index is required if query is sent');
+    }
   }
-
-  if (payload.query && !payload.index) {
-    return res.boom.badRequest('Index is required if query is sent');
-  }
-
   return next();
+}
+
+function getFunctionNameFromRequestContext(req) {
+  return get(req, 'apiGateway.context.functionName');
 }
 
 module.exports = {
   validateBulkGranulesRequest,
   validateGranuleExecutionRequest,
   verifyJwtAuthorization,
+  getFunctionNameFromRequestContext,
 };

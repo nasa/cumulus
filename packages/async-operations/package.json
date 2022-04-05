@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/async-operations",
-  "version": "9.2.0",
+  "version": "11.0.0",
   "description": "Cumulus Core internal async operations module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -8,7 +8,7 @@
     "node": ">=12.18.0"
   },
   "scripts": {
-    "clean": "rm -f ./dist/*.js ./dist/*.d.ts",
+    "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
@@ -28,14 +28,16 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "9.2.0",
-    "@cumulus/db": "9.2.0",
-    "@cumulus/errors": "9.2.0",
-    "@cumulus/types": "9.2.0",
-    "uuid": "8.3.1"
+    "@cumulus/aws-client": "11.1.0-alpha1",
+    "@cumulus/db": "11.0.0",
+    "@cumulus/errors": "11.0.0",
+    "@cumulus/es-client": "11.0.0",
+    "@cumulus/types": "11.0.0",
+    "knex": "0.95.15",
+    "uuid": "8.3.2"
   },
   "devDependencies": {
-    "@cumulus/common": "9.2.0",
+    "@cumulus/common": "11.0.0",
     "@types/aws-sdk": "2.7.0",
     "@types/uuid": "^8.0.0"
   }

@@ -3,7 +3,7 @@ const test = require('ava');
 
 const cryptoRandomString = require('crypto-random-string');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
+const { migrationDir } = require('../../dist');
 
 const testDbName = `provider_${cryptoRandomString({ length: 10 })}`;
 
@@ -74,5 +74,25 @@ test('ProviderPgModel.upsert() overwrites a provider record', async (t) => {
       ...updatedProvider,
       host: updatedProvider.host,
     }
+  );
+});
+
+test('ProviderPgModel.upsert() creates provider with allowed_redirects', async (t) => {
+  const {
+    knex,
+    providerPgModel,
+    providerRecord,
+  } = t.context;
+
+  const updatedRecord = {
+    ...providerRecord,
+    allowed_redirects: ['test.com', 'fake.com:53'],
+  };
+
+  await providerPgModel.upsert(knex, updatedRecord);
+  const actualRecord = await providerPgModel.get(knex, updatedRecord);
+  t.like(
+    actualRecord,
+    updatedRecord
   );
 });

@@ -19,7 +19,10 @@ const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const {
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
+
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 // PG mock data factories
 const {
@@ -32,9 +35,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-
-// eslint-disable-next-line node/no-unpublished-require
-const { migrationDir } = require('../../db-migration');
 
 const {
   migrateExecutionRecord,
@@ -104,6 +104,13 @@ test.before(async (t) => {
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
+
+  t.context.dynamodbDocClient = dynamodbDocClient({
+    marshallOptions: {
+      convertEmptyValues: true,
+      removeUndefinedValues: true,
+    },
+  });
 });
 
 test.afterEach.always(async (t) => {
@@ -135,10 +142,11 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   const existingExecution = await executionsModel.create(fakeExecution);
 
   const collectionPgModel = new CollectionPgModel();
-  const [collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     fakeCollection
   );
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const asyncOperationPgModel = new AsyncOperationPgModel();
   const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
@@ -162,7 +170,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   // Create new Dynamo execution to be migrated to postgres
   const newExecution = fakeExecutionFactoryV2({
     parentArn: existingExecution.arn,
-    collectionId: `${fakeCollection.name}___${fakeCollection.version}`,
+    collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
     asyncOperationId: fakeAsyncOperation.id,
   });
 
@@ -175,7 +183,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
     async_operation_cumulus_id: asyncOperationCumulusId,
-    collection_cumulus_id: collectionCumulusId,
+    collection_cumulus_id: t.context.collectionCumulusId,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
   });
 });
@@ -408,10 +416,10 @@ test.serial('child execution migration fails if parent execution cannot be migra
   await Promise.all([
     // Have to use Dynamo client directly because creating
     // via model won't allow creation of an invalid record
-    dynamodbDocClient().put({
+    t.context.dynamodbDocClient.put({
       TableName: process.env.ExecutionsTable,
       Item: parentExecution,
-    }).promise(),
+    }),
     executionsModel.create(childExecution),
   ]);
   t.teardown(() => Promise.all([

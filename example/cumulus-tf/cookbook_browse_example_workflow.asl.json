@@ -13,6 +13,7 @@
             "downloadBucket": "{$.cumulus_meta.system_bucket}",
             "duplicateHandling": "{$.meta.collection.duplicateHandling}",
             "pdr": "{$.meta.pdr}",
+            "workflowStartTime": "{$.cumulus_meta.workflow_start_time}",
             "cumulus_message": {
               "input": "{$.payload}",
               "outputs": [
@@ -146,7 +147,8 @@
             "buckets": "{$.meta.buckets}",
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "collection": "{$.meta.collection}",
-            "duplicateHandling": "{$.meta.collection.duplicateHandling}"
+            "duplicateHandling": "{$.meta.collection.duplicateHandling}",
+            "s3MultipartChunksizeMb": "{$.meta.collection.meta.s3MultipartChunksizeMb}"
           }
         }
       },
@@ -181,7 +183,19 @@
           "event.$": "$",
           "task_config": {
             "buckets": "{$.meta.buckets}",
-            "distribution_endpoint": "{$.meta.distribution_endpoint}"
+            "distribution_endpoint": "{$.meta.distribution_endpoint}",
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.etags}",
+                  "destination": "{$.meta.file_etags}"
+                },
+                {
+                  "source": "{$}",
+                  "destination": "{$.payload}"
+                }
+              ]
+            }
           }
         }
       },
@@ -211,7 +225,8 @@
             "cmr": "{$.meta.cmr}",
             "launchpad": "{$.meta.launchpad}",
             "input_granules": "{$.meta.input_granules}",
-            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}"
+            "granuleIdExtraction": "{$.meta.collection.granuleIdExtraction}",
+            "etags": "{$.meta.file_etags}"
           }
         }
       },

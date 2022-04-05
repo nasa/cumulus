@@ -17,7 +17,7 @@ variable "cmr_environment" {
 }
 
 variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
+  description = "Custom protocol and host to use for CMR requests (e.g. http://cmr-host.com)"
   type        = string
   default     = null
 }
@@ -56,6 +56,12 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type    = list(object({ id = string, url = string }))
   default = []
+}
+
+variable "default_s3_multipart_chunksize_mb" {
+  description = "default S3 multipart upload chunk size in MB"
+  type = number
+  default = 256
 }
 
 variable "distribution_url" {
@@ -140,6 +146,12 @@ variable "tags" {
   description = "Tags to be applied to managed resources"
   type        = map(string)
   default     = {}
+}
+
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
 }
 
 variable "throttled_queues" {

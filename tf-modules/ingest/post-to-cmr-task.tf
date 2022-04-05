@@ -5,7 +5,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs12.x"
-  timeout          = 300
+  timeout          = lookup(var.lambda_timeouts, "post_to_cmr_task_timeout", 300)
   memory_size      = 256
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]

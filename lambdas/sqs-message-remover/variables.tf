@@ -5,11 +5,6 @@ variable "prefix" {
   type        = string
 }
 
-variable "cmr_environment" {
-  description = "Environment that should be used for CMR requests (e.g. 'UAT', 'SIT')"
-  type        = string
-}
-
 variable "system_bucket" {
   description = "The name of the S3 bucket to be used for staging deployment files"
   type        = string
@@ -21,12 +16,6 @@ variable "lambda_processing_role_arn" {
 }
 
 # Optional
-
-variable "cmr_custom_host" {
-  description = "Custom host to use for CMR requests"
-  type        = string
-  default     = null
-}
 
 variable "lambda_subnet_ids" {
   description = "Subnet IDs for Lambdas"

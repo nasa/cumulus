@@ -38,34 +38,36 @@ async function createSqsQueues(
   };
 
   const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
-  return { queueUrl };
+  return { queueName, queueUrl };
 }
 
-test.before(async () => {
+test.before(async (t) => {
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
+  t.context.stackName = process.env.stackName;
   await createBucket(process.env.system_bucket);
+  t.context.queues = await createSqsQueues(randomString());
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
+  await SQS.deleteQueue(t.context.queues.queueUrl);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
 test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
-  const queues = await createSqsQueues(randomString());
-  const queueUrl = 'fakeQueueUrl';
+  const { stackName, queues } = t.context;
   const body = { testdata: randomString() };
   const message = await SQS.sendSQSMessage(
     queues.queueUrl,
     body
   );
-  const messages = await receiveSQSMessages(
+  const receivedMessage = await receiveSQSMessages(
     queues.queueUrl,
     { numOfMessages: 1, visibilityTimeout: 5 }
   );
-  const key = getS3KeyForArchivedMessage(process.env.stackName, message.MessageId);
+  const key = getS3KeyForArchivedMessage(stackName, message.MessageId, queues.queueName);
 
-  await Promise.all(messages.map((m) => archiveSqsMessageToS3(queueUrl, m)));
+  await archiveSqsMessageToS3(queues.queueUrl, receivedMessage[0]);
 
   const item = await s3().getObject({
     Bucket: process.env.system_bucket,
@@ -75,16 +77,36 @@ test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   t.deepEqual(body, JSON.parse(item.Body));
 });
 
+test.serial('archiveSqsMessageToS3 does not archive message if queueName cannot be derived from queueUrl', async (t) => {
+  const { queues } = t.context;
+  const body = { testdata: randomString() };
+  await SQS.sendSQSMessage(
+    queues.queueUrl,
+    body
+  );
+  const receivedMessage = await receiveSQSMessages(
+    queues.queueUrl,
+    { numOfMessages: 1, visibilityTimeout: 5 }
+  );
+
+  const queueUrl = '';
+
+  await t.throwsAsync(
+    archiveSqsMessageToS3(queueUrl, receivedMessage[0]),
+    { message: `Unable to determine queueName from ${queueUrl}` }
+  );
+});
+
 test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async (t) => {
+  const { queues } = t.context;
   const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);
 
-  const sqsQueues = await createSqsQueues(randomString());
   const sqsMessage = await awsServices.sqs().sendMessage({
-    QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify(message),
+    QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(message),
   }).promise();
   const messageId = sqsMessage.MessageId;
-  const key = getS3KeyForArchivedMessage(process.env.stackName, messageId);
+  const key = getS3KeyForArchivedMessage(process.env.stackName, messageId, queues.queueName);
 
   await s3PutObject({
     Bucket: process.env.system_bucket,
@@ -98,10 +120,45 @@ test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async 
     Key: key,
   }));
 
-  await deleteArchivedMessageFromS3(messageId);
+  await deleteArchivedMessageFromS3(messageId, queues.queueUrl);
 
   // Check that item no longer exists
   t.false(await s3ObjectExists({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }));
+});
+
+test.serial('deleteArchivedMessageFromS3 does delete archived message if queueName cannot be derived from queueUrl', async (t) => {
+  const { queues } = t.context;
+  const message = { testdata: randomString() };
+  await createBucket(process.env.system_bucket);
+
+  const sqsMessage = await awsServices.sqs().sendMessage({
+    QueueUrl: queues.queueUrl, MessageBody: JSON.stringify(message),
+  }).promise();
+  const messageId = sqsMessage.MessageId;
+  const key = getS3KeyForArchivedMessage(process.env.stackName, messageId, queues.queueName);
+  const queueUrl = '';
+
+  await s3PutObject({
+    Bucket: process.env.system_bucket,
+    Key: key,
+    Body: sqsMessage.Body,
+  });
+
+  // Check that item exists in S3
+  t.true(await s3ObjectExists({
+    Bucket: process.env.system_bucket,
+    Key: key,
+  }));
+
+  await t.throwsAsync(
+    deleteArchivedMessageFromS3(messageId, queueUrl),
+    { message: `Unable to determine queueName from ${queueUrl}` }
+  );
+  // Check that item still exists in S3
+  t.true(await s3ObjectExists({
     Bucket: process.env.system_bucket,
     Key: key,
   }));

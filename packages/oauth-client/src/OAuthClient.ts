@@ -169,7 +169,7 @@ export class OAuthClient {
   postRequest(
     params: {
       path: string,
-      form: {[key: string]: any},
+      form: { [key: string]: any },
       headers?: Headers,
     }
   ) {
@@ -205,7 +205,7 @@ export class OAuthClient {
       path: string,
       token: string,
       headers?: Headers,
-      searchParams?: {[key: string]: any},
+      searchParams?: { [key: string]: any },
     }
   ) {
     const { path, token, headers, searchParams } = params;

@@ -3,10 +3,10 @@ const sinon = require('sinon');
 const rewire = require('rewire');
 
 const awsServices = require('@cumulus/aws-client/services');
-const log = require('@cumulus/common/log');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const cmrUtils = rewire('../../cmr-utils');
+const log = cmrUtils.__get__('log');
 
 test.before(async (t) => {
   process.env.CMR_ENVIRONMENT = 'SIT';

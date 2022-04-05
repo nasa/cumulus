@@ -28,14 +28,19 @@ class PythonProcess(Process):
             'all': r".*"
         }
 
+    def build_s3_uri(self, bucket, key):
+        """ Build S3 URI for bucket/key """
+        return f's3://{bucket}/{key}'
+
     def process(self):
         granules = copy.deepcopy(self.input['granules'])
-        # We have to reasssgn the class input each time in an activity
+        # We have to reassign the class input each time in an activity
         # as the library doesn't appear to handle download *and* the service
         # case.   This should be fixed.
-        original_file_names = [file['filename'] for granule in granules
+        original_file_names = [self.build_s3_uri(file['bucket'], file['key'])
+                                for granule in granules
                                for file in granule['files']]
-        self.input = [file['filename'] for granule in granules
+        self.input = [self.build_s3_uri(file['bucket'], file['key']) for granule in granules
                       for file in granule['files'] if file['type'] == 'data']
         local_data_file_list = self.fetch('hdf', remote=False)
         metadata_file_list = list(map(self.add_ancillary_file,
@@ -60,7 +65,7 @@ class PythonProcess(Process):
         return md5_key
 
     def _write_md5sum_file(self, md5_file, md5_sum):
-        with open(md5_file, 'w',) as write_file:
+        with open(md5_file, 'w', encoding='utf8') as write_file:
             write_file.write(md5_sum)
 
     def _get_md5_sum(self, local_file):

@@ -34,11 +34,11 @@ echo "terraform {
 
 if [[ $NGAP_ENV = "SIT" ]]; then
   BASE_VAR_FILE="sit.tfvars"
-  CMA_LAYER_VERSION=12
+  CMA_LAYER_VERSION=17
   ROLE_BOUNDARY=NGAPShRoleBoundary
 else
   BASE_VAR_FILE="sandbox.tfvars"
-  CMA_LAYER_VERSION=15
+  CMA_LAYER_VERSION=20
   ROLE_BOUNDARY=NGAPShNonProdRoleBoundary
 fi
 
@@ -55,33 +55,6 @@ echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
   -var "rds_security_group=$RDS_SECURITY_GROUP"\
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY"
-
-cd ../db-migration-tf
-# Ensure remote state is configured for the deployment
-echo "terraform {
-  backend \"s3\" {
-    bucket = \"$TFSTATE_BUCKET\"
-    key    = \"$DEPLOYMENT/db-migration/terraform.tfstate\"
-    region = \"$AWS_REGION\"
-    dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
-  }
-}" >> ci_backend.tf
-
-# Initialize deployment
-../terraform init \
-  -input=false
-
-## TODO: This can be removed entirely once most stacks have run through Bamboo
-echo "Deploying the Cumulus database schema migration module to $DEPLOYMENT"
-../terraform apply \
-  -auto-approve \
-  -input=false \
-  -var-file="../deployments/db-migration/$BASE_VAR_FILE" \
-  -var-file="../deployments/db-migration/$DEPLOYMENT.tfvars" \
-  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
-  -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
-  -var "subnet_ids=[\"$AWS_SUBNET\"]" \
-  -var "vpc_id=$VPC_ID"
 
 cd ../cumulus-tf
 # Ensure remote state is configured for the deployment
@@ -123,5 +96,5 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "token_secret=$TOKEN_SECRET" \
   -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
   -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
-  -var "postgres_user_pw=$ORCA_POSTGRES_USER_PASSWORD" \
-  -var "database_app_user_pw=$ORCA_DATABASE_APP_USER_PASSWORD" \
+  -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
+  -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \

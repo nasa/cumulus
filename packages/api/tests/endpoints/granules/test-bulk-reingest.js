@@ -7,7 +7,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
@@ -16,14 +16,18 @@ const models = require('../../../models');
 
 const { app } = require('../../../app');
 
+const { bulkReingest } = require('../../../endpoints/granules');
+const { buildFakeExpressResponse } = require('../utils');
+
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
   CollectionsTable: randomId('CollectionsTable'),
   GranulesTable: randomId('GranulesTable'),
+  granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomId('tokenSecret'),
   stackName: randomId('stackName'),
-  system_bucket: randomId('systemBucket'),
+  system_bucket: randomId('bucket'),
   AsyncOperationsTable: randomId('AsyncOperationsTable'),
   AsyncOperationTaskDefinition: randomId('taskDefinition'),
   EcsCluster: randomId('EcsCluster'),
@@ -97,7 +101,9 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     payload: body,
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
+      ES_HOST: process.env.ES_HOST,
       GranulesTable: process.env.GranulesTable,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
@@ -109,6 +115,31 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
   Object.keys(payload.envVars).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
+});
+
+test.serial('bulkReingest() uses correct caller lambda function name', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
+
+  const body = {
+    ids: expectedIds,
+  };
+
+  const functionName = randomId('lambda');
+
+  await bulkReingest(
+    {
+      apiGateway: {
+        context: {
+          functionName,
+        },
+      },
+      body,
+    },
+    buildFakeExpressResponse()
+  );
+
+  t.is(asyncOperationStartStub.getCall(0).firstArg.callerLambdaName, functionName);
 });
 
 test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and ES query', async (t) => {
@@ -145,7 +176,9 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     payload: body,
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
+      ES_HOST: process.env.ES_HOST,
       GranulesTable: process.env.GranulesTable,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,

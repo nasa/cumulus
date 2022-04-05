@@ -6,17 +6,34 @@ const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
 const omit = require('lodash/omit');
+const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
+  ExecutionPgModel,
+  fakeCollectionRecordFactory,
+  fakeExecutionRecordFactory,
+  fakeGranuleRecordFactory,
   FilePgModel,
   generateLocalTestDb,
+  getUniqueGranuleByGranuleId,
   GranulePgModel,
+  GranulesExecutionsPgModel,
   localStackConnectionEnv,
-  translateApiGranuleToPostgresGranule,
+  migrationDir,
+  translateApiExecutionToPostgresExecution,
   translateApiFiletoPostgresFile,
+  translateApiGranuleToPostgresGranule,
+  translatePostgresFileToApiFile,
+  translatePostgresGranuleToApiGranule,
+  upsertGranuleWithExecutionJoinRecord,
 } = require('@cumulus/db');
+
+const {
+  createTestIndex,
+  cleanupTestIndex,
+} = require('@cumulus/es-client/testUtils');
 
 const {
   buildS3Uri,
@@ -32,29 +49,25 @@ const {
   secretsManager,
   sfn,
   s3,
+  sns,
+  sqs,
 } = require('@cumulus/aws-client/services');
 const { CMR } = require('@cumulus/cmr-client');
 const {
   metadataObjectFromCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
-const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-// Postgres mock data factories
-const {
-  fakeCollectionRecordFactory,
-  fakeGranuleRecordFactory,
-} = require('@cumulus/db/dist/test-utils');
-
+const { put } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
+const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
-
-const { createGranuleAndFiles } = require('../../lib/create-test-data');
 
 // Dynamo mock data factories
 const {
@@ -63,36 +76,40 @@ const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
   setAuthorizedOAuthUsers,
+  fakeExecutionFactoryV2,
 } = require('../../lib/testUtils');
-
 const {
   createJwtToken,
 } = require('../../lib/token');
-const { migrationDir } = require('../../../../lambdas/db-migration');
 
 const {
   generateMoveGranuleTestFilesAndEntries,
-  getPostgresFilesInOrder,
+  getFileNameFromKey,
+  getPgFilesFromGranuleCumulusId,
 } = require('./granules/helpers');
+const { buildFakeExpressResponse } = require('./utils');
 
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let accessTokenModel;
 let collectionModel;
-let esClient;
-let esIndex;
+let executionModel;
+let executionPgModel;
 let filePgModel;
 let granuleModel;
 let granulePgModel;
+let granulesExecutionsPgModel;
 let jwtAuthToken;
 
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
+process.env.ExecutionsTable = randomId('executions');
 process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('system-bucket');
 process.env.TOKEN_SECRET = randomId('secret');
+process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -126,7 +143,7 @@ async function setupBucketsConfig() {
   process.env.DISTRIBUTION_ENDPOINT = 'http://example.com/';
   await s3PutObject({
     Bucket: systemBucket,
-    Key: `${process.env.stackName}/workflows/buckets.json`,
+    Key: getBucketsConfigKey(process.env.stackName),
     Body: JSON.stringify(buckets),
   });
   await createBucket(buckets.public.name);
@@ -149,15 +166,6 @@ test.before(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
-  esIndex = randomId('esindex');
-  t.context.esAlias = randomId('esAlias');
-  process.env.ES_INDEX = t.context.esAlias;
-
-  // create esClient
-  esClient = await Search.es('fakehost');
-
-  // add fake elasticsearch index
-  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);
@@ -170,12 +178,20 @@ test.before(async (t) => {
   collectionModel = new models.Collection();
   await collectionModel.createTable();
 
+  // create fake execution table
+  executionModel = new models.Execution();
+  await executionModel.createTable();
+  executionPgModel = new ExecutionPgModel();
+
   // create fake Granules table
   granuleModel = new models.Granule();
   await granuleModel.createTable();
+  t.context.granuleModel = granuleModel;
 
   granulePgModel = new GranulePgModel();
+  t.context.granulePgModel = granulePgModel;
   filePgModel = new FilePgModel();
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -205,6 +221,16 @@ test.before(async (t) => {
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
 
+  const { esIndex, esClient } = await createTestIndex();
+  t.context.esIndex = esIndex;
+  t.context.esClient = esClient;
+
+  t.context.esGranulesClient = new Search(
+    {},
+    'granule',
+    process.env.ES_INDEX
+  );
+
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections
   const collectionName = 'fakeCollection';
@@ -215,10 +241,9 @@ test.before(async (t) => {
     version: collectionVersion,
     duplicateHandling: 'error',
   });
-  const dynamoCollection = await collectionModel.create(t.context.testCollection);
   t.context.collectionId = constructCollectionId(
-    dynamoCollection.name,
-    dynamoCollection.version
+    collectionName,
+    collectionVersion
   );
 
   const testPgCollection = fakeCollectionRecordFactory({
@@ -226,27 +251,61 @@ test.before(async (t) => {
     version: collectionVersion,
   });
   const collectionPgModel = new CollectionPgModel();
-  [t.context.collectionCumulusId] = await collectionPgModel.create(
+  const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
+
+  // Create execution in Dynamo/Postgres
+  // we need this as granules *should have* a related execution
+
+  t.context.testExecution = fakeExecutionRecordFactory();
+  const [testExecution] = (
+    await executionPgModel.create(t.context.knex, t.context.testExecution)
+  );
+  t.context.testExecutionCumulusId = testExecution.cumulus_id;
+  t.context.collectionCumulusId = pgCollection.cumulus_id;
+
+  const newExecution = fakeExecutionFactoryV2({
+    arn: 'arn3',
+    status: 'completed',
+    name: 'test_execution',
+    parentArn: undefined,
+  });
+
+  await executionModel.create(newExecution);
+  const executionPgRecord = await translateApiExecutionToPostgresExecution(
+    newExecution,
+    knex
+  );
+  await executionPgModel.create(knex, executionPgRecord);
+  t.context.executionUrl = executionPgRecord.url;
+  t.context.executionArn = executionPgRecord.arn;
 });
 
 test.beforeEach(async (t) => {
-  const { esAlias } = t.context;
-
-  const granuleId1 = cryptoRandomString({ length: 6 });
-  const granuleId2 = cryptoRandomString({ length: 6 });
+  const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
-    fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed' }),
-    fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed' }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId1,
+      status: 'completed',
+      execution: t.context.executionUrl,
+      duration: 47.125,
+    }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId2,
+      status: 'failed',
+      execution: t.context.executionUrl,
+      duration: 52.235,
+    }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
     granuleModel.create(granule)
-      .then((record) => indexer.indexGranule(esClient, record, esAlias))));
+      .then((record) => indexer.indexGranule(t.context.esClient, record, t.context.esIndex))));
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -255,6 +314,10 @@ test.beforeEach(async (t) => {
         granule_id: granuleId1,
         status: 'completed',
         collection_cumulus_id: t.context.collectionCumulusId,
+        published: true,
+        cmr_link: 'https://cmr.uat.earthdata.nasa.gov/search/granules.json?concept_id=A123456789-TEST_A',
+        duration: 47.125,
+        timestamp: new Date(Date.now()),
       }
     ),
     fakeGranuleRecordFactory(
@@ -262,19 +325,58 @@ test.beforeEach(async (t) => {
         granule_id: granuleId2,
         status: 'failed',
         collection_cumulus_id: t.context.collectionCumulusId,
+        duration: 52.235,
+        timestamp: new Date(Date.now()),
       }
     ),
   ];
 
-  await Promise.all(t.context.fakePGGranules.map((granule) =>
-    granulePgModel.create(t.context.knex, granule)));
+  await Promise.all(
+    t.context.fakePGGranules.map((granule) =>
+      upsertGranuleWithExecutionJoinRecord(
+        t.context.knex,
+        granule,
+        t.context.testExecutionCumulusId,
+        t.context.granulePgModel
+      ))
+  );
+
+  const topicName = randomString();
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  process.env.granule_sns_topic_arn = TopicArn;
+  t.context.TopicArn = TopicArn;
+
+  const QueueName = randomString();
+  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  t.context.QueueUrl = QueueUrl;
+  const getQueueAttributesResponse = await sqs().getQueueAttributes({
+    QueueUrl,
+    AttributeNames: ['QueueArn'],
+  }).promise();
+  const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
+
+  const { SubscriptionArn } = await sns().subscribe({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }).promise();
+
+  await sns().confirmSubscription({
+    TopicArn,
+    Token: SubscriptionArn,
+  }).promise();
+});
+
+test.afterEach(async (t) => {
+  const { QueueUrl, TopicArn } = t.context;
+  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test.after.always(async (t) => {
-  await collectionModel.deleteTable();
   await granuleModel.deleteTable();
+  await executionModel.deleteTable();
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
@@ -290,6 +392,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
+  await cleanupTestIndex(t.context);
 });
 
 test.serial('default returns list of granules', async (t) => {
@@ -304,7 +407,7 @@ test.serial('default returns list of granules', async (t) => {
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
   t.is(meta.count, 2);
-  const granuleIds = t.context.fakeGranules.map((i) => i.granuleId);
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
@@ -408,15 +511,29 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET returns an existing granule', async (t) => {
+test.serial('GET returns the expected existing granule', async (t) => {
+  const {
+    knex,
+    fakePGGranules,
+  } = t.context;
+
   const response = await request(app)
-    .get(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .get(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const { granuleId } = response.body;
-  t.is(granuleId, t.context.fakeGranules[0].granuleId);
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[0].granule_id,
+    collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(response.body, expectedGranule);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
@@ -433,7 +550,7 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
 
 test.serial('PUT fails if action is not supported', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'someUnsupportedAction' })
@@ -444,16 +561,16 @@ test.serial('PUT fails if action is not supported', async (t) => {
   t.true(message.includes('Action is not supported'));
 });
 
-test.serial('PUT fails if action is not provided', async (t) => {
+test.serial('PUT without a body, fails to update granule.', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
   t.is(response.status, 400);
   const { message } = response.body;
-  t.is(message, 'Action is missing');
+  t.is(message, `input :granuleName (${t.context.fakeGranules[0].granuleId}) must match body's granuleId (undefined)`);
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -475,9 +592,9 @@ test.serial('reingest a granule', async (t) => {
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
-
+  t.teardown(() => stub.restore());
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -488,9 +605,16 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
-  stub.restore();
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+    t.context.knex,
+    t.context.fakePGGranules[0].granule_id
+  );
+  const updatedDynamoGranule = await granuleModel.get(
+    { granuleId: t.context.fakeGranules[0].granuleId }
+  );
+
+  t.is(updatedPgGranule.status, 'queued');
+  t.is(updatedDynamoGranule.status, 'queued');
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
@@ -523,9 +647,10 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   const stub = sinon.stub(sfn(), 'describeExecution').returns({
     promise: () => Promise.resolve(fakeDescribeExecutionResult),
   });
+  t.teardown(() => stub.restore());
 
   const response = await request(app)
-    .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -539,18 +664,29 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'applyWorkflow inPlaceWorkflow');
 
-  const updatedGranule = await granuleModel.get({ granuleId: t.context.fakeGranules[0].granuleId });
-  t.is(updatedGranule.status, 'running');
-  stub.restore();
+  const updatedPgGranule = await getUniqueGranuleByGranuleId(
+    t.context.knex,
+    t.context.fakePGGranules[0].granule_id
+  );
+  const updatedDynamoGranule = await granuleModel.get(
+    { granuleId: t.context.fakeGranules[0].granuleId }
+  );
+
+  t.is(updatedPgGranule.status, 'queued');
+  t.is(updatedDynamoGranule.status, 'queued');
 });
 
 test.serial('remove a granule from CMR', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newPgGranule,
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: true,
+    esClient: t.context.esClient,
+    granuleParams: { published: true },
   });
 
-  const granuleId = newDynamoGranule.granuleId;
+  const granuleId = newPgGranule.granule_id;
 
   sinon.stub(
     CMR.prototype,
@@ -580,9 +716,9 @@ test.serial('remove a granule from CMR', async (t) => {
     t.is(updatedDynamoGranule.cmrLink, undefined);
 
     // Should have updated the Postgres granule
-    const updatedPgGranule = await granulePgModel.get(
+    const updatedPgGranule = await getUniqueGranuleByGranuleId(
       t.context.knex,
-      { granule_id: granuleId }
+      granuleId
     );
     t.is(updatedPgGranule.published, false);
     t.is(updatedPgGranule.cmrLink, undefined);
@@ -609,11 +745,11 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
   sinon.stub(
     CMR.prototype,
     'getGranuleMetadata'
-  ).callsFake(() => Promise.resolve({ title: t.context.fakeGranules[0].granuleId }));
+  ).callsFake(() => Promise.resolve({ title: t.context.fakePGGranules[0].granule_id }));
 
   try {
     const response = await request(app)
-      .put(`/granules/${t.context.fakeGranules[0].granuleId}`)
+      .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -624,7 +760,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
     t.is(body.action, 'removeFromCmr');
 
     const updatedGranule = await granuleModel.get({
-      granuleId: t.context.fakeGranules[0].granuleId,
+      granuleId: t.context.fakePGGranules[0].granule_id,
     });
     t.is(updatedGranule.published, false);
     t.is(updatedGranule.cmrLink, undefined);
@@ -648,10 +784,129 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
+test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
+  const {
+    esGranulesClient,
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+  await granuleModel.create(newGranule);
+  const newPgGranule = await translateApiGranuleToPostgresGranule(newGranule, knex);
+  const [createdPgGranule] = await granulePgModel.create(knex, newPgGranule);
+
+  t.true(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: createdPgGranule.granule_id,
+      collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+    }
+  ));
+  t.false(await esGranulesClient.exists(newGranule.granuleId));
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: createdPgGranule.granule_id,
+      collection_cumulus_id: createdPgGranule.collection_cumulus_id,
+    }
+  ));
+});
+
+test.serial('DELETE deletes a granule that exists in Elasticsearch but not PostgreSQL successfully', async (t) => {
+  const {
+    esClient,
+    esIndex,
+    esGranulesClient,
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+  await granuleModel.create(newGranule);
+  await indexer.indexGranule(esClient, newGranule, esIndex);
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    }
+  ));
+  t.true(await esGranulesClient.exists(newGranule.granuleId));
+
+  const response = await request(app)
+    .delete(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  t.false(await esGranulesClient.exists(newGranule.granuleId));
+});
+
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: true,
+    granuleParams: { published: true },
+    esClient: t.context.esClient,
   });
 
   const granuleId = newDynamoGranule.granuleId;
@@ -670,7 +925,10 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   );
 
   // granule should still exist in Dynamo and Postgres
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.true(await granuleModel.exists({ granuleId }));
 
   // Verify files still exist in S3 and Postgres
@@ -687,10 +945,15 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   ]));
 });
 
-test.serial('DELETE deleting an existing unpublished granule', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+test.serial('DELETE deleting an existing unpublished granule succeeds', async (t) => {
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: false,
+    granuleParams: { published: false },
+    esClient: t.context.esClient,
   });
 
   const response = await request(app)
@@ -706,7 +969,10 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   const granuleId = newDynamoGranule.granuleId;
 
   // granule have been deleted from Postgres and Dynamo
-  t.false(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.false(await granuleModel.exists({ granuleId }));
 
   // verify the files are deleted from S3 and Postgres
@@ -723,91 +989,15 @@ test.serial('DELETE deleting an existing unpublished granule', async (t) => {
   ]));
 });
 
-test.serial('DELETE deleting a granule that exists in Dynamo but not Postgres', async (t) => {
-  // Create a granule in Dynamo only
-  const s3Buckets = {
-    protected: {
-      name: randomId('protected'),
-      type: 'protected',
-    },
-    public: {
-      name: randomId('public'),
-      type: 'public',
-    },
-  };
-  const granuleId = randomId('granule');
-  const files = [
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.hdf`,
-      key: `${randomString(5)}/${granuleId}.hdf`,
-    },
-    {
-      bucket: s3Buckets.protected.name,
-      fileName: `${granuleId}.cmr.xml`,
-      key: `${randomString(5)}/${granuleId}.cmr.xml`,
-    },
-    {
-      bucket: s3Buckets.public.name,
-      fileName: `${granuleId}.jpg`,
-      key: `${randomString(5)}/${granuleId}.jpg`,
-    },
-  ];
-
-  const newGranule = fakeGranuleFactoryV2(
-    {
-      granuleId: granuleId,
-      status: 'failed',
-      published: false,
-      files: files,
-    }
-  );
-
-  await createS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]);
-
-  // Add files to S3
-  await Promise.all(newGranule.files.map((file) => s3PutObject({
-    Bucket: file.bucket,
-    Key: file.key,
-    Body: `test data ${randomString()}`,
-  })));
-
-  // create a new Dynamo granule
-  await granuleModel.create(newGranule);
-
-  const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  // granule have been deleted from Dynamo
-  t.false(await granuleModel.exists({ granuleId }));
-
-  // Verify files were removed from S3
-  await Promise.all(
-    newGranule.files.map(async (file) => {
-      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
-    })
-  );
-
-  t.teardown(() => deleteS3Buckets([
-    s3Buckets.protected.name,
-    s3Buckets.public.name,
-  ]));
-});
-
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { s3Buckets, newDynamoGranule } = await createGranuleAndFiles({
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule: { collection_cumulus_id: collectionCumulusId },
+  } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    published: false,
+    granuleParams: { published: true },
+    esClient: t.context.esClient,
   });
 
   sinon
@@ -827,7 +1017,10 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   const granuleId = newDynamoGranule.granuleId;
 
   // granule not have been deleted from Postgres or Dynamo
-  t.true(await granulePgModel.exists(t.context.knex, { granule_id: granuleId }));
+  t.true(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
   t.true(await granuleModel.exists({ granuleId }));
 
   // verify the files still exist in S3 and Postgres
@@ -844,10 +1037,73 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   ]));
 });
 
+test.serial('DELETE publishes an SNS message after a successful granule delete', async (t) => {
+  const {
+    s3Buckets,
+    newDynamoGranule,
+    newPgGranule,
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    granuleParams: { published: false },
+    esClient: t.context.esClient,
+  });
+  const timeOfResponse = Date.now();
+
+  const response = await request(app)
+    .delete(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  const granuleId = newDynamoGranule.granuleId;
+
+  // granule have been deleted from Postgres and Dynamo
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: newPgGranule.collection_cumulus_id,
+    }
+  ));
+  t.false(await granuleModel.exists({ granuleId }));
+
+  // verify the files are deleted from S3 and Postgres
+  await Promise.all(
+    newDynamoGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+
+  t.is(publishedMessage.record.granuleId, newDynamoGranule.granuleId);
+  t.is(publishedMessage.event, 'Delete');
+  t.true(publishedMessage.deletedAt > timeOfResponse);
+  t.true(publishedMessage.deletedAt < Date.now());
+});
+
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
+
+  const {
+    esGranulesClient,
+  } = t.context;
 
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
@@ -929,9 +1185,8 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       });
 
       // check the granule in postgres is updated
-      const pgFiles = await getPostgresFilesInOrder(
+      const pgFiles = await getPgFilesFromGranuleCumulusId(
         t.context.knex,
-        newGranule,
         filePgModel,
         postgresGranuleCumulusId
       );
@@ -940,14 +1195,27 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
 
       for (let i = 0; i < pgFiles.length; i += 1) {
         const destination = destinations.find((dest) => pgFiles[i].file_name.match(dest.regex));
+        const fileName = pgFiles[i].file_name;
+
         t.is(destination.bucket, pgFiles[i].bucket);
         t.like(pgFiles[i], {
-          ...omit(newGranule.files[i], ['fileName', 'size']),
-          key: `${destinationFilepath}/${newGranule.files[i].fileName}`,
+          ...omit(newGranule.files[i], ['fileName', 'size', 'createdAt', 'updatedAt']),
+          key: `${destinationFilepath}/${fileName}`,
           bucket: destination.bucket,
-          file_name: newGranule.files[i].fileName,
         });
       }
+
+      // check the ES index is updated
+      const esRecord = await esGranulesClient.get(newGranule.granuleId);
+      t.is(esRecord.files.length, 3);
+      esRecord.files.forEach((esFileRecord) => {
+        const pgMatchingFileRecord = pgFiles.find(
+          (pgFile) =>
+            pgFile.key.match(esFileRecord.key)
+            && pgFile.bucket.match(esFileRecord.bucket)
+        );
+        t.deepEqual(translatePostgresFileToApiFile(pgMatchingFileRecord), esFileRecord);
+      });
     }
   );
 });
@@ -956,7 +1224,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
-  const fakeBucket = 'TotallyNotARealBucket';
+  const fakeBucket = 'not-a-real-bucket';
 
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
@@ -1008,27 +1276,41 @@ test.serial('When a move granule request fails to move a file correctly, it reco
 
       const message = JSON.parse(response.body.message);
 
+      message.granule.files = sortBy(message.granule.files, (file) => getFileNameFromKey(file.key));
+      newGranule.files = sortBy(newGranule.files, (file) => getFileNameFromKey(file.key));
+
+      const fileWithInvalidDestination = newGranule.files[0];
+
       t.is(message.reason, 'Failed to move granule');
       t.deepEqual(message.granule, newGranule);
       t.is(message.errors.length, 1);
       t.is(message.errors[0].code, 'NoSuchBucket');
 
-      const actualGranuleFileRecord = message.granuleFilesRecords.sort(
-        (a, b) => (a.key < b.key ? -1 : 1)
-      );
+      const actualGranuleFileRecord = sortBy(message.granuleFilesRecords, ['key']);
       const expectedGranuleFileRecord = [
         {
           bucket: thirdBucket,
           key: `${destinationFilepath}/${granuleFileName}.md`,
           fileName: `${granuleFileName}.md`,
+          size: 9,
+          source: 'fakeSource',
         },
         {
           bucket,
           key: `${destinationFilepath}/${granuleFileName}.txt`,
           fileName: `${granuleFileName}.txt`,
+          size: 9,
+          source: 'fakeSource',
         },
-        newGranule.files[2],
+        {
+          bucket: fileWithInvalidDestination.bucket,
+          key: fileWithInvalidDestination.key,
+          fileName: `${granuleFileName}.jpg`,
+          size: 9,
+          source: 'fakeSource',
+        },
       ];
+
       t.deepEqual(expectedGranuleFileRecord, actualGranuleFileRecord);
 
       // Validate S3 Objects are where they should be
@@ -1056,136 +1338,60 @@ test.serial('When a move granule request fails to move a file correctly, it reco
 
       // check the granule in dynamoDb is updated and files are replaced
       const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-      const updatedFiles = updatedGranule.files;
 
-      t.true(updatedFiles[0].key.startsWith(`${destinationFilepath}/${granuleFileName}`));
-      t.like(newGranule.files[0], omit(updatedFiles[0], ['fileName', 'key', 'bucket']));
-      t.is(updatedFiles[0].bucket, destinations.find(
-        (dest) => updatedFiles[0].fileName.match(dest.regex)
-      ).bucket);
+      const updatedFiles = sortBy(updatedGranule.files, (file) => getFileNameFromKey(file.key));
+      const granuleFiles = sortBy(newGranule.files, (file) => getFileNameFromKey(file.key));
 
-      t.true(updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`));
+      t.deepEqual({
+        ...fileWithInvalidDestination,
+        fileName: `${granuleFileName}.jpg`,
+      }, updatedFiles[0]);
+
+      t.true(
+        updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
+        `updatedFile[1] ${updatedFiles[1].key}, did not start with ${destinationFilepath}/${granuleFileName}`
+      );
       t.like(newGranule.files[1], omit(updatedFiles[1], ['fileName', 'key', 'bucket']));
       t.is(updatedFiles[1].bucket, destinations.find(
         (dest) => updatedFiles[1].fileName.match(dest.regex)
       ).bucket);
 
-      t.deepEqual(newGranule.files[2], updatedFiles[2]);
+      t.true(
+        updatedFiles[2].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
+        `updatedFile[2] ${updatedFiles[2].key}, did not start with ${destinationFilepath}/${granuleFileName}`
+      );
+      t.like(granuleFiles[2], omit(updatedFiles[2], ['fileName', 'key', 'bucket']));
+      t.is(updatedFiles[2].bucket, destinations.find(
+        (dest) => updatedFiles[2].fileName.match(dest.regex)
+      ).bucket);
 
       // Check that the postgres granules are in the correct state
-      const pgFiles = await getPostgresFilesInOrder(
+      const pgFiles = await getPgFilesFromGranuleCumulusId(
         t.context.knex,
-        newGranule,
         filePgModel,
         postgresGranuleCumulusId
       );
 
-      // The .jpg at index 2 should fail and have the original object values as
+      // Sort by only the filename because the paths will have changed
+      const sortedPgFiles = sortBy(pgFiles, (file) => getFileNameFromKey(file.key));
+
+      // The .jpg at index 0 should fail and have the original object values as
       // it's assigned `fakeBucket`
-      for (let i = 0; i < 2; i += 1) {
-        const destination = destinations.find((dest) => pgFiles[i].file_name.match(dest.regex));
-        t.is(destination.bucket, pgFiles[i].bucket);
-        t.like(pgFiles[i], {
-          ...omit(newGranule.files[i], ['fileName', 'size']),
-          key: `${destinationFilepath}/${newGranule.files[i].fileName}`,
+      t.like(sortedPgFiles[0], {
+        ...omit(newGranule.files[0], ['fileName', 'size', 'createdAt', 'updatedAt']),
+      });
+
+      for (let i = 1; i <= 2; i += 1) {
+        const fileName = sortedPgFiles[i].file_name;
+        const destination = destinations.find((dest) => fileName.match(dest.regex));
+
+        t.is(destination.bucket, sortedPgFiles[i].bucket);
+        t.like(sortedPgFiles[i], {
+          ...omit(newGranule.files[i], ['fileName', 'size', 'createdAt', 'updatedAt']),
+          key: `${destinationFilepath}/${fileName}`,
           bucket: destination.bucket,
-          file_name: newGranule.files[i].fileName,
         });
       }
-      t.like(pgFiles[2], {
-        ...omit(newGranule.files[2], ['fileName', 'size']),
-        file_name: newGranule.files[2].fileName,
-      });
-    }
-  );
-});
-
-test('When a move granules request attempts to move a granule that is not migrated to postgres, it correctly updates only dynamoDb', async (t) => {
-  const bucket = process.env.system_bucket;
-  const secondBucket = randomId('second');
-  const thirdBucket = randomId('third');
-  await runTestUsingBuckets(
-    [secondBucket, thirdBucket],
-    async () => {
-      const granuleFileName = randomId('granuleFileName');
-      const {
-        newGranule,
-      } = await generateMoveGranuleTestFilesAndEntries({
-        t,
-        bucket,
-        secondBucket,
-        granulePgModel,
-        filePgModel,
-        granuleModel,
-        granuleFileName,
-        createPostgresEntries: false,
-      });
-
-      const destinationFilepath = `${process.env.stackName}/unmigrated_granules_moved`;
-      const destinations = [
-        {
-          regex: '.*.txt$',
-          bucket,
-          filepath: destinationFilepath,
-        },
-        {
-          regex: '.*.md$',
-          bucket: thirdBucket,
-          filepath: destinationFilepath,
-        },
-        {
-          regex: '.*.jpg$',
-          bucket,
-          filepath: destinationFilepath,
-        },
-      ];
-
-      const response = await request(app)
-        .put(`/granules/${newGranule.granuleId}`)
-        .set('Accept', 'application/json')
-        .set('Authorization', `Bearer ${jwtAuthToken}`)
-        .send({
-          action: 'move',
-          destinations,
-        })
-        .expect(200);
-
-      const body = response.body;
-      t.is(body.status, 'SUCCESS');
-      t.is(body.action, 'move');
-
-      const bucketObjects = await s3().listObjects({
-        Bucket: bucket,
-        Prefix: destinationFilepath,
-      }).promise();
-
-      t.is(bucketObjects.Contents.length, 2);
-      bucketObjects.Contents.forEach((item) => {
-        t.is(item.Key.indexOf(destinationFilepath), 0);
-      });
-
-      const thirdBucketObjects = await s3().listObjects({
-        Bucket: thirdBucket,
-        Prefix: destinationFilepath,
-      }).promise();
-
-      t.is(thirdBucketObjects.Contents.length, 1);
-      thirdBucketObjects.Contents.forEach((item) => {
-        t.is(item.Key.indexOf(destinationFilepath), 0);
-      });
-
-      // check the granule in dynamoDb is updated
-      const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-      updatedGranule.files.forEach((file) => {
-        t.true(file.key.startsWith(destinationFilepath));
-        const destination = destinations.find((dest) => file.fileName.match(dest.regex));
-        t.is(destination.bucket, file.bucket);
-      });
-
-      // check there is no granule in postgresGranuleCumulusId
-      await t.throwsAsync(granulePgModel.getRecordCumulusId(t.context.knex, {
-        granule_id: updatedGranule.granuleId,
-      }), { name: 'RecordDoesNotExist' });
     }
   );
 });
@@ -1215,12 +1421,12 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   );
   postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
 
-  const [postgresGranuleCumulusId] = await granulePgModel.create(
+  const [postgresGranule] = await granulePgModel.create(
     t.context.knex, postgresNewGranule
   );
   const postgresNewGranuleFiles = newGranule.files.map((file) => {
     const translatedFile = translateApiFiletoPostgresFile(file);
-    translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
+    translatedFile.granule_cumulus_id = postgresGranule.cumulus_id;
     return translatedFile;
   });
   await Promise.all(
@@ -1333,12 +1539,12 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   );
   postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
 
-  const [postgresGranuleCumulusId] = await granulePgModel.create(
+  const [postgresGranule] = await granulePgModel.create(
     t.context.knex, postgresNewGranule
   );
   const postgresNewGranuleFiles = newGranule.files.map((file) => {
     const translatedFile = translateApiFiletoPostgresFile(file);
-    translatedFile.granule_cumulus_id = postgresGranuleCumulusId;
+    translatedFile.granule_cumulus_id = postgresGranule.cumulus_id;
     return translatedFile;
   });
   await Promise.all(
@@ -1480,4 +1686,1012 @@ test.serial('PUT with action move returns failure if more than one granule file 
     'Cannot move granule because the following files would be overwritten at the destination location: file1, file2, file3. Delete the existing files or reingest the source files.');
 
   filesExistingStub.restore();
+});
+
+test.serial('create (POST) creates new granule without an execution in DynamoDB, PostgreSQL, and Elasticsearch', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+  const fetchedESRecord = await t.context.esGranulesClient.get(
+    newGranule.granuleId
+  );
+
+  t.deepEqual(
+    JSON.parse(response.text),
+    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${t.context.collectionId}` }
+  );
+  t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
+  t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+  t.is(fetchedESRecord.granuleId, newGranule.granuleId);
+});
+
+test.serial('create (POST) creates new granule with associated execution in DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: t.context.executionUrl,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+  const fetchedESRecord = await t.context.esGranulesClient.get(
+    newGranule.granuleId
+  );
+  t.deepEqual(
+    JSON.parse(response.text),
+    { message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}` }
+  );
+  t.is(fetchedDynamoRecord.granuleId, newGranule.granuleId);
+  t.is(fetchedPostgresRecord.granule_id, newGranule.granuleId);
+  t.is(fetchedESRecord.granuleId, newGranule.granuleId);
+});
+
+test.serial('create (POST) publishes an SNS message upon successful granule creation', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: t.context.executionUrl,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages.length, 1);
+});
+
+test.serial('create (POST) rejects if a granule already exists in postgres', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(409);
+
+  const errorText = JSON.parse(response.error.text);
+  t.is(errorText.statusCode, 409);
+  t.is(errorText.error, 'Conflict');
+  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
+});
+
+test.serial('create (POST) returns bad request if a granule is submitted with a bad collectionId', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: randomId('collectionId'),
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(response.statusCode, 400);
+  t.is(response.error.status, 400);
+  t.is(response.error.message, 'cannot POST /granules (400)');
+});
+
+test.serial('PUT replaces an existing granule in all data stores', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const timestamp = Date.now();
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
+  });
+
+  t.is(newDynamoGranule.status, 'running');
+  t.is(newDynamoGranule.queryFields, undefined);
+  t.is(newPgGranule.status, 'running');
+  t.is(newPgGranule.query_fields, null);
+  t.is(esRecord.status, 'running');
+  t.is(esRecord.queryFields, undefined);
+
+  const newQueryFields = {
+    foo: randomString(),
+  };
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+    queryFields: newQueryFields,
+    timestamp,
+  };
+
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+  t.deepEqual(actualGranule, {
+    ...newDynamoGranule,
+    status: 'completed',
+    timestamp,
+    queryFields: newQueryFields,
+    updatedAt: actualGranule.updatedAt,
+    error: {},
+    beginningDateTime: actualGranule.beginningDateTime,
+    endingDateTime: actualGranule.endingDateTime,
+    productionDateTime: actualGranule.productionDateTime,
+    lastUpdateDateTime: actualGranule.lastUpdateDateTime,
+  });
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+
+  t.deepEqual(actualPgGranule, {
+    ...newPgGranule,
+    timestamp: new Date(timestamp),
+    status: 'completed',
+    query_fields: newQueryFields,
+    updated_at: actualPgGranule.updated_at,
+    error: {},
+    last_update_date_time: actualPgGranule.last_update_date_time,
+    beginning_date_time: actualPgGranule.beginning_date_time,
+    ending_date_time: actualPgGranule.ending_date_time,
+    production_date_time: actualPgGranule.production_date_time,
+  });
+
+  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+  t.like(
+    updatedEsRecord,
+    {
+      ...esRecord,
+      files: actualGranule.files,
+      status: 'completed',
+      queryFields: newQueryFields,
+      updatedAt: updatedEsRecord.updatedAt,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+});
+
+test.serial('PUT replaces an existing granule in all data stores with correct timestamps', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      execution: executionUrl,
+    },
+  });
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    updatedAt: Date.now(),
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+
+  t.is(actualGranule.updatedAt, updatedGranule.updatedAt);
+  // createdAt timestamp from original record should have been preserved
+  t.is(actualGranule.createdAt, newDynamoGranule.createdAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPgGranule.created_at.getTime(), actualGranule.createdAt);
+  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
+  t.is(actualPgGranule.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPgGranule.updated_at.getTime(), updatedEsRecord.updatedAt);
+});
+
+test.serial('PUT publishes an SNS message after a successful granule update', async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      execution: executionUrl,
+    },
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+  };
+
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const translatedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: actualPgGranule,
+    knexOrTransaction: knex,
+  });
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  const snsMessageBody = JSON.parse(Messages[0].Body);
+  const publishedMessage = JSON.parse(snsMessageBody.Message);
+
+  t.deepEqual(publishedMessage.record, translatedGranule);
+  t.is(publishedMessage.event, 'Update');
+});
+
+test.serial('put() does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
+  });
+
+  const fakeGranuleModel = {
+    get: () => Promise.resolve(newDynamoGranule),
+    storeGranule: () => {
+      throw new Error('something bad');
+    },
+    delete: () => Promise.resolve(),
+    create: () => Promise.resolve(),
+  };
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+    granuleModel: fakeGranuleModel,
+  };
+
+  const expressRequest = {
+    params: {
+      granuleName: newDynamoGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      granuleModel: fakeGranuleModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+  await put(expressRequest, response);
+  t.true(response.boom.badRequest.calledWithMatch('something bad'));
+
+  t.deepEqual(
+    await t.context.granuleModel.get({
+      granuleId: newDynamoGranule.granuleId,
+    }),
+    newDynamoGranule
+  );
+  t.deepEqual(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: newPgGranule.cumulus_id,
+    }),
+    newPgGranule
+  );
+  t.deepEqual(
+    await t.context.esGranulesClient.get(
+      newDynamoGranule.granuleId
+    ),
+    esRecord
+  );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
+});
+
+test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
+  });
+
+  const fakeGranulePgModel = {
+    upsert: () => {
+      throw new Error('something bad');
+    },
+    search: () => [{
+      created_at: new Date(),
+    }],
+    get: () => ({}),
+  };
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+    granulePgModel: fakeGranulePgModel,
+  };
+
+  const expressRequest = {
+    params: {
+      granuleName: newDynamoGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      granulePgModel: fakeGranulePgModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+  await put(expressRequest, response);
+  t.true(response.boom.badRequest.calledWithMatch('something bad'));
+
+  t.deepEqual(
+    await t.context.granuleModel.get({
+      granuleId: newDynamoGranule.granuleId,
+    }),
+    newDynamoGranule
+  );
+  t.deepEqual(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: newPgGranule.cumulus_id,
+    }),
+    newPgGranule
+  );
+  t.deepEqual(
+    await t.context.esGranulesClient.get(
+      newDynamoGranule.granuleId
+    ),
+    esRecord
+  );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
+});
+
+test.serial('put() rolls back DynamoDB/PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: { status: 'running', execution: executionUrl },
+  });
+
+  const fakeEsClient = {
+    update: () => {
+      throw new Error('something bad');
+    },
+    delete: () => Promise.resolve(),
+  };
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+  };
+
+  const expressRequest = {
+    params: {
+      granuleName: newDynamoGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      esClient: fakeEsClient,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await put(expressRequest, response);
+  t.true(response.boom.badRequest.calledWithMatch('something bad'));
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const expectedDynamoGranule = await translatePostgresGranuleToApiGranule(
+    {
+      granulePgRecord: actualPgGranule,
+      knexOrTransaction: knex,
+    }
+  );
+  const actualDynamoGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+
+  // Remove size from each file object in the files array the file sizes are not being updated
+  // on the postgres side
+  actualDynamoGranule.files = actualDynamoGranule.files.map((file) => omit(file, ['size']));
+  t.deepEqual(
+    actualDynamoGranule,
+    expectedDynamoGranule
+  );
+  t.deepEqual(
+    actualPgGranule,
+    newPgGranule
+  );
+  t.deepEqual(
+    await t.context.esGranulesClient.get(
+      newDynamoGranule.granuleId
+    ),
+    esRecord
+  );
+
+  const { Messages } = await sqs().receiveMessage({
+    QueueUrl: t.context.QueueUrl,
+    WaitTimeSeconds: 10,
+  }).promise();
+  t.is(Messages, undefined);
+});
+
+test.serial('PUT adds granule if it does not exist', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(201);
+
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully wrote granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}`,
+  });
+});
+
+test.serial('PUT returns an updated granule with an undefined execution', async (t) => {
+  const now = Date.now();
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    createdAt: now,
+    timestamp: now,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  t.is(response.statusCode, 200);
+
+  const modifiedGranule = {
+    ...newGranule,
+    status: 'failed',
+    error: { some: 'error' },
+  };
+
+  const modifiedResponse = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(modifiedGranule)
+    .expect(200);
+
+  t.is(modifiedResponse.statusCode, 200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  t.deepEqual(JSON.parse(modifiedResponse.text), {
+    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}`,
+  });
+
+  t.is(fetchedDynamoRecord.status, 'failed');
+  t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
+  t.is(fetchedDynamoRecord.createdAt, fetchedPostgresRecord.created_at.getTime());
+  t.is(fetchedDynamoRecord.updatedAt, fetchedPostgresRecord.updated_at.getTime());
+  t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());
+  t.is(fetchedPostgresRecord.status, 'failed');
+  t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
+});
+
+test.serial('PUT returns an updated granule with associated execution', async (t) => {
+  const timestamp = Date.now();
+  const createdAt = timestamp - 1000000;
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    createdAt,
+    timestamp,
+    execution: undefined,
+  });
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  t.is(response.statusCode, 200);
+
+  const modifiedGranule = {
+    ...newGranule,
+    execution: t.context.executionUrl,
+    status: 'failed',
+    error: { some: 'error' },
+  };
+
+  const modifiedResponse = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(modifiedGranule)
+    .expect(200);
+
+  t.is(modifiedResponse.statusCode, 200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  // get execution for this record.
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  const granulesExecutionsPgRecord = await granulesExecutionsPgModel.search(
+    t.context.knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+    }
+  );
+
+  const executionPgRecord = await executionPgModel.searchByCumulusIds(
+    t.context.knex,
+    granulesExecutionsPgRecord[0].execution_cumulus_id
+  );
+
+  t.deepEqual(JSON.parse(modifiedResponse.text), {
+    message: `Successfully updated granule with Granule Id: ${newGranule.granuleId}, Collection Id: ${newGranule.collectionId}`,
+  });
+
+  t.is(fetchedDynamoRecord.status, 'failed');
+  t.deepEqual(fetchedDynamoRecord.error, { some: 'error' });
+  t.is(fetchedDynamoRecord.execution, modifiedGranule.execution);
+
+  t.is(fetchedPostgresRecord.status, 'failed');
+  t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
+  t.is(executionPgRecord[0].url, modifiedGranule.execution);
+
+  t.is(fetchedDynamoRecord.createdAt, fetchedPostgresRecord.created_at.getTime());
+  t.is(fetchedDynamoRecord.updatedAt, fetchedPostgresRecord.updated_at.getTime());
+  t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());
+});
+
+test.serial('PUT returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({});
+  const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
+
+  const { body } = await request(app)
+    .put(`/granules/${granuleName}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(body.statusCode, 400);
+  t.is(body.error, 'Bad Request');
+  t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
+});
+
+test.serial('update (PUT) can set running granule status to queued', async (t) => {
+  const granuleId = cryptoRandomString({ length: 6 });
+  const runningGranule = fakeGranuleRecordFactory({
+    granule_id: granuleId,
+    status: 'running',
+    collection_cumulus_id: t.context.collectionCumulusId,
+  });
+
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+
+  const pgGranule = (await t.context.granulePgModel.create(t.context.knex, runningGranule))[0];
+  await granulesExecutionsPgModel.create(t.context.knex, {
+    granule_cumulus_id: pgGranule.cumulus_id,
+    execution_cumulus_id: t.context.testExecutionCumulusId,
+  });
+
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: granuleId,
+      status: 'queued',
+      collectionId: t.context.collectionId,
+    });
+
+  t.is(response.status, 200);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully updated granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
+  });
+});
+
+test.serial('PUT will not set completed status to queued', async (t) => {
+  const granuleId = t.context.fakeGranules[0].granuleId;
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: granuleId,
+      status: 'queued',
+      collectionId: t.context.collectionId,
+      execution: t.context.executionUrl,
+    });
+
+  t.is(response.status, 200);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully updated granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
+  });
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId,
+  });
+
+  t.is(fetchedDynamoRecord.status, 'completed');
+});
+
+test.serial('PUT can create a new granule with status queued', async (t) => {
+  const granuleId = randomId('new-granule');
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({
+      granuleId: granuleId,
+      status: 'queued',
+      collectionId: t.context.collectionId,
+    });
+
+  t.is(response.status, 201);
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully wrote granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
+  });
+});
+
+test.serial('associateExecution (POST) returns bad request if fields are missing in payload', async (t) => {
+  const response = await request(app)
+    .post(`/granules/${randomId('granuleId')}/executions`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .expect(400);
+
+  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.message, 'Field granuleId, collectionId or executionArn is missing from request body');
+});
+
+test.serial('associateExecution (POST) returns bad request when the path param granuleName does not match the granuleId in payload', async (t) => {
+  const granuleIdInPath = randomId('granuleIdInPath');
+  const granuleIdInRquest = randomId('granuleIdInRquest');
+
+  const requestPayload = {
+    collectionId: t.context.collectionId,
+    executionArn: t.context.executionArn,
+    granuleId: granuleIdInRquest,
+  };
+  const response = await request(app)
+    .post(`/granules/${granuleIdInPath}/executions`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(requestPayload)
+    .expect(400);
+
+  t.is(response.body.error, 'Bad Request');
+  t.is(response.body.message, `Expected granuleId to be ${granuleIdInPath} but found ${granuleIdInRquest} in payload`);
+});
+
+test.serial('associateExecution (POST) returns Not Found if granule does not exist', async (t) => {
+  const granuleId = randomId('granuleId');
+  const requestPayload = {
+    collectionId: t.context.collectionId,
+    executionArn: t.context.executionArn,
+    granuleId,
+  };
+
+  const response = await request(app)
+    .post(`/granules/${granuleId}/executions`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(requestPayload)
+    .expect(404);
+
+  t.is(response.body.error, 'Not Found');
+  t.is(response.body.message, `No granule found to associate execution with for granuleId ${granuleId} and collectionId: ${t.context.collectionId}`);
+});
+
+test.serial('associateExecution (POST) associates an execution with a granule', async (t) => {
+  const timestamp = Date.now();
+  const createdAt = timestamp - 1000000;
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    createdAt,
+    timestamp,
+    execution: undefined,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const requestPayload = {
+    collectionId: t.context.collectionId,
+    executionArn: t.context.executionArn,
+    granuleId: newGranule.granuleId,
+  };
+
+  const response = await request(app)
+    .post(`/granules/${newGranule.granuleId}/executions`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(requestPayload)
+    .expect(200);
+
+  const fetchedDynamoRecord = await granuleModel.get({
+    granuleId: newGranule.granuleId,
+  });
+
+  const fetchedPostgresRecord = await granulePgModel.get(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  // get execution for this record.
+  const granuleCumulusId = await granulePgModel.getRecordCumulusId(
+    t.context.knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: t.context.collectionCumulusId,
+    }
+  );
+
+  const granulesExecutionsPgRecord = await granulesExecutionsPgModel.search(
+    t.context.knex,
+    {
+      granule_cumulus_id: granuleCumulusId,
+    }
+  );
+
+  const executionPgRecord = await executionPgModel.searchByCumulusIds(
+    t.context.knex,
+    granulesExecutionsPgRecord[0].execution_cumulus_id
+  );
+
+  t.deepEqual(JSON.parse(response.text), {
+    message: `Successfully associated execution ${requestPayload.executionArn} with granule granuleId ${requestPayload.granuleId} collectionId ${requestPayload.collectionId}`,
+  });
+
+  t.is(fetchedDynamoRecord.execution, t.context.executionUrl);
+  t.is(fetchedDynamoRecord.createdAt, fetchedPostgresRecord.created_at.getTime());
+  t.is(fetchedDynamoRecord.updatedAt, fetchedPostgresRecord.updated_at.getTime());
+  t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());
+  t.is(executionPgRecord[0].arn, requestPayload.executionArn);
+});
+
+test.serial('associateExecution (POST) returns Not Found if execution does not exist', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const executionArn = randomId('executionArn');
+  const requestPayload = {
+    collectionId: t.context.collectionId,
+    executionArn,
+    granuleId: newGranule.granuleId,
+  };
+
+  const response = await request(app)
+    .post(`/granules/${newGranule.granuleId}/executions`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(requestPayload)
+    .expect(404);
+
+  t.is(response.body.error, 'Not Found');
+  t.is(response.body.message, `No execution found to associate granule with for executionArn ${executionArn}`);
+});
+
+test.serial('associateExecution (POST) returns Not Found if collectionId in payload does not match the granule record', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const collectionId = `fake_collection___${randomId('collectionId')}`;
+  const requestPayload = {
+    collectionId,
+    executionArn: t.context.executionArn,
+    granuleId: newGranule.granuleId,
+  };
+
+  const response = await request(app)
+    .post(`/granules/${newGranule.granuleId}/executions`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(requestPayload)
+    .expect(404);
+
+  t.is(response.body.error, 'Not Found');
+  t.true(response.body.message.includes(`No collection found to associate execution with for collectionId ${collectionId}`));
 });

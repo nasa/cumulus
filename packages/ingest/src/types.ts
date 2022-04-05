@@ -34,5 +34,5 @@ export interface ProviderClient {
       destinationKey: string,
       bucket?: string,
     }
-  ): Promise<{s3uri: string, etag: string}>
+  ): Promise<{ s3uri: string, etag: string }>
 }

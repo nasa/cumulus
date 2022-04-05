@@ -3,28 +3,21 @@
 const get = require('lodash/get');
 const isObject = require('lodash/isObject');
 const isNil = require('lodash/isNil');
+const pick = require('lodash/pick');
+
+function replacer(key, value) {
+  if (!Array.isArray(value) && isObject(value)) {
+    return pick(value, Object.getOwnPropertyNames(value));
+  }
+  return value;
+}
 
 function errorify(err) {
-  return JSON.stringify(err, Object.getOwnPropertyNames(err));
+  return JSON.stringify(err, replacer);
 }
 
 function filenamify(fileName) {
   return fileName.replace(/["%*/:<>?\\|]/g, '_');
-}
-
-/**
- * Ensures that the exception is returned as an object
- *
- * @param {*} exception - the exception
- * @returns {string} an stringified exception
- */
-function parseException(exception) {
-  if (isNil(exception)) return {};
-  if (isObject(exception)) return exception;
-  return {
-    Error: 'Unknown Error',
-    Cause: exception,
-  };
 }
 
 /**
@@ -39,6 +32,22 @@ function deconstructCollectionId(collectionId) {
   return {
     name,
     version,
+  };
+}
+
+/**
+ * Ensures that the exception is returned as an object
+ *
+ * @param {*} exception - the exception
+ * @returns {Object} an objectified exception
+ */
+function parseException(exception) {
+  if (isNil(exception)) return {};
+  if (isObject(exception)) return exception;
+  if (exception === 'None') return {};
+  return {
+    Error: 'Unknown Error',
+    Cause: exception,
   };
 }
 
@@ -87,10 +96,10 @@ function findCaseInsensitiveValue(obj, keyArg) {
 
 module.exports = {
   deconstructCollectionId,
+  parseException,
   errorify,
   extractDate,
   filenamify,
   findCaseInsensitiveKey,
   findCaseInsensitiveValue,
-  parseException,
 };

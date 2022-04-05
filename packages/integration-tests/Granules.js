@@ -8,9 +8,10 @@
  */
 
 const get = require('lodash/get');
-const granulesApi = require('@cumulus/api-client/granules');
 const pick = require('lodash/pick');
 const pRetry = require('p-retry');
+
+const granulesApi = require('@cumulus/api-client/granules');
 
 class GranuleNotFoundError extends Error {
   constructor(id) {
@@ -75,6 +76,21 @@ const getGranuleWithStatus = async (params = {}) =>
     }
   );
 
+/**
+ * Wait for listGranules to return at least a single value before returning an
+ * empty result
+ * @param {Object} params - parameters to listGranules function
+ * @returns {Promise<Object>} - results of a successful listGranules
+ */
+const waitForListGranulesResult = async (params) => await pRetry(
+  async () => {
+    const results = await granulesApi.listGranules(params);
+    if (results.body && JSON.parse(results.body).results.length > 0) return results;
+    throw new Error('Waiting for searched Granule.');
+  }
+);
+
 module.exports = {
   getGranuleWithStatus,
+  waitForListGranulesResult,
 };

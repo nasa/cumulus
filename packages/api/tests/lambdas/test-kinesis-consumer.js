@@ -5,18 +5,18 @@ const sinon = require('sinon');
 const test = require('ava');
 const proxyquire = require('proxyquire');
 
-const { randomString } = require('@cumulus/common/test-utils');
+const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
-const Collection = require('../../models/collections');
 const Rule = require('../../models/rules');
-const Provider = require('../../models/providers');
 
 const sandbox = sinon.createSandbox();
 const queueMessageStub = sandbox.stub().resolves(true);
+const fetchEnabledRulesStub = sandbox.stub();
 const { handler } = proxyquire('../../lambdas/message-consumer', {
   '../lib/rulesHelpers': {
+    fetchEnabledRules: fetchEnabledRulesStub,
     queueMessageForRule: queueMessageStub,
   },
 });
@@ -54,7 +54,7 @@ const kinesisRule = {
   state: 'ENABLED',
   rule: {
     type: 'kinesis',
-    value: 'test-kinesisarn',
+    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
   },
 };
 
@@ -93,8 +93,6 @@ let ruleModel;
 let templateBucket;
 
 test.before(async () => {
-  process.env.CollectionsTable = randomString();
-  process.env.ProvidersTable = randomString();
   process.env.RulesTable = randomString();
   process.env.messageConsumer = 'my-messageConsumer';
   process.env.KinesisInboundEventLogger = 'my-ruleInput';
@@ -127,8 +125,6 @@ test.before(async () => {
     payload: get(item, 'payload', {}),
     definition: workflowDefinition,
   }));
-  sandbox.stub(Provider.prototype, 'get').callsFake((providerArg) => providerArg);
-  sandbox.stub(Collection.prototype, 'get').callsFake((collectionArg) => collectionArg);
 });
 
 test.beforeEach(async (t) => {
@@ -144,6 +140,7 @@ test.beforeEach(async (t) => {
   process.env.messageConsumer = randomString();
 
   t.context.createdRule = await ruleModel.create(kinesisRule);
+  fetchEnabledRulesStub.callsFake(() => Promise.resolve([t.context.createdRule]));
 });
 
 test.afterEach.always(() => {

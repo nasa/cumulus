@@ -11,7 +11,7 @@ hide_title: false
 Inventory reports provide a detailed report of collections, granules and files in Cumulus and CMR.
 This report shows the following data:
 
-* Granule files in Cumulus, those that are in S3 but missing in the internal data store and those in the internal data store but not S3
+* Granule files in Cumulus, those that are in S3[^note] but missing in the internal data store and those in the internal data store but not S3
 * All Collections in Cumulus and CMR, highlighting any collections only in Cumulus or only in CMR
 * All Granules in Cumulus and CMR belonging to collections found in both, highlighting any granules only in Cumulus or only in CMR
 * All granule files in Cumulus and CMR belonging to granules found in both, highlighting any files only in Cumulus or only in CMR
@@ -27,7 +27,7 @@ This report shows the following data:
 The Cumulus Dashboard offers an interface to create, manage and view these inventory reports.
 
 The Reconciliation Reports Overview page shows a full list of existing reports and the option to create a new report.
-![Screenshot of the Dashboard Rconciliation Reports Overview page](assets/rec_reports_overview.png)
+![Screenshot of the Dashboard Reconciliation Reports Overview page](assets/rec_reports_overview.png)
 
 Viewing an inventory report will show a detailed list of collections, granules and files.
 ![Screenshot of an Inventory Report page](assets/inventory_report.png)
@@ -78,7 +78,7 @@ Example response:
             "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.cmr.xml",
             "s3://cumulus-test-sandbox-private/BROWSE.MYD13Q1.A2017297.h19v10.006.2017313221201.hdf"
         ],
-        "onlyInDynamoDb": [
+        "onlyInDb": [
             {
                 "uri": "s3://cumulus-test-sandbox-protected/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
                 "granuleId": "MOD09GQ.A2016358.h13v04.006.2016360104606"
@@ -134,3 +134,8 @@ Example response:
     }
 }
 ```
+
+[^note]: Reconciliation reports only search data buckets for objects during the
+    report generation.  The data buckets will include any buckets in your
+    Cumulus buckets configuration that have type `public`, `protected` or
+    `private`.

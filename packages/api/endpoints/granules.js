@@ -5,32 +5,60 @@ const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
-const { inTestMode } = require('@cumulus/common/test-utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
-  DeletePublishedGranule,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
 
 const {
   CollectionPgModel,
+  ExecutionPgModel,
   getKnexClient,
+  getUniqueGranuleByGranuleId,
   GranulePgModel,
+  translateApiGranuleToPostgresGranule,
+  translatePostgresCollectionToApiCollection,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-
-const Search = require('@cumulus/es-client/search').Search;
-const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
+const {
+  createGranuleFromApi,
+  updateGranuleFromApi,
+  updateGranuleStatusToQueued,
+  writeGranuleRecordAndPublishSns,
+} = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const models = require('../models');
-const { deconstructCollectionId } = require('../lib/utils');
+const { errorify } = require('../lib/utils');
+const AsyncOperation = require('../models/async-operation');
+const Granule = require('../models/granules');
 const { moveGranule } = require('../lib/granules');
+const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
-const { validateBulkGranulesRequest } = require('../lib/request');
+const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = require('../lib/request');
 
-const log = new Logger({ sender: '@cumulus/api' });
+const log = new Logger({ sender: '@cumulus/api/granules' });
+
+/**
+* 200/201 helper method for .put update/create messages
+* @param {boolean} isNewRecord - Boolean variable representing if the granule is a new record
+* @param {boolean} granule   - API Granule being written
+* @param {Object} res        - express response object
+* @returns {Promise<Object>} Promise resolving to an express response object
+*/
+function _returnPutGranuleStatus(isNewRecord, granule, res) {
+  if (isNewRecord) {
+    return res.status(201).send(
+      { message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` }
+    );
+  }
+  return res.status(200).send(
+    { message: `Successfully updated granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` }
+  );
+}
 
 /**
  * List all granules for a given collection.
@@ -56,29 +84,156 @@ async function list(req, res) {
 }
 
 /**
+ * Create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const create = async (req, res) => {
+  const {
+    knex = await getKnexClient(),
+    collectionPgModel = new CollectionPgModel(),
+    granulePgModel = new GranulePgModel(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const granule = req.body || {};
+
+  try {
+    const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+    if (
+      await granulePgModel.exists(knex, {
+        granule_id: pgGranule.granule_id,
+        collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+          knex,
+          deconstructCollectionId(granule.collectionId)
+        ),
+      })
+    ) {
+      return res.boom.conflict(
+        `A granule already exists for granule_id: ${granule.granuleId}`
+      );
+    }
+  } catch (error) {
+    return res.boom.badRequest(errorify(error));
+  } try {
+    await createGranuleFromApi(granule, knex, esClient);
+  } catch (error) {
+    log.error('Could not write granule', error);
+    return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  }
+  return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` });
+};
+
+/**
+ * Update existing granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const putGranule = async (req, res) => {
+  const {
+    granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+  const apiGranule = req.body || {};
+
+  let pgCollection;
+
+  if (!apiGranule.collectionId) {
+    res.boom.badRequest('Granule update must include a valid CollectionId');
+  }
+
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex, deconstructCollectionId(apiGranule.collectionId)
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.error(`granule collectionId ${apiGranule.collectionId} does not exist, cannot update granule`);
+      res.boom.badRequest(`granule collectionId ${apiGranule.collectionId} invalid`);
+    } else {
+      throw error;
+    }
+  }
+
+  let isNewRecord = false;
+  try {
+    await granulePgModel.get(knex, {
+      granule_id: apiGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    });
+  } catch (error) {
+    // Set status to `201 - Created` if record did not originally exist
+    if (error instanceof RecordDoesNotExist) {
+      isNewRecord = true;
+    } else {
+      return res.boom.badRequest(errorify(error));
+    }
+  }
+
+  try {
+    await updateGranuleFromApi(apiGranule, knex, esClient);
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return _returnPutGranuleStatus(isNewRecord, apiGranule, res);
+};
+
+/**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
+ * If no action is included on the request, the body is assumed to be an
+ * existing granule to update, and update is called with the input parameters.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
 async function put(req, res) {
+  const {
+    granuleModel = new Granule(),
+    knex = await getKnexClient(),
+    granulePgModel = new GranulePgModel(),
+    reingestHandler = reingestGranule,
+    updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
+  } = req.testContext || {};
+
   const granuleId = req.params.granuleName;
   const body = req.body;
   const action = body.action;
 
   if (!action) {
-    return res.boom.badRequest('Action is missing');
+    if (req.body.granuleId === req.params.granuleName) {
+      return putGranule(req, res);
+    }
+    return res.boom.badRequest(
+      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+    );
   }
 
-  const granuleModelClient = new models.Granule();
-  const granule = await granuleModelClient.get({ granuleId });
+  const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
+
+  const collectionPgModel = new CollectionPgModel();
+  const pgCollection = await collectionPgModel.get(
+    knex,
+    { cumulus_id: pgGranule.collection_cumulus_id }
+  );
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    collectionPgRecord: pgCollection,
+    knexOrTransaction: knex,
+  });
+
+  log.info(`PUT request "action": ${action}`);
 
   if (action === 'reingest') {
-    const { name, version } = deconstructCollectionId(granule.collectionId);
-    const collectionModelClient = new models.Collection();
-    const collection = await collectionModelClient.get({ name, version });
+    const apiCollection = translatePostgresCollectionToApiCollection(pgCollection);
     let targetExecution;
     try {
       targetExecution = await chooseTargetExecution({
@@ -86,7 +241,7 @@ async function put(req, res) {
       });
     } catch (error) {
       if (error instanceof RecordDoesNotExist) {
-        return res.boom.BadRequest(`Cannot reingest granule: ${error.message}`);
+        return res.boom.badRequest(`Cannot reingest granule: ${error.message}`);
       }
       throw error;
     }
@@ -95,56 +250,64 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
-    await granuleModelClient.reingest({
-      ...granule,
-      ...(targetExecution && { execution: targetExecution }),
+    await updateGranuleStatusToQueuedMethod({ granule: apiGranule, knex });
+
+    await reingestHandler({
+      granule: {
+        ...apiGranule,
+        ...(targetExecution && { execution: targetExecution }),
+      },
       queueUrl: process.env.backgroundQueueUrl,
     });
 
     const response = {
       action,
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       status: 'SUCCESS',
     };
 
-    if (collection.duplicateHandling !== 'replace') {
+    if (apiCollection.duplicateHandling !== 'replace') {
       response.warning = 'The granule files may be overwritten';
     }
-
     return res.send(response);
   }
 
   if (action === 'applyWorkflow') {
-    await granuleModelClient.applyWorkflow(
-      granule,
-      body.workflow,
-      body.meta
-    );
+    await updateGranuleStatusToQueued({ granule: apiGranule, knex });
+    await applyWorkflow({
+      granule: apiGranule,
+      workflow: body.workflow,
+      meta: body.meta,
+    });
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action: `applyWorkflow ${body.workflow}`,
       status: 'SUCCESS',
     });
   }
 
   if (action === 'removeFromCmr') {
-    const knex = await getKnexClient({ env: process.env });
-
-    await unpublishGranule(knex, granule);
+    await unpublishGranule({
+      knex,
+      pgGranuleRecord: pgGranule,
+      pgCollection: pgCollection,
+    });
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action,
       status: 'SUCCESS',
     });
   }
 
   if (action === 'move') {
-    const filesAtDestination = await granuleModelClient.getFilesExistingAtLocation(
-      granule,
+    // FUTURE - this should be removed from the granule model
+    const filesAtDestination = await granuleModel.getFilesExistingAtLocation(
+      apiGranule,
       body.destinations
     );
+    log.info(`existing files at destination: ${JSON.stringify(filesAtDestination)}`);
 
     if (filesAtDestination.length > 0) {
       const filenames = filesAtDestination.map((file) => file.fileName);
@@ -154,21 +317,110 @@ async function put(req, res) {
     }
 
     await moveGranule(
-      granule,
+      apiGranule,
       body.destinations,
       process.env.DISTRIBUTION_ENDPOINT,
-      granuleModelClient
+      granuleModel
     );
 
     return res.send({
-      granuleId: granule.granuleId,
+      granuleId: apiGranule.granuleId,
       action,
       status: 'SUCCESS',
     });
   }
-
-  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", or "removeFromCmr"');
+  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
 }
+
+/**
+ * associate an execution with a granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object
+ */
+const associateExecution = async (req, res) => {
+  const granuleName = req.params.granuleName;
+
+  const { collectionId, granuleId, executionArn } = req.body || {};
+  if (!granuleId || !collectionId || !executionArn) {
+    return res.boom.badRequest('Field granuleId, collectionId or executionArn is missing from request body');
+  }
+
+  if (granuleName !== granuleId) {
+    return res.boom.badRequest(`Expected granuleId to be ${granuleName} but found ${granuleId} in payload`);
+  }
+
+  const {
+    executionPgModel = new ExecutionPgModel(),
+    granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  let pgGranule;
+  let pgExecution;
+  let pgCollection;
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex, deconstructCollectionId(collectionId)
+    );
+    pgGranule = await granulePgModel.get(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    });
+    pgExecution = await executionPgModel.get(knex, {
+      arn: executionArn,
+    });
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (pgCollection === undefined) {
+        return res.boom.notFound(`No collection found to associate execution with for collectionId ${collectionId}`);
+      }
+      if (pgGranule === undefined) {
+        return res.boom.notFound(`No granule found to associate execution with for granuleId ${granuleId} and collectionId: ${collectionId}`);
+      }
+      if (pgExecution === undefined) {
+        return res.boom.notFound(`No execution found to associate granule with for executionArn ${executionArn}`);
+      }
+      return res.boom.notFound(`Execution ${executionArn} not found`);
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  // Update both granule objects with new execution/updatedAt time
+  const updatedPgGranule = {
+    ...pgGranule,
+    updated_at: new Date(),
+  };
+  const apiGranuleRecord = {
+    ...(await translatePostgresGranuleToApiGranule({
+      knexOrTransaction: knex,
+      granulePgRecord: updatedPgGranule,
+    })),
+    execution: pgExecution.url,
+  };
+
+  try {
+    await writeGranuleRecordAndPublishSns({
+      apiGranuleRecord,
+      esClient,
+      executionCumulusId: pgExecution.cumulus_id,
+      granuleModel: new Granule(),
+      granulePgModel,
+      postgresGranuleRecord: updatedPgGranule,
+      knex,
+      snsEventType: 'Update',
+    });
+  } catch (error) {
+    log.error(`failed to associate execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`, error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({
+    message: `Successfully associated execution ${executionArn} with granule granuleId ${granuleId} collectionId ${collectionId}`,
+  });
+};
 
 /**
  * Delete a granule
@@ -178,73 +430,51 @@ async function put(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function del(req, res) {
+  const {
+    granuleModelClient = new Granule(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
   const granuleId = req.params.granuleName;
+  const esGranulesClient = new Search(
+    {},
+    'granule',
+    process.env.ES_INDEX
+  );
   log.info(`granules.del ${granuleId}`);
-
-  const granuleModelClient = new models.Granule();
-  const collectionPgModel = new CollectionPgModel();
-  const granulePgModel = new GranulePgModel();
-
-  const knex = await getKnexClient({ env: process.env });
 
   let dynamoGranule;
   let pgGranule;
 
-  // If the granule does not exist in Dynamo, throw an error
   try {
-    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
+    pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(error);
-    }
-    throw error;
-  }
-
-  // If the granule does not exist in PG, just log that information. The logic that
-  // actually handles Dynamo/PG granule deletion will skip the PG deletion if the record
-  // does not exist. see deleteGranuleAndFiles().
-  try {
-    if (dynamoGranule.collectionId) {
-      const { name, version } = deconstructCollectionId(dynamoGranule.collectionId);
-      const collectionCumulusId = await collectionPgModel.getRecordCumulusId(
-        knex,
-        { name, version }
-      );
-      // Need granule_id + collection_cumulus_id to get truly unique record.
-      pgGranule = await granulePgModel.get(knex, {
-        granule_id: granuleId,
-        collection_cumulus_id: collectionCumulusId,
-      });
-    }
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.info(`Postgres Granule with ID ${granuleId} does not exist`);
+      if (!(await esGranulesClient.exists(granuleId))) {
+        log.info('Granule does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      log.info(`Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch. Proceeding with deletion.`);
     } else {
       throw error;
     }
   }
 
-  if (dynamoGranule.published) {
-    throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+  try {
+    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
   }
 
   await deleteGranuleAndFiles({
     knex,
     dynamoGranule,
     pgGranule,
+    esClient,
   });
-
-  if (inTestMode()) {
-    const esClient = await Search.es(process.env.ES_HOST);
-    await indexer.deleteRecord({
-      esClient,
-      id: granuleId,
-      type: 'granule',
-      parent: dynamoGranule.collectionId,
-      index: process.env.ES_INDEX,
-      ignore: [404],
-    });
-  }
 
   return res.send({ detail: 'Record deleted' });
 }
@@ -257,18 +487,27 @@ async function del(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function get(req, res) {
+  const {
+    knex = await getKnexClient(),
+  } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
-  let result;
+  let granule;
   try {
-    result = await (new models.Granule()).get({ granuleId });
+    granule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
-    if (error.message.startsWith('No record found')) {
+    if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Granule not found');
     }
 
     throw error;
   }
+
+  // Get related files, execution ARNs, provider, PDR, and collection and format
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: granule,
+    knexOrTransaction: knex,
+  });
 
   const recoveryStatus = getRecoveryStatus === 'true'
     ? await getOrcaRecoveryStatusByGranuleId(granuleId)
@@ -298,6 +537,7 @@ async function bulkOperations(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granules',
@@ -305,7 +545,9 @@ async function bulkOperations(req, res) {
       payload,
       type: 'BULK_GRANULE',
       envVars: {
+        ES_HOST: process.env.ES_HOST,
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
         invoke: process.env.invoke,
@@ -319,7 +561,7 @@ async function bulkOperations(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, models.AsyncOperation);
+  }, AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
@@ -345,6 +587,7 @@ async function bulkDelete(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
     operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change
@@ -359,6 +602,7 @@ async function bulkDelete(req, res) {
         cmr_provider: process.env.cmr_provider,
         cmr_username: process.env.cmr_username,
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         launchpad_api: process.env.launchpad_api,
         launchpad_certificate: process.env.launchpad_certificate,
         launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -367,13 +611,14 @@ async function bulkDelete(req, res) {
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
         stackName: process.env.stackName,
         system_bucket: process.env.system_bucket,
+        ES_HOST: process.env.ES_HOST,
       },
     },
     stackName,
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, models.AsyncOperation);
+  }, AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
@@ -391,6 +636,7 @@ async function bulkReingest(req, res) {
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description,
     operationType: 'Bulk Granule Reingest',
@@ -398,7 +644,9 @@ async function bulkReingest(req, res) {
       payload,
       type: 'BULK_GRANULE_REINGEST',
       envVars: {
+        ES_HOST: process.env.ES_HOST,
         GranulesTable: process.env.GranulesTable,
+        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         system_bucket: process.env.system_bucket,
         stackName: process.env.stackName,
         invoke: process.env.invoke,
@@ -412,14 +660,17 @@ async function bulkReingest(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, models.AsyncOperation);
+  }, AsyncOperation);
 
   return res.status(202).send(asyncOperation);
 }
 
 router.get('/:granuleName', get);
 router.get('/', list);
+router.post('/:granuleName/executions', associateExecution);
+router.post('/', create);
 router.put('/:granuleName', put);
+
 router.post(
   '/bulk',
   validateBulkGranulesRequest,
@@ -440,4 +691,10 @@ router.post(
 );
 router.delete('/:granuleName', del);
 
-module.exports = router;
+module.exports = {
+  bulkOperations,
+  bulkReingest,
+  bulkDelete,
+  put,
+  router,
+};

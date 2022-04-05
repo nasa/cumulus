@@ -6,7 +6,7 @@ const {
   countPostgresRecords,
   generateAggregateReportObj,
   generateCollectionReportObject,
-  getDbCount,
+  getEsCount,
   getDynamoTableEntries,
   getEsCutoffQuery,
 } = require('../dist/lambda/utils');
@@ -144,9 +144,9 @@ test('countPostgresRecords calls the model with the expected query string', asyn
   modelCountSpy.calledWith(knexClient, queryParams);
 });
 
-test('getDbCount returns the count from the query result promise', async (t) => {
+test('getEsCount returns the count from the query result promise', async (t) => {
   const resultPromise = Promise.resolve({ body: '{"meta": { "count": 10}}' });
-  const actual = await getDbCount(resultPromise);
+  const actual = await getEsCount(resultPromise);
   t.is(actual, 10);
 });
 

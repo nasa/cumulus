@@ -62,6 +62,7 @@ Config object fields:
 | stack                 | string  | (required) | Name of deployment stack
 | cmr                   | object  | (required) | CMR credentials object
 | addShortnameAndVersionIdToConceptId | boolean | false | Option to humanize the Hyrax URL. Humanizes when set to true.
+| skipMetadataValidation | boolean | false | Option to skip metadata validation
 
 ### Input
 

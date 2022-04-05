@@ -51,12 +51,19 @@ async function download({
   const ingestGranule = async (granule) => {
     try {
       const startTime = Date.now();
-      const r = await ingest.ingest({ granule, bucket, syncChecksumFiles });
+      const { ingestedGranule, granuleDuplicateFiles } = await ingest.ingest({
+        granule,
+        bucket,
+        syncChecksumFiles,
+      });
       const endTime = Date.now();
 
       return {
-        ...r,
-        sync_granule_duration: endTime - startTime,
+        ingestedGranule: {
+          ...ingestedGranule,
+          sync_granule_duration: endTime - startTime,
+        },
+        granuleDuplicateFiles,
       };
     } catch (error) {
       log.error(error);
@@ -77,7 +84,9 @@ async function download({
  * @param {Object} event - contains input and config parameters
  * @returns {Promise.<Object>} - a description of the ingested granules
  */
-exports.syncGranule = function syncGranule(event) {
+
+function syncGranule(event) {
+  const now = Date.now();
   const config = event.config;
   const input = event.input;
   const stack = config.stack;
@@ -87,6 +96,9 @@ exports.syncGranule = function syncGranule(event) {
   const downloadBucket = config.downloadBucket;
   const syncChecksumFiles = config.syncChecksumFiles;
   const duplicateHandling = duplicateHandlingType(event);
+  const workflowStartTime = config.workflowStartTime ?
+    Math.min(config.workflowStartTime, now) :
+    now;
 
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
@@ -114,8 +126,23 @@ exports.syncGranule = function syncGranule(event) {
     provider,
     granules: input.granules,
     syncChecksumFiles,
-  }).then((granules) => {
-    const output = { granules };
+  }).then((granuleResults) => {
+    // eslint-disable-next-line camelcase
+    const granuleDuplicates = {};
+    const granules = [];
+    granuleResults.forEach((gr) => {
+      if (!gr.ingestedGranule.createdAt) {
+        const granule = gr;
+        granule.ingestedGranule.createdAt = workflowStartTime;
+      }
+      granules.push(gr.ingestedGranule);
+      if (gr.granuleDuplicateFiles) {
+        granuleDuplicates[gr.granuleDuplicateFiles.granuleId] = {
+          files: gr.granuleDuplicateFiles.files,
+        };
+      }
+    });
+    const output = { granules, granuleDuplicates };
     if (collection && collection.process) output.process = collection.process;
     if (config.pdr) output.pdr = config.pdr;
     log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
@@ -133,7 +160,7 @@ exports.syncGranule = function syncGranule(event) {
     log.error(errorToThrow);
     throw errorToThrow;
   });
-};
+}
 
 /**
  * Lambda handler
@@ -143,10 +170,12 @@ exports.syncGranule = function syncGranule(event) {
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
-exports.handler = async function handler(event, context) {
+async function handler(event, context) {
   return await cumulusMessageAdapter.runCumulusTask(
-    exports.syncGranule,
+    syncGranule,
     event,
     context
   );
-};
+}
+
+module.exports = { handler, syncGranule };

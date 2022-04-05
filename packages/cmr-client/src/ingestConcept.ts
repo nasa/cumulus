@@ -1,14 +1,16 @@
+import get from 'lodash/get';
 import got, { Headers } from 'got';
 import property from 'lodash/property';
+import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
-import validate from './validate';
 import { getIngestUrl } from './getUrl';
 import { parseXMLString } from './Utils';
+import { CMRResponseBody, CMRErrorResponseBody, ConceptType } from './types';
 
 const log = new Logger({ sender: 'cmr-client' });
 
-const logDetails: {[key: string]: string} = {
+const logDetails: { [key: string]: string } = {
   file: 'cmr-client/ingestConcept.js',
 };
 
@@ -24,20 +26,18 @@ const logDetails: {[key: string]: string} = {
  * @returns {Promise.<Object>} the CMR response object
  */
 async function ingestConcept(
-  type: string,
+  type: ConceptType,
   xmlString: string,
   identifierPath: string,
   provider: string,
   headers: Headers
-) {
+): Promise<CMRResponseBody | CMRErrorResponseBody> {
   const xmlObject = await parseXMLString(xmlString);
 
   const identifier = <string>property(identifierPath)(xmlObject);
   logDetails.granuleId = identifier;
 
   try {
-    await validate(type, xmlString, identifier, provider);
-
     const response = await got.put(
       `${getIngestUrl({ provider })}${type}s/${identifier}`,
       {
@@ -46,17 +46,28 @@ async function ingestConcept(
       }
     );
 
-    const ingestResponseBody = <{errors?: {error: string}}>(await parseXMLString(response.body));
-
-    if (ingestResponseBody.errors) {
-      const xmlObjectError = JSON.stringify(ingestResponseBody.errors.error);
-      throw new Error(`Failed to ingest, CMR error message: ${xmlObjectError}`);
-    }
-
-    return ingestResponseBody;
+    return <CMRResponseBody>(await parseXMLString(response.body));
   } catch (error) {
     log.error(error, logDetails);
-    throw error;
+
+    const statusCode = get(error, 'response.statusCode', error.code);
+    const statusMessage = get(error, 'response.statusMessage', error.message);
+    let errorMessage = `Failed to ingest, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
+
+    if (get(error, 'response.body')) {
+      const parsedResponseBody = <CMRErrorResponseBody>(await parseXMLString(error.response.body));
+      const responseError = get(parsedResponseBody, 'errors.error');
+      if (responseError) {
+        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
+      }
+    }
+
+    log.error(errorMessage);
+
+    if (statusCode >= 500 && statusCode < 600) {
+      throw new CMRInternalError(errorMessage);
+    }
+    throw new Error(errorMessage);
   }
 }
 export = ingestConcept;

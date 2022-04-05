@@ -9,6 +9,7 @@ const {
   localStackConnectionEnv,
   generateLocalTestDb,
   destroyLocalTestDb,
+  migrationDir,
 } = require('@cumulus/db');
 const asyncOperations = require('@cumulus/async-operations');
 const awsServices = require('@cumulus/aws-client/services');
@@ -16,12 +17,11 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
+const { EcsStartTaskError, IndexExistsError } = require('@cumulus/errors');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
 const mappings = require('@cumulus/es-client/config/mappings.json');
 
-const { migrationDir } = require('../../../../lambdas/db-migration');
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
@@ -29,7 +29,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
-const esIndex = randomString();
+const esIndex = randomId('esindex');
 
 process.env.AccessTokensTable = randomString();
 process.env.AsyncOperationsTable = randomString();
@@ -267,10 +267,12 @@ test.serial('Reindex request returns 400 with the expected message when source i
 test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
   const date = new Date();
   const defaultIndexName = `cumulus-${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-  await esClient.indices.create({
-    index: defaultIndexName,
-    body: { mappings },
-  });
+
+  try {
+    await createIndex(defaultIndexName);
+  } catch (error) {
+    if (!(error instanceof IndexExistsError)) throw error;
+  }
 
   t.teardown(async () => {
     await esClient.indices.delete({ index: defaultIndexName });
@@ -579,6 +581,43 @@ test.serial('Reindex from database - create new index', async (t) => {
   }
 });
 
+test.serial('Reindex from database - startAsyncOperation is called with expected payload', async (t) => {
+  const indexName = randomString();
+  const id = randomString();
+
+  const processEnv = { ...process.env };
+  process.env.ES_HOST = 'fakeEsHost';
+  process.env.ReconciliationReportsTable = 'fakeReportsTable';
+
+  const asyncOperationsStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({ id });
+  const payload = {
+    indexName,
+    esRequestConcurrency: 'fakeEsRequestConcurrency',
+    postgresResultPageSize: 'fakePostgresResultPageSize',
+    postgresConnectionPoolSize: 'fakePostgresConnectionPoolSize',
+  };
+
+  try {
+    await request(app)
+      .post('/elasticsearch/index-from-database')
+      .send(
+        payload
+      )
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200);
+    t.deepEqual(asyncOperationsStub.getCall(0).args[0].payload, {
+      ...payload,
+      esHost: process.env.ES_HOST,
+      reconciliationReportsTable: process.env.ReconciliationReportsTable,
+    });
+  } finally {
+    process.env = processEnv;
+    await esClient.indices.delete({ index: indexName });
+    asyncOperationsStub.restore();
+  }
+});
+
 test.serial('Indices status', async (t) => {
   const indexName = `z-${randomString()}`;
   const otherIndexName = `a-${randomString()}`;
@@ -668,9 +707,15 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 503 
 });
 
 test.serial('indexFromDatabase request completes successfully', async (t) => {
+  const functionName = randomId('lambda');
   const fakeRequest = {
+    apiGateway: {
+      context: {
+        functionName,
+      },
+    },
     body: {
-      indexName: randomId('index'),
+      indexName: t.context.esAlias,
     },
     testContext: {
       // mock starting the ECS task
@@ -683,4 +728,29 @@ test.serial('indexFromDatabase request completes successfully', async (t) => {
 
   await t.notThrowsAsync(indexFromDatabase(fakeRequest, fakeResponse));
   t.true(fakeResponse.send.called);
+});
+
+test.serial('indexFromDatabase uses correct caller lambda function name', async (t) => {
+  const functionName = randomId('lambda');
+  const startEcsTaskStub = sinon.stub();
+  const fakeRequest = {
+    apiGateway: {
+      context: {
+        functionName,
+      },
+    },
+    body: {
+      indexName: randomId('index'),
+    },
+    testContext: {
+      // mock starting the ECS task
+      startEcsTaskFunc: startEcsTaskStub,
+    },
+  };
+  const fakeResponse = {
+    send: sinon.stub(),
+  };
+
+  await indexFromDatabase(fakeRequest, fakeResponse);
+  t.is(startEcsTaskStub.getCall(0).firstArg.callerLambdaName, functionName);
 });

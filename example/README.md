@@ -202,7 +202,7 @@ Run `terraform apply`.
 
 These steps should be performed in the `example` directory.
 
-Copy `.env.sample` to `.env`, filling in approriate values for your deployment.
+Copy `.env.sample` to `.env`, filling in appropriate values for your deployment.
 
 Set the `DEPLOYMENT` environment variable to match the `prefix` that you
 configured in your `terraform.tfvars` files.

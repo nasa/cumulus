@@ -86,7 +86,7 @@ class S3ProviderClient implements ProviderClient {
       destinationKey: string,
       fileRemotePath: string,
     }
-  ): Promise<{s3uri: string, etag: string}> {
+  ): Promise<{ s3uri: string, etag: string }> {
     const { fileRemotePath, destinationBucket, destinationKey, bucket } = params;
     const sourceBucket = bucket || this.bucket;
     const sourceKey = fileRemotePath;

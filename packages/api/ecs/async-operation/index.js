@@ -13,10 +13,23 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
-const { getKnexClient, AsyncOperationPgModel } = require('@cumulus/db');
-const { dynamodb } = require('@cumulus/aws-client/services');
+const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
+const indexer = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
+const {
+  getKnexClient,
+  AsyncOperationPgModel,
+  createRejectableTransaction,
+} = require('@cumulus/db');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
+
+const requiredEnvironmentalVariables = [
+  'asyncOperationId',
+  'asyncOperationsTable',
+  'lambdaName',
+  'payloadUrl',
+];
 
 /**
  * Return a list of environment variables that should be set but aren't
@@ -24,12 +37,7 @@ const logger = new Logger({ sender: 'ecs/async-operation' });
  * @returns {Array<string>} a list of missing environment variables
  */
 function missingEnvironmentVariables() {
-  return [
-    'asyncOperationId',
-    'asyncOperationsTable',
-    'lambdaName',
-    'payloadUrl',
-  ].filter((key) => process.env[key] === undefined);
+  return requiredEnvironmentalVariables.filter((key) => process.env[key] === undefined);
 }
 
 /**
@@ -89,6 +97,7 @@ async function fetchAndDeletePayload(payloadUrl) {
  *   moduleFunctionName
  */
 async function getLambdaInfo(FunctionName) {
+  logger.debug(`Retrieving lambda info for ${FunctionName}.`);
   const lambda = new AWS.Lambda();
 
   const getFunctionResponse = await lambda.getFunction({
@@ -116,6 +125,7 @@ async function fetchLambdaFunction(codeUrl) {
   // Fetching the lambda zip file from S3 was failing intermittently because
   // of connection timeouts.  If the download fails, this will retry it up to
   // 10 times with an exponential backoff.
+  logger.debug(`Fetching lambda code from ${codeUrl}.`);
   await pRetry(
     () => promisify(pipeline)(
       got.stream(codeUrl),
@@ -131,7 +141,7 @@ async function fetchLambdaFunction(codeUrl) {
       },
     }
   );
-
+  logger.debug('Lambda downloaded, unzipping.');
   return exec('unzip -o /home/task/fn.zip -d /home/task/lambda-function');
 }
 
@@ -151,9 +161,15 @@ function buildErrorOutput(error) {
 }
 
 const writeAsyncOperationToPostgres = async (params) => {
-  const { trx, env, dbOutput, status, updatedTime } = params;
+  const {
+    trx,
+    env,
+    dbOutput,
+    status,
+    updatedTime,
+    asyncOperationPgModel,
+  } = params;
   const id = env.asyncOperationId;
-  const asyncOperationPgModel = new AsyncOperationPgModel();
   return await asyncOperationPgModel
     .update(
       trx,
@@ -167,22 +183,67 @@ const writeAsyncOperationToPostgres = async (params) => {
 };
 
 const writeAsyncOperationToDynamoDb = async (params) => {
-  const { env, status, dbOutput, updatedTime } = params;
-  return await dynamodb().updateItem({
+  const { env, status, dbOutput, updatedTime, dynamoDbClient } = params;
+  const ExpressionAttributeNames = {
+    '#S': 'status',
+    '#U': 'updatedAt',
+  };
+  const ExpressionAttributeValues = {
+    ':s': { S: status },
+    ':u': { N: updatedTime },
+  };
+  let UpdateExpression = 'SET #S = :s, #U = :u';
+  if (dbOutput) {
+    ExpressionAttributeNames['#O'] = 'output';
+    ExpressionAttributeValues[':o'] = { S: dbOutput };
+    UpdateExpression += ', #O = :o';
+  }
+  return await dynamoDbClient.updateItem({
     TableName: env.asyncOperationsTable,
     Key: { id: { S: env.asyncOperationId } },
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+    UpdateExpression,
+  });
+};
+
+const revertAsyncOperationWriteToDynamoDb = async (params) => {
+  const { env, status } = params;
+  return await dynamodbDocClient().update({
+    TableName: env.asyncOperationsTable,
+    Key: { id: env.asyncOperationId },
+    UpdateExpression: 'SET #status = :status REMOVE #output, #updatedAt',
     ExpressionAttributeNames: {
-      '#S': 'status',
-      '#O': 'output',
-      '#U': 'updatedAt',
+      '#status': 'status',
+      '#output': 'output',
+      '#updatedAt': 'updatedAt',
     },
     ExpressionAttributeValues: {
-      ':s': { S: status },
-      ':o': { S: dbOutput },
-      ':u': { N: updatedTime },
+      ':status': status,
     },
-    UpdateExpression: 'SET #S = :s, #O = :o, #U = :u',
-  }).promise();
+    ReturnValues: 'ALL_NEW',
+  });
+};
+
+const writeAsyncOperationToEs = async (params) => {
+  const {
+    env,
+    status,
+    dbOutput,
+    updatedTime,
+    esClient,
+  } = params;
+
+  await indexer.updateAsyncOperation(
+    esClient,
+    env.asyncOperationId,
+    {
+      status,
+      output: dbOutput,
+      updatedAt: Number(updatedTime),
+    },
+    process.env.ES_INDEX
+  );
 };
 
 /**
@@ -191,28 +252,61 @@ const writeAsyncOperationToDynamoDb = async (params) => {
  * For help with parameters, see:
  * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property
  *
- * @param {string} status - the new AsyncOperation status
- * @param {Object} output - the new output to store.  Must be parsable JSON
- * @param {Object} envOverride - Object to override/extend environment variables
+ * @param {Object} params
+ * @param {string} params.status - the new AsyncOperation status
+ * @param {Object} params.output - the new output to store.  Must be parsable JSON
+ * @param {Object} params.envOverride - Object to override/extend environment variables
  * @returns {Promise} resolves when the item has been updated
  */
-const updateAsyncOperation = async (status, output, envOverride = {}) => {
-  logger.info(`Updating AsyncOperation ${JSON.stringify(status)} ${JSON.stringify(output)}`);
+const updateAsyncOperation = async (params) => {
+  const {
+    status,
+    output,
+    envOverride = {},
+    esClient = await Search.es(),
+    dynamoDbClient = dynamodb(),
+    asyncOperationPgModel = new AsyncOperationPgModel(),
+  } = params;
+
+  logger.info(`About to update async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
+
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
   const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
   const env = { ...process.env, ...envOverride };
+
   const knex = await getKnexClient({ env });
-  return knex.transaction(async (trx) => {
-    await writeAsyncOperationToPostgres({
-      dbOutput,
-      env,
-      status,
-      trx,
-      updatedTime,
+
+  try {
+    return await createRejectableTransaction(knex, async (trx) => {
+      await writeAsyncOperationToPostgres({
+        dbOutput,
+        env,
+        status,
+        trx,
+        updatedTime,
+        asyncOperationPgModel,
+      });
+      const result = await writeAsyncOperationToDynamoDb({
+        env,
+        status,
+        dbOutput,
+        updatedTime,
+        dynamoDbClient,
+      });
+      await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime, esClient });
+      logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
+      return result;
     });
-    return writeAsyncOperationToDynamoDb({ env, status, dbOutput, updatedTime });
-  });
+  } catch (error) {
+    await revertAsyncOperationWriteToDynamoDb({
+      env,
+      // Can we get away with hardcoding here instead of looking up
+      // the existing record?
+      status: 'RUNNING',
+    });
+    throw error;
+  }
 };
 
 /**
@@ -225,6 +319,8 @@ async function runTask() {
   let lambdaInfo;
   let payload;
 
+  logger.debug('Running async operation %s', process.env.asyncOperationId);
+
   try {
     // Get some information about the lambda function that we'll be calling
     lambdaInfo = await getLambdaInfo(process.env.lambdaName);
@@ -233,49 +329,72 @@ async function runTask() {
     await fetchLambdaFunction(lambdaInfo.codeUrl);
   } catch (error) {
     logger.error('Failed to fetch lambda function:', error);
-    await updateAsyncOperation('RUNNER_FAILED', error);
+    await updateAsyncOperation({
+      status: 'RUNNER_FAILED',
+      output: error,
+    });
     return;
   }
 
   try {
     // Fetch the event that will be passed to the lambda function from S3
+    logger.debug(`Fetching payload from ${process.env.payloadUrl}.`);
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
   } catch (error) {
     logger.error('Failed to fetch payload:', error);
     if (error.name === 'JSONParsingError') {
-      await updateAsyncOperation('TASK_FAILED', error);
+      await updateAsyncOperation({
+        status: 'TASK_FAILED',
+        output: error,
+      });
     } else {
-      await updateAsyncOperation('RUNNER_FAILED', error);
+      await updateAsyncOperation({
+        status: 'RUNNER_FAILED',
+        output: error,
+      });
     }
-
     return;
   }
 
   let result;
   try {
+    logger.debug(`Loading lambda function ${process.env.lambdaName}`);
     // Load the lambda function
     const task = require(`/home/task/lambda-function/${lambdaInfo.moduleFileName}`); //eslint-disable-line global-require, import/no-dynamic-require
 
     // Run the lambda function
+    logger.debug(`Invoking task lambda function: ${process.env.lambdaName}`);
     result = await task[lambdaInfo.moduleFunctionName](payload);
   } catch (error) {
     logger.error('Failed to execute the lambda function:', error);
-    await updateAsyncOperation('TASK_FAILED', error);
+    await updateAsyncOperation({
+      status: 'TASK_FAILED',
+      output: error,
+    });
     return;
   }
 
   // Write the result out to databases
   try {
-    await updateAsyncOperation('SUCCEEDED', result);
+    await updateAsyncOperation({
+      status: 'SUCCEEDED',
+      output: result,
+    });
   } catch (error) {
     logger.error('Failed to update record', error);
     throw error;
   }
+  logger.debug('exiting async-operation runTask()');
 }
 
 const missingVars = missingEnvironmentVariables();
-
-if (missingVars.length === 0) runTask();
-else logger.error('Missing environment variables:', missingVars.join(', '));
+if (missingVars.length === 0) {
+  logger.debug(
+    `initiating runTask() with environment: ${requiredEnvironmentalVariables.map((v) => `${v}[${process.env[v]}];`).join(' ')}`
+  );
+  runTask();
+} else {
+  logger.error('Missing environment variables:', missingVars.join(', '));
+}
 
 module.exports = { updateAsyncOperation };

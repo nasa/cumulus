@@ -1,4 +1,5 @@
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const rewire = require('rewire');
 const range = require('lodash/range');
 
@@ -6,12 +7,14 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const sortBy = require('lodash/sortBy');
 const {
-  convertToDBCollectionSearchParams,
+  convertToDBCollectionSearchObject,
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParams,
-  filterCMRCollections,
+  convertToESGranuleSearchParamsWithCreatedAtRange,
+  convertToOrcaGranuleSearchParams,
   filterDBCollections,
   searchParamsForCollectionIdArray,
+  compareEsGranuleAndApiGranule,
 } = require('../../lib/reconciliationReport');
 const { fakeCollectionFactory } = require('../../lib/testUtils');
 
@@ -72,10 +75,54 @@ test('convertToESGranuleSearchParams returns correct search object.', (t) => {
   t.deepEqual(actual, expected);
 });
 
+test('convertToESGranuleSearchParamsWithCreatedAtRange returns correct search object.', (t) => {
+  const startTimestamp = '2010-01-01T00:00:00.000Z';
+  const endTimestamp = '2011-10-01T12:00:00.000Z';
+  const testObj = {
+    startTimestamp,
+    endTimestamp,
+    anotherKey: 'anything',
+    anotherKey2: 'they are ignored',
+  };
+
+  const expected = {
+    createdAt__from: 1262304000000,
+    createdAt__to: 1317470400000,
+  };
+
+  const actual = convertToESGranuleSearchParamsWithCreatedAtRange(testObj);
+  t.deepEqual(actual, expected);
+});
+
+test('convertToOrcaGranuleSearchParams returns correct search object.', (t) => {
+  const startTimestamp = '2010-01-01T00:00:00.000Z';
+  const endTimestamp = '2011-10-01T12:00:00.000Z';
+  const testObj = {
+    startTimestamp,
+    endTimestamp,
+    anotherKey: 'anything',
+    anotherKey2: 'they are ignored',
+    collectionIds: 'testcollectionId',
+    granuleIds: ['testgranuleId'],
+    providers: ['provider1', 'provider2'],
+  };
+
+  const expected = {
+    startTimestamp: 1262304000000,
+    endTimestamp: 1317470400000,
+    collectionId: testObj.collectionIds,
+    granuleId: testObj.granuleIds,
+    providerId: testObj.providers,
+  };
+
+  const actual = convertToOrcaGranuleSearchParams(testObj);
+  t.deepEqual(actual, expected);
+});
+
 test('convertToESCollectionSearchParams returns correct search object with collectionIds.', (t) => {
   const startTimestamp = '2000-10-31T15:00:00.000Z';
   const endTimestamp = '2001-10-31T15:00:00.000Z';
-  const collectionIds = ['name___version', 'name2___version'];
+  const collectionIds = ['name____version', 'name2___version'];
   const testObj = {
     startTimestamp,
     endTimestamp,
@@ -87,7 +134,7 @@ test('convertToESCollectionSearchParams returns correct search object with colle
   const expected = {
     updatedAt__from: 973004400000,
     updatedAt__to: 1004540400000,
-    _id__in: 'name___version,name2___version',
+    _id__in: 'name____version,name2___version',
   };
 
   const actual = convertToESCollectionSearchParams(testObj);
@@ -106,14 +153,15 @@ test('convertToDBCollectionSearchParams returns correct search object with colle
     anotherKey2: 'they are ignored',
   };
 
-  const expected = {
-    updatedAt__from: 973004400000,
-    updatedAt__to: 1004540400000,
+  const expected = [{
+    updatedAtFrom: new Date(startTimestamp),
+    updatedAtTo: new Date(endTimestamp),
+  }, {
     name: 'name',
     version: 'version',
-  };
+  }];
 
-  const actual = convertToDBCollectionSearchParams(testObj);
+  const actual = convertToDBCollectionSearchObject(testObj);
   t.deepEqual(actual, expected);
 });
 
@@ -129,71 +177,12 @@ test('convertToDBCollectionSearchParams ignores collectionIds when there are mul
     anotherKey2: 'they are ignored',
   };
 
-  const expected = {
-    updatedAt__from: 973004400000,
-    updatedAt__to: 1004540400000,
-  };
+  const expected = [{
+    updatedAtFrom: new Date(startTimestamp),
+    updatedAtTo: new Date(endTimestamp),
+  }, {}];
 
-  const actual = convertToDBCollectionSearchParams(testObj);
-  t.deepEqual(actual, expected);
-});
-
-test('filterCMRCollections returns all collections if no collectionIds on recReportParams', (t) => {
-  const collections = range(25).map(() => fakeCollectionFactory());
-  const expectedCollectionsIds = sortBy(collections, [
-    'name',
-    'version',
-  ]).map((c) => constructCollectionId(c.name, c.version));
-
-  const reportParams = {
-    startTimestamp: 'any',
-    endTimestamp: 'also any',
-    otherUnusedParams: 'could be anything',
-  };
-
-  const cmrCollections = sortBy(collections, ['name', 'version']).map(
-    (collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
-    })
-  );
-
-  const actual = filterCMRCollections(cmrCollections, reportParams);
-
-  t.deepEqual(actual, expectedCollectionsIds);
-});
-
-test("filterCMRCollections filters collections by recReportParams's collectionIds", (t) => {
-  const collections = range(25).map(() => fakeCollectionFactory());
-
-  const targetCollections = [
-    collections[3],
-    collections[5],
-    collections[7],
-    collections[9],
-  ];
-
-  const collectionIds = sortBy(targetCollections, ['name', 'version']).map((c) =>
-    constructCollectionId(c.name, c.version));
-
-  const expected = sortBy(targetCollections, 'name', 'version').map(
-    (collection) => constructCollectionId(collection.name, collection.version)
-  );
-
-  const reportParams = {
-    startTimestamp: 'any',
-    endTimestamp: 'also any',
-    otherUnusedParams: 'could be anything',
-    collectionIds,
-  };
-
-  const cmrCollections = sortBy(collections, ['name', 'version']).map(
-    (collection) => ({
-      umm: { ShortName: collection.name, Version: collection.version },
-    })
-  );
-
-  const actual = filterCMRCollections(cmrCollections, reportParams);
-
+  const actual = convertToDBCollectionSearchObject(testObj);
   t.deepEqual(actual, expected);
 });
 
@@ -250,4 +239,91 @@ test('searchParamsForCollectionIdArray converts array of collectionIds to a prop
 
   const actualSearchParams = searchParamsForCollectionIdArray(collectionIds);
   t.deepEqual(actualSearchParams, expectedInputQueryParams);
+});
+
+test('compareEsGranuleAndApiGranule returns true for matching granules', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+  };
+  const granule2 = { ...granule };
+  t.true(compareEsGranuleAndApiGranule(granule, granule2));
+});
+
+test('compareEsGranuleAndApiGranule returns false for granules with different values', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+  };
+  const granule2 = { ...granule, foo: 'bar' };
+  t.false(compareEsGranuleAndApiGranule(granule, granule2));
+});
+
+test('compareEsGranuleAndApiGranule returns false if one granule has files and other does not', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+  };
+  const granule2 = {
+    ...granule,
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+    }],
+  };
+  t.false(compareEsGranuleAndApiGranule(granule, granule2));
+});
+
+test('compareEsGranuleAndApiGranule returns false if granule file is missing from second granule', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+    }],
+  };
+  const granule2 = {
+    ...granule,
+    files: [{
+      bucket: 'bucket',
+      key: 'key2',
+    }],
+  };
+  t.false(compareEsGranuleAndApiGranule(granule, granule2));
+});
+
+test('compareEsGranuleAndApiGranule returns false if granule files have different properties', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+    }],
+  };
+  const granule2 = {
+    ...granule,
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+      size: 5,
+    }],
+  };
+  t.false(compareEsGranuleAndApiGranule(granule, granule2));
+});
+
+test('compareEsGranuleAndApiGranule returns false if granule files have different values for same property', (t) => {
+  const granule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+      size: 1,
+    }],
+  };
+  const granule2 = {
+    ...granule,
+    files: [{
+      bucket: 'bucket',
+      key: 'key',
+      size: 5,
+    }],
+  };
+  t.false(compareEsGranuleAndApiGranule(granule, granule2));
 });

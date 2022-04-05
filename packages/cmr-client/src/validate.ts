@@ -35,7 +35,7 @@ async function validate(
     result = error.response;
   }
 
-  const parsed = <{errors: {error: string}}>(await parseXMLString(result.body));
+  const parsed = <{ errors: { error: string } }>(await parseXMLString(result.body));
 
   if (result.statusCode >= 500 && result.statusCode < 600) throw new CMRInternalError('CMR Internal Error');
 

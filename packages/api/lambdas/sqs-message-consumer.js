@@ -1,14 +1,15 @@
 'use strict';
 
 const get = require('lodash/get');
-const { log } = require('@cumulus/common');
+const Logger = require('@cumulus/logger');
 const { Consumer } = require('@cumulus/ingest/consumer');
 const { sqs } = require('@cumulus/aws-client/services');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { archiveSqsMessageToS3 } = require('@cumulus/ingest/sqs');
 
 const rulesHelpers = require('../lib/rulesHelpers');
-const Rule = require('../models/rules');
+
+const log = new Logger({ sender: '@cumulus/sqs-message-consumer' });
 
 /**
  * Looks up enabled 'sqs'-type rules, and processes the messages from
@@ -20,17 +21,10 @@ const Rule = require('../models/rules');
  * messages from SQS queue are processed
  */
 async function processQueues(event, dispatchFn) {
-  const rulesModel = new Rule();
-  let rules;
-
-  try {
-    rules = await rulesModel.queryRules({
-      type: 'sqs',
-      state: 'ENABLED',
-    });
-  } catch (error) {
-    log.error(error);
-  }
+  const rules = await rulesHelpers.fetchRules({
+    type: 'sqs',
+    state: 'ENABLED',
+  });
 
   const messageLimit = event.messageLimit || 1;
   const timeLimit = event.timeLimit || 240;
