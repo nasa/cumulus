@@ -1166,10 +1166,7 @@ test.serial('migrateGranulesAndFiles updates multiple granules and files when mi
     execution: testExecution.url,
   });
 
-  await Promise.all([
-    granulesModel.create(testGranule1),
-    granulesModel.create(testGranule2),
-  ]);
+  await granulesModel.create(testGranule1);
 
   t.teardown(async () => {
     await Promise.all([
@@ -1181,22 +1178,25 @@ test.serial('migrateGranulesAndFiles updates multiple granules and files when mi
   const migrationSummary = await migrateGranulesAndFiles(process.env, knex);
   t.deepEqual(migrationSummary, {
     filesResult: {
-      total_dynamo_db_records: 2,
+      total_dynamo_db_records: 1,
       failed: 0,
       skipped: 0,
-      migrated: 2,
+      migrated: 1,
     },
     granulesResult: {
-      total_dynamo_db_records: 2,
+      total_dynamo_db_records: 1,
       failed: 0,
       skipped: 0,
-      migrated: 2,
+      migrated: 1,
     },
   });
+
+  await granulesModel.create(testGranule2);
+
   const records = await granulePgModel.search(knex, {});
   const fileRecords = await filePgModel.search(knex, {});
-  t.is(records.length, 2);
-  t.is(fileRecords.length, 2);
+  t.is(records.length, 1);
+  t.is(fileRecords.length, 1);
 
   const updatedFile1 = { ...testGranule1.files[0], size: 1 };
   const updatedFile2 = { ...testGranule2.files[0], size: 1 };
@@ -1247,8 +1247,11 @@ test.serial('migrateGranulesAndFiles updates multiple granules and files when mi
   });
 
   t.teardown(async () => {
-    await granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
-    await granulePgModel.delete(t.context.knex, { cumulus_id: records[1].cumulus_id });
+    const cleanupRecords = await granulePgModel.search(knex, {});
+    await Promise.all(
+      cleanupRecords.map((record) =>
+        granulePgModel.delete(t.context.knex, { cumulus_id: record.cumulus_id }))
+    );
   });
 });
 
