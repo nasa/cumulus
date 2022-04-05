@@ -1158,7 +1158,7 @@ test.serial('migrateGranulesAndFiles updates multiple granules and files when mi
   });
 
   updatedFileRecords.forEach((fileRecord) => {
-    t.is(fileRecord.file_size, 1);
+    t.is(fileRecord.file_size, '1');
   });
 
   t.teardown(async () => {
