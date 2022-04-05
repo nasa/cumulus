@@ -51,11 +51,16 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 ##### After the `cumulus` deployment
 
-As part of the work in the RDS Phase 2 feature set, it was decided to re-add the granule file `type` property on the file table ( detailed reasoning https://wiki.earthdata.nasa.gov/pages/viewpage.action?pageId=219186829).  This change was implemented as part of CUMULUS-2672/CUMULUS-2673, however Phase 1 granule records will *not* have the file.type property if they were migrated prior to v11.
+As part of the work on the RDS Phase 2 feature, it was decided to re-add the
+granule file `type` property on the file table (detailed reasoning
+https://wiki.earthdata.nasa.gov/pages/viewpage.action?pageId=219186829).  This
+change was implemented as part of CUMULUS-2672/CUMULUS-2673, however granule
+records ingested prior to v11 *not* have the file.type property stored in the
+PostGreSQL database, and on installation of v11 API calls to get granule.files
+will not return this value. We anticipate most users are impacted by this issue.
 
-We anticipate most users are impacted by this.   Users that are impacted by
-these changes should re-run the granule migration lambda to *only* migrate
-granule file records:
+Users that are impacted by these changes should re-run the granule migration
+lambda to *only* migrate granule file records:
 
 ```shell
 PAYLOAD=$(echo '{"migrationsList": ["granules"], "granuleMigrationParams": {"migrateOnlyFiles": "true"}}' | base64)
@@ -64,14 +69,15 @@ aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
 ```
 
 You should note that this will *only* move files for granule records in
-postgres.  IF for some reason you have not completed the phase 1 data migration/
-have granule records in dynamo that are not in postgres, these granules will
-report failure for the dynamo granule and all the associated files.
+postgres.  **If you have not completed the phase 1 data migration or
+have granule records in dynamo that are not in PostgreSQL, the migration will
+report failure for both the DynamoDB granule and all the associated files and the file
+records will not be updated**.
 
-If you wish, instead to do a full granule and file migration, you may instead
-opt to run with the `migrateAndOverwrite` option instead, this will re-run a
-full granule/files migration and overwrite all values in the RDS database from
-what is in DynamoDB:
+If you prefer to do a full granule and file migration, you may instead
+opt to run the migration with the `migrateAndOverwrite` option instead, this will re-run a
+full granule/files migration and overwrite all values in the PostgreSQL database from
+what is in DynamoDB for both granules and associated files:
 
 ```shell
 PAYLOAD=$(echo '{"migrationsList": ["granules"], "granuleMigrationParams": {"migrateAndOverwrite": "true"}}' | base64)
