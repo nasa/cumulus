@@ -1159,7 +1159,7 @@ test.serial('migrateGranulesAndFiles updates multiple granules and files when mi
 
   updatedFileRecords.forEach((fileRecord) => {
     t.is(fileRecord.file_size, 1);
-  })
+  });
 
   t.teardown(async () => {
     await granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
