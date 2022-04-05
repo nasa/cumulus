@@ -38,7 +38,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, AsyncOperation, Collection, Execution, Granule } = require('../../models');
+const { AccessToken, AsyncOperation, Execution, Granule } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -47,13 +47,11 @@ const {
   createExecutionTestRecords,
   cleanupExecutionTestRecords,
   fakeGranuleFactoryV2,
-  fakeCollectionFactory,
   fakeAsyncOperationFactory,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
 process.env.ExecutionsTable = randomString();
 process.env.GranulesTable = randomString();
 process.env.stackName = randomString();
@@ -75,7 +73,6 @@ let executionModel;
 let granuleModel;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('asyncOperation');
-process.env.CollectionsTable = randomId('collection');
 process.env.ExecutionsTable = randomId('executions');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
@@ -202,7 +199,7 @@ test.before(async (t) => {
     testPgAsyncOperation
   );
 
-  // Create collections in Dynamo and Postgres
+  // Create collections in Postgres
   // we need this because a granule has a foreign key referring to collections
   const collectionName = 'fakeCollection';
   const collectionVersion = 'v1';
