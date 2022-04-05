@@ -64,8 +64,18 @@ const initializeGranulesAndFilesMigrationResult = (): GranulesAndFilesMigrationR
  *
  * @param {Object} record
  *   Record from DynamoDB
- * @param {Knex.Transaction} trx - Knex transaction
+ * @param {Knex.Transaction} trx
+ *  - Knex transaction
  * @param {Object} migrationParams
+ *   - Migration parameters
+ * @param {string} migrationParams.migrateAndOverwrite
+ *  - true/false parameter, set to 'true' to have the granule migration
+ *    overwrite existing dynamo *granule* records if there are any.
+ *    Set to 'false' to 'skip' migration when there's an existing granule record in
+ *    PostgreSQL
+ * @param {string} migrationParams.migrateOnlyFiles
+ *   - true/false parameter, set to 'true' to return the granule.cumulus_id
+ *     or throw if it doesn't exist Set to 'false' to migrate granule record data as normal.
  * @returns {Promise<any>}
  * @throws {RecordAlreadyMigrated}
  *   - If record was already migrated
