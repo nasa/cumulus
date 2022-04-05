@@ -10,12 +10,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2860**
   - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+- **CUMULUS-NONE**
+  - Added documentation on choosing and configuring RDS at `deployment/choosing_configuring_rds`.
 
 ### Changed
 
 - **CUMULUS-2864**
   - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
     functions to not perform separate validation request
+- **CUMULUS-2703**
+  - Updated `ORCA Backup` reconciliation report to report `cumulusFilesCount` and `orcaFilesCount`
 
 ## [v11.0.0] 2022-03-24 [STABLE]
 
@@ -482,6 +486,25 @@ Please see [the second data migration docs](https://nasa.github.io/cumulus/docs/
     allow this timeout to be user configurable
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
+
+### Changed
+
+- **CUMULUS-2849**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for DynamoDB requests:
+    - `@aws-sdk/client-dynamodb`
+    - `@aws-sdk/lib-dynamodb`
+    - `@aws-sdk/util-dynamodb`
+  - Updated code for compatibility with AWS SDK v3 Dynamo packages
+    - `@cumulus/api`
+    - `@cumulus/errors`
+    - `@cumulus/tf-inventory`
+    - `lambdas/data-migration2`
+    - `packages/api/ecs/async-operation`
+
+### Fixed
+
+- **CUMULUS-2849**
+  - Fixed AWS service client memoization logic in `@cumulus/aws-client`
 
 ## [v10.1.1] 2022-03-04
 
