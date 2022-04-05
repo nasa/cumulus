@@ -3,7 +3,10 @@ const cryptoRandomString = require('crypto-random-string');
 const uuid = require('uuid/v4');
 
 const AsyncOperation = require('@cumulus/api/models/async-operation');
-const Collection = require('@cumulus/api/models/collections');
+const {
+  CollectionPgModel,
+  fakeCollectionRecordFactory,
+} = require('@cumulus/db');
 const Provider = require('@cumulus/api/models/providers');
 const Rule = require('@cumulus/api/models/rules');
 const KMS = require('@cumulus/aws-client/KMS');
@@ -33,7 +36,6 @@ test.before(async (t) => {
     stackName: cryptoRandomString({ length: 10 }),
     system_bucket: cryptoRandomString({ length: 10 }),
     AsyncOperationsTable: cryptoRandomString({ length: 10 }),
-    CollectionsTable: cryptoRandomString({ length: 10 }),
     ProvidersTable: cryptoRandomString({ length: 10 }),
     RulesTable: cryptoRandomString({ length: 10 }),
   };
@@ -50,13 +52,12 @@ test.before(async (t) => {
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
   });
-  t.context.collectionsModel = new Collection();
+  t.context.collectionPgModel = new CollectionPgModel();
   t.context.providersModel = new Provider();
   t.context.rulesModel = new Rule();
 
   await Promise.all([
     t.context.asyncOperationsModel.createTable(),
-    t.context.collectionsModel.createTable(),
     t.context.providersModel.createTable(),
     t.context.rulesModel.createTable(),
   ]);
@@ -81,7 +82,6 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   await t.context.rulesModel.deleteTable();
   await t.context.providersModel.deleteTable();
-  await t.context.collectionsModel.deleteTable();
   await t.context.asyncOperationsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -93,32 +93,23 @@ test.after.always(async (t) => {
   });
 });
 
-test('handler migrates async operations, collections, providers, rules', async (t) => {
+test('handler migrates async operations, providers, rules', async (t) => {
   const {
     asyncOperationsModel,
-    collectionsModel,
+    collectionPgModel,
     providersModel,
     rulesModel,
   } = t.context;
 
-  const fakeCollection = {
-    name: `${cryptoRandomString({ length: 10 })}collection`,
-    version: '0.0.0',
-    duplicateHandling: 'replace',
-    granuleId: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
-    granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
-    sampleFileName: 'MOD09GQ.A2017025.h21v00.006.2017034065104.hdf',
-    files: [{ regex: '^.*\\.txt$', sampleFileName: 'file.txt', bucket: 'bucket' }],
-    meta: { foo: 'bar', key: { value: 'test' } },
-    reportToEms: false,
-    ignoreFilesConfigForDiscovery: false,
-    process: 'modis',
-    url_path: 'path',
-    tags: ['tag1', 'tag2'],
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
+  const fakePgCollection = fakeCollectionRecordFactory({
+    name: 'fakeCollection',
+    version: 'v1',
+  });
 
+  await collectionPgModel.create(
+    t.context.knex,
+    fakePgCollection
+  );
   const fakeAsyncOperation = {
     id: uuid(),
     description: 'unittest async operation',
@@ -152,8 +143,8 @@ test('handler migrates async operations, collections, providers, rules', async (
     provider: undefined,
     state: 'DISABLED',
     collection: {
-      name: fakeCollection.name,
-      version: fakeCollection.version,
+      name: fakePgCollection.name,
+      version: fakePgCollection.version,
     },
     rule: { type: 'onetime', value: cryptoRandomString({ length: 10 }), arn: cryptoRandomString({ length: 10 }), logEventArn: cryptoRandomString({ length: 10 }) },
     executionNamePrefix: cryptoRandomString({ length: 10 }),
@@ -167,7 +158,6 @@ test('handler migrates async operations, collections, providers, rules', async (
 
   const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRule);
   await Promise.all([
-    collectionsModel.create(fakeCollection),
     asyncOperationsModel.create(fakeAsyncOperation),
     providersModel.create(fakeProvider),
     rulesModel.create(ruleWithTrigger),
@@ -177,18 +167,12 @@ test('handler migrates async operations, collections, providers, rules', async (
     rulesModel.delete(fakeRule),
     providersModel.delete(fakeProvider),
     asyncOperationsModel.delete({ id: fakeAsyncOperation.id }),
-  ]).then(() => collectionsModel.delete(fakeCollection)));
+  ]));
 
   const call = await handler({});
   const expected = {
     MigrationSummary: {
       async_operations: {
-        failed: 0,
-        migrated: 1,
-        skipped: 0,
-        total_dynamo_db_records: 1,
-      },
-      collections: {
         failed: 0,
         migrated: 1,
         skipped: 0,

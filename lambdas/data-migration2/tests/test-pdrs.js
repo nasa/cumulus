@@ -2,7 +2,6 @@ const cryptoRandomString = require('crypto-random-string');
 const test = require('ava');
 const sinon = require('sinon');
 
-const Collection = require('@cumulus/api/models/collections');
 const Provider = require('@cumulus/api/models/providers');
 const Pdr = require('@cumulus/api/models/pdrs');
 const Logger = require('@cumulus/logger');
@@ -47,7 +46,6 @@ const generateTestPdr = (params) => ({
   ...params,
 });
 
-let collectionsModel;
 let providersModel;
 let pdrsModel;
 
@@ -62,9 +60,6 @@ test.before(async (t) => {
   process.env.PdrsTable = cryptoRandomString({ length: 10 });
 
   await createBucket(process.env.system_bucket);
-
-  collectionsModel = new Collection();
-  await collectionsModel.createTable();
 
   providersModel = new Provider();
   await providersModel.createTable();
@@ -112,7 +107,6 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 
   await providersModel.deleteTable();
-  await collectionsModel.deleteTable();
   await pdrsModel.deleteTable();
 
   await destroyLocalTestDb({

@@ -28,6 +28,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removes creation and deletion of DynamoDB record from API endpoint POST /rules/
   - **CUMULUS-2816**
     - Removes addition of DynamoDB record from API endpoint POST /collections
+  - **CUMULUS-2794**
+    - Removes API Collections model and all related test code
 
 ### Added
 

@@ -1,4 +1,3 @@
-const Collection = require('@cumulus/api/models/collections');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const Provider = require('@cumulus/api/models/providers');
@@ -50,7 +49,6 @@ const migrateFakeProviderRecord = async (record, knex) => {
   await knex('providers').insert(updatedRecord);
 };
 
-let collectionsModel;
 let providersModel;
 let rulesModel;
 
@@ -63,9 +61,6 @@ test.before(async (t) => {
 
   const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
   const messageTemplateKey = `${process.env.stackName}/workflow_template.json`;
-
-  collectionsModel = new Collection();
-  await collectionsModel.createTable();
 
   providersModel = new Provider();
   await providersModel.createTable();
@@ -116,7 +111,6 @@ test.afterEach.always(async (t) => {
 
 test.after.always(async (t) => {
   await providersModel.deleteTable();
-  await collectionsModel.deleteTable();
   await rulesModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);

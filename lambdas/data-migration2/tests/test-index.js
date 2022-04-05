@@ -1,7 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
-const Collection = require('@cumulus/api/models/collections');
 const Execution = require('@cumulus/api/models/executions');
 const Granule = require('@cumulus/api/models/granules');
 const Pdr = require('@cumulus/api/models/pdrs');
@@ -53,14 +52,12 @@ test.before(async (t) => {
 
   await createBucket(process.env.system_bucket);
 
-  t.context.collectionsModel = new Collection();
   t.context.executionsModel = new Execution();
   t.context.granulesModel = new Granule();
   t.context.pdrsModel = new Pdr();
   t.context.providersModel = new Provider();
 
   await Promise.all([
-    t.context.collectionsModel.createTable(),
     t.context.executionsModel.createTable(),
     t.context.granulesModel.createTable(),
     t.context.pdrsModel.createTable(),
@@ -103,7 +100,6 @@ test.after.always(async (t) => {
   await t.context.granulesModel.deleteTable();
   await t.context.pdrsModel.deleteTable();
   await t.context.providersModel.deleteTable();
-  await t.context.collectionsModel.deleteTable();
   await t.context.executionsModel.deleteTable();
 
   await recursivelyDeleteS3Bucket(process.env.system_bucket);

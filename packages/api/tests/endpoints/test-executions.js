@@ -71,7 +71,6 @@ const fakeExecutions = [];
 let jwtAuthToken;
 let accessTokenModel;
 let asyncOperationModel;
-let collectionModel;
 let executionModel;
 let granuleModel;
 process.env.AccessTokensTable = randomId('token');
@@ -106,9 +105,6 @@ test.before(async (t) => {
   // create fake Granules table
   granuleModel = new Granule();
   await granuleModel.createTable();
-
-  collectionModel = new Collection();
-  await collectionModel.createTable();
 
   // create fake execution table
   executionModel = new Execution();
@@ -211,17 +207,9 @@ test.before(async (t) => {
   const collectionName = 'fakeCollection';
   const collectionVersion = 'v1';
 
-  t.context.testCollection = fakeCollectionFactory({
-    name: collectionName,
-    version: collectionVersion,
-    duplicateHandling: 'error',
-  });
-  const dynamoCollection = await collectionModel.create(
-    t.context.testCollection
-  );
   t.context.collectionId = constructCollectionId(
-    dynamoCollection.name,
-    dynamoCollection.version
+    collectionName,
+    collectionVersion
   );
 
   const testPgCollection = fakeCollectionRecordFactory({
@@ -320,7 +308,6 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await asyncOperationModel.deleteTable();
-  await collectionModel.deleteTable();
   await executionModel.deleteTable();
   await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);

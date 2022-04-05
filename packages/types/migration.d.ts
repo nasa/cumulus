@@ -6,7 +6,6 @@ export interface MigrationResult {
 }
 
 export interface DataMigration1Summary {
-  collections: MigrationResult,
   providers: MigrationResult,
   async_operations: MigrationResult,
   rules: MigrationResult,

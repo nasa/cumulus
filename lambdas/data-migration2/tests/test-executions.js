@@ -6,7 +6,6 @@ const test = require('ava');
 // Dynamo models
 const Execution = require('@cumulus/api/models/executions');
 const AsyncOperation = require('@cumulus/api/models/async-operation');
-const Collection = require('@cumulus/api/models/collections');
 const Rule = require('@cumulus/api/models/rules');
 const Logger = require('@cumulus/logger');
 
@@ -39,7 +38,6 @@ const {
   migrateExecutions,
 } = require('../dist/lambda/executions');
 
-let collectionsModel;
 let executionsModel;
 let asyncOperationsModel;
 let rulesModel;
@@ -89,14 +87,12 @@ test.before(async (t) => {
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
   });
-  collectionsModel = new Collection();
   rulesModel = new Rule();
 
   t.context.executionPgModel = new ExecutionPgModel();
 
   await executionsModel.createTable();
   await asyncOperationsModel.createTable();
-  await collectionsModel.createTable();
   await rulesModel.createTable();
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
@@ -113,7 +109,6 @@ test.afterEach.always(async (t) => {
 test.after.always(async (t) => {
   await executionsModel.deleteTable();
   await asyncOperationsModel.deleteTable();
-  await collectionsModel.deleteTable();
   await rulesModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({

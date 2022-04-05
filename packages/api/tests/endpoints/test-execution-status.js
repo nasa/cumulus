@@ -27,11 +27,10 @@ const {
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, Collection, Execution, Granule } = require('../../models');
+const { AccessToken, Execution, Granule } = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
-  fakeCollectionFactory,
   setAuthorizedOAuthUsers,
   fakeGranuleFactoryV2,
   fakeExecutionFactoryV2,
@@ -183,7 +182,6 @@ const executionExistsMock = (arn) => {
 
 let jwtAuthToken;
 let accessTokenModel;
-let collectionModel;
 let granuleModel;
 let executionModel;
 let mockedSF;
@@ -247,10 +245,6 @@ test.before(async (t) => {
   );
   const expiredExecutionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
 
-  // create fake Collections table
-  collectionModel = new Collection();
-  await collectionModel.createTable();
-
   // create fake Granules table
   granuleModel = new Granule();
   await granuleModel.createTable();
@@ -274,17 +268,9 @@ test.before(async (t) => {
   collectionPgModel = new CollectionPgModel();
   granulePgModel = new GranulePgModel();
 
-  t.context.testCollection = fakeCollectionFactory({
-    name: collectionName,
-    version: collectionVersion,
-    duplicateHandling: 'error',
-  });
-  const dynamoCollection = await collectionModel.create(
-    t.context.testCollection
-  );
   t.context.collectionId = constructCollectionId(
-    dynamoCollection.name,
-    dynamoCollection.version
+    collectionName,
+    collectionVersion
   );
 
   const fakePgCollection = fakeCollectionRecordFactory({
@@ -356,7 +342,6 @@ test.after.always(async (t) => {
   mockedSF.restore();
   mockedSFExecution.restore();
   await executionModel.deleteTable();
-  await collectionModel.deleteTable();
   await granuleModel.deleteTable();
 
   await destroyLocalTestDb({
