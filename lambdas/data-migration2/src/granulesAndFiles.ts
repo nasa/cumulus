@@ -393,6 +393,14 @@ export const queryAndMigrateGranuleDynamoRecords = async ({
   return migrationResult;
 };
 
+const normalizeBoolParam = (name: string, paramValue: string) => {
+  const returnParam = paramValue.toLowerCase();
+  if (!(['true', 'false'].includes(returnParam))) {
+    throw new InvalidArgument(`${name} must be either true or false`);
+  }
+  return returnParam;
+};
+
 /**
  * Query DynamoDB for granule records to create granule/file records in PostgreSQL.
  *
@@ -421,8 +429,8 @@ export const migrateGranulesAndFiles = async (
   const granulesTable = envUtils.getRequiredEnvVar('GranulesTable', env);
   const stackName = envUtils.getRequiredEnvVar('stackName', env);
 
-  const migrateAndOverwrite = granuleMigrationParams.migrateAndOverwrite ?? 'false';
-  const migrateOnlyFiles = granuleMigrationParams.migrateOnlyFiles ?? 'false';
+  const migrateAndOverwrite = normalizeBoolParam('migrateAndOverwrite', (granuleMigrationParams.migrateAndOverwrite ?? 'false'));
+  const migrateOnlyFiles = normalizeBoolParam('migrateOnlyFiles', (granuleMigrationParams.migrateOnlyFiles ?? 'false'));
   const loggingInterval = granuleMigrationParams.loggingInterval ?? 100;
   const writeConcurrency = granuleMigrationParams.writeConcurrency ?? 10;
   const granulesAndFilesMigrationResult = initializeGranulesAndFilesMigrationResult();
@@ -430,6 +438,7 @@ export const migrateGranulesAndFiles = async (
   if (migrateAndOverwrite === 'true' && migrateOnlyFiles === 'true') {
     throw new InvalidArgument('Invalid migration parameters detected, migrateOnlyFiles cannot be set to true if migrateAndOverwrite is also set to true');
   }
+
   const migrationName = 'granulesAndFiles';
   const {
     errorFileWriteStream,

@@ -880,6 +880,91 @@ test.serial('queryAndMigrateGranuleDynamoRecords only processes records for spec
   });
 });
 
+test.serial('migrateGranulesAndFiles throws if migrateAndOverwrite and migrateOnlyFiles are set to a non-bool string value', async (t) => {
+  const {
+    knex,
+  } = t.context;
+
+  await t.throwsAsync(
+    migrateGranulesAndFiles(process.env, knex, {
+      migrateAndOverwrite: 'foo',
+      migrateOnlyFiles: 'true',
+    }),
+    { instanceOf: InvalidArgument }
+  );
+
+  await t.throwsAsync(
+    migrateGranulesAndFiles(process.env, knex, {
+      migrateAndOverwrite: 'true',
+      migrateOnlyFiles: 'bar',
+    }),
+    { instanceOf: InvalidArgument }
+  );
+});
+
+test.serial('migrateGranulesAndFiles properly handles improperly cased migration options', async (t) => {
+  const {
+    knex,
+    testGranule,
+    testExecution,
+    testCollection,
+  } = t.context;
+
+  const testGranule1 = testGranule;
+  const testGranule2 = generateTestGranule({
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
+    execution: testExecution.url,
+  });
+
+  await Promise.all([
+    granulesModel.create(testGranule1),
+    granulesModel.create(testGranule2),
+  ]);
+
+  t.teardown(async () => {
+    await Promise.all([
+      granulesModel.delete({ granuleId: testGranule.granuleId }),
+      granulesModel.delete({ granuleId: testGranule2.granuleId }),
+    ]);
+  });
+
+  await t.throwsAsync(
+    migrateGranulesAndFiles(process.env, knex, {
+      migrateAndOverwrite: 'TrUe',
+      migrateOnlyFiles: 'True',
+    }),
+    { instanceOf: InvalidArgument }
+  );
+
+  const migrationSummary = await migrateGranulesAndFiles(process.env, knex, {
+    migrateAndOverwrite: 'fAlSe',
+    migrateOnlyFiles: 'False',
+  });
+  t.deepEqual(migrationSummary, {
+    filesResult: {
+      total_dynamo_db_records: 2,
+      failed: 0,
+      skipped: 0,
+      migrated: 2,
+    },
+    granulesResult: {
+      total_dynamo_db_records: 2,
+      failed: 0,
+      skipped: 0,
+      migrated: 2,
+    },
+  });
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
+  const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
+  t.is(records.length, 2);
+  t.is(fileRecords.length, 2);
+
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[1].cumulus_id });
+  });
+});
+
 test.serial('migrateGranulesAndFiles throws if migrateAndOverwrite and migrateOnlyFiles are set to true', async (t) => {
   const {
     knex,
