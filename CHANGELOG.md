@@ -73,7 +73,7 @@ aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
 ```
 
 You should note that this will *only* move files for granule records in
-postgres.  **If you have not completed the phase 1 data migration or
+PostgreSQL.  **If you have not completed the phase 1 data migration or
 have granule records in dynamo that are not in PostgreSQL, the migration will
 report failure for both the DynamoDB granule and all the associated files and the file
 records will not be updated**.
