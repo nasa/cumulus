@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- **CUMULUS-2905**
+  - Updates migration script with new `migrateAndOverwrite` and
+    `migrateOnlyFiles` options.
+
 ### Added
 
 - **CUMULUS-2860**
