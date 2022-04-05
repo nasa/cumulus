@@ -169,3 +169,16 @@ output "ecs_cluster_name" {
 output "start_sf_queue_url" {
   value = module.ingest.start_sf_queue_url
 }
+
+
+# Ingest
+
+output "cumulus_ingest" {
+  value = module.ingest
+}
+
+# Archive 
+
+output "cumulus_archive" {
+  value = module.archive
+}
