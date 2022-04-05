@@ -293,7 +293,7 @@ function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
    * @returns {ApiRule} the updated sqs rule
    */
 async function validateAndUpdateSqsRule(rule) {
-  const queueUrl = rule.rule.value;
+  const { queueUrl } = rule;
   if (!(await sqsQueueExists(queueUrl))) {
     throw new Error(`SQS queue ${queueUrl} does not exist or your account does not have permissions to access it`);
   }

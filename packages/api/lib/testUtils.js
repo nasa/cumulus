@@ -529,6 +529,8 @@ const createRuleTestRecords = async (context, ruleParams) => {
   const originalRule = fakeRuleRecordFactory(ruleParams);
   const apiRule = await translatePostgresRuleToApiRule(originalRule, testKnex);
 
+  console.log(`API RULE: ${JSON.stringify(apiRule)}`);
+
   const ruleWithTrigger = await createRuleTrigger(apiRule);
   const pgRuleWithTrigger = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
 
