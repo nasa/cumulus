@@ -118,7 +118,9 @@ module "queue_granules_service" {
     "--activityArn",
     aws_sfn_activity.queue_granules.id,
     "--lambdaArn",
-    module.cumulus.queue_granules_task.task_arn
+    module.cumulus.queue_granules_task.task_arn,
+    "--lastModified",
+    module.cumulus.queue_granules_task.last_modified_date
   ]
   alarms = {
     MemoryUtilizationHigh = {
