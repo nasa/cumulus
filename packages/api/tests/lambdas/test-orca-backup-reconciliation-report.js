@@ -227,6 +227,8 @@ test.serial('getReportForOneGranule reports ok for one granule in both cumulus a
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
   t.true(report.ok);
   t.is(report.okFilesCount, 1);
+  t.is(report.cumulusFilesCount, 1);
+  t.is(report.orcaFilesCount, 1);
   t.is(report.conflictFiles.length, 0);
 });
 
@@ -245,6 +247,8 @@ test.serial('getReportForOneGranule reports no ok for one granule in both cumulu
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule });
   t.false(report.ok);
   t.is(report.okFilesCount, 2);
+  t.is(report.cumulusFilesCount, 4);
+  t.is(report.orcaFilesCount, 3);
   t.is(report.conflictFiles.length, 3);
   t.is(
     report.conflictFiles.filter((file) =>
@@ -277,6 +281,8 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.true(report.ok);
   t.is(report.okFilesCount, 2);
+  t.is(report.cumulusFilesCount, 2);
+  t.is(report.orcaFilesCount, 0);
   t.is(report.conflictFiles.length, 0);
 });
 
@@ -294,6 +300,8 @@ test.serial('getReportForOneGranule reports not ok for one granule in cumulus on
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.false(report.ok);
   t.is(report.okFilesCount, 1);
+  t.is(report.cumulusFilesCount, 2);
+  t.is(report.orcaFilesCount, 0);
   t.is(report.conflictFiles.length, 1);
 });
 
@@ -305,6 +313,8 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
   const report = getReportForOneGranule({ collectionsConfig, cumulusGranule });
   t.true(report.ok);
   t.is(report.okFilesCount, 0);
+  t.is(report.cumulusFilesCount, 0);
+  t.is(report.orcaFilesCount, 0);
   t.is(report.conflictFiles.length, 0);
 });
 
@@ -357,6 +367,8 @@ test.serial('orcaReconciliationReportForGranules reports discrepancy of granule 
   // matchingCumulusGran has 1, matchingCumulusOnlyGran 2,
   // conflictCumulusGran 2, conflictCumulusOnlyGran 1
   t.is(granulesReport.okFilesCount, 6);
+  t.is(granulesReport.cumulusFilesCount, 9);
+  t.is(granulesReport.orcaFilesCount, 4);
   // conflictCumulusGran 3 , conflictCumulusOnlyGran 1
   t.is(granulesReport.conflictFilesCount, 4);
   // conflictCumulusGran
