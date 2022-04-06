@@ -164,34 +164,34 @@ test('Creating a rule trigger for a onetime rule succeeds', async (t) => {
   t.deepEqual(onetimeRule, rule);
 });
 
-// test('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
-//   const kinesisRule = fakeRuleFactoryV2({
-//     workflow,
-//     state: 'ENABLED',
-//     rule: {
-//       type: 'kinesis',
-//       value: randomString(),
-//     },
-//   });
-//   // create rule
-//   const createdRule = await createRuleTrigger(kinesisRule);
-//   const kinesisEventMappings = await getKinesisEventMappings();
-//   const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-//   const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
+test.skip('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
+  const kinesisRule = fakeRuleFactoryV2({
+    workflow,
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: randomString(),
+    },
+  });
+  // create rule
+  const createdRule = await createRuleTrigger(kinesisRule);
+  const kinesisEventMappings = await getKinesisEventMappings();
+  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
+  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
 
-//   t.is(consumerEventMappings.length, 1);
-//   t.is(logEventMappings.length, 1);
-//   t.is(consumerEventMappings[0].UUID, createdRule.rule.arn);
-//   t.is(logEventMappings[0].UUID, createdRule.rule.logEventArn);
+  t.is(consumerEventMappings.length, 1);
+  t.is(logEventMappings.length, 1);
+  t.is(consumerEventMappings[0].UUID, createdRule.rule.arn);
+  t.is(logEventMappings[0].UUID, createdRule.rule.logEventArn);
 
-//   t.is(createdRule.name, kinesisRule.name);
-//   t.is(createdRule.rule.value, kinesisRule.rule.value);
-//   t.false(createdRule.rule.arn === undefined);
-//   t.false(createdRule.rule.logEventArn === undefined);
+  t.is(createdRule.name, kinesisRule.name);
+  t.is(createdRule.rule.value, kinesisRule.rule.value);
+  t.false(createdRule.rule.arn === undefined);
+  t.false(createdRule.rule.logEventArn === undefined);
 
-//   // Clean Up
-//   await deleteKinesisEventSourceMappings();
-// });
+  // Clean Up
+  await deleteKinesisEventSourceMappings();
+});
 
 test('Creating an invalid kinesis type rule does not add event mappings', async (t) => {
   const kinesisRule = fakeRuleFactoryV2({
