@@ -402,7 +402,8 @@ test('rulesHelpers.lookupCollectionInEvent returns empty object for empty case',
   t.deepEqual(rulesHelpers.lookupCollectionInEvent({}), {});
 });
 
-test.serial.skip('deleteKinesisEventSource deletes a kinesis event source', async (t) => {
+test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -410,9 +411,9 @@ test.serial.skip('deleteKinesisEventSource deletes a kinesis event source', asyn
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     provider: null,
@@ -421,6 +422,7 @@ test.serial.skip('deleteKinesisEventSource deletes a kinesis event source', asyn
   const kinesisRule = fakeRuleFactoryV2(params);
   console.log(`kinesisRule: ${JSON.stringify(kinesisRule)}`);
   const result = await createEventSourceMapping(kinesisRule);
+  console.log('createdEventSourceMapping');
 
   // Update Kinesis Rule ARNs
   kinesisRule.rule.arn = result[0].UUID;
@@ -447,7 +449,8 @@ test.serial.skip('deleteKinesisEventSource deletes a kinesis event source', asyn
   });
 });
 
-test.serial.skip('deleteKinesisEventSources deletes all kinesis event sources', async (t) => {
+test.serial('deleteKinesisEventSources deletes all kinesis event sources', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -455,9 +458,9 @@ test.serial.skip('deleteKinesisEventSources deletes all kinesis event sources', 
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     provider: null,
@@ -630,7 +633,8 @@ test.serial('deleteRuleResources correctly deletes resources for scheduled rule'
   });
 });
 
-test.serial.skip('deleteRuleResources correctly deletes resources for kinesis rule', async (t) => {
+test.serial('deleteRuleResources correctly deletes resources for kinesis rule', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -638,9 +642,9 @@ test.serial.skip('deleteRuleResources correctly deletes resources for kinesis ru
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     collection: null,
@@ -745,7 +749,8 @@ test.serial('deleteRuleResources does nothing when the rule is an SQS rule', asy
   );
 });
 
-test.serial.skip('deleteRuleResources does not delete event source mappings if they exist for other rules', async (t) => {
+test.serial('deleteRuleResources does not delete event source mappings if they exist for other rules', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -753,9 +758,9 @@ test.serial.skip('deleteRuleResources does not delete event source mappings if t
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     provider: null,

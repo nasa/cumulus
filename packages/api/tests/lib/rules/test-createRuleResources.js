@@ -164,13 +164,14 @@ test('Creating a rule trigger for a onetime rule succeeds', async (t) => {
   t.deepEqual(onetimeRule, rule);
 });
 
-test.skip('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
+test('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
     rule: {
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
   });
   // create rule
