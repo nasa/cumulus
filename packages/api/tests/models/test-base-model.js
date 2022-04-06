@@ -14,6 +14,9 @@ test.beforeEach(async (t) => {
   t.context.manager = new Manager({
     tableName: t.context.tableName,
     tableHash,
+    schema: {
+      required: [],
+    },
   });
 
   await DynamoDb.createAndWaitForDynamoDbTable({
@@ -63,7 +66,7 @@ test('Manager.createTable() creates the correct table', async (t) => {
     await manager.createTable();
     const describeTableResponse = await dynamodb().describeTable({
       TableName: tableName,
-    }).promise();
+    });
 
     t.is(describeTableResponse.Table.TableStatus, 'ACTIVE');
   } finally {
@@ -81,17 +84,17 @@ test('The Manager deleteTable method deletes the correct table', async (t) => {
   await manager.createTable();
   const describeTableResponse = await dynamodb().describeTable({
     TableName: tableName,
-  }).promise();
+  });
 
   t.is(describeTableResponse.Table.TableStatus, 'ACTIVE');
 
   await manager.deleteTable();
 
   try {
-    await dynamodb().describeTable({ TableName: tableName }).promise();
+    await dynamodb().describeTable({ TableName: tableName });
     t.fail();
   } catch (error) {
-    t.is(error.code, 'ResourceNotFoundException');
+    t.is(error.name, 'ResourceNotFoundException');
   }
 });
 
@@ -105,7 +108,7 @@ test('Manager.exists() returns true when a record exists', async (t) => {
     Item: {
       id: { S: id },
     },
-  }).promise();
+  });
 
   t.true(await manager.exists({ id }));
 });
@@ -206,4 +209,73 @@ test('Manager._buildDocClientUpdateParams() only updates specified fields', (t) 
   t.is(actualParams.ExpressionAttributeNames['#prop3'], 'prop3');
   t.is(actualParams.ExpressionAttributeValues[':prop3'], 'value3');
   t.true(actualParams.UpdateExpression.includes('#prop3 = if_not_exists(#prop3, :prop3)'));
+});
+
+test('Manager.update() returns new fields', async (t) => {
+  const { manager } = t.context;
+
+  const itemKey = { id: randomString() };
+  const item = {
+    ...itemKey,
+    foo: 'bar',
+  };
+
+  await manager.create(item);
+
+  const initialRecord = await manager.get(itemKey);
+  t.like(initialRecord, {
+    foo: 'bar',
+  });
+
+  const updates = {
+    ...item,
+    foo: 'baz',
+    foo2: 'another-value',
+  };
+  const updatedRecord = await manager.update(itemKey, updates);
+  t.like(updatedRecord, updates);
+});
+
+test('Manager.update() allows removing a single field', async (t) => {
+  const { manager } = t.context;
+
+  const itemKey = { id: randomString() };
+  const item = {
+    ...itemKey,
+    foo: 'bar',
+  };
+
+  await manager.create(item);
+
+  const initialRecord = await manager.get(itemKey);
+  t.is(initialRecord.foo, 'bar');
+
+  await manager.update(itemKey, item, ['foo']);
+  const updatedRecord = await manager.get(itemKey);
+  t.false(Object.prototype.hasOwnProperty.call(updatedRecord, 'foo'));
+});
+
+test('Manager.update() allows removing multiple fields', async (t) => {
+  const { manager } = t.context;
+
+  const itemKey = { id: randomString() };
+  const item = {
+    ...itemKey,
+    foo: 'bar',
+    boo: 'baz',
+  };
+
+  await manager.create(item);
+
+  const initialRecord = await manager.get(itemKey);
+  t.like(initialRecord, {
+    foo: 'bar',
+    boo: 'baz',
+  });
+
+  await manager.update(itemKey, item, ['foo', 'boo']);
+
+  const updatedRecord = await manager.get(itemKey);
+  t.false(Object.prototype.hasOwnProperty.call(updatedRecord, 'foo'));
+  t.false(Object.prototype.hasOwnProperty.call(updatedRecord, 'boo'));
 });

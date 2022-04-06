@@ -1,5 +1,7 @@
-import * as AWS from 'aws-sdk';
 import { ThrottlingException } from '@cumulus/errors';
+
+import { AWSClientTypes } from './types';
+import { getServiceIdentifer } from './utils';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
@@ -11,7 +13,11 @@ const localStackPorts = {
   cloudwatch: 4566,
   cloudwatchevents: 4566,
   cloudwatchlogs: 4566,
-  dynamodb: 4566,
+  DynamoDB: 4566,
+  DynamoDBClient: 4566,
+  DynamoDBStreamsClient: 4566,
+  ec2: 4566,
+  ecs: 4566,
   es: 4566,
   firehose: 4566,
   iam: 4566,
@@ -70,28 +76,28 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export function localStackAwsClientOptions<T>(
   Service: new (params: object) => T,
-  options: object
+  options: object = {}
 ) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
   }
 
-  // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  const serviceIdentifier = getServiceIdentifer(Service);
 
   const localStackOptions: { [key: string ]: unknown } = {
     ...options,
-    accessKeyId: 'my-access-key-id',
-    secretAccessKey: 'my-secret-access-key',
+    credentials: {
+      accessKeyId: 'my-access-key-id',
+      secretAccessKey: 'my-secret-access-key',
+    },
     region: 'us-east-1',
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
-  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
-
-  return new Service(localStackOptions);
+  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.s3ForcePathStyle = true;
+  return localStackOptions;
 }
 
 /**
@@ -103,17 +109,15 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
  *
  * @private
  */
-export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export function getLocalstackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
-  options: object
-): T {
-  // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  options?: object
+): object {
+  const serviceIdentifier = getServiceIdentifer(Service);
   if (localstackSupportedService(serviceIdentifier)) {
-    return localStackAwsClient(Service, options);
+    return localStackAwsClientOptions(Service, options);
   }
-
-  return <T>{};
+  return {};
 }
 
 /**

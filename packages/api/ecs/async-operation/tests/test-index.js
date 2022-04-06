@@ -53,7 +53,9 @@ test.before(async (t) => {
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 
-  const dynamodbDocClient = awsServices.dynamodbDocClient({ convertEmptyValues: true });
+  const dynamodbDocClient = awsServices.dynamodbDocClient({
+    marshallOptions: { convertEmptyValues: true },
+  });
   t.context.dynamodbDocClient = dynamodbDocClient;
 
   const { esIndex, esClient } = await createTestIndex();
@@ -83,7 +85,7 @@ test.beforeEach(async (t) => {
   await t.context.dynamodbDocClient.put({
     TableName: t.context.dynamoTableName,
     Item: t.context.testAsyncOperation,
-  }).promise();
+  });
   await indexAsyncOperation(
     t.context.esClient,
     t.context.testAsyncOperation,
@@ -137,7 +139,7 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
     getParams: { ConsistentRead: true },
   });
 
-  t.is(result.$response.httpResponse.statusCode, 200);
+  t.is(result.$metadata.httpStatusCode, 200);
   t.like(asyncOperationPgRecord, {
     ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,
@@ -195,7 +197,7 @@ test('updateAsyncOperation updates records correctly when output is undefined', 
     getParams: { ConsistentRead: true },
   });
 
-  t.is(result.$response.httpResponse.statusCode, 200);
+  t.is(result.$metadata.httpStatusCode, 200);
   t.like(asyncOperationPgRecord, {
     ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,
