@@ -15,7 +15,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "aws-sdk": "^2.585.0",
-    "moment": "2.29.1"
+    "moment": "2.29.2"
   },
   "private": true
 }

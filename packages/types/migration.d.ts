@@ -44,7 +44,8 @@ export interface MigrationLoggingParams {
 
 export type ParallelScanMigrationParams = MigrationLoggingParams & DynamoDbParallelScanParams;
 
-export type GranuleMigrationParams = ParallelScanMigrationParams & GranuleDynamoDbSearchParams;
+export type GranuleMigrationParams = ParallelScanMigrationParams &
+GranuleDynamoDbSearchParams & { migrateAndOverwrite?: string, migrateOnlyFiles?: string };
 
 type DataMigration2AllowedMigrations = 'granules' | 'executions' | 'pdrs';
 
