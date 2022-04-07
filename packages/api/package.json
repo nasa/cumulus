@@ -66,6 +66,7 @@
     "@cumulus/ingest": "11.0.0",
     "@cumulus/launchpad-auth": "11.0.0",
     "@cumulus/logger": "11.0.0",
+    "@cumulus/lzards-api-client": "11.0.1-alpha.0",
     "@cumulus/message": "11.0.0",
     "@cumulus/oauth-client": "11.0.0",
     "@cumulus/object-store": "11.0.0",
