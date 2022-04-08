@@ -5,6 +5,7 @@
     "allowlist": [
         "1067259",
         "node-forge",
-        "minimist"
+        "minimist",
+        "node-fetch"
     ]
 }
