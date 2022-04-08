@@ -75,11 +75,13 @@ variable "ecs_cluster_instance_subnet_ids" {
 variable "ecs_cluster_max_size" {
   description = "The maximum number of instances for your ECS cluster"
   type        = number
+  default     = 1
 }
 
 variable "ecs_cluster_min_size" {
   description = "The minimum number of instances for your ECS cluster"
   type        = number
+  default     = 0
 }
 
 variable "elasticsearch_domain_arn" {
