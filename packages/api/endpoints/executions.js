@@ -34,7 +34,6 @@ const log = new Logger({ sender: '@cumulus/api/executions' });
 async function create(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
-    executionModel = new Execution(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
@@ -56,7 +55,6 @@ async function create(req, res) {
     await writeExecutionRecordFromApi({
       record: execution,
       knex,
-      executionModel,
     });
 
     return res.send({

@@ -64,6 +64,7 @@ process.env.TOKEN_SECRET = randomString();
 const { del } = require('../../endpoints/executions');
 const { app } = require('../../app');
 const { buildFakeExpressResponse } = require('./utils');
+const { update } = require('lodash');
 
 // create all the variables needed across this test
 const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
@@ -1222,10 +1223,6 @@ test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Ela
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: newExecution.arn,
-  });
-
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1235,11 +1232,6 @@ test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Ela
 
   const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
 
-  t.true(fetchedDynamoRecord.createdAt > newExecution.createdAt);
-  t.true(fetchedDynamoRecord.updatedAt > newExecution.updatedAt);
-
-  t.is(fetchedPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
   t.is(fetchedPgRecord.created_at.getTime(), fetchedEsRecord.createdAt);
   t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
 });
@@ -1263,10 +1255,6 @@ test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: newExecution.arn,
-  });
-
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1276,20 +1264,12 @@ test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL
 
   const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
 
-  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.is(fetchedPgRecord.arn, newExecution.arn);
   t.truthy(fetchedPgRecord.cumulus_id);
   t.is(fetchedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
   t.is(fetchedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   t.is(fetchedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[1].cumulus_id);
 
-  t.deepEqual(
-    fetchedDynamoRecord,
-    {
-      ...newExecution,
-      createdAt: fetchedDynamoRecord.createdAt,
-      updatedAt: fetchedDynamoRecord.updatedAt,
-    }
-  );
   t.deepEqual(
     fetchedEsRecord,
     {
@@ -1393,10 +1373,6 @@ test.serial('POST /executions with non-existing parentArn still creates a new ex
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: newExecution.arn,
-  });
-
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1404,7 +1380,7 @@ test.serial('POST /executions with non-existing parentArn still creates a new ex
     }
   );
 
-  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.is(fetchedPgRecord.arn, newExecution.arn);
   t.falsy(fetchedPgRecord.parent_cumulus_id);
 });
 
@@ -1491,10 +1467,6 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const dynamoRecord = await executionModel.get({
-    arn: execution.arn,
-  });
-
   const pgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1509,11 +1481,7 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const updatedDynamoRecord = await executionModel.get({
-    arn: execution.arn,
-  });
-
-  const updatePgRecord = await t.context.executionPgModel.get(
+  const updatedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
       arn: execution.arn,
@@ -1523,14 +1491,10 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
   const expectedApiRecord = {
     ...updatedExecution,
     collectionId: execution.collectionId,
-    createdAt: dynamoRecord.createdAt,
-    updatedAt: updatedDynamoRecord.updatedAt,
+    createdAt: updatedPgRecord.created_at.getTime(),
+    updatedAt: updatedPgRecord.updated_at.getTime(),
   };
 
-  t.deepEqual(
-    updatedDynamoRecord,
-    expectedApiRecord
-  );
   t.like(
     updatedEsRecord,
     {
@@ -1539,28 +1503,21 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
     }
   );
 
-  t.is(updatePgRecord.arn, execution.arn);
-  t.is(updatePgRecord.cumulus_id, pgRecord.cumulus_id);
+  t.is(updatedPgRecord.arn, execution.arn);
+  t.is(updatedPgRecord.cumulus_id, pgRecord.cumulus_id);
 
-  t.is(updatedDynamoRecord.createdAt, dynamoRecord.createdAt);
-  t.true(updatedDynamoRecord.updatedAt > dynamoRecord.createdAt);
-  t.is(updatePgRecord.created_at.getTime(), pgRecord.created_at.getTime());
-  t.true(updatePgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
+  t.is(updatedPgRecord.created_at.getTime(), pgRecord.created_at.getTime());
+  t.true(updatedPgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
 
   // collectionId was omitted from body of PUT request, so values are
   // not overridden in the database
-  t.is(updatedDynamoRecord.collectionId, execution.collectionId);
-  t.is(updatePgRecord.collection_cumulus_id, t.context.collectionCumulusId);
+  t.is(updatedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   // updated record has added field
-  t.is(updatedDynamoRecord.asyncOperationId, updatedExecution.asyncOperationId);
-  t.is(updatePgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
+  t.is(updatedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
   // updated record has updated field
-  t.is(updatedDynamoRecord.parentArn, updatedExecution.parentArn);
-  t.is(updatePgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
-  t.is(updatedDynamoRecord.status, updatedExecution.status);
-  t.is(updatePgRecord.status, updatedExecution.status);
-  t.deepEqual(updatedDynamoRecord.finalPayload, updatedExecution.finalPayload);
-  t.deepEqual(updatePgRecord.final_payload, updatedExecution.finalPayload);
+  t.is(updatedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
+  t.is(updatedPgRecord.status, updatedExecution.status);
+  t.deepEqual(updatedPgRecord.final_payload, updatedExecution.finalPayload);
 });
 
 test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {
@@ -1664,10 +1621,6 @@ test.serial('PUT /executions with non-existing parentArn still updates the execu
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: updatedExecution.arn,
-  });
-
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1675,7 +1628,7 @@ test.serial('PUT /executions with non-existing parentArn still updates the execu
     }
   );
 
-  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.is(fetchedPgRecord.arn, updatedExecution.arn);
   t.falsy(fetchedPgRecord.parent_cumulus_id);
 });
 
