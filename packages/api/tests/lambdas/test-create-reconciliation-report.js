@@ -2053,6 +2053,8 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
   t.is(report.granules.cumulusCount, 1);
   t.is(report.granules.orcaCount, 1);
   t.is(report.granules.okFilesCount, 1);
+  t.is(report.granules.cumulusFilesCount, 1);
+  t.is(report.granules.orcaFilesCount, 1);
   t.is(report.granules.conflictFilesCount, 0);
   t.is(report.granules.onlyInCumulus.length, 0);
   t.is(report.granules.onlyInOrca.length, 0);

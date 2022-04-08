@@ -55,7 +55,7 @@ const { removeCollectionAndAllDependencies } = require('../../helpers/Collection
 const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
-const { buildAndExecuteWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
@@ -310,7 +310,6 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraGranuleInDb;
   let extraS3Object;
   let granuleBeforeUpdate;
-  let isOrcaIncluded = true;
   let originalGranuleFile;
   let protectedBucket;
   let publishedGranuleId;
@@ -325,13 +324,6 @@ describe('When there are granule differences and granule reconciliation is run',
       collectionId = constructCollectionId(collection.name, collection.version);
 
       config = await loadConfig();
-
-      // check if orca is deployed
-      const stateMachineName = `${config.stackName}-${ingestWithOrcaWorkflowName}`;
-      isOrcaIncluded = await stateMachineExists(stateMachineName);
-      if (!isOrcaIncluded) {
-        console.log(`${stateMachineName} doesn't exist, will skip the orca reconciliation report tests...`);
-      }
 
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
@@ -379,7 +371,7 @@ describe('When there are granule differences and granule reconciliation is run',
         dbGranuleId,
         cmrGranule,
       ] = await Promise.all([
-        ingestAndPublishGranule(config, testSuffix, testDataFolder, true, isOrcaIncluded),
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, true),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
         ingestGranuleToCMR(cmrClient),
       ]);
@@ -840,14 +832,12 @@ describe('When there are granule differences and granule reconciliation is run',
     let orcaReportAsyncOperationId;
 
     afterAll(async () => {
-      if (!isOrcaIncluded) return;
       if (orcaReportAsyncOperationId) {
         await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: orcaReportAsyncOperationId });
       }
     });
 
     it('generates an async operation through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       const request = {
         reportType: 'ORCA Backup',
@@ -870,7 +860,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       let asyncOperation;
       try {
@@ -890,7 +879,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('fetches a reconciliation report through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
       report = JSON.parse(reportContent);
@@ -900,7 +888,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates a report showing number of granules that are in Cumulus and ORCA', () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       const granules = report.granules;
       expect(granules).toBeTruthy();
@@ -911,10 +898,16 @@ describe('When there are granule differences and granule reconciliation is run',
       expect(granules.orcaCount).toBe(1);
       // 4 from publishedGranule (all except .jpg, .jpg2), 1 from dbGranule (.met)
       expect(granules.okFilesCount).toBe(5);
+      // all 5 from publishedGranule, all 5 from dbGranule
+      expect(granules.cumulusFilesCount).toBe(10);
+      // 4 from publishedGranule (except .met)
+      expect(granules.orcaFilesCount).toBe(4);
       expect(granules.conflictFilesCount).toBe(6);
       expect(granules.onlyInCumulus.length).toBe(1);
       expect(granules.onlyInCumulus[0].granuleId).toBe(dbGranuleId);
       expect(granules.onlyInCumulus[0].okFilesCount).toBe(1);
+      expect(granules.onlyInCumulus[0].cumulusFilesCount).toBe(5);
+      expect(granules.onlyInCumulus[0].orcaFilesCount).toBe(0);
       expect(granules.onlyInCumulus[0].conflictFiles.length).toBe(4);
       expect(granules.onlyInCumulus[0].conflictFiles.filter((file) => file.fileName.endsWith('.met')).length).toBe(0);
       expect(granules.onlyInOrca.length).toBe(0);
@@ -923,6 +916,9 @@ describe('When there are granule differences and granule reconciliation is run',
       }
       expect(granules.withConflicts.length).toBe(1);
       expect(granules.withConflicts[0].granuleId).toBe(publishedGranuleId);
+      expect(granules.withConflicts[0].okFilesCount).toBe(4);
+      expect(granules.withConflicts[0].cumulusFilesCount).toBe(5);
+      expect(granules.withConflicts[0].orcaFilesCount).toBe(4);
       expect(granules.withConflicts[0].conflictFiles.length).toBe(2);
       expect(granules.withConflicts[0].conflictFiles.filter(
         (file) => file.fileName.endsWith('.jpg') || file.fileName.endsWith('.jpg2')
@@ -930,7 +926,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('deletes a reconciliation report through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       await reconciliationReportsApi.deleteReconciliationReport({
         prefix: config.stackName,
