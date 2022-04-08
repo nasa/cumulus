@@ -195,19 +195,16 @@ export const buildCollectionMappings = async (
 * here.
 */
 export const getDynamoTableEntries = async (params: {
-  dynamoCollectionModel: any,
   dynamoProvidersModel: any,
   dynamoRulesModel: any,
   dynamoAsyncOperationsModel: any,
 }) => {
   const {
-    dynamoCollectionModel,
     dynamoProvidersModel,
     dynamoRulesModel,
     dynamoAsyncOperationsModel,
   } = params;
   return await Promise.all([
-    dynamoCollectionModel.getAllCollections(),
     dynamoProvidersModel.getAllProviders(),
     dynamoRulesModel.getAllRules(),
     dynamoAsyncOperationsModel.getAllAsyncOperations(),

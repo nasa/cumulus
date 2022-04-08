@@ -12,55 +12,30 @@ test('handler returns the expected report', async (t) => {
   process.env.CollectionsTable = 'CollectionsTable';
   process.env.AsyncOperationsTable = 'AsyncOperationsTable';
   const countPostgresRecordsFunctionStub = () => 5;
-  const mapperFunctionStub = (_val) => ({
-    collectionId: 'TEST_COLLECTION__006',
-    counts: [10, 10, 10, 0, 0, 0],
-  });
-  const buildCollectionMappingsFunctionStub = () => ({
-    collectionValues: [{
-      collection: 'TEST_COLLECTION__006',
-      postgresCollectionId: 1,
-    }],
-    collectionFailures: ['fake collection failures object'],
-  });
   const getDynamoTableEntriesFunctionStub = () => [
     new Array(40),
     new Array(50),
     new Array(60),
-    new Array(1000),
   ];
   const getKnexClientStub = () => Promise.resolve({ val: true });
   const actual = await handler({
     countPostgresRecordsFunction: countPostgresRecordsFunctionStub,
-    mapperFunction: mapperFunctionStub,
-    buildCollectionMappingsFunction: buildCollectionMappingsFunctionStub,
     getDynamoTableEntriesFunction: getDynamoTableEntriesFunctionStub,
     getKnexClientFunction: getKnexClientStub,
   });
 
   const expected = {
-    collectionsNotMapped: [
-      'fake collection failures object',
-    ],
-    pdr_granule_and_execution_records_not_in_postgres_by_collection: {
-      TEST_COLLECTION__006: {
-        executionsDelta: 10,
-        granulesDelta: 10,
-        pdrsDelta: 10,
-        totalExecutions: 10,
-        totalGranules: 10,
-        totalPdrs: 10,
-      },
-    },
+    collectionsNotMapped: [],
+    pdr_granule_and_execution_records_not_in_postgres_by_collection: {},
     records_in_dynamo_not_in_postgres: {
-      totalDynamoAsyncOperations: 1000,
-      totalDynamoCollections: 40,
-      totalDynamoProviders: 50,
-      totalDynamoRules: 60,
-      asyncOperationsDelta: 995,
-      collectionsDelta: 35,
-      providersDelta: 45,
-      rulesDelta: 55,
+      totalDynamoAsyncOperations: 60,
+      totalDynamoCollections: 0,
+      totalDynamoProviders: 40,
+      totalDynamoRules: 50,
+      asyncOperationsDelta: 55,
+      collectionsDelta: -5,
+      providersDelta: 35,
+      rulesDelta: 45,
     },
   };
   t.deepEqual(actual, expected);

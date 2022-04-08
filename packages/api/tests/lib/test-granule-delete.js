@@ -69,9 +69,6 @@ test.before(async (t) => {
   granuleModel = new models.Granule();
   await granuleModel.createTable();
 
-  const collectionModel = new models.Collection();
-  await collectionModel.createTable();
-
   granulePgModel = new GranulePgModel();
   filePgModel = new FilePgModel();
 
@@ -91,7 +88,7 @@ test.before(async (t) => {
     version: 'v1',
     duplicateHandling: 'error',
   });
-  await collectionModel.create(t.context.testCollection);
+
   t.context.collectionId = constructCollectionId(
     t.context.testCollection.name,
     t.context.testCollection.version

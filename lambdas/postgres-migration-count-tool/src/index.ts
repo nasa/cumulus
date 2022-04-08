@@ -1,5 +1,3 @@
-import pMap from 'p-map';
-
 import { models } from '@cumulus/api';
 import * as S3 from '@cumulus/aws-client/S3';
 import { envUtils } from '@cumulus/common';
@@ -13,16 +11,15 @@ import {
 } from '@cumulus/db';
 
 import {
-  buildCollectionMappings,
   countPostgresRecords,
   generateAggregateReportObj,
-  generateCollectionReportObject,
   getDynamoTableEntries,
 } from './utils';
 
-import { ReportObject } from './types';
-
-import { pMapMapper } from './mapper';
+import { 
+  ReportObject,
+  CollectionReportObject,
+} from './types';
 
 const logger = new Logger({
   sender: '@cumulus/lambdas/postgres-migration-count-tool',
@@ -59,14 +56,11 @@ export const handler = async (
     stackName?: string,
     // Arguments below are for unit test injection
     countPostgresRecordsFunction?: typeof countPostgresRecords,
-    mapperFunction?: typeof pMapMapper,
-    buildCollectionMappingsFunction?: typeof buildCollectionMappings,
     getDynamoTableEntriesFunction?: typeof getDynamoTableEntries,
     getKnexClientFunction?: typeof getKnexClient,
   }
 ): Promise<any> => {
   const {
-    dbConcurrency = 1,
     dbMaxPool = 20,
     reportBucket,
     reportPath,
@@ -75,19 +69,15 @@ export const handler = async (
     stackName = envUtils.getRequiredEnvVar('prefix'),
     getKnexClientFunction = getKnexClient,
     countPostgresRecordsFunction = countPostgresRecords,
-    mapperFunction = pMapMapper,
-    buildCollectionMappingsFunction = buildCollectionMappings,
     getDynamoTableEntriesFunction = getDynamoTableEntries,
   } = event;
   process.env.dbMaxPool = `${dbMaxPool}`;
 
   logger.debug(`Running reconciliation with ${JSON.stringify(event)}`);
-  const prefix = process.env.prefix || '';
   const knexClient = await getKnexClientFunction({ env: process.env });
   const cutoffTime = Date.now() - cutoffSeconds * 1000;
   const cutoffIsoString = new Date(cutoffTime).toISOString();
 
-  const dynamoCollectionModel = new models.Collection();
   const dynamoProvidersModel = new models.Provider();
   const dynamoRulesModel = new models.Rule();
 
@@ -102,18 +92,16 @@ export const handler = async (
   const postgresRulesModel = new RulePgModel();
 
   const [
-    dynamoCollections,
     dynamoProviders,
     dynamoRules,
     dynamoAsyncOperations,
   ] = await getDynamoTableEntriesFunction({
-    dynamoCollectionModel,
     dynamoProvidersModel,
     dynamoRulesModel,
     dynamoAsyncOperationsModel,
   });
   const dynamoAsyncOperationsCount = dynamoAsyncOperations.length;
-  const dynamoCollectionsCount = dynamoCollections.length;
+  const dynamoCollectionsCount = 0;
   const dynamoProvidersCount = dynamoProviders.length;
   const dynamoRuleCount = dynamoRules.length;
 
@@ -139,29 +127,8 @@ export const handler = async (
     knexClient,
     cutoffIsoString,
   });
-
-  const {
-    collectionValues,
-    collectionFailures,
-  } = await buildCollectionMappingsFunction(
-    dynamoCollections,
-    postgresCollectionModel,
-    knexClient
-  );
-  if (collectionFailures.length > 0) {
-    logger.warn(`Warning - failed to map ${collectionFailures.length} / ${dynamoCollectionsCount}: ${JSON.stringify(collectionFailures)}`);
-  }
-
-  // Generate report of pdr/executions/granules count differences for each collection.  Return
-  // mapping of collections with differences
-  const collectionReportResults = await pMap(
-    collectionValues,
-    mapperFunction.bind(undefined, cutoffIsoString, cutoffTime, knexClient, prefix),
-    { concurrency: dbConcurrency }
-  );
-
   // Reformat stats objects to user-readable data
-  const CollectionReportObject = await generateCollectionReportObject(collectionReportResults);
+  const CollectionReportObject = {} as CollectionReportObject;
   const aggregateReportObj = generateAggregateReportObj({
     dynamoAsyncOperationsCount,
     dynamoCollectionsCount,
@@ -172,7 +139,7 @@ export const handler = async (
     postgresProviderCount,
     postgresRulesCount,
   });
-
+ const collectionFailures = [] as PromiseRejectedResult[];
   // Create output report
   const reportObj = {
     collectionsNotMapped: collectionFailures,
