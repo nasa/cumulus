@@ -4,8 +4,6 @@
     "retry-count": 20,
     "allowlist": [
         "1067259",
-        "node-forge",
-        "minimist",
-        "node-fetch"
+        "node-forge"
     ]
 }
