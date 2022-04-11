@@ -33,7 +33,6 @@ archive_api_port = 8000
 
 key_name      = "jl"
 
-include_orca = true
 orca_default_bucket = "jl-test-integration-orca-glacier"
 
 tea_distribution_url = "https://2yzme66sf7.execute-api.us-east-1.amazonaws.com:7000/DEV/"
