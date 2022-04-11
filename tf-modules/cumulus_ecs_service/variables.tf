@@ -21,14 +21,38 @@ variable "prefix" {
 
 # Optional
 
+variable "fargate_scaling_cooldown" {
+  type = number
+  default = 300
+}
+
+variable "fargate_upscale_adjustment" {
+  type = number
+  default = 20
+}
+
+variable "fargate_downscale_adjustment" {
+  type = number
+  default = -20
+}
+
+variable "fargate_scaling_adjustment_period" {
+  type = number
+  default = 300
+}
+
+variable "fargate_scheduled_task_threshold" {
+  type = number
+  default = 10
+}
 variable "fargate_max_capacity" {
   type = number
-  default = 2
+  default =  2
 }
 
 variable "fargate_min_capacity" {
   type = number
-  default = 1
+  default = 0
 }
 
 variable "subnet_ids" {

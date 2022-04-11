@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-WRITE TICKET**
+  - Added fargate type to cumulus_ecs_service:
+    https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-networking.html
+  - Update
+
+
 - **CUMULUS-2860**
   - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
 

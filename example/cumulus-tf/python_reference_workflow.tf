@@ -26,6 +26,9 @@ module "python_processing_service" {
 
   cpu                = 256
   memory_reservation = 1024
+  fargate_scaling_cooldown = 60
+  fargate_scaling_adjustment_period = 120
+
 
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name

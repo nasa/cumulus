@@ -51,6 +51,11 @@ class Rule extends Manager {
 
   async addRule(item, payload) {
     const name = this.buildCloudWatchRuleName(item);
+    log.info('Putting event', ([name,
+      item.rule.value,
+      item.state,
+      'Rule created by cumulus-api']));
+
     const r = await CloudwatchEvents.putEvent(
       name,
       item.rule.value,
@@ -58,6 +63,11 @@ class Rule extends Manager {
       'Rule created by cumulus-api'
     );
 
+    log.info('Putting target', [name,
+      this.targetId,
+      process.env.invokeArn,
+      JSON.stringify(payload),
+    ]);
     await CloudwatchEvents.putTarget(
       name,
       this.targetId,
@@ -342,6 +352,9 @@ class Rule extends Manager {
       FunctionName: lambda.name,
       EventSourceArn: item.rule.value,
     };
+
+    log.info('params are', [item, lambda]);
+
     const listData = await awsServices.lambda().listEventSourceMappings(listParams).promise();
     if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
       const currentMapping = listData.EventSourceMappings[0];
@@ -363,6 +376,7 @@ class Rule extends Manager {
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true,
     };
+    log.info('event source mapping is', params);
     return awsServices.lambda().createEventSourceMapping(params).promise();
   }
 
