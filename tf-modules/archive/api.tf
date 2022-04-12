@@ -71,7 +71,6 @@ locals {
       METRICS_ES_PASS                  = var.metrics_es_password
       METRICS_ES_USER                  = var.metrics_es_username
       MigrationAsyncOperationLambda    = var.postgres_migration_async_operation_function_arn
-      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
       OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       orca_api_uri                     = var.orca_api_uri

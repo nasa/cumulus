@@ -51,7 +51,7 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.testCollection = fakeCollectionFactory();
 });
 
