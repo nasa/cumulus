@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v11.1.0] 2022-03-24
+### Added
+
+### Changed
+
+- **CUMULUS-2885**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for S3 requests
+
+## [v11.1.0] 2022-04-07
+
 ### MIGRATION NOTES
 - 11.1.0 is an amendment release and supersedes 11.0.0. However, follow the migration steps for 11.0.0.
 

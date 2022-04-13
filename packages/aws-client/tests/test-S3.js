@@ -124,6 +124,8 @@ test('deleteS3Objects() deletes s3 objects', async (t) => {
       Bucket: bucketName,
     });
     t.is(objects2.length, 0);
+  } catch (error) {
+    console.log('deleteS3Objects test failure', error);
   } finally {
     await awsServices.s3().deleteBucket({ Bucket: bucketName });
   }
