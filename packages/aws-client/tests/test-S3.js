@@ -101,26 +101,32 @@ test('createBucket() creates a bucket', async (t) => {
   }
 });
 
-test.serial('deleteS3Objects() returns the contents of an S3 object', async (t) => {
-  const { Bucket } = t.context;
-  const { Key: key1 } = await stageTestObjectToLocalStack(Bucket, 'asdf');
-  const { Key: key2 } = await stageTestObjectToLocalStack(Bucket, 'foobar');
+test('deleteS3Objects() deletes s3 objects', async (t) => {
+  const bucketName = randomString();
+  await createBucket(bucketName);
 
-  const objects1 = await listS3ObjectsV2({
-    Bucket,
-  });
-  t.is(objects1.length, 2);
+  try {
+    const { Key: key1 } = await stageTestObjectToLocalStack(bucketName, 'asdf');
+    const { Key: key2 } = await stageTestObjectToLocalStack(bucketName, 'foobar');
 
-  await deleteS3Objects({
-    client: awsServices.s3(),
-    bucket: Bucket,
-    keys: [key1, key2],
-  });
+    const objects1 = await listS3ObjectsV2({
+      Bucket: bucketName,
+    });
+    t.is(objects1.length, 2);
 
-  const objects2 = await listS3ObjectsV2({
-    Bucket,
-  });
-  t.is(objects2.length, 0);
+    await deleteS3Objects({
+      client: awsServices.s3(),
+      bucket: bucketName,
+      keys: [key1, key2],
+    });
+
+    const objects2 = await listS3ObjectsV2({
+      Bucket: bucketName,
+    });
+    t.is(objects2.length, 0);
+  } finally {
+    await awsServices.s3().deleteBucket({ Bucket: bucketName });
+  }
 });
 
 test('putFile() uploads a file to S3', async (t) => {

@@ -18,7 +18,6 @@ const { ValidationError } = require('@cumulus/errors');
 const {
   getSnsTriggerPermissionId,
 } = require('../../../lib/snsRuleHelpers');
-const { ResourceNotFoundError } = require('../../../lib/errors');
 const models = require('../../../models');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 
