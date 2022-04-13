@@ -8,5 +8,5 @@ xz-utils tk-dev libffi-dev liblzma-dev python3-pip
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1 && \
     update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 RUN python -m pip install -U pip
-RUN npm install -g npm@8.6.0 && npm config --global set script-shell /bin/bash
+RUN npm install -g npm@8.6 && npm config --global set script-shell /bin/bash
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
