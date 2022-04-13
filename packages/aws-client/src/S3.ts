@@ -30,7 +30,6 @@ import {
   S3,
   Tag,
   Tagging,
-  DeleteObjectsCommand,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -146,13 +145,13 @@ export const deleteS3Objects = (params: {
   keys: string[],
 }) => {
   const { bucket, client, keys } = params;
-  const deleteObjectsCommand = new DeleteObjectsCommand({
+  const objects = {
     Bucket: bucket,
     Delete: {
       Objects: keys.map((key) => ({ Key: key })),
     },
-  });
-  return client.send(deleteObjectsCommand);
+  };
+  return client.deleteObjects(objects);
 };
 
 /**
