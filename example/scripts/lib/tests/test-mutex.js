@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const Mutex = require('../lib/Mutex');
+const Mutex = require('../Mutex');
 
 test.beforeEach((t) => {
   t.context.sha = 'someSha';
