@@ -29,7 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2816**
     - Removes addition of DynamoDB record from API endpoint POST /collections
   - **CUMULUS-2794**
-    - Removes API Collections model and all related test code
+    - Remove API Collections model and all related test code
+    - Remove lambdas/postgres-migration-count-tool and api-client/migrationCounts
 
 ### Added
 
