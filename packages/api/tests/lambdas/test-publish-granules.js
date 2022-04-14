@@ -61,7 +61,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
   await handler(event);
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 20 }).promise();
   t.teardown(
     async () => await Promise.all(Messages.map(
       ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
@@ -112,7 +112,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
     MaxNumberOfMessages: 10,
-    WaitTimeSeconds: 10,
+    WaitTimeSeconds: 20,
   }).promise();
   t.teardown(
     async () => await Promise.all(Messages.map(
@@ -153,7 +153,7 @@ test.serial('The publish-granules Lambda function takes a DynamoDB stream event 
 
   await handler(event);
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 20 }).promise();
   t.teardown(
     async () => await Promise.all(Messages.map(
       ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
