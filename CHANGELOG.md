@@ -6,8 +6,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2922**
+  - Added `@cumulus/example-lib` package to example project to allow unit tests `example/script/lib` dependency.
+  - Updates Mutex unit test to address changes made in [#2902](https://github.com/nasa/cumulus/pull/2902/files)
+
 ## [v11.1.0] 2022-03-24
+
 ### MIGRATION NOTES
+
 - 11.1.0 is an amendment release and supersedes 11.0.0. However, follow the migration steps for 11.0.0.
 
 - **CUMULUS-2905**
