@@ -4,8 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v10.0.2] 2022-02-03
 
+**Please note** changes in 10.0.2 may not yet be released in future versions, as
+this is a backport and patch release on the 10.0.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
 ### Changed
 
 - **CUMULUS-2837**
@@ -15,7 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
   - Move methods in api/lib/cwSfExecutionEventUtils to
     @cumulus/message/StepFunctions
-    
+
 ## [v10.0.1] 2022-02-03
 
 **Please note** changes in 10.0.1 may not yet be released in future versions, as
@@ -5166,7 +5170,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v10.0.2...HEAD
+[v10.0.2]: https://github.com/nasa/cumulus/compare/v10.0.1...10.0.2
 [v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
 [v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
 [v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
