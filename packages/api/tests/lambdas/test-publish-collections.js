@@ -65,7 +65,7 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
-    WaitTimeSeconds: 20,
+    WaitTimeSeconds: 10,
   }).promise();
 
   t.is(Messages.length, 1);
@@ -104,12 +104,16 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
 
   await handler(event);
 
-  const { Messages } = await sqs().receiveMessage({
+  const receiveMessageParams = {
     QueueUrl,
     MaxNumberOfMessages: 2,
-    WaitTimeSeconds: 20,
-  }).promise();
-
+    WaitTimeSeconds: 10,
+  };
+  const { Messages } = await sqs().receiveMessage(receiveMessageParams).promise();
+  if (Messages.length < 2) {
+    const { Messages: additionalMsgs } = await sqs().receiveMessage(receiveMessageParams).promise();
+    Messages.push(...additionalMsgs);
+  }
   const actualMessages = Messages
     .map((message) => JSON.parse(JSON.parse(message.Body).Message))
     .sort((message) => (message.event === 'Create' ? -1 : 1));
@@ -144,7 +148,7 @@ test.serial('The publish-collections Lambda function takes a DynamoDB stream eve
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl,
-    WaitTimeSeconds: 20,
+    WaitTimeSeconds: 10,
   }).promise();
 
   t.is(Messages.length, 1);

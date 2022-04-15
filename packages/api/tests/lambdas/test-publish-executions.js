@@ -58,7 +58,7 @@ test.serial('The publish-executions Lambda function takes a DynamoDB stream even
 
   await handler(event);
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 20 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
   t.teardown(
     async () => await Promise.all(Messages.map(
       ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
@@ -100,11 +100,16 @@ test.serial('The publish-executions Lambda function takes a DynamoDB stream even
 
   await handler(event);
 
-  const { Messages } = await sqs().receiveMessage({
+  const receiveMessageParams = {
     QueueUrl,
     MaxNumberOfMessages: 2,
-    WaitTimeSeconds: 20,
-  }).promise();
+    WaitTimeSeconds: 10,
+  };
+  const { Messages } = await sqs().receiveMessage(receiveMessageParams).promise();
+  if (Messages.length < 2) {
+    const { Messages: additionalMsgs } = await sqs().receiveMessage(receiveMessageParams).promise();
+    Messages.push(...additionalMsgs);
+  }
   t.teardown(
     async () => await Promise.all(Messages.map(
       ({ ReceiptHandle }) => sqs().deleteMessage({ QueueUrl, ReceiptHandle }).promise()
