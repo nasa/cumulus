@@ -1,6 +1,6 @@
 'use strict';
 
-const { S3 } = require('aws-sdk');
+const { S3 } = require('@aws-sdk/client-s3');
 
 /**
  * Lambda handler that tests GET access on an S3 bucket by calling getObject on
@@ -12,7 +12,7 @@ const { S3 } = require('aws-sdk');
  */
 async function testGet(s3, params) {
   try {
-    const result = await s3.getObject(params).promise();
+    const result = await s3.getObject(params);
     return result.Body !== null;
   } catch (error) {
     return false;
@@ -30,7 +30,7 @@ async function testGet(s3, params) {
 async function testWrite(s3, params) {
   const callParams = { ...params, ...{ Body: 'testWrite String.' } };
   try {
-    await s3.putObject(callParams).promise();
+    await s3.putObject(callParams);
     return true;
   } catch (error) {
     return false;
@@ -50,7 +50,7 @@ async function testList(s3, params) {
   const { Key, ...callParams } = { ...params, ...{ Prefix: params.Key } };
 
   try {
-    await s3.listObjectsV2(callParams).promise();
+    await s3.listObjectsV2(callParams);
     return true;
   } catch (error) {
     return false;

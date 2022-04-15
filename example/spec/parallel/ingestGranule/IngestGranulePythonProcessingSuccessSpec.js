@@ -7,7 +7,7 @@ const pRetry = require('p-retry');
 
 const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { s3 } = require('@cumulus/aws-client/services');
-const { getObjectStreamContents } = require('@cumulus/aws-client/S3');
+const { getObjectReadStream, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
   addCollections,
   api: apiTestUtils,
@@ -161,7 +161,11 @@ describe('The TestPythonProcessing workflow', () => {
   it('has a checksum file that matches the ingested granule file', async () => {
     const md5File = granuleResult.files.find((f) => f.key.match('.hdf.md5'));
     const dataFile = granuleResult.files.find((f) => f.key.match('.hdf$'));
-    const dataStream = await s3().getObject({ Bucket: dataFile.bucket, Key: dataFile.key }).createReadStream();
+    const dataStream = await getObjectReadStream({
+      bucket: dataFile.bucket,
+      key: dataFile.key,
+      s3: s3(),
+    });
     const dataHash = await hasha.fromStream(dataStream, { algorithm: 'md5', encoding: 'hex' });
     const md5FileContent = await s3().getObject({ Bucket: md5File.bucket, Key: md5File.key });
 

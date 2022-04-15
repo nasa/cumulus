@@ -289,7 +289,6 @@ const fetchReconciliationReport = async (stackName, reportName) => {
 
   const url = JSON.parse(response.body).presignedS3Url;
   if (isNil(url) || !url.includes(`reconciliation-reports/${reportName}`) ||
-    !url.includes('AWSAccessKeyId') ||
     !url.includes('Signature')) {
     throw new Error(`ReconciliationReport getReconciliationReport did not return valid url ${url}`);
   }
