@@ -161,9 +161,7 @@ module <span class="hljs-string">"queue_granules_service"</span> {
     <span class="hljs-string">"--activityArn"</span>,
     aws_sfn_activity.queue_granules.id,
     <span class="hljs-string">"--lambdaArn"</span>,
-    module.cumulus.queue_granules_task.task_arn,
-    <span class="hljs-string">"--lastModified"</span>,
-    module.cumulus.queue_granules_task.last_modified_date
+    module.cumulus.queue_granules_task.task_arn
   ]
   <span class="hljs-attr">alarms</span> = {
     <span class="hljs-attr">MemoryUtilizationHigh</span> = {
