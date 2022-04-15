@@ -6,7 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2837**
+  - Update process-s3-dead-letter-archive to unpack SQS events in addition to
+    Cumulus Messages
+  - Update process-s3-dead-letter-archive to look up execution status using
+    getCumulusMessageFromExecutionEvent (common method with sfEventSqsToDbRecords)
+  - Move methods in api/lib/cwSfExecutionEventUtils to
+    @cumulus/message/StepFunctions
+    
 ## [v10.0.1] 2022-02-03
+
+**Please note** changes in 10.0.1 may not yet be released in future versions, as
+this is a backport and patch release on the 10.0.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
 
 ### Fixed
 
@@ -111,6 +126,7 @@ instances according to the [policy configuration](https://github.com/nasa/cumulu
 - Made `vpc_id` and `subnet_ids` variables optional for `example/data-persistence-tf` module
 - Made `vpc_id` and `subnets` variables optional for `example/rds-cluster-tf` module
 - Changes audit script to handle integration test failure when `USE\_CACHED\_BOOTSTRAP` is disabled.
+- Increases wait time for CMR to return online resources in integration tests
 - **CUMULUS-1823**
   - Updates to Cumulus rule/provider schemas to improve field titles and descriptions.
 - **CUMULUS-2638**
