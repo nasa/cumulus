@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- **CUMULUS-2924**
+  - Update acquireTimeoutMillis to 400 seconds for the db-provision-lambda module to address potential timeout issues on RDS database start
+
 ## [v11.1.0] 2022-03-24
+
 ### MIGRATION NOTES
+
 - 11.1.0 is an amendment release and supersedes 11.0.0. However, follow the migration steps for 11.0.0.
 
 - **CUMULUS-2905**
