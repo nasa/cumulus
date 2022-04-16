@@ -108,7 +108,7 @@ describe('The Ingest Granule failure workflow', () => {
       });
     } catch (error) {
       const apiMessage = JSON.parse(error.apiMessage);
-      if (apiMessage.code !== 'NoSuchBucket') {
+      if (apiMessage.name !== 'NoSuchBucket') {
         throw new Error(`Could not complete test cleanup ${error.apiMessage}`);
       }
     }
