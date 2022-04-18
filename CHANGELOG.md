@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- **CUMULUS-2920**
+  - Update npm version for Core build to 8.6
+
 ## [v11.1.0] 2022-03-24
 ### MIGRATION NOTES
 - 11.1.0 is an amendment release and supersedes 11.0.0. However, follow the migration steps for 11.0.0.
