@@ -156,7 +156,7 @@ class Granule extends Manager {
     const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
       const { target, file } = moveFileParam;
       if (target) {
-        const exists = await s3Utils.fileExists(target.Bucket, target.Key);
+        const exists = await s3Utils.s3ObjectExists(target);
 
         if (exists) {
           return Promise.resolve(file);
