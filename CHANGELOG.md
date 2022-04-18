@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2922**
   - Added `@cumulus/example-lib` package to example project to allow unit tests `example/script/lib` dependency.
   - Updates Mutex unit test to address changes made in [#2902](https://github.com/nasa/cumulus/pull/2902/files)
+- **CUMULUS-2920**
+  - Update npm version for Core build to 8.6
 
 ## [v11.1.0] 2022-03-24
 
