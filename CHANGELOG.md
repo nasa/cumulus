@@ -11,7 +11,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2885**
-  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for S3 requests
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for S3 requests:
+    - `@aws-sdk/client-s3`
+    - `@aws-sdk/lib-storage`
+    - `@aws-sdk/s3-request-presigner`
+  - Updated code for compatibility with updated `@cumulus/aws-client` and AWS SDK v3 S3 packages:
+    - `@cumulus/api`
+    - `@cumulus/async-operations`
+    - `@cumulus/cmrjs`
+    - `@cumulus/common`
+    - `@cumulus/collection-config-store`
+    - `@cumulus/ingest`
+    - `@cumulus/launchpad-auth`
+    - `@cumulus/sftp-client`
+    - `@cumulus/tf-inventory`
+    - `lambdas/data-migration2`
+    - `tasks/add-missing-file-checksums`
+    - `tasks/hyrax-metadata-updates`
+    - `tasks/lzards-backup`
+    - `tasks/sync-granule`
 
 ## [v11.1.0] 2022-04-07
 
