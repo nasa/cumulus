@@ -9,6 +9,10 @@ set -ex
     cd /cumulus/
  fi
 
+
+# Extract cache of compiled TS files
+./bamboo/extract-ts-build-cache.sh
+
 (npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap-no-scripts
 npm run lint
 

@@ -20,9 +20,6 @@ else
   git fetch --all
 fi
 
-# Extract cache of compiled TS files
-./bamboo/extract-ts-build-cache.sh
-
 npm install --ignore-scripts --no-package-lock
 npm run install-python-deps
 ln -s /dev/stdout ./lerna-debug.log
