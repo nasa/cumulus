@@ -31,6 +31,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `tasks/lzards-backup`
     - `tasks/sync-granule`
 
+- **CUMULUS-2920**
+  - Update npm version for Core build to 8.6
+
 ## [v11.1.0] 2022-04-07
 
 ### MIGRATION NOTES
