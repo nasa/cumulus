@@ -47,5 +47,4 @@ saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/me
 
 thin_egress_jwt_secret_name = "cumulus_sit_jwt_tea_secret"
 
-include_orca = false
 orca_default_bucket = "cumulus-sit-orca-glacier"

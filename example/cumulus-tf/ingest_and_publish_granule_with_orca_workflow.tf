@@ -1,7 +1,6 @@
 module "ingest_and_publish_granule_with_orca_workflow" {
   source = "../../tf-modules/workflow"
 
-  count = var.include_orca ? 1 : 0
   prefix          = var.prefix
   name            = "IngestAndPublishGranuleWithOrca"
   workflow_config = module.cumulus.workflow_config
