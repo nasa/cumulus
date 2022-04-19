@@ -7,6 +7,7 @@ set -ex
 
 echo "***Using NPM VERSION*** $(npm --version)"
 npm config set loglevel verbose
+npm config set unsafe-perm true
 
 set -o pipefail
 
