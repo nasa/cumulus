@@ -1,5 +1,6 @@
 'use strict';
 
+const get = require('lodash/get');
 const router = require('express-promise-router')();
 const { getFileBucketAndKey } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
@@ -13,17 +14,14 @@ const { s3 } = require('@cumulus/aws-client/services');
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-function get(req, res) {
+async function handleGetRequst(req, res) {
   const [Bucket, Key] = getFileBucketAndKey(req.params[0]);
 
-  return s3().getObject({ Bucket, Key })
-    .on('httpHeaders', (code, headers) => {
-      res.set('Content-Type', headers['content-type']);
-    })
-    .createReadStream()
-    .pipe(res);
+  const response = await s3().getObject({ Bucket, Key });
+  res.set('Content-Type', get(response, 'Body.headers.content-type'));
+  return response.Body.pipe(res);
 }
 
-router.get('/*', get);
+router.get('/*', handleGetRequst);
 
 module.exports = router;
