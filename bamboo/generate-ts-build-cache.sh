@@ -6,6 +6,7 @@ set -ex
 
 
 echo "***Using NPM VERSION*** $(npm --version)"
+npm config set loglevel verbose
 
 set -o pipefail
 
