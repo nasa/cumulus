@@ -4,6 +4,9 @@ set -ex
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
+
+echo "***Using NPM VERSION*** $(npm --version)"
+
 set -o pipefail
 
 NONCACHE_WORKING_DIR=$(pwd)
