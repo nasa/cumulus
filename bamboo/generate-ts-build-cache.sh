@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ex
 
+NONCACHE_WORKING_DIR=$(pwd)
+
 . ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
@@ -12,7 +14,6 @@ npm config set unsafe-perm true
 
 set -o pipefail
 
-NONCACHE_WORKING_DIR=$(pwd)
 CURRENT_WORKING_DIR=$NONCACHE_WORKING_DIR
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
@@ -22,6 +23,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   git fetch --all
   git checkout "$GIT_SHA"
 else
+  CURRENT_WORKING_DIR=/uncached/cumulus
   npm install
 fi
 
