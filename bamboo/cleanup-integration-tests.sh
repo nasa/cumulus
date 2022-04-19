@@ -2,6 +2,7 @@
 # shellcheck disable=SC1091
 
 set -ex
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 . ./bamboo/abort-if-skip-integration-tests.sh

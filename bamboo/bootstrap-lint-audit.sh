@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
+
 # This script runs before lint.sh, audit.sh in the agent container
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 

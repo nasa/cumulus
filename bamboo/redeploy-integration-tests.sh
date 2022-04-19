@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ex
+. ./bamboo/use-working-directory.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 source .bamboo_env_vars || true
 

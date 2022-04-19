@@ -1,6 +1,7 @@
 #!/bin/bash
 set -ex
 
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
