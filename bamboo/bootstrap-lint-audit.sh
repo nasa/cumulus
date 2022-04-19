@@ -4,6 +4,7 @@ set -e
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
+echo "***Using NPM VERSION*** $(npm --version)"
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
   echo "*** Using cached bootstrap"
