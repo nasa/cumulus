@@ -10,7 +10,6 @@ set -ex
     cd /cumulus/
  fi
 
-
 # Extract cache of compiled TS files
 ./bamboo/extract-ts-build-cache.sh
 

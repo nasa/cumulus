@@ -7,4 +7,3 @@ export GIT_SHA
 cd /uncached/cumulus
 git fetch --all
 git checkout "$GIT_SHA"
-npm install @octokit/graphql@2.1.1 simple-git@3.7.0

@@ -4,6 +4,11 @@ set -ex
 NONCACHE_WORKING_DIR=$(pwd)
 
 . ./bamboo/use-working-directory.sh
+
+# We need this installed for the GIT_PR lookup in the env script, but only for this
+# first job in the sequence
+npm install @octokit/graphql@2.1.1 simple-git@3.7.0
+
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
@@ -23,7 +28,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   git fetch --all
   git checkout "$GIT_SHA"
 else
-  CURRENT_WORKING_DIR=/uncached/cumulus
+  CURRENT_WORKING_DIR=$(pwd)
   npm install
 fi
 
