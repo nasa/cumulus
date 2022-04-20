@@ -56,11 +56,20 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(testBucketName);
 });
 
-test('GET returns the file', async (t) => {
+test('GET returns the requested file', async (t) => {
   const response = await request(app)
     .get(`/dashboard/${testBucketName}/${testFileKey}`)
     .set('Accept', testDataContentType)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
   t.is(response.text, testData);
+});
+
+test('GET returns error when the requested file does not exist', async (t) => {
+  const response = await request(app)
+    .get(`/dashboard/${testBucketName}/nonexistkey`)
+    .set('Accept', testDataContentType)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.is(response.body.message, `file ${testBucketName}/nonexistkey does not exist!`);
 });

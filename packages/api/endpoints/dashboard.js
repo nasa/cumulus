@@ -16,10 +16,16 @@ const { s3 } = require('@cumulus/aws-client/services');
  */
 async function handleGetRequst(req, res) {
   const [Bucket, Key] = getFileBucketAndKey(req.params[0]);
-
-  const response = await s3().getObject({ Bucket, Key });
-  res.set('Content-Type', get(response, 'Body.headers.content-type'));
-  return response.Body.pipe(res);
+  try {
+    const response = await s3().getObject({ Bucket, Key });
+    res.set('Content-Type', get(response, 'Body.headers.content-type'));
+    return response.Body.pipe(res);
+  } catch (error) {
+    if (error.name === 'NoSuchKey' || error.name === 'NoSuchBucket') {
+      return res.boom.notFound(`file ${req.params[0]} does not exist!`);
+    }
+    throw error;
+  }
 }
 
 router.get('/*', handleGetRequst);
