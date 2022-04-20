@@ -36,7 +36,4 @@ cat .ts-build-cache-files
 
 # Generate TS build cache artifact
 tar cf "$TS_BUILD_CACHE_FILE" -T .ts-build-cache-files
-
-if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-  cp "$TS_BUILD_CACHE_FILE" "$NONCACHE_WORKING_DIR"
-fi
+cp "$TS_BUILD_CACHE_FILE" "$NONCACHE_WORKING_DIR"
