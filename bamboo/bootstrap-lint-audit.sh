@@ -19,8 +19,6 @@ git fetch --all
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   git checkout "$GIT_SHA"
   rm -f package-lock.json
-else
-  git fetch --all
 fi
 
 npm install --ignore-scripts --no-package-lock
