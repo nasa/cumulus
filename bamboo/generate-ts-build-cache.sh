@@ -14,7 +14,6 @@ npm install @octokit/graphql@2.1.1 simple-git@3.7.0
 
 
 echo "***Using NPM VERSION*** $(npm --version)"
-npm config set loglevel verbose
 npm config set unsafe-perm true
 
 set -o pipefail
