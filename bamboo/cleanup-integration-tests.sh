@@ -7,7 +7,6 @@ set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 
-cp .bamboo_env_vars /noncache/cumulus/
 echo Unlocking stack
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
