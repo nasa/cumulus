@@ -7,6 +7,8 @@ services:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
       - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
       - ../packages/test-data:/data
+    image: nsidc/panubo_sshd:latest
+
   build_env:
     image: cumuluss/cumulus-build-env:latest
     volumes:
@@ -26,8 +28,6 @@ services:
     image: localstack/localstack:0.12.13
   elasticsearch:
     image: elasticsearch:5.3
-  sftp:
-    image: nsidc/panubo_sshd:latest
   http:
     image: httpd:alpine
   ftp:
