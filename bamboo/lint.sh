@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ex
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
@@ -8,6 +9,9 @@ set -ex
     echo "*** Using cached bootstrap"
     cd /cumulus/
  fi
+
+# Extract cache of compiled TS files
+./bamboo/extract-ts-build-cache.sh
 
 (npm run ci:bootstrap-no-scripts || true) && npm run ci:bootstrap-no-scripts
 npm run lint
