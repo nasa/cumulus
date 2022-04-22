@@ -141,7 +141,7 @@ async function deleteFolder(bucket, folder) {
     Prefix: folder,
   });
 
-  await Promise.all(l.Contents.map((item) =>
+  await Promise.all((l.Contents || []).map((item) =>
     s3().deleteObject({
       Bucket: bucket,
       Key: item.Key,

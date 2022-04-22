@@ -41,7 +41,7 @@ async function processDeadLetterArchive({
       MaxKeys: batchSize,
     });
     continuationToken = listObjectsResponse.NextContinuationToken;
-    const deadLetterObjects = listObjectsResponse.Contents;
+    const deadLetterObjects = listObjectsResponse.Contents || [];
     const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
         const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
