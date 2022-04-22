@@ -1212,7 +1212,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST /executions creates a new execution in PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+test.only('POST /executions creates a new execution in PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
   await request(app)
@@ -1230,6 +1230,8 @@ test.serial('POST /executions creates a new execution in PostgreSQL/Elasticsearc
   );
 
   const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
+
+  t.true(fetchedPgRecord.created_at.getTime() > newExecution.createdAt);
 
   t.is(fetchedPgRecord.created_at.getTime(), fetchedEsRecord.createdAt);
   t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
