@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2922**
+  - Added `@cumulus/example-lib` package to example project to allow unit tests `example/script/lib` dependency.
+  - Updates Mutex unit test to address changes made in [#2902](https://github.com/nasa/cumulus/pull/2902/files)
 - **CUMULUS-2924**
   - Update acquireTimeoutMillis to 400 seconds for the db-provision-lambda module to address potential timeout issues on RDS database start
 - **CUMULUS-2920**
