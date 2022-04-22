@@ -69,7 +69,7 @@ class LaunchpadToken {
     );
 
     if (!keyExists) {
-      throw new Error(`${this.certificate} does not exist in S3 crypto directory: ${cryptKey}`);
+      throw new Error(`${this.certificate} does not exist in S3 ${bucket} crypto directory: ${cryptKey}`);
     }
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
