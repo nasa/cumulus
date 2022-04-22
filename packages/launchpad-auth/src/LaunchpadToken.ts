@@ -79,15 +79,14 @@ class LaunchpadToken {
       Key: `${stackName}/crypto/${this.certificate}`,
     });
 
-    let buffers;
-
+    let buffer;
     if (pfxObject.Body && pfxObject.Body instanceof Readable) {
       // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
       // request header
-      buffers = await getObjectStreamBuffers(pfxObject.Body);
+      buffer = Buffer.concat(await getObjectStreamBuffers(pfxObject.Body));
     }
 
-    return buffers;
+    return buffer;
   }
 
   /**
