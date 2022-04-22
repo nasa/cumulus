@@ -264,7 +264,7 @@ test('buildExecutionRecord returns record with error', (t) => {
   t.deepEqual(record.error, exception);
 });
 
-test.serial('writeExecutionRecordFromMessage() saves execution to Dynamo/RDS/Elasticsearch if write to RDS is enabled', async (t) => {
+test.serial('writeExecutionRecordFromMessage() saves execution to RDS/Elasticsearch if write to RDS is enabled', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -278,7 +278,7 @@ test.serial('writeExecutionRecordFromMessage() saves execution to Dynamo/RDS/Ela
   t.true(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test.serial('writeExecutionRecordFromMessage() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
+test.serial('writeExecutionRecordFromMessage() saves execution to RDS/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -460,7 +460,7 @@ test.serial('writeExecutionRecordFromMessage() correctly sets both original_payl
   t.deepEqual(pgRecord.final_payload, finalPayload);
 });
 
-test.serial('writeExecutionRecordFromApi() saves execution to Dynamo/RDS/Elasticsearch with same timestamps', async (t) => {
+test.serial('writeExecutionRecordFromApi() saves execution to RDS/Elasticsearch with same timestamps', async (t) => {
   const {
     cumulusMessage,
     knex,

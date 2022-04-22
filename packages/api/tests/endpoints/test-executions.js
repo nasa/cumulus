@@ -64,7 +64,6 @@ process.env.TOKEN_SECRET = randomString();
 const { del } = require('../../endpoints/executions');
 const { app } = require('../../app');
 const { buildFakeExpressResponse } = require('./utils');
-const { update } = require('lodash');
 
 // create all the variables needed across this test
 const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
@@ -1213,7 +1212,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+test.serial('POST /executions creates a new execution in PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
   await request(app)
@@ -1236,7 +1235,7 @@ test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Ela
   t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
 });
 
-test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('POST /executions creates the expected record in PostgreSQL/Elasticsearch', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,
@@ -1444,7 +1443,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
   t.deepEqual(executionRecord, translatedExecution);
 });
 
-test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('PUT /executions updates the record as expected in PostgreSQL/Elasticsearch', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
@@ -1488,7 +1487,7 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
     }
   );
   const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
-  const expectedApiRecord = {
+  const expectedEsRecord = {
     ...updatedExecution,
     collectionId: execution.collectionId,
     createdAt: updatedPgRecord.created_at.getTime(),
@@ -1498,7 +1497,7 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
   t.like(
     updatedEsRecord,
     {
-      ...expectedApiRecord,
+      ...expectedEsRecord,
       timestamp: updatedEsRecord.timestamp,
     }
   );

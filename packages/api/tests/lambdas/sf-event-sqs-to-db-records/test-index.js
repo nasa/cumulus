@@ -62,12 +62,11 @@ const {
         throw new Error('Intentional failure: test case');
       }
       return getMessageExecutionParentArn(cumulusMessage);
-    }
-  }
+    },
+  },
 });
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
-const { get } = require('https');
 
 const loadFixture = (filename) =>
   fs.readJson(
