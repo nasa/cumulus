@@ -48,7 +48,6 @@ services:
   build_env:
     image: maven.earthdata.nasa.gov/cumulus:latest
     volumes:
-      - ../:/source/cumulus
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
     environment:
       - LOCALSTACK_HOST=127.0.0.1
