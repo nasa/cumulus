@@ -33,6 +33,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2920**
   - Update npm version for Core build to 8.6
+- **CUMULUS-2925**
+  - Updates CI to utilize `audit-ci` v6.2.0
+  - Updates CI to utilize a on-container filesystem when building Core in 'uncached' mode
+  - Updates CI to selectively bootstrap Core modules in the cleanup job phase
 
 ## [v11.1.0] 2022-04-07
 
