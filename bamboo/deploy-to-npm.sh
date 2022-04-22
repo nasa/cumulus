@@ -24,12 +24,12 @@ export npm_config_unsafe_perm=true
 
 if [[ $SKIP_NPM_PUBLISH != true ]]; then
   ./node_modules/.bin/lerna publish \
-    "${VERSION}" \
+    ${VERSION} \
     --no-git-tag-version \
     --no-push \
     --yes \
     --force-publish=* \
-    --dist-tag="${NPM_TAG}" \
+    --dist-tag=${NPM_TAG} \
     --exact
 fi
 
