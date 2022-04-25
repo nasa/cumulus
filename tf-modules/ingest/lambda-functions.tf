@@ -289,7 +289,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs14.x"
   timeout          = 200
-  memory_size      = 128
+  memory_size      = 256
   environment {
     variables = {
       stackName       = var.prefix

@@ -69,7 +69,7 @@ test.before(async (t) => {
     t.context.esIndex
   );
 
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   // Create AsyncOperations table
   t.context.asyncOperationModel = new AsyncOperationModel({

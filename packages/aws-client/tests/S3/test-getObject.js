@@ -12,7 +12,7 @@ test('getObject() returns a NoSuchBucket code if the bucket does not exist', asy
     S3.getObject(s3(), { Bucket, Key: 'fdsa' })
   );
 
-  t.is(error.code, 'NoSuchBucket');
+  t.is(error.name, 'NoSuchBucket');
 });
 
 test('getObject() returns a NoSuchKey code if the object does not exist', async (t) => {
@@ -24,7 +24,7 @@ test('getObject() returns a NoSuchKey code if the object does not exist', async 
 
   const error = await t.throwsAsync(S3.getObject(s3(), { Bucket, Key }));
 
-  t.is(error.code, 'NoSuchKey');
+  t.is(error.name, 'NoSuchKey');
 });
 
 test('getObject() returns an existing S3 object', async (t) => {

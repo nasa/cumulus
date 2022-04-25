@@ -43,7 +43,7 @@ let accessTokenModel;
 let jwtAuthToken;
 
 test.before(async () => {
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);

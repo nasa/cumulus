@@ -43,7 +43,7 @@ test('test pdr discovery with force=false', async (t) => {
 
   const tmpDir = os.tmpdir();
 
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
+  await s3().createBucket({ Bucket: event.config.bucket });
 
   try {
     const output = await discoverPdrs(event);
@@ -96,7 +96,7 @@ test('test pdr discovery with force=true', async (t) => {
 
   const tmpDir = os.tmpdir();
 
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
+  await s3().createBucket({ Bucket: event.config.bucket });
 
   try {
     const output = await discoverPdrs(event);

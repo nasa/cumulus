@@ -25,7 +25,7 @@ test.beforeEach(async (t) => {
   t.context.payload = await loadDataJSON('payload.json', t.context.bucket);
   t.context.output = await loadDataJSON('output.json', t.context.bucket);
 
-  await s3().createBucket({ Bucket: t.context.bucket }).promise();
+  await s3().createBucket({ Bucket: t.context.bucket });
   const updates = t.context.output.granules[0].files.map(async (f) => {
     const testdata = randomId('testdata');
     await s3PutObject({
