@@ -69,7 +69,7 @@ export const storeErrors = async (params: {
     Bucket: bucket,
     Key: key,
     Body: createReadStream(filepath),
-  }).promise();
+  });
 
   logger.info(`Stored error log file on S3 at s3://${bucket}/${key}`);
   unlinkSync(filepath);

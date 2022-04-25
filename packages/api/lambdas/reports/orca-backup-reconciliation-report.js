@@ -82,6 +82,8 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   const granuleReport = {
     ok: false,
     okFilesCount: 0,
+    cumulusFilesCount: 0,
+    orcaFilesCount: 0,
     ...pick(cumulusGranule, granuleFields),
     conflictFiles: [],
   };
@@ -119,6 +121,9 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
   const allFileNames = Object.keys({ ...cumulusFiles, ...orcaFiles });
   allFileNames.forEach((fileName) => {
     if (cumulusFiles[fileName] && orcaFiles[fileName]) {
+      granuleReport.cumulusFilesCount += 1;
+      granuleReport.orcaFilesCount += 1;
+
       if (!shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
         granuleReport.okFilesCount += 1;
       } else {
@@ -131,6 +136,8 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
         granuleReport.conflictFiles.push(conflictFile);
       }
     } else if (cumulusFiles[fileName] && orcaFiles[fileName] === undefined) {
+      granuleReport.cumulusFilesCount += 1;
+
       if (shouldFileBeExcludedFromOrca(collectionsConfig, cumulusGranule.collectionId, fileName)) {
         granuleReport.okFilesCount += 1;
       } else {
@@ -142,6 +149,7 @@ function getReportForOneGranule({ collectionsConfig, cumulusGranule, orcaGranule
         granuleReport.conflictFiles.push(conflictFile);
       }
     } else if (cumulusFiles[fileName] === undefined && orcaFiles[fileName]) {
+      granuleReport.orcaFilesCount += 1;
       const conflictFile = {
         fileName,
         bucket: orcaFiles[fileName].cumulusArchiveLocation,
@@ -166,6 +174,9 @@ function constructOrcaOnlyGranuleForReport(orcaGranule) {
     reason: 'onlyInOrca',
   }));
   const granule = {
+    okFilesCount: 0,
+    cumulusFilesCount: 0,
+    orcaFilesCount: orcaGranule.files.length,
     granuleId: orcaGranule.id,
     provider: orcaGranule.providerId,
     ...pick(orcaGranule, ['collectionId', 'createdAt', 'updatedAt']),
@@ -189,6 +200,8 @@ function addGranuleToReport({ granulesReport, collectionsConfig, cumulusGranule,
   }
   granulesReport.conflictFilesCount += granReport.conflictFiles.length;
   granulesReport.okFilesCount += granReport.okFilesCount;
+  granulesReport.cumulusFilesCount += granReport.cumulusFilesCount;
+  granulesReport.orcaFilesCount += granReport.orcaFilesCount;
   /* eslint-enable no-param-reassign */
   return granulesReport;
 }
@@ -214,6 +227,8 @@ async function orcaReconciliationReportForGranules(recReportParams) {
     cumulusCount: 0,
     orcaCount: 0,
     okFilesCount: 0,
+    cumulusFilesCount: 0,
+    orcaFilesCount: 0,
     conflictFilesCount: 0,
     withConflicts: [],
     onlyInCumulus: [],
@@ -295,6 +310,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
       const orcaItem = await orcaGranulesIterator.shift(); // eslint-disable-line no-await-in-loop
       granulesReport.onlyInOrca.push(constructOrcaOnlyGranuleForReport(orcaItem));
       granulesReport.conflictFilesCount += get(orcaItem, 'files', []).length;
+      granulesReport.orcaFilesCount += get(orcaItem, 'files', []).length;
       granulesReport.orcaCount += 1;
     }
   } catch (error) {
@@ -340,6 +356,8 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     cumulusCount: 0,
     orcaCount: 0,
     okFilesCount: 0,
+    cumulusFilesCount: 0,
+    orcaFilesCount: 0,
     conflictFilesCount: 0,
     withConflicts: [],
     onlyInCumulus: [],
@@ -355,7 +373,7 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report, undefined, 2),
-  }).promise();
+  });
 
   const granulesReport = await orcaReconciliationReportForGranules(recReportParams);
 
@@ -369,7 +387,7 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report, undefined, 2),
-  }).promise();
+  });
 }
 
 module.exports = {

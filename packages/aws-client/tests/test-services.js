@@ -3,6 +3,7 @@ const test = require('ava');
 const AWS = require('aws-sdk');
 const { ApiGatewayV2Client } = require('@aws-sdk/client-apigatewayv2');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
+const { S3 } = require('@aws-sdk/client-s3');
 
 const services = require('../services');
 const { localStackAwsClientOptions } = require('../test-utils');
@@ -218,17 +219,25 @@ test('lambda() service defaults to localstack in test mode', (t) => {
   t.is(lambda.config.endpoint, endpoint);
 });
 
-test('s3() service defaults to localstack in test mode', (t) => {
+test('s3() service defaults to localstack in test mode', async (t) => {
   const s3 = services.s3();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.S3);
+  } = localStackAwsClientOptions(S3);
   t.deepEqual(
-    s3.config.credentials,
+    await s3.config.credentials(),
     credentials
   );
-  t.is(s3.config.endpoint, endpoint);
+  const serviceConfigEndpoint = await s3.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
 test('secretsManager() service defaults to localstack in test mode', (t) => {

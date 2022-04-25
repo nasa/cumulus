@@ -24,7 +24,7 @@ test.before(async (t) => {
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
 
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   granulesTable = `${process.env.stackName}-GranulesTable`;
   process.env.GranulesTable = granulesTable;
@@ -59,7 +59,7 @@ test.serial('Run migrations the first time, it should run', async (t) => {
   await s3().headObject({
     Bucket: process.env.system_bucket,
     Key,
-  }).promise();
+  });
 });
 
 test.serial('Run the migration again, it should not run', async (t) => {
@@ -71,7 +71,7 @@ test.serial('Run the migration again, it should not run', async (t) => {
   await s3().headObject({
     Bucket: process.env.system_bucket,
     Key,
-  }).promise();
+  });
 });
 
 test.serial('migrate records from ES to DynamoDB', async (t) => {

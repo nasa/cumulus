@@ -1,8 +1,16 @@
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 
 const sandbox = require('sinon').createSandbox();
 const proxyquire = require('proxyquire');
+
+const {
+  createBucket,
+  s3PutObject,
+  recursivelyDeleteS3Bucket,
+  deleteS3Object,
+} = require('@cumulus/aws-client/S3');
 const { validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
 
 const { ChecksumError, CollectionInvalidRegexpError } = require('../dist/src/errors');
@@ -15,6 +23,25 @@ function removeStackObjectFromErrorBody(object) {
 
 function removeBackupResultsObjectErrorStack(object) {
   return object.map((result) => removeStackObjectFromErrorBody(result));
+}
+
+function stageFixtureObjects(fakePayload) {
+  return Promise.all(fakePayload.input.granules.map(
+    (granule) => Promise.all(granule.files.map((file) => s3PutObject({
+      Bucket: file.bucket,
+      Key: file.key,
+      Body: 'foobar',
+    })))
+  ));
+}
+
+function deleteFixtureObjects(fakePayload) {
+  return Promise.all(fakePayload.input.granules.map(
+    (granule) => Promise.all(granule.files.map((file) => deleteS3Object(
+      file.bucket,
+      file.key
+    )))
+  ));
 }
 
 const fakePostReturn = {
@@ -56,6 +83,13 @@ const index = proxyquire('../dist/src', {
 });
 const env = { ...process.env };
 
+test.before(async (t) => {
+  t.context.fakeBucket1 = cryptoRandomString({ length: 10 });
+  t.context.fakeBucket2 = cryptoRandomString({ length: 10 });
+  await createBucket(t.context.fakeBucket1);
+  await createBucket(t.context.fakeBucket2);
+});
+
 test.beforeEach(() => {
   process.env = { ...env };
 });
@@ -64,6 +98,11 @@ test.afterEach.always(() => {
   sandbox.restore();
   gotPostStub.resetHistory();
   getCollectionStub.resetHistory();
+});
+
+test.after.always(async (t) => {
+  await recursivelyDeleteS3Bucket(t.context.fakeBucket1);
+  await recursivelyDeleteS3Bucket(t.context.fakeBucket2);
 });
 
 test('shouldBackupFile returns true if the regex matches and the backup option is set on the matching collection file', (t) => {
@@ -138,7 +177,7 @@ test('shouldBackupFile returns false if there is no collection file defined', (t
   t.false(index.shouldBackupFile('foo.jpg', fakeCollectionConfig));
 });
 
-test('makeBackupFileRequest returns expected MakeBackupFileRequestResult when file.filename is not a s3 URI', async (t) => {
+test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult when file.filename is not a s3 URI', async (t) => {
   const lzardsPostMethod = () => Promise.resolve({
     body: 'success body',
     statusCode: 201,
@@ -174,24 +213,30 @@ test('makeBackupFileRequest returns expected MakeBackupFileRequestResult when fi
   };
 
   t.deepEqual(omit(actual, 'body'), expected);
-  t.is(JSON.parse(actual.body).name, 'UriParameterError');
+  t.is(JSON.parse(actual.body).name, 'TypeError');
 });
 
-test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on LZARDS failure', async (t) => {
+test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult on LZARDS failure', async (t) => {
+  const { fakeBucket1 } = t.context;
   const lzardsPostMethod = () => Promise.resolve({
     body: 'failure body',
     statusCode: 404,
   });
   const roleCreds = { fake: 'creds_object' };
-  const bucket = 'fakeFileBucket';
   const key = 'fakeFilename';
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
 
   const file = {
-    bucket,
+    bucket: fakeBucket1,
     key,
   };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const granuleId = 'fakeGranuleId';
 
   const actual = await index.makeBackupFileRequest({
@@ -208,7 +253,7 @@ test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on LZAR
 
   const expected = {
     body: 'failure body',
-    filename: `s3://${file.bucket}/${file.key}`,
+    filename: `s3://${fakeBucket1}/${file.key}`,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
     statusCode: 404,
@@ -217,18 +262,24 @@ test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on LZAR
   t.deepEqual(actual, expected);
 });
 
-test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on other failure', async (t) => {
+test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult on other failure', async (t) => {
+  const { fakeBucket1 } = t.context;
   const lzardsPostMethod = () => Promise.reject(new Error('DANGER WILL ROBINSON'));
   const roleCreds = { fake: 'creds_object' };
-  const bucket = 'fakeFileBucket';
   const key = 'fakeFilename';
   const authToken = 'fakeToken';
   const collectionId = 'FAKE_COLLECTION';
 
   const file = {
-    bucket,
+    bucket: fakeBucket1,
     key,
   };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const granuleId = 'fakeGranuleId';
 
   let actual = await index.makeBackupFileRequest({
@@ -245,7 +296,7 @@ test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on othe
 
   const expected = {
     body: '{"name":"Error"}',
-    filename: `s3://${file.bucket}/${file.key}`,
+    filename: `s3://${fakeBucket1}/${file.key}`,
     granuleId: 'fakeGranuleId',
     status: 'FAILED',
   };
@@ -254,7 +305,7 @@ test('makeBackupFileRequest returns expected MakeBackupFileRequestResult on othe
   t.deepEqual(actual, expected);
 });
 
-test('makeBackupFileRequest returns expected MakeBackupFileRequestResult', async (t) => {
+test.serial('makeBackupFileRequest returns expected MakeBackupFileRequestResult', async (t) => {
   const accessUrl = 'fakeURL';
   const generateAccessUrlMethod = (() => accessUrl);
   const lzardsPostMethod = () => Promise.resolve({
@@ -447,15 +498,37 @@ test.serial('postRequestToLzards throws if provider is not set ', async (t) => {
   }));
 });
 
-test('generateDirectS3Url generates an v4 accessURL', async (t) => {
+test.serial('generateDirectS3Url generates an v4 accessURL', async (t) => {
+  const { fakeBucket1 } = t.context;
+  const file = {
+    bucket: fakeBucket1,
+    key: cryptoRandomString({ length: 10 }),
+  };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const actual = await index.generateDirectS3Url({
-    Bucket: 'foo',
-    Key: 'bar',
+    Bucket: file.bucket,
+    Key: file.key,
   });
   t.regex(actual, /X-Amz-Algorithm=AWS4-HMAC-SHA256/);
 });
 
-test('generateDirectS3Url generates a signed URL using passed credentials', async (t) => {
+test.serial('generateDirectS3Url generates a signed URL using passed credentials', async (t) => {
+  const { fakeBucket1 } = t.context;
+  const file = {
+    bucket: fakeBucket1,
+    key: cryptoRandomString({ length: 10 }),
+  };
+  await s3PutObject({
+    Bucket: fakeBucket1,
+    Key: file.key,
+    Body: cryptoRandomString({ length: 10 }),
+  });
+  t.teardown(() => deleteS3Object(fakeBucket1, file.key));
   const actual = await index.generateDirectS3Url({
     usePassedCredentials: true,
     roleCreds: {
@@ -465,8 +538,8 @@ test('generateDirectS3Url generates a signed URL using passed credentials', asyn
         SessionToken: 'FAKEToken',
       },
     },
-    Bucket: 'foo',
-    Key: 'bar',
+    Bucket: file.bucket,
+    Key: file.key,
   });
   t.regex(actual, /X-Amz-Credential=FAKEId/);
 });
@@ -507,6 +580,7 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
 });
 
 test.serial('backupGranulesToLzards returns the expected payload', async (t) => {
+  const { fakeBucket1, fakeBucket2 } = t.context;
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -524,13 +598,13 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
           version: '000',
           files: [
             {
-              bucket: 'fakeBucket1',
+              bucket: fakeBucket1,
               checksumType: 'md5',
               checksum: 'fakehash',
               key: 'path/to/granule1/foo.jpg',
             },
             {
-              bucket: 'fakeBucket1',
+              bucket: fakeBucket1,
               checksumType: 'md5',
               checksum: 'fakehash',
               key: '/path/to/granule1/foo.dat',
@@ -543,13 +617,13 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
           version: '000',
           files: [
             {
-              bucket: 'fakeBucket2',
+              bucket: fakeBucket2,
               key: 'path/to/granule1/foo.jpg',
               checksumType: 'md5',
               checksum: 'fakehash',
             },
             {
-              bucket: 'fakeBucket2',
+              bucket: fakeBucket2,
               key: 'path/to/granule1/foo.dat',
               checksumType: 'md5',
               checksum: 'fakehash',
@@ -563,6 +637,9 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
     },
   };
 
+  await stageFixtureObjects(fakePayload);
+  t.teardown(() => deleteFixtureObjects(fakePayload));
+
   process.env.lzards_api = 'fakeApi';
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
@@ -575,14 +652,14 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
     backupResults: [
       {
         body: 'fake body',
-        filename: 's3://fakeBucket1/path/to/granule1/foo.jpg',
+        filename: `s3://${fakeBucket1}/path/to/granule1/foo.jpg`,
         status: 'COMPLETED',
         granuleId: 'FakeGranule1',
         statusCode: 201,
       },
       {
         body: 'fake body',
-        filename: 's3://fakeBucket2/path/to/granule1/foo.jpg',
+        filename: `s3://${fakeBucket2}/path/to/granule1/foo.jpg`,
         status: 'COMPLETED',
         granuleId: 'FakeGranule2',
         statusCode: 201,
@@ -637,6 +714,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
 });
 
 test.serial('backupGranulesToLzards returns failed record if missing archive checksum', async (t) => {
+  const { fakeBucket1 } = t.context;
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -654,11 +732,11 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
           version: '000',
           files: [
             {
-              bucket: 'fakeBucket1',
+              bucket: fakeBucket1,
               key: 'path/to/granule1/foo.jpg',
             },
             {
-              bucket: 'fakeBucket1',
+              bucket: fakeBucket1,
               key: 'path/to/granule1/foo.dat',
             },
           ],
@@ -669,6 +747,9 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
       urlType: 's3',
     },
   };
+
+  await stageFixtureObjects(fakePayload);
+  t.teardown(() => deleteFixtureObjects(fakePayload));
 
   process.env.lzards_api = 'fakeApi';
   process.env.lzards_provider = 'fakeProvider';
@@ -682,7 +763,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
     backupResults: [
       {
         body: '{"name":"ChecksumError"}',
-        filename: 's3://fakeBucket1/path/to/granule1/foo.jpg',
+        filename: `s3://${fakeBucket1}/path/to/granule1/foo.jpg`,
         status: 'FAILED',
         granuleId: 'FakeGranule1',
       },

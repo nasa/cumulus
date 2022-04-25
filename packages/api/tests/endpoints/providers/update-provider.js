@@ -62,7 +62,7 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
   t.context.providerPgModel = new ProviderPgModel();
 
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;

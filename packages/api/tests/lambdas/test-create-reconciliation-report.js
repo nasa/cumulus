@@ -17,6 +17,8 @@ const {
   buildS3Uri,
   parseS3Uri,
   recursivelyDeleteS3Bucket,
+  getJsonS3Object,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const awsServices = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
@@ -63,7 +65,7 @@ let esAlias;
 let esIndex;
 let esClient;
 
-const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 const testDbName = `create_rec_reports_${cryptoRandomString({ length: 10 })}`;
 
 function createDistributionBucketMapFromBuckets(buckets) {
@@ -99,13 +101,13 @@ async function storeBucketsConfigToS3(buckets, systemBucket, stackName) {
     Bucket: systemBucket,
     Key: getDistributionBucketMapKey(stackName),
     Body: JSON.stringify(distributionMap),
-  }).promise();
+  });
 
   return await awsServices.s3().putObject({
     Bucket: systemBucket,
     Key: getBucketsConfigKey(stackName),
     Body: JSON.stringify(bucketsConfig),
-  }).promise();
+  });
 }
 
 // Expect files to have bucket and key properties
@@ -118,7 +120,7 @@ async function storeFilesToS3(files) {
 
   return await pMap(
     putObjectParams,
-    async (params) => await awsServices.s3().putObject(params).promise(),
+    async (params) => await awsServices.s3().putObject(params),
     { concurrency: 10 }
   );
 }
@@ -179,16 +181,16 @@ async function storeGranulesToElasticsearch(granules) {
 }
 
 async function fetchCompletedReport(reportRecord) {
-  return await awsServices.s3()
-    .getObject(parseS3Uri(reportRecord.location)).promise()
-    .then((response) => response.Body.toString())
-    .then(JSON.parse);
+  const { Bucket, Key } = parseS3Uri(reportRecord.location);
+  return await getJsonS3Object(Bucket, Key);
 }
 
 async function fetchCompletedReportString(reportRecord) {
+  // const { Bucket, Key } = parseS3Uri(reportRecord.location);
+  // return await getJsonS3Object(Bucket, Key);
   return await awsServices.s3()
-    .getObject(parseS3Uri(reportRecord.location)).promise()
-    .then((response) => response.Body.toString());
+    .getObject(parseS3Uri(reportRecord.location))
+    .then((response) => getObjectStreamContents(response.Body));
 }
 
 /**
@@ -369,7 +371,7 @@ test.beforeEach(async (t) => {
   t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
 
-  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
+  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
   await new models.Collection().createTable();
@@ -2051,6 +2053,8 @@ test.serial('A valid ORCA Backup reconciliation report is generated', async (t) 
   t.is(report.granules.cumulusCount, 1);
   t.is(report.granules.orcaCount, 1);
   t.is(report.granules.okFilesCount, 1);
+  t.is(report.granules.cumulusFilesCount, 1);
+  t.is(report.granules.orcaFilesCount, 1);
   t.is(report.granules.conflictFilesCount, 0);
   t.is(report.granules.onlyInCumulus.length, 0);
   t.is(report.granules.onlyInOrca.length, 0);

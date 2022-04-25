@@ -8,17 +8,88 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-2860**
-  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
-
 ### Changed
 
-- **CUMULUS-2864**
-  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
-    functions to not perform separate validation request
+- **CUMULUS-2885**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for S3 requests:
+    - `@aws-sdk/client-s3`
+    - `@aws-sdk/lib-storage`
+    - `@aws-sdk/s3-request-presigner`
+  - Updated code for compatibility with updated `@cumulus/aws-client` and AWS SDK v3 S3 packages:
+    - `@cumulus/api`
+    - `@cumulus/async-operations`
+    - `@cumulus/cmrjs`
+    - `@cumulus/common`
+    - `@cumulus/collection-config-store`
+    - `@cumulus/ingest`
+    - `@cumulus/launchpad-auth`
+    - `@cumulus/sftp-client`
+    - `@cumulus/tf-inventory`
+    - `lambdas/data-migration2`
+    - `tasks/add-missing-file-checksums`
+    - `tasks/hyrax-metadata-updates`
+    - `tasks/lzards-backup`
+    - `tasks/sync-granule`
 - **CUMULUS-2886**
   - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for API Gateway requests:
     - `@aws-sdk/client-apigatewayv2`
+- **CUMULUS-2920**
+  - Update npm version for Core build to 8.6
+- **CUMULUS-2922**
+  - Added `@cumulus/example-lib` package to example project to allow unit tests `example/script/lib` dependency.
+  - Updates Mutex unit test to address changes made in [#2902](https://github.com/nasa/cumulus/pull/2902/files)
+- **CUMULUS-2924**
+  - Update acquireTimeoutMillis to 400 seconds for the db-provision-lambda module to address potential timeout issues on RDS database start
+- **CUMULUS-2925**
+  - Updates CI to utilize `audit-ci` v6.2.0
+  - Updates CI to utilize a on-container filesystem when building Core in 'uncached' mode
+  - Updates CI to selectively bootstrap Core modules in the cleanup job phase
+
+
+## [v11.1.0] 2022-04-07
+
+### MIGRATION NOTES
+
+- 11.1.0 is an amendment release and supersedes 11.0.0. However, follow the migration steps for 11.0.0.
+
+- **CUMULUS-2905**
+  - Updates migration script with new `migrateAndOverwrite` and
+    `migrateOnlyFiles` options.
+
+### Added
+
+- **CUMULUS-2860**
+  - Added an optional configuration parameter `skipMetadataValidation` to `hyrax-metadata-updates` task
+- **CUMULUS-2870**
+  - Added `last_modified_date` as output to all tasks in Terraform `ingest` module.
+- **CUMULUS-NONE**
+  - Added documentation on choosing and configuring RDS at `deployment/choosing_configuring_rds`.
+
+### Changed
+
+- **CUMULUS-2703**
+  - Updated `ORCA Backup` reconciliation report to report `cumulusFilesCount` and `orcaFilesCount`
+- **CUMULUS-2849**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for DynamoDB requests:
+    - `@aws-sdk/client-dynamodb`
+    - `@aws-sdk/lib-dynamodb`
+    - `@aws-sdk/util-dynamodb`
+  - Updated code for compatibility with AWS SDK v3 Dynamo packages
+    - `@cumulus/api`
+    - `@cumulus/errors`
+    - `@cumulus/tf-inventory`
+    - `lambdas/data-migration2`
+    - `packages/api/ecs/async-operation`
+- **CUMULUS-2864**
+  - Updated `@cumulus/cmr-client/ingestUMMGranule` and `@cumulus/cmr-client/ingestConcept`
+    functions to not perform separate validation request
+- **CUMULUS-2870**
+  - Updated `hello_world_service` module to pass in `lastModified` parameter in command list to trigger a Terraform state change when the `hello_world_task` is modified.
+
+### Fixed
+
+- **CUMULUS-2849**
+  - Fixed AWS service client memoization logic in `@cumulus/aws-client`
 
 ## [v11.0.0] 2022-03-24 [STABLE]
 
@@ -47,6 +118,57 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 - Please read the [documentation on the updates to the granule files schema for our Cumulus workflow tasks and how to upgrade your deployment for compatibility](https://nasa.github.io/cumulus/docs/upgrade-notes/update-task-file-schemas).
 - (Optional) Update the `task-config` for all workflows that use the `sync-granule` task to include `workflowStartTime` set to
 `{$.cumulus_meta.workflow_start_time}`. See [here](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/sync_granule_workflow.asl.json#L9) for an example.
+
+##### After the `cumulus` deployment
+
+As part of the work on the RDS Phase 2 feature, it was decided to re-add the
+granule file `type` property on the file table (detailed reasoning
+https://wiki.earthdata.nasa.gov/pages/viewpage.action?pageId=219186829).  This
+change was implemented as part of CUMULUS-2672/CUMULUS-2673, however granule
+records ingested prior to v11 will *not* have the file.type property stored in the
+PostGreSQL database, and on installation of v11 API calls to get granule.files
+will not return this value. We anticipate most users are impacted by this issue.
+
+Users that are impacted by these changes should re-run the granule migration
+lambda to *only* migrate granule file records:
+
+```shell
+PAYLOAD=$(echo '{"migrationsList": ["granules"], "granuleMigrationParams": {"migrateOnlyFiles": "true"}}' | base64)
+aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
+--payload $PAYLOAD $OUTFILE
+```
+
+You should note that this will *only* move files for granule records in
+PostgreSQL.  **If you have not completed the phase 1 data migration or
+have granule records in dynamo that are not in PostgreSQL, the migration will
+report failure for both the DynamoDB granule and all the associated files and the file
+records will not be updated**.
+
+If you prefer to do a full granule and file migration, you may instead
+opt to run the migration with the `migrateAndOverwrite` option instead, this will re-run a
+full granule/files migration and overwrite all values in the PostgreSQL database from
+what is in DynamoDB for both granules and associated files:
+
+```shell
+PAYLOAD=$(echo '{"migrationsList": ["granules"], "granuleMigrationParams": {"migrateAndOverwrite": "true"}}' | base64)
+aws lambda invoke --function-name $PREFIX-postgres-migration-async-operation \
+--payload $PAYLOAD $OUTFILE
+```
+
+*Please note*: Since this data migration is copying all of your granule data
+from DynamoDB to PostgreSQL, it can take multiple hours (or even days) to run,
+depending on how much data you have and how much parallelism you configure the
+migration to use. In general, the more parallelism you configure the migration
+to use, the faster it will go, but the higher load it will put on your
+PostgreSQL database. Excessive database load can cause database outages and
+result in data loss/recovery scenarios. Thus, the parallelism settings for the
+migration are intentionally set by default to conservative values but are
+configurable.      If this impacts only some of your data products you may want
+to consider using other `granuleMigrationParams`.
+
+Please see [the second data migration
+docs](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#5-run-the-second-data-migration)
+for more on this tool if you are unfamiliar with the various options.
 
 ### Notable changes
 
@@ -442,25 +564,6 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
     allow this timeout to be user configurable
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
-
-### Changed
-
-- **CUMULUS-2849**
-  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for DynamoDB requests:
-    - `@aws-sdk/client-dynamodb`
-    - `@aws-sdk/lib-dynamodb`
-    - `@aws-sdk/util-dynamodb`
-  - Updated code for compatibility with AWS SDK v3 Dynamo packages
-    - `@cumulus/api`
-    - `@cumulus/errors`
-    - `@cumulus/tf-inventory`
-    - `lambdas/data-migration2`
-    - `packages/api/ecs/async-operation`
-
-### Fixed
-
-- **CUMULUS-2849**
-  - Fixed AWS service client memoization logic in `@cumulus/aws-client`
 
 ## [v10.1.1] 2022-03-04
 
@@ -5792,7 +5895,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.0...HEAD
+[v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
 [v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1

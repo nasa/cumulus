@@ -1,12 +1,22 @@
 #!/bin/bash
 set -ex
 
+NONCACHE_WORKING_DIR=$(pwd)
+
+. ./bamboo/use-working-directory.sh
+
+# We need this installed for the GIT_PR lookup in the env script, but only for this
+# first job in the sequence
+npm install @octokit/graphql@2.1.1 simple-git@3.7.0
+
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
+
+npm config set unsafe-perm true
+
 set -o pipefail
 
-NONCACHE_WORKING_DIR=$(pwd)
 CURRENT_WORKING_DIR=$NONCACHE_WORKING_DIR
 
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
@@ -16,6 +26,7 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   git fetch --all
   git checkout "$GIT_SHA"
 else
+  CURRENT_WORKING_DIR=$(pwd)
   npm install
 fi
 
@@ -28,7 +39,4 @@ cat .ts-build-cache-files
 
 # Generate TS build cache artifact
 tar cf "$TS_BUILD_CACHE_FILE" -T .ts-build-cache-files
-
-if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
-  cp "$TS_BUILD_CACHE_FILE" "$NONCACHE_WORKING_DIR"
-fi
+cp "$TS_BUILD_CACHE_FILE" "$NONCACHE_WORKING_DIR"
