@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-processing",
-  "version": "9.9.0",
+  "version": "11.1.0",
   "description": "Fake processing task used for integration tests",
   "main": "index.js",
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/test-processing",
@@ -13,6 +13,7 @@
   },
   "scripts": {
     "build": "../../node_modules/.bin/webpack",
+    "clean": "rm -rf dist",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip))",
     "test:coverage": "../../node_modules/.bin/nyc true",
     "watch": "../../node_modules/.bin/webpack --progress -w"
@@ -20,8 +21,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "9.9.0",
+    "@cumulus/aws-client": "11.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/integration-tests": "9.9.0"
+    "@cumulus/integration-tests": "11.1.0"
   }
 }

@@ -60,7 +60,7 @@ vkn-tf:
   bucket: vkn-tf-internal
 
 vkn-ci-tf:
-  bucket: vkn-ci-tf-internal 
-  
+  bucket: vkn-ci-tf-internal
+
 np:
   bucket: npauzenga-internal

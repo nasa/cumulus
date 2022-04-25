@@ -403,6 +403,7 @@ test('rulesHelpers.lookupCollectionInEvent returns empty object for empty case',
 });
 
 test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -410,16 +411,18 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     provider: null,
     collection: null,
   };
   const kinesisRule = fakeRuleFactoryV2(params);
+  console.log(`kinesisRule: ${JSON.stringify(kinesisRule)}`);
   const result = await createEventSourceMapping(kinesisRule);
+  console.log('createdEventSourceMapping');
 
   // Update Kinesis Rule ARNs
   kinesisRule.rule.arn = result[0].UUID;
@@ -447,6 +450,7 @@ test.serial('deleteKinesisEventSource deletes a kinesis event source', async (t)
 });
 
 test.serial('deleteKinesisEventSources deletes all kinesis event sources', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -454,9 +458,9 @@ test.serial('deleteKinesisEventSources deletes all kinesis event sources', async
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     provider: null,
@@ -630,6 +634,7 @@ test.serial('deleteRuleResources correctly deletes resources for scheduled rule'
 });
 
 test.serial('deleteRuleResources correctly deletes resources for kinesis rule', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -637,9 +642,9 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     collection: null,
@@ -745,6 +750,7 @@ test.serial('deleteRuleResources does nothing when the rule is an SQS rule', asy
 });
 
 test.serial('deleteRuleResources does not delete event source mappings if they exist for other rules', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const {
     rulePgModel,
     testKnex,
@@ -752,9 +758,9 @@ test.serial('deleteRuleResources does not delete event source mappings if they e
 
   const params = {
     rule: {
-      arn: randomString(),
+      arn: kinesisArn,
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
     state: 'ENABLED',
     provider: null,

@@ -22,6 +22,7 @@
       "deployment/deployment-readme",
       "deployment/create_bucket",
       "deployment/terraform-best-practices",
+      "deployment/choosing_configuring_rds",
       "deployment/postgres_database_deployment",
       "deployment/components",
       "deployment/thin_egress_app",
