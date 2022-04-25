@@ -367,6 +367,102 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
+  describe('when an ACL is provided in the task config and set to disabled', () => {
+    const meta = { ACL: 'disabled' };
+    let executionArn;
+    let lambdaOutput;
+    let files;
+    let key1;
+    let key2;
+    let syncedTaggings;
+    let existCheck = [];
+
+    beforeAll(async () => {
+      const execution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload, meta
+      );
+
+      console.log('EXECUTION', execution);
+      executionArn = execution.executionArn;
+      console.log(`Wait for completed execution ${executionArn}`);
+
+      await waitForCompletedExecution(executionArn);
+
+      lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'SyncGranule');
+      console.log('LAMBDA OUTPUT', lambdaOutput);
+      files = lambdaOutput.payload.granules[0].files;
+      key1 = s3Join(files[0].key);
+      key2 = s3Join(files[1].key);
+
+      existCheck = await Promise.all([
+        s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
+        s3ObjectExists({ Bucket: files[1].bucket, Key: key2 }),
+      ]);
+      syncedTaggings = await Promise.all(files.map(
+        (file) => s3GetObjectTagging(file.bucket, file.key)
+      ));
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
+    });
+    /*
+    it('receives payload with file objects updated to include file staging location', () => {
+      const thisExpectedPayload = {
+        ...expectedPayload,
+        granules: [
+          {
+            ...expectedPayload.granules[0],
+            sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+            createdAt: lambdaOutput.payload.granules[0].createdAt,
+          },
+        ],
+      };
+
+      expect(lambdaOutput.payload).toEqual(thisExpectedPayload);
+    });
+    */
+
+    it('receives meta.input_granules with files objects updated to include file staging location', () => {
+      const thisExpectedGranules = [
+        {
+          ...expectedPayload.granules[0],
+          sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
+          createdAt: lambdaOutput.payload.granules[0].createdAt,
+        },
+      ];
+
+      expect(lambdaOutput.meta.input_granules).toEqual(thisExpectedGranules);
+    });
+
+    it('receives files with custom staging directory', () => {
+      files.forEach((file) => {
+        expect(file.key.startsWith('custom-staging-dir')).toBeTrue();
+      });
+    });
+
+    it('adds files to staging location', () => {
+      existCheck.forEach((check) => {
+        expect(check).toEqual(true);
+      });
+    });
+
+    it('preserves S3 tags on provider files', () => {
+      syncedTaggings.forEach((tagging) => {
+        expect(tagging.TagSet).toEqual(expectedS3TagSet);
+      });
+    });
+
+    it('maintains tested checksums', () => {
+      expect(lambdaOutput.payload.granules[0].files[0].checksum).toBeDefined();
+      expect(lambdaOutput.payload.granules[0].files[0].checksumType).toBeDefined();
+    });
+
+    it('contains a disabled ACL configuration value in the lamba output', () => {
+      expect(lambdaOutput.meta.ACL).toBe('disabled');
+    });
+  });
+
   describe('when a bad checksum is provided', () => {
     let lambdaOutput;
     let failingExecution;

@@ -1049,3 +1049,13 @@ test.serial('download multiple granules from S3 provider to staging directory', 
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
 });
+
+test.serial.only('ACL defaults to private when none is supplied in the config', async (t) => {
+  t.context.event.input.granules = [];
+  t.context.event.config.ACL = undefined;
+
+  const output = await syncGranule(t.context.event);
+  console.log(output);
+
+  t.deepEqual(output.granules, [], 'output granules list should be empty');
+});

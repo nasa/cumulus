@@ -28,6 +28,7 @@ async function download({
   provider,
   granules,
   syncChecksumFiles = false,
+  ACL,
 }) {
   if (!Array.isArray(granules) || granules.length === 0) return [];
 
@@ -35,10 +36,11 @@ async function download({
     'awaiting lock.proceed in download() '
     + `bucket: ${bucket}, `
     + `provider: ${JSON.stringify(provider)}, `
-    + `granuleID: ${granules[0].granuleId}`
+    + `granuleID: ${granules[0].granuleId}, `
+    + `ACL: ${ACL}`
   );
 
-  const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
+  const proceed = await lock.proceed(bucket, provider, granules[0].granuleId, ACL);
 
   if (!proceed) {
     const err = new errors.ResourcesLockedError(
@@ -88,6 +90,8 @@ async function download({
 function syncGranule(event) {
   const now = Date.now();
   const config = event.config;
+  log.debug(`ACL is : ${config.ACL}`);
+  const ACL = (config.ACL === 'disabled') ? undefined : 'private';
   const input = event.input;
   const stack = config.stack;
   const buckets = config.buckets;
@@ -100,6 +104,7 @@ function syncGranule(event) {
     Math.min(config.workflowStartTime, now) :
     now;
 
+  log.debug(`Putting object in S3 with parameters: ACL: ${ACL}`);
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
@@ -126,6 +131,7 @@ function syncGranule(event) {
     provider,
     granules: input.granules,
     syncChecksumFiles,
+    ACL,
   }).then((granuleResults) => {
     // eslint-disable-next-line camelcase
     const granuleDuplicates = {};
