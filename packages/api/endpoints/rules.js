@@ -1,9 +1,9 @@
 'use strict';
 
 const router = require('express-promise-router')();
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-
 const {
   createRejectableTransaction,
   getKnexClient,
@@ -87,6 +87,10 @@ async function post(req, res) {
   const name = apiRule.name;
 
   try {
+    if (await rulePgModel.exists(knex, { name })) {
+      return res.boom.conflict(`A record already exists for ${name}`);
+    }
+
     apiRule.createdAt = Date.now();
     apiRule.updatedAt = Date.now();
 
@@ -165,6 +169,7 @@ async function put(req, res) {
     });
     return res.send(translatedRule);
   } catch (error) {
+    log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
     }

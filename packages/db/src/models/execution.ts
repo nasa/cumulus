@@ -13,6 +13,8 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     });
   }
 
+  static nonActiveStatuses = ['completed', 'failed', 'unknown'];
+
   create(
     knexOrTransaction: Knex | Knex.Transaction,
     item: PostgresExecution

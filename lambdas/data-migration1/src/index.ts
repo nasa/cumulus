@@ -9,7 +9,8 @@ import { migrateRules } from './rules';
 
 const logger = new Logger({ sender: '@cumulus/data-migration1' });
 export interface HandlerEvent {
-  env?: NodeJS.ProcessEnv
+  env?: NodeJS.ProcessEnv,
+  forceRulesMigration?: boolean,
 }
 
 export const handler = async (event: HandlerEvent): Promise<MigrationSummary> => {
@@ -20,7 +21,7 @@ export const handler = async (event: HandlerEvent): Promise<MigrationSummary> =>
     const collectionsMigrationSummary = await migrateCollections(env, knex);
     const providersMigrationSummary = await migrateProviders(env, knex);
     const asyncOpsMigrationSummary = await migrateAsyncOperations(env, knex);
-    const rulesMigrationSummary = await migrateRules(env, knex);
+    const rulesMigrationSummary = await migrateRules(env, knex, event.forceRulesMigration);
 
     const result: MigrationSummary = {
       MigrationSummary: {

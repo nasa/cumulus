@@ -300,7 +300,7 @@ test('get() will translate an old-style granule file into the new schema', async
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule,
-  }).promise();
+  });
 
   const granuleModel = new Granule();
   const fetchedGranule = await granuleModel.get({ granuleId: granule.granuleId });
@@ -333,7 +333,7 @@ test('get() will correctly return a granule file stored using the new schema', a
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule,
-  }).promise();
+  });
 
   const granuleModel = new Granule();
   const fetchedGranule = await granuleModel.get({ granuleId: granule.granuleId });
@@ -357,7 +357,7 @@ test('getRecord() returns a granule record from the database', async (t) => {
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule,
-  }).promise();
+  });
 
   const granuleModel = new Granule();
 
@@ -386,7 +386,7 @@ test('batchGet() will translate old-style granule files into the new schema', as
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule,
-  }).promise();
+  });
 
   const granuleModel = new Granule();
   const batchGetResponse = await granuleModel.batchGet([
@@ -426,7 +426,7 @@ test('scan() will translate old-style granule files into the new schema', async 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule,
-  }).promise();
+  });
 
   const granuleModel = new Granule();
   const scanResponse = await granuleModel.scan({
@@ -502,7 +502,7 @@ test('removing a granule from CMR fails if the granule is not in CMR', async (t)
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
     Item: granule,
-  }).promise();
+  });
 
   const granuleModel = new Granule();
 
@@ -535,7 +535,7 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
     await awsServices.dynamodbDocClient().put({
       TableName: process.env.GranulesTable,
       Item: granule,
-    }).promise();
+    });
 
     const granuleModel = new Granule();
 
@@ -572,7 +572,7 @@ test.serial('removing a granule from CMR succeeds with Launchpad authentication'
     await awsServices.dynamodbDocClient().put({
       TableName: process.env.GranulesTable,
       Item: granule,
-    }).promise();
+    });
 
     const granuleModel = new Granule();
 

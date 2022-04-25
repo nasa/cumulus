@@ -88,7 +88,13 @@ variable "vpc_id" {
 variable "engine_version" {
   description = "Postgres engine version for serverless cluster"
   type        = string
-  default     = "10.12"
+  default     = "10.14"
+}
+
+variable "parameter_group_family" {
+  description = "Database family to use for creating database parameter group"
+  type = string
+  default = "aurora-postgresql10"
 }
 
 variable "max_capacity" {
@@ -131,4 +137,25 @@ variable "rds_connection_timing_configuration" {
       idleTimeoutMillis: 1000,
       reapIntervalMillis: 1000,
   }
+}
+
+variable "rds_scaling_timeout_action" {
+  description = "Action to take when RDS cluster cannot find a scaling point after given timeout"
+  type = string
+  default = "ForceApplyCapacityChange"
+}
+
+variable "db_parameters" {
+  type = list(object({
+    name = string,
+    value = string,
+    apply_method = string
+  }))
+  default = [
+    {
+      name  = "shared_preload_libraries"
+      value = "pg_stat_statements,auto_explain"
+      apply_method = "pending-reboot"
+    }
+  ]
 }

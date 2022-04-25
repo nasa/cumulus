@@ -60,6 +60,12 @@ test.beforeEach(async (t) => {
     fakeExecutionRecordFactory()
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
+
+  const [pgCompletedExecution] = await t.context.executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'completed' })
+  );
+  t.context.completedExecutionCumulusId = pgCompletedExecution.cumulus_id;
 });
 
 test.after.always(async (t) => {
@@ -301,7 +307,7 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
     granulePgModel,
     granulesExecutionsPgModel,
     collectionCumulusId,
-    executionCumulusId,
+    completedExecutionCumulusId,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -312,7 +318,7 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
   const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
     knex,
     granule,
-    executionCumulusId
+    completedExecutionCumulusId
   );
   const granuleCumulusId = pgGranule.cumulus_id;
 
@@ -324,7 +330,7 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
   await upsertGranuleWithExecutionJoinRecord(
     knex,
     updatedGranule,
-    executionCumulusId
+    completedExecutionCumulusId
   );
 
   const granuleRecord = await granulePgModel.get(
@@ -344,10 +350,10 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
       knex,
       { granule_cumulus_id: granuleCumulusId }
     ),
-    [executionCumulusId].map((executionId) => ({
+    [{
       granule_cumulus_id: Number(granuleCumulusId),
-      execution_cumulus_id: executionId,
-    }))
+      execution_cumulus_id: completedExecutionCumulusId,
+    }]
   );
 });
 

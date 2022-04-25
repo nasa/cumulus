@@ -7,6 +7,7 @@ import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import * as url from 'url';
+import { SQSRecord } from 'aws-lambda';
 
 import { sqs } from './services';
 import { inTestMode } from './test-utils';
@@ -156,7 +157,9 @@ export const receiveSQSMessages = async (
   return <SQSMessage[]>(messages.Messages ?? []);
 };
 
-export const parseSQSMessageBody = (message: any): unknown =>
+export const parseSQSMessageBody = (
+  message: SQSRecord | AWS.SQS.Message
+): { [key: string]: any } =>
   JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
 
 /**

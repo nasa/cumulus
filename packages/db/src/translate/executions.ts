@@ -4,7 +4,7 @@ import { RecordDoesNotExist } from '@cumulus/errors';
 import { ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
 import { removeNilProperties } from '@cumulus/common/util';
-import { constructCollectionId } from '@cumulus/message/Collections';
+import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
 import { CollectionPgModel } from '../models/collection';
@@ -115,10 +115,10 @@ export const translateApiExecutionToPostgresExecution = async (
   };
 
   if (dynamoRecord.collectionId !== undefined) {
-    const collectionNameVersionArray = dynamoRecord.collectionId.split('___');
+    const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
     translatedRecord.collection_cumulus_id = await collectionPgModel.getRecordCumulusId(
       knex,
-      { name: collectionNameVersionArray[0], version: collectionNameVersionArray[1] }
+      { name, version }
     );
   }
 

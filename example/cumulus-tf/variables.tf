@@ -165,6 +165,12 @@ variable "api_gateway_stage" {
   description = "The archive API Gateway stage to create"
 }
 
+variable "ftp_host_configuration_bucket" {
+  type = string
+  default = "cumulus-test-sandbox-internal"
+  description = "Bucket containing ftp test host configuration"
+}
+
 variable "api_reserved_concurrency" {
   type = number
   default = 5
@@ -338,7 +344,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "38"
+  default = "42"
 }
 
 variable "cumulus_process_activity_version" {
@@ -365,11 +371,6 @@ variable "ecs_custom_sg_ids" {
 }
 
 ## ORCA Variables Definitions
-
-variable "include_orca" {
-  type    = bool
-  default = true
-}
 
 variable "orca_db_user_password" {
   description = "Password for RDS database user authentication"
