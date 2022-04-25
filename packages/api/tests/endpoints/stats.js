@@ -52,7 +52,7 @@ test.before(async () => {
   await granuleModel.createTable();
 
   // create buckets
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomId();
   await setAuthorizedOAuthUsers([username]);

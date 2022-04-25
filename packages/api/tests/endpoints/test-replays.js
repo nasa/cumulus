@@ -48,7 +48,7 @@ test.before(async (t) => {
     process.env[key] = envs[key];
   });
 
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);

@@ -46,7 +46,7 @@ const {
 // records from a specified time period and triggers workflows associated
 // with the kinesis-type rules.
 describe('The Kinesis Replay API', () => {
-  const maxWaitForSFExistSecs = 60 * 2.5;
+  const maxWaitForSFExistSecs = 60 * 3;
 
   const ruleDir = './spec/parallel/kinesisTests/data/kinesisReplayRules';
   const providersDir = './data/providers/PODAAC_SWOT/';

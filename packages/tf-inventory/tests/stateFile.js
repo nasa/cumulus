@@ -97,14 +97,16 @@ test('listTfStateFiles lists state files only', async (t) => {
 test('getStateFileDeploymentInfo lists correct resources', async (t) => {
   const bucket = randomString();
   const key = 'terraform.tfstate';
-  await aws.s3().createBucket({ Bucket: bucket }).promise();
+  await aws.s3().createBucket({ Bucket: bucket });
 
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
   await promiseS3Upload({
-    Bucket: bucket,
-    Key: key,
-    Body: state,
+    params: {
+      Bucket: bucket,
+      Key: key,
+      Body: state,
+    },
   });
 
   const resources = await stateFile.getStateFileDeploymentInfo(`${bucket}/${key}`);
@@ -125,14 +127,16 @@ test('listResourcesForFile lists resources', async (t) => {
 
   const bucket = randomString();
   const key = 'terraform.tfstate';
-  await aws.s3().createBucket({ Bucket: bucket }).promise();
+  await aws.s3().createBucket({ Bucket: bucket });
 
   const state = fs.readFileSync(path.join(__dirname, './resources/sampleTfState.tfstate'), 'utf8');
 
   await promiseS3Upload({
-    Bucket: bucket,
-    Key: key,
-    Body: state,
+    params: {
+      Bucket: bucket,
+      Key: key,
+      Body: state,
+    },
   });
 
   const resources = await stateFile.listResourcesForFile(`${bucket}/${key}`);

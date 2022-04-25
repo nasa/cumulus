@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const { startECSTask } = require('@cumulus/async-operations');
 const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs } = require('@cumulus/aws-client/services');

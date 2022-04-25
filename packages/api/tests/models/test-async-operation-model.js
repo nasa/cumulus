@@ -17,7 +17,7 @@ let systemBucket;
 
 test.before(async () => {
   systemBucket = randomString();
-  await s3().createBucket({ Bucket: systemBucket }).promise();
+  await s3().createBucket({ Bucket: systemBucket });
 
   asyncOperationModel = new AsyncOperation({
     systemBucket,

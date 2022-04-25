@@ -194,7 +194,7 @@ let fakeExecutionStatusGranules;
 
 test.before(async (t) => {
   process.env.system_bucket = cryptoRandomString({ length: 10 });
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   await putJsonS3Object(
     process.env.system_bucket,

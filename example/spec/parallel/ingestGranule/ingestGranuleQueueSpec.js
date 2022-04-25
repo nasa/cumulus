@@ -121,7 +121,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } })));
 
       const collectionUrlString = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}/';
 
