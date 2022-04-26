@@ -32,7 +32,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `tasks/sync-granule`
 - **CUMULUS-2886**
   - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for API Gateway requests:
-    - `@aws-sdk/client-apigatewayv2`
+    - `@aws-sdk/client-api-gateway`
 - **CUMULUS-2920**
   - Update npm version for Core build to 8.6
 - **CUMULUS-2922**

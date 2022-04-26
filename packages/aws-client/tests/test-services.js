@@ -1,7 +1,7 @@
 const test = require('ava');
 
 const AWS = require('aws-sdk');
-const { ApiGatewayV2Client } = require('@aws-sdk/client-apigatewayv2');
+const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { S3 } = require('@aws-sdk/client-s3');
 
@@ -13,7 +13,7 @@ test('apigateway() service defaults to localstack in test mode', async (t) => {
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(ApiGatewayV2Client);
+  } = localStackAwsClientOptions(APIGatewayClient);
   t.deepEqual(
     await apigateway.config.credentials(),
     credentials
