@@ -69,7 +69,7 @@ test.beforeEach(async (t) => {
   t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
 
-  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
+  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
   await new models.ReconciliationReport().createTable();

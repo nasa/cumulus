@@ -1,6 +1,14 @@
 // Utility functions to help with S3 multi-part uploads
 
 import range from 'lodash/range';
+
+import {
+  AbortMultipartUploadRequest,
+  CompleteMultipartUploadRequest,
+  CreateMultipartUploadRequest,
+  UploadPartCopyRequest,
+} from '@aws-sdk/client-s3';
+
 import { s3 } from '../services';
 
 export interface CompleteMultipartUploadOutput extends AWS.S3.CompleteMultipartUploadOutput {
@@ -44,21 +52,20 @@ export const createMultipartChunks = (
     );
 
 export const createMultipartUpload = async (
-  params: AWS.S3.CreateMultipartUploadRequest
-) => await s3().createMultipartUpload(params).promise();
+  params: CreateMultipartUploadRequest
+) => await s3().createMultipartUpload(params);
 
 export const completeMultipartUpload = async (
-  params: AWS.S3.CompleteMultipartUploadRequest
+  params: CompleteMultipartUploadRequest
 ): Promise<CompleteMultipartUploadOutput> => {
-  const result = await s3().completeMultipartUpload(params).promise();
-
+  const result = await s3().completeMultipartUpload(params);
   return <CompleteMultipartUploadOutput>result;
 };
 
 export const abortMultipartUpload = async (
-  params: AWS.S3.AbortMultipartUploadRequest
-) => await s3().abortMultipartUpload(params).promise();
+  params: AbortMultipartUploadRequest
+) => await s3().abortMultipartUpload(params);
 
 export const uploadPartCopy = async (
-  params: AWS.S3.UploadPartCopyRequest
-) => await s3().uploadPartCopy(params).promise();
+  params: UploadPartCopyRequest
+) => await s3().uploadPartCopy(params);

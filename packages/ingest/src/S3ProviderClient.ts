@@ -2,7 +2,7 @@ import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 import * as errors from '@cumulus/errors';
 import { basename, dirname, join } from 'path';
-import { ProviderClient, S3ProviderClientListItem } from './types';
+import { ProviderClient, S3ProviderClientListItem, isS3ObjectListItem } from './types';
 
 class S3ProviderClient implements ProviderClient {
   private readonly bucket: string;
@@ -15,9 +15,10 @@ class S3ProviderClient implements ProviderClient {
   /**
    * Download a remote file to disk
    *
-   * @param {string} remotePath - the full path to the remote file to be fetched
-   * @param {string} localPath - the full local destination file path
-   * @param {string} param.remoteAltBucket - alternate per-file bucket override to this.bucket
+   * @param {Object} params
+   * @param {string} params.remotePath - the full path to the remote file to be fetched
+   * @param {string} params.localPath - the full local destination file path
+   * @param {string} params.remoteAltBucket - alternate per-file bucket override to this.bucket
    * bucket
    * @returns {Promise<string>} - the path that the file was saved to
    */
@@ -58,14 +59,21 @@ class S3ProviderClient implements ProviderClient {
       Prefix: path,
     });
 
-    return objects.map(({ Key, Size, LastModified }) => ({
-      name: basename(Key),
-      // If the object is at the top level of the bucket, path.dirname is going
-      // to return "." as the dirname.  It should instead be undefined.
-      path: dirname(Key) === '.' ? undefined : dirname(Key),
-      size: Size,
-      time: LastModified.valueOf(),
-    }));
+    if (!objects) return [];
+
+    return objects.map((object) => {
+      if (!isS3ObjectListItem(object)) {
+        throw new TypeError(`S3 object ${object} did not have expected type`);
+      }
+      return {
+        name: basename(object.Key),
+        // If the object is at the top level of the bucket, path.dirname is going
+        // to return "." as the dirname.  It should instead be undefined.
+        path: dirname(object.Key) === '.' ? undefined : dirname(object.Key),
+        size: object.Size,
+        time: object.LastModified.valueOf(),
+      };
+    });
   }
 
   /**
@@ -129,7 +137,7 @@ class S3ProviderClient implements ProviderClient {
       });
       return { s3uri, etag };
     } catch (error) {
-      if (error.code === 'NotFound' || error.code === 'NoSuchKey') {
+      if (error.name === 'NotFound' || error.name === 'NoSuchKey') {
         const sourceUrl = S3.buildS3Uri(sourceBucket, fileRemotePath);
         throw new errors.FileNotFound(`Source file not found ${sourceUrl}`);
       }

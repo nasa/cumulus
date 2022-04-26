@@ -5,6 +5,13 @@ export interface ProviderClientListItem {
   time: number
 }
 
+export interface S3ObjectListItem {
+  Bucket: string
+  Key: string
+  LastModified: Date
+  Size: number
+}
+
 export interface FtpProviderClientListItem extends ProviderClientListItem {
   type: number
 }
@@ -34,5 +41,11 @@ export interface ProviderClient {
       destinationKey: string,
       bucket?: string,
     }
-  ): Promise<{ s3uri: string, etag: string }>
+  ): Promise<{ s3uri: string, etag?: string }>
+}
+
+export function isS3ObjectListItem(s3Object: any): s3Object is S3ObjectListItem {
+  return (s3Object as S3ObjectListItem).Key !== undefined
+    && (s3Object as S3ObjectListItem).Size !== undefined
+    && (s3Object as S3ObjectListItem).LastModified !== undefined;
 }

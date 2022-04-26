@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ex
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
@@ -13,7 +14,7 @@ fi
 ### *redeploy* if no lock, and continue if a lock is in place already with a matching
 ### SHA
 set +e
-node ./example/scripts/lock-stack.js confirmLock $GIT_SHA "$DEPLOYMENT"
+node ./example/scripts/lock-stack.js confirmLock "$GIT_SHA" "$DEPLOYMENT"
 CHECK_STATUS=$?
 set -e
 if [[ $CHECK_STATUS -eq 101 ]]; then

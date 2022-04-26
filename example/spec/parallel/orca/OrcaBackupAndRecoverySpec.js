@@ -22,7 +22,7 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
-const { buildAndStartWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
+const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
   setupTestGranuleForIngest,
@@ -55,7 +55,6 @@ let collection;
 describe('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
 
-  let isOrcaIncluded = true;
   let config;
   let inputPayload;
   let provider;
@@ -66,14 +65,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
   beforeAll(async () => {
     config = await loadConfig();
-
-    // check if orca is deployed
-    const stateMachineName = `${config.stackName}-${workflowName}`;
-    isOrcaIncluded = await stateMachineExists(stateMachineName);
-    if (!isOrcaIncluded) {
-      console.log(`${stateMachineName} doesn't exist, skip the tests...`);
-      return;
-    }
 
     const testId = createTimestampedTestId(config.stackName, 'OrcaBackupAndRecovery');
     const testSuffix = createTestSuffix(testId);
@@ -117,7 +108,6 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   afterAll(async () => {
-    if (!isOrcaIncluded) return;
     await removeCollectionAndAllDependencies({
       prefix: config.stackName,
       collection,
@@ -130,8 +120,6 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   it('completes execution with success status', async () => {
-    if (!isOrcaIncluded) pending();
-
     const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
@@ -140,13 +128,10 @@ describe('The S3 Ingest Granules workflow', () => {
     let lambdaOutput;
 
     beforeAll(async () => {
-      if (!isOrcaIncluded) return;
       lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'copy_to_glacier');
     });
 
     it('copies files configured to glacier', async () => {
-      if (!isOrcaIncluded) pending();
-
       const excludeFileTypes = get(lambdaOutput, 'meta.collection.meta.excludeFileTypes', []);
       expect(excludeFileTypes.length).toBe(1);
       filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
@@ -167,8 +152,6 @@ describe('The S3 Ingest Granules workflow', () => {
     let asyncOperationId;
 
     it('generates an async operation through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
-
       const collectionsApiResponse = await getCollection({
         prefix: config.stackName,
         collectionName: collection.name,
@@ -192,8 +175,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('starts the recovery workflow', async () => {
-      if (!isOrcaIncluded) pending();
-
       let asyncOperation;
       try {
         asyncOperation = await waitForAsyncOperationStatus({
@@ -224,8 +205,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('retrieves recovery request job status through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
-
       const request = await pRetry(
         async () => {
           const list = await submitRequestToOrca({
@@ -254,8 +233,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('retrieves recovery request granule status through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
-
       const list = await submitRequestToOrca({
         prefix: config.stackName,
         httpMethod: 'POST',
@@ -276,7 +253,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
   describe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
     it('returns list of granules with recovery status', async () => {
-      if (!isOrcaIncluded) pending();
       const response = await listGranules({
         prefix: config.stackName,
         query: {
@@ -292,7 +268,6 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('returns granule information with recovery status', async () => {
-      if (!isOrcaIncluded) pending();
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId,
@@ -305,7 +280,6 @@ describe('The S3 Ingest Granules workflow', () => {
 
   // TODO remove the glacier files via ORCA API when the API is available (PI 21.3 21.4)
   it('removes files from glacier', async () => {
-    if (!isOrcaIncluded) pending();
     await Promise.all(filesCopiedToGlacier.map((s3uri) => deleteS3Object(config.buckets.glacier.name, parseS3Uri(s3uri).Key)));
     const deletedFromGlacier = await Promise.all(filesCopiedToGlacier.map((s3uri) => s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key })));
     deletedFromGlacier.forEach((check) => expect(check).toEqual(false));
