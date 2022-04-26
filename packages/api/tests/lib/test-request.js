@@ -32,7 +32,7 @@ test.before(async () => {
 
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
   await setAuthorizedOAuthUsers([]);
 });
 

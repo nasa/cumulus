@@ -76,7 +76,7 @@ test.before(async (t) => {
     t.context.esIndex
   );
 
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const rulesModel = new models.Rule({ tableName: process.env.RulesTable });
   await rulesModel.createTable();

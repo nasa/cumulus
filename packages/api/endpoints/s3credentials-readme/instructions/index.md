@@ -93,7 +93,7 @@ def lambda_handler(event, context):
 ### Javascript example
 
 ```
-const { S3 } = require('aws-sdk');
+const { S3 } = require('@aws-sdk/client-s3');
 const { promisify } = require('util');
 const { Cookie, CookieJar } = require('tough-cookie');
 const base64 = require('base-64');
@@ -156,7 +156,7 @@ async function listObjects(credentials, bucketName) {
 
   // Get a list of object Keys from the bucket
   try {
-    const returnValue = await s3.listObjectsV2({ Bucket: bucketName, Prefix: '' }).promise();
+    const returnValue = await s3.listObjectsV2({ Bucket: bucketName, Prefix: '' });
     return returnValue.Contents.map((obj) => obj.Key);
   } catch (error) {
     console.error(error);

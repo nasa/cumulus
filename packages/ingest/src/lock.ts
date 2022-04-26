@@ -9,8 +9,8 @@ import * as log from '@cumulus/common/log';
 const lockPrefix = 'lock';
 
 export interface Lock {
-  Key: string,
-  LastModified: Date
+  Key?: string,
+  LastModified?: Date
 }
 
 /**
@@ -28,10 +28,20 @@ export async function checkOldLocks(
   const fiveMinutesAgo = Date.now() - (5 * 60 * 1000);
 
   const expiredLocks = locks.filter(
-    (lock) => lock.LastModified.getTime() < fiveMinutesAgo
+    (lock) => {
+      if (!lock.LastModified) {
+        throw new TypeError(`Could not find LastModified on ${JSON.stringify(lock)}`);
+      }
+      return lock.LastModified.getTime() < fiveMinutesAgo;
+    }
   );
 
-  await Promise.all(expiredLocks.map(({ Key }) => deleteS3Object(bucket, Key)));
+  await Promise.all(expiredLocks.map((lock) => {
+    if (!lock.Key) {
+      throw new TypeError(`Could not find Key on ${JSON.stringify(lock)}`);
+    }
+    return deleteS3Object(bucket, lock.Key);
+  }));
 
   return locks.length - expiredLocks.length;
 }

@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const Mutex = require('../lib/Mutex');
+const Mutex = require('../Mutex');
 
 test.beforeEach((t) => {
   t.context.sha = 'someSha';
@@ -12,14 +12,14 @@ test.beforeEach((t) => {
     Item: { sha: t.context.sha, key: t.context.key, expire: t.context.timeout },
   };
   t.context.docClient = {
-    get: () => ({ promise: () => Promise.resolve(t.context.getResults) }),
-    put: (params) => ({ promise: () => Promise.resolve(params) }),
-    delete: () => ({ promise: () => Promise.resolve(true) }),
+    get: () => Promise.resolve(t.context.getResults),
+    put: (params) => Promise.resolve(params),
+    delete: () => Promise.resolve(true),
   };
   t.context.mutex = new Mutex(t.context.docClient, t.context.tableName);
 });
 
-test('Mutex.wrieLock() passes correct params to dynamo docClient', async (t) => {
+test('Mutex.writeLock() passes correct params to dynamo docClient', async (t) => {
   const key = t.context.key;
   const timeout = t.context.timeout;
   const sha = t.context.sha;
@@ -61,16 +61,14 @@ test('Mutex.unlock() returns result from docClient', async (t) => {
 test('Mutex.unlock() throws a CumulusLockError if there is a SHA mismatch', async (t) => {
   const key = t.context.key;
   const gitSha = t.context.sha;
-  const docClient = t.context.docClient;
+  const docClient = { ...t.context.docClient };
   const errorMessage = 'Cannot unlock stack, lock already exists from another build '
                        + 'with SHA someOtherSha, error: Error: test error';
   docClient.delete = () => {
     throw new Error('test error');
   };
-  docClient.get = () => ({
-    promise: () => Promise.resolve({
-      Item: { sha: 'someOtherSha', key: t.context.key, expire: t.context.timeout },
-    }),
+  docClient.get = () => Promise.resolve({
+    Item: { sha: 'someOtherSha', key: t.context.key, expire: t.context.timeout },
   });
   const mutex = new Mutex(docClient, 'sometable');
   await t.throwsAsync(
@@ -86,9 +84,7 @@ test('Mutex.unlock() re-throws error from DynamoDb document client if checkMatch
   docClient.delete = () => {
     throw new Error('test error');
   };
-  docClient.get = () => ({
-    promise: () => Promise.resolve({}),
-  });
+  docClient.get = () => Promise.resolve({});
   const mutex = new Mutex(docClient, 'sometable');
   await t.throwsAsync(
     () => mutex.unlock(key, gitSha),
@@ -104,21 +100,19 @@ test('Mutex.checkMatchingSha() returns match on matching sha', async (t) => {
 
 test('Mutex.checkMatchingSha() returns collision sha on wrong sha', async (t) => {
   const collisionSha = 'someOtherSha';
-  const getResults = t.context.getResults;
-  getResults.promise = () => ({ Item: { sha: collisionSha } });
+  const getResults = () => ({ Item: { sha: collisionSha } });
   const docClient = t.context.docClient;
-  docClient.get = () => getResults;
+  docClient.get = getResults;
   const mutex = new Mutex(docClient, 'someTable');
 
   const result = await mutex.checkMatchingSha(t.context.key, t.context.sha);
   t.is(result, collisionSha);
 });
 
-test('Mutex.checkMatchingSha() returns noLock if no lock existss', async (t) => {
-  const getResults = t.context.getResults;
-  getResults.promise = () => ({});
-  const docClient = t.context.docClient;
-  docClient.get = () => getResults;
+test('Mutex.checkMatchingSha() returns noLock if no lock exists', async (t) => {
+  const docClient = { ...t.context.docClient };
+  const getResults = () => ({});
+  docClient.get = getResults;
   const mutex = new Mutex(docClient, 'someTable');
   const result = await mutex.checkMatchingSha(t.context.key, t.context.sha);
   t.is(result, 'noLock');

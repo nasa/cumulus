@@ -39,6 +39,7 @@ const {
   s3PutObject,
   s3TagSetToQueryString,
   waitForObject,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 
 const xml2js = require('xml2js');
@@ -322,7 +323,7 @@ const updateGranule = (config) => async (granule) => {
   const tags = await s3GetObjectTagging(Bucket, Key);
 
   // Extract the metadata file object
-  const metadata = metadataResult.Body.toString();
+  const metadata = await getObjectStreamContents(metadataResult.Body);
   const { metadataObject, isUmmG } = await getMetadataObject(metadataFileName, metadata);
   // Add OPeNDAP url
   const hyraxUrl = await generateHyraxUrl(config, metadataObject, isUmmG);

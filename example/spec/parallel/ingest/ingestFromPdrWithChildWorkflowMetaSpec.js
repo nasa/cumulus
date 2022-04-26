@@ -131,7 +131,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
         Bucket: config.bucket,
         CopySource: `${config.bucket}/${testDataFolder}/${origPdrFilename}`,
         Key: `${testDataFolder}/${pdrFilename}`,
-      }).promise();
+      });
 
       await deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
 

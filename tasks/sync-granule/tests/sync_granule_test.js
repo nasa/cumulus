@@ -40,7 +40,7 @@ async function prepareS3DownloadEvent(t) {
   t.context.event.input.granules[0].files[0].path = granuleFilePath;
   t.context.event.config.fileStagingDir = randomString();
 
-  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host });
 
   // Stage the file that's going to be downloaded
   for (let i = 0; i < t.context.event.input.granules.length; i += 1) {
@@ -90,9 +90,9 @@ test.beforeEach(async (t) => {
   t.context.privateBucketName = randomString();
 
   await Promise.all([
-    s3().createBucket({ Bucket: t.context.internalBucketName }).promise(),
-    s3().createBucket({ Bucket: t.context.privateBucketName }).promise(),
-    s3().createBucket({ Bucket: t.context.protectedBucketName }).promise(),
+    s3().createBucket({ Bucket: t.context.internalBucketName }),
+    s3().createBucket({ Bucket: t.context.privateBucketName }),
+    s3().createBucket({ Bucket: t.context.protectedBucketName }),
   ]);
 
   t.context.event = await loadJSONTestData('payloads/new-message-schema/ingest.json');
@@ -102,10 +102,12 @@ test.beforeEach(async (t) => {
   // save collection in internal/stackName/collections/collectionId
   const key = `${process.env.stackName}/collections/${collection.name}___${Number.parseInt(collection.version, 10)}.json`;
   await promiseS3Upload({
-    Bucket: t.context.internalBucketName,
-    Key: key,
-    Body: JSON.stringify(collection),
-    ACL: 'public-read',
+    params: {
+      Bucket: t.context.internalBucketName,
+      Key: key,
+      Body: JSON.stringify(collection),
+      ACL: 'public-read',
+    },
   });
 
   t.context.event.config.downloadBucket = t.context.internalBucketName;
@@ -347,8 +349,8 @@ test.serial('download granule from S3 provider with checksum and data file in an
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  await s3().createBucket({ Bucket: alternateDataBucket }).promise();
-  await s3().createBucket({ Bucket: alternateBucket }).promise();
+  await s3().createBucket({ Bucket: alternateDataBucket });
+  await s3().createBucket({ Bucket: alternateBucket });
   t.teardown(async () => {
     await recursivelyDeleteS3Bucket(alternateDataBucket);
     await recursivelyDeleteS3Bucket(alternateBucket);
@@ -409,7 +411,7 @@ test.serial('download granule from S3 provider', async (t) => {
   await validateConfig(t, t.context.event.config);
   await validateInput(t, t.context.event.input);
 
-  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host });
 
   try {
     // Stage the file that's going to be downloaded
@@ -705,7 +707,7 @@ test.serial('attempt to download file from non-existent path - throw error', asy
 
   // Create the s3 bucket. If the bucket doesn't exist, we just get a
   // 'bucket doesn't exist' error
-  await s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise();
+  await s3().createBucket({ Bucket: t.context.event.config.provider.host });
 
   try {
     await t.throwsAsync(
@@ -821,7 +823,11 @@ test.serial('when duplicateHandling is "version", keep both data if different', 
     const renamedFileInfo = await headObject(filesRenamed[0].bucket, filesRenamed[0].key);
     t.deepEqual(
       renamedFileInfo,
-      { ...existingFileInfo, LastModified: renamedFileInfo.LastModified }
+      {
+        ...existingFileInfo,
+        LastModified: renamedFileInfo.LastModified,
+        $metadata: renamedFileInfo.$metadata,
+      }
     );
 
     const newerContent = randomString();
@@ -911,7 +917,10 @@ test.serial('when duplicateHandling is "skip", do not overwrite or create new', 
     const currentFileInfo = await headObject(
       currentFile.bucket, currentFile.key
     );
-    t.deepEqual(existingFileInfo, currentFileInfo);
+    t.deepEqual(currentFileInfo, {
+      ...existingFileInfo,
+      $metadata: currentFileInfo.$metadata,
+    });
   } finally {
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }

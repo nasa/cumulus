@@ -13,7 +13,12 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
-const { dynamodb, dynamodbDocClient } = require('@cumulus/aws-client/services');
+const { dynamodb, dynamodbDocClient, s3 } = require('@cumulus/aws-client/services');
+const {
+  deleteS3Object,
+  getObject,
+  getObjectStreamContents,
+} = require('@cumulus/aws-client/S3');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -48,18 +53,16 @@ function missingEnvironmentVariables() {
  * @returns {Object|Array} the parsed payload
  */
 async function fetchPayload(Bucket, Key) {
-  const s3 = new AWS.S3();
-
   let payloadResponse;
   try {
-    payloadResponse = await s3.getObject({ Bucket, Key }).promise();
+    payloadResponse = await getObject(s3(), { Bucket, Key });
   } catch (error) {
     throw new Error(`Failed to fetch s3://${Bucket}/${Key}: ${error.message}`);
   }
 
   let parsedPayload;
   try {
-    parsedPayload = JSON.parse(payloadResponse.Body.toString());
+    parsedPayload = JSON.parse(await getObjectStreamContents(payloadResponse.Body));
   } catch (error) {
     if (error.name !== 'SyntaxError') throw error;
     const newError = new Error(`Unable to parse payload: ${error.message}`);
@@ -83,7 +86,7 @@ async function fetchAndDeletePayload(payloadUrl) {
 
   const payload = await fetchPayload(Bucket, Key);
 
-  await (new AWS.S3()).deleteObject({ Bucket, Key }).promise();
+  await deleteS3Object(Bucket, Key);
 
   return payload;
 }

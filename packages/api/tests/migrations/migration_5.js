@@ -30,12 +30,12 @@ let reconciliationReportModel;
 test.before(async () => {
   reconciliationReportModel = new models.ReconciliationReport();
   await reconciliationReportModel.createTable();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
   await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: reportFileKey,
     Body: JSON.stringify(reconciliationReport),
-  }).promise();
+  });
 });
 
 test.after.always(async () => {

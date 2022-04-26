@@ -69,7 +69,7 @@ class Mutex {
    * @param {string} gitSHA - sha to validate against
    * @returns {Promise<Object>} - returns doc client write result
    * @memberof Mutex
-   * @throws {CumulusLockError} - Throws lock error if lock collision occus
+   * @throws {CumulusLockError} - Throws lock error if lock collision occurs
    */
   async unlock(key, gitSHA) {
     const params = {

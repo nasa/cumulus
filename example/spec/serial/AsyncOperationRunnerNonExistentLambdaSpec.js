@@ -1,6 +1,6 @@
 'use strict';
 
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { startECSTask } = require('@cumulus/async-operations');
@@ -38,7 +38,7 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
         Bucket: config.bucket,
         Key: payloadKey,
         Body: JSON.stringify([1, 2, 3]),
-      }).promise();
+      });
 
       const asyncOperationObject = {
         id: asyncOperationId,
@@ -83,7 +83,7 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
   });
 
   afterAll(async () => {
-    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
+    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey });
     if (asyncOperationId) {
       await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
     }

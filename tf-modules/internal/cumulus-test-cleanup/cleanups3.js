@@ -1,7 +1,7 @@
 'use strict';
 
-const AWS = require('aws-sdk');
-const s3 = new AWS.S3();
+const { S3 } = require('@aws-sdk/client-s3');
+const s3 = new S3();
 
 const internalDeleteParams = [
   { regex: /.*-\d{11,}-test-data\/.*/, olderThanDays: 2 },
@@ -43,13 +43,13 @@ async function cleanBucketByParams(bucket, deleteParams, continuationToken) {
     objects = await s3.listObjectsV2({
       Bucket: bucket,
       ContinuationToken: continuationToken,
-    }).promise();
+    });
   } catch (error) {
     console.log(`Error cleaning bucket ${bucket}: ${error}`);
     return;
   }
 
-  const objectsToDelete = objects.Contents
+  const objectsToDelete = (objects.Contents || [])
     .filter((o) => shouldDeleteObject(o, deleteParams))
     .map((o) => ({ Key: o.Key }));
 
@@ -59,7 +59,7 @@ async function cleanBucketByParams(bucket, deleteParams, continuationToken) {
     await s3.deleteObjects({
       Bucket: bucket,
       Delete: { Objects: objectsToDelete },
-    }).promise();
+    });
   }
 
   if (objects.IsTruncated) {
@@ -73,7 +73,7 @@ async function cleanBuckets(buckets, regex, deleteParams) {
 }
 
 async function s3cleanup() {
-  const buckets = await s3.listBuckets().promise();
+  const buckets = await s3.listBuckets({});
   const bucketNames = buckets.Buckets.map((b) => b.Name);
 
   return await Promise.all(
