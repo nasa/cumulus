@@ -19,6 +19,7 @@ const GranuleFetcher = require('./GranuleFetcher');
  * @param {Object[]} kwargs.granules - the granules to be ingested
  * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
  *    all corresponding checksum files
+ * @param {string} kwargs.ACL - Access Control List
  * @returns {Promise<Array>} the list of successfully ingested granules, or an
  *    empty list if the input granules was not a non-empty array of granules
  */
@@ -81,6 +82,22 @@ async function download({
 }
 
 /**
+* Set ACL using value supplied from configuration
+*
+* @param {string} ACL
+* @returns {string | undefined }
+*/
+function setACL(ACL) {
+  if (ACL === 'disabled') {
+    return undefined;
+  }
+  if (ACL) {
+    return ACL;
+  }
+  return 'private';
+}
+
+/**
  * Ingest a list of granules
  *
  * @param {Object} event - contains input and config parameters
@@ -91,7 +108,7 @@ function syncGranule(event) {
   const now = Date.now();
   const config = event.config;
   log.debug(`ACL is : ${config.ACL}`);
-  const ACL = (config.ACL === 'disabled') ? undefined : 'private';
+  const ACL = setACL(config.ACL);
   const input = event.input;
   const stack = config.stack;
   const buckets = config.buckets;
