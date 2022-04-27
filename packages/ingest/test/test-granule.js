@@ -81,8 +81,8 @@ test.beforeEach(async (t) => {
   t.context.key = `${t.context.testPrefix}/${t.context.fileName}`;
 
   await Promise.all([
-    s3().createBucket({ Bucket: t.context.internalBucket }).promise(),
-    s3().createBucket({ Bucket: t.context.destBucket }).promise(),
+    s3().createBucket({ Bucket: t.context.internalBucket }),
+    s3().createBucket({ Bucket: t.context.destBucket }),
   ]);
 
   const { granulePgModel, filePgModel, internalBucket, key } = t.context;
@@ -510,7 +510,7 @@ test('moveGranuleFile moves a granule file and updates postgres', async (t) => {
   const listObjectsResponse = await s3().listObjects({
     Bucket: secondBucket,
     Prefix: testPrefix,
-  }).promise();
+  });
   t.is(listObjectsResponse.Contents.length, 1);
   t.is(listObjectsResponse.Contents[0].Key, key);
 

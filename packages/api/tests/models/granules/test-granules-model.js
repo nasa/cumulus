@@ -140,7 +140,7 @@ test('files existing at location returns both files if both exist', async (t) =>
   const sourceBucket = 'test-bucket';
   const destBucket = randomString();
 
-  await awsServices.s3().createBucket({ Bucket: destBucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: destBucket });
 
   const sourceFiles = filenames.map(
     (fileName) => fakeFileFactory({ fileName, bucket: sourceBucket })
@@ -159,7 +159,7 @@ test('files existing at location returns both files if both exist', async (t) =>
       Key: filename,
       Body: 'test',
     };
-    return await awsServices.s3().putObject(params).promise();
+    return await awsServices.s3().putObject(params);
   });
 
   await Promise.all(dataSetupPromises);
@@ -186,7 +186,7 @@ test('files existing at location returns only file that exists', async (t) => {
   const sourceBucket = 'test-bucket';
   const destBucket = randomString();
 
-  await awsServices.s3().createBucket({ Bucket: destBucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: destBucket });
 
   const sourceFiles = filenames.map(
     (fileName) => fakeFileFactory({ fileName, bucket: sourceBucket })
@@ -205,7 +205,7 @@ test('files existing at location returns only file that exists', async (t) => {
     Key: filenames[1],
     Body: 'test',
   };
-  await awsServices.s3().putObject(params).promise();
+  await awsServices.s3().putObject(params);
 
   const granule = {
     files: sourceFiles,
@@ -231,8 +231,8 @@ test('files existing at location returns only file that exists with multiple des
   const destBucket2 = randomString();
 
   await Promise.all([
-    awsServices.s3().createBucket({ Bucket: destBucket1 }).promise(),
-    awsServices.s3().createBucket({ Bucket: destBucket2 }).promise(),
+    awsServices.s3().createBucket({ Bucket: destBucket1 }),
+    awsServices.s3().createBucket({ Bucket: destBucket2 }),
   ]);
 
   const sourceFiles = filenames.map(
@@ -257,14 +257,14 @@ test('files existing at location returns only file that exists with multiple des
     Key: filenames[0],
     Body: 'test',
   };
-  await awsServices.s3().putObject(params).promise();
+  await awsServices.s3().putObject(params);
 
   params = {
     Bucket: destBucket2,
     Key: filenames[1],
     Body: 'test',
   };
-  await awsServices.s3().putObject(params).promise();
+  await awsServices.s3().putObject(params);
 
   const granule = {
     files: sourceFiles,

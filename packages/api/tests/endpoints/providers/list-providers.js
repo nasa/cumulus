@@ -36,7 +36,7 @@ let jwtAuthToken;
 let accessTokenModel;
 
 test.before(async () => {
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   accessTokenModel = new models.AccessToken();
   providerModel = new models.Provider();

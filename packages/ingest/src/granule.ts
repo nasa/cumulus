@@ -50,8 +50,8 @@ export interface MoveFileParams {
 
 export interface VersionedObject {
   Bucket: string,
-  Key: string,
-  size: number
+  Key?: string,
+  size?: number
 }
 
 /**
@@ -107,11 +107,14 @@ export async function listVersionedObjects(
     Prefix: `${key}.v`,
   });
 
-  return s3list.map(({ Key, Size }) => ({
-    Bucket: bucket,
-    Key,
-    size: Size,
-  }));
+  if (s3list) {
+    return s3list.map(({ Key, Size }) => ({
+      Bucket: bucket,
+      Key,
+      size: Size,
+    }));
+  }
+  return [];
 }
 
 /**

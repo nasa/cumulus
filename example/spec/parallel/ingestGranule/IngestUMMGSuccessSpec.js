@@ -11,11 +11,11 @@ const {
 const mime = require('mime-types');
 
 const {
-  getS3Object,
   s3ObjectExists,
   parseS3Uri,
   headObject,
   buildS3Uri,
+  getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -73,8 +73,8 @@ const SetupError = new Error('Test setup failed, aborting');
 async function getUmmObject(fileLocation) {
   const { Bucket, Key } = parseS3Uri(fileLocation);
 
-  const ummFile = await getS3Object(Bucket, Key);
-  return JSON.parse(ummFile.Body.toString());
+  const ummFileJson = await getJsonS3Object(Bucket, Key);
+  return ummFileJson;
 }
 
 const getOnlineResourcesWithRetries = async (granule) =>

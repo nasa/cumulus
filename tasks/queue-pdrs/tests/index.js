@@ -21,7 +21,7 @@ const { queuePdrs } = require('..');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+  await s3().createBucket({ Bucket: t.context.templateBucket });
 
   t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();

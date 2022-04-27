@@ -68,12 +68,12 @@ async function lockOperation(operation, gitSHA, deployment, shouldLock) {
  * --------
  * node lock-stack.js lock SHA stackname/deployment true/false
  *   Set stack lock status to true/false with SHA key.
- *   Returns exit code 1 if an unknown error occurs, error code 100 if a insert collision due to
+ *   Exits code 1 if an unknown error occurs, error code 100 if a insert collision due to
  *   write constraints.
  *
  * `node lock-stack.js confirmLock SHA stackname/deployment`
  *   Check lock status for a stack.
- *   Returns exit code 1 if another stack has provisioned a lock for this SHA or
+ *   Exits code 1 if another stack has provisioned a lock for this SHA or
  *   if a general error is thrown, and 101 if no lock exists.
  */
 lockOperation(...process.argv.slice(2, 6)).catch((error) => {

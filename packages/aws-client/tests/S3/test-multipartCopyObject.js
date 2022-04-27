@@ -8,6 +8,8 @@ const {
   createBucket,
   multipartCopyObject,
   recursivelyDeleteS3Bucket,
+  getObjectReadStream,
+  uploadS3FileStream,
 } = require('../../S3');
 const { s3 } = require('../../services');
 
@@ -21,27 +23,32 @@ const randomId = (prefix) =>
 const createDummyObject = ({ Bucket, Key, size, contentType }) => {
   const readStream = fs.createReadStream('/dev/urandom', { end: size - 1 });
 
-  return s3().upload({
+  return uploadS3FileStream(
+    readStream,
     Bucket,
     Key,
-    Body: readStream,
-    ContentType: contentType,
-  }).promise();
+    {
+      ContentType: contentType,
+    }
+  );
 };
 
 // Calculate the MD5 checksum of an object
-const md5OfObject = ({ Bucket, Key }) => new Promise(
-  (resolve) => {
-    const hash = createHash('MD5');
+const md5OfObject = async ({ Bucket, Key }) => {
+  const stream = await getObjectReadStream({ s3: s3(), bucket: Bucket, key: Key });
+  return new Promise(
+    (resolve) => {
+      const hash = createHash('MD5');
 
-    hash.on(
-      'finish',
-      () => resolve(hash.read().toString('hex'))
-    );
+      hash.on(
+        'finish',
+        () => resolve(hash.read().toString('hex'))
+      );
 
-    s3().getObject({ Bucket, Key }).createReadStream().pipe(hash);
-  }
-);
+      stream.pipe(hash);
+    }
+  );
+};
 
 test.before(async (t) => {
   t.context.sourceBucket = randomId('source-bucket');
@@ -140,7 +147,7 @@ test("multipartCopyObject() sets the object's ACL", async (t) => {
   const destinationAcls = await s3().getObjectAcl({
     Bucket: destinationBucket,
     Key: destinationKey,
-  }).promise();
+  });
 
   const allUsersGrant = destinationAcls.Grants.find(
     (grant) =>
@@ -173,7 +180,7 @@ test('multipartCopyObject() copies content type', async (t) => {
   const copiedObject = await s3().headObject({
     Bucket: destinationBucket,
     Key: destinationKey,
-  }).promise();
+  });
 
   t.deepEqual(
     copiedObject.ContentType,

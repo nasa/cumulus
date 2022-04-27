@@ -6,12 +6,12 @@ const test = require('ava');
 const range = require('lodash/range');
 
 const SQS = require('@cumulus/aws-client/SQS');
-const { s3 } = require('@cumulus/aws-client/services');
 const {
   createBucket,
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
   s3ObjectExists,
+  getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
@@ -384,12 +384,8 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
 
   await handler(event);
 
-  const item = await s3().getObject({
-    Bucket: process.env.system_bucket,
-    Key: enabledQueueKey,
-  }).promise();
-
-  t.deepEqual(message, JSON.parse(item.Body));
+  const objJson = await getJsonS3Object(process.env.system_bucket, enabledQueueKey);
+  t.deepEqual(message, objJson);
 
   t.false(await s3ObjectExists({
     Bucket: process.env.system_bucket,

@@ -1,5 +1,6 @@
 #!/bin/bash
 set -ex
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-publish.sh
 
@@ -12,20 +13,23 @@ fi
 ./node_modules/.bin/lerna run package
 ./node_modules/.bin/lerna run prepublish
 
-export VERSION=$(jq --raw-output .version lerna.json)
-export NPM_TAG=$(node ./bamboo/npm-tag.js);
+VERSION=$(jq --raw-output .version lerna.json)
+NPM_TAG=$(node ./bamboo/npm-tag.js);
+
+export VERSION
+export NPM_TAG
 
 echo "Publishing packages to NPM with version=${VERSION} and tag=${NPM_TAG}"
 export npm_config_unsafe_perm=true
 
 if [[ $SKIP_NPM_PUBLISH != true ]]; then
   ./node_modules/.bin/lerna publish \
-    ${VERSION} \
+    "${VERSION}" \
     --no-git-tag-version \
     --no-push \
     --yes \
     --force-publish=* \
-    --dist-tag=${NPM_TAG} \
+    --dist-tag="${NPM_TAG}" \
     --exact
 fi
 
