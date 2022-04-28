@@ -42,7 +42,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates CI to utilize a on-container filesystem when building Core in 'uncached' mode
   - Updates CI to selectively bootstrap Core modules in the cleanup job phase
 - **CUMULUS-2934**
-  - Update CI Docker container build to install pyenv to prevent contention on parallel lambda builds
+  - Update CI Docker container build to install pipenv to prevent contention on parallel lambda builds
 
 ## [v11.1.0] 2022-04-07
 
