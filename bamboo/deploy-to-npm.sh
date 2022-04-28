@@ -9,7 +9,7 @@ if [[ ! $PUBLISH_FLAG == true ]]; then
   exit 0
 fi
 
-pip install pyenv
+pip install pipenv
 ./node_modules/.bin/lerna run prepare
 ./node_modules/.bin/lerna run package
 ./node_modules/.bin/lerna run prepublish
