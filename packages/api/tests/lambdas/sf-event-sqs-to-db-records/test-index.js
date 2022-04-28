@@ -39,10 +39,9 @@ const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
 const {
-  getMessageExecutionParentArn
+  getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 
-const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
 

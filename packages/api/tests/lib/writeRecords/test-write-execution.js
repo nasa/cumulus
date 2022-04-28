@@ -20,8 +20,6 @@ const {
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 
-const Execution = require('../../../models/executions');
-
 const {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
@@ -383,7 +381,7 @@ test.serial('writeExecutionRecordFromMessage() properly handles out of order wri
   });
 });
 
-test.serial('writeExecutionRecordFromMessage() does not persist records to RDS/Elasticsearch if RDS write fails', async (t) => {
+test.serial('writeExecutionRecordFromMessage() does not write record to Elasticsearch if RDS write fails', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -410,7 +408,7 @@ test.serial('writeExecutionRecordFromMessage() does not persist records to RDS/E
   t.false(await t.context.esExecutionsClient.exists(executionArn));
 });
 
-test.serial('writeExecutionRecordFromMessage() does not persist records to RDS/Elasticsearch if Elasticsearch write fails', async (t) => {
+test.serial('writeExecutionRecordFromMessage() does not write record to RDS if Elasticsearch write fails', async (t) => {
   const {
     cumulusMessage,
     knex,

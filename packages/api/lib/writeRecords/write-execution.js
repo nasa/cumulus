@@ -93,17 +93,11 @@ const writeExecutionToES = async (params) => {
     apiRecord,
     esClient = await Search.es(),
   } = params;
-  try {
-    await upsertExecution({
-      esClient,
-      updates: apiRecord,
-      index: process.env.ES_INDEX,
-    });
-    logger.info(`Succesfully wrote Elasticsearch record for execution ${apiRecord.arn}`);
-  } catch (error) {
-    logger.info(`Write to Elasticsearch failed, rolling back data store write for execution ${apiRecord.arn}`);
-    throw error;
-  }
+  return await upsertExecution({
+    esClient,
+    updates: apiRecord,
+    index: process.env.ES_INDEX,
+  });
 };
 
 /**
@@ -130,11 +124,17 @@ const _writeExecutionRecord = ({
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
   const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);
-  await writeExecutionToES({
-    apiRecord,
-    updatedAt,
-    esClient,
-  });
+  try {
+    await writeExecutionToES({
+      apiRecord,
+      updatedAt,
+      esClient,
+    });
+    logger.info(`Successfully wrote Elasticsearch record for execution ${apiRecord.arn}`);
+  } catch (error) {
+    logger.info(`Write to Elasticsearch failed, rolling back data store write for execution ${apiRecord.arn}`);
+    throw error;
+  }
   return executionPgRecord;
 });
 
