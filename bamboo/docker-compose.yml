@@ -26,7 +26,7 @@ services:
     network_mode: "service:build_env"
     volumes:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
-      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
+      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/ssh_client_rsa_key.pub
       - ../packages/test-data:/data_volume
       # WARNING - the following mount will have all data wiped each time the stack is
       # brought up via ./bootstrap-sftp.sh.   Think twice before changing this.
