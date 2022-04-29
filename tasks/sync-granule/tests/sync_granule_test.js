@@ -25,7 +25,10 @@ const {
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
-const { syncGranule } = require('..');
+const {
+  setACL,
+  syncGranule,
+} = require('..');
 
 // prepare the s3 event and data
 async function prepareS3DownloadEvent(t) {
@@ -1059,12 +1062,26 @@ test.serial('download multiple granules from S3 provider to staging directory', 
   }
 });
 
-test.serial.only('ACL defaults to private when none is supplied in the config', async (t) => {
-  t.context.event.input.granules = [];
-  t.context.event.config.ACL = undefined;
+test('setACL defaults ACL to private when none is supplied in the config', async (t) => {
+  const ACL = undefined;
 
-  const output = await syncGranule(t.context.event);
-  console.log(output);
+  const result = await setACL(ACL);
 
-  t.deepEqual(output.granules, [], 'output granules list should be empty');
+  t.deepEqual(result, 'private');
+});
+
+test('setACL returns undefined if config.ACL is set to disabled', async (t) => {
+  const ACL = 'disabled';
+
+  const result = await setACL(ACL);
+
+  t.deepEqual(result, undefined);
+});
+
+test('setACL returns ACL if config.ACL is set', async (t) => {
+  const ACL = 'authenticated-read';
+
+  const result = await setACL(ACL);
+
+  t.deepEqual(result, ACL);
 });

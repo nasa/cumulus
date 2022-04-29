@@ -201,4 +201,8 @@ async function handler(event, context) {
   );
 }
 
-module.exports = { handler, syncGranule };
+module.exports = {
+  handler,
+  setACL,
+  syncGranule,
+};
