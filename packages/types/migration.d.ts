@@ -5,12 +5,6 @@ export interface MigrationResult {
   failed: number,
 }
 
-export interface DataMigration1Summary {
-  providers: MigrationResult,
-  async_operations: MigrationResult,
-  rules: MigrationResult,
-}
-
 export interface GranuleDynamoDbSearchParams {
   collectionId?: string
   granuleId?: string
@@ -28,7 +22,7 @@ export interface DataMigration2Summary {
 }
 
 export interface MigrationSummary {
-  MigrationSummary: DataMigration1Summary | DataMigration2Summary
+  MigrationSummary: DataMigration2Summary
 }
 
 export interface DynamoDbParallelScanParams {

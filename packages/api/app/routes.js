@@ -24,7 +24,6 @@ const version = require('../endpoints/version');
 const workflows = require('../endpoints/workflows');
 const dashboard = require('../endpoints/dashboard');
 const elasticsearch = require('../endpoints/elasticsearch');
-const migrationCounts = require('../endpoints/migrationCounts');
 const deadLetterArchive = require('../endpoints/dead-letter-archive');
 const { launchpadProtectedAuth } = require('./launchpadAuth');
 const launchpadSaml = require('../endpoints/launchpadSaml');
@@ -38,9 +37,6 @@ if (process.env.FAKE_AUTH === 'true') {
 
 // dead letters endpoint
 router.use('/deadLetterArchive', ensureAuthorized, deadLetterArchive.router);
-
-//migrationCounts endpoint
-router.use('/migrationCounts', ensureAuthorized, migrationCounts.router);
 
 // collections endpoints
 router.use('/collections', ensureAuthorized, collections.router);
