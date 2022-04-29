@@ -91,6 +91,17 @@ export async function removeLock(
   );
 }
 
+/**
+ *
+ * @param {string} bucket
+ * @param {Object} provider
+ * @param {string} provider.id
+ * @param {number} provider.globalConnectionLimit
+ * @param {string} filename
+ * @param {number} counter
+ * @param {string} ACL
+ * @returns {Promise<boolean>}
+ */
 export async function proceed(
   bucket: string,
   provider: {
