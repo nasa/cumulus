@@ -101,6 +101,7 @@ const writeExecutionToDynamoAndES = async (params) => {
       updates: dynamoRecord,
       index: process.env.ES_INDEX,
     });
+    logger.info(`Succesfully wrote Elasticsearch record for execution ${dynamoRecord.arn}`);
   } catch (error) {
     logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${dynamoRecord.arn}`);
     // On error, delete the Dynamo record to ensure that all systems

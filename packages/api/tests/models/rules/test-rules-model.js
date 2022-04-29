@@ -11,7 +11,6 @@ const {
   putJsonS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const SQS = require('@cumulus/aws-client/SQS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { ValidationError } = require('@cumulus/errors');
 
@@ -125,21 +124,6 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('createRuleTrigger() defaults rule state to ENABLED', async (t) => {
-  const { onetimeRule } = t.context;
-
-  // remove state from rule to be created
-  delete onetimeRule.state;
-
-  // create rule trigger
-  const rule = await rulesModel.createRuleTrigger(onetimeRule);
-
-  t.is(rule.state, 'ENABLED');
-
-  // delete rule
-  await rulesModel.delete(rule);
-});
-
 test('Creates and deletes a onetime rule', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -192,18 +176,6 @@ test('Creating a rule with an invalid type throws an error', async (t) => {
   );
 });
 
-test.serial('Creating an invalid rule does not create workflow triggers', async (t) => {
-  const { onetimeRule } = t.context;
-  const ruleItem = cloneDeep(onetimeRule);
-
-  ruleItem.rule.type = 'invalid';
-
-  await t.throwsAsync(
-    () => rulesModel.createRuleTrigger(ruleItem),
-    { name: 'SchemaValidationError' }
-  );
-});
-
 test('Enabling a disabled rule updates the state', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -238,29 +210,6 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
     () => rulesModel.updateRuleTrigger(rule, updates),
     { name: 'SchemaValidationError' }
   );
-});
-
-test.serial('createRuleTrigger() for a kinesis type rule adds event mappings', async (t) => {
-  const { kinesisRule } = t.context;
-
-  // create rule
-  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
-  const kinesisEventMappings = await getKinesisEventMappings();
-  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
-
-  t.is(consumerEventMappings.length, 1);
-  t.is(logEventMappings.length, 1);
-  t.is(consumerEventMappings[0].UUID, ruleWithTrigger.rule.arn);
-  t.is(logEventMappings[0].UUID, ruleWithTrigger.rule.logEventArn);
-
-  t.is(ruleWithTrigger.name, kinesisRule.name);
-  t.is(ruleWithTrigger.rule.value, kinesisRule.rule.value);
-  t.false(ruleWithTrigger.rule.arn === undefined);
-  t.false(ruleWithTrigger.rule.logEventArn === undefined);
-
-  // clean up
-  await deleteKinesisEventSourceMappings();
 });
 
 test.serial('Deleting a kinesis style rule removes event mappings', async (t) => {
@@ -632,25 +581,6 @@ test.serial('Creating triggers for a kinesis rule where an event source mapping 
   }
 });
 
-test('Creating an invalid kinesis type rule does not add event mappings', async (t) => {
-  const { kinesisRule } = t.context;
-
-  const newKinesisRule = cloneDeep(kinesisRule);
-  delete newKinesisRule.name;
-
-  // attempt to create rule
-  await t.throwsAsync(rulesModel.createRuleTrigger(newKinesisRule), { name: 'SchemaValidationError' });
-
-  const kinesisEventMappings = await getKinesisEventMappings();
-  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
-
-  console.log(JSON.stringify(kinesisEventMappings));
-
-  t.is(consumerEventMappings.length, 0);
-  t.is(logEventMappings.length, 0);
-});
-
 test('Creating a rule with a queueUrl parameter succeeds', async (t) => {
   const { onetimeRule } = t.context;
 
@@ -804,37 +734,6 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
     queuesToDelete.map(
       (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
     )
-  );
-});
-
-test('Creating a rule trigger SQS rule fails if queue does not exist', async (t) => {
-  const rule = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sqs',
-      value: 'non-existent-queue',
-    },
-    state: 'ENABLED',
-  });
-  await t.throwsAsync(
-    rulesModel.createRuleTrigger(rule),
-    { message: /SQS queue non-existent-queue does not exist/ }
-  );
-});
-
-test('Creating a rule trigger for an SQS rule fails if there is no redrive policy on the queue', async (t) => {
-  const queueUrl = await SQS.createQueue(randomId('queue'));
-  const rule = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sqs',
-      value: queueUrl,
-    },
-    state: 'ENABLED',
-  });
-  await t.throwsAsync(
-    rulesModel.createRuleTrigger(rule),
-    { message: `SQS queue ${queueUrl} does not have a dead-letter queue configured` }
   );
 });
 

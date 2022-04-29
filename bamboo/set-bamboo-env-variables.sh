@@ -101,7 +101,7 @@ echo export BRANCH="$BRANCH" >> .bamboo_env_vars
 # Target master by default.
 # Update with appropriate conditional
 # when creating a feature branch.
-export PR_BRANCH='master'
+export PR_BRANCH='feature/rds-phase-3'
 
 ## SKIP CL eval if current branch is equal to the PR branch
 if [[ $BRANCH == "$PR_BRANCH" ]]; then

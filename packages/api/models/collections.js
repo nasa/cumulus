@@ -5,81 +5,13 @@
 const isEmpty = require('lodash/isEmpty');
 const omit = require('lodash/omit');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { InvalidRegexError, UnmatchedRegexError } = require('@cumulus/errors');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const { removeNilProperties } = require('@cumulus/common/util');
 const Manager = require('./base');
 const { collection: collectionSchema } = require('./schemas');
 const Rule = require('./rules');
 const { AssociatedRulesError } = require('../lib/errors');
-
-/**
- * Test a regular expression against a sample filename.
- *
- * @param {string} regex - a regular expression
- * @param {string} sampleFileName - the same filename to test the regular expression
- * @param {string} regexFieldName - Name of the field name for the regular expression, if any
- * @throws {InvalidRegexError|UnmatchedRegexError}
- * @returns {Array<string>} - Array of matches from applying the regex to the sample filename.
- *  See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/match.
- */
-function checkRegex(regex, sampleFileName, regexFieldName = 'regex') {
-  let matchingRegex;
-  try {
-    matchingRegex = new RegExp(regex);
-  } catch (error) {
-    throw new InvalidRegexError(`Invalid ${regexFieldName}: ${error.message}`);
-  }
-
-  const match = sampleFileName.match(matchingRegex);
-  if (!match) {
-    throw new UnmatchedRegexError(`${regexFieldName} "${regex}" cannot validate "${sampleFileName}"`);
-  }
-
-  return match;
-}
-
-const validateCollectionCoreConfig = (collection) => {
-  // Test that granuleIdExtraction regex matches against sampleFileName
-  const match = checkRegex(collection.granuleIdExtraction, collection.sampleFileName, 'granuleIdExtraction');
-
-  if (!match[1]) {
-    throw new UnmatchedRegexError(
-      `granuleIdExtraction regex "${collection.granuleIdExtraction}" does not return a matched group when applied to sampleFileName "${collection.sampleFileName}". `
-      + 'Ensure that your regex includes capturing groups.'
-    );
-  }
-
-  // Test that granuleId regex matches the what was extracted from the
-  // sampleFileName using the granuleIdExtraction
-  checkRegex(collection.granuleId, match[1], 'granuleId');
-};
-
-const validateCollectionFilesConfig = (collection) => {
-  // Check that each file.regex matches against file.sampleFileName
-  collection.files.forEach((file) => checkRegex(file.regex, file.sampleFileName));
-
-  // Check that any files with a `checksumFor` field match one of the other files;
-  collection.files.forEach((fileConfig) => {
-    const checksumFor = fileConfig.checksumFor;
-    if (!checksumFor) return;
-    const matchingFiles = collection.files.filter((f) => f.regex === checksumFor);
-    if (matchingFiles.length === 0) {
-      throw new UnmatchedRegexError(`checksumFor '${checksumFor}' does not match any file regex`);
-    }
-    if (matchingFiles.length > 1) {
-      throw new InvalidRegexError(`checksumFor '${checksumFor}' matches multiple file regexes`);
-    }
-    if (matchingFiles[0] === fileConfig) {
-      throw new InvalidRegexError(`checksumFor '${checksumFor}' cannot be used to validate itself`);
-    }
-  });
-};
-
-const validateCollection = (collection) => {
-  validateCollectionCoreConfig(collection);
-  validateCollectionFilesConfig(collection);
-};
+const { validateCollection } = require('../lib/utils');
 
 // Fields which are no longer supported in collection items, and which should
 // not be returned when records are read from the database.
