@@ -82,7 +82,7 @@ async function download({
 }
 
 /**
-* Set ACL using value supplied from configuration
+* Set ACL using value supplied from configuration. Defaults to private
 *
 * @param {string} ACL
 * @returns {string | undefined }
@@ -107,7 +107,6 @@ function setACL(ACL) {
 function syncGranule(event) {
   const now = Date.now();
   const config = event.config;
-  log.debug(`ACL is : ${config.ACL}`);
   const ACL = setACL(config.ACL);
   const input = event.input;
   const stack = config.stack;
