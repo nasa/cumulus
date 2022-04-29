@@ -4,6 +4,12 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
+const Logger = require('@cumulus/logger');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
+const {
+  RecordDoesNotExist,
+} = require('@cumulus/errors');
+
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -14,12 +20,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const {
-  RecordDoesNotExist,
-} = require('@cumulus/errors');
 const { Search } = require('@cumulus/es-client/search');
-const { deconstructCollectionId } = require('@cumulus/message/Collections');
-const Logger = require('@cumulus/logger');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
@@ -229,6 +230,8 @@ async function put(req, res) {
     knexOrTransaction: knex,
   });
 
+  log.info(`PUT request "action": ${action}`);
+
   if (action === 'reingest') {
     const apiCollection = translatePostgresCollectionToApiCollection(pgCollection);
     let targetExecution;
@@ -304,6 +307,7 @@ async function put(req, res) {
       apiGranule,
       body.destinations
     );
+    log.info(`existing files at destination: ${JSON.stringify(filesAtDestination)}`);
 
     if (filesAtDestination.length > 0) {
       const filenames = filesAtDestination.map((file) => file.fileName);

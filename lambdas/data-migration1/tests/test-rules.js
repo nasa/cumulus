@@ -318,6 +318,44 @@ test.serial('migrateRules skips already migrated record', async (t) => {
   t.is(records.length, 1);
 });
 
+test.serial('migrateRules re-migrates already migrated record if forceRulesMigration is specified', async (t) => {
+  const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+  });
+
+  // This always sets updatedAt to Date.now()
+  const ruleWithTrigger = await rulesModel.createRuleTrigger(fakeRule);
+  await rulesModel.create(ruleWithTrigger);
+
+  // We need to make the updateAt of the record we're about to migrate later
+  // than the record in the dynamo table.
+  fakeRule.updatedAt = Date.now();
+
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+  await migrateRuleRecord(fakeRule, knex);
+
+  t.teardown(() => rulesModel.delete(fakeRule));
+  const migrationSummary = await migrateRules(process.env, knex, true);
+  t.deepEqual(migrationSummary, {
+    dynamoRecords: 1,
+
+    skipped: 0,
+    failed: 0,
+    success: 1,
+  });
+  const records = await rulePgModel.search(
+    knex,
+    {}
+  );
+  t.is(records.length, 1);
+});
+
 test.serial('migrateRules processes multiple rules', async (t) => {
   const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
   const anotherFakeCollection = fakeCollectionFactory();
@@ -345,16 +383,11 @@ test.serial('migrateRules processes multiple rules', async (t) => {
     },
     provider: id,
   });
-  const queueUrls1 = randomString();
-  const queueUrls2 = randomString();
 
   await migrateFakeCollectionRecord(fakeCollection, knex);
   await migrateFakeCollectionRecord(anotherFakeCollection, knex);
   await migrateFakeProviderRecord(fakeProvider, knex);
   await migrateFakeProviderRecord(anotherFakeProvider, knex);
-
-  fakeRule1.queueUrl = queueUrls1.queueUrl;
-  fakeRule2.queueUrl = queueUrls2.queueUrl;
 
   const ruleWithTrigger1 = await rulesModel.createRuleTrigger(fakeRule1);
   const ruleWithTrigger2 = await rulesModel.createRuleTrigger(fakeRule2);
@@ -420,7 +453,7 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
     dynamodbDocClient().put({
       TableName: process.env.RulesTable,
       Item: fakeRule1,
-    }).promise(),
+    }),
     rulesModel.create(fakeRule2),
   ]);
   t.teardown(() => Promise.all([
@@ -439,4 +472,34 @@ test.serial('migrateRules processes all non-failing records', async (t) => {
     {}
   );
   t.is(records.length, 1);
+});
+
+test('migrateRuleRecord with forceRulesMigration: true overwrites existing migrated record and unsets values correctly', async (t) => {
+  const { knex, fakeCollection, fakeProvider, rulePgModel } = t.context;
+  const fakeRule = generateFakeRule({
+    collection: {
+      name: fakeCollection.name,
+      version: fakeCollection.version,
+    },
+    provider: fakeProvider.id,
+    updatedAt: Date.now(),
+    queueUrl: 'queue-url',
+  });
+
+  await migrateFakeCollectionRecord(fakeCollection, knex);
+  await migrateFakeProviderRecord(fakeProvider, knex);
+  await migrateRuleRecord(fakeRule, knex);
+
+  const migratedRule = await rulePgModel.get(knex, { name: fakeRule.name });
+  t.is(migratedRule.queue_url, 'queue-url');
+
+  const updatedFakeRule = {
+    ...fakeRule,
+    queueUrl: undefined,
+  };
+
+  await migrateRuleRecord(updatedFakeRule, knex, true);
+
+  const updatedRule = await rulePgModel.get(knex, { name: fakeRule.name });
+  t.is(updatedRule.queue_url, null);
 });

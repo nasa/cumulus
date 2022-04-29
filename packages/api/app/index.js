@@ -11,12 +11,44 @@ const morgan = require('morgan');
 const awsServerlessExpress = require('aws-serverless-express');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 
-const { services } = require('@cumulus/aws-client');
-const { MissingRequiredEnvVar } = require('@cumulus/errors');
+const { getRequiredEnvVar } = require('@cumulus/common/env');
+const { inTestMode } = require('@cumulus/common/test-utils');
+const { secretsManager } = require('@cumulus/aws-client/services');
+const Logger = require('@cumulus/logger');
 
 const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
 
+const log = new Logger({ sender: '@api/index' });
+
+// Load Environment Variables
+// This should be done outside of the handler to minimize Secrets Manager calls.
+const initEnvVarsFunction = async () => {
+  if (inTestMode() && process.env.INIT_ENV_VARS_FUNCTION_TEST !== 'true') {
+    return undefined;
+  }
+  log.info('Initializing environment variables');
+  const apiConfigSecretId = getRequiredEnvVar('api_config_secret_id');
+  try {
+    const response = await secretsManager().getSecretValue(
+      { SecretId: apiConfigSecretId }
+    ).promise();
+    let envSecret;
+    try {
+      envSecret = JSON.parse(response.SecretString);
+    } catch (error) {
+      throw new SyntaxError(`Secret string returned for SecretId ${apiConfigSecretId} could not be parsed`, error);
+    }
+    process.env = { ...envSecret, ...process.env };
+  } catch (error) {
+    log.error(`Encountered error trying to set environment variables from secret ${apiConfigSecretId}`, error);
+    throw error;
+  }
+  return undefined;
+};
+const initEnvVars = initEnvVarsFunction();
+
+// Setup express app
 const app = express();
 app.use(awsServerlessExpressMiddleware.eventContext());
 
@@ -62,27 +94,20 @@ app.use((err, _req, res, _next) => {
 const server = awsServerlessExpress.createServer(app);
 
 const handler = async (event, context) => {
-  const { dynamoTableNamesParameterName } = process.env;
-  if (!dynamoTableNamesParameterName) {
-    throw new MissingRequiredEnvVar('dynamoTableNamesParameterName environment variable is required for API Lambda');
-  }
-
-  const ssmClient = context.ssmClient || services.systemsManager();
-  const dynamoTableNamesParameter = await ssmClient.getParameter({
-    Name: dynamoTableNamesParameterName,
-  }).promise();
-  const dynamoTableNames = JSON.parse(dynamoTableNamesParameter.Parameter.Value);
+  await initEnvVars; // Wait for environment vars to resolve from initEnvVarsFunction
+  const dynamoTableNames = JSON.parse(getRequiredEnvVar('dynamoTableNameString'));
   // Set Dynamo table names as environment variables for Lambda
   Object.keys(dynamoTableNames).forEach((tableEnvVarName) => {
     process.env[tableEnvVarName] = dynamoTableNames[tableEnvVarName];
   });
 
   // workaround to support multiValueQueryStringParameters
-  // untill this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
+  // until this is fixed: https://github.com/awslabs/aws-serverless-express/issues/214
   const modifiedEvent = {
     ...event,
     queryStringParameters: event.multiValueQueryStringParameters || event.queryStringParameters,
   };
+  log.info('Running serverlessExpress.proxy');
   // see https://github.com/vendia/serverless-express/issues/297
   return new Promise((resolve, reject) => {
     awsServerlessExpress.proxy(
@@ -95,5 +120,6 @@ const handler = async (event, context) => {
 
 module.exports = {
   app,
+  initEnvVarsFunction,
   handler,
 };

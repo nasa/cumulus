@@ -8,6 +8,7 @@ import path from 'path';
 import pMap from 'p-map';
 import pRetry from 'p-retry';
 import pWaitFor from 'p-wait-for';
+import TimeoutError from 'p-timeout';
 import pump from 'pump';
 import querystring from 'querystring';
 import { Readable, TransformOptions, PassThrough } from 'stream';
@@ -196,10 +197,19 @@ export const waitForObjectToExist = async (params: {
     timeout = 30 * 1000,
   } = params;
 
-  return await pWaitFor(
-    () => s3ObjectExists({ Bucket: bucket, Key: key }),
-    { interval, timeout }
-  );
+  try {
+    await pWaitFor(
+      () => s3ObjectExists({ Bucket: bucket, Key: key }),
+      { interval, timeout }
+    );
+  } catch (error) {
+    if (error instanceof TimeoutError) {
+      log.error(`Timed out after ${timeout}ms waiting for existence of s3://${bucket}/${key}`);
+    } else {
+      log.error(`Unexpected error while waiting for existence of s3://${bucket}/${key}: ${error}`);
+    }
+    throw error;
+  }
 };
 
 /**

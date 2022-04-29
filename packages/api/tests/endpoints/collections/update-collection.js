@@ -226,6 +226,97 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
   t.deepEqual(message.record, translatePostgresCollectionToApiCollection(actualPgCollection));
 });
 
+test.serial('PUT replaces an existing collection and correctly removes fields', async (t) => {
+  const origProcess = randomString();
+
+  const {
+    originalCollection,
+    originalPgRecord,
+  } = await createCollectionTestRecords(
+    t.context,
+    {
+      duplicateHandling: 'replace',
+      process: origProcess,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+  );
+
+  t.is(originalCollection.process, origProcess);
+  t.is(originalPgRecord.process, origProcess);
+
+  const updatedCollection = {
+    ...originalCollection,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+    duplicateHandling: 'error',
+  };
+  // remove the "process" field
+  delete updatedCollection.process;
+
+  await request(app)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedCollection)
+    .expect(200);
+
+  const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  t.deepEqual(actualPgCollection, {
+    ...originalPgRecord,
+    duplicate_handling: 'error',
+    process: null,
+    created_at: originalPgRecord.created_at,
+    updated_at: actualPgCollection.updated_at,
+  });
+});
+
+test.serial('PUT replaces an existing collection in PG with correct timestamps', async (t) => {
+  const knex = t.context.testKnex;
+  const { originalCollection } = await createCollectionTestRecords(
+    t.context,
+    {
+      duplicateHandling: 'replace',
+      process: randomString(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    }
+  );
+  const updatedCollection = {
+    ...originalCollection,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+    duplicateHandling: 'error',
+  };
+
+  await request(app)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedCollection)
+    .expect(200);
+
+  const actualPgCollection = await t.context.collectionPgModel.get(knex, {
+    name: originalCollection.name,
+    version: originalCollection.version,
+  });
+
+  const updatedEsRecord = await t.context.esCollectionClient.get(
+    constructCollectionId(originalCollection.name, originalCollection.version)
+  );
+
+  // Endpoint logic will set an updated timestamp and ignore the value from the request
+  // body, so value on actual records should be different (greater) than the value
+  // sent in the request body
+  // createdAt timestamp from original record should have been preserved
+  t.is(actualPgCollection.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
+});
+
 test.serial('PUT replaces an existing collection in all data stores with correct timestamps', async (t) => {
   const { originalCollection } = await createCollectionTestRecords(
     t.context,

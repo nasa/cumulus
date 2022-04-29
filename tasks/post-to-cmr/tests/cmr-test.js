@@ -19,7 +19,7 @@ const {
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
 const { randomString, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
-const { CMRMetaFileNotFound, CMRInternalError, ValidationError } = require('@cumulus/errors');
+const { CMRMetaFileNotFound, CMRInternalError } = require('@cumulus/errors');
 const launchpad = require('@cumulus/launchpad-auth');
 
 const { postToCMR } = require('..');
@@ -84,14 +84,23 @@ test.serial('postToCMR throws error if CMR correctly identifies the xml as inval
   const granuleId = newPayload.input.granules[0].granuleId;
   const cmrFileKey = `${granuleId}.cmr.xml`;
 
+  const errorMessage = 'Failed to ingest, statusCode: 400, statusMessage: Bad Request, CMR error message: validation error';
+  sinon.stub(cmrClient.CMR.prototype, 'ingestGranule').throws(new Error(errorMessage));
+  t.teardown(() => {
+    cmrClient.CMR.prototype.ingestGranule.restore();
+  });
+
+  await promiseS3Upload({
+    Bucket: t.context.bucket,
+    Key: cmrFileKey,
+    Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>',
+  });
   try {
-    await promiseS3Upload({
-      Bucket: t.context.bucket,
-      Key: cmrFileKey,
-      Body: '<?xml version="1.0" encoding="UTF-8"?><results></results>',
-    });
     await t.throwsAsync(postToCMR(newPayload),
-      { instanceOf: ValidationError });
+      {
+        name: 'Error',
+        message: errorMessage,
+      });
   } finally {
     cmrClient.CMR.prototype.getToken.restore();
   }

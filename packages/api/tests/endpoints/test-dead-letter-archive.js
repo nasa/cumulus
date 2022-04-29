@@ -22,7 +22,7 @@ process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
   AsyncOperationsTable: randomId('asyncOperationsTable'),
-  system_bucket: randomId('systemBucket'),
+  system_bucket: randomId('system'),
   stackName: randomId('stackName'),
   TOKEN_SECRET: randomId('tokenSecret'),
 };

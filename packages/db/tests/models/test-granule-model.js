@@ -49,6 +49,12 @@ test.beforeEach(async (t) => {
     fakeExecutionRecordFactory()
   );
   t.context.executionCumulusId = pgExecution.cumulus_id;
+
+  const [completedPgExecution] = await t.context.executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'completed' })
+  );
+  t.context.completedExecutionCumulusId = completedPgExecution.cumulus_id;
 });
 
 test.after.always(async (t) => {
@@ -348,7 +354,7 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
     knex,
     granulePgModel,
     collectionCumulusId,
-    executionCumulusId,
+    completedExecutionCumulusId,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -356,14 +362,14 @@ test('GranulePgModel.upsert() will not allow a running status to replace a compl
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, completedExecutionCumulusId);
 
   const updatedGranule = {
     ...granule,
     status: 'running',
   };
 
-  await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
+  await granulePgModel.upsert(knex, updatedGranule, completedExecutionCumulusId);
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
@@ -378,7 +384,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     executionPgModel,
     granulePgModel,
     collectionCumulusId,
-    executionCumulusId,
+    completedExecutionCumulusId,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -386,7 +392,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, completedExecutionCumulusId);
 
   const [newExecution] = await executionPgModel.create(
     t.context.knex,
@@ -410,10 +416,10 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
 
 test('GranulePgModel.upsert() will not allow a queued status to replace a completed status for same execution', async (t) => {
   const {
-    knex,
-    granulePgModel,
     collectionCumulusId,
-    executionCumulusId,
+    completedExecutionCumulusId,
+    granulePgModel,
+    knex,
   } = t.context;
 
   const granule = fakeGranuleRecordFactory({
@@ -421,14 +427,14 @@ test('GranulePgModel.upsert() will not allow a queued status to replace a comple
     collection_cumulus_id: collectionCumulusId,
   });
 
-  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, completedExecutionCumulusId);
 
   const updatedGranule = {
     ...granule,
     status: 'queued',
   };
 
-  await granulePgModel.upsert(knex, updatedGranule, executionCumulusId);
+  await granulePgModel.upsert(knex, updatedGranule, completedExecutionCumulusId);
 
   const record = await granulePgModel.get(knex, {
     granule_id: granule.granule_id,
