@@ -174,6 +174,48 @@ test('PUT updates existing provider', async (t) => {
   );
 });
 
+test('PUT updates existing provider and correctly removes fields', async (t) => {
+  const globalConnectionLimit = 10;
+  const testProvider = fakeProviderFactory({
+    protocol: 'http',
+    globalConnectionLimit,
+  });
+  const { id } = testProvider;
+  await request(app)
+    .post('/providers')
+    .send(testProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const originalPostgresProvider = await t.context.providerPgModel.get(
+    t.context.testKnex,
+    { name: id }
+  );
+
+  t.is(originalPostgresProvider.global_connection_limit, globalConnectionLimit);
+
+  const updatedProvider = {
+    ...testProvider,
+  };
+  // remove field
+  delete updatedProvider.globalConnectionLimit;
+
+  await request(app)
+    .put(`/providers/${updatedProvider.id}`)
+    .send(updatedProvider)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const actualPostgresProvider = await t.context.providerPgModel.get(
+    t.context.testKnex,
+    { name: id }
+  );
+
+  t.is(actualPostgresProvider.global_connection_limit, null);
+});
+
 test('PUT updates existing provider in all data stores with correct timestamps', async (t) => {
   const { testProvider, testProvider: { id } } = t.context;
   const expectedProvider = omit(testProvider,

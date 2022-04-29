@@ -8,6 +8,7 @@ const {
 const { s3, sqs } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
 const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const queue = require('../queue');
 
 test.beforeEach(async (t) => {
@@ -246,7 +247,7 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
     granuleId: randomId(),
     dataType: collection.name,
     version: collection.version,
-    collectionId: `${collection.name}___${collection.version}`,
+    collectionId: constructCollectionId(collection.name, collection.version),
     files: [],
   };
 

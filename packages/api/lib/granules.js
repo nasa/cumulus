@@ -7,6 +7,8 @@ const uniqWith = require('lodash/uniqWith');
 const awsClients = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
+const CmrUtils = require('@cumulus/cmrjs/cmr-utils');
+const { deconstructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   generateMoveFileParams,
@@ -25,7 +27,6 @@ const { Search } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
-const { deconstructCollectionId } = require('./utils');
 const FileUtils = require('./FileUtils');
 
 const translateGranule = async (
@@ -170,7 +171,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
     updatedFiles,
     moveGranuleErrors,
   } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, granulesModel, destinations });
-  await granulesModel.cmrUtils.reconcileCMRMetadata({
+  await CmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
     updatedFiles,
     distEndpoint,

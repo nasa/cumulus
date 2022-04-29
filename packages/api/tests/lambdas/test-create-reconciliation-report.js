@@ -47,12 +47,14 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const {
   fakeCollectionFactory,
   fakeGranuleFactoryV2,
+  fakeOrcaGranuleFactory,
 } = require('../../lib/testUtils');
 const {
   handler: unwrappedHandler, reconciliationReportForGranules, reconciliationReportForGranuleFiles,
 } = require('../../lambdas/create-reconciliation-report');
 const models = require('../../models');
 const { normalizeEvent } = require('../../lib/reconciliationReport/normalizeEvent');
+const ORCASearchCatalogQueue = require('../../lib/ORCASearchCatalogQueue');
 
 // Call normalize event on all input events before calling the handler.
 const handler = (event) => unwrappedHandler(normalizeEvent(event));
@@ -363,7 +365,7 @@ test.beforeEach(async (t) => {
 
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
-  t.context.systemBucket = randomId('systembucket');
+  t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
 
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
@@ -1556,7 +1558,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
-    collectionId: 'MOD09GQ___006',
+    collectionId: constructCollectionId('MOD09GQ', '006'),
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
@@ -1661,7 +1663,7 @@ test.serial('reconciliationReportForGranuleFiles reports discrepancy of granule 
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
-    collectionId: 'MOD09GQ___006',
+    collectionId: constructCollectionId('MOD09GQ', '006'),
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
@@ -1776,7 +1778,7 @@ test.serial('reconciliationReportForGranuleFiles does not fail if no distributio
 
   const granuleInDb = {
     granuleId: 'MOD09GQ.A4675287.SWPE5_.006.7310007729190',
-    collectionId: 'MOD09GQ___006',
+    collectionId: constructCollectionId('MOD09GQ', '006'),
     files: matchingFilesInDb.concat(privateFilesInDb).concat(filesOnlyInDb),
   };
 
@@ -1976,6 +1978,82 @@ test.serial('Creates a valid Granule Inventory report', async (t) => {
   const header = '"granuleUr","collectionId","createdAt","startDateTime","endDateTime","status","updatedAt","published","provider"';
   t.is(reportHeader, header);
   t.is(reportRows.length, 10);
+});
+
+test.serial('A valid ORCA Backup reconciliation report is generated', async (t) => {
+  const collection = fakeCollectionFactory({
+    name: 'fakeCollection',
+    version: 'v2',
+  });
+  await indexer.indexCollection(esClient, collection, esAlias);
+
+  const collectionId = constructCollectionId(collection.name, collection.version);
+
+  const matchingCumulusGran = {
+    ...fakeGranuleFactoryV2(),
+    granuleId: randomId('matchingGranId'),
+    collectionId,
+    provider: 'fakeProvider2',
+    files: [
+      {
+        bucket: 'cumulus-fake-bucket2',
+        fileName: 'fakeFileName2.hdf',
+        key: 'fakePath2/fakeFileName2.hdf',
+      },
+    ],
+  };
+
+  const matchingOrcaGran = {
+    ...fakeOrcaGranuleFactory(),
+    providerId: matchingCumulusGran.provider,
+    collectionId: matchingCumulusGran.collectionId,
+    id: matchingCumulusGran.granuleId,
+    files: [
+      {
+        name: 'fakeFileName2.hdf',
+        cumulusArchiveLocation: 'cumulus-fake-bucket2',
+        orcaArchiveLocation: 'orca-bucket2',
+        keyPath: 'fakePath2/fakeFileName2.hdf',
+      },
+    ],
+  };
+
+  await indexer.indexGranule(esClient, matchingCumulusGran, esAlias);
+
+  const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
+  searchOrcaStub.resolves({ anotherPage: false, granules: [matchingOrcaGran] });
+
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'ORCA Backup',
+    reportName: randomId('reportName'),
+    collectionId,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+
+  const reportRecord = await handler(event);
+  ORCASearchCatalogQueue.prototype.searchOrca.restore();
+  t.is(reportRecord.status, 'Generated');
+  t.is(reportRecord.name, event.reportName);
+  t.is(reportRecord.type, event.reportType);
+
+  const report = await fetchCompletedReport(reportRecord);
+  t.truthy(report.granules);
+  t.is(report.status, 'SUCCESS');
+  t.is(report.error, undefined);
+  t.is(report.reportType, 'ORCA Backup');
+  t.is(report.granules.okCount, 1);
+  t.is(report.granules.cumulusCount, 1);
+  t.is(report.granules.orcaCount, 1);
+  t.is(report.granules.okFilesCount, 1);
+  t.is(report.granules.cumulusFilesCount, 1);
+  t.is(report.granules.orcaFilesCount, 1);
+  t.is(report.granules.conflictFilesCount, 0);
+  t.is(report.granules.onlyInCumulus.length, 0);
+  t.is(report.granules.onlyInOrca.length, 0);
+  t.is(report.granules.withConflicts.length, 0);
 });
 
 test.serial('Internal Reconciliation report JSON is formatted', async (t) => {

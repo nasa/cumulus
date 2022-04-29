@@ -143,41 +143,19 @@ Create a CloudWatch Events rule
 
 * [DynamoDb](#module_DynamoDb)
     * _static_
-        * [.get](#module_DynamoDb.get) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.scan](#module_DynamoDb.scan) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.createAndWaitForDynamoDbTable(params)](#module_DynamoDb.createAndWaitForDynamoDbTable) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [.deleteAndWaitForDynamoDbTableNotExists(params)](#module_DynamoDb.deleteAndWaitForDynamoDbTableNotExists) ⇒ <code>Promise</code>
     * _inner_
+        * [~get(params)](#module_DynamoDb..get) ⇒ <code>Promise.&lt;Object&gt;</code>
         * [~parallelScan(params)](#module_DynamoDb..parallelScan) ⇒ <code>Promise</code>
-
-<a name="module_DynamoDb.get"></a>
-
-### DynamoDb.get ⇒ <code>Promise.&lt;Object&gt;</code>
-Call DynamoDb client get
-
-See [DocumentClient.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#get-property)
-for descriptions of `params` and the return data.
-
-**Kind**: static property of [<code>DynamoDb</code>](#module_DynamoDb)  
-**Throws**:
-
-- <code>RecordDoesNotExist</code> if a record cannot be found
-
-
-| Param | Type | Description |
-| --- | --- | --- |
-| params | <code>Object</code> |  |
-| params.tableName | <code>string</code> | Table name to read |
-| params.item | <code>AWS.DynamoDB.DocumentClient.Key</code> | Key identifying object to get |
-| params.client | <code>AWS.DynamoDB.DocumentClient</code> | Instance of a DynamoDb DocumentClient |
-| params.getParams | <code>Object</code> | Additional parameters for DocumentClient.get() |
 
 <a name="module_DynamoDb.scan"></a>
 
 ### DynamoDb.scan ⇒ <code>Promise.&lt;Object&gt;</code>
 Call DynamoDb client scan
 
-See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property)
+See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_lib_dynamodb.html)
 for descriptions of `params` and the return data.
 
 **Kind**: static property of [<code>DynamoDb</code>](#module_DynamoDb)  
@@ -196,7 +174,7 @@ Create a DynamoDB table and then wait for the table to exist
 
 | Param | Type | Description |
 | --- | --- | --- |
-| params | <code>Object</code> | the same params that you would pass to AWS.createTable   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#createTable-property |
+| params | <code>Object</code> | the same params that you would pass to AWS.createTable   See https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-dynamodb/classes/dynamodb.html#createtable |
 
 <a name="module_DynamoDb.deleteAndWaitForDynamoDbTableNotExists"></a>
 
@@ -207,7 +185,29 @@ Delete a DynamoDB table and then wait for the table to not exist
 
 | Param | Type | Description |
 | --- | --- | --- |
-| params | <code>Object</code> | the same params that you would pass to AWS.deleteTable   See https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#deleteTable-property |
+| params | <code>Object</code> | the same params that you would pass to AWS.deleteTable   See https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-dynamodb/classes/dynamodb.html#deletetable |
+
+<a name="module_DynamoDb..get"></a>
+
+### DynamoDb~get(params) ⇒ <code>Promise.&lt;Object&gt;</code>
+Call DynamoDb client get
+
+See [DocumentClient.get()](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_lib_dynamodb.html)
+for descriptions of `params` and the return data.
+
+**Kind**: inner method of [<code>DynamoDb</code>](#module_DynamoDb)  
+**Throws**:
+
+- <code>RecordDoesNotExist</code> if a record cannot be found
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| params | <code>Object</code> |  |
+| params.tableName | <code>string</code> | Table name to read |
+| params.item | <code>GetCommandInput.Key</code> | Key identifying object to get |
+| params.client | <code>DynamoDBDocument</code> | Instance of a DynamoDb DocumentClient |
+| params.getParams | <code>Object</code> | Additional parameters for DocumentClient.get() |
 
 <a name="module_DynamoDb..parallelScan"></a>
 
@@ -215,7 +215,7 @@ Delete a DynamoDB table and then wait for the table to not exist
 Do a parallel scan of DynamoDB table using a document client.
 
 See https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan.
-See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html#scan-property).
+See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/modules/_aws_sdk_lib_dynamodb.html).
 
 **Kind**: inner method of [<code>DynamoDb</code>](#module_DynamoDb)  
 
@@ -223,9 +223,9 @@ See [DocumentClient.scan()](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/
 | --- | --- | --- |
 | params | <code>Object</code> |  |
 | params.totalSegments | <code>number</code> | Total number of segments to divide table into for parallel scanning |
-| params.scanParams | <code>DocumentClient.ScanInput</code> | Params for the DynamoDB client scan operation   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html |
+| params.scanParams | <code>ScanInput</code> | Params for the DynamoDB client scan operation   See https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_Scan.html |
 | params.processItemsFunc | <code>function</code> | Function used to process returned items by scan |
-| [params.dynamoDbClient] | <code>DocumentClient</code> | Instance of Dynamo DB document client |
+| [params.dynamoDbClient] | <code>DynamoDBDocument</code> | Instance of Dynamo DB document client |
 | [params.retryOptions] | <code>pRetry.Options</code> | Retry options for scan operations |
 
 <a name="module_KMS"></a>
@@ -858,6 +858,7 @@ Copy an S3 object to another location in S3 using a multipart copy
 | [params.sourceObject] | <code>AWS.S3.HeadObjectOutput</code> |  | Output from https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#headObject-property |
 | [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
+| [params.chunkSize] | <code>number</code> |  | chunk size of the S3 multipart uploads |
 
 <a name="module_S3..moveObject"></a>
 
@@ -875,6 +876,7 @@ Move an S3 object to another location in S3
 | params.destinationKey | <code>string</code> |  |  |
 | [params.ACL] | <code>string</code> |  | an [S3 Canned ACL](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl) |
 | [params.copyTags] | <code>boolean</code> | <code>false</code> |  |
+| [params.chunkSize] | <code>number</code> |  | chunk size of the S3 multipart uploads |
 
 <a name="module_SNS"></a>
 

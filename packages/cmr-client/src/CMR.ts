@@ -1,15 +1,17 @@
 import get from 'lodash/get';
 import got, { Headers } from 'got';
 import publicIp from 'public-ip';
+import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
 
+import { CMRResponseBody, CMRErrorResponseBody } from './types';
 import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
 import deleteConcept from './deleteConcept';
 import getConceptMetadata from './getConcept';
 import { getIngestUrl, getTokenUrl } from './getUrl';
-import { UmmMetadata, ummVersion, validateUMMG } from './UmmUtils';
+import { UmmMetadata, ummVersion } from './UmmUtils';
 
 const log = new Logger({ sender: 'cmr-client' });
 
@@ -262,7 +264,8 @@ export class CMR {
    * @param {string} cmrRevisionId - Optional CMR Revision ID
    * @returns {Promise<Object>} to the CMR response object.
    */
-  async ingestUMMGranule(ummgMetadata: UmmMetadata, cmrRevisionId?: string): Promise<unknown> {
+  async ingestUMMGranule(ummgMetadata: UmmMetadata, cmrRevisionId?: string)
+    : Promise<CMRResponseBody | CMRErrorResponseBody> {
     const headers = this.getWriteHeaders({
       token: await this.getToken(),
       ummgVersion: ummVersion(ummgMetadata),
@@ -272,15 +275,8 @@ export class CMR {
     const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
     logDetails.granuleId = granuleId;
 
-    let response: {
-      body: {
-        errors?: unknown
-      }
-    };
     try {
-      await validateUMMG(ummgMetadata, granuleId, this.provider);
-
-      response = await got.put(
+      const response = await got.put(
         `${getIngestUrl({ provider: this.provider })}granules/${granuleId}`,
         {
           json: ummgMetadata,
@@ -288,15 +284,26 @@ export class CMR {
           headers,
         }
       );
-      if (response.body.errors) {
-        throw new Error(`Failed to ingest, CMR Errors: ${response.body.errors}`);
-      }
+      return <CMRResponseBody>response.body;
     } catch (error) {
       log.error(error, logDetails);
-      throw error;
-    }
+      const statusCode = get(error, 'response.statusCode', error.code);
+      const statusMessage = get(error, 'response.statusMessage', error.message);
+      let errorMessage = `Failed to ingest, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
 
-    return response.body;
+      const responseError = get(error, 'response.body.errors');
+      if (responseError) {
+        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
+      }
+
+      log.error(errorMessage);
+
+      if (statusCode >= 500 && statusCode < 600) {
+        throw new CMRInternalError(errorMessage);
+      }
+
+      throw new Error(errorMessage);
+    }
   }
 
   /**

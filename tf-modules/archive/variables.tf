@@ -61,6 +61,16 @@ variable "ecs_cluster_name" {
   type = string
 }
 
+variable "ecs_execution_role" {
+  description = "Object containing name and ARN of IAM role for initializing ECS tasks"
+  type = object({ name = string, arn = string})
+}
+
+variable "ecs_task_role" {
+  description = "Object containing name and ARN of IAM role for running ECS tasks"
+  type = object({ name = string, arn = string})
+}
+
 variable "elasticsearch_domain_arn" {
   type    = string
   default = null

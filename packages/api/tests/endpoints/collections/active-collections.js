@@ -25,7 +25,7 @@ const assertions = require('../../../lib/assertions');
 process.env.AccessTokensTable = randomId('accessTokensTable');
 process.env.GranulesTable = randomId('granulesTable');
 process.env.stackName = randomId('stackName');
-process.env.system_bucket = randomId('systemBucket');
+process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 
 // import the express app after setting the env variables

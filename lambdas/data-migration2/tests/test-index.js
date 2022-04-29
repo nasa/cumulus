@@ -32,6 +32,8 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { handler } = require('../dist/lambda');
 
 const testDbName = `data_migration_2_${cryptoRandomString({ length: 10 })}`;
@@ -164,7 +166,7 @@ test.serial('handler migrates executions, granules, files, and PDRs by default',
     testProvider,
   } = t.context;
 
-  const collectionId = `${testCollection.name}___${testCollection.version}`;
+  const collectionId = constructCollectionId(testCollection.name, testCollection.version);
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
@@ -251,8 +253,7 @@ test.serial('handler migrates only executions if configured', async (t) => {
     testProvider,
   } = t.context;
 
-  const collectionId = `${testCollection.name}___${testCollection.version}`;
-
+  const collectionId = constructCollectionId(testCollection.name, testCollection.version);
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
@@ -326,7 +327,7 @@ test.serial('handler migrates only granules if configured', async (t) => {
     testProvider,
   } = t.context;
 
-  const collectionId = `${testCollection.name}___${testCollection.version}`;
+  const collectionId = constructCollectionId(testCollection.name, testCollection.version);
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });
@@ -399,7 +400,7 @@ test.serial('handler migrates only PDRs if configured', async (t) => {
     testProvider,
   } = t.context;
 
-  const collectionId = `${testCollection.name}___${testCollection.version}`;
+  const collectionId = constructCollectionId(testCollection.name, testCollection.version);
   const fakeExecution = fakeExecutionFactoryV2({
     parentArn: undefined,
   });

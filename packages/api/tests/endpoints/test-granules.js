@@ -105,7 +105,7 @@ process.env.AsyncOperationsTable = randomId('async');
 process.env.ExecutionsTable = randomId('executions');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('system-bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 process.env.backgroundQueueUrl = randomId('backgroundQueueUrl');
 
@@ -1218,7 +1218,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
-  const fakeBucket = 'TotallyNotARealBucket';
+  const fakeBucket = 'not-a-real-bucket';
 
   await runTestUsingBuckets(
     [secondBucket, thirdBucket],
@@ -1824,7 +1824,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
     executionUrl,
     knex,
   } = t.context;
-
+  const timestamp = Date.now();
   const {
     newPgGranule,
     newDynamoGranule,
@@ -1852,6 +1852,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
     ...newDynamoGranule,
     status: 'completed',
     queryFields: newQueryFields,
+    timestamp,
   };
 
   await request(app)
@@ -1867,6 +1868,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
   t.deepEqual(actualGranule, {
     ...newDynamoGranule,
     status: 'completed',
+    timestamp,
     queryFields: newQueryFields,
     updatedAt: actualGranule.updatedAt,
     error: {},
@@ -1882,6 +1884,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
 
   t.deepEqual(actualPgGranule, {
     ...newPgGranule,
+    timestamp: new Date(timestamp),
     status: 'completed',
     query_fields: newQueryFields,
     updated_at: actualPgGranule.updated_at,

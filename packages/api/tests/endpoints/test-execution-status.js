@@ -237,6 +237,7 @@ test.before(async (t) => {
     arn: expiredExecutionArn,
     original_payload: originalPayload,
     final_payload: finalPayload,
+    duration: Math.floor(Math.random() * 100),
   });
   const executionPgModel = new ExecutionPgModel();
   const [createdExpiredExecutionRecord] = await executionPgModel.create(
@@ -469,7 +470,15 @@ test('when execution is no longer in step function API, returns status from data
     executionStatus.execution.output,
     JSON.stringify(t.context.fakeExecutionRecord.final_payload)
   );
-
+  t.is(
+    executionStatus.execution.startDate,
+    t.context.fakeExecutionRecord.created_at.toISOString()
+  );
+  t.is(
+    executionStatus.execution.stopDate,
+    new Date(t.context.fakeExecutionRecord.created_at.getTime()
+      + t.context.fakeExecutionRecord.duration * 1000).toISOString()
+  );
   t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
 });
 

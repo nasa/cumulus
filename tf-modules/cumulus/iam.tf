@@ -156,3 +156,40 @@ resource "aws_iam_role_policy" "lambda_processing" {
   role   = aws_iam_role.lambda_processing.id
   policy = data.aws_iam_policy_document.lambda_processing_policy.json
 }
+
+# ECS task execution role
+
+data "aws_iam_policy_document" "ecs_execution_assume_role_policy" {
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com", "ec2.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "ecs_execution_role" {
+  name                 = "${var.prefix}-ecs-execution-role"
+  assume_role_policy   = data.aws_iam_policy_document.ecs_execution_assume_role_policy.json
+  permissions_boundary = var.permissions_boundary_arn
+}
+
+# ECS task role
+
+data "aws_iam_policy_document" "ecs_task_assume_role_policy" {
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role" "ecs_task_role" {
+  name                 = "${var.prefix}-ecs-task-role"
+  assume_role_policy   = data.aws_iam_policy_document.ecs_task_assume_role_policy.json
+  permissions_boundary = var.permissions_boundary_arn
+}
+

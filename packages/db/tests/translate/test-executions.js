@@ -2,6 +2,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { removeNilProperties } = require('@cumulus/common/util');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   translateApiExecutionToPostgresExecution,
   translatePostgresExecutionToApiExecution,
@@ -38,7 +39,7 @@ test('translatePostgresExecutionToApiExecution with no FKs does not call externa
 });
 
 test('translatePostgresExecutionToApiExecution translates a Postgres execution to an API record', async (t) => {
-  const collectionId = 'name___version';
+  const collectionId = constructCollectionId('name', 'version');
 
   const fakeCollectionPgModel = {
     get: () => Promise.resolve({ name: 'name', version: 'version' }),
@@ -124,7 +125,7 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     finalPayload: { testOutput: 'finalPayloadValue' },
     duration: 2,
     cumulusVersion: '1.0.0',
-    collectionId: 'name___version',
+    collectionId: constructCollectionId('name', 'version'),
     asyncOperationId: '1234',
     parentArn: 'arn:aws:lambda:us-east-1:5678:5678',
   };
