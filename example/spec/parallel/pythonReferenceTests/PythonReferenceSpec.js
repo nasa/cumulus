@@ -1,6 +1,7 @@
 'use strict';
 
 const { ActivityStep, LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig } = require('../../helpers/testUtils');
@@ -34,6 +35,10 @@ describe('The Python Reference workflow', () => {
     );
     lambdaStep = new LambdaStep();
     activityStep = new ActivityStep();
+  });
+
+  afterAll(async () => {
+    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
   });
 
   it('executes successfully', () => {
