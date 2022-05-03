@@ -23,6 +23,7 @@
     "int-test": "../node_modules/.bin/jasmine && npm run parallel-tests",
     "load-test": "../node_modules/.bin/jasmine ./spec/loadTest/runScaledtest.js",
     "package": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm run package); done",
+    "package-deployment": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm install && npm run package); done",
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "redeploy-test": "../node_modules/.bin/jasmine spec/standalone/redeployment/*.js",
     "test": "npm run test:ava && for x in lambdas/*; do cd $x && npm test && cd -; done",
