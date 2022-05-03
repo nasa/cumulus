@@ -21,7 +21,7 @@ class AsyncOperationPgModel extends BasePgModel<PostgresAsyncOperation, Postgres
       .insert(asyncOperation)
       .onConflict('id')
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
   }
 }
 

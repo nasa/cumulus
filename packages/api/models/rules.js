@@ -67,16 +67,6 @@ class Rule extends Manager {
     return r.RuleArn;
   }
 
-  async deleteRules() {
-    const rules = await this.scan();
-    const deletePromises = rules.Items.map((r) => this.delete(r));
-    return await Promise.all(deletePromises);
-  }
-
-  buildCloudWatchRuleName(item) {
-    return `${process.env.stackName}-custom-${item.name}`;
-  }
-
   async delete(item) {
     switch (item.rule.type) {
     case 'scheduled': {
