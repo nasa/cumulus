@@ -20,8 +20,7 @@ const { Search } = require('@cumulus/es-client/search');
 const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 const { removeNilProperties } = require('@cumulus/common/util');
 
-const Provider = require('../models/providers');
-const { AssociatedRulesError, isBadRequestError } = require('../lib/errors');
+const { isBadRequestError } = require('../lib/errors');
 const log = new Logger({ sender: '@cumulus/api/providers' });
 
 /**
@@ -74,7 +73,6 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    providerModel = new Provider(),
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -87,26 +85,20 @@ async function post(req, res) {
 
   const id = apiProvider.id;
 
+  let postgresProvider;
   try {
     let record;
     if (!apiProvider.id) {
       throw new ValidationError('Provider records require an id');
     }
-
-    const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
+    postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
     validateProviderHost(apiProvider.host);
 
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await providerPgModel.create(trx, postgresProvider);
-        record = await providerModel.create(apiProvider);
-        await indexProvider(esClient, record, process.env.ES_INDEX);
-      });
-    } catch (innerError) {
-      // Clean up DynamoDB record in case of any failure
-      await providerModel.delete(apiProvider);
-      throw innerError;
-    }
+    await createRejectableTransaction(knex, async (trx) => {
+      const [updatedPostgresProvider] = await providerPgModel.create(trx, postgresProvider, '*');
+      record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
+      await indexProvider(esClient, record, process.env.ES_INDEX);
+    });
     return res.send({ record, message: 'Record saved' });
   } catch (error) {
     if (isCollisionError(error)) {
@@ -116,6 +108,8 @@ async function post(req, res) {
       return res.boom.badRequest(error.message);
     }
     log.error('Error occurred while trying to create provider:', error);
+    log.error(`Error occurred with user input provider: ${JSON.stringify(apiProvider)}`);
+    log.error(`Error occurred with translated postgres provider: ${JSON.stringify(postgresProvider)}`);
     return res.boom.badImplementation(error.message);
   }
 }
@@ -129,7 +123,6 @@ async function post(req, res) {
  */
 async function put(req, res) {
   const {
-    providerModel = new Provider(),
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -145,11 +138,10 @@ async function put(req, res) {
     );
   }
 
-  let oldProvider;
-  let oldPgProvider;
+  let existingPgProvider;
 
   try {
-    oldPgProvider = await providerPgModel.get(knex, { name: id });
+    existingPgProvider = await providerPgModel.get(knex, { name: id });
   } catch (error) {
     if (error.name !== 'RecordDoesNotExist') {
       throw error;
@@ -159,34 +151,17 @@ async function put(req, res) {
     );
   }
 
-  try {
-    oldProvider = await providerModel.get({ id });
-  } catch (error) {
-    if (error.name !== 'RecordDoesNotExist') {
-      throw error;
-    }
-    log.warn(`Dynamo record for Provider ${id} not found, proceeding to update with PostgreSQL record alone`);
-  }
-
   apiProvider.updatedAt = Date.now();
-  apiProvider.createdAt = oldPgProvider.created_at.getTime();
+  apiProvider.createdAt = existingPgProvider.created_at.getTime();
 
   let record;
   const postgresProvider = await translateApiProviderToPostgresProvider(apiProvider);
 
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await providerPgModel.upsert(trx, postgresProvider);
-      record = await providerModel.create(apiProvider);
-      await indexProvider(esClient, record, process.env.ES_INDEX);
-    });
-  } catch (innerError) {
-    // Revert Dynamo record update if any write fails
-    if (oldProvider) {
-      await providerModel.create(oldProvider);
-    }
-    throw innerError;
-  }
+  await createRejectableTransaction(knex, async (trx) => {
+    const [updatedPostgresProvider] = await providerPgModel.upsert(trx, postgresProvider);
+    record = translatePostgresProviderToApiProvider(updatedPostgresProvider);
+    await indexProvider(esClient, record, process.env.ES_INDEX);
+  });
 
   return res.send(record);
 }
@@ -200,7 +175,6 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const {
-    providerModel = new Provider(),
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -213,7 +187,6 @@ async function del(req, res) {
     process.env.ES_INDEX
   );
 
-  let existingProvider;
   try {
     await providerPgModel.get(knex, { name: id });
   } catch (error) {
@@ -229,39 +202,20 @@ async function del(req, res) {
   }
 
   try {
-    // Save DynamoDB provider in case delete fails and need to recreate
-    existingProvider = await providerModel.get({ id });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await providerPgModel.delete(trx, { name: id });
-        await providerModel.delete({ id });
-        await deleteProvider({
-          esClient,
-          id,
-          index: process.env.ES_INDEX,
-          ignore: [404],
-        });
+    await createRejectableTransaction(knex, async (trx) => {
+      await providerPgModel.delete(trx, { name: id });
+      await deleteProvider({
+        esClient,
+        id,
+        index: process.env.ES_INDEX,
+        ignore: [404],
       });
-    } catch (innerError) {
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (existingProvider) {
-        await providerModel.create(existingProvider);
-      }
-      throw innerError;
-    }
+    });
+    log.debug(`deleted provider ${id}`);
     return res.send({ message: 'Record deleted' });
   } catch (error) {
-    if (error instanceof AssociatedRulesError || error.constraint === 'rules_provider_cumulus_id_foreign') {
-      const messageDetail = error.rules || [error.detail];
-      const message = `Cannot delete provider with associated rules: ${messageDetail.join(', ')}`;
+    if (error.constraint === 'rules_provider_cumulus_id_foreign') {
+      const message = `Cannot delete provider with associated rules: ${error.detail}`;
       return res.boom.conflict(message);
     }
     if (error.constraint === 'granules_provider_cumulus_id_foreign') {

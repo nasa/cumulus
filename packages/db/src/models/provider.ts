@@ -20,7 +20,7 @@ class ProviderPgModel extends BasePgModel<PostgresProvider, PostgresProviderReco
       .insert(provider)
       .onConflict('name')
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
   }
 }
 
