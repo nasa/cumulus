@@ -26,7 +26,6 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const {
-  MissingRequiredEnvVarError,
   UnmetRequirementsError,
 } = require('@cumulus/errors');
 const {

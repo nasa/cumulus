@@ -84,7 +84,7 @@ test.after.always(async (t) => {
   });
 });
 
-test.only('put request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
+test.serial('put request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
   const {
     granuleId,
   } = t.context;
