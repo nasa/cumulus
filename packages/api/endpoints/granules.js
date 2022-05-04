@@ -521,7 +521,7 @@ async function bulkOperations(req, res) {
   }
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  // TODO remove this env variable setting when we update the async model
+  // TODO -- Phase 3 -- remove this env variable setting when we update the async model
   const tableName = process.env.AsyncOperationsTable;
 
   let description;
