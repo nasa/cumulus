@@ -785,7 +785,7 @@ test.serial('writeGranulesFromMessage() does not write to PostgreSQL/Elasticsear
   t.is(Messages, undefined);
 });
 
-test.serial('writeGranulesFromMessage() does not persist records to DynamoDB/PostgreSQL/Elasticsearch/SNS if Elasticsearch write fails', async (t) => {
+test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/Elasticsearch/SNS if Elasticsearch write fails', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -1259,14 +1259,13 @@ test.serial('writeGranuleFromApi() throws with granule with an execution url tha
   );
 });
 
-test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same input time values.', async (t) => {
+test.serial('writeGranuleFromApi() saves granule records to Postgres and ElasticSearch with same input time values.', async (t) => {
   const {
     esClient,
     knex,
     collectionCumulusId,
     granule,
     granuleId,
-    granuleModel,
     granulePgModel,
   } = t.context;
 
@@ -1278,31 +1277,25 @@ test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and
 
   t.is(result, `Wrote Granule ${granuleId}`);
 
-  const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
   const esRecord = await t.context.esGranulesClient.get(granuleId);
 
-  t.truthy(dynamoRecord.timestamp);
-  t.is(postgresRecord.created_at.getTime(), dynamoRecord.createdAt);
-  t.is(postgresRecord.updated_at.getTime(), dynamoRecord.updatedAt);
-  t.is(postgresRecord.timestamp.getTime(), dynamoRecord.timestamp);
-
+  t.truthy(esRecord.timestamp);
   t.is(postgresRecord.created_at.getTime(), esRecord.createdAt);
   t.is(postgresRecord.updated_at.getTime(), esRecord.updatedAt);
   t.is(postgresRecord.timestamp.getTime(), esRecord.timestamp);
 });
 
-test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same default time values.', async (t) => {
+test.serial('writeGranuleFromApi() saves granule records to Postgres and ElasticSearch with same default time values.', async (t) => {
   const {
     esClient,
     knex,
     collectionCumulusId,
     granule,
     granuleId,
-    granuleModel,
     granulePgModel,
   } = t.context;
 
@@ -1314,22 +1307,17 @@ test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and
 
   t.is(result, `Wrote Granule ${granuleId}`);
 
-  const dynamoRecord = await granuleModel.get({ granuleId });
   const postgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
   const esRecord = await t.context.esGranulesClient.get(granuleId);
 
-  t.truthy(dynamoRecord.timestamp);
-  t.is(postgresRecord.created_at.getTime(), dynamoRecord.createdAt);
-  t.is(postgresRecord.updated_at.getTime(), dynamoRecord.updatedAt);
-  t.is(postgresRecord.timestamp.getTime(), dynamoRecord.timestamp);
-  t.is(postgresRecord.timestamp.getTime(), dynamoRecord.updatedAt);
-
+  t.truthy(esRecord.timestamp);
   t.is(postgresRecord.created_at.getTime(), esRecord.createdAt);
   t.is(postgresRecord.updated_at.getTime(), esRecord.updatedAt);
   t.is(postgresRecord.timestamp.getTime(), esRecord.timestamp);
+  t.is(postgresRecord.timestamp.getTime(), esRecord.updatedAt);
 });
 
 test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres write is enabled and workflow status is "completed"', async (t) => {
