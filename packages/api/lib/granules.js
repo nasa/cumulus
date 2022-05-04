@@ -304,7 +304,6 @@ async function getGranulesForPayload(payload) {
   return uniqueGranules;
 }
 
-// TODO move units
 async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFunctions) {
   let executionDescription;
   try {

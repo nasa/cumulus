@@ -377,6 +377,7 @@ class Granule extends Manager {
     return response;
   }
 
+  // This logic has been moved to api/lib/granule.js, pending removal when the model gets removed P3
   async describeGranuleExecution(executionArn) {
     let executionDescription;
     try {

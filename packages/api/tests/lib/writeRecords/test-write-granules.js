@@ -861,7 +861,6 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
-// TODO we explicitly added schema validation, is this approach a good one
 test.serial('_writeGranules attempts to mark granule as failed if a SchemaValidationException occurs when a granule is in a final state', async (t) => {
   const {
     collectionCumulusId,
@@ -886,7 +885,7 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
 
   const originalError = { Error: 'Original Error', Cause: { Error: 'Original Error Cause' } };
   // second write
-  // Invalid granule schema to prevent granule write to dynamo from succeeding
+  // Invalid granule file schema to prevent granule write from succeeding
   cumulusMessage.meta.status = 'completed';
   cumulusMessage.exception = originalError;
   cumulusMessage.payload.granules[0].files = [

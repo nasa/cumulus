@@ -242,7 +242,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
 };
 
 /**
- * Update granule record status in DynamoDB, PostgreSQL, Elasticsearch.
+ * Update granule record status in PostgreSQL and  Elasticsearch.
  * Publish SNS event for updated granule.
  *
  * @param {Object}  params
@@ -293,8 +293,6 @@ const _updateGranule = async ({
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
       log.error(`Write to Elasticsearch failed, rolling postgres write for ${granuleId}`, writeError);
-      // On error, recreate the DynamoDB record to revert it back to original
-      // status to ensure that all systems stay in sync
       throw writeError;
     }
   });
@@ -374,8 +372,6 @@ const updateGranuleStatusToFailed = async (params) => {
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
- * @param {Object} [params.granule.files] - File objects
- * @param {Object} params.granule.workflowError - Error from the workflow
  * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
@@ -464,7 +460,7 @@ const _writeGranuleRecords = async (params) => {
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      // Validate API schema
+      // Validate API schema using lib method
       recordIsValid(apiGranuleRecord, granuleSchema, false);
       pgGranule = await _writePostgresGranuleViaTransaction({
         granuleRecord: postgresGranuleRecord,
@@ -491,7 +487,6 @@ const _writeGranuleRecords = async (params) => {
     // If granule is in a final state and the error thrown
     // is a SchemaValidationError then update the granule
     // status to failed
-    // TODO this needs updated, because we're no longer validating the schema.   Should we be?  Yes.
     if (isStatusFinalState(apiGranuleRecord.status)
       && thrownError.name === 'SchemaValidationError') {
       const originalError = apiGranuleRecord.error;
@@ -501,7 +496,7 @@ const _writeGranuleRecords = async (params) => {
         errors.push(originalError);
       }
       const errorObject = {
-        Error: 'Failed writing dynamoGranule due to SchemaValdationError.',
+        Error: 'Failed writing granule record due to SchemaValidationError.',
         Cause: thrownError,
       };
       errors.push(errorObject);
@@ -537,13 +532,12 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
 };
 
 /**
- * Write a granule record to DynamoDB and PostgreSQL
+ * Write a granule record to PostgreSQL and publish SNS topic updates
  *
  * @param {Object}          params
  * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
  * @param {number}          params.executionCumulusId - Execution ID the granule was written from
  * @param {Object}          params.esClient - Elasticsearch client
- * @param {Object}          params.granuleModel - Instance of DynamoDB granule model
  * @param {Object}          params.granulePgModel - @cumulus/db compatible granule module instance
  * @param {Knex}            params.knex - Knex object
  * @param {Object}          params.postgresGranuleRecord - PostgreSQL granule record to write
@@ -551,7 +545,7 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
  * @param {string}          params.snsEventType - SNS Event Type
  * returns {Promise}
  */
-const _writeGranule = async ({ // TODO write-granules
+const _writeGranule = async ({
   postgresGranuleRecord,
   apiGranuleRecord,
   esClient,
@@ -586,12 +580,12 @@ const _writeGranule = async ({ // TODO write-granules
 };
 
 /**
-* Method to facilitate parital granule record updates
+* Method to facilitate partial granule record updates
 * @summary In cases where a full API record is not passed, but partial/tangential updates to granule
 *          records are called for, updates to files records are not required and pre-write
-*          calculation in methods like write/update GranulesFromApi result in unneded
-*          evaluation/database writes /etc. This method updates the postgres/Dynamo/ES datastore and
-*          publishes the SNS update event without incurring unneded overhead.
+*          calculation in methods like write/update GranulesFromApi result in unneeded
+*          evaluation/database writes /etc. This method updates the postgres/ES datastore and
+*          publishes the SNS update event without incurring unneeded overhead.
 * @param {Object}          params
 * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
 * @param {number}          params.executionCumulusId - Execution ID the granule was written from
@@ -616,7 +610,7 @@ const writeGranuleRecordAndPublishSns = async ({
 }) => {
   const pgGranule = await _writeGranuleRecords({
     postgresGranuleRecord,
-    apiGranuleRecord,
+    apiGranuleRecord: omit(apiGranuleRecord, 'files'),
     knex,
     esClient,
     granuleModel,
@@ -809,7 +803,6 @@ const writeGranulesFromMessage = async ({
 
   const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrlFromArn(executionArn);
-  // TODO need to get execution arn in describeGranuleExecution
   const executionDescription = await describeGranuleExecution(executionArn, stepFunctionUtils);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
   const provider = getMessageProvider(cumulusMessage);
@@ -875,7 +868,7 @@ const writeGranulesFromMessage = async ({
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to Dynamo', aggregateError);
+    log.error('Failed writing some granules to datastore', aggregateError);
     throw aggregateError;
   }
   return results;
