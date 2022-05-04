@@ -102,8 +102,8 @@ migration notes from prior releases:
 ##### **After deploying the `data-persistence` module, but before deploying the main `cumulus` module**
 
 - Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
-out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
-[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+out of sync with records in DynamoDB. In order to bring the records into sync, re-deploy and re-run the
+[`data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
 `{"forceRulesMigration": true}`:
 
 ```shell
