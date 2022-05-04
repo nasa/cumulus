@@ -1078,10 +1078,10 @@ test('setOrDisableAcl returns undefined if config.ACL is set to disabled', async
   t.deepEqual(result, undefined);
 });
 
-test('setOrDisableAcl returns ACL if config.ACL is set', async (t) => {
+test('setOrDisableAcl defaults ACL to private if config.ACL is set and not set to disabled', async (t) => {
   const ACL = 'authenticated-read';
 
   const result = await setOrDisableAcl(ACL);
 
-  t.deepEqual(result, ACL);
+  t.deepEqual(result, 'private');
 });

@@ -43,8 +43,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates CI to selectively bootstrap Core modules in the cleanup job phase
 - **CUMULUS-2932**
   - Updates `SyncGranule` task to include `setOrDisableAcl` function that uses
-    the configuration ACL parameter to set ACL or disable ACL. Defaults to
-    private.
+    the configuration ACL parameter to set ACL to private by default or disable ACL.
   - Updates `@cumulus/sync-granule` `download()` function to take in ACL parameter
   - Updates `@cumulus/ingest` `proceed()` function to take in ACL parameter
   - Updates `@cumulus/ingest` `addLock()` function to take in an optional ACL parameter

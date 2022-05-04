@@ -92,9 +92,6 @@ function setOrDisableAcl(acl) {
   if (acl === 'disabled') {
     return undefined;
   }
-  if (acl) {
-    return acl;
-  }
   return 'private';
 }
 
