@@ -10,10 +10,7 @@ const {
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const {
-  randomId,
-  randomString,
-} = require('@cumulus/common/test-utils');
+const { randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -48,11 +45,12 @@ const { put } = require('../../../endpoints/collections');
 
 const { buildFakeExpressResponse } = require('../utils');
 
-process.env.AccessTokensTable = randomId('AccessTokens');
-process.env.CollectionsTable = randomId('Collections');
-process.env.stackName = randomId('stackName');
-process.env.system_bucket = randomId('systemBucket');
-process.env.TOKEN_SECRET = randomId('token');
+process.env.AccessTokensTable = randomString();
+process.env.CollectionsTable = randomString();
+process.env.RulesTable = randomString();
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
