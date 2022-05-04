@@ -227,7 +227,11 @@ $ aws dynamodb create-table \
 
 ## Configure the PostgreSQL database
 
-Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](PostgreSQL_database_deployment) utilizing Aurora Serverless. However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
+Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS. We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html). For further guidance about what type of RDS database to use, please [see the guide on choosing and configuring your RDS database](./choosing_configuring_rds.md).
+
+Cumulus provides a default [template and RDS cluster module](PostgreSQL_database_deployment) utilizing Aurora Serverless.
+
+However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
 
 - Appropriate testing/evaluation is given to ensure the database capacity will scale and the database deployment will allow access to Cumulus's internal components.   Core provides for security-group oriented permissions management via the `rds_security_group` configuration parameter.
 - The database is configured such that its endpoint is accessible from the VPC and subnets configured for the Core deployment.
@@ -253,7 +257,7 @@ This secret should provide access to a PostgreSQL database provisioned on the cl
 
 To configure Cumulus you will need:
 
-- The AWS Secrets Manager ARN for the *user* Core will write with (e.g. `arn:aws:secretsmanager:AWS-REGION:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA` ) for use in configuring `rds_user_access_secret_arn`.
+- The AWS Secrets Manager ARN for the _user_ Core will write with (e.g. `arn:aws:secretsmanager:AWS-REGION:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA` ) for use in configuring `rds_user_access_secret_arn`.
 - (Optionally) The security group ID that provides access to the cluster to configure `rds_security_group`.
 
 ---

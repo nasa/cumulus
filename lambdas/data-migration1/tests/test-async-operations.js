@@ -234,7 +234,7 @@ test.serial('migrateAsyncOperations processes all non-failing records', async (t
     dynamodbDocClient().put({
       TableName: process.env.AsyncOperationsTable,
       Item: fakeAsyncOp1,
-    }).promise(),
+    }),
     asyncOperationsModel.create(fakeAsyncOp2),
   ]);
   t.teardown(() => Promise.all([

@@ -112,13 +112,15 @@ test.after.always(async (t) => {
 });
 
 test.serial('Updating rule triggers for a kinesis type rule updates event mappings', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn2 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2')}`;
   const { testKnex } = t.context;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
     rule: {
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
   });
   // create rule trigger
@@ -142,7 +144,7 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
     ...createdRule,
     rule: {
       ...createdRule.rule,
-      value: 'new-value',
+      value: kinesisArn2,
     },
   };
   const updatedRule = await updateRuleTrigger(kinesisRule, updatedKinesisRule, testKnex);
@@ -163,13 +165,15 @@ test.serial('Updating rule triggers for a kinesis type rule updates event mappin
 });
 
 test.serial('Updating a kinesis type rule value updates event mappings', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+  const kinesisArn2 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2')}`;
   const { testKnex } = t.context;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
     rule: {
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
   });
   // create rule
@@ -180,7 +184,7 @@ test.serial('Updating a kinesis type rule value updates event mappings', async (
     ...createdRule,
     rule: {
       ...createdRule.rule,
-      value: 'new-value',
+      value: kinesisArn2,
     },
   };
   delete updatedKinesisRule.name;
@@ -205,13 +209,14 @@ test.serial('Updating a kinesis type rule value updates event mappings', async (
 });
 
 test.serial('Updating a kinesis type rule to disabled does not change event source mappings', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const { testKnex } = t.context;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
     rule: {
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
   });
   // create rule trigger
@@ -247,13 +252,14 @@ test.serial('Updating a kinesis type rule to disabled does not change event sour
 });
 
 test.serial('Updating a kinesis type rule workflow does not affect value or event source mappings', async (t) => {
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
   const { testKnex } = t.context;
   const kinesisRule = fakeRuleFactoryV2({
     workflow,
     state: 'ENABLED',
     rule: {
       type: 'kinesis',
-      value: randomString(),
+      value: kinesisArn,
     },
   });
   // create rule trigger

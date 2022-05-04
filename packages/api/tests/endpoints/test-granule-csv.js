@@ -27,7 +27,7 @@ const { app } = require('../../app');
 process.env.AccessTokensTable = randomId('token');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
-process.env.system_bucket = randomId('systembucket');
+process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
 const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();

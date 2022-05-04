@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-publish.sh
 

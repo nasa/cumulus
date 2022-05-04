@@ -2,7 +2,7 @@ import AWS from 'aws-sdk';
 import { knex, Knex } from 'knex';
 import Logger from '@cumulus/logger';
 
-import { getKnexConfig } from './config';
+import { getKnexConfig, isKnexDebugEnabled } from './config';
 
 const log = new Logger({ sender: '@cumulus/db/connection' });
 
@@ -49,15 +49,36 @@ export const getKnexClient = async ({
   secretsManager?: AWS.SecretsManager,
   knexLogger?: Logger
 } = {}): Promise<Knex> => {
+  if (isKnexDebugEnabled(env)) {
+    knexLogger.info('Initializing connection pool...');
+  }
   const knexConfig = await getKnexConfig({ env, secretsManager });
   const knexClient = knex(knexConfig);
-  //@ts-ignore
-  // context is an internal object that isn't typed
-  // this is needed to force tarn to log per-retry failures
-  // and allow propagateCreateError to be set `false`
-  knexClient.context.client.pool.on('createFail', (_, error) => {
-    knexLogger.warn('knex failed on attempted connection', error);
-    throw error;
-  });
+  if (isKnexDebugEnabled(env)) {
+    //@ts-ignore
+    // context is an internal object that isn't typed
+    // this is needed to force tarn to log per-retry failures
+    // and allow propagateCreateError to be set `false`
+    knexClient.context.client.pool.on('createFail', (_, error) => {
+      knexLogger.warn('knex failed on attempted connection', error);
+      throw error;
+    });
+    //@ts-ignore
+    knexClient.context.client.pool.on('createSuccess', (_, resource) => {
+      knexLogger.info(`added connection to pool: ${JSON.stringify(resource)}`);
+    });
+    //@ts-ignore
+    knexClient.context.client.pool.on('acquireSuccess', (_, resource) => {
+      knexLogger.info(`acquired connection from pool: ${JSON.stringify(resource)}`);
+    });
+    //@ts-ignore
+    knexClient.context.client.pool.on('release', (resource) => {
+      knexLogger.info(`released connection from pool: ${JSON.stringify(resource)}`);
+    });
+    //@ts-ignore
+    knexClient.context.client.pool.on('poolDestroySuccess', () => {
+      knexLogger.info('pool is destroyed');
+    });
+  }
   return knexClient;
 };

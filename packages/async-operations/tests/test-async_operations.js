@@ -412,7 +412,7 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
   t.is(results.taskArn, taskArn);
 });
 
-test.serial.only('The startAsyncOperation method throws error if callerLambdaName parameter is missing', async (t) => {
+test.serial('The startAsyncOperation method throws error if callerLambdaName parameter is missing', async (t) => {
   const stubbedAsyncOperationsModel = class {
     create = sinon.stub();
   };
