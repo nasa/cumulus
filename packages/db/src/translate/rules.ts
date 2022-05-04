@@ -1,6 +1,6 @@
 import { Knex } from 'knex';
-import { Rule, RuleRecord } from '@cumulus/types/api/rules';
 import { removeNilProperties } from '@cumulus/common/util';
+import { RuleRecord, Rule } from '@cumulus/types/api/rules';
 
 import { CollectionPgModel } from '../models/collection';
 import { ProviderPgModel } from '../models/provider';

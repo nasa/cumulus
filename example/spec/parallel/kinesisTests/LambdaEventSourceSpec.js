@@ -1,12 +1,12 @@
 'use strict';
 
 const replace = require('lodash/replace');
+
+const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
-const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { updateRule } = require('@cumulus/api-client/rules');
+const { randomString } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
-
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
-
 const {
   addRulesWithPostfix,
   addProviders,
@@ -17,10 +17,9 @@ const {
   deleteRules,
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
-const { randomString } = require('@cumulus/common/test-utils');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
-const { updateRule } = require('@cumulus/api-client/rules');
-const { deleteExecution } = require('@cumulus/api-client/executions');
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
 const {
   loadConfig,
@@ -126,10 +125,14 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
       await tryCatchExit(cleanUp, async () => {
         // Disable rule
         console.log(`Disabling rule ${rules[1].name}`);
+
         await updateRule({
           prefix: testConfig.stackName,
           ruleName: rules[1].name,
-          updateParams: { ...rules[1], state: 'DISABLED' },
+          updateParams: {
+            ...rules[1],
+            state: 'DISABLED',
+          },
         });
 
         const record = {
@@ -152,7 +155,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
           recordIdentifier,
           workflowArn,
           maxWaitForSFExistSecs,
-          2
+          1
         );
       });
     });

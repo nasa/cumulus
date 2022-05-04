@@ -55,7 +55,7 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.bucketsToCleanup = [];
   t.context.stackName = randomId('stack');
-  t.context.systemBucket = randomId('systembucket');
+  t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
   await s3()
     .createBucket({ Bucket: t.context.systemBucket })

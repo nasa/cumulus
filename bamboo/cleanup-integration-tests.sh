@@ -2,6 +2,7 @@
 # shellcheck disable=SC1091
 
 set -ex
+. ./bamboo/use-working-directory.sh
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
@@ -17,7 +18,8 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull
 fi
 npm install
 npm --version
-## Bootstrapping is only required if updates to dynamodbDocClient relevant to lock-stack.js are made
-## Use the cached directory otherwise.
-# (npm run bootstrap-no-build || true) && npm run bootstrap-no-build && cd example && node ./scripts/lock-stack.js lock $GIT_SHA $DEPLOYMENT false
-cd /cumulus/example && node ./scripts/lock-stack.js lock "$GIT_SHA" "$DEPLOYMENT" false
+
+## This is needed to ensure lock-stack has the expected dependencies
+npx lerna bootstrap --scope @cumulus/cumulus-integration-tests --scope @cumulus/aws-client --scope @cumulus/common --scope @cumulus/errors --scope @cumulus/logger
+
+cd example && node ./scripts/lock-stack.js lock "$GIT_SHA" "$DEPLOYMENT" false

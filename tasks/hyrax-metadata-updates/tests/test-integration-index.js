@@ -290,6 +290,8 @@ test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
+
+  t.true(nock.isDone());
 });
 
 test.serial('Test updating ECHO10 metadata file in S3 with no etags config', async (t) => {
@@ -500,6 +502,8 @@ test.serial('Test updating UMM-G metadata file in S3', async (t) => {
   } finally {
     await recursivelyDeleteS3Bucket(t.context.stagingBucket);
   }
+
+  t.true(nock.isDone());
 });
 
 test.serial('Test updating UMM-G metadata file in S3 with no etags config', async (t) => {
@@ -618,6 +622,56 @@ test.serial('Test validation error when updating ECHO10 metadata file in S3', as
   });
 
   await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+});
+
+test.serial('hyraxMetadataUpdate skips ECHO10 metadata validation when skipMetadataValidation is set to true', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml')
+    .reply(400);
+  await setupS3(t, false);
+
+  const e = {
+    config: {
+      ...event.config,
+      skipMetadataValidation: true,
+    },
+    input: t.context.payload.input,
+  };
+
+  try {
+    const output = await hyraxMetadataUpdate(e);
+    await validateOutput(t, output);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+
+  t.false(nock.isDone());
+});
+
+test.serial('hyraxMetadataUpdate skips UMM-G metadata validation when skipMetadataValidation is set to true', async (t) => {
+  // Set up mock Validation call to CMR
+  nock('https://cmr.earthdata.nasa.gov')
+    .post('/ingest/providers/GES_DISC/validate/granule/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.json')
+    .reply(400);
+  await setupS3(t, true);
+
+  const e = {
+    config: {
+      ...event.config,
+      skipMetadataValidation: true,
+    },
+    input: t.context.payload.input,
+  };
+
+  try {
+    const output = await hyraxMetadataUpdate(e);
+    await validateOutput(t, output);
+  } finally {
+    await recursivelyDeleteS3Bucket(t.context.stagingBucket);
+  }
+
+  t.false(nock.isDone());
 });
 
 test.serial('Test record does not exist error when granule object has no recognizable metadata files in it', async (t) => {

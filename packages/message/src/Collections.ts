@@ -2,6 +2,8 @@
 
 import { Message } from '@cumulus/types';
 
+export const collectionIdSeparator = '___';
+
 /**
  * Utility functions for generating collection information or parsing collection information
  * from a Cumulus message
@@ -16,8 +18,6 @@ type CollectionInfo = {
   name: string
   version: string
 };
-
-export const collectionIdSeparator = '___';
 
 /**
  * Returns the collection ID.
@@ -44,17 +44,19 @@ export const deconstructCollectionId = (collectionId: string) => {
   let name;
   let version;
   try {
-    [name, version] = collectionId.split(collectionIdSeparator);
+    const last = collectionId.lastIndexOf(collectionIdSeparator);
+    name = collectionId.substring(0, last);
+    version = collectionId.substring(last + collectionIdSeparator.length);
+    if (name && version) {
+      return {
+        name,
+        version,
+      };
+    }
   } catch (error) {
-    throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
+    // do nothing, error thrown below
   }
-  if (name && version) {
-    return {
-      name,
-      version,
-    };
-  }
-  throw new Error(`invalid collectionId: ${collectionId}`);
+  throw new Error(`invalid collectionId: ${JSON.stringify(collectionId)}`);
 };
 
 /**

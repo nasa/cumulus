@@ -1,32 +1,38 @@
-import * as AWS from 'aws-sdk';
 import { ThrottlingException } from '@cumulus/errors';
+
+import { AWSClientTypes } from './types';
+import { getServiceIdentifer } from './utils';
 
 export const inTestMode = () => process.env.NODE_ENV === 'test';
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
-  stepfunctions: 4585,
-  apigateway: 4567,
-  cloudformation: 4581,
-  cloudwatch: 4582,
-  cloudwatchevents: 4582,
-  cloudwatchlogs: 4586,
-  dynamodb: 4564,
-  es: 4571,
-  firehose: 4573,
-  iam: 4593,
-  kinesis: 4568,
-  kms: 4599,
-  lambda: 4574,
-  redshift: 4577,
-  route53: 4580,
-  s3: 4572,
-  secretsmanager: 4584,
-  ses: 4579,
-  sns: 4575,
-  sqs: 4576,
-  ssm: 4583,
-  sts: 4592,
+  stepfunctions: 4566,
+  apigateway: 4566,
+  cloudformation: 4566,
+  cloudwatch: 4566,
+  cloudwatchevents: 4566,
+  cloudwatchlogs: 4566,
+  DynamoDB: 4566,
+  DynamoDBClient: 4566,
+  DynamoDBStreamsClient: 4566,
+  ec2: 4566,
+  ecs: 4566,
+  es: 4566,
+  firehose: 4566,
+  iam: 4566,
+  kinesis: 4566,
+  kms: 4566,
+  lambda: 4566,
+  redshift: 4566,
+  route53: 4566,
+  s3: 4566,
+  secretsmanager: 4566,
+  ses: 4566,
+  sns: 4566,
+  sqs: 4566,
+  ssm: 4566,
+  sts: 4566,
 };
 
 /**
@@ -70,28 +76,28 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  *
  * @private
  */
-function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export function localStackAwsClientOptions<T>(
   Service: new (params: object) => T,
-  options: object
+  options: object = {}
 ) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
   }
 
-  // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  const serviceIdentifier = getServiceIdentifer(Service);
 
   const localStackOptions: { [key: string ]: unknown } = {
     ...options,
-    accessKeyId: 'my-access-key-id',
-    secretAccessKey: 'my-secret-access-key',
+    credentials: {
+      accessKeyId: 'my-access-key-id',
+      secretAccessKey: 'my-secret-access-key',
+    },
     region: 'us-east-1',
     endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
-  if (serviceIdentifier === 's3') localStackOptions.s3ForcePathStyle = true;
-
-  return new Service(localStackOptions);
+  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.s3ForcePathStyle = true;
+  return localStackOptions;
 }
 
 /**
@@ -103,17 +109,15 @@ function localStackAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient
  *
  * @private
  */
-export function testAwsClient<T extends AWS.Service | AWS.DynamoDB.DocumentClient>(
+export function getLocalstackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
-  options: object
-): T {
-  // @ts-ignore
-  const serviceIdentifier = Service.serviceIdentifier;
+  options?: object
+): object {
+  const serviceIdentifier = getServiceIdentifer(Service);
   if (localstackSupportedService(serviceIdentifier)) {
-    return localStackAwsClient(Service, options);
+    return localStackAwsClientOptions(Service, options);
   }
-
-  return <T>{};
+  return {};
 }
 
 /**

@@ -26,7 +26,7 @@ test('put() writes a file to DynamoDB', async (t) => {
   const getResponse = await dynamodbDocClient().get({
     TableName: GranuleFilesCache.cacheTableName(),
     Key: { bucket: file.bucket, key: file.key },
-  }).promise();
+  });
 
   t.deepEqual(getResponse.Item, file);
 });

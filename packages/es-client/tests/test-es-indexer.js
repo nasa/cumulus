@@ -455,7 +455,7 @@ test.serial('indexing a granule record', async (t) => {
 
   const granule = {
     granuleId: randomString(),
-    collectionId: `${randomString}___1`,
+    collectionId: constructCollectionId(randomString, '1'),
   };
 
   await indexer.indexGranule(esClient, granule, esIndex);

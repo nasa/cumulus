@@ -65,7 +65,7 @@ export async function invokeApi(
     {
       retries: 3,
       maxTimeout: 10000,
-      onFailedAttempt: (e) => logger.error(`API invoke error: ${e.message}.`),
+      onFailedAttempt: (e) => logger.error(`Attempt ${e.attemptNumber} failed. API invoke error: ${e.message}.`),
       ...pRetryOptions,
     }
   );

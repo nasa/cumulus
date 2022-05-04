@@ -179,9 +179,10 @@ describe('The SNS-type rule', () => {
 
     it('creates a policy when it is created in an enabled state', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      const { Policy } = await lambda().getPolicy({
+      const response = await lambda().getPolicy({
         FunctionName: consumerName,
       }).promise();
+      const { Policy } = response;
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
 
