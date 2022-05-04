@@ -7,6 +7,7 @@ const uniqWith = require('lodash/uniqWith');
 const awsClients = require('@cumulus/aws-client/services');
 const log = require('@cumulus/common/log');
 const s3Utils = require('@cumulus/aws-client/S3');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 
 const {
   generateMoveFileParams,
@@ -303,7 +304,21 @@ async function getGranulesForPayload(payload) {
   return uniqueGranules;
 }
 
+// TODO move units
+async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFunctions) {
+  let executionDescription;
+  try {
+    executionDescription = await stepFunctionUtils.describeExecution({
+      executionArn,
+    });
+  } catch (error) {
+    log.error(`Could not describe execution ${executionArn}`, error);
+  }
+  return executionDescription;
+}
+
 module.exports = {
+  describeGranuleExecution,
   moveGranule,
   translateGranule,
   getExecutionProcessingTimeInfo,

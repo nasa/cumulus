@@ -56,14 +56,12 @@ const {
 const { parseException } = require('@cumulus/message/utils');
 const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/translate/granules');
 
-const {
-  RecordDoesNotExist,
-} = require('@cumulus/errors');
 const FileUtils = require('../FileUtils');
 const {
+  describeGranuleExecution,
   getExecutionProcessingTimeInfo,
 } = require('../granules');
-const Granule = require('../../models/granules');
+
 const {
   publishGranuleSnsMessageByEventType,
 } = require('../publishSnsMessageUtils');
@@ -72,6 +70,8 @@ const {
   isStatusFinalState,
 } = require('./utils');
 
+const { recordIsValid } = require('../schema');
+const granuleSchema = require('../schemas').granule;
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
 /**
@@ -252,7 +252,6 @@ const _publishPostgresGranuleUpdateToSns = async ({
  * @param {Object}  params.apiFieldUpdates       - API fields to update
  * @param {Object}  params.pgFieldUpdates        - PostgreSQL fields to update
  * @param {Object}  params.apiFieldsToDelete     - API fields to delete
- * @param {Object}  params.granuleModel          - Instance of DynamoDB granule model
  * @param {Object}  params.granulePgModel        - @cumulus/db compatible granule module instance
  * @param {Knex}    params.knex                  - Knex object
  * @param {string}  params.snsEventType          - SNS Event Type, defaults to 'Update'
@@ -265,7 +264,6 @@ const _updateGranule = async ({
   apiFieldUpdates,
   pgFieldUpdates,
   apiFieldsToDelete,
-  granuleModel,
   granulePgModel,
   knex,
   snsEventType = 'Update',
@@ -284,8 +282,6 @@ const _updateGranule = async ({
     );
     log.info(`Successfully wrote granule ${granuleId} to PostgreSQL`);
     try {
-      await granuleModel.update({ granuleId }, apiFieldUpdates, apiFieldsToDelete);
-      log.info(`Successfully wrote granule ${granuleId} to DynamoDB`);
       await upsertGranule({
         esClient,
         updates: {
@@ -296,10 +292,9 @@ const _updateGranule = async ({
       });
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
-      log.error(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for granule ${granuleId}`, writeError);
+      log.error(`Write to Elasticsearch failed, rolling postgres write for ${granuleId}`, writeError);
       // On error, recreate the DynamoDB record to revert it back to original
       // status to ensure that all systems stay in sync
-      await granuleModel.create(apiGranule);
       throw writeError;
     }
   });
@@ -310,7 +305,6 @@ const _updateGranule = async ({
     `,
     updatedPgGranule
   );
-  log.info('Successfully wrote granule %j to DynamoDB', apiGranule);
 
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
@@ -335,7 +329,6 @@ const updateGranuleStatusToFailed = async (params) => {
     knex,
     error = {},
     collectionPgModel = new CollectionPgModel(),
-    granuleModel = new Granule(),
     granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
   } = params;
@@ -361,13 +354,12 @@ const updateGranuleStatusToFailed = async (params) => {
       postgresGranule: pgGranule,
       apiFieldUpdates: { status, error },
       pgFieldUpdates: { status, error },
-      granuleModel,
       granulePgModel,
       knex,
       snsEventType: 'Update',
       esClient,
     });
-    log.debug(`Updated granule status to failed, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
+    log.debug(`Updated granule status to failed, granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
   } catch (thrownError) {
     log.error(`Failed to update granule status to failed, granuleId: ${granule.granuleId}, collectionId: ${collectionId}`, thrownError.toString());
     throw thrownError;
@@ -379,14 +371,11 @@ const updateGranuleStatusToFailed = async (params) => {
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
- * @param {Object} [params.files] - File objects
+ * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
- * @param {Object} params.workflowError - Error from the workflow
- * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {string} params.snsEventType - SNS Event Type
- * @param {Object} [params.granuleModel] - Optional Granule DDB model override
- * @param {Object} [params.granulePgModel] - Optional Granule PG model override
+ * @param {Object} [params.granule.files] - File objects
+ * @param {Object} params.granule.workflowError - Error from the workflow
  * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
@@ -468,23 +457,21 @@ const _writeGranuleRecords = async (params) => {
     apiGranuleRecord,
     knex,
     esClient = await Search.es(),
-    granuleModel,
     executionCumulusId,
     granulePgModel,
   } = params;
   let pgGranule;
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
-  log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
-
   try {
     await createRejectableTransaction(knex, async (trx) => {
+      // Validate API schema
+      recordIsValid(apiGranuleRecord, granuleSchema, false);
       pgGranule = await _writePostgresGranuleViaTransaction({
         granuleRecord: postgresGranuleRecord,
         executionCumulusId,
         trx,
         granulePgModel,
       });
-      await granuleModel.storeGranule(apiGranuleRecord);
       await upsertGranule({
         esClient,
         updates: apiGranuleRecord,
@@ -497,73 +484,36 @@ const _writeGranuleRecords = async (params) => {
       `,
       postgresGranuleRecord
     );
-    log.info('Successfully wrote granule %j to DynamoDB', apiGranuleRecord);
     return pgGranule;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
 
-    // If a postgres record was provided
-    // attempt to ensure alignment between postgress/dynamo/es
-    if (pgGranule) {
-      // Align dynamo granule record with postgres record
-      // Retrieve the granule from postgres
-      let pgGranuleExists;
-      let latestPgGranule;
-      try {
-        latestPgGranule = await granulePgModel.get(knex, {
-          granule_id: pgGranule.granule_id,
-          collection_cumulus_id: pgGranule.collection_cumulus_id,
-        });
-        pgGranuleExists = true;
-      } catch (getPgGranuleError) {
-        log.error(`Could not retrieve latest postgres record for granule_id ${pgGranule.granule_id} because ${JSON.stringify(getPgGranuleError)}`);
-        if (getPgGranuleError instanceof RecordDoesNotExist) {
-          pgGranuleExists = false;
-        }
-      }
+    // If granule is in a final state and the error thrown
+    // is a SchemaValidationError then update the granule
+    // status to failed
+    // TODO this needs updated, because we're no longer validating the schema.   Should we be?  Yes.
+    if (isStatusFinalState(apiGranuleRecord.status)
+      && thrownError.name === 'SchemaValidationError') {
+      const originalError = apiGranuleRecord.error;
 
-      // Delete the dynamo record (stays deleted if postgres record does not exist)
-      await granuleModel.delete({
-        granuleId: apiGranuleRecord.granuleId,
-        collectionId: apiGranuleRecord.collectionId,
+      const errors = [];
+      if (originalError) {
+        errors.push(originalError);
+      }
+      const errorObject = {
+        Error: 'Failed writing dynamoGranule due to SchemaValdationError.',
+        Cause: thrownError,
+      };
+      errors.push(errorObject);
+      const errorsObject = {
+        errors: JSON.stringify(errors),
+      };
+
+      await updateGranuleStatusToFailed({
+        granule: apiGranuleRecord,
+        knex,
+        error: errorsObject,
       });
-      // Recreate the dynamo record in alignment with postgres if the postgres record exists
-      if (pgGranuleExists) {
-        const alignedDynamoRecord = await translatePostgresGranuleToApiGranule(
-          {
-            granulePgRecord: latestPgGranule,
-            knexOrTransaction: knex,
-          }
-        );
-        await granuleModel.storeGranule(alignedDynamoRecord);
-      }
-
-      // If granule is in a final state and the error thrown
-      // is a SchemaValidationError then update the granule
-      // status to failed
-      if (isStatusFinalState(apiGranuleRecord.status)
-        && thrownError.name === 'SchemaValidationError') {
-        const originalError = apiGranuleRecord.error;
-
-        const errors = [];
-        if (originalError) {
-          errors.push(originalError);
-        }
-        const errorObject = {
-          Error: 'Failed writing dynamoGranule due to SchemaValdationError.',
-          Cause: thrownError,
-        };
-        errors.push(errorObject);
-        const errorsObject = {
-          errors: JSON.stringify(errors),
-        };
-
-        await updateGranuleStatusToFailed({
-          granule: apiGranuleRecord,
-          knex,
-          error: errorsObject,
-        });
-      }
     }
     throw thrownError;
   }
@@ -582,7 +532,6 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
       granule: apiGranuleRecord,
       knex,
       snsEventType,
-      granuleModel: new Granule(),
     });
   }
 };
@@ -602,12 +551,11 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
  * @param {string}          params.snsEventType - SNS Event Type
  * returns {Promise}
  */
-const _writeGranule = async ({
+const _writeGranule = async ({ // TODO write-granules
   postgresGranuleRecord,
   apiGranuleRecord,
   esClient,
   executionCumulusId,
-  granuleModel,
   granulePgModel,
   knex,
   snsEventType,
@@ -617,11 +565,12 @@ const _writeGranule = async ({
     apiGranuleRecord,
     knex,
     esClient,
-    granuleModel,
     executionCumulusId,
     granulePgModel,
   });
 
+  // Reminder - this will only update the postgres files object
+  // if the granule is in a complete state
   await _writePostgresFilesFromApiGranuleFiles({
     apiGranuleRecord,
     granuleCumulusId: pgGranule.cumulus_id,
@@ -712,7 +661,6 @@ const writeGranuleRecordAndPublishSns = async ({
  * @param {string} [granule.processingStartDateTime] - execution startDate
  * @param {string} [granule.processingEndDateTime] - execution StopDate
  * @param {Object} [granule.queryFields] - query fields
- * @param {Object} [granule.granuleModel] - only for testing.
  * @param {Object} [granule.granulePgModel] - only for testing.
  * @param {Knex} knex - knex Client
  * @param {Object} esClient - Elasticsearch client
@@ -745,7 +693,6 @@ const writeGranuleFromApi = async (
     processingStartDateTime,
     processingEndDateTime,
     queryFields,
-    granuleModel = new Granule(),
     granulePgModel = new GranulePgModel(),
   },
   knex,
@@ -800,12 +747,12 @@ const writeGranuleFromApi = async (
       knex
     );
 
+    // TODO Fix remove api granule model
     await _writeGranule({
       postgresGranuleRecord,
       apiGranuleRecord,
       executionCumulusId,
       knex,
-      granuleModel,
       granulePgModel,
       esClient,
       snsEventType,
@@ -846,22 +793,24 @@ const writeGranulesFromMessage = async ({
   cumulusMessage,
   executionCumulusId,
   knex,
-  granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
   esClient,
+  testOverrides = {}, // Used only for test mocks
 }) => {
   if (!messageHasGranules(cumulusMessage)) {
     log.info('No granules to write, skipping writeGranulesFromMessage');
     return undefined;
   }
 
+  const { stepFunctionUtils } = testOverrides;
   const granules = getMessageGranules(cumulusMessage);
   const granuleIds = granules.map((granule) => granule.granuleId);
   log.info(`process granule IDs ${granuleIds.join(',')}`);
 
   const executionArn = getMessageExecutionArn(cumulusMessage);
   const executionUrl = getExecutionUrlFromArn(executionArn);
-  const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
+  // TODO need to get execution arn in describeGranuleExecution
+  const executionDescription = await describeGranuleExecution(executionArn, stepFunctionUtils);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
   const provider = getMessageProvider(cumulusMessage);
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
@@ -916,7 +865,6 @@ const writeGranulesFromMessage = async ({
         apiGranuleRecord,
         executionCumulusId,
         knex,
-        granuleModel,
         granulePgModel,
         esClient,
         snsEventType: 'Update',
@@ -937,22 +885,21 @@ const writeGranulesFromMessage = async ({
  * Update granule status to 'queued'
  *
  * @param {Object} params
- * @param {Object} params.granule - dynamo granule object
+ * @param {Object} params.apiGranule - dynamo granule object
  * @param {Knex} params.knex - knex Client
  * @returns {Promise}
  * @throws {Error}
  */
 const updateGranuleStatusToQueued = async (params) => {
   const {
-    granule,
+    apiGranule,
     knex,
     collectionPgModel = new CollectionPgModel(),
-    granuleModel = new Granule(),
     granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
   } = params;
   const status = 'queued';
-  const { granuleId, collectionId } = granule;
+  const { granuleId, collectionId } = apiGranule;
   log.info(`updateGranuleStatusToQueued granuleId: ${granuleId}, collectionId: ${collectionId}`);
 
   try {
@@ -969,21 +916,20 @@ const updateGranuleStatusToQueued = async (params) => {
     );
 
     await _updateGranule({
-      apiGranule: granule,
+      apiGranule,
       postgresGranule: pgGranule,
       apiFieldUpdates: { status },
       pgFieldUpdates: { status },
       apiFieldsToDelete: ['execution'],
-      granuleModel,
       granulePgModel,
       knex,
       snsEventType: 'Update',
       esClient,
     });
 
-    log.debug(`Updated granule status to queued, Dynamo granuleId: ${granule.granuleId}, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
+    log.debug(`Updated granule status to queued, PostgreSQL cumulus_id: ${pgGranule.cumulus_id}`);
   } catch (thrownError) {
-    log.error(`Failed to update granule status to queued, granuleId: ${granule.granuleId}, collectionId: ${collectionId}`, thrownError);
+    log.error(`Failed to update granule status to queued, granuleId: ${apiGranule.granuleId}, collectionId: ${collectionId}`, thrownError);
     throw thrownError;
   }
 };

@@ -63,14 +63,10 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
 const writeRecords = async ({
   cumulusMessage,
   knex,
-  granuleModel,
   executionModel,
   pdrModel,
+  testOverrides = {},
 }) => {
-  if (!isPostRDSDeploymentExecution(cumulusMessage)) {
-    log.info('Message is not for a post-RDS deployment execution.');
-  }
-
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
@@ -130,7 +126,7 @@ const writeRecords = async ({
     executionCumulusId,
     pdrCumulusId,
     knex,
-    granuleModel,
+    testOverrides,
   });
 };
 

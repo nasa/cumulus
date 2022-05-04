@@ -10,6 +10,7 @@ const {
   GranulePgModel,
   CollectionPgModel,
   translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { indexGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -50,6 +51,7 @@ async function createGranuleAndFiles({
   collectionCumulusId,
   esClient,
   granuleParams = { published: false },
+  writeDynamo = true,
 }) {
   const s3Buckets = {
     protected: {
@@ -139,13 +141,25 @@ async function createGranuleAndFiles({
     }
   );
 
-  // create a new Dynamo granule
-  const dynamoGranule = await granuleModel.create(newGranule);
-  await indexGranule(esClient, dynamoGranule, process.env.ES_INDEX);
+  let dynamoGranule;
 
+  // TODO -- This needs removed before the end of Phase 3
+  if (writeDynamo) {
+    // create a new Dynamo granule
+    dynamoGranule = await granuleModel.create(newGranule);
+  }
   // create a new Postgres granule
-  const newPgGranule = await translateApiGranuleToPostgresGranule(dynamoGranule, dbClient);
+  const newPgGranule = await translateApiGranuleToPostgresGranule(
+    dynamoGranule || newGranule,
+    dbClient
+  );
   const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
+  const apiGranule = dynamoGranule || await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: dbClient,
+    granulePgRecord: pgGranule,
+  });
+
+  await indexGranule(esClient, apiGranule, process.env.ES_INDEX);
 
   // create Postgres files
   await Promise.all(
@@ -167,9 +181,14 @@ async function createGranuleAndFiles({
     process.env.ES_INDEX
   );
 
+  let newDynamoGranule;
+  if (writeDynamo) {
+    newDynamoGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
+  }
+
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
-    newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
+    newDynamoGranule,
     esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,
     s3Buckets: s3Buckets,

@@ -117,7 +117,7 @@ test.serial('GET with an unauthorized user returns an unauthorized response', as
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test('GET returns a cvs file of all granules', async (t) => {
+test('GET returns a csv file of all granules', async (t) => {
   const response = await request(app)
     .get('/granule-csv')
     .set('Accept', 'application/json')

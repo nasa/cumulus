@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const sinon = require('sinon');
-const omit = require('lodash/omit');
 const cryptoRandomString = require('crypto-random-string');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -28,7 +27,7 @@ const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 
 const testDbName = `granule_remove_cmr_${cryptoRandomString({ length: 10 })}`;
 
-const createGranuleInDynamoAndPG = async (t, params) => {
+const createGranuleInPG = async (t, params) => {
   const collectionId = constructCollectionId(
     t.context.fakeCollection.name,
     t.context.fakeCollection.version
@@ -38,8 +37,6 @@ const createGranuleInDynamoAndPG = async (t, params) => {
     collectionId,
     ...params,
   });
-  const originalDynamoGranule = await t.context.granulesModel.create(granule);
-
   const translatedGranule = await translateApiGranuleToPostgresGranule(
     granule,
     t.context.knex
@@ -54,7 +51,6 @@ const createGranuleInDynamoAndPG = async (t, params) => {
     { cumulus_id: pgGranuleCumulusId }
   );
   return {
-    originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
     collectionId,
@@ -115,11 +111,10 @@ test.after.always(async (t) => {
 
 test('unpublishGranule() removing a granule from CMR fails if the granule is not in CMR', async (t) => {
   const {
-    originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
     collectionId,
-  } = await createGranuleInDynamoAndPG(t, {
+  } = await createGranuleInPG(t, {
     published: false,
     cmrLink: undefined,
   });
@@ -128,14 +123,6 @@ test('unpublishGranule() removing a granule from CMR fails if the granule is not
   } catch (error) {
     t.is(error.message, `Granule ${originalPgGranule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
   }
-
-  t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: false,
-      cmrLink: undefined,
-    }
-  );
 
   t.like(
     await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
@@ -150,21 +137,12 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
   const { fakeCollection } = t.context;
 
   const {
-    originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
-  } = await createGranuleInDynamoAndPG(t, {
+  } = await createGranuleInPG(t, {
     published: true,
     collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
   });
-
-  t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
 
   t.like(
     await t.context.granulePgModel.get(t.context.knex, {
@@ -186,22 +164,10 @@ test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) 
   });
 
   const {
-    dynamoGranule,
     pgGranule,
   } = await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
 
   t.true(cmrDeleteStub.called);
-  t.deepEqual(
-    dynamoGranule,
-    omit(
-      {
-        ...originalDynamoGranule,
-        published: false,
-        updatedAt: dynamoGranule.updatedAt,
-      },
-      'cmrLink'
-    )
-  );
   t.deepEqual(
     pgGranule,
     {
@@ -216,21 +182,12 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
   const { fakeCollection } = t.context;
 
   const {
-    originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
-  } = await createGranuleInDynamoAndPG(t, {
+  } = await createGranuleInPG(t, {
     published: true,
     collectionId: constructCollectionId(fakeCollection.name, fakeCollection.version),
   });
-
-  t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
 
   t.like(
     await t.context.granulePgModel.get(t.context.knex, {
@@ -253,7 +210,6 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
   });
 
   const {
-    dynamoGranule,
     pgGranule,
   } = await unpublishGranule({
     knex: t.context.knex,
@@ -267,17 +223,6 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
   ), true);
 
   t.deepEqual(
-    dynamoGranule,
-    omit(
-      {
-        ...originalDynamoGranule,
-        published: false,
-        updatedAt: dynamoGranule.updatedAt,
-      },
-      'cmrLink'
-    )
-  );
-  t.deepEqual(
     pgGranule,
     {
       ...pgGranule,
@@ -289,20 +234,11 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
 
 test.serial('unpublishGranule() does not update granule CMR status or delete from CMR if PG write fails', async (t) => {
   const {
-    originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
-  } = await createGranuleInDynamoAndPG(t, {
+  } = await createGranuleInPG(t, {
     published: true,
   });
-
-  t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
 
   t.like(
     await t.context.granulePgModel.get(t.context.knex, {
@@ -340,83 +276,6 @@ test.serial('unpublishGranule() does not update granule CMR status or delete fro
 
   t.false(cmrDeleteStub.called);
   t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
-  t.like(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: pgGranuleCumulusId,
-    }),
-    {
-      published: true,
-      cmr_link: originalPgGranule.cmr_link,
-    }
-  );
-});
-
-test.serial('unpublishGranule() does not update granule CMR status or delete from CMR if Dynamo write fails', async (t) => {
-  const {
-    originalDynamoGranule,
-    originalPgGranule,
-    pgGranuleCumulusId,
-  } = await createGranuleInDynamoAndPG(t, {
-    published: true,
-  });
-
-  t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
-
-  t.like(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: pgGranuleCumulusId,
-    }),
-    {
-      published: true,
-      cmr_link: originalPgGranule.cmr_link,
-    }
-  );
-
-  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves({
-    foo: 'bar',
-  });
-  const cmrDeleteStub = sinon.stub(CMR.prototype, 'deleteGranule').resolves();
-  t.teardown(() => {
-    cmrMetadataStub.restore();
-    cmrDeleteStub.restore();
-  });
-
-  const fakeGranuleDynamoModel = {
-    update: () => {
-      throw new Error('Dynamo error');
-    },
-  };
-
-  await t.throwsAsync(
-    unpublishGranule({
-      knex: t.context.knex,
-      pgGranuleRecord: originalPgGranule,
-      granulePgModel: t.context.granulePgModel,
-      granuleDynamoModel: fakeGranuleDynamoModel,
-    })
-  );
-
-  t.false(cmrDeleteStub.called);
-  t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
-  t.like(
     await t.context.granulePgModel.get(t.context.knex, {
       cumulus_id: pgGranuleCumulusId,
     }),
@@ -429,10 +288,9 @@ test.serial('unpublishGranule() does not update granule CMR status or delete fro
 
 test.serial('unpublishGranule() does not update granule CMR status if CMR removal fails', async (t) => {
   const {
-    originalDynamoGranule,
     originalPgGranule,
     pgGranuleCumulusId,
-  } = await createGranuleInDynamoAndPG(t, {
+  } = await createGranuleInPG(t, {
     published: true,
   });
 
@@ -445,14 +303,6 @@ test.serial('unpublishGranule() does not update granule CMR status if CMR remova
     cmrMetadataStub.restore();
     cmrDeleteStub.restore();
   });
-
-  t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
 
   t.like(
     await t.context.granulePgModel.get(t.context.knex, {
@@ -474,13 +324,6 @@ test.serial('unpublishGranule() does not update granule CMR status if CMR remova
 
   t.true(cmrDeleteStub.called);
   t.like(
-    await t.context.granulesModel.get({ granuleId: originalDynamoGranule.granuleId }),
-    {
-      published: true,
-      cmrLink: originalDynamoGranule.cmrLink,
-    }
-  );
-  t.like(
     await t.context.granulePgModel.get(t.context.knex, {
       cumulus_id: pgGranuleCumulusId,
     }),
@@ -494,7 +337,7 @@ test.serial('unpublishGranule() does not update granule CMR status if CMR remova
 test.serial('removing a granule from CMR passes the granule UR to the cmr delete function', async (t) => {
   const {
     originalPgGranule,
-  } = await createGranuleInDynamoAndPG(t, {
+  } = await createGranuleInPG(t, {
     published: true,
   });
 
@@ -525,7 +368,7 @@ test.serial('removing a granule from CMR passes the granule UR to the cmr delete
 test.serial('removing a granule from CMR succeeds with Launchpad authentication', async (t) => {
   const {
     originalPgGranule,
-  } = await createGranuleInDynamoAndPG(t, {
+  } = await createGranuleInPG(t, {
     published: true,
   });
 
