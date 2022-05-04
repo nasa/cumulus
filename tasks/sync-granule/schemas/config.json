@@ -152,6 +152,11 @@
     "workflowStartTime": {
       "type": "integer",
       "description": "Specifies the start time for the current workflow (as a timestamp) and will be used as the createdAt time for granules output"
+    },
+    "ACL": {
+      "type": "string",
+      "description": "Allows disabling of ACLs when value is set to disabled. Otherwise, defaults to canned ACL of private",
+      "default": "private"
     }
   }
 }
