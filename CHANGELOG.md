@@ -9,6 +9,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2804**
+    - Updates api/lib/granule-delete.deleteGranuleAndFiles:
+      - Updates dynamoGranule -> apiGranule in the signature and throughout the dependent code
+      - Updates logic to make apiGranule optional, but pgGranule required, and all lookups use postgres instead of ES/implied apiGranule values
+      - Updates logic to make pgGranule optional - in this case the logic removes the entry from ES only
+    - Removes all dynamo model logic from api/endpoints/granules
+    - Removes dynamo write logic from api/lib/writeRecords.*
+    - Removes dynamo write logic from api/lib/ingest.*
+    - Removes all granule model calls from api/lambdas/bulk-operations and any dependencies
+    - Removes dynamo model calls from api/lib/granule-remove-from-cmr.unpublishGranule
+    - Removes Post Deployment execution check from sf-event-sqs-to-db-records
+    - Moves describeGranuleExecution from api granule model to api/lib/granules.js
   - **CUMULUS-2809**
     - Remove DynamoDB logic from providers `PUT` endpoint
     - Updates DB models asyncOperation, provider and rule to return all fields on upsert.
@@ -23,7 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Move event resources deletion logic from `rulesModel` to `rulesHelper`
   - **CUMULUS-2815**
     - Remove update of DynamoDB record from API endpoint PUT /collections/<name>/<version>
-    - Move File Config and Core Config validation logic for Postgres Collections from `api/models/collections.js` to `api/lib/utils.js`   
+    - Move File Config and Core Config validation logic for Postgres Collections from `api/models/collections.js` to `api/lib/utils.js`
   - **CUMULUS-2813**
     - Removes creation and deletion of DynamoDB record from API endpoint POST /rules/
   - **CUMULUS-2816**
