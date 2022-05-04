@@ -2,7 +2,6 @@
 
 const Ajv = require('ajv');
 
-// TODO -- units
 const recordIsValid = (item, schema, removeAdditional = false) => {
   if (!schema) {
     throw new Error('schema is not defined');
