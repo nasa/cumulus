@@ -72,7 +72,7 @@ test.before(async (t) => {
 
   process.env.stackName = randomId('stack');
   process.env.system_bucket = randomId('bucket');
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
@@ -96,7 +96,7 @@ test.before(async (t) => {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 });
 
 test.beforeEach(async (t) => {

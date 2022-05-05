@@ -7,7 +7,10 @@ const {
   getObjectSize,
   getS3Object,
   parseS3Uri,
+  buildS3Uri,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
+const S3ObjectStore = require('@cumulus/aws-client/S3ObjectStore');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -63,9 +66,14 @@ async function getReport(req, res) {
     }
 
     const downloadFile = Key.split('/').pop();
-    const presignedS3Url = s3().getSignedUrl('getObject', {
-      Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
-    });
+    const s3ObjectStoreClient = new S3ObjectStore();
+    const s3ObjectUrl = buildS3Uri(Bucket, Key);
+    const presignedS3Url = await s3ObjectStoreClient.signGetObject(
+      s3ObjectUrl,
+      {
+        ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
+      }
+    );
 
     if (Key.endsWith('.json') || Key.endsWith('.csv')) {
       const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key });
@@ -82,9 +90,10 @@ async function getReport(req, res) {
       } else {
         const file = await getS3Object(Bucket, Key);
         logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
+        const fileBody = await getObjectStreamContents(file.Body);
         return res.json({
           presignedS3Url,
-          data: Key.endsWith('.json') ? JSON.parse(file.Body.toString()) : file.Body.toString(),
+          data: Key.endsWith('.json') ? JSON.parse(fileBody) : fileBody,
         });
       }
     }

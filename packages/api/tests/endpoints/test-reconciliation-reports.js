@@ -91,7 +91,7 @@ test.before(async () => {
 
   await awsServices.s3().createBucket({
     Bucket: process.env.system_bucket,
-  }).promise();
+  });
 
   const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);
@@ -125,7 +125,7 @@ test.before(async () => {
       Body: JSON.stringify({
         test_key: `${reportRecord.name} test data`,
       }),
-    }).promise()));
+    })));
 
   // add records to es
   await Promise.all(fakeReportRecords.map((reportRecord) =>

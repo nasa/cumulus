@@ -239,7 +239,7 @@ export const startAsyncOperation = async (
     Bucket: payloadBucket,
     Key: payloadKey,
     Body: JSON.stringify(payload),
-  }).promise();
+  });
 
   // Start the task in ECS
   const runTaskResponse = await startEcsTaskFunc({

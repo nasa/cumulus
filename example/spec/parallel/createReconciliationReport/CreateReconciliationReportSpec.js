@@ -289,7 +289,6 @@ const fetchReconciliationReport = async (stackName, reportName) => {
 
   const url = JSON.parse(response.body).presignedS3Url;
   if (isNil(url) || !url.includes(`reconciliation-reports/${reportName}`) ||
-    !url.includes('AWSAccessKeyId') ||
     !url.includes('Signature')) {
     throw new Error(`ReconciliationReport getReconciliationReport did not return valid url ${url}`);
   }
@@ -338,7 +337,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       // Write an extra S3 object to the protected bucket
       extraS3Object = { Bucket: protectedBucket, Key: randomString() };
-      await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
+      await s3().putObject({ Body: 'delete-me', ...extraS3Object });
 
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
 
@@ -967,7 +966,7 @@ describe('When there are granule differences and granule reconciliation is run',
     const cleanupResults = await Promise.allSettled([
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection: extraCumulusCollection }),
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection }),
-      s3().deleteObject(extraS3Object).promise(),
+      s3().deleteObject(extraS3Object),
       deleteFolder(config.bucket, testDataFolder),
       cmrClient.deleteGranule(cmrGranule),
     ]);

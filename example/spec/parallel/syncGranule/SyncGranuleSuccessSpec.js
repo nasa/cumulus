@@ -109,7 +109,7 @@ describe('The Sync Granules workflow', () => {
     newGranuleId = inputPayload.granules[0].granuleId;
     expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } })));
 
     const templatedOutputPayloadFilename = templateFile({
       inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',

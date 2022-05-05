@@ -1,6 +1,6 @@
 'use strict';
 
-const { S3 } = require('aws-sdk');
+const { S3 } = require('@aws-sdk/client-s3');
 
 /**
  * Receives event trigger from SNS and forwards event message to S3 bucket.
@@ -19,7 +19,7 @@ async function handleExecutions(event) {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${executionRecord.name}-${executionRecord.status}.output`,
     Body: JSON.stringify(event, undefined, 2),
-  }).promise();
+  });
 }
 
 /**
@@ -41,7 +41,7 @@ async function handleGranules(event) {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${granule.granuleId}-${granule.status}-${eventType}.output`,
     Body: JSON.stringify(event, undefined, 2),
-  }).promise();
+  });
 }
 
 /**
@@ -61,7 +61,7 @@ async function handlePdrs(event) {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${pdr.pdrName}-${pdr.status}.output`,
     Body: JSON.stringify(event, undefined, 2),
-  }).promise();
+  });
 }
 
 /**
@@ -86,7 +86,7 @@ async function handleCollections(event) {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/test-output/${collection.name}-${collection.version}-${eventType}.output`,
     Body: JSON.stringify(event, undefined, 2),
-  }).promise();
+  });
 }
 
 module.exports = {

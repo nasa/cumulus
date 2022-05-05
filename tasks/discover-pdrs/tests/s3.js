@@ -23,8 +23,8 @@ test.beforeEach(async (t) => {
   };
 
   await Promise.all([
-    s3().createBucket({ Bucket: t.context.event.config.bucket }).promise(),
-    s3().createBucket({ Bucket: t.context.event.config.provider.host }).promise(),
+    s3().createBucket({ Bucket: t.context.event.config.bucket }),
+    s3().createBucket({ Bucket: t.context.event.config.provider.host }),
   ]);
 });
 
@@ -50,7 +50,7 @@ test.serial('test pdr discovery with S3 when no PDRs are new', async (t) => {
     Bucket: t.context.event.config.bucket,
     Key: `${t.context.event.config.provider_path}/${pdrName}`,
     Body: 'test PDR body',
-  }).promise();
+  });
 
   // Upload a status indicator to show that this PDR has already been ingested
 
@@ -63,7 +63,7 @@ test.serial('test pdr discovery with S3 when no PDRs are new', async (t) => {
     Bucket: t.context.event.config.bucket,
     Key: `${t.context.event.config.stack}/${folder}/${pdrName}`,
     Body: pdrName,
-  }).promise();
+  });
 
   await validateConfig(t, t.context.event.config);
 
@@ -83,12 +83,12 @@ test.serial('test pdr discovery with S3 when some PDRs are new', async (t) => {
       Bucket: t.context.event.config.provider.host,
       Key: `${t.context.event.config.provider_path}/${oldPdrName}`,
       Body: 'test PDR body',
-    }).promise(),
+    }),
     s3().putObject({
       Bucket: t.context.event.config.provider.host,
       Key: `${t.context.event.config.provider_path}/${newPdrName}`,
       Body: 'test PDR body',
-    }).promise(),
+    }),
   ]);
 
   // Upload a status indicator to show that this PDR has already been ingested
@@ -102,7 +102,7 @@ test.serial('test pdr discovery with S3 when some PDRs are new', async (t) => {
     Bucket: t.context.event.config.bucket,
     Key: `${t.context.event.config.stack}/${folder}/${oldPdrName}`,
     Body: 'test PDR body',
-  }).promise();
+  });
 
   await validateConfig(t, t.context.event.config);
 
@@ -120,7 +120,7 @@ test.serial('test pdr discovery with S3 when all PDRs are new', async (t) => {
     Bucket: t.context.event.config.provider.host,
     Key: `${t.context.event.config.provider_path}/${pdrName}`,
     Body: 'test PDR body',
-  }).promise();
+  });
 
   await validateConfig(t, t.context.event.config);
 

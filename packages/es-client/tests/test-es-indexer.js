@@ -24,7 +24,7 @@ test.before(async (t) => {
   t.context.esClient = esClient;
 
   // create bucket
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 });
 
 test.after.always(async (t) => {

@@ -1,7 +1,7 @@
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
 const test = require('ava');
-const uuid = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const AsyncOperation = require('@cumulus/api/models/async-operation');
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
@@ -25,7 +25,7 @@ const {
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
 const generateFakeAsyncOperation = (params) => ({
-  id: uuid(),
+  id: uuidv4(),
   description: 'unittest async operation',
   output: '\"Index from database complete\"',
   operationType: 'ES Index',

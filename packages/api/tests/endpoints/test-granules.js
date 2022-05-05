@@ -1143,7 +1143,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       const bucketObjects = await s3().listObjects({
         Bucket: bucket,
         Prefix: destinationFilepath,
-      }).promise();
+      });
 
       t.is(bucketObjects.Contents.length, 2);
       bucketObjects.Contents.forEach((item) => {
@@ -1153,7 +1153,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       const thirdBucketObjects = await s3().listObjects({
         Bucket: thirdBucket,
         Prefix: destinationFilepath,
-      }).promise();
+      });
 
       t.is(thirdBucketObjects.Contents.length, 1);
       t.is(thirdBucketObjects.Contents[0].Key, `${destinationFilepath}/${granuleFileName}.md`);
@@ -1257,7 +1257,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       t.is(message.reason, 'Failed to move granule');
       t.deepEqual(message.granule, newGranule);
       t.is(message.errors.length, 1);
-      t.is(message.errors[0].code, 'NoSuchBucket');
+      t.is(message.errors[0].name, 'NoSuchBucket');
 
       const actualGranuleFileRecord = sortBy(message.granuleFilesRecords, ['key']);
       const expectedGranuleFileRecord = [
@@ -1290,14 +1290,14 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       const bucketObjects = await s3().listObjects({
         Bucket: bucket,
         Prefix: destinationFilepath,
-      }).promise();
+      });
       t.is(bucketObjects.Contents.length, 1);
       t.is(bucketObjects.Contents[0].Key, `${destinationFilepath}/${granuleFileName}.txt`);
 
       const failedBucketObjects = await s3().listObjects({
         Bucket: secondBucket,
         Prefix: `${process.env.stackName}/original_filepath`,
-      }).promise();
+      });
       t.is(failedBucketObjects.Contents.length, 1);
       t.is(failedBucketObjects.Contents[0].Key,
         (`${process.env.stackName}/original_filepath/${granuleFileName}.jpg`));
@@ -1305,7 +1305,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       const thirdBucketObjects = await s3().listObjects({
         Bucket: thirdBucket,
         Prefix: destinationFilepath,
-      }).promise();
+      });
       t.is(thirdBucketObjects.Contents.length, 1);
       t.is(thirdBucketObjects.Contents[0].Key, `${destinationFilepath}/${granuleFileName}.md`);
 
@@ -1424,14 +1424,14 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   const list = await s3().listObjects({
     Bucket: internalBucket,
     Prefix: destinationFilepath,
-  }).promise();
+  });
   t.is(list.Contents.length, 1);
   t.is(list.Contents[0].Key.indexOf(destinationFilepath), 0);
 
   const list2 = await s3().listObjects({
     Bucket: publicBucket,
     Prefix: `${process.env.stackName}/original_filepath`,
-  }).promise();
+  });
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].key, list2.Contents[0].Key);
 
@@ -1532,7 +1532,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const list = await s3().listObjects({
     Bucket: internalBucket,
     Prefix: destinationFilepath,
-  }).promise();
+  });
   t.is(list.Contents.length, 1);
   t.is(list.Contents[0].Key.indexOf(destinationFilepath), 0);
 
@@ -1540,7 +1540,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const list2 = await s3().listObjects({
     Bucket: publicBucket,
     Prefix: `${process.env.stackName}/original_filepath`,
-  }).promise();
+  });
   t.is(list2.Contents.length, 1);
   t.is(newGranule.files[1].key, list2.Contents[0].Key);
 
