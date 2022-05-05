@@ -35,8 +35,7 @@ const {
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const AsyncOperation = require('../models/async-operation');
-const Granule = require('../models/granules');
-const { moveGranule } = require('../lib/granules');
+const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
@@ -199,11 +198,11 @@ const putGranule = async (req, res) => {
  */
 async function put(req, res) {
   const {
-    granuleModel = new Granule(),
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
     reingestHandler = reingestGranule,
     updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
+    getFilesExistingAtLocationMethod = getFilesExistingAtLocation,
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
@@ -306,10 +305,16 @@ async function put(req, res) {
   if (action === 'move') {
     // FUTURE - this should be removed from the granule model
     // TODO -- Phase 3 -- This needs to be pulled out of the granule model
-    const filesAtDestination = await granuleModel.getFilesExistingAtLocation(
-      apiGranule,
-      body.destinations
-    );
+    let filesAtDestination;
+    try {
+      filesAtDestination = await getFilesExistingAtLocationMethod(
+        apiGranule,
+        body.destinations
+      );
+    } catch (e) {
+      console.log(e);
+      throw e;
+    }
     log.info(`existing files at destination: ${JSON.stringify(filesAtDestination)}`);
 
     if (filesAtDestination.length > 0) {

@@ -135,6 +135,41 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
 }
 
 /**
+   * With the params for moving a granule, return the files that already exist at
+   * the move location
+   *
+   * @param {Object} granule - the granule object
+   * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
+   * - list of destinations specified
+   *    regex - regex for matching filepath of file to new destination
+   *    bucket - aws bucket of the destination
+   *    filepath - file path/directory on the bucket for the destination
+   * @returns {Promise<Array<Object>>} - promise that resolves to a list of files
+   * that already exist at the destination that they would be written to if they
+   * were to be moved via the move granules call
+   */
+async function getFilesExistingAtLocation(granule, destinations) {
+  const moveFileParams = generateMoveFileParams(granule.files, destinations);
+
+  const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
+    const { target, file } = moveFileParam;
+    if (target) {
+      const exists = await s3Utils.fileExists(target.Bucket, target.Key);
+
+      if (exists) {
+        return Promise.resolve(file);
+      }
+    }
+
+    return Promise.resolve();
+  });
+
+  const existingFiles = await Promise.all(fileExistsPromises);
+
+  return existingFiles.filter((file) => file);
+}
+
+/**
  * Move a granule's files to destinations specified
  *
  * @param {Object} apiGranule - the granule record object
@@ -312,10 +347,11 @@ async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFu
 
 module.exports = {
   describeGranuleExecution,
-  moveGranule,
-  translateGranule,
   getExecutionProcessingTimeInfo,
-  getGranulesForPayload,
+  getFilesExistingAtLocation,
   getGranuleIdsForPayload,
+  getGranulesForPayload,
+  moveGranule,
   moveGranuleFilesAndUpdateDatastore,
+  translateGranule,
 };
