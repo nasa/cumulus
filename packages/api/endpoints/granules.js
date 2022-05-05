@@ -305,16 +305,10 @@ async function put(req, res) {
   if (action === 'move') {
     // FUTURE - this should be removed from the granule model
     // TODO -- Phase 3 -- This needs to be pulled out of the granule model
-    let filesAtDestination;
-    try {
-      filesAtDestination = await getFilesExistingAtLocationMethod(
-        apiGranule,
-        body.destinations
-      );
-    } catch (e) {
-      console.log(e);
-      throw e;
-    }
+    const filesAtDestination = await getFilesExistingAtLocationMethod(
+      apiGranule,
+      body.destinations
+    );
     log.info(`existing files at destination: ${JSON.stringify(filesAtDestination)}`);
 
     if (filesAtDestination.length > 0) {
