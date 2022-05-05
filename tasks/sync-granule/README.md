@@ -17,7 +17,46 @@ Download a given granule from a given provider to S3
 | pdr               | object |                |                                                                                                                                                                                                                                | Object containing the name and path for a PDR file                                                                                                                                |
 | stack             | string |                |                                                                                                                                                                                                                                | The name of the deployment stack to use. Useful as a prefix.                                                                                                                      |
 | workflowStartTime | integer | | | Specifies the start time (as a timestamp) for the current workflow and will be used as the createdAt time for granules output. If the specified timestamp is in the future, then the current time will be used instead.
-| ACL             | string | Optional. Defaults to `private`               | `disabled` will disable ACLs                                                                                                                                                                                                                               | Set to `disabled` to disable ACLs. Otherwise, defaults to canned ACL `private`.                                                                                                                      |
+
+## Disabling ACLs
+
+If you would like to disable ACLs, you can update your workflow's `*.asl.json` file. Update the `task_config` field in your `SyncGranule` step to include the ACL parameter so that it can be configured through the `Metadata` field in the Cumulus dashboard:
+
+```json
+{
+  "Comment": "Sync Granule",
+  "StartAt": "SyncGranule",
+  "States": {
+    "SyncGranule": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "ACL": "{$.meta.ACL}",
+            "buckets": "{$.meta.buckets}",
+            .
+            .
+            .
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Alternatively, you can hardcode the `ACL` value to be `"disabled"` like so:
+
+```json
+...
+"task_config": {
+            "ACL": "disabled",
+            "buckets": "{$.meta.buckets}",
+            .
+            .
+            .
+}
+```
 
 ## About Cumulus
 
