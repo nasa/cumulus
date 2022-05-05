@@ -34,7 +34,7 @@ const STACK_EXPIRATION_MS = 120 * 60 * 1000; // 2 hours
  *                                       lock operation
  * @returns {Promise}                  - On success, returns resolved promise
  * @throws {CumulusLockCollisionError} - On 'confirmLock' missing a lock
- * @throws {CumulusNoLockError}         -on 'lock' locking collision
+ * @throws {CumulusNoLockError}        - on 'lock' locking collision
  */
 async function lockOperation(operation, gitSHA, deployment, shouldLock) {
   const mutex = new Mutex(dynamodbDocClient({
