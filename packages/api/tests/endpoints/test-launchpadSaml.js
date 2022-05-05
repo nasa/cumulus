@@ -36,7 +36,7 @@ process.env.LAUNCHPAD_METADATA_URL = 'http://example.com/launchpad.idp.xml';
 const { app } = require('../../app');
 
 const testBucketName = randomId('testbucket');
-const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 const testBucketNames = [process.env.system_bucket, testBucketName];
 const launchpadMetadataS3Uri = launchpadSaml.__get__('launchpadMetadataS3Uri');
 

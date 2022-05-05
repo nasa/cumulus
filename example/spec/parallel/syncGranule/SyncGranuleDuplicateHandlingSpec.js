@@ -251,7 +251,7 @@ describe('When the Sync Granule workflow is configured', () => {
           Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content,
         };
 
-        await s3().putObject(updateParams).promise();
+        await s3().putObject(updateParams);
         inputPayload.granules[0].files[0].size = content.length;
 
         workflowExecution = await buildAndExecuteWorkflow(
@@ -309,7 +309,7 @@ describe('When the Sync Granule workflow is configured', () => {
           Bucket: config.bucket, Key: s3Join(file.path, file.name), Body: content,
         };
 
-        await s3().putObject(updateParams).promise();
+        await s3().putObject(updateParams);
         inputPayload.granules[0].files[0].size = content.length;
 
         workflowExecution = await buildAndExecuteWorkflow(

@@ -98,6 +98,10 @@ if [[ -z $BRANCH ]]; then
 fi
 echo export BRANCH="$BRANCH" >> .bamboo_env_vars
 
+# Target master by default.
+# Update with appropriate conditional
+# when creating a feature branch.
+export PR_BRANCH='master'
 
 ## SKIP CL eval if current branch is equal to the PR branch
 if [[ $BRANCH == "$PR_BRANCH" ]]; then
@@ -140,11 +144,6 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export ORCA_DATABASE_USER_PASSWORD=$bamboo_SECRET_SIT_ORCA_DATABASE_USER_PASSWORD
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
-
-# Target master by default.
-# Update with appropriate conditional
-# when creating a feature branch.
-export PR_BRANCH='feature/rds-phase-3'
 
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the

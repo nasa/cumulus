@@ -31,7 +31,7 @@ test.before(async () => {
 
   await collectionsModel.createTable();
   await ruleModel.createTable();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 });
 
 test.after.always(async () => {
@@ -94,12 +94,12 @@ test.serial('Collection.delete() throws an exception if the collection has assoc
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
       Body: JSON.stringify({}),
-    }).promise(),
+    }),
     s3().putObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/workflow_template.json`,
       Body: JSON.stringify({}),
-    }).promise(),
+    }),
   ]);
 
   const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);

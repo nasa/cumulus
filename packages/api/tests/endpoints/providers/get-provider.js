@@ -42,7 +42,7 @@ let accessTokenModel;
 
 test.before(async (t) => {
   t.context.testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;

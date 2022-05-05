@@ -110,12 +110,12 @@ test.before(async () => {
     arn: stateMachineArn,
   };
 
-  await s3().createBucket({ Bucket: templateBucket }).promise();
+  await s3().createBucket({ Bucket: templateBucket });
   await s3().putObject({
     Bucket: templateBucket,
     Key: messageTemplateKey,
     Body: JSON.stringify(messageTemplate),
-  }).promise();
+  });
 
   sandbox.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
     template: messageTemplate,

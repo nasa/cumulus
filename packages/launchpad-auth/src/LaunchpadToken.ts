@@ -1,9 +1,14 @@
 import { URL } from 'url';
 import got from 'got';
+import { Readable } from 'stream';
 
 import Logger from '@cumulus/logger';
 import { s3 } from '@cumulus/aws-client/services';
-import { getObject, s3ObjectExists } from '@cumulus/aws-client/S3';
+import {
+  getObject,
+  s3ObjectExists,
+  getObjectStreamBuffers,
+} from '@cumulus/aws-client/S3';
 
 import {
   LaunchpadTokenParams,
@@ -64,7 +69,7 @@ class LaunchpadToken {
     );
 
     if (!keyExists) {
-      throw new Error(`${this.certificate} does not exist in S3 crypto directory: ${cryptKey}`);
+      throw new Error(`${this.certificate} does not exist in S3 ${bucket} crypto directory: ${cryptKey}`);
     }
 
     log.debug(`Reading Key: ${this.certificate} bucket:${bucket},stack:${stackName}`);
@@ -73,11 +78,15 @@ class LaunchpadToken {
       Bucket: bucket,
       Key: `${stackName}/crypto/${this.certificate}`,
     });
-    // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
-    // request header
-    const pfx = pfxObject?.Body;
 
-    return <Buffer>pfx;
+    let buffer;
+    if (pfxObject.Body && pfxObject.Body instanceof Readable) {
+      // MUST NOT add .toString() to this value, otherwise value is too large when sent as a
+      // request header
+      buffer = Buffer.concat(await getObjectStreamBuffers(pfxObject.Body));
+    }
+
+    return buffer;
   }
 
   /**

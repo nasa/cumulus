@@ -30,7 +30,7 @@ process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
-const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 
 // create all the variables needed across this test
 let esClient;

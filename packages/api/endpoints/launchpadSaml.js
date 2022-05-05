@@ -14,6 +14,7 @@ const {
   parseS3Uri,
   s3ObjectExists,
   s3PutObject,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
@@ -68,9 +69,9 @@ const launchpadPublicCertificate = async (launchpadPublicMetadataPath) => {
       await downloadLaunchpadPublicMetadata(launchpadPublicMetadataPath);
     }
     const s3Object = await getS3Object(Bucket, Key);
-    launchpadMetatdataXML = s3Object.Body.toString();
+    launchpadMetatdataXML = await getObjectStreamContents(s3Object.Body);
   } catch (error) {
-    if (error.code === 'NoSuchKey' || error.code === 'NoSuchBucket') {
+    if (error.name === 'NoSuchKey' || error.name === 'NoSuchBucket') {
       error.message = `Cumulus could not find Launchpad public xml metadata at ${launchpadPublicMetadataPath}`;
     }
     throw error;

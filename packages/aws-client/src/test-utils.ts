@@ -26,7 +26,7 @@ const localStackPorts = {
   lambda: 4566,
   redshift: 4566,
   route53: 4566,
-  s3: 4566,
+  S3: 4566,
   secretsmanager: 4566,
   ses: 4566,
   sns: 4566,
@@ -78,7 +78,7 @@ export function getLocalstackEndpoint(identifier: keyof typeof localStackPorts) 
  */
 export function localStackAwsClientOptions<T>(
   Service: new (params: object) => T,
-  options: object = {}
+  options: { credentials?: object } = {}
 ) {
   if (!process.env.LOCALSTACK_HOST) {
     throw new Error('The LOCALSTACK_HOST environment variable is not set.');
@@ -87,16 +87,17 @@ export function localStackAwsClientOptions<T>(
   const serviceIdentifier = getServiceIdentifer(Service);
 
   const localStackOptions: { [key: string ]: unknown } = {
+    region: 'us-east-1',
+    endpoint: getLocalstackEndpoint(serviceIdentifier),
     ...options,
     credentials: {
       accessKeyId: 'my-access-key-id',
       secretAccessKey: 'my-secret-access-key',
+      ...options.credentials,
     },
-    region: 'us-east-1',
-    endpoint: getLocalstackEndpoint(serviceIdentifier),
   };
 
-  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.s3ForcePathStyle = true;
+  if (serviceIdentifier.toLowerCase() === 's3') localStackOptions.forcePathStyle = true;
   return localStackOptions;
 }
 
@@ -111,7 +112,7 @@ export function localStackAwsClientOptions<T>(
  */
 export function getLocalstackAwsClientOptions<T extends AWSClientTypes>(
   Service: new (params: object) => T,
-  options?: object
+  options: { credentials?: object } = {}
 ): object {
   const serviceIdentifier = getServiceIdentifer(Service);
   if (localstackSupportedService(serviceIdentifier)) {
