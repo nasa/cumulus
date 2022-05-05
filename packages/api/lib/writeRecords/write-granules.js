@@ -594,7 +594,6 @@ const _writeGranule = async ({
 * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
 * @param {number}          params.executionCumulusId - Execution ID the granule was written from
 * @param {Object}          params.esClient - Elasticsearch client
-* @param {Object}          params.granuleModel - Instance of DynamoDB granule model
 * @param {Object}          params.granulePgModel - @cumulus/db compatible granule module instance
 * @param {Knex}            params.knex - Knex object
 * @param {Object}          params.postgresGranuleRecord - PostgreSQL granule record to write
@@ -607,7 +606,6 @@ const writeGranuleRecordAndPublishSns = async ({
   apiGranuleRecord,
   esClient,
   executionCumulusId,
-  granuleModel,
   granulePgModel,
   knex,
   snsEventType = 'Update',
@@ -617,7 +615,6 @@ const writeGranuleRecordAndPublishSns = async ({
     apiGranuleRecord: omit(apiGranuleRecord, 'files'),
     knex,
     esClient,
-    granuleModel,
     executionCumulusId,
     granulePgModel,
   });

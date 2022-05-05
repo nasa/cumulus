@@ -322,8 +322,7 @@ async function put(req, res) {
     await moveGranule(
       apiGranule,
       body.destinations,
-      process.env.DISTRIBUTION_ENDPOINT,
-      granuleModel
+      process.env.DISTRIBUTION_ENDPOINT
     );
 
     return res.send({
@@ -410,7 +409,6 @@ const associateExecution = async (req, res) => {
       apiGranuleRecord,
       esClient,
       executionCumulusId: pgExecution.cumulus_id,
-      granuleModel: new Granule(),
       granulePgModel,
       postgresGranuleRecord: updatedPgGranule,
       knex,

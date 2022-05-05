@@ -61,7 +61,7 @@ const getExecutionProcessingTimeInfo = ({
 };
 
 /**
-* Move granule 'file' S3 Objects and update Postgres/Dynamo/CMR metadata with new locations
+* Move granule 'file' S3 Objects and update Postgres/CMR metadata with new locations
 *
 * @param {Object} params                                - params object
 * @param {Object} params.apiGranule                     - API 'granule' object to move
@@ -79,7 +79,6 @@ const getExecutionProcessingTimeInfo = ({
 async function moveGranuleFilesAndUpdateDatastore(params) {
   const {
     apiGranule,
-    granulesModel,
     destinations,
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
@@ -119,12 +118,6 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
   });
 
   const moveResults = await Promise.allSettled(moveFilePromises);
-  await granulesModel.update(
-    { granuleId: apiGranule.granuleId },
-    {
-      files: updatedFiles,
-    }
-  );
 
   await indexer.upsertGranule({
     esClient,
@@ -154,7 +147,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
  * @param {Object} granulesModel - An instance of an API Granule granulesModel
  * @returns {Promise<undefined>} undefined
  */
-async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel) {
+async function moveGranule(apiGranule, destinations, distEndpoint) {
   log.info(`granules.move ${apiGranule.granuleId}`);
 
   const bucketsConfig = await s3Utils.getJsonS3Object(
@@ -171,7 +164,7 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
   const {
     updatedFiles,
     moveGranuleErrors,
-  } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, granulesModel, destinations });
+  } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, destinations });
   await CmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
     updatedFiles,
