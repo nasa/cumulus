@@ -97,11 +97,6 @@ let granulePgModel;
 let granulesExecutionsPgModel;
 let jwtAuthToken;
 
-// Phase 3 -- this is still present as there are granule
-// model built-in behaviors related to file-move that are required
-// possibly others
-let granuleModel;
-
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
 process.env.ExecutionsTable = randomId('executions');
@@ -175,11 +170,6 @@ test.before(async (t) => {
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
   executionPgModel = new ExecutionPgModel();
-
-  // create fake Granules table
-  granuleModel = new models.Granule();
-  await granuleModel.createTable();
-  t.context.granuleModel = granuleModel;
 
   granulePgModel = new GranulePgModel();
   t.context.granulePgModel = granulePgModel;
@@ -654,6 +644,7 @@ test.serial('remove a granule from CMR', async (t) => {
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: true },
+    writeDynamo: false,
   });
 
   const granuleId = newPgGranule.granule_id;
@@ -1089,7 +1080,6 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   t.true(publishedMessage.deletedAt < Date.now());
 });
 
-// TDOO - need to re-add the granule model for this unit test
 test.serial('move a granule with no .cmr.xml file', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
@@ -1113,7 +1103,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
         secondBucket,
         granulePgModel,
         filePgModel,
-        granuleModel,
         granuleFileName,
       });
 
@@ -1169,15 +1158,6 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       t.is(thirdBucketObjects.Contents.length, 1);
       t.is(thirdBucketObjects.Contents[0].Key, `${destinationFilepath}/${granuleFileName}.md`);
 
-      // check the granule in dynamoDb is updated and files are replaced
-      const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-
-      updatedGranule.files.forEach((file) => {
-        t.true(file.key.startsWith(`${destinationFilepath}/${granuleFileName}`));
-        const destination = destinations.find((dest) => file.fileName.match(dest.regex));
-        t.is(destination.bucket, file.bucket);
-      });
-
       // check the granule in postgres is updated
       const pgFiles = await getPgFilesFromGranuleCumulusId(
         t.context.knex,
@@ -1214,8 +1194,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
   );
 });
 
-// TDOO - need to re-add the granule model for this unit test
-test.serial('When a move granule request fails to move a file correctly, it records the expected granule files in postgres and dynamo', async (t) => {
+test.serial('When a move granule request fails to move a file correctly, it records the expected granule files in postgres', async (t) => {
   const bucket = process.env.system_bucket;
   const secondBucket = randomId('second');
   const thirdBucket = randomId('third');
@@ -1235,7 +1214,6 @@ test.serial('When a move granule request fails to move a file correctly, it reco
         secondBucket,
         granulePgModel,
         filePgModel,
-        granuleModel,
         granuleFileName,
       });
 
@@ -1331,35 +1309,6 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       t.is(thirdBucketObjects.Contents.length, 1);
       t.is(thirdBucketObjects.Contents[0].Key, `${destinationFilepath}/${granuleFileName}.md`);
 
-      // check the granule in dynamoDb is updated and files are replaced
-      const updatedGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-
-      const updatedFiles = sortBy(updatedGranule.files, (file) => getFileNameFromKey(file.key));
-      const granuleFiles = sortBy(newGranule.files, (file) => getFileNameFromKey(file.key));
-
-      t.deepEqual({
-        ...fileWithInvalidDestination,
-        fileName: `${granuleFileName}.jpg`,
-      }, updatedFiles[0]);
-
-      t.true(
-        updatedFiles[1].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
-        `updatedFile[1] ${updatedFiles[1].key}, did not start with ${destinationFilepath}/${granuleFileName}`
-      );
-      t.like(newGranule.files[1], omit(updatedFiles[1], ['fileName', 'key', 'bucket']));
-      t.is(updatedFiles[1].bucket, destinations.find(
-        (dest) => updatedFiles[1].fileName.match(dest.regex)
-      ).bucket);
-
-      t.true(
-        updatedFiles[2].key.startsWith(`${destinationFilepath}/${granuleFileName}`),
-        `updatedFile[2] ${updatedFiles[2].key}, did not start with ${destinationFilepath}/${granuleFileName}`
-      );
-      t.like(granuleFiles[2], omit(updatedFiles[2], ['fileName', 'key', 'bucket']));
-      t.is(updatedFiles[2].bucket, destinations.find(
-        (dest) => updatedFiles[2].fileName.match(dest.regex)
-      ).bucket);
-
       // Check that the postgres granules are in the correct state
       const pgFiles = await getPgFilesFromGranuleCumulusId(
         t.context.knex,
@@ -1408,8 +1357,6 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     },
   ];
 
-  await granuleModel.create(newGranule);
-
   const postgresNewGranule = await translateApiGranuleToPostgresGranule(
     newGranule,
     t.context.knex
@@ -1428,7 +1375,6 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     postgresNewGranuleFiles.map((file) =>
       filePgModel.create(t.context.knex, file))
   );
-  await granuleModel.create(newGranule, t.context.knex);
 
   await s3PutObject({
     Bucket: newGranule.files[0].bucket,
@@ -1508,7 +1454,6 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   await recursivelyDeleteS3Bucket(publicBucket);
 });
 
-// TDOO - need to re-add the granule model for this unit test
 test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   const { internalBucket, publicBucket } = await setupBucketsConfig();
 
@@ -1547,8 +1492,6 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     postgresNewGranuleFiles.map((file) =>
       filePgModel.create(t.context.knex, file))
   );
-  await granuleModel.create(newGranule);
-
   await Promise.all(newGranule.files.map((file) => {
     if (file.name === `${newGranule.granuleId}.txt`) {
       return s3PutObject({ Bucket: file.bucket, Key: file.key, Body: 'test data' });
@@ -1628,8 +1571,6 @@ test.serial('PUT with action move returns failure if one granule file exists', a
     granulePgRecord: insertedPgGranules[0],
   });
 
-  await granuleModel.create(granule);
-
   const body = {
     action: 'move',
     destinations: [{
@@ -1660,14 +1601,7 @@ test.serial('PUT with action move returns failure if more than one granule file 
     { fileName: 'file2' },
     { fileName: 'file3' },
   ]);
-  const { knex, insertedPgGranules } = t.context;
-
-  const granule = await translatePostgresGranuleToApiGranule({
-    knexOrTransaction: knex,
-    granulePgRecord: insertedPgGranules[0],
-  });
-
-  await granuleModel.create(granule);
+  const { insertedPgGranules } = t.context;
 
   const body = {
     action: 'move',
@@ -1679,7 +1613,7 @@ test.serial('PUT with action move returns failure if more than one granule file 
   };
 
   const response = await request(app)
-    .put(`/granules/${granule.granuleId}`)
+    .put(`/granules/${insertedPgGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -1689,7 +1623,6 @@ test.serial('PUT with action move returns failure if more than one granule file 
   t.is(response.statusCode, 409);
   t.is(responseBody.message,
     'Cannot move granule because the following files would be overwritten at the destination location: file1, file2, file3. Delete the existing files or reingest the source files.');
-
   filesExistingStub.restore();
 });
 
@@ -1915,6 +1848,7 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    writeDynamo: false,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -1973,6 +1907,7 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
       updatedAt: Date.now(),
       execution: executionUrl,
     },
+    writeDynamo: false,
     collection_cumulus_id: collectionCumulusId,
   });
 
@@ -2029,6 +1964,7 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
       status: 'running',
       execution: executionUrl,
     },
+    writeDynamo: false,
   });
 
   const fakeGranulePgModel = {
@@ -2104,12 +2040,12 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
   } = t.context;
   const {
     newPgGranule,
-    newDynamoGranule,
     esRecord,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
     granuleParams: { status: 'running', execution: executionUrl },
+    writeDynamo: false,
   });
 
   const fakeEsClient = {
@@ -2118,15 +2054,19 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
     },
     delete: () => Promise.resolve(),
   };
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: newPgGranule,
+    knexOrTransaction: knex,
+  });
 
   const updatedGranule = {
-    ...newDynamoGranule,
+    ...apiGranule,
     status: 'completed',
   };
 
   const expressRequest = {
     params: {
-      granuleName: newDynamoGranule.granuleId,
+      granuleName: apiGranule.granuleId,
     },
     body: updatedGranule,
     testContext: {
@@ -2150,7 +2090,7 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
   );
   t.deepEqual(
     await t.context.esGranulesClient.get(
-      newDynamoGranule.granuleId
+      apiGranule.granuleId
     ),
     esRecord
   );
