@@ -84,7 +84,7 @@ Run LZARDS backup
 
 Move granule files from staging to final location
 
-- Readme: Cbeck out the [README](https://github.com/nasa/cumulus/tree/master/tasks/move-granules) for additional information.
+- Readme: Check out the [README](https://github.com/nasa/cumulus/tree/master/tasks/move-granules) for additional information.
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/move-granules/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/move-granules) | [source](https://github.com/nasa/cumulus)
 

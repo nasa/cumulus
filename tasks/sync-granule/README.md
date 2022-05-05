@@ -20,7 +20,7 @@ Download a given granule from a given provider to S3
 
 ## Disabling ACLs
 
-If you would like to disable ACLs, you can update your workflow's `*.asl.json` file. Update the `task_config` field in your `SyncGranule` step to include the ACL parameter so that it can be configured through the `Metadata` field in the Cumulus dashboard:
+If you would like to disable ACLs, you can update your workflow's `*.asl.json` file. Update the `task_config` field in your `SyncGranule` step to include the ACL parameter to allow it to be configured through the `Metadata` field in the Cumulus dashboard:
 
 ```json
 {
