@@ -373,7 +373,7 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report, undefined, 2),
-  }).promise();
+  });
 
   const granulesReport = await orcaReconciliationReportForGranules(recReportParams);
 
@@ -387,7 +387,7 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     Bucket: systemBucket,
     Key: reportKey,
     Body: JSON.stringify(report, undefined, 2),
-  }).promise();
+  });
 }
 
 module.exports = {

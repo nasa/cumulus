@@ -6,7 +6,7 @@ import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
 
 const calculateGranuleFileChecksum = async (params: {
-  s3: { getObject: S3.GetObjectCreateReadStreamMethod },
+  s3: { getObject: S3.GetObjectMethod },
   algorithm: string,
   granuleFile: GranuleFile
 }) => {
@@ -33,7 +33,7 @@ const skipGranuleFileUpdate = (granuleFile: GranuleFile) =>
   || granuleFileDoesNotHaveBucketAndKey(granuleFile);
 
 export const addChecksumToGranuleFile = async (params: {
-  s3: { getObject: S3.GetObjectCreateReadStreamMethod },
+  s3: { getObject: S3.GetObjectMethod },
   algorithm: string,
   granuleFile: GranuleFile
 }) => {
@@ -57,7 +57,7 @@ export const addChecksumToGranuleFile = async (params: {
 };
 
 const addFileChecksumsToGranule = async (params: {
-  s3: { getObject: S3.GetObjectCreateReadStreamMethod },
+  s3: { getObject: S3.GetObjectMethod },
   algorithm: string,
   granule: Granule
 }) => {

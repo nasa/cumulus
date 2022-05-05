@@ -10,10 +10,7 @@ const {
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const {
-  randomId,
-  randomString,
-} = require('@cumulus/common/test-utils');
+const { randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
   destroyLocalTestDb,
@@ -44,11 +41,11 @@ const {
 const assertions = require('../../../lib/assertions');
 const { del } = require('../../../endpoints/collections');
 
-process.env.AccessTokensTable = randomId('AccessTokens');
-process.env.CollectionsTable = randomId('Collections');
-process.env.stackName = randomId('stackName');
-process.env.system_bucket = randomId('systemBucket');
-process.env.TOKEN_SECRET = randomId('token');
+process.env.AccessTokensTable = randomString();
+process.env.CollectionsTable = randomString();
+process.env.stackName = randomString();
+process.env.system_bucket = randomString();
+process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
 const { app } = require('../../../app');
@@ -82,7 +79,7 @@ test.before(async (t) => {
     t.context.esIndex
   );
 
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -98,7 +95,7 @@ test.before(async (t) => {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 });
 
 test.beforeEach(async (t) => {
@@ -341,7 +338,7 @@ test.serial('Attempting to delete a collection with an associated rule returns a
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 
   await rulePgModel.create(testKnex, rule);
 
@@ -373,7 +370,7 @@ test.serial('Attempting to delete a collection with an associated rule does not 
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 
   await rulePgModel.create(testKnex, rule);
 

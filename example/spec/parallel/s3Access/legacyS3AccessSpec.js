@@ -79,16 +79,16 @@ xdescribe('When accessing an S3 bucket directly', () => {
     accessTokensModel = new AccessToken();
 
     await Promise.all([
-      s3().putObject({ Bucket: protectedBucketName, Key: testFileKey, Body: 'test' }).promise(),
-      s3().putObject({ Bucket: publicBucketName, Key: testFileKey, Body: 'test' }).promise(),
+      s3().putObject({ Bucket: protectedBucketName, Key: testFileKey, Body: 'test' }),
+      s3().putObject({ Bucket: publicBucketName, Key: testFileKey, Body: 'test' }),
     ]);
     setDistributionApiEnvVars();
   });
 
   afterAll(async () => {
     await Promise.all([
-      s3().deleteObject({ Bucket: protectedBucketName, Key: testFileKey }).promise(),
-      s3().deleteObject({ Bucket: publicBucketName, Key: testFileKey }).promise(),
+      s3().deleteObject({ Bucket: protectedBucketName, Key: testFileKey }),
+      s3().deleteObject({ Bucket: publicBucketName, Key: testFileKey }),
       accessTokensModel.delete({ accessToken }),
     ]);
   });

@@ -66,11 +66,11 @@ class CollectionConfigStore {
         // Attempt to fetch the collection config from S3
         collectionConfig = await getJsonS3Object(this.bucket, this.configKey(collectionId));
       } catch (error) {
-        if (error.code === 'NoSuchKey') {
+        if (error.name === 'NoSuchKey') {
           throw new Error(`A collection config for data type "${collectionId}" was not found.`);
         }
 
-        if (error.code === 'NoSuchBucket') {
+        if (error.name === 'NoSuchBucket') {
           throw new Error(`Collection config bucket does not exist: ${this.bucket}`);
         }
 

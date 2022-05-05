@@ -17,7 +17,7 @@ export interface SftpClientConfig {
 
 export interface SyncToS3Response {
   s3uri: string,
-  etag: string
+  etag?: string
 }
 
 export interface ListItem {
@@ -137,10 +137,12 @@ export class SftpClient {
     const sftpReadStream = this.sftp.sftp.createReadStream(remotePath);
 
     const result = await S3.promiseS3Upload({
-      Bucket: bucket,
-      Key: key,
-      Body: sftpReadStream,
-      ContentType: mime.lookup(key) || undefined,
+      params: {
+        Bucket: bucket,
+        Key: key,
+        Body: sftpReadStream,
+        ContentType: mime.lookup(key) || undefined,
+      },
     });
 
     log.info(`Finished copying ${remoteUrl} to ${s3uri}`);

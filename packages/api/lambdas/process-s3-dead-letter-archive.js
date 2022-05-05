@@ -39,9 +39,9 @@ async function processDeadLetterArchive({
       Prefix: path,
       ContinuationToken: continuationToken,
       MaxKeys: batchSize,
-    }).promise();
+    });
     continuationToken = listObjectsResponse.NextContinuationToken;
-    const deadLetterObjects = listObjectsResponse.Contents;
+    const deadLetterObjects = listObjectsResponse.Contents || [];
     const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
         const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
@@ -69,7 +69,7 @@ async function processDeadLetterArchive({
         Delete: {
           Objects: keysToDelete,
         },
-      }).promise();
+      });
     }
   } while (listObjectsResponse.IsTruncated);
   /* eslint-enable no-await-in-loop */
