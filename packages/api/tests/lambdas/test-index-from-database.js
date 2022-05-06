@@ -94,21 +94,25 @@ function searchEs(type, index, limit = 10) {
 test.before(async (t) => {
   t.context.esIndices = [];
 
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
   await reconciliationReportModel.createTable();
 
   const wKey = `${process.env.stackName}/workflows/${workflowList[0].name}.json`;
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await Promise.all([
     promiseS3Upload({
-      Bucket: process.env.system_bucket,
-      Key: wKey,
-      Body: JSON.stringify(workflowList[0]),
+      params: {
+        Bucket: process.env.system_bucket,
+        Key: wKey,
+        Body: JSON.stringify(workflowList[0]),
+      },
     }),
     promiseS3Upload({
-      Bucket: process.env.system_bucket,
-      Key: tKey,
-      Body: JSON.stringify({}),
+      params: {
+        Bucket: process.env.system_bucket,
+        Key: tKey,
+        Body: JSON.stringify({}),
+      },
     }),
   ]);
 });

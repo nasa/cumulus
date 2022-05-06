@@ -36,7 +36,7 @@ test('test pdr discovery with FTP assuming all PDRs are new', async (t) => {
 
   await validateConfig(t, event.config);
 
-  await s3().createBucket({ Bucket: event.config.bucket }).promise();
+  await s3().createBucket({ Bucket: event.config.bucket });
 
   try {
     const output = await discoverPdrs(event);
@@ -68,7 +68,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
 
   await validateConfig(t, newPayload.config);
 
-  return s3().createBucket({ Bucket: internalBucketName }).promise()
+  return s3().createBucket({ Bucket: internalBucketName })
     .then(() => {
       const Key = [
         newPayload.config.stack,
@@ -80,7 +80,7 @@ test('test pdr discovery with FTP assuming some PDRs are new', async (t) => {
         Bucket: internalBucketName,
         Key,
         Body: 'PDN.ID1611071307.PDR',
-      }).promise();
+      });
     })
     .then(() => discoverPdrs(newPayload, {}))
     .then((output) => {
@@ -95,7 +95,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
   const internalBucketName = randomString();
 
   try {
-    await s3().createBucket({ Bucket: internalBucketName }).promise();
+    await s3().createBucket({ Bucket: internalBucketName });
     const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs', 'discover-pdrs');
     const pdrFilenames = await fs.readdir(testDataDirectory);
     const oldPdr = pdrFilenames[0];
@@ -119,7 +119,7 @@ test('test pdr discovery with HTTP assuming some PDRs are new', async (t) => {
       // 'pdrs' is the default 'folder' value in the Discover contructor
       Key: `${event.config.stack}/pdrs/${oldPdr}`,
       Body: 'Pretend this is a PDR',
-    }).promise();
+    });
 
     await validateConfig(t, event.config);
     const output = await discoverPdrs(event, {});
@@ -142,7 +142,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
   const testDataDirectory = path.join(await findTestDataDirectory(), 'pdrs', 'discover-pdrs');
 
   // Create providerPathDirectory and internal bucket
-  await s3().createBucket({ Bucket: internalBucketName }).promise();
+  await s3().createBucket({ Bucket: internalBucketName });
 
   try {
     // Copy the PDRs to the SFTP directory
@@ -171,7 +171,7 @@ test('test pdr discovery with SFTP assuming some PDRs are new', async (t) => {
       // 'pdrs' is the default 'folder' value in the Discover constructor
       Key: `${event.config.stack}/pdrs/${oldPdr}`,
       Body: 'Pretend this is a PDR',
-    }).promise();
+    });
 
     await validateConfig(t, event.config);
 

@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 
 const { startECSTask } = require('@cumulus/async-operations');
 const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
@@ -47,7 +47,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         Bucket: config.bucket,
         Key: payloadKey,
         Body: 'invalid JSON',
-      }).promise();
+      });
 
       const asyncOperationObject = {
         id: asyncOperationId,
@@ -111,7 +111,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
   });
 
   afterAll(async () => {
-    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
+    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey });
     if (asyncOperationId) {
       await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
     }

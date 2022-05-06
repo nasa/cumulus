@@ -139,7 +139,7 @@ let ruleModel;
 let reconciliationReportModel;
 
 test.before(async (t) => {
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   // create tables
   granuleModel = new models.Granule();

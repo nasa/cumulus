@@ -35,7 +35,7 @@ test.afterEach((t) =>
     .catch((error) => {
       // Some tests delete the bucket before this "afterEach" hook is run,
       // which is okay.
-      if (error.code !== 'NoSuchBucket') throw error;
+      if (error.name !== 'NoSuchBucket') throw error;
     }));
 
 test.serial('get() fetches a collection config from S3', async (t) => {

@@ -4,7 +4,7 @@
 
 const groupBy = require('lodash/groupBy');
 const aws = require('@cumulus/aws-client/services');
-const { getS3Object, parseS3Uri } = require('@cumulus/aws-client/S3');
+const { getObject, parseS3Uri, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 
 const DEFAULT_DEPLOYMENT_REGEX = /.*\/(.*)\/(data-persistence.*|cumulus.*)\/terraform.tfstate/;
@@ -141,12 +141,14 @@ function extractDeploymentName(filename, regex = DEFAULT_DEPLOYMENT_REGEX) {
  * @returns {Array<Object>} - list of resource objects
  */
 async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX) {
-  const { Bucket, Key } = parseS3Uri(`s3://${file}`);
+  const s3ObjectParams = parseS3Uri(`s3://${file}`);
 
   try {
-    const stateFile = await getS3Object(Bucket, Key);
+    const stateFile = await getObject(aws.s3(), s3ObjectParams);
 
-    const stateFileBody = JSON.parse(stateFile.Body);
+    const stateFileBody = JSON.parse(
+      await getObjectStreamContents(stateFile.Body)
+    );
 
     return {
       file,

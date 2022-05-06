@@ -201,7 +201,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     configure(t);
 
     await validateConfig(t, config);
-    await s3().createBucket({ Bucket: config.sourceBucketName }).promise();
+    await s3().createBucket({ Bucket: config.sourceBucketName });
 
     try {
       await Promise.all(files.map((file) =>
@@ -209,7 +209,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
           Bucket: config.sourceBucketName,
           Key: `${event.config.provider_path}/${file}`,
           Body: `This is ${file}`,
-        }).promise()));
+        })));
       await assert(t, await discoverGranules(event));
     } finally {
       // Clean up
@@ -322,7 +322,7 @@ test('discover granules using S3 throws error when discovery fails',
         host: randomString(),
       };
     });
-    await t.throwsAsync(assert(t), { code: 'NoSuchBucket' });
+    await t.throwsAsync(assert(t), { name: 'NoSuchBucket' });
   });
 
 test('handleDuplicates filters on duplicateHandling set to "skip"', async (t) => {

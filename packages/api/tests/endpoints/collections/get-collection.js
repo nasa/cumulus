@@ -57,7 +57,7 @@ test.before(async (t) => {
   process.env.ES_INDEX = esAlias;
   await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);

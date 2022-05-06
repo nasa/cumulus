@@ -7,7 +7,7 @@ const pWaitFor = require('p-wait-for');
 
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteS3Object } = require('@cumulus/aws-client/S3');
+const { deleteS3Object, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
   receiveSQSMessages,
@@ -314,8 +314,8 @@ describe('The SQS rule', () => {
       const message = await s3().getObject({
         Bucket: config.bucket,
         Key: key,
-      }).promise();
-      expect(message.Body.toString()).toBe(invalidMessage);
+      });
+      expect(await getObjectStreamContents(message.Body)).toBe(invalidMessage);
     });
   });
 });
