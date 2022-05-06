@@ -421,59 +421,6 @@ describe('The Sync Granules workflow', () => {
     });
   });
 
-  describe('when an ACL is provided in the task config and set to the canned ACL authenticated-read', () => {
-    const meta = { ACL: 'authenticated-read' };
-    let executionArn;
-    let lambdaOutput;
-    let objectACLs;
-    let files;
-    let key1;
-    let key2;
-
-    beforeAll(async () => {
-      const execution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload, meta
-      );
-
-      executionArn = execution.executionArn;
-      console.log(`Wait for completed execution ${executionArn}`);
-
-      await waitForCompletedExecution(executionArn);
-
-      lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'SyncGranule');
-      files = lambdaOutput.payload.granules[0].files;
-      key1 = s3Join(files[0].key);
-      key2 = s3Join(files[1].key);
-
-      await Promise.all([
-        s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
-        s3ObjectExists({ Bucket: files[1].bucket, Key: key2 }),
-      ]);
-      objectACLs = await Promise.all(files.map(
-        (file) => s3().getObjectAcl({
-          Bucket: file.bucket,
-          Key: file.key,
-        })
-      ));
-    });
-
-    afterAll(async () => {
-      await Promise.all([
-        deleteS3Object(files[0].bucket, key1),
-        deleteS3Object(files[1].bucket, key2),
-      ]);
-      await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
-    });
-
-    it('puts objects with ACL private (full control permission)', () => {
-      objectACLs.map((acl) => expect(acl.Grants[0].Permission).toBe('FULL_CONTROL'));
-    });
-
-    it('an authenticated-read ACL configuration value in the lamba output', () => {
-      expect(lambdaOutput.meta.ACL).toBe('authenticated-read');
-    });
-  });
-
   describe('when a bad checksum is provided', () => {
     let lambdaOutput;
     let failingExecution;

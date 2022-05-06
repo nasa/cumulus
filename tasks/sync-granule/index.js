@@ -82,13 +82,13 @@ async function download({
 }
 
 /**
-* Set or disable ACL using value supplied from configuration.
+* Disable ACL using value supplied from configuration.
 * Defaults to private. ACL value of 'disabled' disables it.
 *
 * @param {string} acl
 * @returns {string | undefined }
 */
-function setOrDisableAcl(acl) {
+function disableOrDefaultAcl(acl) {
   if (acl === 'disabled') {
     return undefined;
   }
@@ -105,7 +105,7 @@ function setOrDisableAcl(acl) {
 function syncGranule(event) {
   const now = Date.now();
   const config = event.config;
-  const ACL = setOrDisableAcl(config.ACL);
+  const ACL = disableOrDefaultAcl(config.ACL);
   const input = event.input;
   const stack = config.stack;
   const buckets = config.buckets;
@@ -200,6 +200,6 @@ async function handler(event, context) {
 
 module.exports = {
   handler,
-  setOrDisableAcl,
+  disableOrDefaultAcl,
   syncGranule,
 };
