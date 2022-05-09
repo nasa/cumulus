@@ -1,0 +1,11 @@
+{
+  "name": "@cumulus/data-migration1",
+  "version": "11.1.0",
+  "description": "TODO: Remove this dummy package.json post-main merge. Snyk temporary fix for feature/rds-phase-3 merge.",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=12.18.0"
+  },
+  "private": true
+}
+
