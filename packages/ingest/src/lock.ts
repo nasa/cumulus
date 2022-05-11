@@ -68,12 +68,15 @@ export async function countLock(
 async function addLock(
   bucket: string,
   providerName: string,
-  filename: string
+  filename: string,
+  ACL?: string
 ): Promise<void> {
+  const key = `${lockPrefix}/${providerName}/${filename}`;
   await s3PutObject({
     Bucket: bucket,
-    Key: `${lockPrefix}/${providerName}/${filename}`,
+    Key: key,
     Body: '',
+    ACL,
   });
 }
 
@@ -88,6 +91,17 @@ export async function removeLock(
   );
 }
 
+/**
+ *
+ * @param {string} bucket
+ * @param {Object} provider
+ * @param {string} provider.id
+ * @param {number} provider.globalConnectionLimit
+ * @param {string} filename
+ * @param {number} counter
+ * @param {string} ACL
+ * @returns {Promise<boolean>}
+ */
 export async function proceed(
   bucket: string,
   provider: {
@@ -95,7 +109,8 @@ export async function proceed(
     globalConnectionLimit?: number
   },
   filename: string,
-  counter = 0
+  counter = 0,
+  ACL: string
 ): Promise<boolean> {
   if (provider.globalConnectionLimit === undefined) {
     return true;
@@ -114,10 +129,10 @@ export async function proceed(
     log.debug(`The "${provider.id}" provider's globalConnectionLimit of "${provider.globalConnectionLimit}" has been reached.`);
     // wait for 5 second and try again
     await delay(5000);
-    return proceed(bucket, provider, filename, counter + 1);
+    return proceed(bucket, provider, filename, counter + 1, ACL);
   }
 
   // add the lock
-  await addLock(bucket, provider.id, filename);
+  await addLock(bucket, provider.id, filename, ACL);
   return true;
 }
