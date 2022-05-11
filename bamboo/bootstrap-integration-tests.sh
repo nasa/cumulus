@@ -40,7 +40,7 @@ if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Prepare repo lambdas
   cd ..
 
-  npm install && npm run package
+  npm install && npm run package-deployment
   cd ..
 else
   echo "***Bootstrapping integration tests with source"

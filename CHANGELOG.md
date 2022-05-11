@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v11.1.1] 2022-04-26
+
 ### Added
 
 ### Changed
@@ -41,6 +43,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates CI to utilize `audit-ci` v6.2.0
   - Updates CI to utilize a on-container filesystem when building Core in 'uncached' mode
   - Updates CI to selectively bootstrap Core modules in the cleanup job phase
+- **CUMULUS-2934**
+  - Update CI Docker container build to install pipenv to prevent contention on parallel lambda builds
 
 ## [v11.1.0] 2022-04-07
 
@@ -5891,7 +5895,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.1...HEAD
+[v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
 [v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
