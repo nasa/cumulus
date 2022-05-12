@@ -3,7 +3,7 @@
   "version": "11.1.1",
   "description": "A node SDK for CMR",
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",

@@ -15,7 +15,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
