@@ -9,8 +9,8 @@ const logger = new Logger({ sender: '@cumulus/api/start-async-operation' });
 /**
  * Start an async operation
  *
- * @param {Object} event - A DynamoDB event
- * @returns {Promise}
+ * @param {Object} event - event object
+ * @returns {Promise} an AsyncOperation record
  */
 const handler = async (event) => {
   const dynamoTableName = process.env.AsyncOperationsTable;
