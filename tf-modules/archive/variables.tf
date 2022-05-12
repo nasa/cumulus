@@ -86,6 +86,12 @@ variable "elasticsearch_security_group_id" {
   default = ""
 }
 
+variable "elasticsearch_remove_index_alias_conflict" {
+  type = bool
+  default = true
+  description = "Set to false to not allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias'"
+}
+
 variable "kinesis_inbound_event_logger_lambda_function_arn" {
   type = string
 }

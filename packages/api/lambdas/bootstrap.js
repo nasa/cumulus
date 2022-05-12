@@ -18,7 +18,10 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
  */
 const handler = async ({ elasticsearchHostname }) => {
   try {
-    await bootstrapElasticSearch(elasticsearchHostname);
+    await bootstrapElasticSearch({
+      host: elasticsearchHostname,
+      removeAliasConflict: process.env.ALLOW_REMOVE_CUMULUS_ALIAS,
+    });
     return { Status: 'SUCCESS', Data: {} };
   } catch (error) {
     log.error(error);

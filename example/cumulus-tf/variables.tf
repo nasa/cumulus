@@ -221,6 +221,12 @@ variable "elasticsearch_client_config" {
   default     = {}
 }
 
+variable "elasticsearch_remove_index_alias_conflict" {
+  type = bool
+  default = true
+  description = "Set to false to not allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias'"
+}
+
 variable "es_request_concurrency" {
   type = number
   default = 10

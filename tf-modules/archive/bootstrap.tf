@@ -9,9 +9,10 @@ resource "aws_lambda_function" "custom_bootstrap" {
   memory_size      = 320
   environment {
     variables = {
-      stackName       = var.prefix
-      system_bucket   = var.system_bucket
-      ES_INDEX_SHARDS = var.es_index_shards
+      stackName                     = var.prefix
+      system_bucket                 = var.system_bucket
+      ES_INDEX_SHARDS               = var.es_index_shards
+      ALLOW_REMOVE_CUMULUS_ALIAS    = var.elasticsearch_remove_index_alias_conflict
     }
   }
 

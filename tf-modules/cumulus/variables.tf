@@ -82,6 +82,12 @@ variable "ecs_cluster_min_size" {
   type        = number
 }
 
+variable "elasticsearch_remove_index_alias_conflict" {
+  type = bool
+  default = true
+  description = "Set to false to not allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias'"
+}
+
 variable "elasticsearch_domain_arn" {
   description = "The ARN of an Elasticsearch domain to use for storing data"
   type        = string

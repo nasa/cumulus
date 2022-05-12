@@ -76,12 +76,19 @@ async function removeIndexAsAlias(esClient, alias) {
  * Initialize elastic search. If the index does not exist, create it with an alias.
  * If an index exists but is not aliased, alias the index.
  *
- * @param {string} host - elastic search host
- * @param {string} index - name of the index to create if does not exist, defaults to 'cumulus'
- * @param {string} alias - alias name for the index, defaults to 'cumulus'
+ * @param {Object} params
+ * @param {string} params.host  - elastic search host
+ * @param {string} params.index - name of the index to create if does not exist, defaults
+ *                                to 'cumulus'
+ * @param {string} params.alias - alias name for the index, defaults to 'cumulus'
  * @returns {Promise} undefined
  */
-async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIndexAlias) {
+async function bootstrapElasticSearch({
+  host,
+  index = 'cumulus',
+  alias = defaultIndexAlias,
+  removeAliasConflict = false,
+}) {
   if (!host) return;
 
   const esClient = await Search.es(host);
@@ -93,7 +100,9 @@ async function bootstrapElasticSearch(host, index = 'cumulus', alias = defaultIn
     },
   });
 
-  await removeIndexAsAlias(esClient, alias);
+  if (removeAliasConflict) {
+    await removeIndexAsAlias(esClient, alias);
+  }
 
   let aliasedIndex = index;
 
