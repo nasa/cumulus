@@ -56,7 +56,7 @@ async function findMissingMappings(esClient, index, newMappings) {
   });
 }
 
-async function removeIndexAsAlias(esClient, alias) {
+async function removeIndexAsAlias(esClient, alias, removeAliasConflict) {
   // If the alias already exists as an index, remove it
   // We can't do a simple exists check here, because it'll return true if the alias
   // is actually an alias assigned to an index. We do a get and check that the alias
@@ -67,7 +67,11 @@ async function removeIndexAsAlias(esClient, alias) {
   );
 
   if (existingIndex && existingIndex[alias]) {
-    logger.info(`Deleting alias as index: ${alias}`);
+    logger.warn(`Conflicting index for alias ${alias} detected!`);
+    if (!removeAliasConflict) {
+      throw new Error('Aborting ES recreation as configuration does not allow removal of index');
+    }
+    logger.warn(`Deleting alias as index: ${alias}`);
     await esClient.indices.delete({ index: alias });
   }
 }
@@ -100,9 +104,7 @@ async function bootstrapElasticSearch({
     },
   });
 
-  if (removeAliasConflict) {
-    await removeIndexAsAlias(esClient, alias);
-  }
+  await removeIndexAsAlias(esClient, alias, removeAliasConflict);
 
   let aliasedIndex = index;
 

@@ -39,7 +39,11 @@ test.serial('bootstrap creates index with specified number of shards', async (t)
 
   process.env.ES_INDEX_SHARDS = 4;
   try {
-    await bootstrapElasticSearch('fakehost', indexName, testAlias);
+    await bootstrapElasticSearch({
+      host: 'fakehost',
+      index: indexName,
+      alias: testAlias,
+    });
     esClient = await Search.es();
 
     const indexSettings = await esClient.indices.get({ index: indexName })
@@ -63,7 +67,11 @@ test('bootstrap adds alias to existing index', async (t) => {
     body: { mappings },
   });
 
-  await bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: testAlias,
+  });
   esClient = await Search.es();
 
   const alias = await esClient.indices.getAlias({ name: testAlias })
@@ -90,7 +98,11 @@ test('Missing types added to index', async (t) => {
     ['deletedgranule']
   );
 
-  await bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: testAlias,
+  });
   esClient = await Search.es();
 
   t.deepEqual(
@@ -117,7 +129,11 @@ test('Missing fields added to index', async (t) => {
     ['execution']
   );
 
-  await bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: testAlias,
+  });
   esClient = await Search.es();
 
   t.deepEqual(
@@ -140,8 +156,11 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
     body: { mappings },
   });
 
-  await bootstrapElasticSearch('fakehost', indexName, testAlias);
-
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: testAlias,
+  });
   // Get the index and make sure `testAlias` is not a key which would mean it's an index
   // If you use indices.exist on testAlias it'll return true because the alias is
   // applied to the index. Here we're checking it's an alias, not an index
@@ -158,11 +177,19 @@ test('If an alias exists that index is used and a new one is not created', async
   const existingAlias = randomId('esalias');
 
   esClient = await Search.es();
-  await bootstrapElasticSearch('fakehost', existingIndex, existingAlias);
 
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: existingIndex,
+    alias: existingAlias,
+  });
   // Try bootstrapping with a different index name
-  await bootstrapElasticSearch('fakehost', indexName, existingAlias);
 
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: existingAlias,
+  });
   const indexExists = await esClient.indices.exists({ index: indexName })
     .then((response) => response.body);
 
