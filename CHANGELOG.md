@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2939**
+  - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
+
 ### Changed
 
 - **CUMULUS-2932**
@@ -17,6 +22,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+- **CUMULUS-2939**
+  - Updated `@cumulus/api` granules bulk endpoints to invoke StartAsyncOperation lambda
 
 ## [v11.1.1] 2022-04-26
 
