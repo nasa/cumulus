@@ -2,8 +2,10 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const { v4: uuidv4 } = require('uuid');
 
 const asyncOperations = require('@cumulus/async-operations');
+const { lambda } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -521,9 +523,6 @@ async function bulkOperations(req, res) {
   if (!payload.workflowName) {
     return res.boom.badRequest('workflowName is required.');
   }
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
 
   let description;
   if (payload.query) {
@@ -534,9 +533,9 @@ async function bulkOperations(req, res) {
     description = `Bulk run on ${payload.workflowName}`;
   }
 
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description,
@@ -556,14 +555,16 @@ async function bulkOperations(req, res) {
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       },
     },
-    esHost: process.env.ES_HOST,
-    stackName,
-    systemBucket,
-    dynamoTableName: tableName,
-    knexConfig: process.env,
-  }, AsyncOperation);
+  };
 
-  return res.status(202).send(asyncOperation);
+  log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
+  await lambda().invoke({
+    FunctionName: `${process.env.stackName}-StartAsyncOperation`,
+    Payload: JSON.stringify(asyncOperationEvent),
+    InvocationType: 'Event',
+  }).promise();
+
+  return res.status(202).send({ id: asyncOperationId });
 }
 
 /**
