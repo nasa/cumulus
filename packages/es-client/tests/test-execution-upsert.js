@@ -31,7 +31,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('upsertExecution writes new "running" execution', async (t) => {
+test.only('upsertExecution writes new "running" execution', async (t) => {
   const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {

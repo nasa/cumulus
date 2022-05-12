@@ -12,7 +12,6 @@ resource "aws_lambda_function" "custom_bootstrap" {
       stackName                     = var.prefix
       system_bucket                 = var.system_bucket
       ES_INDEX_SHARDS               = var.es_index_shards
-      ALLOW_REMOVE_CUMULUS_ALIAS    = var.elasticsearch_remove_index_alias_conflict
     }
   }
 
@@ -35,6 +34,7 @@ data "aws_lambda_invocation" "custom_bootstrap" {
   input = jsonencode(
     {
       elasticsearchHostname = var.elasticsearch_hostname
+      removeAliasConflict = var.elasticsearch_remove_index_alias_conflict
       replacementTrigger = timestamp()
     })
 }

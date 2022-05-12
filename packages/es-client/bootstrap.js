@@ -91,7 +91,7 @@ async function bootstrapElasticSearch({
   host,
   index = 'cumulus',
   alias = defaultIndexAlias,
-  removeAliasConflict = false,
+  removeAliasConflict = true,
 }) {
   if (!host) return;
 

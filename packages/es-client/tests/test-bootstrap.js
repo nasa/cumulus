@@ -18,7 +18,11 @@ test('bootstrap creates index with alias', async (t) => {
   const indexName = randomId('esindex');
   const testAlias = randomId('esalias');
 
-  await bootstrapElasticSearch('fakehost', indexName, testAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: testAlias,
+  });
   try {
     esClient = await Search.es();
 
@@ -169,6 +173,26 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   t.falsy(index[testAlias]);
 
   await esClient.indices.delete({ index: indexName });
+});
+
+test('If an index exists with the alias name, and removeAliasConflict is set to false it is deleted on bootstrap', async (t) => {
+  const indexName = randomString();
+  const testAlias = randomString();
+
+  esClient = await Search.es();
+
+  // Create index with name of alias we want to use
+  await esClient.indices.create({
+    index: testAlias,
+    body: { mappings },
+  });
+
+  await t.throwsAsync(bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: testAlias,
+    removeAliasConflict: false,
+  }), { message: 'Aborting ES recreation as configuration does not allow removal of index' });
 });
 
 test('If an alias exists that index is used and a new one is not created', async (t) => {
