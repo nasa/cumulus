@@ -92,7 +92,6 @@ const { buildFakeExpressResponse } = require('./utils');
 const testDbName = `granules_${cryptoRandomString({ length: 10 })}`;
 
 let accessTokenModel;
-let collectionModel;
 let executionModel;
 let executionPgModel;
 let filePgModel;
@@ -104,7 +103,6 @@ let jwtAuthToken;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
 process.env.ExecutionsTable = randomId('executions');
-process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('system-bucket');
@@ -174,10 +172,6 @@ test.before(async (t) => {
   const tKey = `${process.env.stackName}/workflow_template.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: tKey, Body: '{}' });
 
-  // create fake Collections table
-  collectionModel = new models.Collection();
-  await collectionModel.createTable();
-
   // create fake execution table
   executionModel = new models.Execution();
   await executionModel.createTable();
@@ -231,7 +225,7 @@ test.before(async (t) => {
     process.env.ES_INDEX
   );
 
-  // Create collections in Dynamo and Postgres
+  // Create collections in Postgres
   // we need this because a granule has a foreign key referring to collections
   const collectionName = 'fakeCollection';
   const collectionVersion = 'v1';

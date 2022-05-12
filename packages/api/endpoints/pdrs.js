@@ -12,7 +12,6 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 const { indexPdr, deletePdr } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
-const models = require('../models');
 
 const log = new Logger({ sender: '@cumulus/api/pdrs' });
 
@@ -69,7 +68,6 @@ const isRecordDoesNotExistError = (e) => e.message.includes('RecordDoesNotExist'
  */
 async function del(req, res) {
   const {
-    pdrModel = new models.Pdr(),
     pdrPgModel = new PdrPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -84,7 +82,6 @@ async function del(req, res) {
     process.env.ES_INDEX
   );
 
-  let existingPdr;
   try {
     await pdrPgModel.get(knex, { name: pdrName });
   } catch (error) {
@@ -99,16 +96,6 @@ async function del(req, res) {
     }
   }
 
-  try {
-    // Save DynamoDb PDR in case delete fails and we need to recreate
-    existingPdr = await pdrModel.get({ pdrName });
-  } catch (error) {
-    // Ignore error if record does not exist in DynamoDb
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
   const esPdrClient = new Search(
     {},
     'pdr',
@@ -117,13 +104,10 @@ async function del(req, res) {
   const esPdrRecord = await esPdrClient.get(pdrName).catch(log.info);
 
   try {
-    let dynamoPdrDeleted = false;
     let esPdrDeleted = false;
     try {
       await createRejectableTransaction(knex, async (trx) => {
         await pdrPgModel.delete(trx, { name: pdrName });
-        await pdrModel.delete({ pdrName });
-        dynamoPdrDeleted = true;
         await deletePdr({
           esClient,
           name: pdrName,
@@ -134,11 +118,6 @@ async function del(req, res) {
         await s3Utils.deleteS3Object(process.env.system_bucket, pdrS3Key);
       });
     } catch (innerError) {
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (dynamoPdrDeleted && existingPdr) {
-        await pdrModel.create(existingPdr);
-      }
       if (esPdrDeleted && esPdrRecord) {
         delete esPdrRecord._id;
         await indexPdr(esClient, esPdrRecord, process.env.ES_INDEX);

@@ -133,7 +133,6 @@ const buildReconciliationReportRecord = ({ type, oldReport, newReport }) => {
   });
 };
 
-let collectionModel;
 let executionModel;
 let granuleModel;
 let ruleModel;
@@ -143,14 +142,12 @@ test.before(async (t) => {
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   // create tables
-  collectionModel = new models.Collection();
   granuleModel = new models.Granule();
   executionModel = new models.Execution();
   ruleModel = new models.Rule();
   reconciliationReportModel = new models.ReconciliationReport();
 
   await Promise.all([
-    collectionModel.createTable(),
     executionModel.createTable(),
     granuleModel.createTable(),
     ruleModel.createTable(),
@@ -167,7 +164,6 @@ test.before(async (t) => {
 });
 
 test.after.always(async () => {
-  await collectionModel.deleteTable();
   await granuleModel.deleteTable();
   await executionModel.deleteTable();
   await ruleModel.deleteTable();
