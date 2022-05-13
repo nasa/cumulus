@@ -16,7 +16,7 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
  * @param {Object} event - AWS Lambda event input
  * @returns {Promise<Object>} a Terraform Lambda invocation response
  */
-const handler = async ({ elasticsearchHostname, removeAliasConflict, testContext }) => {
+const handler = async ({ elasticsearchHostname, removeAliasConflict, testContext = {} }) => {
   const bootstrapFunction = testContext.bootstrapFunction || bootstrapElasticSearch;
   try {
     await bootstrapFunction({
