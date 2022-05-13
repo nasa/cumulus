@@ -10,6 +10,7 @@ const {
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
+const startAsyncOperation = require('../../../lib/startAsyncOperation');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 const models = require('../../../models');
@@ -57,7 +58,7 @@ test.before(async () => {
 
 test.beforeEach((t) => { // TODO - fix this mock
   const asyncOperationId = randomString();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation')
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda')
     .resolves({ id: asyncOperationId });
 });
 
@@ -69,7 +70,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
-
+// bulk TODO
 test.serial('POST /granules/bulk starts an async-operation with the correct payload and list of IDs', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
@@ -92,13 +93,11 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   t.truthy(response.body.id);
   const {
     lambdaName,
-    cluster,
     description,
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(cluster, process.env.EcsCluster);
   t.is(description, `Bulk run ${expectedWorkflowName} on 1 granules`);
   t.deepEqual(payload, {
     payload: body,
@@ -175,13 +174,11 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
 
   const {
     lambdaName,
-    cluster,
     description,
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(cluster, process.env.EcsCluster);
   t.is(description, `Bulk run ${expectedWorkflowName} on 2 granules`);
   t.deepEqual(payload, {
     payload: body,
@@ -341,9 +338,9 @@ test.serial('POST /granules/bulk returns 400 when the Metrics ELK stack is not c
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulk returns 500 if starting ECS task throws unexpected error', async (t) => {
+test.serial('POST /granules/bulk returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
     new Error('failed to start')
   );
 
@@ -356,21 +353,4 @@ test.serial('POST /granules/bulk returns 500 if starting ECS task throws unexpec
       ids: [1, 2, 3],
     });
   t.is(response.status, 500);
-});
-
-test.serial('POST /granules/bulk returns 503 if starting ECS task throws unexpected error', async (t) => {
-  t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
-    new EcsStartTaskError('failed to start')
-  );
-
-  const response = await request(app)
-    .post('/granules/bulk')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({
-      workflowName: 'workflowName',
-      ids: [1, 2, 3],
-    });
-  t.is(response.status, 503);
 });

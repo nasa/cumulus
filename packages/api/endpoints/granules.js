@@ -4,7 +4,6 @@ const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 const { v4: uuidv4 } = require('uuid');
 
-const { lambda } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -25,6 +24,7 @@ const { Search } = require('@cumulus/es-client/search');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
+const startAsyncOperation = require('../lib/startAsyncOperation');
 const {
   createGranuleFromApi,
   updateGranuleFromApi,
@@ -556,12 +556,7 @@ async function bulkOperations(req, res) {
   };
 
   log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
-  await lambda().invoke({
-    FunctionName: process.env.StartAsyncOperationLambda,
-    Payload: JSON.stringify(asyncOperationEvent),
-    InvocationType: 'Event',
-  }).promise();
-
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
   return res.status(202).send({ id: asyncOperationId });
 }
 
@@ -612,12 +607,7 @@ async function bulkDelete(req, res) {
   };
 
   log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
-  await lambda().invoke({
-    FunctionName: process.env.StartAsyncOperationLambda,
-    Payload: JSON.stringify(asyncOperationEvent),
-    InvocationType: 'Event',
-  }).promise();
-
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
   return res.status(202).send({ id: asyncOperationId });
 }
 
@@ -652,12 +642,7 @@ async function bulkReingest(req, res) {
   };
 
   log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
-  await lambda().invoke({
-    FunctionName: process.env.StartAsyncOperationLambda,
-    Payload: JSON.stringify(asyncOperationEvent),
-    InvocationType: 'Event',
-  }).promise();
-
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
   return res.status(202).send({ id: asyncOperationId });
 }
 
