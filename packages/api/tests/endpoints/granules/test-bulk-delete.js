@@ -65,9 +65,8 @@ test.before(async () => {
 
 test.beforeEach((t) => {
   const asyncOperationId = randomString();
-  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').resolves(
-    { id: asyncOperationId }
-  );
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda')
+    .resolves({ id: asyncOperationId });
 });
 
 test.afterEach.always((t) => {
@@ -329,7 +328,7 @@ test.serial('POST /granules/bulkDelete returns a 401 status code if valid author
   t.is(response.status, 401);
 });
 
-test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking lambda throws unexpected error', async (t) => {
+test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
   t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
     new Error('failed to start')
