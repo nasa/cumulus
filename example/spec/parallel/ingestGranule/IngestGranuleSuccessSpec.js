@@ -964,7 +964,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           const responseBody = JSON.parse(bulkReingestResponse.body);
           asyncOperationId = responseBody.id;
-          expect(responseBody.operationType).toBe('Bulk Granule Reingest');
+          expect(bulkReingestResponse.statusCode).toBe(202);
         });
 
         it('executes async operation successfully', async () => {
