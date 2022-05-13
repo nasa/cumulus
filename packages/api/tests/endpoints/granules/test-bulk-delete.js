@@ -9,7 +9,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 
 const startAsyncOperation = require('../../../lib/startAsyncOperation');
 const {

@@ -2,13 +2,11 @@ const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
-const asyncOperations = require('@cumulus/async-operations');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 
 const startAsyncOperation = require('../../../lib/startAsyncOperation');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
