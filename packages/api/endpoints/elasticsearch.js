@@ -10,7 +10,7 @@ const { createIndex } = require('@cumulus/es-client/indexer');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { getFunctionNameFromRequestContext } = require('../lib/request');
-const { invokeStartAsyncOperationLambda } = require('../lib/startAsyncOperation');
+const startAsyncOperation = require('../lib/startAsyncOperation');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -232,7 +232,7 @@ async function indexFromDatabase(req, res) {
   };
 
   log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
-  await invokeStartAsyncOperationLambda(asyncOperationEvent);
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperationId}` });
 }
 
