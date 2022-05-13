@@ -55,6 +55,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2932**
+  - Updates `SyncGranule` task to include `disableOrDefaultAcl` function that uses
+    the configuration ACL parameter to set ACL to private by default or disable ACL.
+  - Updates `@cumulus/sync-granule` `download()` function to take in ACL parameter
+  - Updates `@cumulus/ingest` `proceed()` function to take in ACL parameter
+  - Updates `@cumulus/ingest` `addLock()` function to take in an optional ACL parameter
+  - Updates `SyncGranule` example worfklow config
+    `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
+    parameter.
+
+## [v11.1.1] 2022-04-26
+
 ### Added
 
 ### Changed
@@ -90,6 +104,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates CI to utilize `audit-ci` v6.2.0
   - Updates CI to utilize a on-container filesystem when building Core in 'uncached' mode
   - Updates CI to selectively bootstrap Core modules in the cleanup job phase
+- **CUMULUS-2934**
+  - Update CI Docker container build to install pipenv to prevent contention on parallel lambda builds
 
 ## [v11.1.0] 2022-04-07
 
@@ -100,6 +116,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2905**
   - Updates migration script with new `migrateAndOverwrite` and
     `migrateOnlyFiles` options.
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
 
 ### Added
 
@@ -5940,7 +5965,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.1...HEAD
+[v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
 [v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
