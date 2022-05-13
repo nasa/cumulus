@@ -81,10 +81,12 @@ async function removeIndexAsAlias(esClient, alias, removeAliasConflict) {
  * If an index exists but is not aliased, alias the index.
  *
  * @param {Object} params
- * @param {string} params.host  - elastic search host
- * @param {string} params.index - name of the index to create if does not exist, defaults
- *                                to 'cumulus'
- * @param {string} params.alias - alias name for the index, defaults to 'cumulus'
+ * @param {string} params.host                 - elastic search host
+ * @param {string} params.index                - name of the index to create if does not exist,
+ *                                               defaults to 'cumulus'
+ * @param {string} params.alias                - alias name for the index, defaults to 'cumulus'
+ * @param {boolean} params.removeAliasConflict - Flag to allow/disallow deletion of conflicting
+ *                                               'cumulus-alias' index
  * @returns {Promise} undefined
  */
 async function bootstrapElasticSearch({
