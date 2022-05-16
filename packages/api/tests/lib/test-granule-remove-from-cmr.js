@@ -218,8 +218,7 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
   });
 
   t.is(cmrDeleteStub.calledOnceWith(
-    metadataTitle,
-    constructCollectionId(fakeCollection.name, fakeCollection.version)
+    metadataTitle
   ), true);
 
   t.deepEqual(
