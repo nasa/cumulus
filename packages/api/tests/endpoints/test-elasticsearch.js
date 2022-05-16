@@ -554,13 +554,11 @@ test.serial('Change index and delete source index', async (t) => {
 
 test.serial('Reindex from database - startAsyncOperation is called with expected payload', async (t) => {
   const indexName = randomString();
-  const id = randomString();
-
   const processEnv = { ...process.env };
   process.env.ES_HOST = 'fakeEsHost';
   process.env.ReconciliationReportsTable = 'fakeReportsTable';
 
-  const asyncOperationsStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').resolves({ id });
+  const asyncOperationsStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const payload = {
     indexName,
     esRequestConcurrency: 'fakeEsRequestConcurrency',
@@ -661,8 +659,7 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 500 
 });
 
 test.serial('indexFromDatabase request completes successfully', async (t) => {
-  const id = randomString();
-  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').resolves({ id });
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const functionName = randomId('lambda');
   const fakeRequest = {
     apiGateway: {
@@ -685,8 +682,7 @@ test.serial('indexFromDatabase request completes successfully', async (t) => {
 });
 
 test.serial('indexFromDatabase uses correct caller lambda function name', async (t) => {
-  const id = randomString();
-  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').resolves({ id });
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const functionName = randomId('lambda');
   const fakeRequest = {
     apiGateway: {

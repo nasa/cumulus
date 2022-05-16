@@ -63,9 +63,7 @@ test.before(async () => {
 });
 
 test.beforeEach((t) => {
-  const asyncOperationId = randomString();
-  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda')
-    .resolves({ id: asyncOperationId });
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
 });
 
 test.afterEach.always((t) => {

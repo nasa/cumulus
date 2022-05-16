@@ -55,9 +55,7 @@ test.before(async () => {
 });
 
 test.beforeEach((t) => { // TODO - fix this mock
-  const asyncOperationId = randomString();
-  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda')
-    .resolves({ id: asyncOperationId });
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
 });
 
 test.afterEach.always((t) => {
