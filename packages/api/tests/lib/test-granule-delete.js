@@ -144,7 +144,6 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
     collectionCumulusId: t.context.collectionCumulusId,
     esClient: t.context.esClient,
     granuleParams: { published: true },
-    writeDynamo: false,
   });
 
   await t.throwsAsync(
@@ -185,7 +184,6 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
     collectionCumulusId,
     granuleParams: { published: false },
     esClient,
-    writeDynamo: false,
   });
 
   t.true(await granulePgModel.exists(knex, {
@@ -290,7 +288,6 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
     collectionCumulusId: t.context.collectionCumulusId,
     esClient: t.context.esClient,
     granuleParams: { published: false },
-    writeDynamo: false,
   });
 
   const mockGranuleModel = {
@@ -352,7 +349,6 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     collectionCumulusId: t.context.collectionCumulusId,
     esClient: t.context.esClient,
     granuleParams: { published: false },
-    writeDynamo: false,
   });
 
   const fakeEsClient = {

@@ -643,7 +643,6 @@ test.serial('remove a granule from CMR', async (t) => {
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: true },
-    writeDynamo: false,
   });
 
   const granuleId = newPgGranule.granule_id;
@@ -916,7 +915,6 @@ test.serial('DELETE deleting an existing granule that is published will fail and
     dbClient: t.context.knex,
     granuleParams: { published: true },
     esClient: t.context.esClient,
-    writeDynamo: false,
   });
 
   const collectionCumulusId = newPgGranule.collection_cumulus_id;
@@ -969,7 +967,6 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     dbClient: t.context.knex,
     granuleParams: { published: false },
     esClient: t.context.esClient,
-    writeDynamo: false,
   });
 
   const collectionCumulusId = newPgGranule.collection_cumulus_id;
@@ -1020,7 +1017,6 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: true },
-    writeDynamo: false,
   });
 
   const collectionCumulusId = newPgGranule.collection_cumulus_id;
@@ -1075,7 +1071,6 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: false },
-    writeDynamo: false,
   });
 
   const newApiGranule = await translatePostgresGranuleToApiGranule({
@@ -1821,7 +1816,6 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
       execution: executionUrl,
       timestamp: Date.now(),
     },
-    writeDynamo: false,
   });
   const newApiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: newPgGranule,
@@ -1899,7 +1893,6 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    writeDynamo: false,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -1958,7 +1951,6 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
       updatedAt: Date.now(),
       execution: executionUrl,
     },
-    writeDynamo: false,
     collection_cumulus_id: collectionCumulusId,
   });
 
@@ -2015,7 +2007,6 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
       status: 'running',
       execution: executionUrl,
     },
-    writeDynamo: false,
   });
 
   const fakeGranulePgModel = {
@@ -2096,7 +2087,6 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
     dbClient: knex,
     esClient,
     granuleParams: { status: 'running', execution: executionUrl },
-    writeDynamo: false,
   });
 
   const fakeEsClient = {

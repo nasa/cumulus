@@ -30,8 +30,6 @@ const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
-const models = require('../../models');
-
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
 /**
@@ -51,7 +49,6 @@ async function createGranuleAndFiles({
   collectionCumulusId,
   esClient,
   granuleParams = { published: false },
-  writeDynamo = true,
 }) {
   const s3Buckets = {
     protected: {
@@ -69,7 +66,6 @@ async function createGranuleAndFiles({
     s3Buckets.public.name,
   ]);
 
-  const granuleModel = new models.Granule();
   const granulePgModel = new GranulePgModel();
   const filePgModel = new FilePgModel();
 
@@ -143,11 +139,6 @@ async function createGranuleAndFiles({
 
   let dynamoGranule;
 
-  // TODO -- This needs removed before the end of Phase 3
-  if (writeDynamo) {
-    // create a new Dynamo granule
-    dynamoGranule = await granuleModel.create(newGranule);
-  }
   // create a new Postgres granule
   const newPgGranule = await translateApiGranuleToPostgresGranule(
     dynamoGranule || newGranule,
@@ -182,9 +173,6 @@ async function createGranuleAndFiles({
   );
 
   let newDynamoGranule;
-  if (writeDynamo) {
-    newDynamoGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
-  }
 
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
