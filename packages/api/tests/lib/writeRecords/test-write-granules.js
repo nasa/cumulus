@@ -1455,7 +1455,6 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL/
     QueueUrl,
   } = t.context;
 
-  //TODO: Fix this
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
   const postgresRecord = await granulePgModel.get(
     knex,
