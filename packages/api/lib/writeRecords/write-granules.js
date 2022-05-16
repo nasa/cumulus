@@ -301,7 +301,7 @@ const _updateGranule = async ({
       });
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
-      log.error(`Write to Elasticsearch failed, rolling postgres write for ${granuleId}`, writeError);
+      log.error(`Write to Elasticsearch failed for ${granuleId}`, writeError);
       throw writeError;
     }
   });
