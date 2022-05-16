@@ -363,7 +363,6 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-// TODO why was this passing before?  I had to add L310 (inserting PG granules into elasitcsearch)
 test.serial('default returns list of granules', async (t) => {
   const response = await request(app)
     .get('/granules')
