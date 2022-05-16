@@ -5,10 +5,15 @@ const {
   sns,
   sqs,
 } = require('@cumulus/aws-client/services');
+
+const { recordNotFoundString } = require('@cumulus/es-client/search');
+
 const {
   createBucket,
   deleteS3Buckets,
   s3ObjectExists,
+  s3PutObject,
+  createS3Buckets,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
@@ -33,6 +38,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 // Dynamo mock data factories
 const {
   fakeCollectionFactory,
+  fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
 const { deleteGranuleAndFiles } = require('../../src/lib/granule-delete');
@@ -156,7 +162,7 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
     { instanceOf: DeletePublishedGranule }
   );
 
-  // Check Dynamo and RDS. The granule should still exist in both.
+  // Check RDS. The granule should still exist.
   t.true(await granulePgModel.exists(
     t.context.knex,
     {
@@ -398,3 +404,95 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
     s3Buckets.public.name,
   ]));
 });
+
+test.serial(
+  'deleteGranuleAndFiles() does not require a PostgreSQL granule if an elasticsearch granule is present',
+  async (t) => {
+    // Create a granule in Dynamo only
+    const s3Buckets = {
+      protected: {
+        name: randomId('protected'),
+        type: 'protected',
+      },
+      public: {
+        name: randomId('public'),
+        type: 'public',
+      },
+    };
+    const granuleId = randomId('granule');
+    const files = [
+      {
+        bucket: s3Buckets.protected.name,
+        fileName: `${granuleId}.hdf`,
+        key: `${randomString(5)}/${granuleId}.hdf`,
+      },
+      {
+        bucket: s3Buckets.protected.name,
+        fileName: `${granuleId}.cmr.xml`,
+        key: `${randomString(5)}/${granuleId}.cmr.xml`,
+      },
+      {
+        bucket: s3Buckets.public.name,
+        fileName: `${granuleId}.jpg`,
+        key: `${randomString(5)}/${granuleId}.jpg`,
+      },
+    ];
+
+    const newGranule = fakeGranuleFactoryV2({
+      granuleId: granuleId,
+      status: 'failed',
+      published: false,
+      files: files,
+    });
+
+    await createS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]);
+
+    // Add files to S3
+    await Promise.all(
+      newGranule.files.map((file) =>
+        s3PutObject({
+          Bucket: file.bucket,
+          Key: file.key,
+          Body: `test data ${randomString()}`,
+        }))
+    );
+
+    // Add granule to elasticsearch
+
+    const esGranulesClient = new Search(
+      {},
+      'granule',
+      process.env.ES_INDEX
+    );
+
+    await t.context.esClient.index({
+      index: t.context.esIndex,
+      type: 'granule',
+      id: newGranule.granuleId,
+      parent: 'fakeCollectionId',
+      body: newGranule,
+    });
+
+    await deleteGranuleAndFiles({
+      knex: t.context.knex,
+      apiGranule: newGranule,
+      pgGranule: undefined,
+      esClient: t.context.esClient,
+    });
+
+    // verify the files are deleted from S3.
+    await Promise.all(
+      files.map(async (file) => {
+        t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      })
+    );
+
+    // Verify record is removed from elasticsearch
+
+    const esResult = await esGranulesClient.get(newGranule.granuleId);
+    t.is(esResult.detail, recordNotFoundString);
+
+    t.teardown(() =>
+      deleteS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]));
+  }
+);

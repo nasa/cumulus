@@ -24,7 +24,6 @@ const {
   localStackConnectionEnv,
   migrationDir,
   translatePostgresGranuleToApiGranule,
-  translateApiGranuleToPostgresGranule,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
