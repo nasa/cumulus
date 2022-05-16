@@ -434,14 +434,14 @@ async function del(req, res) {
   const {
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    esGranulesClient = new Search(
+      {},
+      'granule',
+      process.env.ES_INDEX
+    ),
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
-  const esGranulesClient = new Search(
-    {},
-    'granule',
-    process.env.ES_INDEX
-  );
   log.info(`granules.del ${granuleId}`);
 
   let pgGranule;
@@ -696,6 +696,7 @@ module.exports = {
   bulkOperations,
   bulkReingest,
   bulkDelete,
+  del,
   put,
   router,
 };

@@ -57,14 +57,14 @@ const {
   metadataObjectFromCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, multipleRecordFoundString } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { put } = require('../../endpoints/granules');
+const { put, del } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
@@ -234,7 +234,7 @@ test.before(async (t) => {
     testPgCollection
   );
 
-  // Create execution in Dynamo/Postgres
+  // Create execution in Postgres
   // we need this as granules *should have* a related execution
 
   t.context.testExecution = fakeExecutionRecordFactory();
@@ -854,6 +854,59 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
   t.is(detail, 'Record deleted');
 
   t.false(await esGranulesClient.exists(newGranule.granuleId));
+});
+
+test.serial('del() fails to delete a granule that has multiple entries in Elasticsearch, but no records in PostgreSQL', async (t) => {
+  const {
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    }
+  ));
+
+  const expressRequest = {
+    params: {
+      granuleName: newGranule.granuleId,
+    },
+    testContext: {
+      esGranulesClient: {
+        get: () => ({ detail: multipleRecordFoundString }),
+      },
+    },
+  };
+  const response = buildFakeExpressResponse();
+
+  await del(expressRequest, response);
+  t.true(response.boom.notFound.called());
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
