@@ -980,6 +980,7 @@ describe('The S3 Ingest Granules workflow', () => {
             },
           });
 
+          expect(asyncOperation.operationType).toBe('Bulk Granule Reingest');
           const reingestOutput = JSON.parse(asyncOperation.output);
           expect(reingestOutput.length).toBe(2);
           expect(reingestOutput.includes(reingestGranuleId)).toBe(true);
