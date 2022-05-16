@@ -403,7 +403,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
   t.is(actual, undefined);
 });
 
-test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/Elasticsearch/SNS if PostgreSQL write is enabled', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/Elasticsearch/SNS', async (t) => {
   const {
     cumulusMessage,
     knex,
