@@ -1,11 +1,13 @@
 {
   "lerna": "3.20.2",
-  "version": "11.1.0",
+  "version": "11.1.1",
   "packages": [
     "example",
     "example/lambdas/*",
     "example/scripts/*",
-    "lambdas/*",
+    "lambdas/db-migration",
+    "lambdas/db-provision-user-database",
+    "lambdas/sqs-message-remover",
     "packages/*",
     "packages/api/ecs/async-operation",
     "tasks/*",

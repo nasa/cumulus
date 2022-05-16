@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/collection-config-store",
-  "version": "11.1.0",
+  "version": "11.1.1",
   "description": "Utility for persisting collection configuration to S3 and retrieving it",
   "keywords": [
     "CUMULUS",
     "NASA"
   ],
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "publishConfig": {
     "access": "public"
@@ -32,8 +32,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "11.1.0",
-    "@cumulus/common": "11.1.0",
-    "@cumulus/message": "11.1.0"
+    "@cumulus/aws-client": "11.1.1",
+    "@cumulus/common": "11.1.1",
+    "@cumulus/message": "11.1.1"
   }
 }

@@ -5,5 +5,5 @@ set -ex
 GIT_SHA=$(git rev-parse HEAD)
 export GIT_SHA
 cd /uncached/cumulus
-git fetch --all
+git fetch --all --tags --force
 git checkout "$GIT_SHA"
