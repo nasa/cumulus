@@ -906,7 +906,7 @@ test.serial('del() fails to delete a granule that has multiple entries in Elasti
   const response = buildFakeExpressResponse();
 
   await del(expressRequest, response);
-  t.true(response.boom.notFound.called());
+  t.true(response.boom.notFound.called);
 });
 
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
