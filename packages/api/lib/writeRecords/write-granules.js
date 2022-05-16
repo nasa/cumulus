@@ -58,9 +58,12 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const FileUtils = require('../FileUtils');
 const {
-  describeGranuleExecution,
   getExecutionProcessingTimeInfo,
 } = require('../granules');
+
+const {
+  describeGranuleExecution,
+} = require('../executions');
 
 const {
   publishGranuleSnsMessageByEventType,

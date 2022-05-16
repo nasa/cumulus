@@ -20,7 +20,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removes all granule model calls from api/lambdas/bulk-operations and any dependencies
     - Removes dynamo model calls from api/lib/granule-remove-from-cmr.unpublishGranule
     - Removes Post Deployment execution check from sf-event-sqs-to-db-records
-    - Moves describeGranuleExecution from api granule model to api/lib/granules.js
+    - Moves describeGranuleExecution from api granule model to api/lib/executions.js
   - **CUMULUS-2809**
     - Remove DynamoDB logic from providers `PUT` endpoint
     - Updates DB models asyncOperation, provider and rule to return all fields on upsert.
