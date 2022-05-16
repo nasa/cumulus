@@ -32,7 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
 - **CUMULUS-2939**
-  - Updated `@cumulus/api` granules bulk endpoints to invoke StartAsyncOperation lambda
+  - Updated `@cumulus/api` granules/bulk endpoints and elasticsearch/index-from-database
+    endpoint to invoke StartAsyncOperation lambda
 
 ## [v11.1.1] 2022-04-26
 
