@@ -494,7 +494,7 @@ test.serial('applyWorkflowToGranules sets the granules status to queued', async 
   await verifyGranulesQueuedStatus(t);
 });
 
-test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Dynamo and Postgres', async (t) => {
+test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granule IDs from Postgres', async (t) => {
   const granulePgModel = new GranulePgModel();
 
   const granules = await Promise.all([

@@ -179,7 +179,6 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
     newPgGranule,
     files,
     s3Buckets,
-    esRecord,
   } = await createGranuleAndFiles({
     dbClient: knex,
     collectionId,
@@ -189,7 +188,6 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
     writeDynamo: false,
   });
 
-  console.log(esRecord);
   t.true(await granulePgModel.exists(knex, {
     granule_id: newPgGranule.granule_id,
     collection_cumulus_id: collectionCumulusId,
