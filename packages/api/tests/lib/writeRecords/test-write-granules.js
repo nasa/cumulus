@@ -1372,38 +1372,6 @@ test.serial('writeGranuleFromApi() does not persist file records to Postgres if 
   );
 });
 
-// TODO discuss -- this seems like a pretty useless test.
-test.serial('writeGranuleFromApi() throws error if Postgres upsert fails', async (t) => {
-  const {
-    collectionCumulusId,
-    esClient,
-    granule,
-    knex,
-    granuleId,
-  } = t.context;
-
-  const testGranulePgModel = {
-    upsert: () => {
-      throw new Error('Granules Postgres error');
-    },
-    exists: () => Promise.resolve(false),
-  };
-
-  const error = await t.throwsAsync(writeGranuleFromApi(
-    { ...granule, granulePgModel: testGranulePgModel },
-    knex,
-    esClient,
-    'Create'
-  ));
-  t.true(error.message.includes('Granules Postgres error'));
-  t.false(
-    await t.context.granulePgModel.exists(
-      knex,
-      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-    )
-  );
-});
-
 test.serial('writeGranuleFromApi() writes all valid files if any non-valid file fails', async (t) => {
   const {
     esClient,
