@@ -2372,7 +2372,6 @@ test.serial('update (PUT) can set running granule status to queued', async (t) =
   t.is(fetchedRecord.status, 'completed');
 });*/
 
-// TODO - this is a modified version of 'PUT will not set completed status to queued' to deal with
 test.serial('PUT will not set completed status to queued when queued created at is older', async (t) => {
   const { fakePGGranules, knex, collectionCumulusId } = t.context;
   const granuleId = fakePGGranules[0].granule_id;
