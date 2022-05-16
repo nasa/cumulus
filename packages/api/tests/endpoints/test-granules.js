@@ -1014,7 +1014,6 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   ]));
 });
 
-// TODO make sure all calls to createGranulesAndFiles use writeDynamo = false
 test.serial('DELETE publishes an SNS message after a successful granule delete', async (t) => {
   const { knex } = t.context;
   const {
