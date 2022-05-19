@@ -7,6 +7,7 @@ const buildFakeExpressResponse = () => ({
     badImplementation: sinon.fake(),
     badRequest: sinon.fake(),
     conflict: sinon.fake(),
+    notFound: sinon.fake(),
   },
   send: sinon.fake(),
   status: sinon.stub().returns({

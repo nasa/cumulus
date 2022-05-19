@@ -58,9 +58,12 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const FileUtils = require('../FileUtils');
 const {
-  describeGranuleExecution,
   getExecutionProcessingTimeInfo,
 } = require('../granules');
+
+const {
+  describeGranuleExecution,
+} = require('../executions');
 
 const {
   publishGranuleSnsMessageByEventType,
@@ -298,7 +301,7 @@ const _updateGranule = async ({
       });
       log.info(`Successfully wrote granule ${granuleId} to Elasticsearch`);
     } catch (writeError) {
-      log.error(`Write to Elasticsearch failed, rolling postgres write for ${granuleId}`, writeError);
+      log.error(`Write to Elasticsearch failed for ${granuleId}`, writeError);
       throw writeError;
     }
   });

@@ -20,7 +20,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, recordNotFoundString, multipleRecordFoundString } = require('@cumulus/es-client/search');
 
 const {
   deleteGranuleAndFiles,
@@ -433,14 +433,14 @@ async function del(req, res) {
   const {
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    esGranulesClient = new Search(
+      {},
+      'granule',
+      process.env.ES_INDEX
+    ),
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
-  const esGranulesClient = new Search(
-    {},
-    'granule',
-    process.env.ES_INDEX
-  );
   log.info(`granules.del ${granuleId}`);
 
   let pgGranule;
@@ -455,11 +455,11 @@ async function del(req, res) {
 
       esResult = await esGranulesClient.get(granuleId);
 
-      if (esResult.detail === 'Record not found') {
+      if (esResult.detail === recordNotFoundString) {
         log.info('Granule does not exist in Elasticsearch and PostgreSQL');
         return res.boom.notFound('No record found');
       }
-      if (esResult.detail === 'More than one record was found!') {
+      if (esResult.detail === multipleRecordFoundString) {
         return res.boom.notFound('No Postgres record found, multiple ES entries found for deletion');
       }
       log.info(`Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch.  Proceeding to remove from elasticsearch.`);
@@ -695,6 +695,7 @@ module.exports = {
   bulkOperations,
   bulkReingest,
   bulkDelete,
+  del,
   put,
   router,
 };

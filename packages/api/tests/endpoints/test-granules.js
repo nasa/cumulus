@@ -57,14 +57,14 @@ const {
   metadataObjectFromCMRFile,
 } = require('@cumulus/cmrjs/cmr-utils');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, multipleRecordFoundString } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { put } = require('../../endpoints/granules');
+const { put, del } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
@@ -100,7 +100,6 @@ let jwtAuthToken;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('async');
 process.env.ExecutionsTable = randomId('executions');
-process.env.CollectionsTable = randomId('collection');
 process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('system-bucket');
@@ -234,7 +233,7 @@ test.before(async (t) => {
     testPgCollection
   );
 
-  // Create execution in Dynamo/Postgres
+  // Create execution in Postgres
   // we need this as granules *should have* a related execution
 
   t.context.testExecution = fakeExecutionRecordFactory();
@@ -363,7 +362,6 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-// TODO why was this passing before?  I had to add L310 (inserting PG granules into elasitcsearch)
 test.serial('default returns list of granules', async (t) => {
   const response = await request(app)
     .get('/granules')
@@ -644,7 +642,6 @@ test.serial('remove a granule from CMR', async (t) => {
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: true },
-    writeDynamo: false,
   });
 
   const granuleId = newPgGranule.granule_id;
@@ -856,6 +853,59 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 });
 
+test.serial('del() fails to delete a granule that has multiple entries in Elasticsearch, but no records in PostgreSQL', async (t) => {
+  const {
+    knex,
+  } = t.context;
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: randomString(),
+    version: '005',
+  });
+
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  const collectionPgModel = new CollectionPgModel();
+  const [pgCollection] = await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+  const newGranule = fakeGranuleFactoryV2(
+    {
+      granuleId: randomId(),
+      status: 'failed',
+      collectionId: newCollectionId,
+      published: false,
+      files: [],
+    }
+  );
+
+  t.false(await granulePgModel.exists(
+    knex,
+    {
+      granule_id: newGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    }
+  ));
+
+  const expressRequest = {
+    params: {
+      granuleName: newGranule.granuleId,
+    },
+    testContext: {
+      esGranulesClient: {
+        get: () => ({ detail: multipleRecordFoundString }),
+      },
+    },
+  };
+  const response = buildFakeExpressResponse();
+
+  await del(expressRequest, response);
+  t.true(response.boom.notFound.called);
+});
+
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const {
     s3Buckets,
@@ -864,7 +914,6 @@ test.serial('DELETE deleting an existing granule that is published will fail and
     dbClient: t.context.knex,
     granuleParams: { published: true },
     esClient: t.context.esClient,
-    writeDynamo: false,
   });
 
   const collectionCumulusId = newPgGranule.collection_cumulus_id;
@@ -917,7 +966,6 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     dbClient: t.context.knex,
     granuleParams: { published: false },
     esClient: t.context.esClient,
-    writeDynamo: false,
   });
 
   const collectionCumulusId = newPgGranule.collection_cumulus_id;
@@ -968,7 +1016,6 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: true },
-    writeDynamo: false,
   });
 
   const collectionCumulusId = newPgGranule.collection_cumulus_id;
@@ -1014,7 +1061,6 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
   ]));
 });
 
-// TODO make sure all calls to createGranulesAndFiles use writeDynamo = false
 test.serial('DELETE publishes an SNS message after a successful granule delete', async (t) => {
   const { knex } = t.context;
   const {
@@ -1024,7 +1070,6 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     dbClient: t.context.knex,
     esClient: t.context.esClient,
     granuleParams: { published: false },
-    writeDynamo: false,
   });
 
   const newApiGranule = await translatePostgresGranuleToApiGranule({
@@ -1778,7 +1823,6 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
       execution: executionUrl,
       timestamp: Date.now(),
     },
-    writeDynamo: false,
   });
   const newApiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: newPgGranule,
@@ -1856,7 +1900,6 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    writeDynamo: false,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -1915,7 +1958,6 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
       updatedAt: Date.now(),
       execution: executionUrl,
     },
-    writeDynamo: false,
     collection_cumulus_id: collectionCumulusId,
   });
 
@@ -1972,7 +2014,6 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
       status: 'running',
       execution: executionUrl,
     },
-    writeDynamo: false,
   });
 
   const fakeGranulePgModel = {
@@ -2053,7 +2094,6 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
     dbClient: knex,
     esClient,
     granuleParams: { status: 'running', execution: executionUrl },
-    writeDynamo: false,
   });
 
   const fakeEsClient = {
@@ -2339,7 +2379,6 @@ test.serial('update (PUT) can set running granule status to queued', async (t) =
   t.is(fetchedRecord.status, 'completed');
 });*/
 
-// TODO - this is a modified version of 'PUT will not set completed status to queued' to deal with
 test.serial('PUT will not set completed status to queued when queued created at is older', async (t) => {
   const { fakePGGranules, knex, collectionCumulusId } = t.context;
   const granuleId = fakePGGranules[0].granule_id;

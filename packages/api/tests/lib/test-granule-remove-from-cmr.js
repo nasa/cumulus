@@ -133,7 +133,7 @@ test('unpublishGranule() removing a granule from CMR fails if the granule is not
   );
 });
 
-test.serial('unpublishGranule() succeeds with Dynamo and PG granule', async (t) => {
+test.serial('unpublishGranule() succeeds with PG granule', async (t) => {
   const { fakeCollection } = t.context;
 
   const {
@@ -218,8 +218,7 @@ test.serial('unpublishGranule() accepts an optional collection', async (t) => {
   });
 
   t.is(cmrDeleteStub.calledOnceWith(
-    metadataTitle,
-    constructCollectionId(fakeCollection.name, fakeCollection.version)
+    metadataTitle
   ), true);
 
   t.deepEqual(

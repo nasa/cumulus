@@ -21,7 +21,6 @@ const {
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -34,7 +33,6 @@ let esClient;
 
 let jwtAuthToken;
 let accessTokenModel;
-let collectionModel;
 
 test.before(async () => {
   const esAlias = randomString();
@@ -42,9 +40,6 @@ test.before(async () => {
   await bootstrapElasticSearch('fakehost', esIndex, esAlias);
 
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
-
-  collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
-  await collectionModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -56,14 +51,12 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.testCollection = fakeCollectionFactory();
-  await collectionModel.create(t.context.testCollection);
 });
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });
