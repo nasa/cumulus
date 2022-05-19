@@ -1671,7 +1671,7 @@ test.serial('PUT with action move returns failure if more than one granule file 
   filesExistingStub.restore();
 });
 
-test.serial('create (POST) creates new granule without an execution in PostgreSQL, and Elasticsearch', async (t) => {
+test.serial('create (POST) creates new granule without an execution in PostgreSQL and Elasticsearch', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
