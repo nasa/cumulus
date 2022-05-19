@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
   - **CUMULUS-2801**
-    - Move `getFilesExistingAtLocation`from api granule, update granules put
+    - Move `getFilesExistingAtLocation`from api granules model to api/lib, update granules put
       endpoint to remove model references
   - **CUMULUS-2804**
     - Updates api/lib/granule-delete.deleteGranuleAndFiles:
