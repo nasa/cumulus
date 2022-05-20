@@ -8,8 +8,6 @@ services:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
       - ../packages/test-data/keys/ssh_client_rsa_key.pub:/ssh_client_rsa_key.pub
       - ../packages/test-data:/data
-    image: nsidc/panubo_sshd:latest
-
   build_env:
     image: cumuluss/cumulus-build-env:latest
     volumes:
