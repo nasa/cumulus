@@ -32,7 +32,11 @@ test.beforeEach(async (t) => {
   process.env.ES_INDEX = t.context.esAlias;
 
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: t.context.esIndex,
+    alias: t.context.esAlias,
+  });
   esClient = await Search.es();
 });
 
