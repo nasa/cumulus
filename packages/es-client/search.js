@@ -23,6 +23,8 @@ const logDetails = {
 };
 
 const defaultIndexAlias = 'cumulus-alias';
+const multipleRecordFoundString = 'More than one record was found!';
+const recordNotFoundString = 'Record not found';
 
 const getCredentials = () =>
   new Promise((resolve, reject) => aws.config.getCredentials((err) => {
@@ -234,10 +236,10 @@ class BaseSearch {
     }).then((response) => response.body);
 
     if (result.hits.total > 1) {
-      return { detail: 'More than one record was found!' };
+      return { detail: multipleRecordFoundString };
     }
     if (result.hits.total === 0) {
-      return { detail: 'Record not found' };
+      return { detail: recordNotFoundString };
     }
 
     const resp = result.hits.hits[0]._source;
@@ -247,7 +249,7 @@ class BaseSearch {
 
   async exists(id, parentId) {
     const response = await this.get(id, parentId);
-    return response.detail !== 'Record not found';
+    return response.detail !== recordNotFoundString;
   }
 
   async granulesStats(key, value) {
@@ -376,5 +378,7 @@ module.exports = {
   BaseSearch,
   Search,
   defaultIndexAlias,
+  multipleRecordFoundString,
+  recordNotFoundString,
   getLocalEsHost,
 };
