@@ -1,7 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const { createAsyncOperation, deleteAsyncOperation, listAsyncOperations } = require('@cumulus/api-client/asyncOperations');
 const { startECSTask } = require('@cumulus/async-operations');
 const { ecs, s3 } = require('@cumulus/aws-client/services');
@@ -46,7 +46,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         Bucket: config.bucket,
         Key: payloadKey,
         Body: JSON.stringify([1, 2, 3]),
-      }).promise();
+      });
 
       const asyncOperationObject = {
         description: 'Some description',
@@ -128,7 +128,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
   });
 
   afterAll(async () => {
-    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey }).promise();
+    await s3().deleteObject({ Bucket: config.bucket, Key: payloadKey });
     if (asyncOperationId) {
       await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId });
     }

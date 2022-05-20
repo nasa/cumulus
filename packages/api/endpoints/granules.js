@@ -20,9 +20,11 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, recordNotFoundString, multipleRecordFoundString } = require('@cumulus/es-client/search');
 
-const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
+const {
+  deleteGranuleAndFiles,
+} = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
 const {
   createGranuleFromApi,
@@ -166,7 +168,7 @@ const putGranule = async (req, res) => {
     await granulePgModel.get(knex, {
       granule_id: apiGranule.granuleId,
       collection_cumulus_id: pgCollection.cumulus_id,
-    });
+    }); // TODO this should do a select count, not a full record get
   } catch (error) {
     // Set status to `201 - Created` if record did not originally exist
     if (error instanceof RecordDoesNotExist) {
@@ -250,10 +252,10 @@ async function put(req, res) {
       log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
     }
 
-    await updateGranuleStatusToQueuedMethod({ granule: apiGranule, knex });
+    await updateGranuleStatusToQueuedMethod({ apiGranule, knex });
 
     await reingestHandler({
-      granule: {
+      apiGranule: {
         ...apiGranule,
         ...(targetExecution && { execution: targetExecution }),
       },
@@ -273,9 +275,9 @@ async function put(req, res) {
   }
 
   if (action === 'applyWorkflow') {
-    await updateGranuleStatusToQueued({ granule: apiGranule, knex });
+    await updateGranuleStatusToQueued({ apiGranule, knex });
     await applyWorkflow({
-      granule: apiGranule,
+      apiGranule,
       workflow: body.workflow,
       meta: body.meta,
     });
@@ -303,6 +305,7 @@ async function put(req, res) {
 
   if (action === 'move') {
     // FUTURE - this should be removed from the granule model
+    // TODO -- Phase 3 -- This needs to be pulled out of the granule model
     const filesAtDestination = await granuleModel.getFilesExistingAtLocation(
       apiGranule,
       body.destinations
@@ -319,8 +322,7 @@ async function put(req, res) {
     await moveGranule(
       apiGranule,
       body.destinations,
-      process.env.DISTRIBUTION_ENDPOINT,
-      granuleModel
+      process.env.DISTRIBUTION_ENDPOINT
     );
 
     return res.send({
@@ -407,7 +409,6 @@ const associateExecution = async (req, res) => {
       apiGranuleRecord,
       esClient,
       executionCumulusId: pgExecution.cumulus_id,
-      granuleModel: new Granule(),
       granulePgModel,
       postgresGranuleRecord: updatedPgGranule,
       knex,
@@ -431,48 +432,47 @@ const associateExecution = async (req, res) => {
  */
 async function del(req, res) {
   const {
-    granuleModelClient = new Granule(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    esGranulesClient = new Search(
+      {},
+      'granule',
+      process.env.ES_INDEX
+    ),
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
-  const esGranulesClient = new Search(
-    {},
-    'granule',
-    process.env.ES_INDEX
-  );
   log.info(`granules.del ${granuleId}`);
 
-  let dynamoGranule;
   let pgGranule;
-
+  let esResult;
   try {
+    // TODO - Phase 3 - we need a ticket to address granule/collection consistency
+    // For now use granule ID without collection search in ES
     pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (!(await esGranulesClient.exists(granuleId))) {
+      // TODO - Phase 3 - we need to require the collectionID, not infer it
+
+      esResult = await esGranulesClient.get(granuleId);
+
+      if (esResult.detail === recordNotFoundString) {
         log.info('Granule does not exist in Elasticsearch and PostgreSQL');
         return res.boom.notFound('No record found');
       }
-      log.info(`Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch. Proceeding with deletion.`);
+      if (esResult.detail === multipleRecordFoundString) {
+        return res.boom.notFound('No Postgres record found, multiple ES entries found for deletion');
+      }
+      log.info(`Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch.  Proceeding to remove from elasticsearch.`);
     } else {
-      throw error;
-    }
-  }
-
-  try {
-    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     }
   }
 
   await deleteGranuleAndFiles({
     knex,
-    dynamoGranule,
-    pgGranule,
+    apiGranule: esResult,
+    pgGranule: pgGranule,
     esClient,
   });
 
@@ -523,6 +523,7 @@ async function bulkOperations(req, res) {
   }
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
+  // TODO -- Phase 3 -- remove this env variable setting when we update the async model
   const tableName = process.env.AsyncOperationsTable;
 
   let description;
@@ -695,6 +696,7 @@ module.exports = {
   bulkOperations,
   bulkReingest,
   bulkDelete,
+  del,
   put,
   router,
 };

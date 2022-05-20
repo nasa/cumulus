@@ -25,7 +25,6 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
 const {
   getCollectionCumulusId,
   getMessageProviderCumulusId,
-  isPostRDSDeploymentExecution,
   getAsyncOperationCumulusId,
   getParentExecutionCumulusId,
 } = require('../../lib/writeRecords/utils');
@@ -52,24 +51,20 @@ const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-record
  * @param {Object} params
  * @param {Object} params.cumulusMessage - Cumulus workflow message
  * @param {Knex} params.knex - Knex client
- * @param {Object} [params.granuleModel]
- *   Optional instance of granules model used for writing to DynamoDB
  * @param {Object} [params.executionModel]
  *   Optional instance of execution model used for writing to DynamoDB
  * @param {Object} [params.pdrModel]
  *   Optional instance of PDR model used for writing to DynamoDB
+ * @param {Object} [params.testOverrides]
+ *   Optional override/mock object used for testing
  */
 const writeRecords = async ({
   cumulusMessage,
   knex,
-  granuleModel,
   executionModel,
   pdrModel,
+  testOverrides = {},
 }) => {
-  if (!isPostRDSDeploymentExecution(cumulusMessage)) {
-    log.info('Message is not for a post-RDS deployment execution.');
-  }
-
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
@@ -129,7 +124,7 @@ const writeRecords = async ({
     executionCumulusId,
     pdrCumulusId,
     knex,
-    granuleModel,
+    testOverrides,
   });
 };
 

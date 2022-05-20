@@ -2,7 +2,7 @@
 
 const get = require('lodash/get');
 const merge = require('lodash/merge');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const fs = require('fs-extra');
 
 const {

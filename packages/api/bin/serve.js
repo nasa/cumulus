@@ -61,17 +61,21 @@ async function createTable(Model, tableName) {
 async function populateBucket(bucket, stackName) {
   // upload workflow files
   const workflowPromises = workflowList.map((obj) => promiseS3Upload({
-    Bucket: bucket,
-    Key: `${stackName}/workflows/${obj.name}.json`,
-    Body: JSON.stringify(obj),
+    params: {
+      Bucket: bucket,
+      Key: `${stackName}/workflows/${obj.name}.json`,
+      Body: JSON.stringify(obj),
+    },
   }));
 
   // upload workflow template
   const workflow = `${stackName}/workflow_template.json`;
   const templatePromise = promiseS3Upload({
-    Bucket: bucket,
-    Key: workflow,
-    Body: JSON.stringify({}),
+    params: {
+      Bucket: bucket,
+      Key: workflow,
+      Body: JSON.stringify({}),
+    },
   });
   await Promise.all([...workflowPromises, templatePromise]);
 }
@@ -132,7 +136,7 @@ async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   console.log(process.env.ES_HOST);
   await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
-  await s3().createBucket({ Bucket: bucket }).promise();
+  await s3().createBucket({ Bucket: bucket });
 
   const { TopicArn } = await sns().createTopic({ Name: randomId('topicName') }).promise();
   process.env.collection_sns_topic_arn = TopicArn;
@@ -413,7 +417,6 @@ async function eraseDynamoTables(stackName, systemBucket) {
 
   // Remove all data from tables
   const providerModel = new models.Provider();
-  const collectionModel = new models.Collection();
   const rulesModel = new models.Rule();
   const executionModel = new models.Execution();
   const granulesModel = new models.Granule();
@@ -422,7 +425,6 @@ async function eraseDynamoTables(stackName, systemBucket) {
   try {
     await rulesModel.deleteRules();
     await Promise.allSettled([
-      collectionModel.deleteCollections(),
       providerModel.deleteProviders(),
       executionModel.deleteExecutions(),
       granulesModel.deleteGranules(),

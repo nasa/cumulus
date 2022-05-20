@@ -55,7 +55,7 @@ async function runMigrations(migrations, options) {
     await s3().putObject({ // eslint-disable-line no-await-in-loop
       Bucket: process.env.system_bucket,
       Key: `${migrationFolder}/${m.name}`,
-    }).promise();
+    });
     log.info(`Successfully ran migration script ${m.name}`);
   }
 

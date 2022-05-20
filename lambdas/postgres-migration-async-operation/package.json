@@ -1,39 +1,11 @@
 {
   "name": "@cumulus/postgres-migration-async-operation",
   "version": "11.1.0",
-  "description": "A Lambda function used to start an ECS task to run data-migrations2 lambda",
+  "description": "TODO: Remove this dummy package.json post-main merge. Snyk temporary fix for feature/rds-phase-3 merge.",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
-  "private": true,
-  "main": "./dist/lambda/index.js",
-  "types": "./dist/lambda/index.d.ts",
-  "scripts": {
-    "clean": "rm -rf dist",
-    "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
-    "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
-    "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
-    "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "prepare": "npm run tsc",
-    "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "webpack": "../../node_modules/.bin/webpack"
-  },
-  "ava": {
-    "files": [
-      "tests/**/*.js"
-    ],
-    "timeout": "15m"
-  },
-  "dependencies": {
-    "@cumulus/api": "11.1.0",
-    "@cumulus/async-operations": "11.1.0",
-    "@cumulus/logger": "11.1.0",
-    "@cumulus/types": "11.1.0"
-  },
-  "devDependencies": {
-    "@cumulus/test-data": "11.1.0"
-  }
+  "private": true
 }
+

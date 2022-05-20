@@ -12,14 +12,14 @@ const randomString = () => cryptoRandomString({ length: 10 });
 
 test.beforeEach((t) => {
   t.context.bucketName = randomString();
-  return awsServices.s3().createBucket({ Bucket: t.context.bucketName }).promise();
+  return awsServices.s3().createBucket({ Bucket: t.context.bucketName });
 });
 
 test.afterEach.always((t) => recursivelyDeleteS3Bucket(t.context.bucketName));
 
 test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not remove it from the queue', async (t) => {
   const key = randomString();
-  await awsServices.s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
+  await awsServices.s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' });
 
   const queue = new S3ListObjectsV2Queue({ Bucket: t.context.bucketName });
 
@@ -29,7 +29,7 @@ test.serial('S3ListObjectsV2Queue.peek() returns the next object but does not re
 
 test.serial('S3ListObjectsV2Queue.shift() returns the next object and removes it from the queue', async (t) => {
   const key = randomString();
-  await awsServices.s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' }).promise();
+  await awsServices.s3().putObject({ Bucket: t.context.bucketName, Key: key, Body: 'body' });
 
   const queue = new S3ListObjectsV2Queue({ Bucket: t.context.bucketName });
 
@@ -44,7 +44,7 @@ test.serial('S3ListObjectsV2Queue can handle paging', async (t) => {
       Bucket: t.context.bucketName,
       Key: randomString(),
       Body: 'body',
-    }).promise()));
+    })));
 
   const queue = new S3ListObjectsV2Queue({
     Bucket: t.context.bucketName,

@@ -64,7 +64,7 @@ test.before(async (t) => {
   t.context.granuleId = pgGranule.granule_id;
 
   process.env.system_bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -84,7 +84,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('put request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
+test.serial('put request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
   const {
     granuleId,
   } = t.context;
@@ -110,7 +110,7 @@ test('put request with reingest action queues granule and calls the reingestGran
   t.is(granuleReingestStub.calledOnce, true);
 
   const { queueUrl } = granuleReingestStub.lastCall.args[0];
-  const { granule } = updateGranuleStatusToQueuedMethod.lastCall.args[0];
-  t.is(granule.granuleId, granuleId);
+  const { apiGranule } = updateGranuleStatusToQueuedMethod.lastCall.args[0];
+  t.is(apiGranule.granuleId, granuleId);
   t.is(queueUrl, process.env.backgroundQueueUrl);
 });

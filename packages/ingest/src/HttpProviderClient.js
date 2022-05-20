@@ -279,9 +279,11 @@ class HttpProviderClient {
     const { ETag: etag } = await streamS3Upload(
       uploadStream,
       {
-        Bucket: destinationBucket,
-        Key: destinationKey,
-        ContentType: contentType,
+        params: {
+          Bucket: destinationBucket,
+          Key: destinationKey,
+          ContentType: contentType,
+        },
       }
     );
 

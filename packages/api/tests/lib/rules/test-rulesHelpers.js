@@ -64,7 +64,7 @@ test.before(async (t) => {
   workflow = randomString();
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
   const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
   const templateFile = `${process.env.stackName}/workflow_template.json`;
   await Promise.all([
@@ -72,12 +72,12 @@ test.before(async (t) => {
       Bucket: process.env.system_bucket,
       Key: workflowfile,
       Body: '{}',
-    }).promise(),
+    }),
     awsServices.s3().putObject({
       Bucket: process.env.system_bucket,
       Key: templateFile,
       Body: '{}',
-    }).promise(),
+    }),
   ]);
 
   process.env = {

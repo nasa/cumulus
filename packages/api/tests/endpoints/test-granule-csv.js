@@ -30,7 +30,7 @@ process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');
 
-const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket }).promise();
+const createBucket = (Bucket) => awsServices.s3().createBucket({ Bucket });
 
 // create all the variables needed across this test
 let esClient;
@@ -117,7 +117,7 @@ test.serial('GET with an unauthorized user returns an unauthorized response', as
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test('GET returns a cvs file of all granules', async (t) => {
+test('GET returns a csv file of all granules', async (t) => {
   const response = await request(app)
     .get('/granule-csv')
     .set('Accept', 'application/json')

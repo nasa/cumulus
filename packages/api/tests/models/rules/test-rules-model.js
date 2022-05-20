@@ -64,7 +64,7 @@ test.before(async () => {
     FunctionName: randomId('messageConsumer'),
     Role: randomId('role'),
     Handler: 'index.handler',
-    Runtime: 'nodejs12.x',
+    Runtime: 'nodejs14.x',
   }).promise();
   process.env.messageConsumer = lambda.FunctionName;
   process.env.messageConsumerArn = lambda.FunctionArn;
@@ -345,7 +345,9 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
   await rulesModel.create(snsRuleWithTrigger);
 
   const rule = await rulesModel.get({ name: snsRule.name });
-  t.teardown(() => rulesModel.deleteOldEventSourceMappings(rule));
+  // do cleanup before `updateRuleTrigger` to avoid localstack bug.
+  // see https://github.com/localstack/localstack/issues/5762.
+  await rulesModel.deleteOldEventSourceMappings(rule);
 
   // update rule value
   const updates = {
@@ -355,6 +357,7 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
 
   const ruleWithUpdatedTrigger = await rulesModel.updateRuleTrigger(rule, updates);
   const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
+
   t.teardown(async () => {
     await rulesModel.delete(updatedRule);
     await awsServices.sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();

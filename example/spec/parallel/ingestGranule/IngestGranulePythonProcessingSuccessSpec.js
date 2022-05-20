@@ -2,15 +2,12 @@
 
 const fs = require('fs-extra');
 const hasha = require('hasha');
-const pMap = require('p-map');
-const pRetry = require('p-retry');
 
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { s3 } = require('@cumulus/aws-client/services');
+const { getObjectReadStream, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
   addCollections,
   api: apiTestUtils,
-  getExecutionOutput,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -98,7 +95,7 @@ describe('The TestPythonProcessing workflow', () => {
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } })));
 
       console.log('Start SuccessExecution');
       workflowExecutionArn = await buildAndStartWorkflow(
@@ -160,39 +157,20 @@ describe('The TestPythonProcessing workflow', () => {
   it('has a checksum file that matches the ingested granule file', async () => {
     const md5File = granuleResult.files.find((f) => f.key.match('.hdf.md5'));
     const dataFile = granuleResult.files.find((f) => f.key.match('.hdf$'));
-    const dataStream = await s3().getObject({ Bucket: dataFile.bucket, Key: dataFile.key }).createReadStream();
+    const dataStream = await getObjectReadStream({
+      bucket: dataFile.bucket,
+      key: dataFile.key,
+      s3: s3(),
+    });
     const dataHash = await hasha.fromStream(dataStream, { algorithm: 'md5', encoding: 'hex' });
-    const md5FileContent = await s3().getObject({ Bucket: md5File.bucket, Key: md5File.key }).promise();
+    const md5FileContent = await s3().getObject({ Bucket: md5File.bucket, Key: md5File.key });
 
-    expect(dataHash).toEqual(md5FileContent.Body.toString());
+    expect(dataHash).toEqual(await getObjectStreamContents(md5FileContent.Body));
   });
 
   it('completes execution with success status', async () => {
     const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
-  });
-
-  it('results in the files being added to the granule files cache table', async () => {
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-
-    const executionOutput = await getExecutionOutput(workflowExecutionArn);
-
-    await pMap(
-      executionOutput.payload.granules[0].files,
-      async (file) => {
-        const granuleId = await pRetry(
-          async () => {
-            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
-            return id;
-          },
-          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
-        );
-
-        expect(granuleId).toEqual(executionOutput.payload.granules[0].granuleId);
-      },
-      { concurrency: 1 }
-    );
   });
 
   describe('the ProcessingStep activity', () => {

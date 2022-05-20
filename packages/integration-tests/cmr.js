@@ -242,7 +242,7 @@ async function generateAndStoreCmrXml(granule, collection, bucket, additionalUrl
     Tagging: `granuleId=${granule.granuleId}`,
   };
 
-  await s3().putObject(params).promise();
+  await s3().putObject(params);
 
   granuleFiles.push(`s3://${bucket}/${fileKey}`);
   log.info(`s3://${bucket}/${fileKey}`);
@@ -400,7 +400,7 @@ async function generateAndStoreCmrUmmJson(
     Tagging: `granuleId=${granule.granuleId}`,
   };
 
-  await s3().putObject(params).promise();
+  await s3().putObject(params);
 
   const granuleFiles = granule.files.map((f) => buildS3Uri(f.bucket, f.key));
   granuleFiles.push(`s3://${bucket}/${fileKey}`);

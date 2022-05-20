@@ -1,10 +1,10 @@
 {
   "name": "@cumulus/api",
-  "version": "11.1.0",
+  "version": "11.1.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "bin": {
     "cumulus-api": "./bin/cli.js"
@@ -52,26 +52,26 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "11.1.0",
-    "@cumulus/async-operations": "11.1.0",
-    "@cumulus/aws-client": "11.1.0",
-    "@cumulus/cmr-client": "11.1.0",
-    "@cumulus/cmrjs": "11.1.0",
-    "@cumulus/collection-config-store": "11.1.0",
-    "@cumulus/common": "11.1.0",
-    "@cumulus/db": "11.1.0",
-    "@cumulus/distribution-utils": "11.1.0",
-    "@cumulus/errors": "11.1.0",
-    "@cumulus/es-client": "11.1.0",
-    "@cumulus/ingest": "11.1.0",
-    "@cumulus/launchpad-auth": "11.1.0",
-    "@cumulus/logger": "11.1.0",
-    "@cumulus/message": "11.1.0",
-    "@cumulus/oauth-client": "11.1.0",
-    "@cumulus/object-store": "11.1.0",
-    "@cumulus/pvl": "11.1.0",
-    "@cumulus/sftp-client": "11.1.0",
-    "@cumulus/types": "11.1.0",
+    "@cumulus/api-client": "11.1.1",
+    "@cumulus/async-operations": "11.1.1",
+    "@cumulus/aws-client": "11.1.1",
+    "@cumulus/cmr-client": "11.1.1",
+    "@cumulus/cmrjs": "11.1.1",
+    "@cumulus/collection-config-store": "11.1.1",
+    "@cumulus/common": "11.1.1",
+    "@cumulus/db": "11.1.1",
+    "@cumulus/distribution-utils": "11.1.1",
+    "@cumulus/errors": "11.1.1",
+    "@cumulus/es-client": "11.1.1",
+    "@cumulus/ingest": "11.1.1",
+    "@cumulus/launchpad-auth": "11.1.1",
+    "@cumulus/logger": "11.1.1",
+    "@cumulus/message": "11.1.1",
+    "@cumulus/oauth-client": "11.1.1",
+    "@cumulus/object-store": "11.1.1",
+    "@cumulus/pvl": "11.1.1",
+    "@cumulus/sftp-client": "11.1.1",
+    "@cumulus/types": "11.1.1",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
@@ -116,6 +116,6 @@
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "@cumulus/test-data": "11.1.0"
+    "@cumulus/test-data": "11.1.1"
   }
 }

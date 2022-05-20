@@ -1,3 +1,8 @@
+import {
+  ListObjectsV2Request,
+  S3,
+  _Object,
+} from '@aws-sdk/client-s3';
 import { s3 } from './services';
 
 /**
@@ -5,11 +10,11 @@ import { s3 } from './services';
  * them all into memory at once.  Handles paging of listS3ObjectsV2 requests.
  */
 class S3ListObjectsV2Queue {
-  private readonly s3: AWS.S3;
-  private readonly params: AWS.S3.ListObjectsV2Request;
-  private items: Array<AWS.S3.Object | null>;
+  private readonly s3: S3;
+  private readonly params: ListObjectsV2Request;
+  private items: Array<_Object | null>;
 
-  constructor(params: AWS.S3.ListObjectsV2Request) {
+  constructor(params: ListObjectsV2Request) {
     this.items = [];
     this.params = params;
     this.s3 = s3();
@@ -41,7 +46,7 @@ class S3ListObjectsV2Queue {
   }
 
   private async fetchItems() {
-    const response = await this.s3.listObjectsV2(this.params).promise();
+    const response = await this.s3.listObjectsV2(this.params);
 
     this.items = (response.Contents || []);
 

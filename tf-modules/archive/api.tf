@@ -85,8 +85,7 @@ locals {
       METRICS_ES_HOST                  = var.metrics_es_host
       METRICS_ES_PASS                  = var.metrics_es_password
       METRICS_ES_USER                  = var.metrics_es_username
-      MigrationAsyncOperationLambda    = var.postgres_migration_async_operation_function_arn
-      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
+      OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       orca_api_uri                     = var.orca_api_uri
       protected_buckets                = join(",", local.protected_buckets)
@@ -162,7 +161,7 @@ resource "aws_lambda_function" "private_api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs12.x"
+  runtime          = "nodejs14.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
@@ -187,7 +186,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs12.x"
+  runtime          = "nodejs14.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})

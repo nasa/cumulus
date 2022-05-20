@@ -1,7 +1,7 @@
 'use strict';
 
 const test = require('ava');
-const uuidv4 = require('uuid/v4');
+const { v4: uuidv4 } = require('uuid');
 const cryptoRandomString = require('crypto-random-string');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const awsServices = require('@cumulus/aws-client/services');

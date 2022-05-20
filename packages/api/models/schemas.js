@@ -1,5 +1,8 @@
 'use strict';
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
+
 module.exports.accessToken = {
   title: 'Access Token Object',
   description: 'Cumulus API AccessToken Table schema',
@@ -25,24 +28,36 @@ module.exports.accessToken = {
     updatedAt: { type: 'integer' },
     username: {
       title: 'Username',
-      description: 'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
+      description:
+        'The username associated with the access token. For valid request authorization, the username must match a record in the Users table',
       type: 'string',
     },
     tokenInfo: {
       title: 'Token Info',
-      description: 'The information associated with the access token, such as user profile information',
+      description:
+        'The information associated with the access token, such as user profile information',
       type: 'object',
       additionalProperties: true,
     },
   },
 };
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
+
 // Async Operation record definition
 module.exports.asyncOperation = {
   title: 'AsyncOperation Object',
   description: 'Cumulus API AsyncOperation Table schema',
   type: 'object',
-  required: ['createdAt', 'id', 'status', 'updatedAt', 'description', 'operationType'],
+  required: [
+    'createdAt',
+    'id',
+    'status',
+    'updatedAt',
+    'description',
+    'operationType',
+  ],
   additionalProperties: false,
   properties: {
     createdAt: { type: 'integer' },
@@ -50,7 +65,18 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['Data Migration', 'Dead-Letter Processing', 'Migration Count Report', 'ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report', 'SQS Replay'],
+      enum: [
+        'Data Migration',
+        'Dead-Letter Processing',
+        'Migration Count Report',
+        'ES Index',
+        'Bulk Granules',
+        'Bulk Granule Delete',
+        'Bulk Granule Reingest',
+        'Kinesis Replay',
+        'Reconciliation Report',
+        'SQS Replay',
+      ],
     },
     output: {
       description: 'The result of the operation, stored as JSON',
@@ -65,6 +91,8 @@ module.exports.asyncOperation = {
   },
 };
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
 // Collection Record Definition
 module.exports.collection = {
   title: 'Collection Object',
@@ -105,15 +133,17 @@ module.exports.collection = {
     },
     granuleId: {
       title: 'GranuleId Validation Regex',
-      description: 'The regular expression used to validate the granule ID '
-        + 'extracted from filenames according to the `granuleIdExtraction`',
+      description:
+        'The regular expression used to validate the granule ID ' +
+        'extracted from filenames according to the `granuleIdExtraction`',
       type: 'string',
     },
     granuleIdExtraction: {
       title: 'GranuleId Extraction Regex',
-      description: 'The regular expression used to extract the granule ID from filenames. '
-        + 'The first capturing group extracted from the filename by the regex'
-        + 'will be used as the granule ID.',
+      description:
+        'The regular expression used to extract the granule ID from filenames. ' +
+        'The first capturing group extracted from the filename by the regex' +
+        'will be used as the granule ID.',
       type: 'string',
     },
     reportToEms: {
@@ -124,18 +154,20 @@ module.exports.collection = {
     },
     sampleFileName: {
       title: 'Sample Filename',
-      description: 'Is used to validate to test granule ID '
-        + 'validation and extraction regexes against',
+      description:
+        'Is used to validate to test granule ID ' +
+        'validation and extraction regexes against',
       type: 'string',
     },
     ignoreFilesConfigForDiscovery: {
       title: 'Ignore Files Configuration During Discovery',
-      description: "When true, ignore this collection's files config list for"
-        + ' determining which files to ingest for a granule, and ingest all of'
-        + ' them.  When false, ingest only files that match a regex in one of'
-        + " this collection's files config list.  When this property is"
-        + ' specified on a task, it overrides the value set on a collection.'
-        + ' Defaults to false.',
+      description:
+        "When true, ignore this collection's files config list for" +
+        ' determining which files to ingest for a granule, and ingest all of' +
+        ' them.  When false, ingest only files that match a regex in one of' +
+        " this collection's files config list.  When this property is" +
+        ' specified on a task, it overrides the value set on a collection.' +
+        ' Defaults to false.',
       type: 'boolean',
     },
     files: {
@@ -152,7 +184,8 @@ module.exports.collection = {
           },
           sampleFileName: {
             title: 'Sample Filename',
-            description: 'Filename used to validate the provided regular expression',
+            description:
+              'Filename used to validate the provided regular expression',
             type: 'string',
           },
           bucket: {
@@ -162,18 +195,21 @@ module.exports.collection = {
           },
           url_path: {
             title: 'Url Path',
-            description: 'Folder used to save the granule in the bucket. '
-              + 'Defaults to the collection url_path',
+            description:
+              'Folder used to save the granule in the bucket. ' +
+              'Defaults to the collection url_path',
             type: 'string',
           },
           type: {
             title: 'File Type',
-            description: 'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" type',
+            description:
+              'CNM file type.  Cumulus uses this for CMR submission.  Non-CNM file types will be treated as "data" type',
             type: 'string',
           },
           checksumFor: {
             title: 'Checksum-For Regex',
-            description: 'Regex to identify the base file for which this files serves as a sidecar checksum file. Should be identical to the \'regex\' property of the base file',
+            description:
+              "Regex to identify the base file for which this files serves as a sidecar checksum file. Should be identical to the 'regex' property of the base file",
             type: 'string',
           },
           lzards: {
@@ -182,23 +218,21 @@ module.exports.collection = {
             properties: {
               backup: {
                 title: 'LZARDS backup flag',
-                description: 'Boolean configuration value to determine if file type should be backed up by backup components.  Defaults to false',
+                description:
+                  'Boolean configuration value to determine if file type should be backed up by backup components.  Defaults to false',
                 type: 'boolean',
               },
             },
           },
           reportToEms: {
             title: 'Report to EMS',
-            description: 'Indicates whether the granule with this file type will be reported to EMS when the collection level configuration is true.',
+            description:
+              'Indicates whether the granule with this file type will be reported to EMS when the collection level configuration is true.',
             type: 'boolean',
             default: true,
           },
         },
-        required: [
-          'regex',
-          'sampleFileName',
-          'bucket',
-        ],
+        required: ['regex', 'sampleFileName', 'bucket'],
       },
     },
     createdAt: {
@@ -213,7 +247,8 @@ module.exports.collection = {
       type: 'object',
       additionalProperties: true,
       s3MultipartChunksizeMb: {
-        description: 'chunk size of the S3 multipart uploads for the collection',
+        description:
+          'chunk size of the S3 multipart uploads for the collection',
         type: 'number',
       },
     },
@@ -237,15 +272,11 @@ module.exports.collection = {
   ],
 };
 
+// NOTE -- This schema is being removed/deprecated in P3
+// updates to this schema MUST be made to /api/lib/schemas.js
 module.exports.file = {
   type: 'object',
-  required: [
-    'granuleId',
-    'bucket',
-    'key',
-    'createdAt',
-    'updatedAt',
-  ],
+  required: ['granuleId', 'bucket', 'key', 'createdAt', 'updatedAt'],
   properties: {
     granuleId: { type: 'string' },
     bucket: { type: 'string' },
@@ -255,6 +286,8 @@ module.exports.file = {
   },
 };
 
+// NOTE -- This schema is being removed/deprecated in P3
+// updates to this schema MUST be made to /api/lib/schemas.js
 // Granule Record Schema
 module.exports.granule = {
   title: 'Granule Object',
@@ -372,15 +405,11 @@ module.exports.granule = {
       additionalProperties: true,
     },
   },
-  required: [
-    'granuleId',
-    'collectionId',
-    'status',
-    'createdAt',
-    'updatedAt',
-  ],
+  required: ['granuleId', 'collectionId', 'status', 'createdAt', 'updatedAt'],
 };
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
 // Reconciliation Report record
 module.exports.reconciliationReport = {
   title: 'ReconciliationReport Object',
@@ -391,7 +420,13 @@ module.exports.reconciliationReport = {
     name: { type: 'string' },
     type: {
       type: 'string',
-      enum: ['Granule Inventory', 'Granule Not Found', 'Internal', 'Inventory', 'ORCA Backup'],
+      enum: [
+        'Granule Inventory',
+        'Granule Not Found',
+        'Internal',
+        'Inventory',
+        'ORCA Backup',
+      ],
     },
     status: {
       type: 'string',
@@ -407,6 +442,8 @@ module.exports.reconciliationReport = {
   },
 };
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
 // Ingest Rule Record Schema
 module.exports.rule = {
   title: 'Ingest Rule Record Object',
@@ -442,14 +479,17 @@ module.exports.rule = {
     meta: {
       title: 'Metadata',
       type: 'object',
-      description: 'Optional Metadata for the rule, passed through to $.meta on the message',
+      description:
+        'Optional Metadata for the rule, passed through to $.meta on the message',
       properties: {
         retries: {
-          description: 'Number of retries on errors, for sqs-type rule only. Default to 3.',
+          description:
+            'Number of retries on errors, for sqs-type rule only. Default to 3.',
           type: 'number',
         },
         visibilityTimeout: {
-          description: 'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only.  Default to the visibility timeout of the SQS queue when the rule is created.',
+          description:
+            'VisibilityTimeout in seconds for the inflight messages, for sqs-type rule only.  Default to the visibility timeout of the SQS queue when the rule is created.',
           type: 'number',
         },
       },
@@ -457,11 +497,13 @@ module.exports.rule = {
     },
     payload: {
       title: 'Input Payload',
-      description: 'Optional input payload to be used in onetime and scheduled rules',
+      description:
+        'Optional input payload to be used in onetime and scheduled rules',
     },
     queueUrl: {
       title: 'Queue URL for Scheduled Executions',
-      description: 'Optional queue URL used to schedule executions for this rule',
+      description:
+        'Optional queue URL used to schedule executions for this rule',
       type: 'string',
     },
     rule: {
@@ -520,11 +562,11 @@ module.exports.rule = {
       type: 'string',
     },
   },
-  required: [
-    'name', 'workflow', 'rule', 'state', 'createdAt', 'updatedAt',
-  ],
+  required: ['name', 'workflow', 'rule', 'state', 'createdAt', 'updatedAt'],
 };
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
 // PDR Record Schema
 module.exports.pdr = {
   title: 'PDR Record Object',
@@ -600,15 +642,11 @@ module.exports.pdr = {
     },
     updatedAt: { type: 'integer' },
   },
-  required: [
-    'pdrName',
-    'provider',
-    'collectionId',
-    'status',
-    'createdAt',
-  ],
+  required: ['pdrName', 'provider', 'collectionId', 'status', 'createdAt'],
 };
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
 // Provider Schema => the model keeps information about each ingest location
 module.exports.provider = {
   title: 'Provider Object',
@@ -635,7 +673,8 @@ module.exports.provider = {
     },
     allowedRedirects: {
       title: 'Allowed Redirects',
-      description: 'Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.',
+      description:
+        'Only hosts in this list will have the provider username/password forwarded for authentication. Entries should be specified as host.com or host.com:7000 if redirect port is different than the provider port.',
       type: 'array',
       items: {
         type: 'string',
@@ -665,7 +704,8 @@ module.exports.provider = {
     },
     privateKey: {
       type: 'string',
-      description: 'filename assumed to be in s3://bucketInternal/stackName/crypto',
+      description:
+        'filename assumed to be in s3://bucketInternal/stackName/crypto',
     },
     cmKeyId: {
       title: 'AWS KMS Customer Master Key ARN Or Alias',
@@ -675,17 +715,15 @@ module.exports.provider = {
     certificateUri: {
       title: 'S3 URI For Custom SSL Certificate',
       type: 'string',
-      description: 'Optional SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate',
+      description:
+        'Optional SSL Certificate S3 URI for custom or self-signed SSL (TLS) certificate',
     },
   },
-  required: [
-    'id',
-    'protocol',
-    'host',
-    'createdAt',
-  ],
+  required: ['id', 'protocol', 'host', 'createdAt'],
 };
 
+// NOTE -- This schema is being removed/deprecated in P3,
+// updates to this schema MUST be made to /api/lib/schemas.js
 // Execution Schema => the model keeps information about each step function execution
 module.exports.execution = {
   title: 'Execution Object',
@@ -747,11 +785,5 @@ module.exports.execution = {
     asyncOperationId: { type: 'string' },
     cumulusVersion: { type: 'string' },
   },
-  required: [
-    'arn',
-    'name',
-    'status',
-    'createdAt',
-    'updatedAt',
-  ],
+  required: ['arn', 'name', 'status', 'createdAt', 'updatedAt'],
 };

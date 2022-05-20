@@ -27,7 +27,6 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     bucket,
     secondBucket,
     filePgModel,
-    granuleModel,
     granulePgModel,
     granuleFileName,
   } = params;
@@ -74,7 +73,6 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     granulePgRecord: pgGranule,
     knexOrTransaction: t.context.knex,
   });
-  await granuleModel.create(apiGranule);
 
   await Promise.all(
     apiGranule.files.map(

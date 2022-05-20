@@ -155,12 +155,8 @@ class Granule extends Manager {
 
     const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
       const { target, file } = moveFileParam;
-      if (target) {
-        const exists = await s3Utils.fileExists(target.Bucket, target.Key);
-
-        if (exists) {
-          return Promise.resolve(file);
-        }
+      if (target && await s3Utils.s3ObjectExists(target)) {
+        return Promise.resolve(file);
       }
 
       return Promise.resolve();
@@ -380,6 +376,7 @@ class Granule extends Manager {
     return response;
   }
 
+  // This logic has been moved to api/lib/granule.js, pending removal when the model gets removed P3
   async describeGranuleExecution(executionArn) {
     let executionDescription;
     try {
