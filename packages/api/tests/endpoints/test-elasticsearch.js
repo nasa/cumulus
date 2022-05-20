@@ -78,7 +78,11 @@ async function indexData() {
  * @returns {undefined} - none
  */
 async function createIndex(indexName, aliasName) {
-  await bootstrapElasticSearch('fakehost', indexName, aliasName);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: aliasName,
+  });
   esClient = await Search.es();
 }
 
