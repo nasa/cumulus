@@ -75,8 +75,11 @@ test.before(async () => {
   process.env.ES_INDEX = esAlias;
 
   // add fake elasticsearch index
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
-
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
