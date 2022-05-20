@@ -2,16 +2,12 @@
 
 const fs = require('fs-extra');
 const hasha = require('hasha');
-const pMap = require('p-map');
-const pRetry = require('p-retry');
 
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getObjectReadStream, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
   addCollections,
   api: apiTestUtils,
-  getExecutionOutput,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -175,29 +171,6 @@ describe('The TestPythonProcessing workflow', () => {
   it('completes execution with success status', async () => {
     const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
-  });
-
-  it('results in the files being added to the granule files cache table', async () => {
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-
-    const executionOutput = await getExecutionOutput(workflowExecutionArn);
-
-    await pMap(
-      executionOutput.payload.granules[0].files,
-      async (file) => {
-        const granuleId = await pRetry(
-          async () => {
-            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
-            return id;
-          },
-          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
-        );
-
-        expect(granuleId).toEqual(executionOutput.payload.granules[0].granuleId);
-      },
-      { concurrency: 1 }
-    );
   });
 
   describe('the ProcessingStep activity', () => {

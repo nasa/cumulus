@@ -98,7 +98,6 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
     esClient,
   } = t.context;
 
-  const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
 
   const granules = await Promise.all([
@@ -106,11 +105,13 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       dbClient: knex,
       granuleParams: { published: true },
       esClient: esClient,
+      writeDynamo: false,
     }),
     createGranuleAndFiles({
       dbClient: knex,
       granuleParams: { published: true },
       esClient: esClient,
+      writeDynamo: false,
     }),
   ]);
 
@@ -127,19 +128,12 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       ],
       forceRemoveFromCmr: true,
     },
-    async ({ _, pgGranuleRecord }) => {
-      const dynamoGranule = await granuleModel.get(
-        { granuleId: pgGranuleRecord.granule_id }
-      );
-
-      return {
-        dynamoGranule: { ...dynamoGranule, published: false },
-        pgGranule: {
-          ...pgGranuleRecord,
-          published: false,
-        },
-      };
-    }
+    ({ _, pgGranuleRecord }) => ({
+      pgGranule: {
+        ...pgGranuleRecord,
+        published: false,
+      },
+    })
   );
 
   t.deepEqual(
@@ -149,11 +143,6 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       pgGranuleId2,
     ].sort()
   );
-
-  // Granules should have been deleted from Dynamo
-  t.false(await granuleModel.exists({ granuleId: pgGranuleId1 }));
-  t.false(await granuleModel.exists({ granuleId: pgGranuleId2 }));
-
   // Granules should have been deleted from Postgres
   const pgCollectionCumulusId1 = granules[0].newPgGranule.collection_cumulus_id;
   const pgCollectionCumulusId2 = granules[1].newPgGranule.collection_cumulus_id;

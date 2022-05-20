@@ -153,19 +153,18 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   const granulePgModel = new GranulePgModel();
   const queueUrl = 'testqueueUrl';
 
-  const granule = fakeGranuleFactoryV2({
+  const apiGranule = fakeGranuleFactoryV2({
     collectionId,
   });
-  const dynamoGranule = await granuleModel.create(granule);
   await granulePgModel.create(
     t.context.knex,
-    await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
+    await translateApiGranuleToPostgresGranule(apiGranule, t.context.knex)
   );
 
   t.teardown(() => buildPayloadSpy.restore());
 
   await reingestGranule({
-    granule,
+    apiGranule,
     queueUrl,
     granuleModel,
     granulePgModel,
@@ -177,18 +176,18 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
 
   const updatedPgGranule = await getUniqueGranuleByGranuleId(
     t.context.knex,
-    granule.granuleId
+    apiGranule.granuleId
   );
   t.is(updatedPgGranule.status, 'queued');
 });
 
 test.serial('applyWorkflow throws error if workflow argument is missing', async (t) => {
-  const granule = {
+  const apiGranule = {
     granuleId: randomString(),
   };
 
   await t.throwsAsync(
-    applyWorkflow(granule),
+    applyWorkflow(apiGranule),
     {
       instanceOf: TypeError,
     }
@@ -196,20 +195,20 @@ test.serial('applyWorkflow throws error if workflow argument is missing', async 
 });
 
 test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
-  const granule = fakeGranuleFactoryV2({
+  const apiGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
   const workflow = randomString();
   const lambdaPayload = {
     payload: {
-      granules: [granule],
+      granules: [apiGranule],
     },
   };
 
   const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
-  await applyWorkflow({ granule, workflow });
+  await applyWorkflow({ apiGranule, workflow });
 
   try {
     t.true(lambdaInvokeStub.called);
@@ -221,26 +220,24 @@ test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
 });
 
 test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
-  const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
 
-  const granule = fakeGranuleFactoryV2({
+  const apiGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
   const workflow = randomString();
   const queueUrl = randomString();
 
-  const dynamoGranule = await granuleModel.create(granule);
   await granulePgModel.create(
     t.context.knex,
-    await translateApiGranuleToPostgresGranule(dynamoGranule, t.context.knex)
+    await translateApiGranuleToPostgresGranule(apiGranule, t.context.knex)
   );
 
   const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
   try {
-    await applyWorkflow({ granule, workflow, queueUrl });
+    await applyWorkflow({ apiGranule, workflow, queueUrl });
 
     t.true(buildPayloadStub.called);
     t.like(buildPayloadStub.args[0][0], {
