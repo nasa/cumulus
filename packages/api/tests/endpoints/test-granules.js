@@ -1608,10 +1608,10 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 });
 
 test.serial('PUT with action move returns failure if one granule file exists', async (t) => {
-  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([{ fileName: 'file1' }]);
+  const getFilesExistingAtLocationMethod = () => Promise.resolve([{ fileName: 'file1' }]);
   const { knex, insertedPgGranules } = t.context;
 
-  const granule = await translatePostgresGranuleToApiGranule({
+  await translatePostgresGranuleToApiGranule({
     knexOrTransaction: knex,
     granulePgRecord: insertedPgGranules[0],
   });
@@ -1625,28 +1625,32 @@ test.serial('PUT with action move returns failure if one granule file exists', a
     }],
   };
 
-  const response = await request(app)
-    .put(`/granules/${granule.granuleId}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(409);
+  const expressRequest = {
+    params: {
+      granuleName: insertedPgGranules[0].granule_id,
+    },
+    body,
+    testContext: {
+      knex,
+      getFilesExistingAtLocationMethod,
+    },
+  };
 
-  const responseBody = response.body;
-  t.is(response.status, 409);
-  t.is(responseBody.message,
+  const expressResponse = buildFakeExpressResponse();
+  await put(expressRequest, expressResponse);
+  t.true(expressResponse.boom.conflict.called);
+  t.is(expressResponse.boom.conflict.args[0][0],
     'Cannot move granule because the following files would be overwritten at the destination location: file1. Delete the existing files or reingest the source files.');
-
-  filesExistingStub.restore();
 });
 
-test.serial('PUT with action move returns failure if more than one granule file exists', async (t) => {
-  const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([
+test.serial('put() with action move returns failure if more than one granule file exists', async (t) => {
+  const getFilesExistingAtLocationMethod = () => Promise.resolve([
     { fileName: 'file1' },
     { fileName: 'file2' },
     { fileName: 'file3' },
   ]);
-  const { insertedPgGranules } = t.context;
+
+  const { insertedPgGranules, knex } = t.context;
 
   const body = {
     action: 'move',
@@ -1657,21 +1661,25 @@ test.serial('PUT with action move returns failure if more than one granule file 
     }],
   };
 
-  const response = await request(app)
-    .put(`/granules/${insertedPgGranules[0].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(body)
-    .expect(409);
+  const expressRequest = {
+    params: {
+      granuleName: insertedPgGranules[0].granule_id,
+    },
+    body,
+    testContext: {
+      knex,
+      getFilesExistingAtLocationMethod,
+    },
+  };
 
-  const responseBody = response.body;
-  t.is(response.statusCode, 409);
-  t.is(responseBody.message,
+  const expressResponse = buildFakeExpressResponse();
+  await put(expressRequest, expressResponse);
+  t.true(expressResponse.boom.conflict.called);
+  t.is(expressResponse.boom.conflict.args[0][0],
     'Cannot move granule because the following files would be overwritten at the destination location: file1, file2, file3. Delete the existing files or reingest the source files.');
-  filesExistingStub.restore();
 });
 
-test.serial('create (POST) creates new granule without an execution in PostgreSQL and Elasticsearch', async (t) => {
+test.serial('create (POST) creates new granule without an execution in PostgreSQL, and Elasticsearch', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
