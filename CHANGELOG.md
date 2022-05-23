@@ -71,6 +71,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-2903**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
+
 ### Changed
 
 - **CUMULUS-2932**
@@ -132,15 +141,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2905**
   - Updates migration script with new `migrateAndOverwrite` and
     `migrateOnlyFiles` options.
-
-### Breaking Changes
-
-- **CUMULUS-2903**
-  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
-  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
-    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
-    property of any tasks defined using the `cumulus_ecs_service` Terraform
-    module.
 
 ### Added
 
