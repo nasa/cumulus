@@ -169,6 +169,10 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
     },
   });
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
+  if (ids.length === 0) {
+    console.log('No Provider IDs to Delete, Exiting');
+    return;
+  }
 
   console.log('Starting Granule Deletion');
 
@@ -218,10 +222,12 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
       }))
   );
   const rulesForDeletion = ruleResponse.map((r) => JSON.parse(r.body).results).flat();
-  await Promise.all(rulesForDeletion.map((rule) => deleteRule({
-    prefix,
-    ruleName: rule.name,
-  })));
+  if (rulesForDeletion.length > 0) {
+    await Promise.all(rulesForDeletion.map((rule) => deleteRule({
+      prefix,
+      ruleName: rule.name,
+    })));
+  }
 
   console.log('Rule deletion complete');
 

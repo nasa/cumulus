@@ -19,7 +19,7 @@
       ],
       "port": 9229,
       "outputCapture": "std",
-      "runtimeVersion": "12.18.2",
+      "runtimeVersion": "14.19.1",
       "env": {
         "LOCALSTACK_HOST": "localhost",
         "LOCAL_ES_HOST": "localhost"
@@ -34,7 +34,7 @@
       "args": [
         "${file}"
       ],
-      "runtimeVersion": "12.18.2",
+      "runtimeVersion": "14.19.1",
       "env": {
         "AWS_PROFILE": "<your-profile>",
         "DEPLOYMENT": "<your-deployment>",
