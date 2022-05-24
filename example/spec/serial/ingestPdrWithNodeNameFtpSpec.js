@@ -41,7 +41,7 @@ const {
 } = require('../helpers/granuleUtils');
 
 const { waitForApiStatus } = require('../helpers/apiUtils');
-const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../helpers/Providers');
+const { deleteProvidersAndAllDependenciesByHost, waitForProviderRecordInOrNotInList } = require('../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
@@ -85,8 +85,8 @@ describe('Ingesting from PDR', () => {
       testDataFolder = createTestDataPath(testId);
 
       const ftpProvider = await buildFtpProvider(`${randomString(4)}-${testSuffix}`);
-      await deleteProvidersByHost(config.stackName, config.pdrNodeNameProviderBucket);
-      await deleteProvidersByHost(config.stackName, ftpProvider.host);
+      await deleteProvidersAndAllDependenciesByHost(config.stackName, config.pdrNodeNameProviderBucket);
+      await deleteProvidersAndAllDependenciesByHost(config.stackName, ftpProvider.host);
 
       nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
 
@@ -154,7 +154,7 @@ describe('Ingesting from PDR', () => {
         Bucket: config.bucket,
         CopySource: `${config.bucket}/${testDataFolder}/${origPdrFilename}`,
         Key: `${testDataFolder}/${pdrFilename}`,
-      }).promise();
+      });
 
       await S3.deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
     } catch (error) {

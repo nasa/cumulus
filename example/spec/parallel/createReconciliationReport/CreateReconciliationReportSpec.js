@@ -55,7 +55,7 @@ const { removeCollectionAndAllDependencies } = require('../../helpers/Collection
 const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
-const { buildAndExecuteWorkflow, stateMachineExists } = require('../../helpers/workflowUtils');
+const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
@@ -289,7 +289,6 @@ const fetchReconciliationReport = async (stackName, reportName) => {
 
   const url = JSON.parse(response.body).presignedS3Url;
   if (isNil(url) || !url.includes(`reconciliation-reports/${reportName}`) ||
-    !url.includes('AWSAccessKeyId') ||
     !url.includes('Signature')) {
     throw new Error(`ReconciliationReport getReconciliationReport did not return valid url ${url}`);
   }
@@ -310,7 +309,6 @@ describe('When there are granule differences and granule reconciliation is run',
   let extraGranuleInDb;
   let extraS3Object;
   let granuleBeforeUpdate;
-  let isOrcaIncluded = true;
   let originalGranuleFile;
   let protectedBucket;
   let publishedGranuleId;
@@ -326,13 +324,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
       config = await loadConfig();
 
-      // check if orca is deployed
-      const stateMachineName = `${config.stackName}-${ingestWithOrcaWorkflowName}`;
-      isOrcaIncluded = await stateMachineExists(stateMachineName);
-      if (!isOrcaIncluded) {
-        console.log(`${stateMachineName} doesn't exist, will skip the orca reconciliation report tests...`);
-      }
-
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 
@@ -346,7 +337,7 @@ describe('When there are granule differences and granule reconciliation is run',
 
       // Write an extra S3 object to the protected bucket
       extraS3Object = { Bucket: protectedBucket, Key: randomString() };
-      await s3().putObject({ Body: 'delete-me', ...extraS3Object }).promise();
+      await s3().putObject({ Body: 'delete-me', ...extraS3Object });
 
       extraCumulusCollection = await createActiveCollection(config.stackName, config.bucket);
 
@@ -379,7 +370,7 @@ describe('When there are granule differences and granule reconciliation is run',
         dbGranuleId,
         cmrGranule,
       ] = await Promise.all([
-        ingestAndPublishGranule(config, testSuffix, testDataFolder, true, isOrcaIncluded),
+        ingestAndPublishGranule(config, testSuffix, testDataFolder, true),
         ingestAndPublishGranule(config, testSuffix, testDataFolder, false),
         ingestGranuleToCMR(cmrClient),
       ]);
@@ -840,14 +831,12 @@ describe('When there are granule differences and granule reconciliation is run',
     let orcaReportAsyncOperationId;
 
     afterAll(async () => {
-      if (!isOrcaIncluded) return;
       if (orcaReportAsyncOperationId) {
         await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: orcaReportAsyncOperationId });
       }
     });
 
     it('generates an async operation through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       const request = {
         reportType: 'ORCA Backup',
@@ -870,7 +859,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       let asyncOperation;
       try {
@@ -890,7 +878,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('fetches a reconciliation report through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       const reportContent = await fetchReconciliationReport(config.stackName, reportRecord.name);
       report = JSON.parse(reportContent);
@@ -900,7 +887,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('generates a report showing number of granules that are in Cumulus and ORCA', () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       const granules = report.granules;
       expect(granules).toBeTruthy();
@@ -939,7 +925,6 @@ describe('When there are granule differences and granule reconciliation is run',
     });
 
     it('deletes a reconciliation report through the Cumulus API', async () => {
-      if (!isOrcaIncluded) pending();
       if (beforeAllFailed) fail(beforeAllFailed);
       await reconciliationReportsApi.deleteReconciliationReport({
         prefix: config.stackName,
@@ -981,7 +966,7 @@ describe('When there are granule differences and granule reconciliation is run',
     const cleanupResults = await Promise.allSettled([
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection: extraCumulusCollection }),
       removeCollectionAndAllDependencies({ prefix: config.stackName, collection }),
-      s3().deleteObject(extraS3Object).promise(),
+      s3().deleteObject(extraS3Object),
       deleteFolder(config.bucket, testDataFolder),
       cmrClient.deleteGranule(cmrGranule),
     ]);

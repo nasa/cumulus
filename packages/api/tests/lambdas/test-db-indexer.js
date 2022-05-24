@@ -140,7 +140,7 @@ let ruleModel;
 let reconciliationReportModel;
 
 test.before(async (t) => {
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   // create tables
   collectionModel = new models.Collection();
@@ -163,7 +163,11 @@ test.before(async (t) => {
   t.context.esAlias = randomString();
   process.env.ES_INDEX = t.context.esAlias;
 
-  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: t.context.esAlias,
+  });
 });
 
 test.after.always(async () => {

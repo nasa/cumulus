@@ -43,9 +43,12 @@ let granuleModel;
 test.before(async () => {
   const esAlias = randomId('esAlias');
   process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
-
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await collectionModel.createTable();

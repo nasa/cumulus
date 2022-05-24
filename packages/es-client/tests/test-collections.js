@@ -27,14 +27,18 @@ let esIndex;
 // these tests to test a clean ES index
 test.before(async () => {
   // create buckets
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   esAlias = randomId('esalias');
   esIndex = randomId('esindex');
   process.env.ES_INDEX = esAlias;
 
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   esClient = await Search.es();
 
   await Promise.all([

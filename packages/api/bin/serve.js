@@ -61,17 +61,21 @@ async function createTable(Model, tableName) {
 async function populateBucket(bucket, stackName) {
   // upload workflow files
   const workflowPromises = workflowList.map((obj) => promiseS3Upload({
-    Bucket: bucket,
-    Key: `${stackName}/workflows/${obj.name}.json`,
-    Body: JSON.stringify(obj),
+    params: {
+      Bucket: bucket,
+      Key: `${stackName}/workflows/${obj.name}.json`,
+      Body: JSON.stringify(obj),
+    },
   }));
 
   // upload workflow template
   const workflow = `${stackName}/workflow_template.json`;
   const templatePromise = promiseS3Upload({
-    Bucket: bucket,
-    Key: workflow,
-    Body: JSON.stringify({}),
+    params: {
+      Bucket: bucket,
+      Key: workflow,
+      Body: JSON.stringify({}),
+    },
   });
   await Promise.all([...workflowPromises, templatePromise]);
 }
@@ -131,8 +135,11 @@ async function checkOrCreateTables(stackName) {
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   console.log(process.env.ES_HOST);
-  await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
-  await s3().createBucket({ Bucket: bucket }).promise();
+  await bootstrapElasticSearch({
+    host: process.env.ES_HOST,
+    index: process.env.ES_INDEX,
+  });
+  await s3().createBucket({ Bucket: bucket });
 
   const { TopicArn } = await sns().createTopic({ Name: randomId('topicName') }).promise();
   process.env.collection_sns_topic_arn = TopicArn;
@@ -185,7 +192,10 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
 async function initializeLocalElasticsearch(stackName) {
   const es = await getESClientAndIndex(stackName);
   await eraseElasticsearchIndices(es.client, es.index);
-  return bootstrapElasticSearch(process.env.ES_HOST, es.index);
+  return bootstrapElasticSearch({
+    host: process.env.ES_HOST,
+    index: es.index,
+  });
 }
 
 /**

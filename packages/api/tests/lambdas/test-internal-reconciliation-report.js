@@ -69,7 +69,7 @@ test.beforeEach(async (t) => {
   t.context.systemBucket = randomId('bucket');
   process.env.system_bucket = t.context.systemBucket;
 
-  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket }).promise()
+  await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
   await new models.ReconciliationReport().createTable();
@@ -77,7 +77,11 @@ test.beforeEach(async (t) => {
   esAlias = randomId('esalias');
   esIndex = randomId('esindex');
   process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   esClient = await Search.es();
 
   t.context.testDbName = `test_internal_recon_${cryptoRandomString({ length: 10 })}`;

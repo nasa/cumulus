@@ -12,9 +12,10 @@ import { getRequiredEnvVar } from '@cumulus/common/env';
 import { getSecretString } from '@cumulus/aws-client/SecretsManager';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
 import { buildS3Uri } from '@cumulus/aws-client/S3';
+import S3ObjectStore from '@cumulus/aws-client/S3ObjectStore';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
-import { s3 as coreS3, sts } from '@cumulus/aws-client/services';
+import { sts } from '@cumulus/aws-client/services';
 import {
   constructDistributionUrl,
   fetchDistributionBucketMap,
@@ -64,21 +65,20 @@ export const generateDirectS3Url = async (params: {
   const s3AccessTimeoutSeconds = (
     process.env.lzards_s3_link_timeout || S3_LINK_EXPIRY_SECONDS_DEFAULT
   );
-  let s3;
-  if (!inTestMode() || usePassedCredentials) {
-    const s3Config = {
-      signatureVersion: 'v4',
-      secretAccessKey,
-      accessKeyId,
-      sessionToken,
+  let s3Config;
+  if ((!inTestMode() || usePassedCredentials) && (secretAccessKey && accessKeyId)) {
+    s3Config = {
       region,
+      credentials: {
+        secretAccessKey,
+        accessKeyId,
+        sessionToken,
+      },
     };
-    s3 = new AWS.S3(s3Config);
-  } else {
-    coreS3().config.update({ signatureVersion: 'v4' });
-    s3 = coreS3();
   }
-  return await s3.getSignedUrlPromise('getObject', { Bucket, Key, Expires: s3AccessTimeoutSeconds });
+  const s3ObjectStore = new S3ObjectStore(s3Config);
+  const s3Uri = buildS3Uri(Bucket, Key);
+  return await s3ObjectStore.signGetObject(s3Uri, {}, { Expires: s3AccessTimeoutSeconds });
 };
 
 export const generateAccessUrl = async (params: {

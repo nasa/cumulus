@@ -78,14 +78,18 @@ async function indexData() {
  * @returns {undefined} - none
  */
 async function createIndex(indexName, aliasName) {
-  await bootstrapElasticSearch('fakehost', indexName, aliasName);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: indexName,
+    alias: aliasName,
+  });
   esClient = await Search.es();
 }
 
 const testDbName = randomId('elasticsearch');
 
 test.before(async (t) => {
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);

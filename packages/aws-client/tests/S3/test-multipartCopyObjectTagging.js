@@ -12,7 +12,12 @@ const { s3 } = require('../../services');
 
 const stubS3MultipartUploads = {};
 
-const { createBucket, multipartCopyObject, recursivelyDeleteS3Bucket } = proxyquire(
+const {
+  createBucket,
+  multipartCopyObject,
+  recursivelyDeleteS3Bucket,
+  uploadS3FileStream,
+} = proxyquire(
   '../../S3',
   {
     './lib/S3MultipartUploads': stubS3MultipartUploads,
@@ -26,11 +31,11 @@ const randomId = (prefix) =>
 const createDummyObject = async ({ Bucket, Key, size, tags = {} }) => {
   const readStream = fs.createReadStream('/dev/urandom', { end: size - 1 });
 
-  await s3().upload({
+  await uploadS3FileStream(
+    readStream,
     Bucket,
-    Key,
-    Body: readStream,
-  }).promise();
+    Key
+  );
 
   await s3().putObjectTagging({
     Bucket,
@@ -40,7 +45,7 @@ const createDummyObject = async ({ Bucket, Key, size, tags = {} }) => {
         ([tagKey, tagValue]) => ({ Key: tagKey, Value: tagValue })
       ),
     },
-  }).promise();
+  });
 };
 
 test.before(async (t) => {

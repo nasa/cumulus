@@ -8,13 +8,13 @@ import { handler, addChecksumToGranuleFile } from '../src';
 const randomString = () => cryptoRandomString({ length: 10 });
 
 const test = anyTest as TestInterface<{
-  stubS3: { getObject: S3.GetObjectCreateReadStreamMethod }
+  stubS3: { getObject: S3.GetObjectMethod }
 }>;
 
 test.before((t) => {
   t.context.stubS3 = {
-    getObject: () => ({
-      createReadStream: () => Readable.from(['asdf']),
+    getObject: () => Promise.resolve({
+      Body: Readable.from(['asdf']),
     }),
   };
 });
@@ -87,8 +87,8 @@ test('addChecksumToGranuleFile() adds the checksumType and checksum to the file 
     key: 'path/to/file.txt',
   };
 
-  const fakeGetObject = sinon.fake.returns({
-    createReadStream: () => Readable.from(['asdf']),
+  const fakeGetObject = sinon.fake.resolves({
+    Body: Readable.from(['asdf']),
   });
 
   const result = await addChecksumToGranuleFile({

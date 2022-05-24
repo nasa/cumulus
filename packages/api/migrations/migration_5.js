@@ -1,6 +1,10 @@
 const moment = require('moment');
 const { s3 } = require('@cumulus/aws-client/services');
-const { buildS3Uri, parseS3Uri } = require('@cumulus/aws-client/S3');
+const {
+  buildS3Uri,
+  parseS3Uri,
+  getObjectStreamContents,
+} = require('@cumulus/aws-client/S3');
 const { ReconciliationReport } = require('../models');
 
 const reportsPrefix = (stackName) => `${stackName}/reconciliation-reports/`;
@@ -9,8 +13,7 @@ function getS3ReportsKeys(systemBucket, stackName) {
   return s3().listObjectsV2({
     Bucket: systemBucket,
     Prefix: reportsPrefix(stackName),
-  }).promise()
-    .then((response) => response.Contents.map((o) => o.Key));
+  }).then((response) => (response.Contents || []).map((o) => o.Key));
 }
 
 // get list of reconciliation reports in s3 and add them to the new database table
@@ -30,8 +33,8 @@ async function run(_options) {
   };
 
   const addedItems = await Promise.all(s3filesNotInDb.map(async (s3Report) => {
-    const s3Response = await s3().getObject(parseS3Uri(s3Report)).promise();
-    const report = JSON.parse(s3Response.Body.toString());
+    const s3Response = await s3().getObject(parseS3Uri(s3Report));
+    const report = JSON.parse(await getObjectStreamContents(s3Response.Body));
     const reportRecord = {
       name: `inventoryReport-${moment.utc(report.reportStartTime).format('YYYYMMDDTHHmmssSSS')}`,
       type: 'Inventory',

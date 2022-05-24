@@ -42,11 +42,15 @@ let accessTokenModel;
 
 test.before(async (t) => {
   t.context.testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
 
   providerModel = new models.Provider();
   await providerModel.createTable();

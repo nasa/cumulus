@@ -1,6 +1,15 @@
-import * as querystring from 'querystring';
 import { URL } from 'url';
-import * as AWS from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
+
+import {
+  S3,
+  GetObjectCommand,
+  HeadObjectCommand,
+  GetObjectCommandInput,
+  S3ClientConfig,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
 import Logger from '@cumulus/logger';
 import { headObject, parseS3Uri } from './S3';
 import awsClient from './client';
@@ -9,15 +18,55 @@ import awsClient from './client';
 
 const log = new Logger({ sender: '@cumulus/aws-client/S3ObjectStore' });
 
+type QueryParams = { [key: string]: number | string };
+
 /**
  * Class to use when interacting with S3
  *
  */
 class S3ObjectStore {
-  private readonly s3: AWS.S3;
+  private readonly s3: S3;
+  private readonly middlewareName: string;
+  private queryParams: QueryParams;
 
-  constructor() {
-    this.s3 = awsClient(AWS.S3, '2006-03-01', { signatureVersion: 'v4' })();
+  constructor(config?: Partial<S3ClientConfig>) {
+    this.s3 = awsClient(S3, '2006-03-01', {
+      signatureVersion: 'v4',
+    })(config);
+
+    this.queryParams = {};
+    this.middlewareName = `customQueryParams${uuidv4()}`;
+  }
+
+  getQueryParams() {
+    return this.queryParams;
+  }
+
+  setQueryParams(queryParams: QueryParams) {
+    this.queryParams = queryParams;
+  }
+
+  async getS3SignedUrlWithCustomQueryParams(
+    command: GetObjectCommand | HeadObjectCommand
+  ) {
+    this.s3.middlewareStack.addRelativeTo(
+      (next: any) => (args: any) => {
+        const { request } = args;
+        request.query = {
+          ...this.getQueryParams(),
+          ...request.query,
+        };
+        return next(args);
+      },
+      {
+        name: this.middlewareName,
+        relation: 'before',
+        toMiddleware: 'presignInterceptMiddleware',
+      }
+    );
+    const signedUrl = await getSignedUrl(this.s3, command);
+    this.s3.middlewareStack.remove(this.middlewareName);
+    return signedUrl;
   }
 
   /**
@@ -32,8 +81,8 @@ class S3ObjectStore {
    */
   async signGetObject(
     objectUrl: string,
-    options: { [key: string]: string } = {},
-    queryParams: { [key: string]: string }
+    options: Partial<GetObjectCommandInput> = {},
+    queryParams: QueryParams = {}
   ): Promise<string> {
     log.info(`Executing signGetObject with objectUrl: ${objectUrl}, options: ${JSON.stringify(options)}, queryParams: ${JSON.stringify(queryParams)}`);
 
@@ -46,18 +95,14 @@ class S3ObjectStore {
 
     await headObject(Bucket, Key);
 
-    const req = this.s3.getObject({ Bucket, Key, ...options });
+    const command = new GetObjectCommand({ Bucket, Key, ...options });
 
-    if (queryParams && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `${options ? '&' : '?'}${querystring.stringify(queryParams)}`; }));
-    }
+    this.setQueryParams(queryParams);
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command);
 
-    // TypeScript doesn't recognize that req has a presign method.  It does.
-    const result = await (req as any).presign();
+    log.debug(`Signed GetObject request URL: ${signedUrl}`);
 
-    log.debug(`Signed GetObject request URL: ${result}`);
-
-    return result;
+    return signedUrl;
   }
 
   /**
@@ -73,7 +118,7 @@ class S3ObjectStore {
   async signHeadObject(
     objectUrl: string,
     options: { [key: string]: string } = {},
-    queryParams: { [key: string]: string }
+    queryParams: QueryParams
   ): Promise<string> {
     log.info(`Executing signHeadObject with objectUrl: ${objectUrl}, options: ${JSON.stringify(options)}, queryParams: ${JSON.stringify(queryParams)}`);
     const url = new URL(objectUrl);
@@ -84,18 +129,13 @@ class S3ObjectStore {
 
     const { Bucket, Key } = parseS3Uri(objectUrl);
 
-    const req = this.s3.headObject({ Bucket, Key, ...options });
+    const command = new HeadObjectCommand({ Bucket, Key, ...options });
+    this.setQueryParams(queryParams);
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command);
 
-    if (queryParams && req.on) {
-      (req.on('build', () => { req.httpRequest.path += `?${querystring.stringify(queryParams)}`; }));
-    }
+    log.debug(`Signed HeadObject request URL: ${signedUrl}`);
 
-    // TypeScript doesn't recognize that req has a presign method.  It does.
-    const result = await (req as any).presign();
-
-    log.debug(`Signed HeadObject request URL: ${result}`);
-
-    return result;
+    return signedUrl;
   }
 }
 
