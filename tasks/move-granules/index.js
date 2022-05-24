@@ -18,6 +18,7 @@ const {
 } = require('@cumulus/ingest/granule');
 
 const {
+  isFileExtensionMatched,
   isCMRFile,
   isISOFile,
   metadataObjectFromCMRFile,
@@ -266,7 +267,14 @@ async function moveGranules(event) {
 
   const granulesInput = event.input.granules;
 
-  const filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
+  let filterFunc;
+  const metadataFileExtension = get(config, 'collection.meta.metadataFileExtension');
+  if (metadataFileExtension) {
+    filterFunc = (fileobject) => isFileExtensionMatched(fileobject, metadataFileExtension);
+  } else {
+    filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
+  }
+
   const cmrFiles = granulesToCmrFileObjects(granulesInput, filterFunc);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 

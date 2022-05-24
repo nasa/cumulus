@@ -216,6 +216,10 @@ module.exports.collection = {
         description: 'chunk size of the S3 multipart uploads for the collection',
         type: 'number',
       },
+      metadataFileExtension: {
+        title: 'Optional, the file extension for tasks such as move-granule to look for the granule metadata information',
+        type: 'string',
+      },
     },
     tags: {
       title: 'Optional tags for search',
