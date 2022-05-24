@@ -38,7 +38,11 @@ test.before(async (t) => {
 
   esClient = await Search.es();
   t.context.esAlias = randomString();
-  await bootstrapElasticSearch('fakehost', esIndex, t.context.esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: t.context.esAlias,
+  });
 });
 
 test.after.always(async () => {

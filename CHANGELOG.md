@@ -10,7 +10,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-2931**
+
+  - Updates CustomBootstrap lambda to default to failing if attempting to remove
+    a pre-existing `cumulus-alias` index that would collide with the required
+    `cumulus-alias` *alias*.   A configuration parameter
+    `elasticsearch_remove_index_alias_conflict`  on the `cumulus` and
+    `archive` modules has been added to enable the original behavior that would
+    remove the invalid index (and all it's data).
+  - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
+    parameterized and accommodate a new parameter `removeAliasConflict` which
+    allows/disallows the deletion of a conflicting `cumulus-alias` index
+    
 - **CUMULUS-2903**
+
   - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
   - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
     `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
@@ -20,6 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2932**
+
   - Updates `SyncGranule` task to include `disableOrDefaultAcl` function that uses
     the configuration ACL parameter to set ACL to private by default or disable ACL.
   - Updates `@cumulus/sync-granule` `download()` function to take in ACL parameter
