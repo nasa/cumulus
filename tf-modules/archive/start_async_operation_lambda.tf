@@ -6,7 +6,7 @@ resource "aws_lambda_function" "start_async_operation" {
   role             = aws_iam_role.start_async_operation.arn
   runtime          = "nodejs14.x"
   timeout          = 300
-  memory_size      = 256
+  memory_size      = 960
   environment {
     variables = {
       acquireTimeoutMillis         = var.rds_connection_timing_configuration.acquireTimeoutMillis
@@ -57,18 +57,22 @@ data "aws_iam_policy_document" "start_async_operation" {
 
   statement {
     actions = [
-      "ecs:RunTask",
       "ec2:CreateNetworkInterface",
       "ec2:DeleteNetworkInterface",
       "ec2:DescribeNetworkInterfaces",
-      "lambda:GetFunctionConfiguration",
-      "lambda:invokeFunction",
       "logs:CreateLogGroup",
       "logs:CreateLogStream",
       "logs:DescribeLogStreams",
-      "logs:PutLogEvents",
+      "logs:PutLogEvents"
     ]
     resources = ["*"]
+  }
+
+  statement {
+    actions = [
+      "lambda:GetFunctionConfiguration",
+    ]
+    resources = ["arn:aws:lambda:*"]
   }
 
 statement {
