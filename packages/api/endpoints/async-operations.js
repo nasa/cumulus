@@ -24,6 +24,9 @@ const { Search } = require('@cumulus/es-client/search');
 const { deleteAsyncOperation } = require('@cumulus/es-client/indexer');
 const { isBadRequestError } = require('../lib/errors');
 
+const { recordIsValid } = require('../lib/schema');
+const asyncSchema = require('../lib/schemas').asyncOperation;
+
 const logger = new Logger({ sender: '@cumulus/api/asyncOperations' });
 
 async function list(req, res) {
@@ -135,6 +138,7 @@ async function post(req, res) {
     if (!apiAsyncOperation.id) {
       throw new ValidationError('Async Operations require an ID');
     }
+    recordIsValid(apiAsyncOperation, asyncSchema, false);
     if (await asyncOperationPgModel.exists(knex, { id: apiAsyncOperation.id })) {
       return res.boom.conflict(`A record already exists for async operation ID ${apiAsyncOperation.id}`);
     }
@@ -143,10 +147,10 @@ async function post(req, res) {
     let apiDbRecord;
     await createRejectableTransaction(knex, async (trx) => {
       const pgRecord = await asyncOperationPgModel.create(trx, dbRecord, ['*']);
-      apiDbRecord = await translatePostgresAsyncOperationToApiAsyncOperation(pgRecord);
+      apiDbRecord = await translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
       await indexAsyncOperation(esClient, apiDbRecord, process.env.ES_INDEX);
     });
-    logger.info(`Successfully created async operation ${dbRecord.id}:`);
+    logger.info(`Successfully created async operation ${apiDbRecord.id}:`);
     return res.send({
       message: 'Record saved',
       record: apiDbRecord,
