@@ -30,6 +30,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2923**
+  - Changed public key setup for SFTP local testing.
+
 - **CUMULUS-2932**
 
   - Updates `SyncGranule` task to include `disableOrDefaultAcl` function that uses
