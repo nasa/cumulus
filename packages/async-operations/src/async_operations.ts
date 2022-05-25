@@ -246,18 +246,46 @@ export const startAsyncOperation = async (
   });
 
   logger.debug(`About to start AsyncOperation: ${id}`);
-  // Start the task in ECS
-  const runTaskResponse = await startEcsTaskFunc({
-    ...params,
-    id,
-    payloadBucket,
-    payloadKey,
-  });
+  let runTaskResponse;
+  try {
+    runTaskResponse = await startEcsTaskFunc({
+      ...params,
+      id,
+      payloadBucket,
+      payloadKey,
+    });
 
-  if (runTaskResponse?.failures && runTaskResponse.failures.length > 0) {
-    throw new EcsStartTaskError(
-      `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
+    if (runTaskResponse?.failures && runTaskResponse.failures.length > 0) {
+      throw new EcsStartTaskError(
+        `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
+      );
+    }
+  } catch (error) {
+    logger.error(`Failed to start AsyncOperation ${id}`, error);
+    const output = {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+    await createAsyncOperation(
+      {
+        createObject: {
+          id,
+          status: 'RUNNER_FAILED',
+          output: JSON.stringify(output),
+          description,
+          operationType,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+        stackName,
+        systemBucket,
+        dynamoTableName,
+        knexConfig,
+      },
+      AsyncOperation
     );
+    throw error;
   }
 
   logger.debug(`About to create AsyncOperation record: ${id}`);
