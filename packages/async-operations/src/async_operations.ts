@@ -6,6 +6,7 @@ import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
 import {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  translatePostgresAsyncOperationToApiAsyncOperation,
   AsyncOperationPgModel,
   createRejectableTransaction,
 } from '@cumulus/db';
@@ -142,12 +143,12 @@ export const createAsyncOperation = async (
   if (!systemBucket) throw new TypeError('systemBucket is required');
 
   const knex = await getKnexClient({ env: knexConfig });
-  let createdAsyncOperation: ApiAsyncOperation | undefined;
   return await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
     const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
-    await asyncOperationPgModel.create(trx, pgCreateObject);
-    await indexAsyncOperation(esClient, createObject, process.env.ES_INDEX);
-    return createdAsyncOperation;
+    const pgRecord = await asyncOperationPgModel.create(trx, pgCreateObject, ['*']);
+    const apiRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
+    await indexAsyncOperation(esClient, apiRecord, process.env.ES_INDEX);
+    return apiRecord;
   });
 };
 
@@ -231,7 +232,7 @@ export const startAsyncOperation = async (
     );
   }
 
-  return createAsyncOperation(
+  return await createAsyncOperation(
     {
       createObject: {
         id,
