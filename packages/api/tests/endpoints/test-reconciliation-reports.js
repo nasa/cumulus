@@ -333,7 +333,6 @@ test.serial('create a report starts an async operation', async (t) => {
   });
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
   try {
     const response = await request(app)
       .post('/reconciliationReports')
@@ -356,7 +355,6 @@ test.serial('create a report starts an async operation', async (t) => {
       useLambdaEnvironmentVariables: true,
       stackName,
       systemBucket,
-      dynamoTableName: tableName,
       knexConfig: process.env,
     }));
   } finally {
@@ -369,8 +367,6 @@ test.serial('createReport() uses correct caller lambda function name', async (t)
   const id = randomId('id');
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
-
   const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({
     id,
   });
@@ -399,7 +395,6 @@ test.serial('createReport() uses correct caller lambda function name', async (t)
     useLambdaEnvironmentVariables: true,
     stackName,
     systemBucket,
-    dynamoTableName: tableName,
     knexConfig: process.env,
   }));
 });
