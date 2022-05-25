@@ -149,7 +149,6 @@ async function deleteReport(req, res) {
 async function createReport(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
@@ -169,9 +168,8 @@ async function createReport(req, res) {
     useLambdaEnvironmentVariables: true,
     stackName,
     systemBucket,
-    dynamoTableName: tableName,
     knexConfig: process.env,
-  }, models.AsyncOperation);
+  });
 
   return res.status(202).send(asyncOperation);
 }
