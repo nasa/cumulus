@@ -9,10 +9,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2801**
+    - Move `getFilesExistingAtLocation`from api granules model to api/lib, update granules put
+      endpoint to remove model references
   - **CUMULUS-2804**
     - Updates api/lib/granule-delete.deleteGranuleAndFiles:
       - Updates dynamoGranule -> apiGranule in the signature and throughout the dependent code
-      - Updates logic to make apiGranule optional, but pgGranule required, and all lookups use postgres instead of ES/implied apiGranule values
+      - Updates logic to make apiGranule optional, but pgGranule required, and
+        all lookups use postgres instead of ES/implied apiGranule values
       - Updates logic to make pgGranule optional - in this case the logic removes the entry from ES only
     - Removes all dynamo model logic from api/endpoints/granules
     - Removes dynamo write logic from api/lib/writeRecords.*
@@ -66,6 +70,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     reintroduction.
 
 ## Unreleased
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
 
 ### Changed
 
@@ -128,15 +141,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2905**
   - Updates migration script with new `migrateAndOverwrite` and
     `migrateOnlyFiles` options.
-
-### Breaking Changes
-
-- **CUMULUS-2903**
-  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
-  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
-    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
-    property of any tasks defined using the `cumulus_ecs_service` Terraform
-    module.
 
 ### Added
 
