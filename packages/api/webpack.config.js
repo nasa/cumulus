@@ -46,6 +46,7 @@ module.exports = {
     sfSemaphoreDown: './lambdas/sf-semaphore-down.js',
     sfStarter: './lambdas/sf-starter.js',
     sqsMessageConsumer: './lambdas/sqs-message-consumer.js',
+    startAsyncOperation: './lambdas/start-async-operation.js',
     writeDbDlqRecordstoS3: './lambdas/write-db-dlq-records-to-s3.js',
   },
   devtool: 'inline-source-map',
