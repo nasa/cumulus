@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
-    
+
 - **CUMULUS-2903**
 
   - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
