@@ -11,16 +11,16 @@ const {
   destroyLocalTestDb,
   migrationDir,
 } = require('@cumulus/db');
-const asyncOperations = require('@cumulus/async-operations');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError, IndexExistsError } = require('@cumulus/errors');
+const { IndexExistsError } = require('@cumulus/errors');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
 const mappings = require('@cumulus/es-client/config/mappings.json');
+const startAsyncOperation = require('../../lib/startAsyncOperation');
 
 const models = require('../../models');
 const assertions = require('../../lib/assertions');
@@ -556,44 +556,13 @@ test.serial('Change index and delete source index', async (t) => {
   await esClient.indices.delete({ index: destIndex });
 });
 
-test.serial('Reindex from database - create new index', async (t) => {
-  const indexName = randomString();
-  const id = randomString();
-
-  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({ id });
-
-  try {
-    const response = await request(app)
-      .post('/elasticsearch/index-from-database')
-      .send({
-        indexName,
-      })
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .expect(200);
-
-    t.is(response.body.message,
-      `Indexing database to ${indexName}. Operation id: ${id}`);
-
-    const indexExists = await esClient.indices.exists({ index: indexName })
-      .then((indexResponse) => indexResponse.body);
-
-    t.true(indexExists);
-  } finally {
-    await esClient.indices.delete({ index: indexName });
-    stub.restore();
-  }
-});
-
 test.serial('Reindex from database - startAsyncOperation is called with expected payload', async (t) => {
   const indexName = randomString();
-  const id = randomString();
-
   const processEnv = { ...process.env };
   process.env.ES_HOST = 'fakeEsHost';
   process.env.ReconciliationReportsTable = 'fakeReportsTable';
 
-  const asyncOperationsStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({ id });
+  const asyncOperationsStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const payload = {
     indexName,
     esRequestConcurrency: 'fakeEsRequestConcurrency',
@@ -676,8 +645,8 @@ test.serial('Current index - custom alias', async (t) => {
   await esClient.indices.delete({ index: indexName });
 });
 
-test.serial('request to /elasticsearch/index-from-database endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
+test.serial('request to /elasticsearch/index-from-database endpoint returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
+  const asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
     new Error('failed to start')
   );
 
@@ -693,24 +662,8 @@ test.serial('request to /elasticsearch/index-from-database endpoint returns 500 
   }
 });
 
-test.serial('request to /elasticsearch/index-from-database endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
-    new EcsStartTaskError('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/elasticsearch/index-from-database')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({});
-    t.is(response.status, 503);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
-});
-
 test.serial('indexFromDatabase request completes successfully', async (t) => {
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const functionName = randomId('lambda');
   const fakeRequest = {
     apiGateway: {
@@ -721,22 +674,20 @@ test.serial('indexFromDatabase request completes successfully', async (t) => {
     body: {
       indexName: t.context.esAlias,
     },
-    testContext: {
-      // mock starting the ECS task
-      startEcsTaskFunc: () => Promise.resolve({}),
-    },
   };
+
   const fakeResponse = {
     send: sinon.stub(),
   };
 
   await t.notThrowsAsync(indexFromDatabase(fakeRequest, fakeResponse));
   t.true(fakeResponse.send.called);
+  stub.restore();
 });
 
 test.serial('indexFromDatabase uses correct caller lambda function name', async (t) => {
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const functionName = randomId('lambda');
-  const startEcsTaskStub = sinon.stub();
   const fakeRequest = {
     apiGateway: {
       context: {
@@ -746,15 +697,12 @@ test.serial('indexFromDatabase uses correct caller lambda function name', async 
     body: {
       indexName: randomId('index'),
     },
-    testContext: {
-      // mock starting the ECS task
-      startEcsTaskFunc: startEcsTaskStub,
-    },
   };
   const fakeResponse = {
     send: sinon.stub(),
   };
 
   await indexFromDatabase(fakeRequest, fakeResponse);
-  t.is(startEcsTaskStub.getCall(0).firstArg.callerLambdaName, functionName);
+  t.is(stub.getCall(0).firstArg.callerLambdaName, functionName);
+  stub.restore();
 });

@@ -4,11 +4,10 @@ const test = require('ava');
 const sinon = require('sinon');
 const got = require('got');
 const isEqual = require('lodash/isEqual');
+const isMatch = require('lodash/isMatch');
 const omit = require('lodash/omit');
 const request = require('supertest');
-const {
-  EcsStartTaskError,
-} = require('@cumulus/errors');
+
 const { localStackConnectionEnv } = require('@cumulus/db');
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -17,7 +16,6 @@ const {
   parseS3Uri,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const asyncOperations = require('@cumulus/async-operations');
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
@@ -25,6 +23,7 @@ const {
   Search,
 } = require('@cumulus/es-client/search');
 
+const startAsyncOperation = require('../../lib/startAsyncOperation');
 const {
   createFakeJwtAuthToken,
   fakeReconciliationReportFactory,
@@ -330,53 +329,30 @@ test.serial('delete a report', (t) =>
   })));
 
 test.serial('create a report starts an async operation', async (t) => {
-  const id = randomId('id');
-  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({
-    id,
-  });
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
-  try {
-    const response = await request(app)
-      .post('/reconciliationReports')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .expect(202);
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
+  t.teardown(() => stub.restore());
+  const response = await request(app)
+    .post('/reconciliationReports')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(202);
 
-    t.deepEqual(response.body, {
-      id,
-    });
+  t.truthy(response.body.id);
 
-    t.true(stub.calledWith({
-      asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-      cluster: process.env.EcsCluster,
-      callerLambdaName: undefined,
-      lambdaName: process.env.invokeReconcileLambda,
-      description: 'Create Reconciliation Report',
-      operationType: 'Reconciliation Report',
-      payload: normalizeEvent({}),
-      useLambdaEnvironmentVariables: true,
-      stackName,
-      systemBucket,
-      dynamoTableName: tableName,
-      knexConfig: process.env,
-    }));
-  } finally {
-    stub.restore();
-  }
+  const expectedArg = {
+    callerLambdaName: undefined,
+    lambdaName: process.env.invokeReconcileLambda,
+    description: 'Create Reconciliation Report',
+    operationType: 'Reconciliation Report',
+    payload: normalizeEvent({}),
+  };
+  const callArgs = stub.getCall(0).args;
+  t.true(isMatch(callArgs[0], expectedArg));
 });
 
 test.serial('createReport() uses correct caller lambda function name', async (t) => {
   const functionName = randomId('lambda');
-  const id = randomId('id');
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
-
-  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves({
-    id,
-  });
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   t.teardown(() => stub.restore());
 
   await createReport(
@@ -391,24 +367,19 @@ test.serial('createReport() uses correct caller lambda function name', async (t)
     buildFakeExpressResponse()
   );
 
-  t.true(stub.calledWith({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const expectedArg = {
     callerLambdaName: functionName,
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
     payload: normalizeEvent({}),
-    useLambdaEnvironmentVariables: true,
-    stackName,
-    systemBucket,
-    dynamoTableName: tableName,
-    knexConfig: process.env,
-  }));
+  };
+  const callArgs = stub.getCall(0).args;
+  t.true(isMatch(callArgs[0], expectedArg));
 });
 
-test.serial('POST returns a 500 when failing to create an async operation', async (t) => {
-  const stub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
+test.serial('POST returns a 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
     new Error('failed to start')
   );
 
@@ -423,25 +394,8 @@ test.serial('POST returns a 500 when failing to create an async operation', asyn
   }
 });
 
-test.serial('POST returns a 503 when there is an ecs error', async (t) => {
-  const asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
-    new EcsStartTaskError('failed to start')
-  );
-
-  try {
-    const response = await request(app)
-      .post('/reconciliationReports')
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({});
-    t.is(response.status, 503);
-  } finally {
-    asyncOperationStartStub.restore();
-  }
-});
-
 test.serial('create a report with invalid payload errors immediately', async (t) => {
-  const stub = sinon.stub(asyncOperations, 'startAsyncOperation');
+  const stub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
   const payload = {
     startTimestamp: '2020-09-17T16:38:23.973Z',
     collectionId: ['a-collectionId'],
