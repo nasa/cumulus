@@ -28,6 +28,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     property of any tasks defined using the `cumulus_ecs_service` Terraform
     module.
 
+### Added
+
+- **CUMULUS-2939**
+  - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
+
 ### Changed
 
 - **CUMULUS-2932**
@@ -40,6 +45,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+- **CUMULUS-2939**
+  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
+    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
 
 ## [v11.1.1] 2022-04-26
 
@@ -67,6 +75,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `tasks/hyrax-metadata-updates`
     - `tasks/lzards-backup`
     - `tasks/sync-granule`
+- **CUMULUS-2886**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for API Gateway requests:
+    - `@aws-sdk/client-api-gateway`
 - **CUMULUS-2920**
   - Update npm version for Core build to 8.6
 - **CUMULUS-2922**
@@ -80,6 +91,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates CI to selectively bootstrap Core modules in the cleanup job phase
 - **CUMULUS-2934**
   - Update CI Docker container build to install pipenv to prevent contention on parallel lambda builds
+
 
 ## [v11.1.0] 2022-04-07
 

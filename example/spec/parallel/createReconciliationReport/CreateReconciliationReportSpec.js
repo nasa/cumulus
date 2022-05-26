@@ -451,7 +451,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const responseBody = JSON.parse(response.body);
       inventoryReportAsyncOperationId = responseBody.id;
       console.log('inventoryReportAsyncOperationId', inventoryReportAsyncOperationId);
-      expect(responseBody.operationType).toBe('Reconciliation Report');
+      expect(response.statusCode).toBe(202);
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
@@ -471,6 +471,7 @@ describe('When there are granule differences and granule reconciliation is run',
         fail(error);
       }
       expect(asyncOperation.status).toEqual('SUCCEEDED');
+      expect(asyncOperation.operationType).toBe('Reconciliation Report');
       reportRecord = JSON.parse(asyncOperation.output);
       expect(reportRecord.status).toEqual('Generated');
       console.log(`report Record: ${JSON.stringify(reportRecord)}`);
@@ -636,7 +637,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const responseBody = JSON.parse(response.body);
       internalReportAsyncOperationId = responseBody.id;
       console.log('internalReportAsyncOperationId', internalReportAsyncOperationId);
-      expect(responseBody.operationType).toBe('Reconciliation Report');
+      expect(response.statusCode).toBe(202);
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
@@ -655,6 +656,7 @@ describe('When there are granule differences and granule reconciliation is run',
       } catch (error) {
         fail(error);
       }
+      expect(asyncOperation.operationType).toBe('Reconciliation Report');
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
@@ -742,7 +744,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const responseBody = JSON.parse(response.body);
       granuleInventoryAsyncOpId = responseBody.id;
       console.log('granuleInventoryAsyncOpId', granuleInventoryAsyncOpId);
-      expect(responseBody.operationType).toBe('Reconciliation Report');
+      expect(response.statusCode).toBe(202);
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
@@ -763,6 +765,7 @@ describe('When there are granule differences and granule reconciliation is run',
         fail(error);
       }
 
+      expect(asyncOperation.operationType).toBe('Reconciliation Report');
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
@@ -855,7 +858,7 @@ describe('When there are granule differences and granule reconciliation is run',
       const responseBody = JSON.parse(response.body);
       orcaReportAsyncOperationId = responseBody.id;
       console.log('orcaReportAsyncOperationId', orcaReportAsyncOperationId);
-      expect(responseBody.operationType).toBe('Reconciliation Report');
+      expect(response.statusCode).toBe(202);
     });
 
     it('generates reconciliation report through the Cumulus API', async () => {
@@ -874,6 +877,7 @@ describe('When there are granule differences and granule reconciliation is run',
       } catch (error) {
         fail(error);
       }
+      expect(asyncOperation.operationType).toBe('Reconciliation Report');
       reportRecord = JSON.parse(asyncOperation.output);
     });
 
