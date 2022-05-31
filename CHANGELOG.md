@@ -28,7 +28,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     property of any tasks defined using the `cumulus_ecs_service` Terraform
     module.
 
+### Notable changes
+
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    By default, granule CMR metadata or ISO metadata file is used.
+
 ### Added
+
+- **CUMULUS-2929**
+  - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify metadata
+    file extension for tasks such as move-granule.
 
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation

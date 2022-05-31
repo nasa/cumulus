@@ -262,19 +262,21 @@ async function moveGranules(event) {
     ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
 
   const duplicateHandling = duplicateHandlingType(event);
+  const granuleMetadataFileExtension = get(config, 'collection.meta.granuleMetadataFileExtension');
 
-  log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, moveStagedFiles: ${moveStagedFiles}, s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}`);
-
-  const granulesInput = event.input.granules;
+  log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, `
+    + `moveStagedFiles: ${moveStagedFiles}, `
+    + `s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
+    + `granuleMetadataFileExtension ${granuleMetadataFileExtension}`);
 
   let filterFunc;
-  const metadataFileExtension = get(config, 'collection.meta.metadataFileExtension');
-  if (metadataFileExtension) {
-    filterFunc = (fileobject) => isFileExtensionMatched(fileobject, metadataFileExtension);
+  if (granuleMetadataFileExtension) {
+    filterFunc = (fileobject) => isFileExtensionMatched(fileobject, granuleMetadataFileExtension);
   } else {
     filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
   }
 
+  const granulesInput = event.input.granules;
   const cmrFiles = granulesToCmrFileObjects(granulesInput, filterFunc);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 
