@@ -94,6 +94,7 @@ locals {
       public_buckets                   = join(",", local.public_buckets)
       reapIntervalMillis               = var.rds_connection_timing_configuration.reapIntervalMillis
       ReplaySqsMessagesLambda          = aws_lambda_function.replay_sqs_messages.arn
+      StartAsyncOperationLambda        = aws_lambda_function.start_async_operation.arn
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
       TOKEN_REDIRECT_ENDPOINT          = local.api_redirect_uri
