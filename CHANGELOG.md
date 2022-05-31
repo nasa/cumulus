@@ -6,8 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v12.0.0] 2022-05-20
-
 ### Breaking Changes
 
 - **CUMULUS-2931**
@@ -21,7 +19,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
-    
+
+### Added
+
+- **CUMULUS-2939**
+  - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
+
+### Changed
+
+- **CUMULUS-2939**
+  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
+    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+
+## [v12.0.0] 2022-05-20
+
+### Breaking Changes
+
 - **CUMULUS-2903**
 
   - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
@@ -29,11 +42,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
     property of any tasks defined using the `cumulus_ecs_service` Terraform
     module.
-
-### Added
-
-- **CUMULUS-2939**
-  - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
 ### Changed
 
@@ -47,9 +55,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
-- **CUMULUS-2939**
-  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
-    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
 
 ## [v11.1.1] 2022-04-26
 
