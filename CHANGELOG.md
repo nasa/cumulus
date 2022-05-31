@@ -33,7 +33,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2929**
   - Updated `move-granule` task to check the optional collection configuration parameter
     `meta.granuleMetadataFileExtension` to determine the granule metadata file.
-    By default, granule CMR metadata or ISO metadata file is used.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
 
 ### Added
 
