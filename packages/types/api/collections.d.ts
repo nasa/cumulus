@@ -1,6 +1,8 @@
 // eslint-disable-next-line import/extensions
 import { DuplicateHandling } from '..';
 
+export type CollectionCumulusId = string;
+
 export interface CollectionFile {
   bucket: string,
   regex: string,

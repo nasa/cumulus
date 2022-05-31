@@ -15,6 +15,7 @@ const {
   ExecutionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
+  getGranuleByUniqueColumns,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -491,9 +492,15 @@ async function get(req, res) {
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
+  const collectionCumulusId = req.params.collectionCumulusId;
+
   let granule;
   try {
-    granule = await getUniqueGranuleByGranuleId(knex, granuleId);
+    if (collectionCumulusId) {
+      granule = await getGranuleByUniqueColumns(knex, granuleId, collectionCumulusId);
+    } else {
+      granule = await getUniqueGranuleByGranuleId(knex, granuleId);
+    }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound('Granule not found');
@@ -666,6 +673,7 @@ async function bulkReingest(req, res) {
 }
 
 router.get('/:granuleName', get);
+router.get('/:collectionCumulusId/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
