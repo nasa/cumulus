@@ -88,34 +88,23 @@ const buildExecutionRecord = ({
   });
 };
 
-const writeExecutionToDynamoAndES = async (params) => {
+const writeExecutionToES = async (params) => {
   const {
-    dynamoRecord,
-    executionModel,
+    apiRecord,
     esClient = await Search.es(),
   } = params;
-  try {
-    await executionModel.storeExecutionRecord(dynamoRecord);
-    await upsertExecution({
-      esClient,
-      updates: dynamoRecord,
-      index: process.env.ES_INDEX,
-    });
-    logger.info(`Succesfully wrote Elasticsearch record for execution ${dynamoRecord.arn}`);
-  } catch (error) {
-    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for execution ${dynamoRecord.arn}`);
-    // On error, delete the Dynamo record to ensure that all systems
-    // stay in sync
-    await executionModel.delete({ arn: dynamoRecord.arn });
-    throw error;
-  }
+  return await upsertExecution({
+    esClient,
+    updates: apiRecord,
+    index: process.env.ES_INDEX,
+  });
 };
 
 /**
  * Write execution record to databases
  *
  * @param {Object} params
- * @param {Object} params.dynamoRecord - Execution DynamoDB record to be written
+ * @param {Object} params.apiRecord - Execution DynamoDB record to be written
  * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Object} params.knex - Knex client
  * @param {Object} [params.executionModel] - DynamoDB execution model
@@ -125,10 +114,9 @@ const writeExecutionToDynamoAndES = async (params) => {
  * @returns {Promise<Object>} - PostgreSQL execution record that was written to the database
  */
 const _writeExecutionRecord = ({
-  dynamoRecord,
+  apiRecord,
   postgresRecord,
   knex,
-  executionModel = new Execution(),
   executionPgModel = new ExecutionPgModel(),
   updatedAt = Date.now(),
   esClient,
@@ -136,12 +124,17 @@ const _writeExecutionRecord = ({
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
   const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);
-  await writeExecutionToDynamoAndES({
-    dynamoRecord,
-    executionModel,
-    updatedAt,
-    esClient,
-  });
+  try {
+    await writeExecutionToES({
+      apiRecord,
+      updatedAt,
+      esClient,
+    });
+    logger.info(`Successfully wrote Elasticsearch record for execution ${apiRecord.arn}`);
+  } catch (error) {
+    logger.info(`Write to Elasticsearch failed, rolling back data store write for execution ${apiRecord.arn}`);
+    throw error;
+  }
   return executionPgRecord;
 });
 
@@ -149,7 +142,7 @@ const _writeExecutionRecord = ({
  * Write execution record to databases and publish SNS message
  *
  * @param {Object} params
- * @param {Object} params.dynamoRecord - Execution DynamoDB record to be written
+ * @param {Object} params.apiRecord - Execution DynamoDB record to be written
  * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Object} params.knex - Knex client
  * @param {Object} [params.executionModel] - DynamoDB execution model
@@ -159,20 +152,18 @@ const _writeExecutionRecord = ({
  * @returns {Promise<Object>} - PostgreSQL execution record that was written to the database
  */
 const _writeExecutionAndPublishSnsMessage = async ({
-  dynamoRecord,
+  apiRecord,
   postgresRecord,
   knex,
-  executionModel,
   executionPgModel,
   updatedAt,
   esClient,
 }) => {
   const writeExecutionResponse = await _writeExecutionRecord(
     {
-      dynamoRecord,
+      apiRecord,
       postgresRecord,
       knex,
-      executionModel,
       esClient,
       executionPgModel,
       updatedAt,
@@ -205,7 +196,7 @@ const writeExecutionRecordFromMessage = async ({
   });
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
-    dynamoRecord: executionApiRecord,
+    apiRecord: executionApiRecord,
     postgresRecord,
     knex,
     executionModel,
@@ -215,23 +206,21 @@ const writeExecutionRecordFromMessage = async ({
 };
 
 const writeExecutionRecordFromApi = async ({
-  record: dynamoRecord,
+  record: apiRecord,
   knex,
-  executionModel = new Execution(),
 }) => {
-  const postgresRecord = await translateApiExecutionToPostgresExecution(dynamoRecord, knex);
+  const postgresRecord = await translateApiExecutionToPostgresExecution(apiRecord, knex);
   return await _writeExecutionAndPublishSnsMessage({
-    dynamoRecord,
+    apiRecord,
     postgresRecord,
     knex,
-    executionModel,
   });
 };
 
 module.exports = {
   buildExecutionRecord,
   shouldWriteExecutionToPostgres,
-  writeExecutionToDynamoAndES,
+  writeExecutionToES,
   writeExecutionRecordFromMessage,
   writeExecutionRecordFromApi,
 };
