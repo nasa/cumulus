@@ -27,6 +27,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2923**
+  - Changed public key setup for SFTP local testing.
+
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
@@ -44,9 +47,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     module.
 
 ### Changed
-
-- **CUMULUS-2923**
-  - Changed public key setup for SFTP local testing.
 
 - **CUMULUS-2932**
 
