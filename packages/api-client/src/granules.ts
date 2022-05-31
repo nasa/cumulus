@@ -1,6 +1,7 @@
 import pRetry from 'p-retry';
 
 import { ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { CollectionCumulusId } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
@@ -30,15 +31,29 @@ type AssociateExecutionRequest = {
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionCumulusId?: CollectionCumulusId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
+    collectionCumulusId,
     query,
     callback = invokeApi,
   } = params;
+
+  if (collectionCumulusId) {
+    return await callback({
+      prefix: prefix,
+      payload: {
+        httpMethod: 'GET',
+        resource: '/{proxy+}',
+        path: `/granules/${collectionCumulusId}/${granuleId}`,
+        ...(query && { queryStringParameters: query }),
+      },
+    });
+  }
 
   return await callback({
     prefix: prefix,
@@ -67,6 +82,7 @@ export const getGranuleResponse = async (params: {
 export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionCumulusId?: CollectionCumulusId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranule> => {

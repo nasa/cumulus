@@ -218,19 +218,35 @@ test.before(async (t) => {
   const collectionName = 'fakeCollection';
   const collectionVersion = 'v1';
 
+  const collectionName2 = 'fakeCollection2';
+  const collectionVersion2 = 'v2';
+
   t.context.collectionId = constructCollectionId(
     collectionName,
     collectionVersion
+  );
+
+  t.context.collectionId2 = constructCollectionId(
+    collectionName2,
+    collectionVersion2
   );
 
   const testPgCollection = fakeCollectionRecordFactory({
     name: collectionName,
     version: collectionVersion,
   });
+  const testPgCollection2 = fakeCollectionRecordFactory({
+    name: collectionName2,
+    version: collectionVersion2,
+  });
   const collectionPgModel = new CollectionPgModel();
   const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
     testPgCollection
+  );
+  const [pgCollection2] = await collectionPgModel.create(
+    t.context.knex,
+    testPgCollection2
   );
 
   // Create execution in Postgres
@@ -242,6 +258,7 @@ test.before(async (t) => {
   );
   t.context.testExecutionCumulusId = testExecution.cumulus_id;
   t.context.collectionCumulusId = pgCollection.cumulus_id;
+  t.context.collectionCumulusId2 = pgCollection2.cumulus_id;
 
   const newExecution = fakeExecutionFactoryV2({
     arn: 'arn3',
@@ -262,6 +279,7 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
   const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId3 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -281,6 +299,25 @@ test.beforeEach(async (t) => {
         granule_id: granuleId2,
         status: 'failed',
         collection_cumulus_id: t.context.collectionCumulusId,
+        duration: 52.235,
+        timestamp: new Date(Date.now()),
+      }
+    ),
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId3,
+        status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+        duration: 52.235,
+        timestamp: new Date(Date.now()),
+      }
+    ),
+    // granule with same granule_id as above but different collection_cumulus_id
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId3,
+        status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId2,
         duration: 52.235,
         timestamp: new Date(Date.now()),
       }
@@ -478,7 +515,7 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET returns the expected existing granule', async (t) => {
+test.serial('GET returns the expected existing granule if a collection_cumulus_id is NOT provided', async (t) => {
   const {
     knex,
     fakePGGranules,
@@ -493,6 +530,31 @@ test.serial('GET returns the expected existing granule', async (t) => {
   const pgGranule = await granulePgModel.get(knex, {
     granule_id: fakePGGranules[0].granule_id,
     collection_cumulus_id: fakePGGranules[0].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(response.body, expectedGranule);
+});
+
+test.only('GET returns the expected existing granule if a collection_cumulus_id is provided', async (t) => {
+  const {
+    knex,
+    fakePGGranules,
+  } = t.context;
+
+  const response = await request(app)
+    .get(`/granules/${t.context.fakePGGranules[2].collection_cumulus_id}/${t.context.fakePGGranules[2].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[2].granule_id,
+    collection_cumulus_id: fakePGGranules[2].collection_cumulus_id,
   });
 
   const expectedGranule = await translatePostgresGranuleToApiGranule({
