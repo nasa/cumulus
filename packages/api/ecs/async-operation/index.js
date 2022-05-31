@@ -32,7 +32,6 @@ const logger = new Logger({ sender: 'ecs/async-operation' });
 
 const requiredEnvironmentalVariables = [
   'asyncOperationId',
-  'asyncOperationsTable',
   'lambdaName',
   'payloadUrl',
 ];
