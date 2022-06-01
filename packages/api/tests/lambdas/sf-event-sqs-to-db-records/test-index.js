@@ -39,9 +39,11 @@ const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
 const {
+  getMessageExecutionParentArn,
+} = require('@cumulus/message/Executions');
+const {
   writeRecords,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
-const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
 
@@ -50,6 +52,14 @@ const {
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: (queue, message) => Promise.resolve([queue, message]),
+  },
+  '@cumulus/message/Executions': {
+    getMessageExecutionParentArn: (cumulusMessage) => {
+      if (cumulusMessage.fail === true) {
+        throw new Error('Intentional failure: test case');
+      }
+      return getMessageExecutionParentArn(cumulusMessage);
+    },
   },
 });
 
@@ -159,10 +169,6 @@ test.before(async (t) => {
   process.env.ExecutionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.PdrsTable = randomString();
-
-  const executionModel = new Execution();
-  await executionModel.createTable();
-  t.context.executionModel = executionModel;
 
   const fakeFileUtils = {
     buildDatabaseFiles: (params) => Promise.resolve(params.files),
@@ -288,13 +294,11 @@ test.beforeEach(async (t) => {
 
 test.after.always(async (t) => {
   const {
-    executionModel,
     pdrModel,
     PdrsTopicArn,
     granuleModel,
     ExecutionsTopicArn,
   } = t.context;
-  await executionModel.deleteTable();
   await pdrModel.deleteTable();
   await granuleModel.deleteTable();
   await destroyLocalTestDb({
@@ -329,7 +333,6 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   const {
     collectionCumulusId,
     cumulusMessage,
-    executionModel,
     pdrModel,
     testKnex,
     executionArn,
@@ -346,7 +349,6 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
     testOverrides,
   }));
 
-  t.false(await executionModel.exists({ arn: executionArn }));
   t.false(await pdrModel.exists({ pdrName }));
 
   t.false(
@@ -367,7 +369,6 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
   const {
     collectionCumulusId,
     cumulusMessage,
-    executionModel,
     pdrModel,
     testKnex,
     executionArn,
@@ -378,7 +379,6 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
 
   await writeRecords({ cumulusMessage, knex: testKnex, testOverrides });
 
-  t.true(await executionModel.exists({ arn: executionArn }));
   t.true(await pdrModel.exists({ pdrName }));
 
   t.true(
@@ -396,19 +396,12 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
 });
 
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
-  // make execution write throw an error
-  const fakeExecutionModel = {
-    storeExecution: () => {
-      throw new Error('execution Dynamo error');
-    },
-  };
-
   const {
     handlerResponse,
     sqsEvent,
   } = await runHandler({
     ...t.context,
-    executionModel: fakeExecutionModel,
+    cumulusMessage: { fail: true },
   });
 
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
@@ -458,7 +451,6 @@ test.serial('writeRecords() discards an out of order message that has an older s
   const {
     collectionCumulusId,
     cumulusMessage,
-    executionModel,
     pdrModel,
     testKnex,
     executionArn,
@@ -477,7 +469,6 @@ test.serial('writeRecords() discards an out of order message that has an older s
   cumulusMessage.meta.status = 'running';
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, testOverrides }));
 
-  t.is('completed', (await executionModel.get({ arn: executionArn })).status);
   t.is('completed', (await pdrModel.get({ pdrName })).status);
 
   t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
