@@ -8,7 +8,11 @@ const createTestIndex = async () => {
   const esIndex = randomString();
   const esAlias = randomString();
   process.env.ES_INDEX = esIndex;
-  await bootstrap.bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrap.bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   const esClient = await Search.es('fakehost');
   return { esIndex, esClient };
 };

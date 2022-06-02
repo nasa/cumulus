@@ -17,11 +17,11 @@ test.beforeEach(async (t) => {
   t.context.esAlias = randomId('esalias');
   t.context.esIndex = randomId('esindex');
   process.env.ES_INDEX = t.context.esAlias;
-  await bootstrapElasticSearch(
-    'fakehost',
-    t.context.esIndex,
-    t.context.esAlias
-  );
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: t.context.esIndex,
+    alias: t.context.esAlias,
+  });
   t.context.esClient = await Search.es();
   t.context.esClientSpy = sinon.spy(t.context.esClient, 'scroll');
 });
