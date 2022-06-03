@@ -3,7 +3,6 @@
 const test = require('ava');
 const { v4: uuidv4 } = require('uuid');
 const cryptoRandomString = require('crypto-random-string');
-const awsServices = require('@cumulus/aws-client/services');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -33,11 +32,6 @@ test.before(async (t) => {
   t.context.testKnexAdmin = knexAdmin;
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
-
-  const dynamodbDocClient = awsServices.dynamodbDocClient({
-    marshallOptions: { convertEmptyValues: true },
-  });
-  t.context.dynamodbDocClient = dynamodbDocClient;
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;

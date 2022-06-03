@@ -38,7 +38,6 @@ process.env.invoke = 'granule-reconciliation-reports';
 process.env.stackName = 'test-stack';
 process.env.system_bucket = 'testsystembucket';
 process.env.AccessTokensTable = randomId('accessTokensTable');
-process.env.AsyncOperationsTable = randomId('asyncOperationsTable');
 process.env.ReconciliationReportsTable = randomId('recReportsTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
 process.env.stackName = randomId('stackname');
@@ -63,7 +62,6 @@ const esIndex = randomId('esindex');
 
 let jwtAuthToken;
 let accessTokenModel;
-let asyncOperationsModel;
 let reconciliationReportModel;
 let fakeReportRecords = [];
 
@@ -82,12 +80,6 @@ test.before(async () => {
 
   reconciliationReportModel = new models.ReconciliationReport();
   await reconciliationReportModel.createTable();
-
-  asyncOperationsModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-  });
-  await asyncOperationsModel.createTable();
 
   await awsServices.s3().createBucket({
     Bucket: process.env.system_bucket,
@@ -136,7 +128,6 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await reconciliationReportModel.deleteTable();
-  await asyncOperationsModel.deleteTable();
   await esClient.indices.delete({
     index: esIndex,
   });
