@@ -61,7 +61,7 @@
           }
         },
         "meta": {
-          "title": "Optional MetaData for the Collection",
+          "title": "Optional Metadata for the Collection",
           "type": "object",
           "additionalProperties": true,
           "granuleMetadataFileExtension": {
