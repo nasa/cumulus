@@ -3,7 +3,6 @@
 const test = require('ava');
 const { v4: uuidv4 } = require('uuid');
 const cryptoRandomString = require('crypto-random-string');
-const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   localStackConnectionEnv,
@@ -28,25 +27,6 @@ const { updateAsyncOperation } = require('../index');
 const testDbName = `async_operation_model_test_db_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
-  t.context.dynamoTableName = cryptoRandomString({ length: 10 });
-
-  const tableHash = { name: 'id', type: 'S' };
-  await DynamoDb.createAndWaitForDynamoDbTable({
-    TableName: t.context.dynamoTableName,
-    AttributeDefinitions: [{
-      AttributeName: tableHash.name,
-      AttributeType: tableHash.type,
-    }],
-    KeySchema: [{
-      AttributeName: tableHash.name,
-      KeyType: 'HASH',
-    }],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5,
-    },
-  });
-
   process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
@@ -82,11 +62,6 @@ test.beforeEach(async (t) => {
   t.context.testAsyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(
     t.context.testAsyncOperation
   );
-
-  await t.context.dynamodbDocClient.put({
-    TableName: t.context.dynamoTableName,
-    Item: t.context.testAsyncOperation,
-  });
   await indexAsyncOperation(
     t.context.esClient,
     t.context.testAsyncOperation,
@@ -99,9 +74,6 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await DynamoDb.deleteAndWaitForDynamoDbTableNotExists({
-    TableName: t.context.dynamoTableName,
-  });
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -118,7 +90,6 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
     status,
     output,
     envOverride: {
-      asyncOperationsTable: t.context.dynamoTableName,
       asyncOperationId: t.context.asyncOperationId,
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
@@ -276,7 +247,6 @@ test('updateAsyncOperation does not update Elasticsearch if write to PostgreSQL 
       status,
       output,
       envOverride: {
-        asyncOperationsTable: t.context.dynamoTableName,
         asyncOperationId: t.context.asyncOperationId,
         ...localStackConnectionEnv,
         PG_DATABASE: testDbName,
