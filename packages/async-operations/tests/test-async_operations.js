@@ -85,12 +85,6 @@ test.before(async (t) => {
     promise: () => Promise.resolve(t.context.functionConfig),
   });
 
-  t.context.stubbedAsyncOperationsModel = class {
-    create = t.context.createSpy;
-
-    delete = t.context.deleteSpy;
-  };
-
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 });
 
@@ -404,7 +398,7 @@ test('createAsyncOperation throws if stackName is not provided', async (t) => {
     systemBucket: 'FakeBucket',
   };
   await t.throwsAsync(
-    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    createAsyncOperation(createParams),
     { name: 'TypeError' }
   );
 });
@@ -425,7 +419,7 @@ test('createAsyncOperation throws if systemBucket is not provided', async (t) =>
     stackName: 'fakeStack',
   };
   await t.throwsAsync(
-    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    createAsyncOperation(createParams),
     { name: 'TypeError' }
   );
 });
@@ -447,7 +441,7 @@ test.serial('createAsyncOperation() does not write to Elasticsearch if writing t
     systemBucket: 'FakeBucket',
   };
   await t.throwsAsync(
-    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    createAsyncOperation(createParams),
     { message: 'something bad' }
   );
 
@@ -475,7 +469,7 @@ test.serial('createAsyncOperation() does not write to PostgreSQL if writing to E
     systemBucket: 'FakeBucket',
   };
   await t.throwsAsync(
-    createAsyncOperation(createParams, t.context.stubbedAsyncOperationsModel),
+    createAsyncOperation(createParams),
     { message: 'ES something bad' }
   );
   const dbRecords = await t.context.asyncOperationPgModel
