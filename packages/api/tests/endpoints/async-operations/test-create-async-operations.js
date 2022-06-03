@@ -23,7 +23,6 @@ const {
   translatePostgresAsyncOperationToApiAsyncOperation,
   migrationDir,
 } = require('@cumulus/db');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const assertions = require('../../../lib/assertions');
 const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
@@ -35,7 +34,6 @@ const {
 } = require('../../../lib/testUtils');
 const {
   AccessToken,
-  AsyncOperation: AsyncOperationModel,
 } = require('../../../models');
 
 process.env.stackName = randomString();
@@ -72,14 +70,6 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
-  // Create AsyncOperations table
-  t.context.asyncOperationModel = new AsyncOperationModel({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-  await t.context.asyncOperationModel.createTable();
-
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -93,7 +83,6 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await t.context.asyncOperationModel.deleteTable().catch(noop);
   await t.context.accessTokenModel.deleteTable().catch(noop);
   await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -114,10 +103,6 @@ test('POST without an Authorization header returns an Authorization Missing resp
     .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
-  await t.throwsAsync(
-    () => t.context.asyncOperationModel.get({ id: asyncOperation1.id }),
-    { instanceOf: RecordDoesNotExist }
-  );
 });
 
 test('POST with an invalid access token returns an unauthorized response', async (t) => {
@@ -131,10 +116,6 @@ test('POST with an invalid access token returns an unauthorized response', async
     .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
-  await t.throwsAsync(
-    () => t.context.asyncOperationModel.get({ id: asyncOperation.id }),
-    { instanceOf: RecordDoesNotExist }
-  );
 });
 
 test('POST creates a new async operation in all data stores', async (t) => {
@@ -311,7 +292,6 @@ test('post() does not write to PostgreSQL if writing to Elasticsearch fails', as
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
-  t.false(await t.context.asyncOperationModel.exists({ id: asyncOperation.id }));
   t.false(
     await t.context.asyncOperationPgModel.exists(t.context.testKnex, {
       id: asyncOperation.id,
