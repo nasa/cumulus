@@ -18,7 +18,6 @@ const {
 } = require('@cumulus/ingest/granule');
 
 const {
-  isFileExtensionMatched,
   isCMRFile,
   isISOFile,
   metadataObjectFromCMRFile,
@@ -28,6 +27,7 @@ const {
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
+const { isFileExtensionMatched } = require('@cumulus/message/utils');
 const log = require('@cumulus/common/log');
 
 const MB = 1024 * 1024;

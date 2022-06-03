@@ -66,11 +66,6 @@ function getFileDescription(file, urlType = 'distribution') {
   return filename ? `Download ${filename}` : 'File to download';
 }
 
-function isFileExtensionMatched(fileobject, extension) {
-  const filename = fileobject.key || fileobject.name || fileobject.filename || '';
-  return filename.endsWith(extension);
-}
-
 const isECHO10Filename = (filename) => filename.endsWith('cmr.xml');
 const isUMMGFilename = (filename) => filename.endsWith('cmr.json');
 const isISOFilename = (filename) => filename.endsWith('.iso.xml');
@@ -1233,7 +1228,6 @@ module.exports = {
   getS3UrlOfFile,
   getUserAccessibleBuckets,
   granulesToCmrFileObjects,
-  isFileExtensionMatched,
   isCMRFile,
   isCMRFilename,
   isCMRISOFilename,
