@@ -253,7 +253,7 @@ const updateAsyncOperation = async (params) => {
 
 /**
  * Download and run a Lambda task locally.  On completion, write the results out
- *   to a DynamoDB table.
+ *   to postgres async_operations table.
  *
  * @returns {Promise<undefined>} resolves when the task has completed
  */
