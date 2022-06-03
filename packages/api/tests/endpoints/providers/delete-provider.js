@@ -78,7 +78,7 @@ test.before(async (t) => {
   process.env.stackName = randomString();
 
   process.env.system_bucket = randomString();
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
@@ -114,7 +114,7 @@ test.before(async (t) => {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 });
 
 test.beforeEach(async (t) => {
@@ -270,7 +270,7 @@ test('Attempting to delete a provider with an associated postgres rule returns a
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 
   const collection = {
     name: randomString(10),
@@ -322,7 +322,7 @@ test('Attempting to delete a provider with an associated rule returns a 409 resp
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 
   const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
   await ruleModel.create(ruleWithTrigger);
@@ -352,7 +352,7 @@ test('Attempting to delete a provider with an associated rule does not delete th
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 
   const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
   await ruleModel.create(ruleWithTrigger);

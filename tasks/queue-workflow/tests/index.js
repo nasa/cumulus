@@ -21,7 +21,7 @@ const { queueWorkflow } = require('..');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomId('bucket');
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+  await s3().createBucket({ Bucket: t.context.templateBucket });
 
   t.context.workflow = randomId('Workflow');
   t.context.stateMachineArn = randomId('stateMachineArn');

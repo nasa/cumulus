@@ -171,7 +171,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const granuleId = inputPayload.granules[0].granuleId;
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+        s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } })));
 
       const templatedSyncGranuleFilename = templateFile({
         inputTemplateFilename: './spec/parallel/ingestGranule/SyncGranule.output.payload.template.json',
@@ -972,7 +972,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           const responseBody = JSON.parse(bulkReingestResponse.body);
           asyncOperationId = responseBody.id;
-          expect(responseBody.operationType).toBe('Bulk Granule Reingest');
+          expect(bulkReingestResponse.statusCode).toBe(202);
         });
 
         it('executes async operation successfully', async () => {
@@ -988,6 +988,7 @@ describe('The S3 Ingest Granules workflow', () => {
             },
           });
 
+          expect(asyncOperation.operationType).toBe('Bulk Granule Reingest');
           const reingestOutput = JSON.parse(asyncOperation.output);
           expect(reingestOutput.length).toBe(2);
           expect(reingestOutput.includes(reingestGranuleId)).toBe(true);

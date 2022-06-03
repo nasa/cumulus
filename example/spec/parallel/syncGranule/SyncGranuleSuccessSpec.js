@@ -15,6 +15,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
+  deleteS3Object,
   s3GetObjectTagging,
   s3Join,
   s3ObjectExists,
@@ -109,7 +110,7 @@ describe('The Sync Granules workflow', () => {
     newGranuleId = inputPayload.granules[0].granuleId;
     expectedS3TagSet = [{ Key: 'granuleId', Value: newGranuleId }];
     await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
-      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } }).promise()));
+      s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } })));
 
     const templatedOutputPayloadFilename = templateFile({
       inputTemplateFilename: './spec/parallel/syncGranule/SyncGranule.output.payload.template.json',
@@ -366,6 +367,59 @@ describe('The Sync Granules workflow', () => {
       currentFiles.forEach((cf) => {
         expect(cf.LastModified).toBeGreaterThan(reingestGranuleExecution.startDate);
       });
+    });
+  });
+
+  describe('when an ACL is provided in the task config and set to disabled', () => {
+    const meta = { ACL: 'disabled' };
+    let executionArn;
+    let lambdaOutput;
+    let objectACLs;
+    let files;
+    let key1;
+    let key2;
+
+    beforeAll(async () => {
+      const execution = await buildAndExecuteWorkflow(
+        config.stackName, config.bucket, workflowName, collection, provider, inputPayload, meta
+      );
+
+      executionArn = execution.executionArn;
+      console.log(`Wait for completed execution ${executionArn}`);
+
+      await waitForCompletedExecution(executionArn);
+
+      lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'SyncGranule');
+      files = lambdaOutput.payload.granules[0].files;
+      key1 = s3Join(files[0].key);
+      key2 = s3Join(files[1].key);
+
+      await Promise.all([
+        s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
+        s3ObjectExists({ Bucket: files[1].bucket, Key: key2 }),
+      ]);
+      objectACLs = await Promise.all(files.map(
+        (file) => s3().getObjectAcl({
+          Bucket: file.bucket,
+          Key: file.key,
+        })
+      ));
+    });
+
+    afterAll(async () => {
+      await Promise.all([
+        deleteS3Object(files[0].bucket, key1),
+        deleteS3Object(files[1].bucket, key2),
+      ]);
+      await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
+    });
+
+    it('puts objects with ACL disabled (full control permission)', () => {
+      objectACLs.map((acl) => expect(acl.Grants[0].Permission).toBe('FULL_CONTROL'));
+    });
+
+    it('a disabled ACL configuration value in the lamba output', () => {
+      expect(lambdaOutput.meta.ACL).toBe('disabled');
     });
   });
 

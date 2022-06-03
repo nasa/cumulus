@@ -52,7 +52,7 @@ test.before(async () => {
   await granuleModel.createTable();
 
   // create buckets
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomId();
   await setAuthorizedOAuthUsers([username]);
@@ -63,7 +63,11 @@ test.before(async () => {
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   esClient = await Search.es();
 
   // Index test data - 2 collections, 3 granules

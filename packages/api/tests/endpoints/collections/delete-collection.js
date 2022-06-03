@@ -79,7 +79,7 @@ test.before(async (t) => {
     t.context.esIndex
   );
 
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
   await t.context.collectionModel.createTable();
@@ -100,7 +100,7 @@ test.before(async (t) => {
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflow_template.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 });
 
 test.beforeEach(async (t) => {
@@ -340,7 +340,7 @@ test.serial('Attempting to delete a collection with an associated rule returns a
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 
   const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
   await ruleModel.create(ruleWithTrigger);
@@ -374,7 +374,7 @@ test.serial('Attempting to delete a collection with an associated rule does not 
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
-  }).promise();
+  });
 
   const ruleWithTrigger = await ruleModel.createRuleTrigger(rule);
   await ruleModel.create(ruleWithTrigger);

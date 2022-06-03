@@ -21,7 +21,7 @@ let esClient;
 
 test.before(async () => {
   // create buckets
-  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 });
 
 // Before each test create a new index and use that since it's very important for
@@ -32,7 +32,11 @@ test.beforeEach(async (t) => {
   process.env.ES_INDEX = t.context.esAlias;
 
   // create the elasticsearch index and add mapping
-  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: t.context.esIndex,
+    alias: t.context.esAlias,
+  });
   esClient = await Search.es();
 });
 

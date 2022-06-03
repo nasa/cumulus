@@ -320,7 +320,7 @@ class GranuleFetcher {
    */
   async enableBucketVersioning(bucket) {
     // check that the bucket has versioning enabled
-    const versioning = await s3().getBucketVersioning({ Bucket: bucket }).promise();
+    const versioning = await s3().getBucketVersioning({ Bucket: bucket });
 
     // if not enabled, make it enabled
     if (versioning.Status !== 'Enabled') {

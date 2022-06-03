@@ -26,7 +26,7 @@ services:
     network_mode: "service:build_env"
     volumes:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
-      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
+      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/ssh_client_rsa_key.pub
       - ../packages/test-data:/data_volume
       # WARNING - the following mount will have all data wiped each time the stack is
       # brought up via ./bootstrap-sftp.sh.   Think twice before changing this.
@@ -41,14 +41,13 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
-    image: maven.earthdata.nasa.gov/localstack/localstack:0.11.5
+    image: localstack/localstack:0.12.13
     network_mode: "service:build_env"
     environment:
       SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs"
   build_env:
     image: maven.earthdata.nasa.gov/cumulus:latest
     volumes:
-      - ../:/source/cumulus
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
     environment:
       - LOCALSTACK_HOST=127.0.0.1

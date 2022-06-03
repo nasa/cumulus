@@ -2,14 +2,13 @@ const request = require('supertest');
 const sinon = require('sinon');
 const test = require('ava');
 
-const asyncOperations = require('@cumulus/async-operations');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 
+const startAsyncOperation = require('../../../lib/startAsyncOperation');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 
 const models = require('../../../models');
@@ -43,7 +42,7 @@ let accessTokenModel;
 let jwtAuthToken;
 
 test.before(async () => {
-  await s3().createBucket({ Bucket: process.env.system_bucket }).promise();
+  await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);
@@ -55,10 +54,7 @@ test.before(async () => {
 });
 
 test.beforeEach((t) => {
-  const asyncOperationId = randomId('asyncOperationId');
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').returns(
-    new Promise((resolve) => resolve({ id: asyncOperationId }))
-  );
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
 });
 
 test.afterEach.always((t) => {
@@ -89,13 +85,11 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
   t.truthy(response.body.id);
   const {
     lambdaName,
-    cluster,
     description,
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Bulk granule reingest run on 1 granules');
   t.deepEqual(payload, {
     payload: body,
@@ -164,13 +158,11 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
 
   const {
     lambdaName,
-    cluster,
     description,
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Bulk granule reingest run on 2 granules');
   t.deepEqual(payload, {
     payload: body,
@@ -288,9 +280,9 @@ test.serial('POST /granules/bulkReingest returns 400 when the Metrics ELK stack 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 500 if starting ECS task throws unexpected error', async (t) => {
+test.serial('POST /granules/bulkReingest returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
     new Error('failed to start')
   );
 
@@ -303,21 +295,4 @@ test.serial('POST /granules/bulkReingest returns 500 if starting ECS task throws
       ids: [1, 2, 3],
     });
   t.is(response.status, 500);
-});
-
-test.serial('POST /granules/bulkReingest returns 503 if starting ECS task throws unexpected error', async (t) => {
-  t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
-    new EcsStartTaskError('failed to start')
-  );
-
-  const response = await request(app)
-    .post('/granules/bulkReingest')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({
-      workflowName: 'workflowName',
-      ids: [1, 2, 3],
-    });
-  t.is(response.status, 503);
 });

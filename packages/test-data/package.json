@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-data",
-  "version": "11.0.0",
+  "version": "11.1.1",
   "description": "Includes the test data for various packages",
   "keywords": [
     "GIBS",
@@ -25,7 +25,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

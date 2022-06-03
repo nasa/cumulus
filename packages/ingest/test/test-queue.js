@@ -13,7 +13,7 @@ const queue = require('../queue');
 
 test.beforeEach(async (t) => {
   t.context.templateBucket = randomString();
-  await s3().createBucket({ Bucket: t.context.templateBucket }).promise();
+  await s3().createBucket({ Bucket: t.context.templateBucket });
 
   t.context.stackName = randomId('stack');
   t.context.queueUrl = await createQueue(randomString());

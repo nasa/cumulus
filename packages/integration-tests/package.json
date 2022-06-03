@@ -1,12 +1,12 @@
 {
   "name": "@cumulus/integration-tests",
-  "version": "11.0.0",
+  "version": "11.1.1",
   "description": "Integration tests",
   "bin": {
     "cumulus-test": "./bin/cli.js"
   },
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "main": "index.js",
   "publishConfig": {
@@ -28,16 +28,16 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api": "11.0.0",
-    "@cumulus/api-client": "11.0.0",
-    "@cumulus/aws-client": "11.1.0-alpha1",
-    "@cumulus/cmr-client": "11.0.0",
-    "@cumulus/cmrjs": "11.0.0",
-    "@cumulus/common": "11.0.0",
-    "@cumulus/launchpad-auth": "11.0.0",
-    "@cumulus/logger": "11.0.0",
-    "@cumulus/message": "11.0.0",
-    "@cumulus/oauth-client": "11.0.0",
+    "@cumulus/api": "11.1.1",
+    "@cumulus/api-client": "11.1.1",
+    "@cumulus/aws-client": "11.1.1",
+    "@cumulus/cmr-client": "11.1.1",
+    "@cumulus/cmrjs": "11.1.1",
+    "@cumulus/common": "11.1.1",
+    "@cumulus/launchpad-auth": "11.1.1",
+    "@cumulus/logger": "11.1.1",
+    "@cumulus/message": "11.1.1",
+    "@cumulus/oauth-client": "11.1.1",
     "aws-sdk": "^2.585.0",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",

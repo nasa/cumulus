@@ -1,24 +1,28 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { v4: uuidv4 } = require('uuid');
 const {
   deleteS3Object,
   fileExists,
   getObjectSize,
   getS3Object,
   parseS3Uri,
+  buildS3Uri,
+  getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
+const S3ObjectStore = require('@cumulus/aws-client/S3ObjectStore');
 const { s3 } = require('@cumulus/aws-client/services');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
 const models = require('../models');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
+const startAsyncOperation = require('../lib/startAsyncOperation');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { getFunctionNameFromRequestContext } = require('../lib/request');
 
@@ -63,17 +67,22 @@ async function getReport(req, res) {
     }
 
     const downloadFile = Key.split('/').pop();
-    const presignedS3Url = s3().getSignedUrl('getObject', {
-      Bucket, Key, ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
-    });
+    const s3ObjectStoreClient = new S3ObjectStore();
+    const s3ObjectUrl = buildS3Uri(Bucket, Key);
+    const presignedS3Url = await s3ObjectStoreClient.signGetObject(
+      s3ObjectUrl,
+      {
+        ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
+      }
+    );
 
     if (Key.endsWith('.json') || Key.endsWith('.csv')) {
       const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key });
       // estimated payload size, add extra
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
       if (
-        estimatedPayloadSize >
-        (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
+        estimatedPayloadSize
+          > (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
       ) {
         res.json({
           presignedS3Url,
@@ -82,9 +91,10 @@ async function getReport(req, res) {
       } else {
         const file = await getS3Object(Bucket, Key);
         logger.debug(`Sending json file with contentLength ${file.ContentLength}`);
+        const fileBody = await getObjectStreamContents(file.Body);
         return res.json({
           presignedS3Url,
-          data: Key.endsWith('.json') ? JSON.parse(file.Body.toString()) : file.Body.toString(),
+          data: Key.endsWith('.json') ? JSON.parse(fileBody) : fileBody,
         });
       }
     }
@@ -138,9 +148,6 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
@@ -149,22 +156,19 @@ async function createReport(req, res) {
     return res.boom.badRequest(error.message, error);
   }
 
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
     payload: validatedInput,
-    useLambdaEnvironmentVariables: true,
-    stackName,
-    systemBucket,
-    dynamoTableName: tableName,
-    knexConfig: process.env,
-  }, models.AsyncOperation);
+  };
 
-  return res.status(202).send(asyncOperation);
+  logger.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
+  return res.status(202).send({ id: asyncOperationId });
 }
 
 router.get('/:name', getReport);
