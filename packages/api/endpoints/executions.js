@@ -180,8 +180,6 @@ async function del(req, res) {
     process.env.ES_INDEX
   );
 
-  let apiExecution;
-
   try {
     await executionPgModel.get(knex, { arn });
   } catch (error) {
