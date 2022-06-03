@@ -104,10 +104,9 @@ const writeExecutionToES = async (params) => {
  * Write execution record to databases
  *
  * @param {Object} params
- * @param {Object} params.apiRecord - Execution DynamoDB record to be written
+ * @param {Object} params.apiRecord - Execution API record to be written
  * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Object} params.knex - Knex client
- * @param {Object} [params.executionModel] - DynamoDB execution model
  * @param {Object} [params.executionPgModel] - PostgreSQL execution model
  * @param {number} [params.updatedAt] - updatedAt timestamp to use when writing records
  * @param {Object} [params.esClient] - Elasticsearch client
@@ -142,10 +141,9 @@ const _writeExecutionRecord = ({
  * Write execution record to databases and publish SNS message
  *
  * @param {Object} params
- * @param {Object} params.apiRecord - Execution DynamoDB record to be written
+ * @param {Object} params.apiRecord - Execution API record to be written
  * @param {Object} params.postgresRecord - Execution PostgreSQL record to be written
  * @param {Object} params.knex - Knex client
- * @param {Object} [params.executionModel] - DynamoDB execution model
  * @param {Object} [params.executionPgModel] - PostgreSQL execution model
  * @param {number} [params.updatedAt] - updatedAt timestamp to use when writing records
  * @param {Object} [params.esClient] - Elasticsearch client
