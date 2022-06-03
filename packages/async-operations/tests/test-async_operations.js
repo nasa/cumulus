@@ -32,8 +32,6 @@ const {
   startAsyncOperation,
 } = require('../dist/async_operations');
 
-const dynamoTableName = 'notUsedDynamoTableName';
-
 let stubbedEcsRunTaskParams;
 let stubbedEcsRunTaskResult;
 let ecsClient;
@@ -79,7 +77,6 @@ test.before(async (t) => {
     Environment: {
       Variables: {
         ES_HOST: 'es-host',
-        AsyncOperationsTable: 'async-operations-table',
       },
     },
   };
@@ -138,7 +135,6 @@ test.serial('startAsyncOperation uploads the payload to S3', async (t) => {
     operationType: 'ES Index',
     payload,
     stackName,
-    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
   });
@@ -170,7 +166,6 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
     operationType: 'ES Index',
     payload,
     stackName,
-    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
     useLambdaEnvironmentVariables: true,
@@ -206,7 +201,6 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
     operationType: 'ES Index',
     payload: {},
     stackName,
-    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
   }), {
@@ -235,7 +229,6 @@ test('The startAsyncOperation writes records to all data stores', async (t) => {
     operationType,
     payload: {},
     stackName,
-    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
   });
@@ -289,7 +282,6 @@ test.serial('The startAsyncOperation writes records with correct timestamps', as
     operationType,
     payload: {},
     stackName,
-    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
   });
@@ -322,7 +314,6 @@ test.serial('The startAsyncOperation method returns the newly-generated record',
     operationType: 'ES Index',
     payload: {},
     stackName,
-    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
   });
@@ -346,7 +337,6 @@ test.serial('The startAsyncOperation method throws error if callerLambdaName par
       operationType: 'ES Index',
       payload: { x: randomString() },
       stackName: randomString,
-      dynamoTableName: dynamoTableName,
       knexConfig: knexConfig,
       systemBucket,
       useLambdaEnvironmentVariables: true,
@@ -365,7 +355,6 @@ test('getLambdaEnvironmentVariables returns expected environment variables', (t)
 
   t.deepEqual(new Set(vars), new Set([
     { name: 'ES_HOST', value: 'es-host' },
-    { name: 'AsyncOperationsTable', value: 'async-operations-table' },
   ]));
 });
 
@@ -387,7 +376,6 @@ test.serial('ECS task params contain lambda environment variables when useLambda
     payload: {},
     useLambdaEnvironmentVariables: true,
     stackName,
-    dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
   });
