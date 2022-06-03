@@ -38,8 +38,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2929**
-  - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify metadata
-    file extension for tasks such as move-granule.
+  - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
+    file extension for tasks that utilize metadata file lookups 
 
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
