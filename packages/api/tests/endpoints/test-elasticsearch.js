@@ -43,7 +43,6 @@ const { indexFromDatabase } = require('../../endpoints/elasticsearch');
 
 let jwtAuthToken;
 let accessTokenModel;
-let asyncOperationsModel;
 let esClient;
 
 /**
