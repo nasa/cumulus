@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2398**
+    - Remove all dynamoDB updates for `@cumulus/api/ecs/async-operation/*`
+    - Updates all api endpoints with updated signature for
+      `asyncOperationsStart` calls
+    - Remove all dynamoDB models calls from async-operations api endpoints
   - **CUMULUS-2801**
     - Move `getFilesExistingAtLocation`from api granules model to api/lib, update granules put
       endpoint to remove model references

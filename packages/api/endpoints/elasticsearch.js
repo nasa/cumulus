@@ -10,7 +10,6 @@ const { createIndex } = require('@cumulus/es-client/indexer');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 
-const models = require('../models');
 const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
@@ -215,7 +214,6 @@ async function indexFromDatabase(req, res) {
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
   const knexConfig = process.env;
 
   await createIndex(esClient, indexName)
@@ -240,10 +238,9 @@ async function indexFromDatabase(req, res) {
     },
     stackName,
     systemBucket,
-    dynamoTableName: tableName,
     knexConfig,
     startEcsTaskFunc,
-  }, models.AsyncOperation);
+  });
 
   return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
 }
