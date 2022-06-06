@@ -140,14 +140,16 @@ export const getUniqueGranuleByGranuleId = async (
   return PgGranuleRecords[0];
 };
 
+// TODO logging?
 export const getGranuleByUniqueColumns = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleId: string,
-  collectionCumulusId: string,
+  collectionCumulusId: number,
   granulePgModel = new GranulePgModel()
-  ): Promise<PostgresGranuleRecord> => {
-
-  };
+  ): Promise<PostgresGranuleRecord> =>
+    granulePgModel.get(
+      knexOrTransaction,
+      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId });
 
 /**
  * Get cumulus IDs for all executions associated to a set of granules
