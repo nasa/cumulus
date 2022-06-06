@@ -615,7 +615,6 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
 const createAsyncOperationTestRecords = async (context) => {
   const {
     knex,
-    asyncOperationModel,
     asyncOperationPgModel,
     esClient,
     esAsyncOperationClient,
@@ -626,7 +625,6 @@ const createAsyncOperationTestRecords = async (context) => {
     originalAsyncOperation,
     knex
   );
-  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
   const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
     knex,
     insertPgRecord
@@ -639,7 +637,6 @@ const createAsyncOperationTestRecords = async (context) => {
     originalAsyncOperation.id
   );
   return {
-    originalDynamoAsyncOperation,
     originalPgRecord,
     originalEsRecord,
   };

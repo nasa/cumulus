@@ -34,7 +34,6 @@ const {
 } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
-const AsyncOperation = require('../models/async-operation');
 const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -561,7 +560,7 @@ async function bulkOperations(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, AsyncOperation);
+  });
 
   return res.status(202).send(asyncOperation);
 }
@@ -618,7 +617,7 @@ async function bulkDelete(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, AsyncOperation);
+  });
 
   return res.status(202).send(asyncOperation);
 }
@@ -660,7 +659,7 @@ async function bulkReingest(req, res) {
     systemBucket,
     dynamoTableName: tableName,
     knexConfig: process.env,
-  }, AsyncOperation);
+  });
 
   return res.status(202).send(asyncOperation);
 }
