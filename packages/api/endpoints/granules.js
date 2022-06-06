@@ -35,7 +35,7 @@ const {
 } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
-const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
+const { moveGranule } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
