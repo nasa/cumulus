@@ -540,7 +540,7 @@ test.serial('GET returns the expected existing granule if a collection_cumulus_i
   t.deepEqual(response.body, expectedGranule);
 });
 
-test.only('GET returns the expected existing granule if a collection_cumulus_id is provided', async (t) => {
+test.serial('GET returns the expected existing granule if a collection_cumulus_id is provided', async (t) => {
   const {
     knex,
     fakePGGranules,
