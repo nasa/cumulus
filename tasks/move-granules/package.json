@@ -45,6 +45,7 @@
     "@cumulus/distribution-utils": "11.1.2",
     "@cumulus/errors": "11.1.2",
     "@cumulus/ingest": "11.1.2",
+    "@cumulus/message": "11.1.2",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

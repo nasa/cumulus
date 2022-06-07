@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## [v11.1.3]
+
+### Notable changes
+
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
+### Added
+
+- **CUMULUS-2929**
+  - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
+    file extension for tasks that utilize metadata file lookups 
+
 ## [v11.1.2] 2022-06-13
 
 **Please note** changes in 11.1.2 may not yet be released in future versions, as
