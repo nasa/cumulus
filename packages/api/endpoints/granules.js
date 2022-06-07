@@ -20,7 +20,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const { Search } = require('@cumulus/es-client/search');
+const ESScrollSearch = require('@cumulus/es-client/esScrollSearch');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
@@ -69,7 +69,7 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
  */
 async function list(req, res) {
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
-  const es = new Search(
+  const es = new ESScrollSearch(
     { queryStringParameters },
     'granule',
     process.env.ES_INDEX
@@ -95,7 +95,7 @@ const create = async (req, res) => {
     knex = await getKnexClient(),
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await Search.es(),
+    esClient = await ESScrollSearch.es(),
   } = req.testContext || {};
 
   const granule = req.body || {};
@@ -138,7 +138,7 @@ const putGranule = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await ESScrollSearch.es(),
   } = req.testContext || {};
   const apiGranule = req.body || {};
 
@@ -356,7 +356,7 @@ const associateExecution = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await ESScrollSearch.es(),
   } = req.testContext || {};
 
   let pgGranule;
@@ -433,11 +433,11 @@ async function del(req, res) {
   const {
     granuleModelClient = new Granule(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await ESScrollSearch.es(),
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
-  const esGranulesClient = new Search(
+  const esGranulesClient = new ESScrollSearch(
     {},
     'granule',
     process.env.ES_INDEX
