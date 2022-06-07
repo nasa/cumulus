@@ -488,20 +488,30 @@ async function del(req, res) {
 async function get(req, res) {
   const {
     knex = await getKnexClient(),
+    collectionPgModel = new CollectionPgModel(),
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
-  const collectionCumulusId = req.params.collectionCumulusId;
+  const collectionId = req.params.collectionId;
 
   let granule;
+  let pgCollection;
   try {
-    if (collectionCumulusId) {
-      granule = await getGranuleByUniqueColumns(knex, granuleId, collectionCumulusId);
+    if (collectionId) {
+      pgCollection = await collectionPgModel.get(
+        knex, deconstructCollectionId(collectionId)
+      );
+
+      granule = await getGranuleByUniqueColumns(knex, granuleId, pgCollection.cumulus_id);
     } else {
       granule = await getUniqueGranuleByGranuleId(knex, granuleId);
     }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
+      if (pgCollection === undefined) {
+        return res.boom.notFound(`No collection found for granuleId ${granuleId} with collectionId ${collectionId}`);
+      }
+
       return res.boom.notFound('Granule not found');
     }
 
@@ -672,7 +682,7 @@ async function bulkReingest(req, res) {
 }
 
 router.get('/:granuleName', get);
-router.get('/:collectionCumulusId/:granuleName', get);
+router.get('/:collectionId/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
