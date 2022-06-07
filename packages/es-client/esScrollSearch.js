@@ -46,17 +46,25 @@ class ESScrollSearch extends Search {
       searchParams.scroll = process.env.ES_SCROLL || defaultESScrollDuration;
       response = await this.client.search(searchParams);
       this.scrollId = response.body._scroll_id;
+      this.page = 1;
     } else {
       response = await this.client.scroll({
         scrollId: this.scrollId,
         scroll: process.env.ES_SCROLL || defaultESScrollDuration,
       });
       this.scrollId = response.body._scroll_id;
+      this.page += 1;
     }
-    if (response.body.hits.hits.length > 0) {
-      return response.body.hits.hits.map((s) => s._source);
-    }
-    return [];
+
+    const meta = this._metaTemplate();
+    meta.limit = this.size;
+    meta.page = this.page;
+    meta.count = response.body.hits.total;
+
+    return {
+      meta,
+      results: (response.body.hits.hits.length > 0) ? response.body.hits.hits.map((s) => s._source) : [],
+    };
   }
 }
 

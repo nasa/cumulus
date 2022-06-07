@@ -97,7 +97,7 @@ class ESFileQueue {
         this.index
       );
     }
-    const response = await this.esClient.query();
+    const response = (await this.esClient.query()).results;
     this.items = buildFilesResponse(response, this.bucket);
   }
 }
