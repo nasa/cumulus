@@ -508,11 +508,12 @@ async function get(req, res) {
     }
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      if (pgCollection === undefined) {
+      if (collectionId && pgCollection === undefined) {
         return res.boom.notFound(`No collection found for granuleId ${granuleId} with collectionId ${collectionId}`);
       }
-
-      return res.boom.notFound('Granule not found');
+      if (granule === undefined) {
+        return res.boom.notFound('Granule not found');
+      }
     }
 
     throw error;
