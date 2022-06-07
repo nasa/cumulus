@@ -155,10 +155,11 @@ export const getGranuleByUniqueColumns = async (
   granuleId: string,
   collectionCumulusId: number,
   granulePgModel = new GranulePgModel()
-  ): Promise<PostgresGranuleRecord> =>
-    granulePgModel.get(
-      knexOrTransaction,
-      { granule_id: granuleId, collection_cumulus_id: collectionCumulusId });
+): Promise<PostgresGranuleRecord> =>
+  granulePgModel.get(
+    knexOrTransaction,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
 
 /**
  * Get cumulus IDs for all executions associated to a set of granules
