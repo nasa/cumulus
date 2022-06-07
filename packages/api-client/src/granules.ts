@@ -1,7 +1,7 @@
 import pRetry from 'p-retry';
 
 import { ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
-import { CollectionCumulusId } from '@cumulus/types/api/collections';
+import { CollectionId } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
@@ -16,7 +16,7 @@ type AssociateExecutionRequest = {
 };
 
 /**
- * GET raw response from /granules/{granuleName}
+ * GET raw response from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -31,25 +31,25 @@ type AssociateExecutionRequest = {
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionCumulusId?: CollectionCumulusId,
+  collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
-    collectionCumulusId,
+    collectionId,
     query,
     callback = invokeApi,
   } = params;
 
-  if (collectionCumulusId) {
+  if (collectionId) {
     return await callback({
       prefix: prefix,
       payload: {
         httpMethod: 'GET',
         resource: '/{proxy+}',
-        path: `/granules/${collectionCumulusId}/${granuleId}`,
+        path: `/granules/${collectionId}/${granuleId}`,
         ...(query && { queryStringParameters: query }),
       },
     });
@@ -67,7 +67,7 @@ export const getGranuleResponse = async (params: {
 };
 
 /**
- * GET granule record from /granules/{granuleName}
+ * GET granule record from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -82,7 +82,7 @@ export const getGranuleResponse = async (params: {
 export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionCumulusId?: CollectionCumulusId,
+  collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranule> => {

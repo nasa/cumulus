@@ -7,7 +7,7 @@ const granulesApi = require('../granules');
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
-  t.context.collectionCumulusId = 'collection-1';
+  t.context.collectionId = 'fakeName___fakeVersion';
   t.context.status = 'queued';
 });
 
@@ -66,13 +66,13 @@ test('getGranule calls the callback with the expected object when there is query
   }));
 });
 
-test('getGranule accepts an optional collection_cumulus_id', async (t) => {
+test('getGranule accepts an optional collectionId', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.collectionCumulusId}/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
     },
   };
 
@@ -81,7 +81,7 @@ test('getGranule accepts an optional collection_cumulus_id', async (t) => {
     return Promise.resolve({
       body: JSON.stringify({
         granuleId: t.context.granuleId,
-        collectionCumulusId: t.context.collectionCumulusId,
+        collectionId: t.context.collectionId,
       }),
     });
   };
@@ -90,7 +90,7 @@ test('getGranule accepts an optional collection_cumulus_id', async (t) => {
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
-    collectionCumulusId: t.context.collectionCumulusId,
+    collectionId: t.context.collectionId,
   }));
 });
 
