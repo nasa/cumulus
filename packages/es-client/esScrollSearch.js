@@ -58,6 +58,7 @@ class ESScrollSearch extends Search {
     const meta = this._metaTemplate();
     meta.searchContextId = this.scrollId;
     meta.count = response.body.hits.total;
+    meta.page = this.page;
 
     return {
       meta,

@@ -413,7 +413,7 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
-test.serial('default paginates correctly with scroll', async (t) => {
+test.only('default paginates correctly with scroll', async (t) => {
   const response = await request(app)
     .get('/granules?limit=1')
     .set('Accept', 'application/json')
@@ -424,15 +424,17 @@ test.serial('default paginates correctly with scroll', async (t) => {
 
   const { meta, results } = response.body;
   t.is(results.length, 1);
+  t.is(meta.page, 1);
   t.truthy(meta.searchContextId);
 
   const newResponse = await request(app)
-    .get(`/granules?limit=1&searchContextId=${meta.searchContextId}`)
+    .get(`/granules?limit=1&page=2&searchContextId=${meta.searchContextId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
   const { meta: newMeta, results: newResults } = newResponse.body;
   t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
   t.truthy(newMeta.searchContextId);
 
   t.true(granuleIds.includes(results[0].granuleId));
