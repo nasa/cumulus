@@ -69,6 +69,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Move event resources logic from `rulesModel` to `rulesHelper`
   - **CUMULUS-2820**
     - Remove deletion of DynamoDB record from API endpoint DELETE /pdr/<pdrName>
+  - **CUMULUS-2688**
+    - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
 
 ### Fixed
 
