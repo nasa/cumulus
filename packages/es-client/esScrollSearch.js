@@ -35,30 +35,28 @@ const {
  *
  */
 class ESScrollSearch extends Search {
-  async query() {
+  async query(searchContextId) {
     if (!this.client) {
       this.client = await super.constructor.es();
     }
     let response;
-    if (!this.scrollId) {
+    if (!this.scrollId && !searchContextId) {
       const searchParams = this._buildSearch();
-      searchParams.size = Number(process.env.ES_SCROLL_SIZE || defaultESScrollSize);
+      // this.params.limit exists for API invocation vs. not for reconciliation usage
+      searchParams.size = Number(this.params.limit ? this.size : (process.env.ES_SCROLL_SIZE || defaultESScrollSize));
       searchParams.scroll = process.env.ES_SCROLL || defaultESScrollDuration;
       response = await this.client.search(searchParams);
       this.scrollId = response.body._scroll_id;
-      this.page = 1;
     } else {
       response = await this.client.scroll({
-        scrollId: this.scrollId,
+        scrollId: searchContextId || this.scrollId,
         scroll: process.env.ES_SCROLL || defaultESScrollDuration,
       });
       this.scrollId = response.body._scroll_id;
-      this.page += 1;
     }
 
     const meta = this._metaTemplate();
-    meta.limit = this.size;
-    meta.page = this.page;
+    meta.searchContextId = this.scrollId;
     meta.count = response.body.hits.total;
 
     return {

@@ -75,7 +75,7 @@ async function list(req, res) {
     process.env.ES_INDEX
   );
 
-  let result = await es.query();
+  let result = await es.query(queryStringParameters.searchContextId);
   if (getRecoveryStatus === 'true') {
     result = await addOrcaRecoveryStatus(result);
   }

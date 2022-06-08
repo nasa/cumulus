@@ -327,17 +327,17 @@ class BaseSearch {
       if (!this.client) {
         this.client = await this.constructor.es(null, this.metrics);
       }
-      const result = await this.client.search(searchParams);
-      const response = result.body.hits.hits.map((s) => s._source);
+      const response = await this.client.search(searchParams);
+      const results = response.body.hits.hits.map((s) => s._source);
 
       const meta = this._metaTemplate();
       meta.limit = this.size;
       meta.page = this.page;
-      meta.count = result.body.hits.total;
+      meta.count = response.body.hits.total;
 
       return {
         meta,
-        results: response,
+        results,
       };
     } catch (error) {
       //log.error(e, logDetails);

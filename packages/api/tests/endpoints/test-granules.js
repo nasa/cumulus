@@ -413,6 +413,33 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
+test.serial('default paginates correctly with scroll', async (t) => {
+  const response = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.truthy(meta.searchContextId);
+
+  const newResponse = await request(app)
+    .get(`/granules?limit=1&searchContextId=${meta.searchContextId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.truthy(newMeta.searchContextId);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+});
+
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/granules')
