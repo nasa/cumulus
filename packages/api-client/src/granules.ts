@@ -43,16 +43,11 @@ export const getGranuleResponse = async (params: {
     callback = invokeApi,
   } = params;
 
-  if (collectionId) {
-    return await callback({
-      prefix: prefix,
-      payload: {
-        httpMethod: 'GET',
-        resource: '/{proxy+}',
-        path: `/granules/${collectionId}/${granuleId}`,
-        ...(query && { queryStringParameters: query }),
-      },
-    });
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
   }
 
   return await callback({
@@ -60,7 +55,7 @@ export const getGranuleResponse = async (params: {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       ...(query && { queryStringParameters: query }),
     },
   });

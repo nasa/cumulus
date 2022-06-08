@@ -15,6 +15,7 @@ import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
+const { deprecate } = require('@cumulus/common/util');
 
 const { TableNames } = require('../tables');
 
@@ -124,6 +125,12 @@ export const getUniqueGranuleByGranuleId = async (
   granuleId: string,
   granulePgModel = new GranulePgModel()
 ): Promise<PostgresGranuleRecord> => {
+  deprecate(
+    '@cumulus/db/getUniqueGranuleByGranuleId',
+    'RDS-Phase-3',
+    '@cumulus/db/getGranuleByUniqueColumns'
+  );
+
   const logger = new Logger({ sender: '@cumulus/api/granules' });
 
   const PgGranuleRecords = await granulePgModel.search(knexOrTransaction, {
@@ -150,7 +157,7 @@ export const getUniqueGranuleByGranuleId = async (
  * @param {GranulePgModel} granulePgModel - Granule PG model class instance
  * @returns {Promise<PostgresGranuleRecord>}
  */
-export const getGranuleByUniqueColumns = async (
+export const getGranuleByUniqueColumns = (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleId: string,
   collectionCumulusId: number,
