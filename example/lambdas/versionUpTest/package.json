@@ -1,11 +1,11 @@
 {
   "name": "@cumulus/test-version-up",
-  "version": "11.1.1",
+  "version": "12.0.0",
   "description": "Version Up Test Lambda",
   "main": "index.js",
   "private": true,
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "scripts": {
     "test": "true",

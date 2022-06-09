@@ -124,7 +124,12 @@ test.beforeEach(async (t) => {
   t.context.knexAdmin = knexAdmin;
   t.context.esIndex = randomString();
   t.context.esAlias = randomString();
-  await bootstrapElasticSearch('fakehost', t.context.esIndex, t.context.esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: t.context.esIndex,
+    alias: t.context.esAlias,
+  });
+
   t.context.esClient = await Search.es('fakehost');
 });
 
