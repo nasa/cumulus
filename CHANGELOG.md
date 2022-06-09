@@ -44,6 +44,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+## Fixed
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when the old granule record is retrieved from DynamoDB.
 
 ## [v12.0.0] 2022-05-20
 

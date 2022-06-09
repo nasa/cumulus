@@ -2,6 +2,7 @@
 
 const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
+const isNumber = require('lodash/isNumber');
 const uniqWith = require('lodash/uniqWith');
 
 const awsClients = require('@cumulus/aws-client/services');
@@ -33,14 +34,21 @@ const translateGranule = async (
   granule,
   fileUtils = FileUtils
 ) => {
-  if (isNil(granule.files)) return granule;
+  let { files, productVolume } = granule;
+  if (!isNil(files)) {
+    files = await fileUtils.buildDatabaseFiles({
+      s3: awsClients.s3(),
+      files: granule.files,
+    });
+  }
+  if (!isNil(productVolume) && isNumber(productVolume)) {
+    productVolume = productVolume.toString();
+  }
 
   return {
     ...granule,
-    files: await fileUtils.buildDatabaseFiles({
-      s3: awsClients.s3(),
-      files: granule.files,
-    }),
+    files,
+    productVolume,
   };
 };
 
