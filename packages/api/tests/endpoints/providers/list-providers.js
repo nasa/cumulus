@@ -49,7 +49,11 @@ test.before(async () => {
 
   await Promise.all([
     accessTokenModel.createTable(),
-    bootstrapElasticSearch('fakehost', esIndex, esAlias),
+    bootstrapElasticSearch({
+      host: 'fakehost',
+      index: esIndex,
+      alias: esAlias,
+    }),
     providerModel.createTable(),
   ]);
 

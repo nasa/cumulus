@@ -4,14 +4,14 @@ resource "aws_lambda_function" "custom_bootstrap" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bootstrap/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs12.x"
+  runtime          = "nodejs14.x"
   timeout          = 300
   memory_size      = 320
   environment {
     variables = {
-      stackName       = var.prefix
-      system_bucket   = var.system_bucket
-      ES_INDEX_SHARDS = var.es_index_shards
+      stackName                     = var.prefix
+      system_bucket                 = var.system_bucket
+      ES_INDEX_SHARDS               = var.es_index_shards
     }
   }
 
@@ -34,6 +34,7 @@ data "aws_lambda_invocation" "custom_bootstrap" {
   input = jsonencode(
     {
       elasticsearchHostname = var.elasticsearch_hostname
+      removeAliasConflict = var.elasticsearch_remove_index_alias_conflict
       replacementTrigger = timestamp()
     })
 }

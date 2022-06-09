@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "11.1.1",
+  "version": "12.0.0",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "files": [
     "*.js",
@@ -41,11 +41,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.53.0",
-    "@aws-sdk/signature-v4-crt": "^3.53.0",
-    "@cumulus/aws-client": "11.1.1",
-    "@cumulus/errors": "11.1.1",
-    "@cumulus/logger": "11.1.1",
+    "@aws-sdk/client-s3": "^3.58.0",
+    "@aws-sdk/signature-v4-crt": "^3.58.0",
+    "@cumulus/aws-client": "12.0.0",
+    "@cumulus/errors": "12.0.0",
+    "@cumulus/logger": "12.0.0",
     "ajv": "^6.12.3",
     "aws-sdk": "^2.585.0",
     "follow-redirects": "^1.2.4",
