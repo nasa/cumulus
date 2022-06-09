@@ -44,7 +44,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     property of any tasks defined using the `cumulus_ecs_service` Terraform
     module.
 
+### Notable changes
+
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
 ### Added
+
+- **CUMULUS-2929**
+  - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
+    file extension for tasks that utilize metadata file lookups 
 
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
@@ -61,6 +72,24 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
 
+- **CUMULUS-2939**
+  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
+    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+
+## [v12.0.0] 2022-05-20
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
+
+### Changed
+
 - **CUMULUS-2932**
 
   - Updates `SyncGranule` task to include `disableOrDefaultAcl` function that uses
@@ -71,9 +100,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
-- **CUMULUS-2939**
-  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
-    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
 
 ## [v11.1.1] 2022-04-26
 
@@ -5968,7 +5994,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v12.0.0...HEAD
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0

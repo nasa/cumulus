@@ -209,12 +209,16 @@ module.exports.collection = {
       type: 'integer',
     },
     meta: {
-      title: 'Optional MetaData for the Collection',
+      title: 'Optional Metadata for the Collection',
       type: 'object',
       additionalProperties: true,
       s3MultipartChunksizeMb: {
         description: 'chunk size of the S3 multipart uploads for the collection',
         type: 'number',
+      },
+      granuleMetadataFileExtension: {
+        title: 'Optional file extension for tasks that utilize metadata file to look for the granule metadata information, e.g. .cmr.json, .iso.xml',
+        type: 'string',
       },
     },
     tags: {
