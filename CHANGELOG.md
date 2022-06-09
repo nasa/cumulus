@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
-    
+
 - **CUMULUS-2903**
 
   - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
@@ -34,6 +34,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
 ### Changed
+
+- **CUMULUS-2955**
+  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
+    `granule_cumulus_id` on the files table.
+  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
+    changes from `20220126172008_files_granule_id_index` on any deployed stacks
+    that might have the index to ensure consistency in deployed stacks
 
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
