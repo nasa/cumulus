@@ -31,12 +31,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2929**
   - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
-    file extension for tasks that utilize metadata file lookups 
+    file extension for tasks that utilize metadata file lookups
 
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
 ### Changed
+
+- **CUMULUS-2965**
+  - Update `cumulus-rds-tf` module to ignore `engine_version` lifecycle changes
 
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
