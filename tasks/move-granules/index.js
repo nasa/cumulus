@@ -27,6 +27,7 @@ const {
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
 
 const { urlPathTemplate } = require('@cumulus/ingest/url-path-template');
+const { isFileExtensionMatched } = require('@cumulus/message/utils');
 const log = require('@cumulus/common/log');
 
 const MB = 1024 * 1024;
@@ -261,12 +262,21 @@ async function moveGranules(event) {
     ? config.s3MultipartChunksizeMb : process.env.default_s3_multipart_chunksize_mb;
 
   const duplicateHandling = duplicateHandlingType(event);
+  const granuleMetadataFileExtension = get(config, 'collection.meta.granuleMetadataFileExtension');
 
-  log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, moveStagedFiles: ${moveStagedFiles}, s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}`);
+  log.debug(`moveGranules config duplicateHandling: ${duplicateHandling}, `
+    + `moveStagedFiles: ${moveStagedFiles}, `
+    + `s3MultipartChunksizeMb: ${s3MultipartChunksizeMb}, `
+    + `granuleMetadataFileExtension ${granuleMetadataFileExtension}`);
+
+  let filterFunc;
+  if (granuleMetadataFileExtension) {
+    filterFunc = (fileobject) => isFileExtensionMatched(fileobject, granuleMetadataFileExtension);
+  } else {
+    filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
+  }
 
   const granulesInput = event.input.granules;
-
-  const filterFunc = (fileobject) => isCMRFile(fileobject) || isISOFile(fileobject);
   const cmrFiles = granulesToCmrFileObjects(granulesInput, filterFunc);
   const granulesByGranuleId = keyBy(granulesInput, 'granuleId');
 

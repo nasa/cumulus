@@ -207,8 +207,61 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
   t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${stackName}/async-operation-payloads/${id}.json`);
 });
 
-test.serial('The startAsyncOperation method throws error if it is unable to create an ECS task', async (t) => {
-  const createSpy = sinon.spy((obj) => ({ id: obj.id }));
+test.serial('The AsyncOperation start method starts an ECS task with the asyncOperationId passed in', async (t) => {
+  const createSpy = sinon.spy((obj) => obj);
+  const stubbedAsyncOperationsModel = class {
+    create = createSpy;
+  };
+
+  stubbedEcsRunTaskParams = {};
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn: randomString() }],
+    failures: [],
+  };
+
+  const asyncOperationId = uuidv4();
+  const asyncOperationTaskDefinition = randomString();
+  const cluster = randomString();
+  const callerLambdaName = randomString();
+  const lambdaName = randomString();
+  const payload = { x: randomString() };
+  const stackName = randomString();
+
+  const { id } = await startAsyncOperation({
+    asyncOperationId,
+    asyncOperationTaskDefinition,
+    cluster,
+    lambdaName,
+    callerLambdaName,
+    description: randomString(),
+    operationType: 'ES Index',
+    payload,
+    stackName,
+    dynamoTableName: dynamoTableName,
+    knexConfig: knexConfig,
+    systemBucket,
+    useLambdaEnvironmentVariables: true,
+  }, stubbedAsyncOperationsModel);
+
+  t.is(stubbedEcsRunTaskParams.cluster, cluster);
+  t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
+  t.is(stubbedEcsRunTaskParams.launchType, 'FARGATE');
+
+  const environmentOverrides = {};
+  stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
+    environmentOverrides[env.name] = env.value;
+  });
+
+  t.is(id, asyncOperationId);
+  t.is(environmentOverrides.asyncOperationId, asyncOperationId);
+  t.is(environmentOverrides.asyncOperationsTable, dynamoTableName);
+  t.is(environmentOverrides.lambdaName, lambdaName);
+  t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${stackName}/async-operation-payloads/${asyncOperationId}.json`);
+});
+
+test.serial('The startAsyncOperation method throws error and calls database model create method '
+  + 'when it is unable to create an ECS task', async (t) => {
+  const createSpy = sinon.spy((obj) => obj);
   const stubbedAsyncOperationsModel = class {
     create = createSpy;
   };
@@ -219,7 +272,8 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
   };
   const stackName = randomString();
 
-  await t.throwsAsync(startAsyncOperation({
+  const asyncOperationParams = {
+    asyncOperationId: uuidv4(),
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     callerLambdaName: randomString(),
@@ -231,10 +285,30 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
     dynamoTableName: dynamoTableName,
     knexConfig: knexConfig,
     systemBucket,
-  }, stubbedAsyncOperationsModel), {
+  };
+  const expectedErrorThrown = {
     instanceOf: EcsStartTaskError,
     message: 'Failed to start AsyncOperation: out of cheese',
-  });
+  };
+  await t.throwsAsync(
+    startAsyncOperation(asyncOperationParams, stubbedAsyncOperationsModel),
+    expectedErrorThrown
+  );
+
+  const spyCall = createSpy.getCall(0).args[0];
+
+  const expected = {
+    id: asyncOperationParams.asyncOperationId,
+    description: asyncOperationParams.description,
+    operationType: asyncOperationParams.operationType,
+    status: 'RUNNER_FAILED',
+  };
+
+  t.like(spyCall, expected);
+  t.deepEqual(omit(spyCall, ['createdAt', 'updatedAt', 'output']), expected);
+  t.is(spyCall.id, asyncOperationParams.asyncOperationId);
+  const output = JSON.parse(spyCall.output || {});
+  t.like(output, { name: 'EcsStartTaskError', message: expectedErrorThrown.message });
 });
 
 test('startAsyncOperation calls Dynamo model create method', async (t) => {

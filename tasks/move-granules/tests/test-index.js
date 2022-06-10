@@ -665,6 +665,78 @@ test.serial('url_path is evaluated correctly when the metadata file is ISO', asy
   t.true(check);
 });
 
+test.serial('url_path is evaluated correctly when collection is configured to use .cmr.xml as metadata file', async (t) => {
+  // redo payload initialization from beforeEach, the payload has
+  // additional configuration and granule metadata file
+  const expectedFileKeys = [
+    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+    'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.iso.xml',
+  ];
+
+  const payloadPath = path.join(__dirname, 'data', 'payload_echo10_metadata.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(
+    t.context.stagingBucket,
+    t.context.payload.input.granules
+  );
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+
+  const newPayload = buildPayload(t);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const outputFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), outputFileKeys.sort());
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: 'example/2003/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+  });
+  t.true(check);
+});
+
+test.serial('url_path is evaluated correctly when collection is configured to use .iso.xml as metadata file', async (t) => {
+  // redo payload initialization from beforeEach, the payload has
+  // additional configuration and granule metadata file
+  const expectedFileKeys = [
+    'example/2018/12/08/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+    'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    'example/2018/12/08/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg',
+    'example/2018/12/08/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml',
+    'example/2018/12/08/MOD11A1.A2017200.h19v04.006.2017201090724.iso.xml',
+  ];
+  const payloadPath = path.join(__dirname, 'data', 'payload_iso_metadata.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(
+    t.context.stagingBucket,
+    t.context.payload.input.granules
+  );
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+
+  const newPayload = buildPayload(t);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+  const outputFileKeys = output.granules[0].files.map((f) => f.key);
+  t.deepEqual(expectedFileKeys.sort(), outputFileKeys.sort());
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.protectedBucket,
+    Key: 'example/2018/12/08/MOD11A1.A2017200.h19v04.006.2017201090724.hdf',
+  });
+  t.true(check);
+});
+
 test.serial('task config s3MultipartChunksizeMb is used for moving s3 files if specified', async (t) => {
   process.env.default_s3_multipart_chunksize_mb = 256;
   const collectionChunkSizeMb = 16;
