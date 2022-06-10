@@ -47,8 +47,8 @@ const translateGranule = async (
 
   return {
     ...granule,
-    files,
-    productVolume,
+    ...(files && { files }),
+    ...(productVolume && { productVolume }),
   };
 };
 
