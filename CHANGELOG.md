@@ -4,9 +4,51 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v12.0.1] 2022-05-20 [BACKPORT]
+
+Please note changes in 12.0.1 may not yet be released in future versions, as this is a backport
+and patch release on the 9.7.x series of releases. Updates that are included in the future will
+have a corresponding CHANGELOG entry in future releases.
+
+### MIGRATION NOTES
+
+**Please note** This is a patch on top of version 12.0.0 and is intended to supersede
+it as the initial v12.0.x release.
+
+All migration instructions from v12.0.0 should be followed in addition to the following if
+upgrading from a version prior to version 12.
+
+- The changes introduced in CUMULUS-2955 should result in removal of
+  `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
+  release).  The success of this operation is dependent on system ingest load
+
+  In rare cases where data-persistence deployment fails because the
+  `postgres-db-migration` times out, it may be required to manually remove the
+  index and then redeploy:
+
+  ```text
+  DROP INDEX IF EXISTS files_granule_cumulus_id_index;
+  ```
+
+### Breaking Changes
+
+- **CUMULUS-2931**
+
+  - Updates CustomBootstrap lambda to default to failing if attempting to remove
+    a pre-existing `cumulus-alias` index that would collide with the required
+    `cumulus-alias` *alias*.   A configuration parameter
+    `elasticsearch_remove_index_alias_conflict`  on the `cumulus` and
+    `archive` modules has been added to enable the original behavior that would
+    remove the invalid index (and all it's data).
+  - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
+    parameterized and accommodate a new parameter `removeAliasConflict` which
+    allows/disallows the deletion of a conflicting `cumulus-alias` index
 
 ## [v12.0.0] 2022-05-20
+
+**DEPRECATED** -- Please note updates in 12.0.1 mean that any user moving to the 12.0.x series should
+move to a version > 12.0.1 or (preferably) directly to version 13.0.x  If moving to version 12.0.1, please
+combine these migration notes with the migration notes from v12.0.1.
 
 ### Breaking Changes
 
