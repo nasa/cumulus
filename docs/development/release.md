@@ -153,7 +153,7 @@ Add a link reference for the github "compare" view at the bottom of the `CHANGEL
 ### 5. Update DATA\_MODEL\_CHANGELOG.md
 
 Similar to #4, make sure the DATA\_MODEL\_CHANGELOG is updated if there are data model changes in the release, and the link reference at the end of the document is updated as appropriate.
-3
+
 ### 6. Update CONTRIBUTORS.md
 
 ```bash
