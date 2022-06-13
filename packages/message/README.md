@@ -113,6 +113,9 @@ update the status of any granules/PDRs that don&#39;t exist in the initial execu
 input.</p>
 <p>Falls back to overall execution input.</p>
 </dd>
+<dt><a href="#isFileExtensionMatched">isFileExtensionMatched(granuleFile, extension)</a> ⇒ <code>boolean</code></dt>
+<dd><p>Check if the file has the extension</p>
+</dd>
 <dt><a href="#parseException">parseException(exception)</a> ⇒ <code>string</code></dt>
 <dd><p>Ensures that the exception is returned as an object</p>
 </dd>
@@ -542,6 +545,19 @@ Falls back to overall execution input.
 | --- | --- | --- |
 | inputCumulusMessage | <code>Object</code> | Workflow execution input message |
 | getExecutionHistoryFunction | <code>function</code> | Testing override for mock/etc of                                                 StepFunctions.getExecutionHistory |
+
+<a name="isFileExtensionMatched"></a>
+
+### isFileExtensionMatched(granuleFile, extension) ⇒ <code>boolean</code>
+Check if the file has the extension
+
+**Kind**: global function  
+**Returns**: <code>boolean</code> - whether the file has the extension  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| granuleFile | <code>ApiFile</code> | Granule file |
+| extension | <code>string</code> | File extension to check |
 
 <a name="parseException"></a>
 
