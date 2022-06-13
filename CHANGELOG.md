@@ -6,18 +6,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v12.0.0] 2022-06-13
+
 ### MIGRATION NOTES
 
 - The changes introduced in CUMULUS-2955 should result in removal of
   `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
-  release).  The success of this operation is dependent on system ingest load
+  release).  The success of this operation is dependent on system ingest load.
 
   In rare cases where data-persistence deployment fails because the
   `postgres-db-migration` times out, it may be required to manually remove the
   index and then redeploy:
 
   ```text
-  DROP INDEX IF EXISTS postgres-db-migration;
+  > DROP INDEX IF EXISTS postgres-db-migration;
   DROP INDEX
   ```
 
@@ -35,15 +37,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
 
-- **CUMULUS-2903**
-
-  - The minimum supported version for all published Cumulus Core npm packages is
-    now  Node 14.19.1
-  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
-    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
-    property of any tasks defined using the `cumulus_ecs_service` Terraform
-    module.
-
 ### Notable changes
 
 - **CUMULUS-2929**
@@ -55,7 +48,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2929**
   - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
-    file extension for tasks that utilize metadata file lookups 
+    file extension for tasks that utilize metadata file lookups
 
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
