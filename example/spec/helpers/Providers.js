@@ -237,7 +237,7 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
     prefix,
     providerId: id,
   }));
-  await Promise.all(providerDeletes);
+  await Promise.allSettled(providerDeletes);
   await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
 };
 
