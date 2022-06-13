@@ -1,14 +1,13 @@
 version: "3"
 services:
   sftp:
+    image: nsidc/panubo_sshd:latest
     environment:
       - CI=false
     volumes:
       - ./bootstrap-sftp.sh:/bootstrap-sftp.sh
-      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/etc/authorized_keys/user
+      - ../packages/test-data/keys/ssh_client_rsa_key.pub:/ssh_client_rsa_key.pub
       - ../packages/test-data:/data
-    image: nsidc/panubo_sshd:latest
-
   build_env:
     image: cumuluss/cumulus-build-env:latest
     volumes:

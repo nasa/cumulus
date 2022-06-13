@@ -9,6 +9,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2398**
+    - Remove all dynamoDB updates for `@cumulus/api/ecs/async-operation/*`
+    - Updates all api endpoints with updated signature for
+      `asyncOperationsStart` calls
+    - Remove all dynamoDB models calls from async-operations api endpoints
   - **CUMULUS-2801**
     - Move `getFilesExistingAtLocation`from api granules model to api/lib, update granules put
       endpoint to remove model references
@@ -78,16 +83,38 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-2931**
+
+  - Updates CustomBootstrap lambda to default to failing if attempting to remove
+    a pre-existing `cumulus-alias` index that would collide with the required
+    `cumulus-alias` *alias*.   A configuration parameter
+    `elasticsearch_remove_index_alias_conflict`  on the `cumulus` and
+    `archive` modules has been added to enable the original behavior that would
+    remove the invalid index (and all it's data).
+  - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
+    parameterized and accommodate a new parameter `removeAliasConflict` which
+    allows/disallows the deletion of a conflicting `cumulus-alias` index
+    
 - **CUMULUS-2903**
+
   - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
   - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
     `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
     property of any tasks defined using the `cumulus_ecs_service` Terraform
     module.
 
+### Added
+
+- **CUMULUS-2939**
+  - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
+
 ### Changed
 
+- **CUMULUS-2923**
+  - Changed public key setup for SFTP local testing.
+
 - **CUMULUS-2932**
+
   - Updates `SyncGranule` task to include `disableOrDefaultAcl` function that uses
     the configuration ACL parameter to set ACL to private by default or disable ACL.
   - Updates `@cumulus/sync-granule` `download()` function to take in ACL parameter
@@ -96,6 +123,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+- **CUMULUS-2939**
+  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
+    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
 
 ## [v11.1.1] 2022-04-26
 
@@ -123,6 +153,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - `tasks/hyrax-metadata-updates`
     - `tasks/lzards-backup`
     - `tasks/sync-granule`
+- **CUMULUS-2886**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for API Gateway requests:
+    - `@aws-sdk/client-api-gateway`
 - **CUMULUS-2920**
   - Update npm version for Core build to 8.6
 - **CUMULUS-2922**
@@ -136,6 +169,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates CI to selectively bootstrap Core modules in the cleanup job phase
 - **CUMULUS-2934**
   - Update CI Docker container build to install pipenv to prevent contention on parallel lambda builds
+
 
 ## [v11.1.0] 2022-04-07
 

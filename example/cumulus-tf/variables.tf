@@ -221,6 +221,12 @@ variable "elasticsearch_client_config" {
   default     = {}
 }
 
+variable "elasticsearch_remove_index_alias_conflict" {
+  type = bool
+  default = true
+  description = "NOTE -- THIS SHOULD NEVER BE SET TO TRUE BY DEFAULT IN PRODUCTION SITUATIONS, we've set it to true here for dev only -- Set to false to not allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias'."
+}
+
 variable "es_request_concurrency" {
   type = number
   default = 10
@@ -344,7 +350,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "42"
+  default = "44"
 }
 
 variable "cumulus_process_activity_version" {
