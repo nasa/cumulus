@@ -145,7 +145,6 @@ export const createAsyncOperation = async (
   if (!stackName) throw new TypeError('stackName is required');
   if (!systemBucket) throw new TypeError('systemBucket is required');
 
-
   const knex = await getKnexClient({ env: knexConfig });
   return await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
     const pgCreateObject = translateApiAsyncOperationToPostgresAsyncOperation(createObject);
