@@ -1,16 +1,16 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { v4: uuidv4 } = require('uuid');
 
 const log = require('@cumulus/common/log');
-const asyncOperations = require('@cumulus/async-operations');
 const { IndexExistsError } = require('@cumulus/errors');
 const { defaultIndexAlias, Search } = require('@cumulus/es-client/search');
 const { createIndex } = require('@cumulus/es-client/indexer');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-
 const { getFunctionNameFromRequestContext } = require('../lib/request');
+const startAsyncOperation = require('../lib/startAsyncOperation');
 
 // const snapshotRepoName = 'cumulus-es-snapshots';
 
@@ -205,25 +205,18 @@ async function indicesStatus(req, res) {
 }
 
 async function indexFromDatabase(req, res) {
-  const {
-    startEcsTaskFunc,
-  } = req.testContext || {};
   const esClient = await Search.es();
   const indexName = req.body.indexName || timestampedIndexName();
   const { postgresResultPageSize, postgresConnectionPoolSize, esRequestConcurrency } = req.body;
-
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const knexConfig = process.env;
 
   await createIndex(esClient, indexName)
     .catch((error) => {
       if (!(error instanceof IndexExistsError)) throw error;
     });
 
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.IndexFromDatabaseLambda,
     description: 'Elasticsearch index from database',
@@ -236,13 +229,11 @@ async function indexFromDatabase(req, res) {
       postgresResultPageSize,
       postgresConnectionPoolSize,
     },
-    stackName,
-    systemBucket,
-    knexConfig,
-    startEcsTaskFunc,
-  });
+  };
 
-  return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperation.id}` });
+  log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
+  return res.send({ message: `Indexing database to ${indexName}. Operation id: ${asyncOperationId}` });
 }
 
 async function getCurrentIndex(req, res) {
