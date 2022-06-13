@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## [v11.1.2]
+## [v11.1.2] 2022-06-13
 
 **Please note** changes in 11.1.2 may not yet be released in future versions, as
 this is a backport and patch release on the 11.1.x series of releases. Updates that
@@ -5922,7 +5922,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.2...HEAD
+[v11.1.2]: https://github.com/nasa/cumulus/compare/v11.1.1...v11.1.2
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
