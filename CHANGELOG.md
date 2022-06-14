@@ -55,13 +55,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2929**
   - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
-    file extension for tasks that utilize metadata file lookups 
+    file extension for tasks that utilize metadata file lookups
 
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
 ### Changed
 
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
 - **CUMULUS-2955**
   - Updates `20220126172008_files_granule_id_index` to *not* create an index on
     `granule_cumulus_id` on the files table.

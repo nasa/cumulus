@@ -236,8 +236,9 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
   const providerDeletes = ids.map((id) => providersApi.deleteProvider({
     prefix,
     providerId: id,
+    expectedStatusCodes: [404, 200],
   }));
-  await Promise.allSettled(providerDeletes);
+  await Promise.all(providerDeletes);
   await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
 };
 
