@@ -4,7 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v11.1.2] 2022-06-13
+
+**Please note** changes in 11.1.2 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### MIGRATION NOTES
+
+- The changes introduced in CUMULUS-2955 should result in removal of
+  `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
+  release).  The success of this operation is dependent on system ingest load
+
+  In rare cases where data-persistence deployment fails because the
+  `postgres-db-migration` times out, it may be required to manually remove the
+  index and then redeploy:
+
+  ```text
+  > DROP INDEX IF EXISTS postgres-db-migration;
+  DROP INDEX
+  ```
+
+### Changed
+
+- **CUMULUS-2955**
+  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
+    `granule_cumulus_id` on the files table.
+  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
+    changes from `20220126172008_files_granule_id_index` on any deployed stacks
+    that might have the index to ensure consistency in deployed stacks
 
 ## [v11.1.1] 2022-04-26
 
@@ -5893,7 +5922,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.2...HEAD
+[v11.1.2]: https://github.com/nasa/cumulus/compare/v11.1.1...v11.1.2
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
