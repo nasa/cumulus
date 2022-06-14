@@ -10,6 +10,7 @@ import {
   AsyncOperationPgModel,
   createRejectableTransaction,
 } from '@cumulus/db';
+import Logger from '@cumulus/logger';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
 import type { AWSError } from 'aws-sdk/lib/error';
@@ -26,6 +27,8 @@ const {
 const {
   Search,
 } = require('@cumulus/es-client/search');
+
+const logger = new Logger({ sender: '@cumulus/async-operation' });
 
 type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSError>>;
 
@@ -148,6 +151,7 @@ export const createAsyncOperation = async (
     const pgRecord = await asyncOperationPgModel.create(trx, pgCreateObject, ['*']);
     const apiRecord = translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
     await indexAsyncOperation(esClient, apiRecord, process.env.ES_INDEX);
+
     return apiRecord;
   });
 };
@@ -178,6 +182,7 @@ export const createAsyncOperation = async (
  */
 export const startAsyncOperation = async (
   params: {
+    asyncOperationId?: string,
     asyncOperationTaskDefinition: string,
     cluster: string,
     description: string,
@@ -207,7 +212,7 @@ export const startAsyncOperation = async (
     throw new MissingRequiredArgument(`callerLambdaName must be specified to start new async operation, received: ${callerLambdaName}`);
   }
 
-  const id = uuidv4();
+  const id = params.asyncOperationId ?? uuidv4();
   // Store the payload to S3
   const payloadBucket = systemBucket;
   const payloadKey = `${stackName}/async-operation-payloads/${id}.json`;
@@ -218,21 +223,49 @@ export const startAsyncOperation = async (
     Body: JSON.stringify(payload),
   });
 
-  // Start the task in ECS
-  const runTaskResponse = await startEcsTaskFunc({
-    ...params,
-    id,
-    payloadBucket,
-    payloadKey,
-  });
+  logger.debug(`About to start AsyncOperation: ${id}`);
+  let runTaskResponse;
+  try {
+    runTaskResponse = await startEcsTaskFunc({
+      ...params,
+      id,
+      payloadBucket,
+      payloadKey,
+    });
 
-  if (runTaskResponse?.failures && runTaskResponse.failures.length > 0) {
-    throw new EcsStartTaskError(
-      `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
+    if (runTaskResponse?.failures && runTaskResponse.failures.length > 0) {
+      throw new EcsStartTaskError(
+        `Failed to start AsyncOperation: ${runTaskResponse.failures[0].reason}`
+      );
+    }
+  } catch (error) {
+    logger.error(`Failed to start AsyncOperation ${id}`, error);
+    const output = {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    };
+    await createAsyncOperation(
+      {
+        createObject: {
+          id,
+          status: 'RUNNER_FAILED',
+          output: JSON.stringify(output),
+          description,
+          operationType,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        },
+        stackName,
+        systemBucket,
+        knexConfig,
+      }
     );
+    throw error;
   }
 
-  return await createAsyncOperation(
+  logger.debug(`About to create AsyncOperation record: ${id}`);
+  return createAsyncOperation(
     {
       createObject: {
         id,

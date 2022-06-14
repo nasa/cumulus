@@ -179,14 +179,60 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
   t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${stackName}/async-operation-payloads/${id}.json`);
 });
 
-test.serial('The startAsyncOperation method throws error if it is unable to create an ECS task', async (t) => {
+test.serial('The AsyncOperation start method starts an ECS task with the asyncOperationId passed in', async (t) => {
+  stubbedEcsRunTaskParams = {};
+  stubbedEcsRunTaskResult = {
+    tasks: [{ taskArn: randomString() }],
+    failures: [],
+  };
+
+  const asyncOperationId = uuidv4();
+  const asyncOperationTaskDefinition = randomString();
+  const cluster = randomString();
+  const callerLambdaName = randomString();
+  const lambdaName = randomString();
+  const payload = { x: randomString() };
+  const stackName = randomString();
+
+  const { id } = await startAsyncOperation({
+    asyncOperationId,
+    asyncOperationTaskDefinition,
+    cluster,
+    lambdaName,
+    callerLambdaName,
+    description: randomString(),
+    operationType: 'ES Index',
+    payload,
+    stackName,
+    knexConfig: knexConfig,
+    systemBucket,
+    useLambdaEnvironmentVariables: true,
+  });
+
+  t.is(stubbedEcsRunTaskParams.cluster, cluster);
+  t.is(stubbedEcsRunTaskParams.taskDefinition, asyncOperationTaskDefinition);
+  t.is(stubbedEcsRunTaskParams.launchType, 'FARGATE');
+
+  const environmentOverrides = {};
+  stubbedEcsRunTaskParams.overrides.containerOverrides[0].environment.forEach((env) => {
+    environmentOverrides[env.name] = env.value;
+  });
+
+  t.is(id, asyncOperationId);
+  t.is(environmentOverrides.asyncOperationId, asyncOperationId);
+  t.is(environmentOverrides.lambdaName, lambdaName);
+  t.is(environmentOverrides.payloadUrl, `s3://${systemBucket}/${stackName}/async-operation-payloads/${asyncOperationId}.json`);
+});
+
+test.serial('The startAsyncOperation method throws error and calls createAsyncOperation when unable to start ECS task', async (t) => {
   stubbedEcsRunTaskResult = {
     tasks: [],
     failures: [{ arn: randomString(), reason: 'out of cheese' }],
   };
-  const stackName = randomString();
 
-  await t.throwsAsync(startAsyncOperation({
+  const asyncOperationId = uuidv4();
+  const asyncOperationParams = {
+    asyncOperationId,
     asyncOperationTaskDefinition: randomString(),
     cluster: randomString(),
     callerLambdaName: randomString(),
@@ -194,13 +240,37 @@ test.serial('The startAsyncOperation method throws error if it is unable to crea
     description: randomString(),
     operationType: 'ES Index',
     payload: {},
-    stackName,
+    stackName: randomString(),
     knexConfig: knexConfig,
     systemBucket,
-  }), {
+  };
+  const expectedErrorThrown = {
     instanceOf: EcsStartTaskError,
     message: 'Failed to start AsyncOperation: out of cheese',
-  });
+  };
+  await t.throwsAsync(
+    startAsyncOperation(asyncOperationParams),
+    expectedErrorThrown
+  );
+
+  const asyncOperationPgRecord = await t.context.asyncOperationPgModel.get(
+    t.context.testKnex,
+    { id: asyncOperationId }
+  );
+
+  const expected = {
+    id: asyncOperationParams.asyncOperationId,
+    description: asyncOperationParams.description,
+    operationType: asyncOperationParams.operationType,
+    status: 'RUNNER_FAILED',
+    task_arn: null,
+  };
+
+  const omitList = ['created_at', 'updated_at', 'cumulus_id', 'output'];
+  t.deepEqual(
+    omit(asyncOperationPgRecord, omitList),
+    translateApiAsyncOperationToPostgresAsyncOperation(omit(expected, omitList))
+  );
 });
 
 test('The startAsyncOperation writes records to all data stores', async (t) => {
@@ -284,8 +354,8 @@ test.serial('The startAsyncOperation writes records with correct timestamps', as
     t.context.testKnex,
     { id }
   );
-  const esRecord = await t.context.esAsyncOperationsClient.get(id);
 
+  const esRecord = await t.context.esAsyncOperationsClient.get(id);
   t.is(asyncOperationPgRecord.created_at.getTime(), esRecord.createdAt);
   t.is(asyncOperationPgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
@@ -382,7 +452,7 @@ test.serial('ECS task params contain lambda environment variables when useLambda
   t.is(environmentOverrides.ES_HOST, 'es-host');
 });
 
-test('createAsyncOperation throws if stackName is not provided', async (t) => {
+test.serial('createAsyncOperation throws if stackName is not provided', async (t) => {
   const { createObject } = t.context;
 
   const fakeAsyncOpPgModel = {
@@ -472,6 +542,7 @@ test.serial('createAsyncOperation() does not write to PostgreSQL if writing to E
     createAsyncOperation(createParams),
     { message: 'ES something bad' }
   );
+
   const dbRecords = await t.context.asyncOperationPgModel
     .search(t.context.testKnex, { id });
   t.is(dbRecords.length, 0);
