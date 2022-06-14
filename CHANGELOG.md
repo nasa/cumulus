@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   index and then redeploy:
 
   ```text
-  > DROP INDEX IF EXISTS postgres-db-migration;
+  DROP INDEX IF EXISTS files_granule_cumulus_id_index;
   ```
 
 ### Breaking Changes
