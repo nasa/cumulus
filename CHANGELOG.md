@@ -17,7 +17,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2929**
   - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
-    file extension for tasks that utilize metadata file lookups 
+    file extension for tasks that utilize metadata file lookups
+
+### Fixed
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
 
 ## [v11.1.2] 2022-06-13
 
