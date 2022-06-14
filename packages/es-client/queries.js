@@ -226,6 +226,7 @@ module.exports = function query(params) {
       'prefix',
       'infix',
       'fields',
+      'searchContext',
     ]
   );
 

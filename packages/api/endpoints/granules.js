@@ -20,7 +20,8 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
-const ESScrollSearch = require('@cumulus/es-client/esScrollSearch');
+const { Search } = require('@cumulus/es-client/search');
+const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
@@ -39,6 +40,7 @@ const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = require('../lib/request');
+const { query } = require('express');
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
 
@@ -69,17 +71,26 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
  */
 async function list(req, res) {
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
-  const es = new ESScrollSearch(
-    { queryStringParameters },
-    'granule',
-    process.env.ES_INDEX
-  );
 
-  let result = await es.query(queryStringParameters.searchContextId);
+  let result;
+  if (queryStringParameters.searchContext) {
+    const es = new ESSearchAfter(
+      { queryStringParameters },
+      'granule',
+      process.env.ES_INDEX
+    );
+    result = await es.query(queryStringParameters.searchContext);
+  } else {
+    const es = new Search(
+      { queryStringParameters },
+      'granule',
+      process.env.ES_INDEX
+    );
+    result = await es.query();
+  }
   if (getRecoveryStatus === 'true') {
     result = await addOrcaRecoveryStatus(result);
   }
-
   return res.send(result);
 }
 
@@ -95,7 +106,7 @@ const create = async (req, res) => {
     knex = await getKnexClient(),
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await ESScrollSearch.es(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const granule = req.body || {};
@@ -138,7 +149,7 @@ const putGranule = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await ESScrollSearch.es(),
+    esClient = await Search.es(),
   } = req.testContext || {};
   const apiGranule = req.body || {};
 
@@ -356,7 +367,7 @@ const associateExecution = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await ESScrollSearch.es(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   let pgGranule;
@@ -433,11 +444,11 @@ async function del(req, res) {
   const {
     granuleModelClient = new Granule(),
     knex = await getKnexClient(),
-    esClient = await ESScrollSearch.es(),
+    esClient = await Search.es(),
   } = req.testContext || {};
 
   const granuleId = req.params.granuleName;
-  const esGranulesClient = new ESScrollSearch(
+  const esGranulesClient = new Search(
     {},
     'granule',
     process.env.ES_INDEX

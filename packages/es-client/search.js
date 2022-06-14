@@ -328,19 +328,21 @@ class BaseSearch {
         this.client = await this.constructor.es(null, this.metrics);
       }
       const response = await this.client.search(searchParams);
-      const results = response.body.hits.hits.map((s) => s._source);
+      const hits = response.body.hits.hits;
 
       const meta = this._metaTemplate();
       meta.limit = this.size;
       meta.page = this.page;
       meta.count = response.body.hits.total;
+      if (hits.length > 0) {
+        meta.searchContext = JSON.stringify(hits[hits.length - 1].sort);
+      }
 
       return {
         meta,
-        results,
+        results: hits.map((s) => s._source),
       };
     } catch (error) {
-      //log.error(e, logDetails);
       return error;
     }
   }

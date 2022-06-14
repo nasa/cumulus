@@ -30,15 +30,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
 - **CUMULUS-2930**
-  - Updated `GET /granules` endpoint to use ElasticSearch Scroll API. Note that
-    this may subtly change behavior in terms of search context lifespan/timeout,
-    as granule listing context lifespan now depends on the API's
-    `process.env.ES_SCROLL` environment variable, if specified. The default
-    value will cause a search to time out after 6 mins. A new API request
-    incorporating the searchContextId (see below) will refresh the timeout.
-  - The `GET /granules` endpoint has a new query parameter: `searchContextId`,
-    which is used to resume listing within the same search context. This ID is
-    provided in every response from the endpoint as `meta.searchContextId`.
+  - The `GET /granules` endpoint has a new optional query parameter:
+    `searchContext`, which is used to resume listing within the same search
+    context. It is provided in every response from the endpoint as
+    `meta.searchContext`. The searchContext value must be submitted with every
+    consequent API call, and must be fetched from each new response to maintain
+    the context.
+    - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
+    The endpoint will only use search-after when the `searchContext` parameter
+    is provided in a request.
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
