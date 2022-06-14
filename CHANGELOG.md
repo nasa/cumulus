@@ -78,7 +78,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+### Fixed
 
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
 ## [v12.0.0] 2022-05-20
 
 ### Breaking Changes
@@ -206,8 +210,8 @@ migration notes from prior releases:
 ##### **After deploying the `data-persistence` module, but before deploying the main `cumulus` module**
 
 - Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
-out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
-[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+out of sync with records in DynamoDB. In order to bring the records into sync, re-deploy and re-run the
+[`data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
 `{"forceRulesMigration": true}`:
 
 ```shell
