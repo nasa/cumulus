@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v12.0.0] 2022-06-13
+## [v13.0.0] 2022-06-13
 
 ### MIGRATION NOTES
 
@@ -20,7 +20,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   ```text
   > DROP INDEX IF EXISTS postgres-db-migration;
-  DROP INDEX
   ```
 
 ### Breaking Changes
