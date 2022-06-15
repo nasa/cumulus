@@ -33,7 +33,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2806**
     - Remove DynamoDB logic from executions `POST` endpoint
     - Remove DynamoDB logic from sf-event-sqs-to-db-records lambda execution writes.
-    **CUMULUS-2807**
     - Remove DynamoDB logic from executions `PUT` endpoint
   - **CUMULUS-2809**
     - Remove DynamoDB logic from providers `PUT` endpoint
