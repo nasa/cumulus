@@ -66,7 +66,7 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
 });
-// bulk TODO
+
 test.serial('POST /granules/bulk starts an async-operation with the correct payload and list of IDs', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
