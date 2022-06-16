@@ -106,15 +106,21 @@ export const migrateGranuleRecord = async (
   // fail granule migration if execution cannot be found.
   let executionCumulusId: number | undefined;
   try {
-    executionCumulusId = await executionPgModel.getRecordCumulusId(
-      trx,
-      {
-        url: record.execution,
-      }
-    );
+    if (record.execution) {
+      executionCumulusId = await executionPgModel.getRecordCumulusId(
+        trx,
+        {
+          url: record.execution,
+        }
+      );
+    } else {
+      logger.warn('Migration of granule ID %j linked no executions as record did not have an ARN associated with it', record.id);
+    }
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
+    } else {
+      logger.warn(`Migration of granule ID ${record.id} linked no executions as execution ${record.execution} does not exist in the postGreSQL database`);
     }
   }
 
