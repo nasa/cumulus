@@ -788,7 +788,7 @@ test.serial('bulk operation BULK_GRANULE_DELETE throws an error if the collectio
   }));
 });
 
-test.only('bulk operation BULK_GRANULE_REINGEST reingests list of granules', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules', async (t) => {
   await setUpExistingDatabaseRecords(t);
   const { granules, knex } = t.context;
 
@@ -819,7 +819,7 @@ test.only('bulk operation BULK_GRANULE_REINGEST reingests list of granules', asy
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs with a workflowName', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules with a workflowName', async (t) => {
   await setUpExistingDatabaseRecords(t);
   const {
     granules,
@@ -830,10 +830,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     type: 'BULK_GRANULE_REINGEST',
     envVars,
     payload: {
-      ids: [
-        granules[0].granuleId,
-        granules[1].granuleId,
-      ],
+      granules,
       workflowName,
     },
     reingestHandler: reingestStub,
@@ -858,20 +855,67 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned by query', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by query', async (t) => {
   await setUpExistingDatabaseRecords(t);
-  const { granules, knex } = t.context;
+  const { knex } = t.context;
+
+  const collectionPgModel = new CollectionPgModel();
+  const collection = fakeCollectionRecordFactory();
+  const [collectionPgRecord] = await collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+
+  const collectionCumulusId = collectionPgRecord.cumulus_id;
+
+  const granuleModel = new GranulePgModel();
+  const granules = [
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }),
+  ];
+  const pgGranules = await Promise.all([
+    granuleModel.create(
+      t.context.knex,
+      granules[0]
+    ),
+    granuleModel.create(
+      t.context.knex,
+      granules[1]
+    ),
+  ]);
+  const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
+
+  granules[0].cumulus_id = cumulusGranuleIds[0];
+  granules[1].cumulus_id = cumulusGranuleIds[1];
+  t.context.granuleIds = granules.map((g) => g.granule_id);
+  t.context.collectionCumulusId = collectionCumulusId;
 
   esSearchStub.resolves({
     body: {
       hits: {
         hits: [{
           _source: {
-            granuleId: granules[0].granuleId,
+            granuleId: granules[0].granule_id,
+            collectionId: constructCollectionId(
+              collectionPgRecord.name,
+              collectionPgRecord.version
+            ),
           },
         }, {
           _source: {
-            granuleId: granules[1].granuleId,
+            granuleId: granules[1].granule_id,
+            collectionId: constructCollectionId(
+              collectionPgRecord.name,
+              collectionPgRecord.version
+            ),
           },
         }],
         total: {
@@ -896,9 +940,9 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
 
   reingestStub.args.forEach(async (callArgs) => {
     const matchingGranule = granules.find((granule) =>
-      granule.granuleId === callArgs[0].apiGranule.granuleId);
+      granule.granule_id === callArgs[0].apiGranule.granuleId);
 
-    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granule_id);
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
@@ -911,11 +955,57 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
 
 test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to queued', async (t) => {
   await setUpExistingDatabaseRecords(t);
+
+  const collectionPgModel = new CollectionPgModel();
+  const granuleModel = new GranulePgModel();
+
+  const collection = fakeCollectionRecordFactory();
+  const [collectionPgRecord] = await collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+  t.context.collectionCumulusId = collectionPgRecord.cumulus_id;
+
+  const granules = [
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }),
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: t.context.collectionCumulusId,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }),
+  ];
+  const pgGranules = await Promise.all([
+    granuleModel.create(
+      t.context.knex,
+      granules[0]
+    ),
+    granuleModel.create(
+      t.context.knex,
+      granules[1]
+    ),
+  ]);
+  const cumulusGranuleIds = pgGranules.map(([granule]) => granule.cumulus_id);
+  t.context.granuleIds = pgGranules.map(([granule]) => granule.granule_id);
+
+  granules[0].cumulus_id = cumulusGranuleIds[0];
+  granules[1].cumulus_id = cumulusGranuleIds[1];
+
+  const apiGranules = await Promise.all(
+    granules.map((granule) => translatePostgresGranuleToApiGranule({
+      granulePgRecord: granule,
+      knexOrTransaction: t.context.knex,
+    }))
+  );
+
   await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
     envVars,
     payload: {
-      ids: t.context.granuleIds,
+      granules: apiGranules,
     },
     reingestHandler: reingestStub,
   });
@@ -926,13 +1016,33 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
 });
 
 test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
+  const collectionPgModel = new CollectionPgModel();
+
+  const collection = fakeCollectionRecordFactory();
+  const [collectionPgRecord] = await collectionPgModel.create(
+    t.context.knex,
+    collection
+  );
+
   const result = await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
     envVars,
     payload: {
-      ids: [
-        randomGranuleId(),
-        randomGranuleId(),
+      granules: [
+        {
+          granuleId: randomGranuleId(),
+          collectionId: constructCollectionId(
+            collectionPgRecord.name,
+            collectionPgRecord.version
+          ),
+        },
+        {
+          granuleId: randomGranuleId(),
+          collectionId: constructCollectionId(
+            collectionPgRecord.name,
+            collectionPgRecord.version
+          ),
+        },
       ],
     },
     reingestHandler: reingestStub,
