@@ -50,7 +50,7 @@
     "@cumulus/launchpad-auth": "12.0.0",
     "@cumulus/logger": "12.0.0",
     "@cumulus/message": "12.0.0",
-    "got": "11.8.3"
+    "got": "11.8.5"
   },
   "devDependencies": {
     "@cumulus/schemas": "12.0.0",
