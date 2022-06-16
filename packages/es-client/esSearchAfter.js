@@ -12,32 +12,42 @@ const { Search } = require('./search');
  * 
  */
 class ESSearchAfter extends Search {
+  /**
+   * Build search params for search-after API.
+   *
+   * @param {string} searchContext - Stringified search context
+   * @returns {Object} ES search params
+   */
   _buildSearch(searchContext) {
     const params = super._buildSearch();
     delete params.from;
 
     if (searchContext) {
-      params.body.search_after = searchContext;
+      params.body.search_after = JSON.parse(searchContext);
     }
     return params;
   }
 
+  /**
+   * Query ES search-after API.
+   *
+   * @param {string} searchContext - Stringified search context
+   * @returns {Promise<Object>} Object containing query meta and results
+   */
   async query(searchContext) {
     try {
       if (!this.client) {
         this.client = await super.constructor.es();
       }
-      const searchParams = this._buildSearch(JSON.parse(searchContext));
+      const searchParams = this._buildSearch(searchContext);
       const response = await this.client.search(searchParams);
       const hits = response.body.hits.hits;
-
       const meta = this._metaTemplate();
       meta.count = response.body.hits.total;
       meta.page = this.page;
       if (hits.length > 0) {
         meta.searchContext = JSON.stringify(hits[hits.length - 1].sort);
       }
-
       return {
         meta,
         results: hits.map((s) => s._source),
