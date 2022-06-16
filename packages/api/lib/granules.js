@@ -30,6 +30,13 @@ const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const FileUtils = require('./FileUtils');
 
+/**
+ * translate an old-style granule file and numeric productVolume into the new schema
+ *
+ * @param {Object} granule - granule object to be translated
+ * @param {Function} fileUtils - utility to convert files to new schema
+ * @returns {Object} - translated granule object
+ */
 const translateGranule = async (
   granule,
   fileUtils = FileUtils
