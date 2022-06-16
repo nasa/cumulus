@@ -49,8 +49,11 @@ test.before(async () => {
   esClient = await Search.es('fakehost');
 
   // add fake elasticsearch index
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
-
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   // create a fake bucket
   await createBucket(process.env.system_bucket);
 

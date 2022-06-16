@@ -1,6 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const { v4: uuidv4 } = require('uuid');
 const {
   deleteS3Object,
   fileExists,
@@ -15,13 +16,13 @@ const { s3 } = require('@cumulus/aws-client/services');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
-const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
 const models = require('../models');
 const { normalizeEvent } = require('../lib/reconciliationReport/normalizeEvent');
+const startAsyncOperation = require('../lib/startAsyncOperation');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { getFunctionNameFromRequestContext } = require('../lib/request');
 
@@ -80,8 +81,8 @@ async function getReport(req, res) {
       // estimated payload size, add extra
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
       if (
-        estimatedPayloadSize >
-        (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
+        estimatedPayloadSize
+          > (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
       ) {
         res.json({
           presignedS3Url,
@@ -147,8 +148,6 @@ async function deleteReport(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function createReport(req, res) {
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
   let validatedInput;
   try {
     validatedInput = normalizeEvent(req.body);
@@ -157,21 +156,19 @@ async function createReport(req, res) {
     return res.boom.badRequest(error.message, error);
   }
 
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.invokeReconcileLambda,
     description: 'Create Reconciliation Report',
     operationType: 'Reconciliation Report',
     payload: validatedInput,
-    useLambdaEnvironmentVariables: true,
-    stackName,
-    systemBucket,
-    knexConfig: process.env,
-  });
+  };
 
-  return res.status(202).send(asyncOperation);
+  logger.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
+  return res.status(202).send({ id: asyncOperationId });
 }
 
 router.get('/:name', getReport);

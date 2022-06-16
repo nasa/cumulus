@@ -5,8 +5,6 @@ module "archive" {
 
   api_url = var.archive_api_url
 
-  elasticsearch_client_config = var.elasticsearch_client_config
-
   deploy_to_ngap = var.deploy_to_ngap
 
   permissions_boundary_arn = var.permissions_boundary_arn
@@ -16,9 +14,12 @@ module "archive" {
   async_operation_image = var.async_operation_image
   ecs_cluster_name      = aws_ecs_cluster.default.name
 
-  elasticsearch_domain_arn        = var.elasticsearch_domain_arn
-  elasticsearch_hostname          = var.elasticsearch_hostname
-  elasticsearch_security_group_id = var.elasticsearch_security_group_id
+  elasticsearch_client_config               = var.elasticsearch_client_config
+  elasticsearch_domain_arn                  = var.elasticsearch_domain_arn
+  elasticsearch_hostname                    = var.elasticsearch_hostname
+  elasticsearch_security_group_id           = var.elasticsearch_security_group_id
+  elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
+
 
   es_index_shards        = var.es_index_shards
   es_request_concurrency = var.es_request_concurrency

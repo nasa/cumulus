@@ -153,7 +153,7 @@ export const getUniqueGranuleByGranuleId = async (
  * @param {Knex | Knex.Transaction} knexOrTransaction -
  *  DB client or transaction
  * @param {string} granuleId - a granule.granule_id
- * @param {string} collectionCumulusId - a granule.collection_cumulus_id
+ * @param {number} collectionCumulusId - a granule.collection_cumulus_id
  * @param {GranulePgModel} granulePgModel - Granule PG model class instance
  * @returns {Promise<PostgresGranuleRecord>}
  */
