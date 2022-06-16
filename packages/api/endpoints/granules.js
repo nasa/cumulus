@@ -40,7 +40,6 @@ const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = require('../lib/request');
-const { query } = require('express');
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
 

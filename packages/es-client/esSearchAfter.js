@@ -2,14 +2,12 @@ const { Search } = require('./search');
 
 /**
  * ES search_after wrapper class for Search.
- * 
+ *
  * This class just allows a user to access the search_after api of elasticsearch for
  * long lived requests that require multiple server requests.
- * 
+ *
  * Use: Instantiate a class with the queryStringParameters, type, and index.
  * and call the object.query() until no more results are returned.
- * 
- * 
  */
 class ESSearchAfter extends Search {
   /**

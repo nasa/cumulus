@@ -43,7 +43,8 @@ class ESScrollSearch extends Search {
     if (!this.scrollId && !searchContext) {
       const searchParams = this._buildSearch();
       // this.params.limit exists for API invocation vs. not for reconciliation usage
-      searchParams.size = Number(this.params.limit ? this.size : (process.env.ES_SCROLL_SIZE || defaultESScrollSize));
+      searchParams.size = Number(this.params.limit
+        ? this.size : (process.env.ES_SCROLL_SIZE || defaultESScrollSize));
       searchParams.scroll = process.env.ES_SCROLL || defaultESScrollDuration;
       response = await this.client.search(searchParams);
       this.scrollId = response.body._scroll_id;
@@ -59,10 +60,11 @@ class ESScrollSearch extends Search {
     meta.searchContext = this.scrollId;
     meta.count = response.body.hits.total;
     meta.page = this.page;
+    const hits = response.body.hits.hits;
 
     return {
       meta,
-      results: (response.body.hits.hits.length > 0) ? response.body.hits.hits.map((s) => s._source) : [],
+      results: (hits.length > 0) ? hits.map((s) => s._source) : [],
     };
   }
 }

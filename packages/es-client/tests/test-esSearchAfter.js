@@ -3,7 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
-const { isEqual } = require('lodash');
+const isEqual = require('lodash/isEqual');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const { Search } = require('../search');
 const ESSearchAfter = require('../esSearchAfter');
@@ -40,8 +40,8 @@ test.serial(
       await loadGranules(granules, t);
       const esSearchAfter = new ESSearchAfter(
         { queryStringParameters: {
-          limit: testSearchSize
-        }},
+          limit: testSearchSize,
+        } },
         'granule',
         t.context.esAlias
       );
@@ -60,11 +60,11 @@ test.serial(
         calls += 1;
       } while (results.length > 0);
       /* eslint-enable no-await-in-loop */
-      resultGranuleIds = allResults.map((g) => g.granuleId);
+      const resultGranuleIds = allResults.map((g) => g.granuleId);
       t.is(allResults.length, numGranules);
       t.true(spy.called);
       t.is(spy.getCalls().length, calls);
-      t.true(isEqual(granuleIds, resultGranuleIds));
+      t.true(isEqual(granuleIds.sort(), resultGranuleIds.sort()));
     } catch (error) {
       console.log(JSON.stringify(error));
     }
