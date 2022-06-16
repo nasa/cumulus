@@ -114,13 +114,13 @@ export const migrateGranuleRecord = async (
         }
       );
     } else {
-      logger.warn('Migration of granule ID %j linked no executions as record did not have an ARN associated with it', record.id);
+      logger.warn('Migration of granule ID %j linked no executions as record did not have an ARN associated with it', record.granuleId);
     }
   } catch (error) {
     if (!(error instanceof RecordDoesNotExist)) {
       throw error;
     } else {
-      logger.warn(`Migration of granule ID ${record.id} linked no executions as execution ${record.execution} does not exist in the postGreSQL database`);
+      logger.warn(`Migration of granule ID ${record.granuleId} linked no executions as execution ${record.execution} does not exist in the postGreSQL database`);
     }
   }
 
