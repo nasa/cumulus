@@ -694,6 +694,96 @@ test.serial('post() creates the SQS rule with trigger information in Dynamo/Post
   });
 });
 
+test.serial('post() creates the SQS rule with the meta provided in Dynamo/PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue1 = randomId('queue');
+
+  const stubbedRulesModel = new Rule({
+    SqsUtils: {
+      sqsQueueExists: () => Promise.resolve(true),
+    },
+    SqsClient: {
+      getQueueAttributes: () => ({
+        promise: () => Promise.resolve({
+          Attributes: {
+            RedrivePolicy: 'policy',
+            VisibilityTimeout: 10,
+          },
+        }),
+      }),
+    },
+  });
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queue1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    meta: {
+      retries: 0,
+      visibilityTimeout: 0,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expectedMeta = {
+    visibilityTimeout: 0,
+    retries: 0,
+  };
+
+  const expressRequest = {
+    body: rule,
+    testContext: {
+      ruleModel: stubbedRulesModel,
+    },
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const dynamoRule = await ruleModel.get({ name: rule.name });
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(dynamoRule, {
+    rule: {
+      type: 'sqs',
+      value: queue1,
+    },
+    meta: expectedMeta,
+  });
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sqs',
+        value: queue1,
+      },
+      meta: expectedMeta,
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sqs',
+    value: queue1,
+    meta: expectedMeta,
+  });
+});
+
 test('POST creates a rule in Dynamo and PG with correct timestamps', async (t) => {
   const { newRule } = t.context;
 
