@@ -148,6 +148,9 @@ describe('Ingesting from PDR', () => {
       ]);
 
       addedCollection = populatePromises[0][0];
+      if (addedCollection === undefined) {
+        console.log('populatePromises %j', populatePromises);
+      }
 
       // Rename the PDR to avoid race conditions
       await s3().copyObject({
@@ -159,7 +162,7 @@ describe('Ingesting from PDR', () => {
       await S3.deleteS3Object(config.bucket, `${testDataFolder}/${origPdrFilename}`);
     } catch (error) {
       beforeAllFailed = true;
-      console.log(error);
+      console.log('beforeAll setup error %j', error);
       throw error;
     }
   });
@@ -180,10 +183,6 @@ describe('Ingesting from PDR', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename,
-      }),
     ]).catch(console.error);
 
     await providersApi.deleteProvider({

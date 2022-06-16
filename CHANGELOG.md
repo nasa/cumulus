@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.
 
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB.
+
 ## [v11.1.2] 2022-06-13
 
 **Please note** changes in 11.1.2 may not yet be released in future versions, as
