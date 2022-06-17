@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- Added names to all security groups
+
 ### MIGRATION NOTES
 
 - The changes introduced in CUMULUS-2955 should result in removal of
