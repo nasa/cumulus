@@ -64,6 +64,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2965**
   - Update `cumulus-rds-tf` module to ignore `engine_version` lifecycle changes
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
 - **CUMULUS-2955**
   - Updates `20220126172008_files_granule_id_index` to *not* create an index on
     `granule_cumulus_id` on the files table.
@@ -77,11 +80,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+
 ### Fixed
 
 - **CUMULUS-2863**
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB.
+
 ## [v12.0.0] 2022-05-20
 
 ### Breaking Changes
