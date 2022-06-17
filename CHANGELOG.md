@@ -34,6 +34,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Remove DynamoDB logic from executions `POST` endpoint
     - Remove DynamoDB logic from sf-event-sqs-to-db-records lambda execution writes.
     - Remove DynamoDB logic from executions `PUT` endpoint
+  - **CUMULUS-2808**
+    - Remove DynamoDB logic from executions `DELETE` endpoint
   - **CUMULUS-2809**
     - Remove DynamoDB logic from providers `PUT` endpoint
     - Updates DB models asyncOperation, provider and rule to return all fields on upsert.

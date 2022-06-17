@@ -590,7 +590,6 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
 const createExecutionTestRecords = async (context, executionParams = {}) => {
   const {
     knex,
-    executionModel,
     executionPgModel,
     esClient,
     esExecutionsClient,
@@ -598,7 +597,6 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
 
   const originalExecution = fakeExecutionFactoryV2(executionParams);
   const insertPgRecord = await translateApiExecutionToPostgresExecution(originalExecution, knex);
-  const originalDynamoExecution = await executionModel.create(originalExecution);
   const [pgExecution] = await executionPgModel.create(knex, insertPgRecord);
   const executionCumulusId = pgExecution.cumulus_id;
   const originalPgRecord = await executionPgModel.get(
@@ -609,7 +607,6 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
     originalExecution.arn
   );
   return {
-    originalDynamoExecution,
     originalPgRecord,
     originalEsRecord,
   };
