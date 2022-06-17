@@ -30,7 +30,6 @@ const {
 } = require('../../../endpoints/async-operations');
 const {
   AccessToken,
-  AsyncOperation: AsyncOperationModel,
 } = require('../../../models');
 const {
   createFakeJwtAuthToken,
@@ -49,7 +48,6 @@ process.env.TOKEN_SECRET = randomString();
 const { app } = require('../../../app');
 
 let jwtAuthToken;
-let asyncOperationModel;
 let accessTokenModel;
 
 const testDbName = randomId('async_operations_test');
@@ -78,15 +76,6 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
-  // Create AsyncOperations table
-  asyncOperationModel = new AsyncOperationModel({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-  t.context.asyncOperationModel = asyncOperationModel;
-  await asyncOperationModel.createTable();
-
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -98,7 +87,6 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await asyncOperationModel.deleteTable().catch(noop);
   await accessTokenModel.deleteTable().catch(noop);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -113,12 +101,10 @@ test.serial('GET /asyncOperations returns a list of operations', async (t) => {
   const asyncOperation1 = fakeAsyncOperationFactory();
   const asyncOperation2 = fakeAsyncOperationFactory();
 
-  await asyncOperationModel.create(asyncOperation1);
   const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord1);
   await indexer.indexAsyncOperation(esClient, asyncOperation1, esIndex);
 
-  await asyncOperationModel.create(asyncOperation2);
   const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord2);
   await indexer.indexAsyncOperation(esClient, asyncOperation2, esIndex);
@@ -153,14 +139,12 @@ test.serial('GET /asyncOperations with a timestamp parameter returns a list of f
   const firstDate = Date.now();
   const asyncOperation1 = fakeAsyncOperationFactory();
   const asyncOperation2 = fakeAsyncOperationFactory();
-  await asyncOperationModel.create(asyncOperation1);
   const asyncOpPgRecord1 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation1);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord1);
   await indexer.indexAsyncOperation(esClient, asyncOperation1, esIndex);
 
   const secondDate = Date.now();
 
-  await asyncOperationModel.create(asyncOperation2);
   const asyncOpPgRecord2 = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation2);
   await t.context.asyncOperationPgModel.create(t.context.knex, asyncOpPgRecord2);
   await indexer.indexAsyncOperation(esClient, asyncOperation2, esIndex);
@@ -207,12 +191,11 @@ test.serial('GET /asyncOperations/{:id} returns a 404 status code if the request
 test.serial('GET /asyncOperations/{:id} returns the async operation if it does exist', async (t) => {
   const { asyncOperationPgModel } = t.context;
   const asyncOperation = fakeAsyncOperationFactory();
-  const createdAsyncOperation = await asyncOperationModel.create(asyncOperation);
   const asyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(asyncOperation);
   await asyncOperationPgModel.create(t.context.knex, asyncOperationPgRecord);
 
   const response = await request(app)
-    .get(`/asyncOperations/${createdAsyncOperation.id}`)
+    .get(`/asyncOperations/${asyncOperationPgRecord.id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -265,8 +248,7 @@ test('DELETE deletes async operation successfully if it exists in PostgreSQL but
     originalAsyncOperation,
     knex
   );
-  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
-  const id = originalDynamoAsyncOperation.id;
+  const id = insertPgRecord.id;
   await asyncOperationPgModel.create(
     knex,
     insertPgRecord
@@ -283,7 +265,6 @@ test('DELETE deletes async operation successfully if it exists in PostgreSQL but
   const { message } = response.body;
 
   t.is(message, 'Record deleted');
-  t.false(await asyncOperationModel.exists({ id }));
   t.false(
     await asyncOperationPgModel.exists(knex, { id })
   );
@@ -302,8 +283,7 @@ test('DELETE deletes async operation successfully if it exists Elasticsearch but
   } = t.context;
 
   const originalAsyncOperation = fakeAsyncOperationFactory();
-  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
-  const id = originalDynamoAsyncOperation.id;
+  const id = originalAsyncOperation.id;
   await indexer.indexAsyncOperation(esClient, originalAsyncOperation, esIndex);
   t.false(
     await asyncOperationPgModel.exists(knex, { id })
@@ -321,20 +301,16 @@ test('DELETE deletes async operation successfully if it exists Elasticsearch but
 
   t.is(message, 'Record deleted');
   t.false(
-    await asyncOperationModel.exists({ id })
-  );
-  t.false(
     await esAsyncOperationClient.exists(id)
   );
 });
 
 test('DELETE deletes the async operation from all data stores', async (t) => {
   const {
-    originalDynamoAsyncOperation,
+    originalPgRecord,
   } = await createAsyncOperationTestRecords(t.context);
-  const { id } = originalDynamoAsyncOperation;
+  const { id } = originalPgRecord;
 
-  t.true(await asyncOperationModel.exists({ id }));
   t.true(
     await t.context.asyncOperationPgModel.exists(t.context.knex, { id })
   );
@@ -348,65 +324,19 @@ test('DELETE deletes the async operation from all data stores', async (t) => {
   const { message } = response.body;
 
   t.is(message, 'Record deleted');
-  t.false(await asyncOperationModel.exists({ id }));
   const dbRecords = await t.context.asyncOperationPgModel
     .search(t.context.knex, { id });
   t.is(dbRecords.length, 0);
+  t.false(await t.context.esAsyncOperationClient.exists(
+    id
+  ));
 });
 
-test('del() does not remove from PostgreSQL/Elasticsearch if removing from DynamoDB fails', async (t) => {
+test('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
-    originalDynamoAsyncOperation,
-  } = await createAsyncOperationTestRecords(t.context);
-  const { id } = originalDynamoAsyncOperation;
-
-  const fakeAsyncOperationModel = {
-    get: () => Promise.resolve(fakeAsyncOperationModel),
-    delete: () => {
-      throw new Error('something bad');
-    },
-    create: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    params: {
-      id,
-    },
-    testContext: {
-      knex: t.context.knex,
-      asyncOperationModel: fakeAsyncOperationModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.deepEqual(
-    await t.context.asyncOperationModel.get({ id }),
-    originalDynamoAsyncOperation
-  );
-  t.true(
-    await t.context.asyncOperationPgModel.exists(t.context.knex, {
-      id,
-    })
-  );
-  t.true(
-    await t.context.esAsyncOperationClient.exists(
-      id
-    )
-  );
-});
-
-test('del() does not remove from DynamoDB/Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalDynamoAsyncOperation,
     originalPgRecord,
   } = await createAsyncOperationTestRecords(t.context);
-  const { id } = originalDynamoAsyncOperation;
+  const { id } = originalPgRecord;
 
   const fakeAsyncOperationPgModel = {
     delete: () => {
@@ -432,10 +362,6 @@ test('del() does not remove from DynamoDB/Elasticsearch if removing from Postgre
     { message: 'PG something bad' }
   );
 
-  t.deepEqual(
-    await t.context.asyncOperationModel.get({ id }),
-    originalDynamoAsyncOperation
-  );
   t.true(
     await t.context.asyncOperationPgModel.exists(t.context.knex, {
       id,
@@ -448,11 +374,11 @@ test('del() does not remove from DynamoDB/Elasticsearch if removing from Postgre
   );
 });
 
-test('del() does not remove from DynamoDB/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+test('del() does not remove from PostgreSQL if removing from Elasticsearch fails', async (t) => {
   const {
-    originalDynamoAsyncOperation,
+    originalPgRecord,
   } = await createAsyncOperationTestRecords(t.context);
-  const { id } = originalDynamoAsyncOperation;
+  const { id } = originalPgRecord;
 
   const fakeEsClient = {
     delete: () => {
@@ -477,10 +403,6 @@ test('del() does not remove from DynamoDB/PostgreSQL if removing from Elasticsea
     { message: 'ES something bad' }
   );
 
-  t.deepEqual(
-    await t.context.asyncOperationModel.get({ id }),
-    originalDynamoAsyncOperation
-  );
   t.true(
     await t.context.asyncOperationPgModel.exists(t.context.knex, {
       id,

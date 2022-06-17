@@ -103,8 +103,6 @@ module "archive" {
   rds_security_group = var.rds_security_group
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
-  postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
-  postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
 
   tags = var.tags
 }

@@ -70,24 +70,6 @@ test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test('creating a disabled SNS rule creates no event source mapping', async (t) => {
-  const { snsTopicArn } = t.context;
-  const item = fakeRuleFactoryV2({
-    workflow,
-    rule: {
-      type: 'sns',
-      value: snsTopicArn,
-    },
-    state: 'DISABLED',
-  });
-
-  const rule = await rulesModel.create(item);
-
-  t.is(rule.state, 'DISABLED');
-  t.is(rule.rule.value, snsTopicArn);
-  t.falsy(rule.rule.arn);
-});
-
 test.serial('disabling an SNS rule removes the event source mapping', async (t) => {
   const { snsTopicArn } = t.context;
 

@@ -13,7 +13,7 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
-const { dynamodb, dynamodbDocClient, s3 } = require('@cumulus/aws-client/services');
+const { s3 } = require('@cumulus/aws-client/services');
 const {
   deleteS3Object,
   getObject,
@@ -25,13 +25,13 @@ const {
   getKnexClient,
   AsyncOperationPgModel,
   createRejectableTransaction,
+  translatePostgresAsyncOperationToApiAsyncOperation,
 } = require('@cumulus/db');
 
 const logger = new Logger({ sender: 'ecs/async-operation' });
 
 const requiredEnvironmentalVariables = [
   'asyncOperationId',
-  'asyncOperationsTable',
   'lambdaName',
   'payloadUrl',
 ];
@@ -181,51 +181,9 @@ const writeAsyncOperationToPostgres = async (params) => {
         status,
         output: dbOutput,
         updated_at: new Date(Number(updatedTime)),
-      }
+      },
+      ['*']
     );
-};
-
-const writeAsyncOperationToDynamoDb = async (params) => {
-  const { env, status, dbOutput, updatedTime, dynamoDbClient } = params;
-  const ExpressionAttributeNames = {
-    '#S': 'status',
-    '#U': 'updatedAt',
-  };
-  const ExpressionAttributeValues = {
-    ':s': { S: status },
-    ':u': { N: updatedTime },
-  };
-  let UpdateExpression = 'SET #S = :s, #U = :u';
-  if (dbOutput) {
-    ExpressionAttributeNames['#O'] = 'output';
-    ExpressionAttributeValues[':o'] = { S: dbOutput };
-    UpdateExpression += ', #O = :o';
-  }
-  return await dynamoDbClient.updateItem({
-    TableName: env.asyncOperationsTable,
-    Key: { id: { S: env.asyncOperationId } },
-    ExpressionAttributeNames,
-    ExpressionAttributeValues,
-    UpdateExpression,
-  });
-};
-
-const revertAsyncOperationWriteToDynamoDb = async (params) => {
-  const { env, status } = params;
-  return await dynamodbDocClient().update({
-    TableName: env.asyncOperationsTable,
-    Key: { id: env.asyncOperationId },
-    UpdateExpression: 'SET #status = :status REMOVE #output, #updatedAt',
-    ExpressionAttributeNames: {
-      '#status': 'status',
-      '#output': 'output',
-      '#updatedAt': 'updatedAt',
-    },
-    ExpressionAttributeValues: {
-      ':status': status,
-    },
-    ReturnValues: 'ALL_NEW',
-  });
 };
 
 const writeAsyncOperationToEs = async (params) => {
@@ -250,10 +208,8 @@ const writeAsyncOperationToEs = async (params) => {
 };
 
 /**
- * Update an AsyncOperation item in DynamoDB
+ * Update an AsyncOperation item in Postgres
  *
- * For help with parameters, see:
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#updateItem-property
  *
  * @param {Object} params
  * @param {string} params.status - the new AsyncOperation status
@@ -267,7 +223,6 @@ const updateAsyncOperation = async (params) => {
     output,
     envOverride = {},
     esClient = await Search.es(),
-    dynamoDbClient = dynamodb(),
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 
@@ -280,41 +235,25 @@ const updateAsyncOperation = async (params) => {
 
   const knex = await getKnexClient({ env });
 
-  try {
-    return await createRejectableTransaction(knex, async (trx) => {
-      await writeAsyncOperationToPostgres({
-        dbOutput,
-        env,
-        status,
-        trx,
-        updatedTime,
-        asyncOperationPgModel,
-      });
-      const result = await writeAsyncOperationToDynamoDb({
-        env,
-        status,
-        dbOutput,
-        updatedTime,
-        dynamoDbClient,
-      });
-      await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime, esClient });
-      logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
-      return result;
-    });
-  } catch (error) {
-    await revertAsyncOperationWriteToDynamoDb({
+  return await createRejectableTransaction(knex, async (trx) => {
+    const pgRecords = await writeAsyncOperationToPostgres({
+      dbOutput,
       env,
-      // Can we get away with hardcoding here instead of looking up
-      // the existing record?
-      status: 'RUNNING',
+      status,
+      trx,
+      updatedTime,
+      asyncOperationPgModel,
     });
-    throw error;
-  }
+    const result = translatePostgresAsyncOperationToApiAsyncOperation(pgRecords[0]);
+    await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime, esClient });
+    logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
+    return result;
+  });
 };
 
 /**
  * Download and run a Lambda task locally.  On completion, write the results out
- *   to a DynamoDB table.
+ *   to postgres async_operations table.
  *
  * @returns {Promise<undefined>} resolves when the task has completed
  */

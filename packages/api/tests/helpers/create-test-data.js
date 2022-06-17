@@ -10,6 +10,7 @@ const {
   GranulePgModel,
   CollectionPgModel,
   translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { indexGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -28,8 +29,6 @@ const {
 const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
-
-const models = require('../../models');
 
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
@@ -67,7 +66,6 @@ async function createGranuleAndFiles({
     s3Buckets.public.name,
   ]);
 
-  const granuleModel = new models.Granule();
   const granulePgModel = new GranulePgModel();
   const filePgModel = new FilePgModel();
 
@@ -139,13 +137,20 @@ async function createGranuleAndFiles({
     }
   );
 
-  // create a new Dynamo granule
-  const dynamoGranule = await granuleModel.create(newGranule);
-  await indexGranule(esClient, dynamoGranule, process.env.ES_INDEX);
+  let dynamoGranule;
 
   // create a new Postgres granule
-  const newPgGranule = await translateApiGranuleToPostgresGranule(dynamoGranule, dbClient);
+  const newPgGranule = await translateApiGranuleToPostgresGranule(
+    dynamoGranule || newGranule,
+    dbClient
+  );
   const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
+  const apiGranule = dynamoGranule || await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: dbClient,
+    granulePgRecord: pgGranule,
+  });
+
+  await indexGranule(esClient, apiGranule, process.env.ES_INDEX);
 
   // create Postgres files
   await Promise.all(
@@ -167,9 +172,11 @@ async function createGranuleAndFiles({
     process.env.ES_INDEX
   );
 
+  let newDynamoGranule;
+
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
-    newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
+    newDynamoGranule,
     esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,
     s3Buckets: s3Buckets,
