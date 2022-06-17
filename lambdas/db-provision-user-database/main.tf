@@ -41,8 +41,8 @@ resource "aws_lambda_function" "provision_database" {
 resource "aws_security_group" "db_provision" {
   count = length(var.subnet_ids) == 0 ? 0 : 1
 
-  name_prefix = "${var.prefix}-db-provision"
-  vpc_id      = var.vpc_id
+  name   = "${var.prefix}-db-provision"
+  vpc_id = var.vpc_id
 
   egress {
     from_port   = 0
