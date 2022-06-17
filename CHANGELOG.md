@@ -4,7 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
 ## [v11.1.3] 2022-06-17
+
+**Please note** changes in 11.1.3 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
 
 ### Notable changes
 
