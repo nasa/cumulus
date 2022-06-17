@@ -79,7 +79,8 @@ async function applyWorkflowToGranules({
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
- * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
+ * e.g. { granuleId: xxx, collectionID: xxx }
  * @param {Function} [unpublishGranuleFunc] - Optional function to delete the
  * granule from CMR. Useful for testing.
  * @returns {Promise}
@@ -154,7 +155,8 @@ async function bulkGranuleDelete(
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
- * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
+ * e.g. { granuleId: xxx, collectionID: xxx }
  * @param {function} [applyWorkflowHandler] - Optional handler for testing
  * @returns {Promise}
  */
