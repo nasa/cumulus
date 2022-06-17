@@ -96,7 +96,6 @@ const envVars = {
 const setUpExistingDatabaseRecords = async (t) => {
   t.context.workflowName = randomWorkflow();
   t.context.executionArns = [randomArn(), randomArn()];
-  // t.context.granuleIds = [randomGranuleId(), randomGranuleId()];
 
   const collection = fakeCollectionRecordFactory();
   t.context.collectionId = constructCollectionId(collection.name, collection.version);
@@ -339,13 +338,13 @@ test.serial('bulk operation BULK_GRANULE applies workflow to list of granules', 
 
   t.is(applyWorkflowStub.callCount, 2);
   // Can't guarantee processing order so test against granule matching by ID
-  await Promise.all(applyWorkflowStub.args.map(async (callArgs) => {
+  applyWorkflowStub.args.forEach((callArgs) => {
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
     t.deepEqual(matchingGranule, callArgs[0].apiGranule);
     t.is(callArgs[0].workflow, workflowName);
-  }));
+  });
 });
 
 test.serial('bulk operation BULK_GRANULE applies workflow to granules returned by query', async (t) => {
@@ -388,13 +387,13 @@ test.serial('bulk operation BULK_GRANULE applies workflow to granules returned b
   t.is(applyWorkflowStub.callCount, 2);
 
   // Can't guarantee processing order so test against granule matching by ID
-  await Promise.all(applyWorkflowStub.args.map(async (callArgs) => {
+  applyWorkflowStub.args.forEach((callArgs) => {
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
     t.deepEqual(matchingGranule, callArgs[0].apiGranule);
     t.is(callArgs[0].workflow, workflowName);
-  }));
+  });
   await verifyGranulesQueuedStatus(t);
 });
 test.serial('applyWorkflowToGranules sets the granules status to queued', async (t) => {
@@ -716,7 +715,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
   t.true(esSearchStub.called);
   t.is(reingestStub.callCount, 2);
 
-  reingestStub.args.forEach(async (callArgs) => {
+  reingestStub.args.forEach((callArgs) => {
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 

@@ -206,12 +206,10 @@ async function bulkGranuleReingest(
           knexOrTransaction: knex,
         });
 
-        const targetExecution = await chooseTargetExecution(
-          {
-            granuleId: granule.granuleId,
-            workflowName,
-          }
-        );
+        const targetExecution = await chooseTargetExecution({
+          granuleId: granule.granuleId,
+          workflowName,
+        });
         const apiGranuleToReingest = {
           ...apiGranule,
           ...(targetExecution && { execution: targetExecution }),
