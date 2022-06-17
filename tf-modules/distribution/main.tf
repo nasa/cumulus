@@ -115,6 +115,7 @@ resource "aws_iam_role_policy" "s3_credentials_lambda" {
 resource "aws_security_group" "s3_credentials_lambda" {
   count = (var.deploy_s3_credentials_endpoint && var.vpc_id != null) ? 1 : 0
 
+  name   = "${var.prefix}-s3-credentials-lambda"
   vpc_id = var.vpc_id
 
   egress {

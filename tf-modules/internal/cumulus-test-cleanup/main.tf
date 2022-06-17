@@ -27,7 +27,10 @@ locals {
 
 resource "aws_security_group" "test_cleanup_lambda" {
   count  = local.security_group_ids_set ? 0 : 1
+
+  name   = "${var.prefix}-test-cleanup-lambda"
   vpc_id = var.vpc_id
+
   egress {
     from_port   = 0
     to_port     = 0

@@ -193,6 +193,7 @@ resource "aws_iam_instance_profile" "ecs_cluster_instance" {
 }
 
 resource "aws_security_group" "ecs_cluster_instance" {
+  name   = "${var.prefix}-ecs-cluster-instance"
   vpc_id = var.vpc_id
   tags   = var.tags
 }
