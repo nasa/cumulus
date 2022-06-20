@@ -60,6 +60,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
+- **CUMULUS-2966**
+  - Added extractPath operation and nested string replacement to `url_path` in the collection configuration
+
 ### Changed
 
 - **CUMULUS-2967**

@@ -80,9 +80,73 @@ test('url path has dateFormat operation', async (t) => {
   t.is(result, '2016-12-23T13:45:00');
 });
 
-test('url path has metadata fields which has multiple values', async (t) => {
+test('url path has metadata field which has multiple values', async (t) => {
   const metadataObject = await getTestMetadata(measuresXmlFile);
   const urlPath = '{cmrMetadata.Granule.Platforms.Platform[0].ShortName}';
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, 'ALOS');
+});
+
+test('url path supports extractPath operation', (t) => {
+  const context = {
+    file: {
+      source: '/data/GPM_L3/GPM_3IMERGHH.06/2021/001/abc.efg.HDF.xml',
+    },
+  };
+  const urlPath = '{extractPath(file.source)}';
+  const result = urlPathTemplate(urlPath, context);
+  t.is(result, '/data/GPM_L3/GPM_3IMERGHH.06/2021/001');
+});
+
+test('url path supports operation with constant argument', (t) => {
+  const context = {
+    foo: 'boo',
+  };
+  const urlPath = '{extractPath(/data/GPM_L3/GPM_3IMERGHH.06/2021/001/abc.efg.HDF.xml)}';
+  const result = urlPathTemplate(urlPath, context);
+  t.is(result, '/data/GPM_L3/GPM_3IMERGHH.06/2021/001');
+});
+
+test('url path supports nested operations', (t) => {
+  const context = {
+    file: {
+      source: '/data/GPM_L3/GPM_3IMERGHH.06/2021/001/abc.efg.HDF.xml',
+    },
+  };
+  const urlPath = '{extractPath({substring(file.source, 6)})}';
+  const result = urlPathTemplate(urlPath, context);
+  t.is(result, 'GPM_L3/GPM_3IMERGHH.06/2021/001');
+});
+
+test('url path supports multiple and nested operations', async (t) => {
+  const metadataObject = await getTestMetadata(modisXmlFile);
+  const context = {
+    file: {
+      source: '/data/GPM_L3/GPM_3IMERGHH.06/2021/001/abc.efg.HDF.xml',
+    },
+    cmrMetadata: metadataObject,
+  };
+  const urlPath = '/destinationdata/{cmrMetadata.Granule.Collection.ShortName}/{substring({extractPath(file.source)}, 6)}';
+  const result = urlPathTemplate(urlPath, context);
+  t.is(result, '/destinationdata/MOD09GQ/GPM_L3/GPM_3IMERGHH.06/2021/001');
+});
+
+test('urlPathTemplate throws exception when operation is not supported', async (t) => {
+  const metadataObject = await getTestMetadata(modisXmlFile);
+  const context = { cmrMetadata: metadataObject };
+  const urlPath = '{unsupportedOperation(cmrMetadata.Granule.Collection.ShortName)}';
+  t.throws(
+    () => urlPathTemplate(urlPath, context),
+    { message: /Error: Could not support operation unsupportedOperation/ }
+  );
+});
+
+test('urlPathTemplate throws exception when object path does not exist', async (t) => {
+  const metadataObject = await getTestMetadata(modisXmlFile);
+  const context = { cmrMetadata: metadataObject };
+  const urlPath = '{substring(cmrMetadata.nonexistentfield.Collection.ShortName, 1, 3)}';
+  t.throws(
+    () => urlPathTemplate(urlPath, context),
+    { message: /Could not resolve path cmrMetadata.nonexistentfield.Collection.ShortName/ }
+  );
 });
