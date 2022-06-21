@@ -6,19 +6,44 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable changes
+
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
+### Changed
+
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
+
+### Fixed
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB
+
+## [v13.0.0] 2022-06-13
+
 ### MIGRATION NOTES
 
 - The changes introduced in CUMULUS-2955 should result in removal of
   `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
-  release).  The success of this operation is dependent on system ingest load
+  release).  The success of this operation is d
+  ependent on system ingest load.
 
   In rare cases where data-persistence deployment fails because the
   `postgres-db-migration` times out, it may be required to manually remove the
   index and then redeploy:
 
   ```text
-  DROP INDEX IF EXISTS postgres-db-migration;
-  DROP INDEX
+  DROP INDEX IF EXISTS files_granule_cumulus_id_index;
   ```
 
 ### Breaking Changes
@@ -34,15 +59,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
-
-- **CUMULUS-2903**
-
-  - The minimum supported version for all published Cumulus Core npm packages is
-    now  Node 14.19.1
-  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
-    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
-    property of any tasks defined using the `cumulus_ecs_service` Terraform
-    module.
 
 ### Notable changes
 
@@ -60,34 +76,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
-### Changed
-
-- **CUMULUS-2967**
-  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
-    case of deletion race conditions
-- **CUMULUS-2955**
-  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
-    `granule_cumulus_id` on the files table.
-  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
-    changes from `20220126172008_files_granule_id_index` on any deployed stacks
-    that might have the index to ensure consistency in deployed stacks
-
-- **CUMULUS-2923**
-  - Changed public key setup for SFTP local testing.
-
-- **CUMULUS-2939**
-  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
-    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
-
-### Fixed
-
-- **CUMULUS-2863**
-  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
-    in rule's meta.
-
-- **CUMULUS-2959**
-  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
-    when an old granule record is retrieved from DynamoDB.
 
 ## [v12.0.0] 2022-05-20
 
@@ -113,6 +101,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+
+## [v11.1.2] 2022-06-13
+
+**Please note** changes in 11.1.2 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### MIGRATION NOTES
+
+- The changes introduced in CUMULUS-2955 should result in removal of
+  `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
+  release).  The success of this operation is dependent on system ingest load
+
+  In rare cases where data-persistence deployment fails because the
+  `postgres-db-migration` times out, it may be required to manually remove the
+  index and then redeploy:
+
+  ```text
+  > DROP INDEX IF EXISTS postgres-db-migration;
+  DROP INDEX
+  ```
+
+### Changed
+
+- **CUMULUS-2955**
+  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
+    `granule_cumulus_id` on the files table.
+  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
+    changes from `20220126172008_files_granule_id_index` on any deployed stacks
+    that might have the index to ensure consistency in deployed stacks
 
 ## [v11.1.1] 2022-04-26
 
