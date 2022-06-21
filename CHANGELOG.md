@@ -75,6 +75,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
+### Changed
+
+- **CUMULUS-2955**
+  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
+    `granule_cumulus_id` on the files table.
+  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
+    changes from `20220126172008_files_granule_id_index` on any deployed stacks
+    that might have the index to ensure consistency in deployed stacks
+
+- **CUMULUS-2923**
+  - Changed public key setup for SFTP local testing.
+
+- **CUMULUS-2939**
+  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
+    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
 
 ## [v12.0.0] 2022-05-20
 
