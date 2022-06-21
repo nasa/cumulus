@@ -35,8 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - The changes introduced in CUMULUS-2955 should result in removal of
   `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
-  release).  The success of this operation is d
-  ependent on system ingest load.
+  release).  The success of this operation is dependent on system ingest load.
 
   In rare cases where data-persistence deployment fails because the
   `postgres-db-migration` times out, it may be required to manually remove the
