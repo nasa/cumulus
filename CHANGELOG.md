@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased Phase 3
 
+### Breaking Changes
+
+- **CUMULUS-2688**
+  - Updated bulk operation logic to use collectionId in addition to granuleId to fetch granules.
+  - Tasks using the `bulk-operation` Lambda should provide collectionId and granuleId e.g. { granuleId: xxx, collectionId: xxx }
+
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
@@ -94,7 +100,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
-    
+
 - **CUMULUS-2903**
 
   - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
