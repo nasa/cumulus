@@ -54,6 +54,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
 - **CUMULUS-2955**
   - Updates `20220126172008_files_granule_id_index` to *not* create an index on
     `granule_cumulus_id` on the files table.
@@ -67,6 +70,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+
+### Fixed
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB.
 
 ## [v12.0.0] 2022-05-20
 
@@ -195,8 +208,8 @@ migration notes from prior releases:
 ##### **After deploying the `data-persistence` module, but before deploying the main `cumulus` module**
 
 - Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
-out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
-[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+out of sync with records in DynamoDB. In order to bring the records into sync, re-deploy and re-run the
+[`data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
 `{"forceRulesMigration": true}`:
 
 ```shell

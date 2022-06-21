@@ -16,6 +16,8 @@ const logger = new Logger({ sender: '@api-client/cumulusApiClient' });
  * @param {string} params.payload - the payload object (e.g. httpMethod,
  *   resource, headers, path, body) containing params the lambda expects in the
  *   payload
+ * @param {number[]} params.expectedStatusCodes - list of status codes that will
+ *                                                not cause a retry/failure
  * @param {pRetry.Options} [params.pRetryOptions={}]
  * @returns {Promise<Object|undefined>} - Returns promise that resolves to the
  *   output payload from the API lambda
