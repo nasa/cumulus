@@ -9,7 +9,7 @@ const {
   destroyLocalTestDb,
   CollectionPgModel,
   fakeCollectionRecordFactory,
-  translatePostgresGranuleToApiGranule
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
@@ -135,10 +135,12 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
   const pgGranuleId1 = pgGranule1.granule_id;
   const pgGranuleId2 = pgGranule2.granule_id;
 
-  const apiGranules = await Promise.all(granules.map((granule) => translatePostgresGranuleToApiGranule({
-    granulePgRecord: granule.newPgGranule,
-    knexOrTransaction: knex,
-  })));
+  const apiGranules = await Promise.all(
+    granules.map((granule) => translatePostgresGranuleToApiGranule({
+      granulePgRecord: granule.newPgGranule,
+      knexOrTransaction: knex,
+    }))
+  );
 
   const { deletedGranules } = await bulkGranuleDelete(
     {
