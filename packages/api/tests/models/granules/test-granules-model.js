@@ -104,7 +104,8 @@ test('get() will translate an old-style granule file into the new schema', async
     fileSize: 1234,
   };
 
-  const granule = fakeGranuleFactoryV2({ files: [oldFile] });
+  const oldProductVolume = 20;
+  const granule = fakeGranuleFactoryV2({ files: [oldFile], productVolume: oldProductVolume });
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
@@ -125,6 +126,7 @@ test('get() will translate an old-style granule file into the new schema', async
       size: 1234,
     }
   );
+  t.is(fetchedGranule.productVolume, oldProductVolume.toString());
 });
 
 test('get() will correctly return a granule file stored using the new schema', async (t) => {
@@ -217,7 +219,7 @@ test('batchGet() will translate old-style granule files into the new schema', as
   );
 });
 
-test('scan() will translate old-style granule files into the new schema', async (t) => {
+test('scan() will translate old-style granule files and numeric productVolume into the new schema', async (t) => {
   const oldFile = {
     bucket: 'my-bucket',
     filename: 's3://my-bucket/path/to/file.txt',
@@ -229,8 +231,9 @@ test('scan() will translate old-style granule files into the new schema', async 
     url_path: 'some-url-path',
     fileSize: 1234,
   };
+  const oldProductVolume = 20;
 
-  const granule = fakeGranuleFactoryV2({ files: [oldFile] });
+  const granule = fakeGranuleFactoryV2({ files: [oldFile], productVolume: oldProductVolume });
 
   await awsServices.dynamodbDocClient().put({
     TableName: process.env.GranulesTable,
@@ -255,6 +258,7 @@ test('scan() will translate old-style granule files into the new schema', async 
       size: 1234,
     }
   );
+  t.deepEqual(scanResponse.Items[0].productVolume, oldProductVolume.toString());
 });
 
 test('granuleAttributeScan() returns granules filtered by search params', async (t) => {
