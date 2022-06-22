@@ -74,8 +74,8 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
   };
 
@@ -122,8 +122,8 @@ test.serial('bulkReingest() uses correct caller lambda function name', async (t)
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
   };
 
@@ -301,9 +301,9 @@ test.serial('POST /granules/bulkReingest returns 500 if invoking StartAsyncOpera
     .send({
       workflowName: 'workflowName',
       granules: [
-        {granuleId: 1, collectionId: 1},
-        {granuleId: 2, collectionId: 1},
-        {granuleId: 3, collectionId: 1}
+        { granuleId: 1, collectionId: 1 },
+        { granuleId: 2, collectionId: 1 },
+        { granuleId: 3, collectionId: 1 },
       ],
     });
   t.is(response.status, 500);

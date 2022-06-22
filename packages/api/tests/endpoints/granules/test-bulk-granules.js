@@ -78,8 +78,8 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
   };
 
@@ -130,8 +130,8 @@ test.serial('bulkOperations() uses correct caller lambda function name', async (
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
   };
 
@@ -355,9 +355,9 @@ test.serial('POST /granules/bulk returns 500 if invoking StartAsyncOperation lam
     .send({
       workflowName: 'workflowName',
       granules: [
-        {granuleId: 1, collectionId: 1},
-        {granuleId: 2, collectionId: 1},
-        {granuleId: 3, collectionId: 1}
+        { granuleId: 1, collectionId: 1 },
+        { granuleId: 2, collectionId: 1 },
+        { granuleId: 3, collectionId: 1 },
       ],
     });
   t.is(response.status, 500);

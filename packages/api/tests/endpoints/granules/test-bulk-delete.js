@@ -82,8 +82,8 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
     forceRemoveFromCmr: true,
   };
@@ -141,8 +141,8 @@ test.serial('bulkDelete() uses correct caller lambda function name', async (t) =
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
     forceRemoveFromCmr: true,
   };
@@ -313,8 +313,8 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
     forceRemoveFromCmr: 'true',
   };
@@ -348,8 +348,8 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking St
     granules: [
       {
         granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
-        collectionId: 'name___version'
-      }
+        collectionId: 'name___version',
+      },
     ],
   };
 
