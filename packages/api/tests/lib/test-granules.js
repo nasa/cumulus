@@ -9,6 +9,7 @@ const {
   getExecutionProcessingTimeInfo,
   moveGranuleFilesAndUpdateDatastore,
 } = require('../../lib/granules');
+const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
 const { fakeFileFactory } = require('../../lib/testUtils');
 
@@ -26,7 +27,7 @@ class FakeSearch {
   }
 }
 
-const { getGranulesForPayload, getGranuleIdsForPayload } = proxyquire('../../lib/granules', {
+const { getGranulesForPayload, getGranuleIdsForPayload, translateGranule } = proxyquire('../../lib/granules', {
   '@cumulus/es-client/search': {
     Search: FakeSearch,
   },
@@ -499,4 +500,35 @@ test.serial('getGranulsForPayload handles query paging', async (t) => {
       { granuleId: granuleId2, collectionId },
       { granuleId: granuleId3, collectionId }]
   );
+});
+
+test('translateGranule() will translate an old-style granule file and numeric productVolume into the new schema', async (t) => {
+  const oldFile = {
+    bucket: 'my-bucket',
+    filename: 's3://my-bucket/path/to/file.txt',
+    filepath: 'path/to/file.txt',
+    name: 'file123.txt',
+    path: 'source/path',
+    checksumType: 'my-checksumType',
+    checksumValue: 'my-checksumValue',
+    url_path: 'some-url-path',
+    fileSize: 1234,
+  };
+
+  const oldProductVolume = 20;
+  const granule = fakeGranuleFactoryV2({ files: [oldFile], productVolume: oldProductVolume });
+  const translatedGranule = await translateGranule(granule);
+
+  t.deepEqual(
+    translatedGranule.files[0],
+    {
+      bucket: 'my-bucket',
+      key: 'path/to/file.txt',
+      fileName: 'file123.txt',
+      checksumType: 'my-checksumType',
+      checksum: 'my-checksumValue',
+      size: 1234,
+    }
+  );
+  t.is(translatedGranule.productVolume, oldProductVolume.toString());
 });
