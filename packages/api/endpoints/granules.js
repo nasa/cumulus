@@ -15,7 +15,6 @@ const {
   ExecutionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
-  getGranuleByUniqueColumns,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -23,7 +22,6 @@ const {
 } = require('@cumulus/db');
 const { Search, recordNotFoundString, multipleRecordFoundString } = require('@cumulus/es-client/search');
 
-const { deprecate } = require('util');
 const {
   deleteGranuleAndFiles,
 } = require('../src/lib/granule-delete');
@@ -491,6 +489,7 @@ async function get(req, res) {
   const {
     knex = await getKnexClient(),
     collectionPgModel = new CollectionPgModel(),
+    granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
@@ -503,7 +502,10 @@ async function get(req, res) {
       knex, deconstructCollectionId(collectionId)
     );
 
-    granule = await getGranuleByUniqueColumns(knex, granuleId, pgCollection.cumulus_id);
+    granule = await granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+    );
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       if (collectionId && pgCollection === undefined) {

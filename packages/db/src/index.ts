@@ -124,7 +124,6 @@ export {
   getApiGranuleExecutionCumulusIds,
   getGranuleCollectionId,
   getUniqueGranuleByGranuleId,
-  getGranuleByUniqueColumns,
   upsertGranuleWithExecutionJoinRecord,
   getGranulesByApiPropertiesQuery,
 } from './lib/granule';

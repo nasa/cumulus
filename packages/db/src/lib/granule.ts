@@ -128,7 +128,7 @@ export const getUniqueGranuleByGranuleId = async (
   deprecate(
     '@cumulus/db/getUniqueGranuleByGranuleId',
     'RDS-Phase-3',
-    '@cumulus/db/getGranuleByUniqueColumns'
+    '@cumulus/db/GranulePgModel.get'
   );
 
   const logger = new Logger({ sender: '@cumulus/api/granules' });
@@ -146,27 +146,6 @@ export const getUniqueGranuleByGranuleId = async (
 
   return PgGranuleRecords[0];
 };
-
-/**
- * Get one Granule for a granule_id and collection_cumulus_id
- *
- * @param {Knex | Knex.Transaction} knexOrTransaction -
- *  DB client or transaction
- * @param {string} granuleId - a granule.granule_id
- * @param {number} collectionCumulusId - a granule.collection_cumulus_id
- * @param {GranulePgModel} granulePgModel - Granule PG model class instance
- * @returns {Promise<PostgresGranuleRecord>}
- */
-export const getGranuleByUniqueColumns = (
-  knexOrTransaction: Knex | Knex.Transaction,
-  granuleId: string,
-  collectionCumulusId: number,
-  granulePgModel = new GranulePgModel()
-): Promise<PostgresGranuleRecord> =>
-  granulePgModel.get(
-    knexOrTransaction,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  );
 
 /**
  * Get cumulus IDs for all executions associated to a set of granules
