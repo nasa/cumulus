@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v10.1.3] 2022-06-28
+
+### Added
+
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
 ## [v10.1.2] 2022-03-11
 
 ### Added
