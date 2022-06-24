@@ -273,7 +273,7 @@ test.serial('Test failing granule with no metadata', async (t) => {
   t.like(error, expectedError);
 });
 
-test.serial('Test passing granule with no metadata', async (t) => {
+test.serial('Test passing granule with no metadata if config.allowNoMetadata is true', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload-json-nometa.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
