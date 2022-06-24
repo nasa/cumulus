@@ -26,6 +26,8 @@ releases.
   - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
     file extension for tasks that utilize metadata file lookups
 
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
 ### Fixed
 
 - **CUMULUS-2863**
