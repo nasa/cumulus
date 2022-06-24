@@ -44,35 +44,8 @@ test('getGranule calls the callback with the expected object when there is query
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
-      queryStringParameters: query,
-    },
-  };
-
-  const callback = (configObject) => {
-    t.deepEqual(configObject, expected);
-    return Promise.resolve({
-      body: JSON.stringify({
-        granuleId: t.context.granuleId,
-      }),
-    });
-  };
-
-  await t.notThrowsAsync(granulesApi.getGranule({
-    callback,
-    prefix: t.context.testPrefix,
-    granuleId: t.context.granuleId,
-    query,
-  }));
-});
-
-test('getGranule accepts an optional collectionId', async (t) => {
-  const expected = {
-    prefix: t.context.testPrefix,
-    payload: {
-      httpMethod: 'GET',
-      resource: '/{proxy+}',
       path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      queryStringParameters: query,
     },
   };
 
@@ -91,6 +64,7 @@ test('getGranule accepts an optional collectionId', async (t) => {
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     collectionId: t.context.collectionId,
+    query,
   }));
 });
 
