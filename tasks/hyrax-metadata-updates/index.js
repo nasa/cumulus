@@ -310,6 +310,12 @@ const updateGranule = (config) => async (granule) => {
   const metadataFile = granule.files.find(isCMRFile);
   // If there is no metadata file, error out.
   if (metadataFile === undefined) {
+    if (config.allowNoMetadata) {
+      return {
+        granule,
+        etags,
+      };
+    }
     throw new RecordDoesNotExist(
       `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}`
     );
