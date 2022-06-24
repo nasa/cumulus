@@ -25,7 +25,6 @@ releases.
 - **CUMULUS-2929**
   - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
     file extension for tasks that utilize metadata file lookups
-
 - **CUMULUS-2966**
   - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
 ### Fixed
@@ -33,14 +32,11 @@ releases.
 - **CUMULUS-2863**
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries
     and 0 visibilityTimeout in rule's meta.
-- **CUMULUS-2961**
-  - Fixed `data-migration2` granule migration logic to allow for DynamoDb granules that have a null/empty string value for `execution`.   The migration will now migrate them without a linked execution.
-  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
-    in rule's meta.
-
 - **CUMULUS-2959**
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB.
+- **CUMULUS-2961**
+  - Fixed `data-migration2` granule migration logic to allow for DynamoDb granules that have a null/empty string value for `execution`.   The migration will now migrate them without a linked execution.
 
 ## [v11.1.2] 2022-06-13
 
