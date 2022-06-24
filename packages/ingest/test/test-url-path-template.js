@@ -80,14 +80,14 @@ test('url path has dateFormat operation', async (t) => {
   t.is(result, '2016-12-23T13:45:00');
 });
 
-test('url path has metadata field which has multiple values', async (t) => {
+test('urlPathTemplate has metadata field which has multiple values', async (t) => {
   const metadataObject = await getTestMetadata(measuresXmlFile);
   const urlPath = '{cmrMetadata.Granule.Platforms.Platform[0].ShortName}';
   const result = urlPathTemplate(urlPath, { cmrMetadata: metadataObject });
   t.is(result, 'ALOS');
 });
 
-test('url path supports extractPath operation', (t) => {
+test('urlPathTemplate supports extractPath operation', (t) => {
   const context = {
     file: {
       source: '/data/GPM_L3/GPM_3IMERGHH.06/2021/001/abc.efg.HDF.xml',
@@ -98,7 +98,7 @@ test('url path supports extractPath operation', (t) => {
   t.is(result, '/data/GPM_L3/GPM_3IMERGHH.06/2021/001');
 });
 
-test('url path supports operation with constant argument', (t) => {
+test('urlPathTemplate supports operation with constant argument', (t) => {
   const context = {
     foo: 'boo',
   };
@@ -107,7 +107,7 @@ test('url path supports operation with constant argument', (t) => {
   t.is(result, '/data/GPM_L3/GPM_3IMERGHH.06/2021/001');
 });
 
-test('url path supports nested operations', (t) => {
+test('urlPathTemplate supports nested operations', (t) => {
   const context = {
     file: {
       source: '/data/GPM_L3/GPM_3IMERGHH.06/2021/001/abc.efg.HDF.xml',
@@ -118,7 +118,7 @@ test('url path supports nested operations', (t) => {
   t.is(result, 'GPM_L3/GPM_3IMERGHH.06/2021/001');
 });
 
-test('url path supports multiple and nested operations', async (t) => {
+test('urlPathTemplate supports multiple and nested operations', async (t) => {
   const metadataObject = await getTestMetadata(modisXmlFile);
   const context = {
     file: {
