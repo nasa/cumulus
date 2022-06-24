@@ -289,7 +289,7 @@ test.serial('Test passing granule with no metadata', async (t) => {
   try {
     const output = await hyraxMetadataUpdate(e);
     await validateOutput(t, output);
-    t.deepEqual(output.granules[0], e.input.granules[0]);
+    t.deepEqual(output.granules, e.input.granules);
     t.deepEqual(output.etags, event.config.etags);
   } catch (error) {
     console.log(error);
