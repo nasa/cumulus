@@ -1,5 +1,6 @@
 const get = require('lodash/get');
 const moment = require('moment');
+const path = require('path');
 
 /**
 * evaluate the operation specified in template
@@ -29,6 +30,9 @@ function evaluateOperation(name, args) {
   case 'substring': {
     return String.prototype.substring.apply(String(valueStr), args.slice(1));
   }
+  case 'extractPath': {
+    return path.dirname(valueStr);
+  }
   default:
     throw new Error(`Could not support operation ${name}`);
   }
@@ -46,17 +50,21 @@ function templateReplacer(context, submatch) {
   const expressionRegex = /([^(]+)\(([^)]+)\)/;
   const matches = submatch.match(expressionRegex);
 
-  // submatch contains operation
+  // submatch contains operation and args
   if (submatch.match(expressionRegex)) {
     const name = matches[1];
     const args = matches[2].split(/\s*,\s*/);
-    const jsonPathValue = get(context, args[0], null);
+    // args[0] is either an object path or a constant
+    //   e.g. extractPath(file.path) or extractPath('/a/b/c')
+    // assume args[0] is an object path if it starts with a key of context
+    const isObjectPath = Object.keys(context).includes(args[0].split('.')[0]);
+    const jsonPathValue = get(context, args[0], isObjectPath ? undefined : args[0]);
     if (!jsonPathValue) throw new Error(`Could not resolve path ${args[0]}`);
     args[0] = jsonPathValue;
     return evaluateOperation(name, args);
   }
 
-  const jsonPathValue = get(context, submatch, null);
+  const jsonPathValue = get(context, submatch);
   if (!jsonPathValue) throw new Error(`Could not resolve path ${submatch}`);
   return jsonPathValue;
 }
@@ -70,11 +78,17 @@ function templateReplacer(context, submatch) {
 * @returns {string} - the url path for the file
 **/
 function urlPathTemplate(pathTemplate, context) {
-  const templateRegex = /{([^}]+)}/g;
+  const templateRegex = /{([^{}]+)}/g;
+
   try {
     // match: The matched substring, submatch: The parenthesized submatch string
-    return pathTemplate.replace(templateRegex, (match, submatch) =>
+    const replacedPath = pathTemplate.replace(templateRegex, (match, submatch) =>
       templateReplacer(context, submatch));
+
+    if (replacedPath.match(templateRegex)) {
+      return urlPathTemplate(replacedPath, context);
+    }
+    return replacedPath;
   } catch (error) {
     throw new Error(
       `Could not resolve path template "${pathTemplate}" with error "${error.toString()}"`
