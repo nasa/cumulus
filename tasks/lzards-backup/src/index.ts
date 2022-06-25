@@ -6,6 +6,7 @@ import { Context } from 'aws-lambda';
 
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
+import { deconstructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
 import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { getRequiredEnvVar } from '@cumulus/common/env';
@@ -29,7 +30,14 @@ import {
   InvalidUrlTypeError,
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
-import { MakeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
+import {
+  MakeBackupFileRequestResult,
+  HandlerEvent,
+  MessageGranule,
+  MessageGranuleFilesObject,
+  MessageGranuleFromStepOutput,
+  ApiGranule,
+} from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
@@ -268,14 +276,28 @@ export const backupGranule = async (params: {
     cloudfrontEndpoint?: string,
   },
 }) => {
+  let granuleCollection : CollectionRecord;
+  let collectionId : string;
   const { granule, backupConfig } = params;
+  let granuleFromStepOutput = granule as MessageGranuleFromStepOutput;
+  let apiGranule = granule as ApiGranule;
   log.info(`${granule.granuleId}: Backup called on granule: ${JSON.stringify(granule)}`);
   try {
-    const granuleCollection = await getGranuleCollection({
-      collectionName: granule.dataType,
-      collectionVersion: granule.version,
-    });
-    const collectionId = constructCollectionId(granule.dataType, granule.version);
+    if (apiGranule.collectionId) {
+      collectionId = apiGranule.collectionId;
+      const {name, version} = deconstructCollectionId(apiGranule.collectionId);
+      granuleCollection = await getGranuleCollection({
+        collectionName: name,
+        collectionVersion: version,
+      });
+    }
+    else if (granuleFromStepOutput.dataType && granuleFromStepOutput.version) {
+       granuleCollection = await getGranuleCollection({
+        collectionName: granuleFromStepOutput.dataType,
+        collectionVersion: granuleFromStepOutput.version,
+      });
+      collectionId = constructCollectionId(granuleFromStepOutput.dataType, granuleFromStepOutput.version);
+    }
     const backupFiles = granule.files.filter(
       (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
     );

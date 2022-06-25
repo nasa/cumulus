@@ -579,7 +579,7 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
   t.true(index.generateCloudfrontUrl.calledOnce);
 });
 
-test.serial('backupGranulesToLzards returns the expected payload', async (t) => {
+test.serial('backupGranulesToLzards returns the expected payload with workflow output type input granule', async (t) => {
   const { fakeBucket1, fakeBucket2 } = t.context;
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
@@ -668,6 +668,8 @@ test.serial('backupGranulesToLzards returns the expected payload', async (t) => 
     granules: fakePayload.input.granules,
   };
   t.deepEqual(actual, expected);
+});
+test.skip('backupGranulesToLzards returns the expected payload with API type input granule', async (t) => {
 });
 
 test.serial('backupGranulesToLzards returns empty record if no files to archive', async (t) => {
