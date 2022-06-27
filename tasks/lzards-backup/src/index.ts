@@ -26,6 +26,7 @@ import {
   ChecksumError,
   CollectionNotDefinedError,
   CollectionInvalidRegexpError,
+  CollectionIdentifiersNotProvidedError,
   GetAuthTokenError,
   InvalidUrlTypeError,
 } from './errors';
@@ -298,6 +299,10 @@ export const backupGranule = async (params: {
       });
       collectionId = constructCollectionId(granuleFromStepOutput.dataType, granuleFromStepOutput.version);
     }
+    else if (!apiGranule.collectionId || !(granuleFromStepOutput.dataType && granuleFromStepOutput.version)) {
+      log.info(`${granule}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
+      throw new CollectionIdentifiersNotProvidedError("[dataType and version] or [collectionId] required.");
+    }
     const backupFiles = granule.files.filter(
       (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
     );
@@ -310,6 +315,10 @@ export const backupGranule = async (params: {
       granuleId: granule.granuleId,
     })));
   } catch (error) {
+    if (error.name === 'CollectionIdentifiersNotProvidedError') {
+      log.error(`${granule}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
+      log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
+    }
     if (error.name === 'CollectionNotDefinedError') {
       log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the database`);
       log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
