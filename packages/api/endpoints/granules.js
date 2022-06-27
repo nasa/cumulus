@@ -200,6 +200,174 @@ async function put(req, res) {
   const {
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
+    reingestHandler = reingestGranule,
+    updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
+    getFilesExistingAtLocationMethod = getFilesExistingAtLocation,
+  } = req.testContext || {};
+
+  const granuleId = req.params.granuleName;
+  const collectionId = req.params.collectionId;
+
+  const body = req.body;
+  const action = body.action;
+
+  if (!action) {
+    if (req.body.granuleId === req.params.granuleName) {
+      return putGranule(req, res);
+    }
+    return res.boom.badRequest(
+      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+    );
+  }
+
+  let pgGranule;
+  let pgCollection;
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex, deconstructCollectionId(collectionId)
+    );
+
+    pgGranule = await granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        return res.boom.notFound(`No collection found for granuleId ${granuleId} with collectionId ${collectionId}`);
+      }
+      if (pgGranule === undefined) {
+        return res.boom.notFound('Granule not found');
+      }
+    }
+  }
+
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    collectionPgRecord: pgCollection,
+    knexOrTransaction: knex,
+  });
+
+  log.info(`PUT request "action": ${action}`);
+
+  if (action === 'reingest') {
+    const apiCollection = translatePostgresCollectionToApiCollection(pgCollection);
+    let targetExecution;
+    try {
+      targetExecution = await chooseTargetExecution({
+        granuleId, executionArn: body.executionArn, workflowName: body.workflowName,
+      });
+    } catch (error) {
+      if (error instanceof RecordDoesNotExist) {
+        return res.boom.badRequest(`Cannot reingest granule: ${error.message}`);
+      }
+      throw error;
+    }
+
+    if (targetExecution) {
+      log.info(`targetExecution has been specified for granule (${granuleId}) reingest: ${targetExecution}`);
+    }
+
+    await updateGranuleStatusToQueuedMethod({ apiGranule, knex });
+
+    await reingestHandler({
+      apiGranule: {
+        ...apiGranule,
+        ...(targetExecution && { execution: targetExecution }),
+      },
+      queueUrl: process.env.backgroundQueueUrl,
+    });
+
+    const response = {
+      action,
+      granuleId: apiGranule.granuleId,
+      status: 'SUCCESS',
+    };
+
+    if (apiCollection.duplicateHandling !== 'replace') {
+      response.warning = 'The granule files may be overwritten';
+    }
+    return res.send(response);
+  }
+
+  if (action === 'applyWorkflow') {
+    await updateGranuleStatusToQueued({ apiGranule, knex });
+    await applyWorkflow({
+      apiGranule,
+      workflow: body.workflow,
+      meta: body.meta,
+    });
+
+    return res.send({
+      granuleId: apiGranule.granuleId,
+      action: `applyWorkflow ${body.workflow}`,
+      status: 'SUCCESS',
+    });
+  }
+
+  if (action === 'removeFromCmr') {
+    await unpublishGranule({
+      knex,
+      pgGranuleRecord: pgGranule,
+      pgCollection: pgCollection,
+    });
+
+    return res.send({
+      granuleId: apiGranule.granuleId,
+      action,
+      status: 'SUCCESS',
+    });
+  }
+
+  if (action === 'move') {
+    // FUTURE - this should be removed from the granule model
+    // TODO -- Phase 3 -- This needs to be pulled out of the granule model
+    const filesAtDestination = await getFilesExistingAtLocationMethod(
+      apiGranule,
+      body.destinations
+    );
+    log.info(`existing files at destination: ${JSON.stringify(filesAtDestination)}`);
+
+    if (filesAtDestination.length > 0) {
+      const filenames = filesAtDestination.map((file) => file.fileName);
+      const message = `Cannot move granule because the following files would be overwritten at the destination location: ${filenames.join(', ')}. Delete the existing files or reingest the source files.`;
+
+      return res.boom.conflict(message);
+    }
+
+    await moveGranule(
+      apiGranule,
+      body.destinations,
+      process.env.DISTRIBUTION_ENDPOINT
+    );
+
+    return res.send({
+      granuleId: apiGranule.granuleId,
+      action,
+      status: 'SUCCESS',
+    });
+  }
+  return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
+}
+
+/**
+ * Update a single granule.
+ * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
+ * If no action is included on the request, the body is assumed to be an
+ * existing granule to update, and update is called with the input parameters.
+ *
+ * DEPRECATED: use put() instead to update granules by
+ *   granuleId + collectionId
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function putByGranuleId(req, res) {
+  const {
+    knex = await getKnexClient(),
+    granulePgModel = new GranulePgModel(),
     reingestHandler = reingestGranule,
     updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
     getFilesExistingAtLocationMethod = getFilesExistingAtLocation,
@@ -708,7 +876,8 @@ router.get('/:collectionId/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', put);
+router.put('/:granuleName', putByGranuleId);
+router.put('/:collectionId/:granuleName', put);
 
 router.post(
   '/bulk',

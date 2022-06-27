@@ -606,7 +606,7 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
 
 test.serial('PUT fails if action is not supported', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'someUnsupportedAction' })
@@ -619,7 +619,7 @@ test.serial('PUT fails if action is not supported', async (t) => {
 
 test.serial('PUT without a body, fails to update granule.', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
@@ -629,8 +629,9 @@ test.serial('PUT without a body, fails to update granule.', async (t) => {
   t.is(message, `input :granuleName (${t.context.fakePGGranules[0].granule_id}) must match body's granuleId (undefined)`);
 });
 
-// This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('reingest a granule', async (t) => {
+// FUTURE: This test should be removed when deprecated putByGranuleId
+//  is removed.
+test.serial('PUT does not require a collectionId.', async (t) => {
   const fakeDescribeExecutionResult = {
     input: JSON.stringify({
       meta: {
@@ -660,6 +661,65 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
+});
+
+test.serial('PUT returns a 404 if the collection is not found.', async (t) => {
+  const response = await request(app)
+    .put(`/granules/unknown___unknown/${t.context.fakePGGranules[2].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(404);
+
+  t.is(response.status, 404);
+  const { message } = response.body;
+  t.is(message, `No collection found for granuleId ${t.context.fakePGGranules[2].granule_id} with collectionId unknown___unknown`);
+});
+
+test.serial('PUT returns a 404 if the granule is not found.', async (t) => {
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/unknownGranuleId`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(404);
+
+  t.is(response.status, 404);
+  const { message } = response.body;
+  t.is(message, 'Granule not found');
+});
+
+// This needs to be serial because it is stubbing aws.sfn's responses
+test.serial('PUT reingests a granule', async (t) => {
+  const fakeDescribeExecutionResult = {
+    input: JSON.stringify({
+      meta: {
+        workflow_name: 'IngestGranule',
+      },
+      payload: {},
+    }),
+  };
+
+  // fake workflow
+  const message = JSON.parse(fakeDescribeExecutionResult.input);
+  const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
+
+  const stub = sinon.stub(sfn(), 'describeExecution').returns({
+    promise: () => Promise.resolve(fakeDescribeExecutionResult),
+  });
+  t.teardown(() => stub.restore());
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(200);
+
+  const body = response.body;
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'reingest');
+  t.true(body.warning.includes('overwritten'));
 
   const updatedPgGranule = await getUniqueGranuleByGranuleId(
     t.context.knex,
@@ -669,7 +729,7 @@ test.serial('reingest a granule', async (t) => {
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('apply an in-place workflow to an existing granule', async (t) => {
+test.serial('PUT applies an in-place workflow to an existing granule', async (t) => {
   const fakeSFResponse = {
     execution: {
       input: JSON.stringify({
@@ -701,7 +761,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.teardown(() => stub.restore());
 
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -723,13 +783,14 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(updatedPgGranule.status, 'queued');
 });
 
-test.serial('remove a granule from CMR', async (t) => {
+test.serial('PUT removes a granule from CMR', async (t) => {
   const {
     s3Buckets,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     esClient: t.context.esClient,
+    collectionId: t.context.collectionId,
     granuleParams: { published: true },
   });
 
@@ -747,7 +808,7 @@ test.serial('remove a granule from CMR', async (t) => {
 
   try {
     const response = await request(app)
-      .put(`/granules/${granuleId}`)
+      .put(`/granules/${t.context.collectionId}/${granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -775,7 +836,7 @@ test.serial('remove a granule from CMR', async (t) => {
   ]));
 });
 
-test.serial('remove a granule from CMR with launchpad authentication', async (t) => {
+test.serial('PUT removes a granule from CMR with launchpad authentication', async (t) => {
   process.env.cmr_oauth_provider = 'launchpad';
   const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
 
@@ -791,7 +852,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
 
   try {
     const response = await request(app)
-      .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+      .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -1716,6 +1777,7 @@ test.serial('PUT with action move returns failure if one granule file exists', a
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: insertedPgGranules[0].granule_id,
     },
     body,
@@ -1752,6 +1814,7 @@ test.serial('put() with action move returns failure if more than one granule fil
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: insertedPgGranules[0].granule_id,
     },
     body,
@@ -2128,6 +2191,7 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: apiGranule.granuleId,
     },
     body: updatedGranule,
@@ -2203,6 +2267,7 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: apiGranule.granuleId,
     },
     body: updatedGranule,
