@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
 - **CUMULUS-2859**
   - Update `postgres-db-migration` lambda timeout to default 900 seconds
   - Add `db_migration_lambda_timeout` variable to `data-persistence` module to
