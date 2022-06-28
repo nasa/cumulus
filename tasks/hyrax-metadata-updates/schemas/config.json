@@ -64,7 +64,7 @@
       "type": "object",
       "description": "map of s3URIs to ETags"
     },
-    "allowNoMetadata": {
+    "skipMetadataCheck": {
       "type": "boolean",
       "description": "allow granules with no metadata to pass without error"
     }

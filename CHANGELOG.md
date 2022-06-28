@@ -61,7 +61,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
 - **CUMULUS-2953**
-  - Added `allowNoMetadata` flag to config for Hyrax metadata updates task.
+  - Added `skipMetadataCheck` flag to config for Hyrax metadata updates task.
   - If this config flag is set to `true`, and a granule has no CMR file, the task will simply return the input values.
 
 - **CUMULUS-2966**

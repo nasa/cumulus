@@ -309,9 +309,9 @@ const updateGranule = (config) => async (granule) => {
   // Read in the metadata file
   const metadataFile = granule.files.find(isCMRFile);
   if (metadataFile === undefined) {
-    if (config.allowNoMetadata) return { granule, etags };
+    if (config.skipMetadataCheck) return { granule, etags };
     throw new RecordDoesNotExist(
-      `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}. Set config.allowNoMetadata to true to silence this error.`
+      `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}. Set config.skipMetadataCheck to true to silence this error.`
     );
   }
   const { bucket: Bucket, key: Key } = metadataFile;

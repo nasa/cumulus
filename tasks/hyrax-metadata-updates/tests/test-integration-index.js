@@ -267,13 +267,13 @@ test.serial('Test failing granule with no metadata', async (t) => {
 
   const expectedError = {
     name: 'RecordDoesNotExist',
-    message: `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}. Set config.allowNoMetadata to true to silence this error.`,
+    message: `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}. Set config.skipMetadataCheck to true to silence this error.`,
   };
   const error = await t.throwsAsync(hyraxMetadataUpdate(e));
   t.like(error, expectedError);
 });
 
-test.serial('Test passing granule with no metadata if config.allowNoMetadata is true', async (t) => {
+test.serial('Test passing granule with no metadata if config.skipMetadataCheck is true', async (t) => {
   const payloadPath = path.join(__dirname, 'data', 'payload-json-nometa.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
@@ -281,7 +281,7 @@ test.serial('Test passing granule with no metadata if config.allowNoMetadata is 
   const e = {
     config: {
       ...event.config,
-      allowNoMetadata: true,
+      skipMetadataCheck: true,
     },
     input: t.context.payload.input,
   };
