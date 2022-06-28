@@ -243,6 +243,65 @@ test.serial('migrateGranuleRecord correctly migrates granule record', async (t) 
   );
 });
 
+test.serial('migrateGranuleRecord correctly migrates granule record with missing execution', async (t) => {
+  const {
+    collectionCumulusId,
+    granulesExecutionsPgModel,
+    granulePgModel,
+    pdrCumulusId,
+    knex,
+    testGranule,
+  } = t.context;
+
+  const updatedTestGranule = { ...testGranule, execution: '' };
+
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(updatedTestGranule, trx)
+  );
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: granuleCumulusId });
+  });
+  const record = await granulePgModel.get(knex, {
+    cumulus_id: granuleCumulusId,
+  });
+
+  t.deepEqual(
+    omit(record, ['cumulus_id']),
+    {
+      granule_id: testGranule.granuleId,
+      status: testGranule.status,
+      collection_cumulus_id: collectionCumulusId,
+      published: testGranule.published,
+      duration: testGranule.duration,
+      time_to_archive: testGranule.timeToArchive,
+      time_to_process: testGranule.timeToPreprocess,
+      product_volume: testGranule.productVolume,
+      error: testGranule.error,
+      cmr_link: testGranule.cmrLink,
+      pdr_cumulus_id: pdrCumulusId,
+      provider_cumulus_id: null,
+      query_fields: null,
+      beginning_date_time: new Date(testGranule.beginningDateTime),
+      ending_date_time: new Date(testGranule.endingDateTime),
+      last_update_date_time: new Date(testGranule.lastUpdateDateTime),
+      processing_end_date_time: new Date(testGranule.processingEndDateTime),
+      processing_start_date_time: new Date(testGranule.processingStartDateTime),
+      production_date_time: new Date(testGranule.productionDateTime),
+      timestamp: new Date(testGranule.timestamp),
+      created_at: new Date(testGranule.createdAt),
+      updated_at: new Date(testGranule.updatedAt),
+    }
+  );
+  t.deepEqual(
+    await granulesExecutionsPgModel.search(
+      knex,
+      { granule_cumulus_id: granuleCumulusId }
+    ),
+    []
+  );
+});
+
 test.serial('migrateGranuleRecord successfully migrates granule record with missing execution', async (t) => {
   const {
     granulePgModel,
