@@ -76,7 +76,7 @@
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
-    "@octokit/graphql": "2.1.1",
+    "@octokit/graphql": "^2.1.1",
     "@types/aws-lambda": "^8.10.58",
     "@types/lodash": "^4.14.150",
     "@types/lodash.iserror": "^3.1.6",
@@ -142,7 +142,7 @@
     "retry": "^0.12.0",
     "rewire": "^4.0.1",
     "semver": "^5.5.0",
-    "simple-git": "^1.96.0",
+    "simple-git": "^3.3.0",
     "sinon": "^9.0.2",
     "snake-camel": "^1.0.6",
     "ssh2-streams": "^0.4.8",
