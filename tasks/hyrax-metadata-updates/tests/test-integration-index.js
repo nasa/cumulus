@@ -267,7 +267,7 @@ test.serial('Test failing granule with no metadata', async (t) => {
 
   const expectedError = {
     name: 'RecordDoesNotExist',
-    message: `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}`,
+    message: `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}. Set config.allowNoMetadata to true to silence this error.`,
   };
   const error = await t.throwsAsync(hyraxMetadataUpdate(e));
   t.like(error, expectedError);
