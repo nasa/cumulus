@@ -257,3 +257,43 @@ export const getGranulesByApiPropertiesQuery = (
     .groupBy(`${collectionsTable}.cumulus_id`)
     .groupBy(`${providersTable}.cumulus_id`);
 };
+
+
+export const getGranuleAndCollection = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  granulePgModel = new GranulePgModel(),
+  granuleId: string,
+  collectionId: string,
+): Promise<object> => {
+  let pgGranule;
+  let pgCollection;
+  let notFoundError;
+
+  try {
+    pgCollection = await collectionPgModel.get(
+      knexOrTransaction, deconstructCollectionId(collectionId)
+    );
+
+    pgGranule = await granulePgModel.get(
+      knexOrTransaction,
+      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        notFoundError = `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`;
+      }
+      if (pgGranule === undefined) {
+        notFoundError = 'Granule not found';
+      }
+    }
+    throw error;
+  }
+
+  return {
+    pgGranule,
+    pgCollection,
+    notFoundError
+  }
+};
