@@ -69,6 +69,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2965**
+  - Update `cumulus-rds-tf` module to ignore `engine_version` lifecycle changes
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
     case of deletion race conditions
