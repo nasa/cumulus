@@ -34,14 +34,14 @@ The following shows the minimal set of keys required for an input payload:
       "createdAt": 1647222436211,
       "files": [
         {
-          "filename": "s3://fakeBucket1//path/to/granule1/foo.jpg",
           "bucket": "fakeBucket",
+          "key": "fakeKey",
           "checksumType": "md5",
           "checksum": "someChecksum"
         },
         {
-          "filename": "s3://fakeBucket1//path/to/granule1/foo.dat",
           "bucket": "fakeBucket",
+          "key": "fakeKey",
           "checksumType": "md5",
           "checksum": "someChecksum"
         },
@@ -50,6 +50,8 @@ The following shows the minimal set of keys required for an input payload:
   ]
 }
 ```
+
+See the full schema here: [LZARDS backup input schema](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/schemas/input.json)
 
 Each granule *must* have a `dataType` and `version` to associate it with a Cumulus collection.
 

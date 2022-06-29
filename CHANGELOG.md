@@ -60,6 +60,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
+- **CUMULUS-2953**
+  - Added `skipMetadataCheck` flag to config for Hyrax metadata updates task.
+  - If this config flag is set to `true`, and a granule has no CMR file, the task will simply return the input values.
+
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
 ### Changed
 
 - **CUMULUS-2967**
@@ -78,11 +85,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+
 ### Fixed
 
 - **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries
+    and 0 visibilityTimeout in rule's meta.
+- **CUMULUS-2961**
+  - Fixed `data-migration2` granule migration logic to allow for DynamoDb granules that have a null/empty string value for `execution`.   The migration will now migrate them without a linked execution.
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB.
+
 ## [v12.0.0] 2022-05-20
 
 ### Breaking Changes

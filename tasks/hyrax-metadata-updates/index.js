@@ -308,10 +308,10 @@ const updateGranule = (config) => async (granule) => {
   addEtagsToFileObjects(granule, etags);
   // Read in the metadata file
   const metadataFile = granule.files.find(isCMRFile);
-  // If there is no metadata file, error out.
   if (metadataFile === undefined) {
+    if (config.skipMetadataCheck) return { granule, etags };
     throw new RecordDoesNotExist(
-      `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}`
+      `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}. Set config.skipMetadataCheck to true to silence this error.`
     );
   }
   const { bucket: Bucket, key: Key } = metadataFile;
