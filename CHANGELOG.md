@@ -44,6 +44,15 @@ upgrading from a version prior to version 12.
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
 
+### Changes
+
+- **CUMULUS-2955**
+  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
+    `granule_cumulus_id` on the files table.
+  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
+    changes from `20220126172008_files_granule_id_index` on any deployed stacks
+    that might have the index to ensure consistency in deployed stacks
+
 ## [v12.0.0] 2022-05-20
 
 **DEPRECATED** -- Please note updates in 12.0.1 mean that any user moving to the 12.0.x series should
