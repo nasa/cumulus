@@ -13,7 +13,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `meta.granuleMetadataFileExtension` to determine the granule metadata file.
     If none is specified, the granule CMR metadata or ISO metadata file is used.
 
+### Added
+
+- **CUMULUS-2787**
+  - Added `lzards-api-client` package to Cumulus with `submitGetRequestToLzards` method to support LZARDS reconciliation report
+
 ### Changed
+
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
@@ -704,12 +712,6 @@ for more on this tool if you are unfamiliar with the various options.
     allow this timeout to be user configurable
 - **CUMULUS-2868**
   - Added `iam:PassRole` permission to `step_policy` in `tf-modules/ingest/iam.tf`
-- **CUMULUS-2787**
-  - Added `lzards-api-client` package to Cumulus with `submitGetRequestToLzards` method to support LZARDS reconciliation report
-
-### Changed
-- **CUMULUS-2787**
-  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 
 ## [v10.1.1] 2022-03-04
 
