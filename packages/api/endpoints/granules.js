@@ -36,7 +36,10 @@ const {
 } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
-const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
+const {
+  moveGranule,
+  getFilesExistingAtLocation,
+} = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
@@ -187,13 +190,37 @@ const putGranule = async (req, res) => {
   return _returnPutGranuleStatus(isNewRecord, apiGranule, res);
 };
 
-async function handlePutAction(action, body, req, res, apiGranule) {
+/**
+ * Applies an 'action' provided with a PUT request
+ * e.g. 'move', 'reingest'
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @param {Object} pgGranule - Postgres Granule object
+ * @param {Object} pgCollection - Postgres Collection object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const handlePutAction = async (
+  req,
+  res,
+  pgGranule,
+  pgCollection
+) => {
   const {
     knex = await getKnexClient(),
     reingestHandler = reingestGranule,
     updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
     getFilesExistingAtLocationMethod = getFilesExistingAtLocation,
   } = req.testContext || {};
+
+  const body = req.body;
+  const action = body.action;
+
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    collectionPgRecord: pgCollection,
+    knexOrTransaction: knex,
+  });
 
   const granuleId = apiGranule.granuleId;
 
@@ -297,10 +324,10 @@ async function handlePutAction(action, body, req, res, apiGranule) {
     });
   }
   return res.boom.badRequest('Action is not supported. Choices are "applyWorkflow", "move", "reingest", "removeFromCmr" or specify no "action" to update an existing granule');
-}
+};
 
 /**
- * Update a single granule.
+ * Update a single granule by granuleId and collectionId.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  * If no action is included on the request, the body is assumed to be an
  * existing granule to update, and update is called with the input parameters.
@@ -312,15 +339,11 @@ async function handlePutAction(action, body, req, res, apiGranule) {
 async function put(req, res) {
   const {
     knex = await getKnexClient(),
+    granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
   } = req.testContext || {};
 
-  const granuleId = req.params.granuleName;
-  const collectionId = req.params.collectionId;
-
-  const body = req.body;
-  const action = body.action;
-
-  if (!action) {
+  if (!req.body.action) {
     if (req.body.granuleId === req.params.granuleName) {
       return putGranule(req, res);
     }
@@ -329,27 +352,27 @@ async function put(req, res) {
     );
   }
 
-  const [
+  const {
     pgGranule,
     pgCollection,
     notFoundError,
-  ] = await getGranuleAndCollection(knex, granuleId, collectionId);
+  } = await getGranuleAndCollection(
+    knex,
+    collectionPgModel,
+    granulePgModel,
+    req.params.granuleName,
+    req.params.collectionId
+  );
 
   if (notFoundError) {
     return res.boom.notFound(notFoundError);
   }
 
-  const apiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    collectionPgRecord: pgCollection,
-    knexOrTransaction: knex,
-  });
-
-  return await handlePutAction(action, body, req, res, apiGranule);
+  return await handlePutAction(req, res, pgGranule, pgCollection);
 }
 
 /**
- * Update a single granule.
+ * Update a single granule by granuleId.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  * If no action is included on the request, the body is assumed to be an
  * existing granule to update, and update is called with the input parameters.
@@ -365,16 +388,9 @@ async function putByGranuleId(req, res) {
   const {
     knex = await getKnexClient(),
     granulePgModel = new GranulePgModel(),
-    reingestHandler = reingestGranule,
-    updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
-    getFilesExistingAtLocationMethod = getFilesExistingAtLocation,
   } = req.testContext || {};
 
-  const granuleId = req.params.granuleName;
-  const body = req.body;
-  const action = body.action;
-
-  if (!action) {
+  if (!req.body.action) {
     if (req.body.granuleId === req.params.granuleName) {
       return putGranule(req, res);
     }
@@ -383,20 +399,15 @@ async function putByGranuleId(req, res) {
     );
   }
 
-  const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
+  const pgGranule = await getUniqueGranuleByGranuleId(knex, req.params.granuleName, granulePgModel);
 
   const collectionPgModel = new CollectionPgModel();
   const pgCollection = await collectionPgModel.get(
     knex,
     { cumulus_id: pgGranule.collection_cumulus_id }
   );
-  const apiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    collectionPgRecord: pgCollection,
-    knexOrTransaction: knex,
-  });
 
-  return await handlePutAction(action, body, req, res, apiGranule);
+  return await handlePutAction(req, res, pgGranule, pgCollection);
 }
 
 /**

@@ -259,6 +259,18 @@ export const getGranulesByApiPropertiesQuery = (
 };
 
 
+/**
+ * Get Postgres Granule and Collection objects for a granuleId + collectionId
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {Object} [collectionPgModel] - Collection PG model class instance
+ * @param {Object} [granulePgModel] - Granule PG model class instance
+ * @param {String} granuleId - primary ID for granule record
+ * @param {String} collectionId - collection ID in 'name___version' format
+ * @returns {Promise<object>} an object containing the Postgres Granule,
+ * Postgres Collection, and an optional "Not Found" error message
+ */
 export const getGranuleAndCollection = async (
   knexOrTransaction: Knex | Knex.Transaction,
   collectionPgModel = new CollectionPgModel(),
@@ -284,11 +296,12 @@ export const getGranuleAndCollection = async (
       if (collectionId && pgCollection === undefined) {
         notFoundError = `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`;
       }
-      if (pgGranule === undefined) {
+      else {
         notFoundError = 'Granule not found';
       }
+    } else {
+      throw error;
     }
-    throw error;
   }
 
   return {
