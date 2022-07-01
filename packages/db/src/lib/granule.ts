@@ -258,7 +258,6 @@ export const getGranulesByApiPropertiesQuery = (
     .groupBy(`${providersTable}.cumulus_id`);
 };
 
-
 /**
  * Get Postgres Granule and Collection objects for a granuleId + collectionId
  *
@@ -276,7 +275,7 @@ export const getGranuleAndCollection = async (
   collectionPgModel = new CollectionPgModel(),
   granulePgModel = new GranulePgModel(),
   granuleId: string,
-  collectionId: string,
+  collectionId: string
 ): Promise<object> => {
   let pgGranule;
   let pgCollection;
@@ -295,8 +294,7 @@ export const getGranuleAndCollection = async (
     if (error instanceof RecordDoesNotExist) {
       if (collectionId && pgCollection === undefined) {
         notFoundError = `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`;
-      }
-      else {
+      } else {
         notFoundError = 'Granule not found';
       }
     } else {
@@ -307,6 +305,6 @@ export const getGranuleAndCollection = async (
   return {
     pgGranule,
     pgCollection,
-    notFoundError
-  }
+    notFoundError,
+  };
 };
