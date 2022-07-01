@@ -49,7 +49,7 @@ test.serial(
       let results = (await esScrollSearch.query()).results;
       t.is(results.length, testScrollSize);
 
-      const spy = sinon.spy(esScrollSearch.client, 'scroll');
+      const spy = sandbox.spy(esScrollSearch.client, 'scroll');
       let calls = 0;
       /* eslint-disable no-await-in-loop */
       do {

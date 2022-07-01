@@ -23,7 +23,7 @@ test.beforeEach(async (t) => {
     alias: t.context.esAlias,
   });
   t.context.esClient = await Search.es();
-  t.context.esClientSpy = sinon.spy(t.context.esClient, 'scroll');
+  t.context.esClientSpy = sandbox.spy(t.context.esClient, 'scroll');
 });
 
 test.afterEach.always(async (t) => {
