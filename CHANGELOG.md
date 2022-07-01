@@ -6,19 +6,43 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable changes
+
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
+### Changed
+
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
+
+### Fixed
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB
+
+## [v13.0.0] 2022-06-13
+
 ### MIGRATION NOTES
 
 - The changes introduced in CUMULUS-2955 should result in removal of
   `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
-  release).  The success of this operation is dependent on system ingest load
+  release).  The success of this operation is dependent on system ingest load.
 
   In rare cases where data-persistence deployment fails because the
   `postgres-db-migration` times out, it may be required to manually remove the
   index and then redeploy:
 
   ```text
-  DROP INDEX IF EXISTS postgres-db-migration;
-  DROP INDEX
+  DROP INDEX IF EXISTS files_granule_cumulus_id_index;
   ```
 
 ### Breaking Changes
@@ -35,15 +59,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     parameterized and accommodate a new parameter `removeAliasConflict` which
     allows/disallows the deletion of a conflicting `cumulus-alias` index
 
-- **CUMULUS-2903**
-
-  - The minimum supported version for all published Cumulus Core npm packages is
-    now  Node 14.19.1
-  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
-    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
-    property of any tasks defined using the `cumulus_ecs_service` Terraform
-    module.
-
 ### Notable changes
 
 - **CUMULUS-2929**
@@ -55,13 +70,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2929**
   - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
-    file extension for tasks that utilize metadata file lookups 
+    file extension for tasks that utilize metadata file lookups
 
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
+- **CUMULUS-2953**
+  - Added `skipMetadataCheck` flag to config for Hyrax metadata updates task.
+  - If this config flag is set to `true`, and a granule has no CMR file, the task will simply return the input values.
+
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
 ### Changed
 
+- **CUMULUS-2965**
+  - Update `cumulus-rds-tf` module to ignore `engine_version` lifecycle changes
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
 - **CUMULUS-2955**
   - Updates `20220126172008_files_granule_id_index` to *not* create an index on
     `granule_cumulus_id` on the files table.
@@ -84,11 +111,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+
 ### Fixed
 
 - **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries
+    and 0 visibilityTimeout in rule's meta.
+- **CUMULUS-2961**
+  - Fixed `data-migration2` granule migration logic to allow for DynamoDb granules that have a null/empty string value for `execution`.   The migration will now migrate them without a linked execution.
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB.
+
 ## [v12.0.0] 2022-05-20
 
 ### Breaking Changes
@@ -6007,7 +6044,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v12.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.0...HEAD
+[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.0...v13.0.0
 [v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0

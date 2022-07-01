@@ -91,4 +91,8 @@ resource "aws_rds_cluster" "cumulus" {
   final_snapshot_identifier       = "${var.cluster_identifier}-final-snapshot"
   snapshot_identifier             = var.snapshot_identifier
   db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.rds_cluster_group.id
+
+  lifecycle {
+    ignore_changes = [engine_version]
+  }
 }
