@@ -268,6 +268,56 @@ test.serial('messages are retried the correct number of times based on the rule 
   });
 });
 
+test.serial('messages are not retried if retries is set to zero in the rule configuration', async (t) => {
+  const { queueMessageStub } = t.context;
+  // set visibilityTimeout to 5s so the message is available 5s after retrieval
+  const visibilityTimeout = 5;
+  const queueMaxReceiveCount = 3;
+
+  const { rules, queues } = await createRulesAndQueues(
+    { visibilityTimeout, retries: 0 },
+    queueMaxReceiveCount
+  );
+  t.context.fetchRulesStub.returns(rules.filter((rule) => rule.state === 'ENABLED'));
+
+  const queueMessageFromEnabledRuleStub = queueMessageStub
+    .withArgs(rules[1], sinon.match.any, sinon.match.any);
+
+  // send two messages to the queue of the ENABLED sqs rule
+  await Promise.all(
+    range(2).map(() =>
+      SQS.sendSQSMessage(
+        queues[0].queueUrl,
+        { testdata: randomString() }
+      ))
+  );
+
+  await handler(event);
+
+  /* eslint-disable no-await-in-loop */
+  for (let i = 0; i < queueMaxReceiveCount; i += 1) {
+    await delay(visibilityTimeout * 1000);
+    await handler(event);
+  }
+  /* eslint-enable no-await-in-loop */
+
+  // the retries is 0, so each message can only be scheduled for workflow execution once
+  t.is(queueMessageStub.callCount, 2);
+  t.is(queueMessageFromEnabledRuleStub.callCount, 2);
+
+  // messages are picked up from the source queue
+  const numberOfMessages = await getSqsQueueMessageCounts(queues[0].queueUrl);
+  t.is(numberOfMessages.numberOfMessagesAvailable, 0);
+
+  // messages are moved to dead-letter queue after `queueMaxReceiveCount` retries
+  const numberOfMessagesDLQ = await getSqsQueueMessageCounts(queues[0].deadLetterQueueUrl);
+  t.is(numberOfMessagesDLQ.numberOfMessagesAvailable, 2);
+
+  t.teardown(async () => {
+    await cleanupQueues(queues);
+  });
+});
+
 test.serial('SQS message consumer queues workflow for rule when there is no event collection', async (t) => {
   const { queueMessageStub } = t.context;
 
