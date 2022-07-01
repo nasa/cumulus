@@ -21,8 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   migration and time to create the index given the resources available.
 
   For reference a rx.5 large Aurora/RDS database
-  with no activity took roughly 6 minutes to create the index for a 300M file
-  table with no ingest, however timed out when the same migration was attempted
+  with *no activity* took roughly 6 minutes to create the index for a file table with 300M records and no active ingest, however timed out when the same migration was attempted
   in production with possible activity on the table.
 
   If you believe you are subject to the above consideration, you may opt to
