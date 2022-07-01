@@ -37,7 +37,7 @@
     "@cumulus/aws-client": "13.0.0",
     "@cumulus/errors": "13.0.0",
     "@cumulus/logger": "13.0.0",
-    "got": "^11.7.0",
+    "got": "^11.8.5",
     "lodash": "^4.17.21",
     "public-ip": "^3.0.0",
     "xml2js": "^0.4.19"
