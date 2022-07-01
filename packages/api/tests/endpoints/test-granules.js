@@ -889,6 +889,10 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
+// TODO
+// test.serial('DELETE returns 404 if collection does not exist', async (t) => {});
+// test.serial('DELETE does not require a collectionId', async (t) => {});
+
 test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
   const {
     esGranulesClient,
@@ -930,7 +934,7 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 
   const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
+    .delete(`/granules/${newCollectionId}/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -991,7 +995,7 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
   t.true(await esGranulesClient.exists(newGranule.granuleId));
 
   const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
+    .delete(`/granules/${newCollectionId}/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -1003,7 +1007,7 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 });
 
-test.serial('del() fails to delete a granule that has multiple entries in Elasticsearch, but no records in PostgreSQL', async (t) => {
+test.serial('DELETE fails to delete a granule that has multiple entries in Elasticsearch, but no records in PostgreSQL', async (t) => {
   const {
     knex,
   } = t.context;
@@ -1043,6 +1047,7 @@ test.serial('del() fails to delete a granule that has multiple entries in Elasti
   const expressRequest = {
     params: {
       granuleName: newGranule.granuleId,
+      collectionId: newCollectionId,
     },
     testContext: {
       esGranulesClient: {
@@ -1059,6 +1064,7 @@ test.serial('del() fails to delete a granule that has multiple entries in Elasti
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
@@ -1066,17 +1072,10 @@ test.serial('DELETE deleting an existing granule that is published will fail and
     esClient: t.context.esClient,
   });
 
-  const collectionCumulusId = newPgGranule.collection_cumulus_id;
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: t.context.knex,
-  });
-
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   const response = await request(app)
-    .delete(`/granules/${granuleId}`)
+    .delete(`/granules/${apiGranule.collectionId}/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
@@ -1091,12 +1090,12 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   // granule should still exist in Postgres
   t.true(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
   ));
 
   // Verify files still exist in S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1111,6 +1110,7 @@ test.serial('DELETE deleting an existing granule that is published will fail and
 test.serial('DELETE deleting an existing unpublished granule succeeds', async (t) => {
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
@@ -1118,15 +1118,8 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     esClient: t.context.esClient,
   });
 
-  const collectionCumulusId = newPgGranule.collection_cumulus_id;
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: t.context.knex,
-  });
-
   const response = await request(app)
-    .delete(`/granules/${newApiGranule.granuleId}`)
+    .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -1135,17 +1128,17 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   // granule has been deleted from Postgres
   t.false(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
   ));
 
   // verify the files are deleted from S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1158,21 +1151,14 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
 });
 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { knex } = t.context;
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    esClient: t.context.esClient,
     granuleParams: { published: true },
-  });
-
-  const collectionCumulusId = newPgGranule.collection_cumulus_id;
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: knex,
+    esClient: t.context.esClient,
   });
 
   sinon
@@ -1181,7 +1167,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 
   try {
     const response = await request(app)
-      .delete(`/granules/${newApiGranule.granuleId}`)
+      .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`);
     t.is(response.status, 400);
@@ -1189,17 +1175,17 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
     GranulePgModel.prototype.get.restore();
   }
 
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   // granule has not been deleted from Postgres
   t.true(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
   ));
 
   // verify the files still exist in S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1212,25 +1198,20 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 });
 
 test.serial('DELETE publishes an SNS message after a successful granule delete', async (t) => {
-  const { knex } = t.context;
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    esClient: t.context.esClient,
     granuleParams: { published: false },
-  });
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: knex,
+    esClient: t.context.esClient,
   });
 
   const timeOfResponse = Date.now();
 
   const response = await request(app)
-    .delete(`/granules/${newApiGranule.granuleId}`)
+    .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -1239,7 +1220,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(
@@ -1252,7 +1233,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
 
   // verify the files are deleted from S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1269,7 +1250,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.is(publishedMessage.record.granuleId, newApiGranule.granuleId);
+  t.is(publishedMessage.record.granuleId, apiGranule.granuleId);
   t.is(publishedMessage.event, 'Delete');
   t.true(publishedMessage.deletedAt > timeOfResponse);
   t.true(publishedMessage.deletedAt < Date.now());

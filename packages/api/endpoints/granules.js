@@ -500,13 +500,16 @@ const associateExecution = async (req, res) => {
 };
 
 /**
- * Delete a granule
+ * Delete a granule by granuleId
+ *
+ * DEPRECATED: use del() instead to delete granules by
+ *   granuleId + collectionId
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function del(req, res) {
+async function delByGranuleId(req, res) {
   const {
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -531,6 +534,74 @@ async function del(req, res) {
       // TODO - Phase 3 - we need to require the collectionID, not infer it
 
       esResult = await esGranulesClient.get(granuleId);
+
+      if (esResult.detail === recordNotFoundString) {
+        log.info('Granule does not exist in Elasticsearch and PostgreSQL');
+        return res.boom.notFound('No record found');
+      }
+      if (esResult.detail === multipleRecordFoundString) {
+        return res.boom.notFound('No Postgres record found, multiple ES entries found for deletion');
+      }
+      log.info(`Postgres Granule with ID ${granuleId} does not exist but exists in Elasticsearch.  Proceeding to remove from elasticsearch.`);
+    } else {
+      throw error;
+    }
+  }
+
+  await deleteGranuleAndFiles({
+    knex,
+    apiGranule: esResult,
+    pgGranule: pgGranule,
+    esClient,
+  });
+
+  return res.send({ detail: 'Record deleted' });
+}
+
+/**
+ * Delete a granule by granuleId + collectionId
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function del(req, res) {
+  const {
+    knex = await getKnexClient(),
+    collectionPgModel = new CollectionPgModel(),
+    granulePgModel = new GranulePgModel(),
+    esClient = await Search.es(),
+    esGranulesClient = new Search(
+      {},
+      'granule',
+      process.env.ES_INDEX
+    ),
+  } = req.testContext || {};
+
+  const granuleId = req.params.granuleName;
+  const collectionId = req.params.collectionId;
+
+  log.info(`granules.del ${granuleId}`);
+
+  let pgGranule;
+  let pgCollection;
+  let esResult;
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex, deconstructCollectionId(collectionId)
+    );
+
+    pgGranule = await granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        return res.boom.notFound(`No collection found for granuleId ${granuleId} with collectionId ${collectionId}`);
+      }
+
+      esResult = await esGranulesClient.get(granuleId, collectionId);
 
       if (esResult.detail === recordNotFoundString) {
         log.info('Granule does not exist in Elasticsearch and PostgreSQL');
@@ -806,7 +877,8 @@ router.post(
   bulkReingest,
   asyncOperationEndpointErrorHandler
 );
-router.delete('/:granuleName', del);
+router.delete('/:granuleName', delByGranuleId);
+router.delete('/:collectionId/:granuleName', del);
 
 module.exports = {
   bulkOperations,
