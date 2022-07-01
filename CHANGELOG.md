@@ -30,20 +30,6 @@ upgrading from a version prior to version 12.
   DROP INDEX IF EXISTS files_granule_cumulus_id_index;
   ```
 
-### Breaking Changes
-
-- **CUMULUS-2931**
-
-  - Updates CustomBootstrap lambda to default to failing if attempting to remove
-    a pre-existing `cumulus-alias` index that would collide with the required
-    `cumulus-alias` *alias*.   A configuration parameter
-    `elasticsearch_remove_index_alias_conflict`  on the `cumulus` and
-    `archive` modules has been added to enable the original behavior that would
-    remove the invalid index (and all it's data).
-  - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
-    parameterized and accommodate a new parameter `removeAliasConflict` which
-    allows/disallows the deletion of a conflicting `cumulus-alias` index
-
 ### Changes
 
 - **CUMULUS-2955**
