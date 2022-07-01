@@ -15,8 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   *In cases where the index is already applied, this update will have no effect*.
 
-  **Please Note**: In some cases where ingest is occurring at high volume levels and/or there are
-  record volumes in the files table of > 150M files records, the migration may
+  **Please Note**: In some cases where ingest is occurring at high volume levels and/or the
+  files table has > 150M file records, the migration may
   fail on deployment due to timing required to both acquire the table state needed for the
   migration and time to create the index given the resources available.
 
