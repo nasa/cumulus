@@ -35,37 +35,28 @@ const {
  *
  */
 class ESScrollSearch extends Search {
-  async query(searchContext) {
+  async query() {
     if (!this.client) {
       this.client = await super.constructor.es();
     }
     let response;
-    if (!this.scrollId && !searchContext) {
+    if (!this.scrollId) {
       const searchParams = this._buildSearch();
-      // this.params.limit exists for API invocation vs. not for reconciliation usage
-      searchParams.size = Number(this.params.limit
-        ? this.size : (process.env.ES_SCROLL_SIZE || defaultESScrollSize));
+      searchParams.size = Number(process.env.ES_SCROLL_SIZE || defaultESScrollSize);
       searchParams.scroll = process.env.ES_SCROLL || defaultESScrollDuration;
       response = await this.client.search(searchParams);
       this.scrollId = response.body._scroll_id;
     } else {
       response = await this.client.scroll({
-        scrollId: searchContext || this.scrollId,
+        scrollId: this.scrollId,
         scroll: process.env.ES_SCROLL || defaultESScrollDuration,
       });
       this.scrollId = response.body._scroll_id;
     }
-
-    const meta = this._metaTemplate();
-    meta.searchContext = this.scrollId;
-    meta.count = response.body.hits.total;
-    meta.page = this.page;
-    const hits = response.body.hits.hits;
-
-    return {
-      meta,
-      results: (hits.length > 0) ? hits.map((s) => s._source) : [],
-    };
+    if (response.body.hits.hits.length > 0) {
+      return response.body.hits.hits.map((s) => s._source);
+    }
+    return [];
   }
 }
 

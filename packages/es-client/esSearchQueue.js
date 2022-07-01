@@ -75,7 +75,7 @@ class ESSearchQueue {
         this.index
       );
     }
-    this.items = (await this.scrollClient.query()).results;
+    this.items = await this.scrollClient.query();
   }
 }
 
