@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   This index will be automatically created as part of the bootstrap lambda
   function *on deployment* of the `data-persistence` module.
 
-  *In cases where the index is already applied, this update have no effect*.
+  *In cases where the index is already applied, this update will have no effect*.
 
   **Please Note**: In some cases where ingest is occurring at high volume levels and/or there are
   record volumes in the files table of > 150M files records, the migration may
