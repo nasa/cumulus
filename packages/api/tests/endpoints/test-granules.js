@@ -889,9 +889,59 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
   t.true(response.body.message.includes('No record found'));
 });
 
-// TODO
-// test.serial('DELETE returns 404 if collection does not exist', async (t) => {});
-// test.serial('DELETE does not require a collectionId', async (t) => {});
+test.serial('DELETE returns 404 if collection does not exist', async (t) => {
+  const granuleId = randomString();
+  const response = await request(app)
+    .delete(`/granules/unknown___unknown/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.true(response.body.message.includes(`No collection found for granuleId ${granuleId} with collectionId unknown___unknown`));
+});
+
+// FUTURE: This test should be removed when deprecated delByGranuleId is removed
+test.serial('DELETE does not require a collectionId', async (t) => {
+  const {
+    s3Buckets,
+    apiGranule,
+    newPgGranule,
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    granuleParams: { published: false },
+    esClient: t.context.esClient,
+  });
+
+  const response = await request(app)
+    .delete(`/granules/${apiGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  const granuleId = apiGranule.granuleId;
+
+  // granule has been deleted from Postgres
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
+
+  // verify the files are deleted from S3 and Postgres
+  await Promise.all(
+    apiGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
 
 test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
   const {
