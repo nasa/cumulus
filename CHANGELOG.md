@@ -61,7 +61,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   the system.
 
   Note: In rare instances if there are hung queries that are unable to resolve, it may be necessary to
-  manually use psql `Server Signaling Functions` `pg_cancel_backend` and/or
+  manually use psql [Server Signaling
+  Functions](https://www.postgresql.org/docs/10/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL)
+  `pg_cancel_backend` and/or
   `pg_terminate_backend` if the migration will not complete in the next step.
 
   - Create the Index
