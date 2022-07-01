@@ -6,32 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Notable changes
+### MIGRATION notes
 
-- **CUMULUS-2929**
-  - Updated `move-granule` task to check the optional collection configuration parameter
-    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
-    If none is specified, the granule CMR metadata or ISO metadata file is used.
-
-### Changed
-
-- **CUMULUS-2967**
-  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
-    case of deletion race conditions
-
-### Fixed
-
-- **CUMULUS-2863**
-  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
-    in rule's meta.
-
-- **CUMULUS-2959**
-  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
-    when an old granule record is retrieved from DynamoDB
-
-## [v13.0.0] 2022-06-13
-
-### MIGRATION NOTES
 
 - The changes introduced in CUMULUS-2962 will re-introduce a
   `files_granules_cumulus_id_index` on the `files` table in the RDS database.
@@ -132,6 +108,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   this route should proceed with caution.
 
   -----
+
+### Notable changes
+
+- **CUMULUS-2962**
+  - Re-added database structural migration to `files` table to add an index on `granule_cumulus_id`
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
+### Changed
+
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
+
+### Fixed
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB
+
+## [v13.0.0] 2022-06-13
+
+### MIGRATION NOTES
 
 - The changes introduced in CUMULUS-2955 should result in removal of
   `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
