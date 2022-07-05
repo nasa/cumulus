@@ -46,15 +46,15 @@ test.serial(
       );
 
       let allResults = [];
-      let results = (await esScrollSearch.query()).results;
+      let results = await esScrollSearch.query();
       t.is(results.length, testScrollSize);
 
-      const spy = sandbox.spy(esScrollSearch.client, 'scroll');
+      const spy = sinon.spy(esScrollSearch.client, 'scroll');
       let calls = 0;
       /* eslint-disable no-await-in-loop */
       do {
         allResults = allResults.concat(results);
-        results = (await esScrollSearch.query()).results;
+        results = await esScrollSearch.query();
         calls += 1;
       } while (results.length > 0);
       /* eslint-enable no-await-in-loop */
