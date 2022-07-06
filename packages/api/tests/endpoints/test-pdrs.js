@@ -48,7 +48,6 @@ const { del } = require('../../endpoints/pdrs');
 const { buildFakeExpressResponse } = require('./utils');
 
 process.env.AccessTokensTable = randomString();
-process.env.PdrsTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();

@@ -426,7 +426,6 @@ async function eraseDynamoTables(stackName, systemBucket) {
   const rulesModel = new models.Rule();
   const executionModel = new models.Execution();
   const granulesModel = new models.Granule();
-  const pdrsModel = new models.Pdr();
 
   try {
     await rulesModel.deleteRules();
@@ -434,7 +433,6 @@ async function eraseDynamoTables(stackName, systemBucket) {
       providerModel.deleteProviders(),
       executionModel.deleteExecutions(),
       granulesModel.deleteGranules(),
-      pdrsModel.deletePdrs(),
     ]);
   } catch (error) {
     console.log(error);
