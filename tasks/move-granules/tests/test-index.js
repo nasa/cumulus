@@ -803,7 +803,7 @@ test.serial('should move files even when there is a zero byte xml file', async (
 
   const check = await s3ObjectExists({
     Bucket: t.context.publicBucket,
-    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+    Key: 'example/test/emptyxml/MOD11A1.A2017200.h19v04.006.2017201090724.empty.cmr.xml',
   });
 
   t.true(check);

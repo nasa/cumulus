@@ -54,7 +54,7 @@
           "url_path": "jpg/example/"
         }
       ],
-      "url_path": "example/test/emptyxml",
+      "url_path": "example/test/emptyxml/",
       "name": "MOD11A1",
       "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
       "dataType": "MOD11A1",
