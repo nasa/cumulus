@@ -36,6 +36,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2939**
   - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
 
+  **CUMULUS-2557**
+  - Added test for moveGranules that allows for a zero byte xml file in a granule to be encountered and not fail
+
 ### Changed
 
 - **CUMULUS-2923**

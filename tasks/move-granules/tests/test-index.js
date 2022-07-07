@@ -32,7 +32,11 @@ const { moveGranules } = require('..');
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => {
     let body;
-    if (isECHO10Filename(file)) {
+    if (file.endsWith('empty.cmr.xml')) {
+      // specifying emtpy zero byte xml file
+      // TODO: should abstract to cmr-utils?
+      body = fs.createReadStream('tests/data/empty_meta.xml')
+    } else if (isECHO10Filename(file)) {
       body = fs.createReadStream('tests/data/meta.xml');
     } else if (isISOFilename(file)) {
       body = fs.createReadStream('tests/data/meta.iso.xml');
@@ -778,3 +782,29 @@ test.serial('default_s3_multipart_chunksize_mb is used for moving s3 files if ta
 
   moveObjectStub.restore();
 });
+
+test.serial('should move files even when there is a zero byte xml file', async (t) => {
+  // redo payload initialization from beforeEach, but for payload with an empty xml
+  const payloadPath = path.join(__dirname, 'data', 'payload_with_empty_xml.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+  const filesToUpload = granulesToFileURIs(
+    t.context.stagingBucket,
+    t.context.payload.input.granules
+  );
+  t.context.filesToUpload = filesToUpload.map((file) =>
+    buildS3Uri(`${t.context.stagingBucket}`, parseS3Uri(file).Key));
+
+  const newPayload = buildPayload(t);
+  await uploadFiles(t.context.filesToUpload, t.context.stagingBucket);
+
+  const output = await moveGranules(newPayload);
+  await validateOutput(t, output);
+
+  const check = await s3ObjectExists({
+    Bucket: t.context.publicBucket,
+    Key: 'jpg/example/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg',
+  });
+
+  t.true(check);
+})
