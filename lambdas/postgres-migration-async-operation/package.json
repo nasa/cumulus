@@ -28,7 +28,7 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "13.0.0",
+    "@cumulus/api": "13.0.1-alpha.1",
     "@cumulus/async-operations": "13.0.0",
     "@cumulus/logger": "13.0.0",
     "@cumulus/types": "13.0.0"

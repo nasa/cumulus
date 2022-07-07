@@ -17,7 +17,7 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "13.0.0",
+    "@cumulus/api": "13.0.1-alpha.1",
     "@cumulus/aws-client": "13.0.0",
     "@cumulus/cmrjs": "13.0.0",
     "@cumulus/errors": "13.0.0",

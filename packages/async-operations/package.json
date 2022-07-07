@@ -31,7 +31,7 @@
     "@cumulus/aws-client": "13.0.0",
     "@cumulus/db": "13.0.0",
     "@cumulus/errors": "13.0.0",
-    "@cumulus/es-client": "13.0.0",
+    "@cumulus/es-client": "13.0.1-alpha.1",
     "@cumulus/types": "13.0.0",
     "knex": "0.95.15",
     "uuid": "8.3.2"
