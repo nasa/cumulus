@@ -1,0 +1,42 @@
+{
+    "Comment": "Lzards Backup Workflow Test",
+    "StartAt": "LzardsBackup",
+    "States": {
+      "LzardsBackup": {
+        "Parameters": {
+          "cma": {
+            "event.$": "$",
+            "task_config": {
+              "urlType": "{$.meta.urlType}",
+              "cloudfrontEndpoint": "{$.meta.cloudfrontEndpoint}"
+            }
+          }
+        },
+        "Type": "Task",
+        "Resource": "${lzards_backup_task_arn}",
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "ResultPath": "$.exception",
+            "Next": "WorkflowFailed"
+          }
+        ],
+        "End": true
+      }
+    }
+  }
+  

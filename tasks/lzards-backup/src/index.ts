@@ -388,5 +388,6 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
 export const handler = async (
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
-): Promise<CumulusMessageWithAssignedPayload
-| CumulusRemoteMessage> => await runCumulusTask(backupGranulesToLzards, event, context);
+): Promise<CumulusMessageWithAssignedPayload | CumulusRemoteMessage> => {
+  return await runCumulusTask(backupGranulesToLzards, event, context);
+};
