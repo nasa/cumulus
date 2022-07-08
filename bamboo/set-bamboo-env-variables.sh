@@ -5,6 +5,7 @@ set -ex
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
 declare -a param_list=(
   "bamboo_AWS_REGION"
+  "bamboo_CUMULUS_BASE_IMAGE"
   "bamboo_CMR_PASSWORD"
   "bamboo_CMR_USERNAME"
   "bamboo_DEPLOYMENT"
