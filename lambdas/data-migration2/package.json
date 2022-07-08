@@ -28,7 +28,7 @@
     "@aws-sdk/client-dynamodb": "^3.58.0",
     "@aws-sdk/lib-dynamodb": "^3.58.0",
     "@aws-sdk/util-dynamodb": "^3.58.0",
-    "@cumulus/api": "13.0.1-alpha.1",
+    "@cumulus/api": "13.0.0",
     "@cumulus/aws-client": "13.0.0",
     "@cumulus/common": "13.0.0",
     "@cumulus/db": "13.0.0",
