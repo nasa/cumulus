@@ -211,6 +211,7 @@ export const makeBackupFileRequest = async (params: {
       Key,
       urlConfig: backupConfig,
     });
+    log.info(`collectionId: ${collectionId}`);
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
       authToken,
@@ -278,7 +279,7 @@ export const backupGranule = async (params: {
   },
 }) => {
   let granuleCollection : CollectionRecord;
-  let collectionId : string;
+  let collectionId: string = '';
   const { granule, backupConfig } = params;
   let granuleFromStepOutput = granule as MessageGranuleFromStepOutput;
   let apiGranule = granule as ApiGranule;
@@ -303,6 +304,7 @@ export const backupGranule = async (params: {
       log.info(`${granule}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
       throw new CollectionIdentifiersNotProvidedError("[dataType and version] or [collectionId] required.");
     }
+
     const backupFiles = granule.files.filter(
       (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
     );

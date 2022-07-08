@@ -6,6 +6,10 @@
         "Parameters": {
           "cma": {
             "event.$": "$",
+            "ReplaceConfig": {
+              "Path": "$.payload",
+              "TargetPath": "$.payload"
+            },
             "task_config": {
               "urlType": "{$.meta.urlType}",
               "cloudfrontEndpoint": "{$.meta.cloudfrontEndpoint}"
@@ -36,6 +40,10 @@
           }
         ],
         "End": true
+      },
+      "WorkflowFailed": {
+        "Type": "Fail",
+        "Cause": "Workflow failed"
       }
     }
   }

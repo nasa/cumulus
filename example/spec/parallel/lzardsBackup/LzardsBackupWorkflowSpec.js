@@ -1,15 +1,16 @@
 'use strict';
 
 const get = require('lodash/get');
-const pAll = require('p-all');
 const path = require('path');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
-const { lambda } = require('@cumulus/aws-client/services');
 const { putFile } = require('@cumulus/aws-client/S3');
+const {
+  waitForCompletedExecution,
+} = require('@cumulus/integration-tests');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
@@ -38,7 +39,7 @@ describe('The Lzards Backup workflow ', () => {
       provider = await buildHttpOrHttpsProvider(testSuffix, config.bucket, 'https');
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
-      FunctionName = `${prefix}-LzardsBackup`;
+      const FunctionName = `${prefix}-LzardsBackup`;
 
       // Create the collection
       collection = await createCollection(
@@ -96,6 +97,12 @@ describe('The Lzards Backup workflow ', () => {
           payload,
           { urlType: 's3'}
         )
+        const executionArn = workflowExecution.executionArn;
+        console.log(`Wait for completed execution ${executionArn}`);
+  
+        await waitForCompletedExecution(executionArn);
+        const lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
+        console.log('LAMBDA OUTPUT', lambdaOutput);
       } catch (error) {
         beforeAllFailed = error;
       }
