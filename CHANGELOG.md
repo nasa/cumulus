@@ -118,6 +118,10 @@ releases.
 
   -----
 
+### Changed
+
+- Updated Moment.js package to 2.29.4 to address security vulnerability
+
 ## [v11.1.3] 2022-06-17
 
 **Please note** changes in 11.1.3 may not yet be released in future versions, as
