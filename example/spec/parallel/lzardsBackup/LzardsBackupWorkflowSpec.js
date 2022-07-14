@@ -38,7 +38,6 @@ describe('The Lzards Backup workflow ', () => {
       ingestPath = `${prefix}/lzardsBackupWorkflowSpec`;
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
-      const FunctionName = `${prefix}-LzardsBackup`;
 
       // Create the collection
       collection = await createCollection(
@@ -59,7 +58,8 @@ describe('The Lzards Backup workflow ', () => {
           ],
         }
       );
-      provider = await createProvider(config.stackName, provider);
+      const httpsProvider = await buildHttpOrHttpsProvider(testSuffix, config.bucket, 'https');
+      await createProvider(config.stackName, httpsProvider);
 
       const payload = {
         granules: [
@@ -92,7 +92,7 @@ describe('The Lzards Backup workflow ', () => {
           config.bucket,
           'LzardsBackupTest',
           collection,
-          provider,
+          httpsProvider,
           payload,
           { urlType: 's3'}
         )
