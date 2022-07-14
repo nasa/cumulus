@@ -1,0 +1,104 @@
+{
+  "config": {
+    "bucket": "cumulus-internal",
+    "buckets": {
+      "internal": {
+        "name": "cumulus-internal",
+        "type": "internal"
+      },
+      "private": {
+        "name": "cumulus-private",
+        "type": "private"
+      },
+      "protected": {
+        "name": "cumulus-protected",
+        "type": "protected"
+      },
+      "public": {
+        "name": "cumulus-public",
+        "type": "public"
+      }
+    },
+    "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
+    "collection": {
+      "files": [
+        {
+          "bucket": "protected",
+          "regex": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})\\.PTM_([0-9]{1,2})$",
+          "type": "data",
+          "reportToEms": true,
+          "sampleFileName": "SWOT_SST_20210610T081948_20220616T004239_20220616T022710_O_APID1040.PTM_0",
+          "lzards": {
+            "backup": true
+          }
+        },
+        {
+          "bucket": "protected",
+          "regex": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})\\.PTM_([0-9]{1,2})\\.archive\\.xml$",
+          "type": "metadata",
+          "reportToEms": true,
+          "sampleFileName": "SWOT_SST_20210610T081948_20220616T004239_20220616T022710_O_APID1040.PTM_0.archive.xml",
+          "lzards": {
+            "backup": true
+          }
+        },
+        {
+          "bucket": "protected",
+          "regex": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})\\.PTM_([0-9]{1,2})\\.cmr\\.json$",
+          "type": "metadata",
+          "reportToEms": true,
+          "sampleFileName": "SWOT_SST_20210610T081948_20220616T004239_20220616T022710_O_APID1040.PTM_0.cmr.json"
+        },
+        {
+          "bucket": "protected",
+          "checksumFor": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})\\.PTM_([0-9]{1,2})$",
+          "regex": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})\\.PTM_([0-9]{1,2})\\.md5$",
+          "type": "metadata",
+          "reportToEms": true,
+          "sampleFileName": "SWOT_SST_20210610T081948_20220616T004239_20220616T022710_O_APID1040.PTM_0.md5"
+        },
+        {
+          "bucket": "protected",
+          "checksumFor": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})\\.PTM_([0-9]{1,2})\\.archive\\.xml$",
+          "regex": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})\\.PTM_([0-9]{1,2})\\.archive\\.xml\\.md5$",
+          "type": "metadata",
+          "reportToEms": true,
+          "sampleFileName": "SWOT_SST_20210610T081948_20220616T004239_20220616T022710_O_APID1040.PTM_0.archive.xml.md5"
+        }
+      ],
+      "url_path": "",
+      "name": "MOD11A1",
+      "granuleId": "^SWOT_(IVK|KRX|AUX|HBX|KUX|SST)_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([0-9]{8}T[0-9]{6})_([O])_APID([0-9]{4})$",
+      "dataType": "MOD11A1",
+      "process": "modis",
+      "version": "006",
+      "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+      "id": "MOD11A1"
+    }
+  },
+  "input": {
+    "granules": [
+      {
+        "granuleId": "SWOT_IVK_20210612T081400_20210612T072103_20210612T080137_O_APID1040.PTM_1",
+        "dataType": "SWOT_L0A_NALT_COMBO_RAW_1.0",
+        "files": [
+          {
+            "bucket": "cumulus-internal",
+            "type": "data",
+            "key": "file-staging/podaac-swot-uat-cumulus/SWOT_L0A_NALT_COMBO_RAW_1.0/SWOT_IVK_20210612T081400_20210612T072103_20210612T080137_O_APID1040.PTM_1"
+          },
+          {
+            "bucket": "cumulus-internal",
+            "key": "file-staging/podaac-swot-uat-cumulus/SWOT_L0A_NALT_COMBO_RAW_1.0/SWOT_IVK_20210612T081400_20210612T072103_20210612T080137_O_APID1040.PTM_1.archive.xml",
+            "type": "metadata"
+          },
+          {
+            "bucket": "cumulus-internal",
+            "type": "metadata",
+            "key": "file-staging/podaac-swot-uat-cumulus/SWOT_L0A_NALT_COMBO_RAW_1.0/SWOT_IVK_20210612T081400_20210612T072103_20210612T080137_O_APID1040.PTM_1.cmr.json"
+          }
+        ]
+      }
+    ]
+  }
+}

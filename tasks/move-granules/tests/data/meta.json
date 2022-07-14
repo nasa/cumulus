@@ -1,0 +1,101 @@
+{
+    "TemporalExtent": {
+        "RangeDateTime": {
+            "EndingDateTime": "2022-06-04T21:00:00.000Z",
+            "BeginningDateTime": "2022-06-03T21:00:00.000Z"
+        }
+    },
+    "MetadataSpecification": {
+        "Version": "1.6.3",
+        "URL": "https://cdn.earthdata.nasa.gov/umm/granule/v1.6.3",
+        "Name": "UMM-G"
+    },
+    "GranuleUR": "20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1",
+    "ProviderDates": [
+        {
+            "Type": "Insert",
+            "Date": "2022-06-13T07:35:02.664Z"
+        },
+        {
+            "Type": "Update",
+            "Date": "2022-06-13T07:35:02.664Z"
+        }
+    ],
+    "SpatialExtent": {
+        "HorizontalSpatialDomain": {
+            "Geometry": {
+                "BoundingRectangles": [
+                    {
+                        "WestBoundingCoordinate": -180,
+                        "SouthBoundingCoordinate": -90,
+                        "EastBoundingCoordinate": 180,
+                        "NorthBoundingCoordinate": 90
+                    }
+                ]
+            }
+        }
+    },
+    "DataGranule": {
+        "ArchiveAndDistributionInformation": [
+            {
+                "SizeUnit": "MB",
+                "Size": 708.484824180603,
+                "Checksum": {
+                    "Value": "94d73a29f71426e70854ba4429f08e19",
+                    "Algorithm": "MD5"
+                },
+                "SizeInBytes": 742900183,
+                "Name": "20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc"
+            },
+            {
+                "SizeUnit": "MB",
+                "Size": 0.00009059906005859375,
+                "Checksum": {
+                    "Value": "54a12e77c038393a7a750b0d99c0cf91",
+                    "Algorithm": "MD5"
+                },
+                "SizeInBytes": 95,
+                "Name": "20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5"
+            }
+        ],
+        "DayNightFlag": "Unspecified",
+        "ProductionDateTime": "2022-06-13T07:26:11.000Z"
+    },
+    "CollectionReference": {
+        "Version": "4.1",
+        "ShortName": "MUR-JPL-L4-GLOB-v4.1"
+    },
+    "RelatedUrls": [
+        {
+            "URL": "https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-public/MUR-JPL-L4-GLOB-v4.1/20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+            "Description": "Download 20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+            "Type": "EXTENDED METADATA"
+        },
+        {
+            "URL": "s3://podaac-ops-cumulus-public/MUR-JPL-L4-GLOB-v4.1/20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+            "Description": "This link provides direct download access via S3 to the granule",
+            "Type": "EXTENDED METADATA"
+        },
+        {
+            "URL": "https://archive.podaac.earthdata.nasa.gov/podaac-ops-cumulus-protected/MUR-JPL-L4-GLOB-v4.1/20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+            "Description": "Download 20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+            "Type": "GET DATA"
+        },
+        {
+            "URL": "s3://podaac-ops-cumulus-protected/MUR-JPL-L4-GLOB-v4.1/20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+            "Description": "This link provides direct download access via S3 to the granule",
+            "Type": "GET DATA VIA DIRECT ACCESS"
+        },
+        {
+            "URL": "https://archive.podaac.earthdata.nasa.gov/s3credentials",
+            "Description": "api endpoint to retrieve temporary credentials valid for same-region direct s3 access",
+            "Type": "VIEW RELATED INFORMATION"
+        },
+        {
+            "URL": "https://opendap.earthdata.nasa.gov/collections/C1996881146-POCLOUD/granules/20220604090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1",
+            "Type": "USE SERVICE API",
+            "Subtype": "OPENDAP DATA",
+            "Description": "OPeNDAP request URL"
+        }
+    ]
+}

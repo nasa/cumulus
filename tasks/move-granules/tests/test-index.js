@@ -25,21 +25,24 @@ const {
   randomString, randomId, validateConfig, validateInput, validateOutput,
 } = require('@cumulus/common/test-utils');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
-const { isECHO10Filename, isISOFilename } = require('@cumulus/cmrjs/cmr-utils');
+const { isECHO10Filename, isISOFilename, isUMMGFilename } = require('@cumulus/cmrjs/cmr-utils');
 
 const { moveGranules } = require('..');
 
 async function uploadFiles(files, bucket) {
   await Promise.all(files.map((file) => {
     let body;
-    if (file.endsWith('empty.cmr.xml')) {
+    if (file.endsWith('archive.xml')) {
       // specifying emtpy zero byte xml file
-      // TODO: should abstract to cmr-utils?
-      body = fs.createReadStream('tests/data/empty_meta.xml')
+      // TODO: this might not be the correct file to make 0 bytes as PODAAC's sample
+      // payload said size for this was 1708 but the PTM_1 file was 0
+      body = fs.createReadStream('tests/data/empty_meta.xml');
     } else if (isECHO10Filename(file)) {
       body = fs.createReadStream('tests/data/meta.xml');
     } else if (isISOFilename(file)) {
       body = fs.createReadStream('tests/data/meta.iso.xml');
+    } else if (isUMMGFilename(file)) {
+      body = fs.createReadStream('tests/data/meta.json');
     } else {
       body = parseS3Uri(file).Key;
     }
@@ -785,7 +788,7 @@ test.serial('default_s3_multipart_chunksize_mb is used for moving s3 files if ta
 
 test.serial('should move files even when there is a zero byte xml file', async (t) => {
   // redo payload initialization from beforeEach, but for payload with an empty xml
-  const payloadPath = path.join(__dirname, 'data', 'payload_with_empty_xml.json');
+  const payloadPath = path.join(__dirname, 'data', 'payload_with_empty_xml_2.json');
   const rawPayload = fs.readFileSync(payloadPath, 'utf8');
   t.context.payload = JSON.parse(rawPayload);
   const filesToUpload = granulesToFileURIs(
@@ -802,8 +805,8 @@ test.serial('should move files even when there is a zero byte xml file', async (
   await validateOutput(t, output);
 
   const check = await s3ObjectExists({
-    Bucket: t.context.publicBucket,
-    Key: 'example/test/emptyxml/MOD11A1.A2017200.h19v04.006.2017201090724.empty.cmr.xml',
+    Bucket: t.context.protectedBucket,
+    Key: 'SWOT_IVK_20210612T081400_20210612T072103_20210612T080137_O_APID1040.PTM_1.archive.xml',
   });
 
   t.true(check);
