@@ -35,8 +35,7 @@ describe('The Lzards Backup workflow ', () => {
       testId = createTimestampedTestId(config.stackName, 'LzardsBackupWorkflow');
       testSuffix = createTestSuffix(testId);
       ingestBucket = config.buckets.protected.name;
-      ingestPath = `${prefix}/lzardsBackupSpec`;
-      provider = await buildHttpOrHttpsProvider(testSuffix, config.bucket, 'https');
+      ingestPath = `${prefix}/lzardsBackupWorkflowSpec`;
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       const FunctionName = `${prefix}-LzardsBackup`;
@@ -60,7 +59,7 @@ describe('The Lzards Backup workflow ', () => {
           ],
         }
       );
-      await createProvider(config.stackName, provider);
+      provider = await createProvider(config.stackName, provider);
 
       const payload = {
         granules: [

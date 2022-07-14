@@ -1,50 +1,61 @@
 {
-    "Comment": "Lzards Backup Workflow Test",
-    "StartAt": "LzardsBackup",
-    "States": {
-      "LzardsBackup": {
-        "Parameters": {
-          "cma": {
-            "event.$": "$",
-            "ReplaceConfig": {
-              "Path": "$.payload",
-              "TargetPath": "$.payload"
-            },
-            "task_config": {
-              "urlType": "{$.meta.urlType}",
-              "cloudfrontEndpoint": "{$.meta.cloudfrontEndpoint}"
+  "Comment": "Lzards Backup Workflow Test",
+  "StartAt": "LzardsBackup",
+  "States": {
+    "LzardsBackup": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "cumulus_message": {
+              "outputs": [
+                {
+                  "source": "{$.granules}",
+                  "destination": "{$.payload.granules}"
+                },
+                {
+                  "source": "{$.backupResults}",
+                  "destination": "{$.meta.backupStatus}"
+                }
+              ]
             }
           }
-        },
-        "Type": "Task",
-        "Resource": "${lzards_backup_task_arn}",
-        "Retry": [
-          {
-            "ErrorEquals": [
-              "Lambda.ServiceException",
-              "Lambda.AWSLambdaException",
-              "Lambda.SdkClientException"
-            ],
-            "IntervalSeconds": 2,
-            "MaxAttempts": 6,
-            "BackoffRate": 2
-          }
-        ],
-        "Catch": [
-          {
-            "ErrorEquals": [
-              "States.ALL"
-            ],
-            "ResultPath": "$.exception",
-            "Next": "WorkflowFailed"
-          }
-        ],
-        "End": true
+        }
       },
-      "WorkflowFailed": {
-        "Type": "Fail",
-        "Cause": "Workflow failed"
-      }
+      "Type": "Task",
+      "Resource": "${lzards_backup_task_arn}",
+      "Next": "WorkflowSucceeded",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "BackoffRate": 2,
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6
+        }
+      ]
+    },
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
+    },
+    "WorkflowFailed": {
+      "Cause": "Workflow failed",
+      "Type": "Fail"
     }
   }
-  
+}
