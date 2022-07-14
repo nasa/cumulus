@@ -43,7 +43,7 @@ import {
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
 const CREDS_EXPIRY_SECONDS = 1000;
-const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
+const S3_LINK_EXPIRY_SECONDS_DEFAULT = '3600';
 
 export const generateCloudfrontUrl = async (params: {
   Bucket: string,
@@ -388,8 +388,11 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
 };
 
 export const handler = async (
-  event: CumulusMessage | CumulusRemoteMessage,
+  event: CumulusMessage | CumulusRemoteMessage | any,
   context: Context
 ): Promise<CumulusMessageWithAssignedPayload | CumulusRemoteMessage> => {
+    log.info('\nEVENT:', JSON.stringify(event));
+    log.info('\nContext:', JSON.stringify(context));
+    log.info('\nBACKUP GRANULES:', backupGranulesToLzards);
   return await runCumulusTask(backupGranulesToLzards, event, context);
 };
