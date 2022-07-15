@@ -6,24 +6,21 @@ const path = require('path');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
-const { deleteProvider } = require('@cumulus/api-client/providers');
 const { putFile } = require('@cumulus/aws-client/S3');
-const {
-  waitForCompletedExecution,
-} = require('@cumulus/integration-tests');
+const { waitForCompletedExecution } = require('@cumulus/integration-tests');
+const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
-const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 
 describe('The Lzards Backup workflow ', () => {
-  let activityOutput;
   let beforeAllFailed = false;
   let collection;
-  let prefix;
-  let provider;
   let ingestBucket;
   let ingestPath;
+  let lambdaOutput;
+  let lambdaStep;
+  let prefix;
   let testId;
   let testSuffix;
   let workflowExecution;
@@ -32,17 +29,20 @@ describe('The Lzards Backup workflow ', () => {
     try {
       const config = await loadConfig();
       prefix = config.stackName;
-      testId = createTimestampedTestId(config.stackName, 'LzardsBackupWorkflow');
+      testId = createTimestampedTestId(prefix, 'LzardsBackupWorkflow');
       testSuffix = createTestSuffix(testId);
       ingestBucket = config.buckets.protected.name;
       ingestPath = `${prefix}/lzardsBackupWorkflowSpec`;
+
+      // Setup files for workflow
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
 
-      // Create the collection
+      // Create collection 
       collection = await createCollection(
         prefix,
         {
+          name: `testCollections-${testSuffix}`,
           files: [
             {
               bucket: 'protected',
@@ -58,13 +58,11 @@ describe('The Lzards Backup workflow ', () => {
           ],
         }
       );
-      const httpsProvider = await buildHttpOrHttpsProvider(testSuffix, config.bucket, 'https');
-      await createProvider(config.stackName, httpsProvider);
 
       const payload = {
         granules: [
           {
-            granuleId: 'FakeGranule2',
+            granuleId: 'FakeGranule1',
             collectionId: `${collection.name}___${collection.version}`,
             files: [
               {
@@ -88,11 +86,11 @@ describe('The Lzards Backup workflow ', () => {
 
       try {
         workflowExecution = await buildAndExecuteWorkflow(
-          config.stackName,
+          prefix,
           config.bucket,
           'LzardsBackupTest',
           collection,
-          httpsProvider,
+          undefined,
           payload,
           { urlType: 's3'}
         )
@@ -100,17 +98,11 @@ describe('The Lzards Backup workflow ', () => {
         console.log(`Wait for completed execution ${executionArn}`);
   
         await waitForCompletedExecution(executionArn);
-        const lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
-        console.log('LAMBDA OUTPUT', lambdaOutput);
+        lambdaStep = new LambdaStep();
+        lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
       } catch (error) {
         beforeAllFailed = error;
       }
-
-      activityOutput = await activityStep.getStepOutput(
-        workflowExecution.executionArn,
-        'LzardsBackup'
-      );
-
     } catch (error) {
       beforeAllFailed = true;
       throw error;
@@ -123,16 +115,15 @@ describe('The Lzards Backup workflow ', () => {
   });
 
   it('has the expected step output', () => {
-    expect(activityOutput.payload).toEqual({});
+    expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
   });
 
   afterAll(async () => {
-    await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+    await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
     await deleteCollection({
       prefix,
       collectionName: get(collection, 'name'),
       collectionVersion: get(collection, 'version'),
     });
-    await deleteProvider({ prefix: stackName, providerId: provider.id });
   });
 });

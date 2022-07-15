@@ -8,11 +8,9 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["files", "granuleId", "dataType", "version"],
+        "required": ["files", "granuleId"],
         "properties": {
           "granuleId": { "type": "string" },
-          "dataType": { "type": "string" },
-          "version": { "type": "string" },
           "files": "{{files}}"
         }
       }

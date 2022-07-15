@@ -18,15 +18,6 @@
           "granuleId": {
             "type": "string"
           },
-          "dataType": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          },
-          "collectionId": {
-            "type": "string"
-          },
           "files": {
             "type": "array",
             "items": {
