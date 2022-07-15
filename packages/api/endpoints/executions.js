@@ -16,7 +16,6 @@ const {
 const { deleteExecution } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 
-const Execution = require('../models/executions');
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
 const { writeExecutionRecordFromApi } = require('../lib/writeRecords/write-execution');
@@ -34,7 +33,6 @@ const log = new Logger({ sender: '@cumulus/api/executions' });
 async function create(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
-    executionModel = new Execution(),
     knex = await getKnexClient(),
   } = req.testContext || {};
 
@@ -56,7 +54,6 @@ async function create(req, res) {
     await writeExecutionRecordFromApi({
       record: execution,
       knex,
-      executionModel,
     });
 
     return res.send({
@@ -171,7 +168,6 @@ async function get(req, res) {
  */
 async function del(req, res) {
   const {
-    executionModel = new Execution(),
     executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -183,8 +179,6 @@ async function del(req, res) {
     'execution',
     process.env.ES_INDEX
   );
-
-  let apiExecution;
 
   try {
     await executionPgModel.get(knex, { arn });
@@ -200,35 +194,15 @@ async function del(req, res) {
     }
   }
 
-  try {
-    // Get DynamoDB execution in case of failure
-    apiExecution = await executionModel.get({ arn });
-  } catch (error) {
-    // Don't throw an error if record doesn't exist
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await executionPgModel.delete(trx, { arn });
-      await executionModel.delete({ arn });
-      await deleteExecution({
-        esClient,
-        arn,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
+  await createRejectableTransaction(knex, async (trx) => {
+    await executionPgModel.delete(trx, { arn });
+    await deleteExecution({
+      esClient,
+      arn,
+      index: process.env.ES_INDEX,
+      ignore: [404],
     });
-  } catch (error) {
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (apiExecution) {
-      await executionModel.create(apiExecution);
-    }
-    throw error;
-  }
+  });
 
   return res.send({ message: 'Record deleted' });
 }

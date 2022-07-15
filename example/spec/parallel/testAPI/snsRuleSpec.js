@@ -11,7 +11,6 @@ const {
   removeRuleAddedParams,
 } = require('@cumulus/integration-tests');
 
-const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteRule,
@@ -187,7 +186,7 @@ describe('The SNS-type rule', () => {
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
 
-      expect(statementSids).toContain(getSnsTriggerPermissionId(createdRule.record));
+      expect(statementSids).toContain(`${ruleName}Permission`);
     });
   });
 
@@ -269,13 +268,14 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
+        const updateParams = {
+          ...updatedRule,
+          state: 'ENABLED',
+        };
         const putRuleResponse = await updateRule({
           prefix: config.stackName,
           ruleName,
-          updateParams: {
-            ...updatedRule,
-            state: 'ENABLED',
-          },
+          updateParams,
         });
         updatedRule = JSON.parse(putRuleResponse.body);
       } catch (error) {
@@ -302,16 +302,17 @@ describe('The SNS-type rule', () => {
       try {
         const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName }).promise();
         newTopicArn = TopicArn;
+        const updateParams = {
+          ...createdRule.record,
+          rule: {
+            value: TopicArn,
+            type: 'sns',
+          },
+        };
         const putRuleResponse = await updateRule({
           prefix: config.stackName,
           ruleName,
-          updateParams: {
-            ...createdRule.record,
-            rule: {
-              value: TopicArn,
-              type: 'sns',
-            },
-          },
+          updateParams,
         });
         putRule = JSON.parse(putRuleResponse.body);
       } catch (error) {
@@ -338,7 +339,8 @@ describe('The SNS-type rule', () => {
 
     it('deletes the old subscription', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      expect(await getNumberOfTopicSubscriptions(snsTopicArn)).toBe(0);
+      const numberOfTopicSubscriptions = await getNumberOfTopicSubscriptions(snsTopicArn);
+      expect(numberOfTopicSubscriptions).toBe(0);
     });
 
     it('adds the new policy and subscription', async () => {
@@ -346,7 +348,7 @@ describe('The SNS-type rule', () => {
       const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
       const { Statement } = JSON.parse(Policy);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBeGreaterThan(0);
-      expect(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(putRule))).toBeTrue();
+      expect(Statement.some((s) => s.Sid === expectedStatementId)).toBeTrue();
     });
   });
 
@@ -367,17 +369,18 @@ describe('The SNS-type rule', () => {
         };
         const { SubscriptionArn } = await SNS.subscribe(subscriptionParams).promise();
         subscriptionArn = SubscriptionArn;
+        const updateParams = {
+          ...createdRule.record,
+          rule: {
+            value: TopicArn,
+            type: 'sns',
+          },
+          state: 'ENABLED',
+        };
         const putRuleResponse = await updateRule({
           prefix: config.stackName,
           ruleName,
-          updateParams: {
-            ...createdRule.record,
-            rule: {
-              value: TopicArn,
-              type: 'sns',
-            },
-            state: 'ENABLED',
-          },
+          updateParams,
         });
         putRule = JSON.parse(putRuleResponse.body);
       } catch (error) {

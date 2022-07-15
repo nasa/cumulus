@@ -101,7 +101,6 @@ describe('The Ingest Load Test', () => {
     bucket = config.bucket;
     process.env.system_bucket = config.bucket;
     process.env.ProvidersTable = `${stackName}-ProvidersTable`;
-    process.env.PdrsTable = `${stackName}-PdrsTable`;
     process.env.ExecutionsTable = `${stackName}-ExecutionsTable`;
     process.env.GranulesTable = `${stackName}-GranulesTable`;
     let workflowCount = 0;

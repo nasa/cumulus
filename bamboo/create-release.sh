@@ -26,4 +26,3 @@ curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-a
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-distribution.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-distribution.zip
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-ecs-service.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-ecs-service.zip
 curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-rds.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-rds.zip
-curl -X POST -H "Authorization: token $GITHUB_TOKEN" --data-binary "@terraform-aws-cumulus-data-migrations1.zip" -H "Content-type: application/octet-stream" $RELEASE_URL/assets?name=terraform-aws-cumulus-data-migrations1.zip

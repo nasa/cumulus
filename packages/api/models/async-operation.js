@@ -39,14 +39,5 @@ class AsyncOperation extends Manager {
       schema: asyncOperationSchema,
     });
   }
-
-  async getAllAsyncOperations() {
-    return await this.dynamoDbClient.scan({
-      names: {
-        '#id': 'id',
-      },
-    },
-    '#id').then((result) => result.Items);
-  }
 }
 module.exports = AsyncOperation;

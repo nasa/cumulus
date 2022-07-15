@@ -3,7 +3,6 @@
 const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
 
-const s3Utils = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
@@ -12,9 +11,6 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,
 } = require('@cumulus/errors');
-const {
-  generateMoveFileParams,
-} = require('@cumulus/ingest/granule');
 
 const Manager = require('./base');
 
@@ -134,37 +130,6 @@ class Granule extends Manager {
   async removeGranuleFromCmrByGranule(granule) {
     await this._removeGranuleFromCmr(granule);
     return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
-  }
-
-  /**
-   * With the params for moving a granule, return the files that already exist at
-   * the move location
-   *
-   * @param {Object} granule - the granule object
-   * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
-   * - list of destinations specified
-   *    regex - regex for matching filepath of file to new destination
-   *    bucket - aws bucket of the destination
-   *    filepath - file path/directory on the bucket for the destination
-   * @returns {Promise<Array<Object>>} - promise that resolves to a list of files
-   * that already exist at the destination that they would be written to if they
-   * were to be moved via the move granules call
-   */
-  async getFilesExistingAtLocation(granule, destinations) {
-    const moveFileParams = generateMoveFileParams(granule.files, destinations);
-
-    const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
-      const { target, file } = moveFileParam;
-      if (target && await s3Utils.s3ObjectExists(target)) {
-        return Promise.resolve(file);
-      }
-
-      return Promise.resolve();
-    });
-
-    const existingFiles = await Promise.all(fileExistsPromises);
-
-    return existingFiles.filter((file) => file);
   }
 
   /**
@@ -376,6 +341,7 @@ class Granule extends Manager {
     return response;
   }
 
+  // This logic has been moved to api/lib/granule.js, pending removal when the model gets removed P3
   async describeGranuleExecution(executionArn) {
     let executionDescription;
     try {
