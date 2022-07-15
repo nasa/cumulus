@@ -27,7 +27,6 @@ module.exports = {
     bulkOperation: './lambdas/bulk-operation.js',
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
-    dbIndexer: './lambdas/db-indexer.js',
     distribution: './app/distribution.js',
     executeMigrations: './lambdas/executeMigrations.js',
     indexFromDatabase: './lambdas/index-from-database.js',
