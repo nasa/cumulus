@@ -45,11 +45,13 @@ export const createProvider = async (params: {
 export const deleteProvider = async (params: {
   prefix: string,
   providerId: string,
+  expectedStatusCodes: number[],
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, providerId, callback = invokeApi } = params;
+  const { expectedStatusCodes = 200, prefix, providerId, callback = invokeApi } = params;
 
   return await callback({
+    expectedStatusCodes,
     prefix,
     payload: {
       httpMethod: 'DELETE',

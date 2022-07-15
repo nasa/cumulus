@@ -39,6 +39,7 @@ test('deleteProvider calls the callback with the expected object', async (t) => 
       resource: '/{proxy+}',
       path: `/providers/${t.context.testProviderId}`,
     },
+    expectedStatusCodes: [404, 200],
   };
   const callback = (configObject) => {
     t.deepEqual(configObject, expected);
@@ -47,6 +48,7 @@ test('deleteProvider calls the callback with the expected object', async (t) => 
   await t.notThrowsAsync(providersApi.deleteProvider({
     prefix: t.context.testPrefix,
     providerId: t.context.testProviderId,
+    expectedStatusCodes: [404, 200],
     callback,
   }));
 });
