@@ -940,5 +940,99 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   process.env.lzards_api = 'fakeApi';
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
-  await t.throwsAsync(index.backupGranulesToLzards(fakePayload));
+  await t.throwsAsync(
+    index.backupGranulesToLzards(fakePayload),
+    { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
+  );
+});
+
+test.serial('backupGranulesToLzards throws an error with a granule incomplete collection information, containing only dataType', async (t) => {
+  sandbox.stub(index, 'generateAccessCredentials').returns({
+    Credentials: {
+      SecretAccessKey: 'FAKEKey',
+      AccessKeyId: 'FAKEId',
+      SessionToken: 'FAKEToken',
+    },
+  });
+  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+
+  getCollectionStub.returns(fakeCollection);
+  const fakePayload = {
+    input: {
+      granules: [
+        {
+          granuleId: 'FakeGranule1',
+          dataType: 'FakeType',
+          files: [
+            {
+              bucket: 'fakeBucket1',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: 'path/to/granule1/foo.jpg',
+            },
+            {
+              bucket: 'fakeBucket1',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: 'path/to/granule1/foo.dat',
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  process.env.lzards_api = 'fakeApi';
+  process.env.lzards_provider = 'fakeProvider';
+  process.env.stackName = 'fakeStack';
+  await t.throwsAsync(
+    index.backupGranulesToLzards(fakePayload),
+    { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
+  );
+});
+
+
+test.serial('backupGranulesToLzards throws an error with a granule incomplete collection information, containing only version', async (t) => {
+  sandbox.stub(index, 'generateAccessCredentials').returns({
+    Credentials: {
+      SecretAccessKey: 'FAKEKey',
+      AccessKeyId: 'FAKEId',
+      SessionToken: 'FAKEToken',
+    },
+  });
+  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+
+  getCollectionStub.returns(fakeCollection);
+  const fakePayload = {
+    input: {
+      granules: [
+        {
+          granuleId: 'FakeGranule1',
+          version: '001',
+          files: [
+            {
+              bucket: 'fakeBucket1',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: 'path/to/granule1/foo.jpg',
+            },
+            {
+              bucket: 'fakeBucket1',
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: 'path/to/granule1/foo.dat',
+            },
+          ],
+        },
+      ],
+    },
+  };
+
+  process.env.lzards_api = 'fakeApi';
+  process.env.lzards_provider = 'fakeProvider';
+  process.env.stackName = 'fakeStack';
+  await t.throwsAsync(
+    index.backupGranulesToLzards(fakePayload),
+    { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
+  );
 });

@@ -301,7 +301,7 @@ export const backupGranule = async (params: {
       collectionId = constructCollectionId(granuleFromStepOutput.dataType, granuleFromStepOutput.version);
     }
     else if (!apiGranule.collectionId || !(granuleFromStepOutput.dataType && granuleFromStepOutput.version)) {
-      log.info(`${granule}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
+      log.error(`${JSON.stringify(granule)}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
       throw new CollectionIdentifiersNotProvidedError("[dataType and version] or [collectionId] required.");
     }
 
@@ -318,7 +318,6 @@ export const backupGranule = async (params: {
     })));
   } catch (error) {
     if (error.name === 'CollectionIdentifiersNotProvidedError') {
-      log.error(`${granule}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
       log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
     }
     if (error.name === 'CollectionNotDefinedError') {
@@ -391,8 +390,5 @@ export const handler = async (
   event: CumulusMessage | CumulusRemoteMessage | any,
   context: Context
 ): Promise<CumulusMessageWithAssignedPayload | CumulusRemoteMessage> => {
-    log.info('\nEVENT:', JSON.stringify(event));
-    log.info('\nContext:', JSON.stringify(context));
-    log.info('\nBACKUP GRANULES:', backupGranulesToLzards);
   return await runCumulusTask(backupGranulesToLzards, event, context);
 };
