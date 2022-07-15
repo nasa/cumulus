@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### MIGRATION notes
 
-
 - The changes introduced in CUMULUS-2962 will re-introduce a
   `files_granules_cumulus_id_index` on the `files` table in the RDS database.
   This index will be automatically created as part of the bootstrap lambda
@@ -122,6 +121,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Updated Moment.js package to 2.29.4 to address security vulnerability
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
     case of deletion race conditions
@@ -135,6 +135,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2959**
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB
+
+## [v13.0.1] 2022-7-12
+
+- **CUMULUS-2995**
+  - Updated Moment.js package to 2.29.4 to address security vulnerability
 
 ## [v13.0.0] 2022-06-13
 
@@ -248,6 +253,70 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+
+## [v11.1.3] 2022-06-24
+
+**Please note** changes in 11.1.3 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Notable changes
+
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
+### Added
+
+- **CUMULUS-2929**
+  - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
+    file extension for tasks that utilize metadata file lookups
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
+### Fixed
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries
+    and 0 visibilityTimeout in rule's meta.
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB.
+- **CUMULUS-2961**
+  - Fixed `data-migration2` granule migration logic to allow for DynamoDb granules that have a null/empty string value for `execution`.   The migration will now migrate them without a linked execution.
+
+## [v11.1.2] 2022-06-13
+
+**Please note** changes in 11.1.2 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### MIGRATION NOTES
+
+- The changes introduced in CUMULUS-2955 should result in removal of
+  `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
+  release).  The success of this operation is dependent on system ingest load
+
+  In rare cases where data-persistence deployment fails because the
+  `postgres-db-migration` times out, it may be required to manually remove the
+  index and then redeploy:
+
+  ```text
+  > DROP INDEX IF EXISTS postgres-db-migration;
+  DROP INDEX
+  ```
+
+### Changed
+
+- **CUMULUS-2955**
+  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
+    `granule_cumulus_id` on the files table.
+  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
+    changes from `20220126172008_files_granule_id_index` on any deployed stacks
+    that might have the index to ensure consistency in deployed stacks
 
 ## [v11.1.1] 2022-04-26
 
@@ -6142,7 +6211,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.1...HEAD
+[v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
 [v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.0...v13.0.0
 [v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
