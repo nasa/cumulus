@@ -11,6 +11,13 @@ class RulePgModel extends BasePgModel<PostgresRule, PostgresRuleRecord> {
     });
   }
 
+  create(
+    knexOrTransaction: Knex | Knex.Transaction,
+    item: PostgresRule
+  ) {
+    return super.create(knexOrTransaction, item, '*');
+  }
+
   upsert(
     knexOrTransaction: Knex | Knex.Transaction,
     rule: PostgresRule
@@ -19,7 +26,7 @@ class RulePgModel extends BasePgModel<PostgresRule, PostgresRuleRecord> {
       .insert(rule)
       .onConflict('name')
       .merge()
-      .returning('cumulus_id');
+      .returning('*');
   }
 }
 

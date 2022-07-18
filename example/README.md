@@ -124,37 +124,6 @@ Run `terraform apply`.
 
 This will deploy your data persistence resources.
 
-## Configure and deploy the `db-migration-tf` root module
-
-These steps should be executed in the `example/db-migration-tf` directory.
-
-Create a `terraform.tf` file, substituting the appropriate values for `bucket`,
-`dynamodb_table`, and `<stack>`. This tells Terraform where to store its
-remote state.
-
-**terraform.tf:**
-
-```hcl
-terraform {
-  backend "s3" {
-    region         = "us-east-1"
-    bucket         = "PREFIX-state"
-    key            = "PREFIX/db-migration/terraform.tfstate"
-    dynamodb_table = "PREFIX-tf-locks"
-  }
-}
-```
-
-Copy the `terraform.tfvars.example` file to `terraform.tfvars`, and fill in
-appropriate values. For additional information about the variables, see the
-[variable definitions for the `db-migration` module](../db-migration-tf/variables.tf).
-
-Run `terraform init`.
-
-Run `terraform apply`.
-
-This will deploy your data-migration resources.
-
 ## Enable a distribution API
 
 The steps below assume you will be using the [Cumulus Distribution API](./cumulus-tf/cumulus_distribution.tf) and no additional changes are required unless you want to use the Thin Egress App instead. If you would prefer

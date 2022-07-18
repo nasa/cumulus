@@ -11,7 +11,6 @@ const {
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { chooseTargetExecution } = require('../lib/executions');
-const GranuleModel = require('../models/granules');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { updateGranuleStatusToQueued } = require('../lib/writeRecords/write-granules');
@@ -40,13 +39,13 @@ async function applyWorkflowToGranules({
           granuleId,
           granulePgModel
         );
-        const granule = await granuleTranslateMethod({
+        const apiGranule = await granuleTranslateMethod({
           granulePgRecord: pgGranule,
           knexOrTransaction: knex,
         });
-        await updateGranulesToQueuedMethod({ granule, knex });
+        await updateGranulesToQueuedMethod({ apiGranule, knex });
         await applyWorkflowHandler({
-          granule,
+          apiGranule,
           workflow: workflowName,
           meta,
           queueUrl,
@@ -89,10 +88,7 @@ async function bulkGranuleDelete(
     granuleIds,
     async (granuleId) => {
       let pgGranule;
-      let dynamoGranule;
       const granulePgModel = new GranulePgModel();
-      const dynamoGranuleModel = new GranuleModel();
-
       try {
         pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId, granulePgModel);
       } catch (error) {
@@ -105,17 +101,14 @@ async function bulkGranuleDelete(
       }
 
       if (pgGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc({
+        ({ pgGranule } = await unpublishGranuleFunc({
           knex,
           pgGranuleRecord: pgGranule,
         }));
-      } else {
-        dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
       }
 
       await deleteGranuleAndFiles({
         knex,
-        dynamoGranule,
         pgGranule,
       });
 
@@ -172,19 +165,19 @@ async function bulkGranuleReingest(
     async (granuleId) => {
       try {
         const pgGranule = await getUniqueGranuleByGranuleId(knex, granuleId);
-        const granule = await translatePostgresGranuleToApiGranule({
+        const apiGranule = await translatePostgresGranuleToApiGranule({
           granulePgRecord: pgGranule,
           knexOrTransaction: knex,
         });
 
         const targetExecution = await chooseTargetExecution({ granuleId, workflowName });
-        const granuleToReingest = {
-          ...granule,
+        const apiGranuleToReingest = {
+          ...apiGranule,
           ...(targetExecution && { execution: targetExecution }),
         };
-        await updateGranuleStatusToQueued({ granule: granuleToReingest, knex });
+        await updateGranuleStatusToQueued({ apiGranule: apiGranuleToReingest, knex });
         await reingestHandler({
-          granule: granuleToReingest,
+          apiGranule: apiGranuleToReingest,
           asyncOperationId: process.env.asyncOperationId,
         });
         return granuleId;
