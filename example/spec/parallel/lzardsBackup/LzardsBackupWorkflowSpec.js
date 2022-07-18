@@ -38,7 +38,7 @@ describe('The Lzards Backup workflow ', () => {
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
 
-      // Create collection 
+      // Create collection
       collection = await createCollection(
         prefix,
         {
@@ -92,11 +92,11 @@ describe('The Lzards Backup workflow ', () => {
           collection,
           undefined,
           payload,
-          { urlType: 's3'}
-        )
+          { urlType: 's3' }
+        );
         const executionArn = workflowExecution.executionArn;
         console.log(`Wait for completed execution ${executionArn}`);
-  
+
         await waitForCompletedExecution(executionArn);
         lambdaStep = new LambdaStep();
         lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');

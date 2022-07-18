@@ -991,7 +991,6 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
   );
 });
 
-
 test.serial('backupGranulesToLzards throws an error with a granule incomplete collection information, containing only version', async (t) => {
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {

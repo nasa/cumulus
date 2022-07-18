@@ -281,28 +281,26 @@ export const backupGranule = async (params: {
   let granuleCollection : CollectionRecord;
   let collectionId: string = '';
   const { granule, backupConfig } = params;
-  let granuleFromStepOutput = granule as MessageGranuleFromStepOutput;
-  let apiGranule = granule as ApiGranule;
+  const messageGranule = granule as MessageGranuleFromStepOutput;
+  const apiGranule = granule as ApiGranule;
   log.info(`${granule.granuleId}: Backup called on granule: ${JSON.stringify(granule)}`);
   try {
     if (apiGranule.collectionId) {
       collectionId = apiGranule.collectionId;
-      const {name, version} = deconstructCollectionId(apiGranule.collectionId);
+      const { name, version } = deconstructCollectionId(apiGranule.collectionId);
       granuleCollection = await getGranuleCollection({
         collectionName: name,
         collectionVersion: version,
       });
-    }
-    else if (granuleFromStepOutput.dataType && granuleFromStepOutput.version) {
-       granuleCollection = await getGranuleCollection({
-        collectionName: granuleFromStepOutput.dataType,
-        collectionVersion: granuleFromStepOutput.version,
+    } else if (messageGranule.dataType && messageGranule.version) {
+      granuleCollection = await getGranuleCollection({
+        collectionName: messageGranule.dataType,
+        collectionVersion: messageGranule.version,
       });
-      collectionId = constructCollectionId(granuleFromStepOutput.dataType, granuleFromStepOutput.version);
-    }
-    else if (!apiGranule.collectionId || !(granuleFromStepOutput.dataType && granuleFromStepOutput.version)) {
+      collectionId = constructCollectionId(messageGranule.dataType, messageGranule.version);
+    } else if (!apiGranule.collectionId || !(messageGranule.dataType && messageGranule.version)) {
       log.error(`${JSON.stringify(granule)}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
-      throw new CollectionIdentifiersNotProvidedError("[dataType and version] or [collectionId] required.");
+      throw new CollectionIdentifiersNotProvidedError('[dataType and version] or [collectionId] required.');
     }
 
     const backupFiles = granule.files.filter(
@@ -389,6 +387,5 @@ export const backupGranulesToLzards = async (event: HandlerEvent) => {
 export const handler = async (
   event: CumulusMessage | CumulusRemoteMessage | any,
   context: Context
-): Promise<CumulusMessageWithAssignedPayload | CumulusRemoteMessage> => {
-  return await runCumulusTask(backupGranulesToLzards, event, context);
-};
+): Promise<CumulusMessageWithAssignedPayload
+| CumulusRemoteMessage> => await runCumulusTask(backupGranulesToLzards, event, context);
