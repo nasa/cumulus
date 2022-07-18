@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### MIGRATION notes
 
-
 - The changes introduced in CUMULUS-2962 will re-introduce a
   `files_granules_cumulus_id_index` on the `files` table in the RDS database.
   This index will be automatically created as part of the bootstrap lambda
@@ -129,6 +128,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2995**
+  - Updated Lerna package to 5.1.8 to address security vulnerability
+
 - **CUMULUS-2863**
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.
@@ -136,6 +138,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2959**
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB
+
+## [v13.0.1] 2022-7-12
+
+- **CUMULUS-2995**
+  - Updated Moment.js package to 2.29.4 to address security vulnerability
 
 ## [v13.0.0] 2022-06-13
 
@@ -6214,7 +6221,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.1...HEAD
+[v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
 [v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.0...v13.0.0
 [v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
