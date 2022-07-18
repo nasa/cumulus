@@ -132,6 +132,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2995**
+  - Updated Lerna package to 5.1.8 to address security vulnerability
+
 - **CUMULUS-2863**
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.
