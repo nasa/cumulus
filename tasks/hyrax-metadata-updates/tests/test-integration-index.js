@@ -254,6 +254,49 @@ async function verifyUpdatedMetadata({
   t.deepEqual(actualPartial, expectedPartial);
 }
 
+test.serial('Test failing granule with no metadata', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload-json-nometa.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+
+  const e = {
+    config: event.config,
+    input: t.context.payload.input,
+  };
+  const granule = e.input.granules[0];
+
+  const expectedError = {
+    name: 'RecordDoesNotExist',
+    message: `No recognizable CMR metadata file (*.cmr.xml or *.cmr.json) for granule ${granule.granuleId}. Set config.skipMetadataCheck to true to silence this error.`,
+  };
+  const error = await t.throwsAsync(hyraxMetadataUpdate(e));
+  t.like(error, expectedError);
+});
+
+test.serial('Test passing granule with no metadata if config.skipMetadataCheck is true', async (t) => {
+  const payloadPath = path.join(__dirname, 'data', 'payload-json-nometa.json');
+  const rawPayload = fs.readFileSync(payloadPath, 'utf8');
+  t.context.payload = JSON.parse(rawPayload);
+
+  const e = {
+    config: {
+      ...event.config,
+      skipMetadataCheck: true,
+    },
+    input: t.context.payload.input,
+  };
+
+  try {
+    const output = await hyraxMetadataUpdate(e);
+    await validateOutput(t, output);
+    t.deepEqual(output.granules, e.input.granules);
+    t.deepEqual(output.etags, event.config.etags);
+  } catch (error) {
+    console.log(error);
+    t.fail(error);
+  }
+});
+
 test.serial('Test updating ECHO10 metadata file in S3', async (t) => {
   // Set up mock Validation call to CMR
   nock('https://cmr.earthdata.nasa.gov')
