@@ -9,6 +9,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   determineExecutionName,
   handler,
+  getISODate,
 } = require('../../lambdas/write-db-dlq-records-to-s3.js');
 
 test.before(async (t) => {
@@ -52,11 +53,11 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
 
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${message1Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${getISODate()}/${message1Name}`,
   })).length, 1);
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${message2Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${getISODate()}/${message2Name}`,
   })).length, 1);
 });
 
@@ -87,7 +88,7 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
 
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${messageName}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${getISODate()}/${messageName}`,
   })).length, 2);
 });
 

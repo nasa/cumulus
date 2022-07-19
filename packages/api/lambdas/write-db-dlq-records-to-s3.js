@@ -18,6 +18,10 @@ function determineExecutionName(cumulusMessageObject) {
   }
 }
 
+function getISODate(date = new Date()) {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
 async function handler(event) {
   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
@@ -30,7 +34,7 @@ async function handler(event) {
     const s3Identifier = `${executionName}-${uuidv4()}`;
     await s3PutObject({
       Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
+      Key: `${process.env.stackName}/dead-letter-archive/sqs/${getISODate()}/${s3Identifier}.json`,
       Body: sqsMessage.body,
     });
   }));
