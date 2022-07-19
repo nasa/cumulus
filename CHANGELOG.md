@@ -873,6 +873,13 @@ for more on this tool if you are unfamiliar with the various options.
   - **CUMULUS-2877**
     - Ensure database records receive a timestamp when writing granules.
 
+## [v10.1.3] 2022-06-28 [BACKPORT]
+
+### Added
+
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
 ## [v10.1.2] 2022-03-11
 
 ### Added
@@ -6220,7 +6227,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
-[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
+[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.3...v11.0.0
+[v10.1.3]: https://github.com/nasa/cumulus/compare/v10.1.2...v10.1.3
 [v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
