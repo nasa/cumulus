@@ -1,6 +1,7 @@
 import pRetry from 'p-retry';
 
 import { ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { CollectionId } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
@@ -15,7 +16,7 @@ type AssociateExecutionRequest = {
 };
 
 /**
- * GET raw response from /granules/{granuleName}
+ * GET raw response from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -30,29 +31,38 @@ type AssociateExecutionRequest = {
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
+    collectionId,
     query,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       ...(query && { queryStringParameters: query }),
     },
   });
 };
 
 /**
- * GET granule record from /granules/{granuleName}
+ * GET granule record from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -67,6 +77,7 @@ export const getGranuleResponse = async (params: {
 export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranule> => {

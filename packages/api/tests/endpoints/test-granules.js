@@ -218,19 +218,35 @@ test.before(async (t) => {
   const collectionName = 'fakeCollection';
   const collectionVersion = 'v1';
 
+  const collectionName2 = 'fakeCollection2';
+  const collectionVersion2 = 'v2';
+
   t.context.collectionId = constructCollectionId(
     collectionName,
     collectionVersion
   );
 
-  const testPgCollection = fakeCollectionRecordFactory({
+  t.context.collectionId2 = constructCollectionId(
+    collectionName2,
+    collectionVersion2
+  );
+
+  t.context.testPgCollection = fakeCollectionRecordFactory({
     name: collectionName,
     version: collectionVersion,
+  });
+  t.context.testPgCollection2 = fakeCollectionRecordFactory({
+    name: collectionName2,
+    version: collectionVersion2,
   });
   const collectionPgModel = new CollectionPgModel();
   const [pgCollection] = await collectionPgModel.create(
     t.context.knex,
-    testPgCollection
+    t.context.testPgCollection
+  );
+  const [pgCollection2] = await collectionPgModel.create(
+    t.context.knex,
+    t.context.testPgCollection2
   );
 
   // Create execution in Postgres
@@ -242,6 +258,7 @@ test.before(async (t) => {
   );
   t.context.testExecutionCumulusId = testExecution.cumulus_id;
   t.context.collectionCumulusId = pgCollection.cumulus_id;
+  t.context.collectionCumulusId2 = pgCollection2.cumulus_id;
 
   const newExecution = fakeExecutionFactoryV2({
     arn: 'arn3',
@@ -262,6 +279,7 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
   const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId3 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -281,6 +299,25 @@ test.beforeEach(async (t) => {
         granule_id: granuleId2,
         status: 'failed',
         collection_cumulus_id: t.context.collectionCumulusId,
+        duration: 52.235,
+        timestamp: new Date(Date.now()),
+      }
+    ),
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId3,
+        status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+        duration: 52.235,
+        timestamp: new Date(Date.now()),
+      }
+    ),
+    // granule with same granule_id as above but different collection_cumulus_id
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId3,
+        status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId2,
         duration: 52.235,
         timestamp: new Date(Date.now()),
       }
@@ -370,10 +407,10 @@ test.serial('default returns list of granules', async (t) => {
     .expect(200);
 
   const { meta, results } = response.body;
-  t.is(results.length, 2);
+  t.is(results.length, 3);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
-  t.is(meta.count, 2);
+  t.is(meta.count, 3);
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
@@ -478,7 +515,7 @@ test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an 
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('GET returns the expected existing granule', async (t) => {
+test.serial('GET returns the expected existing granule if a collectionId is NOT provided', async (t) => {
   const {
     knex,
     fakePGGranules,
@@ -501,6 +538,58 @@ test.serial('GET returns the expected existing granule', async (t) => {
   });
 
   t.deepEqual(response.body, expectedGranule);
+});
+
+test.serial('GET returns the expected existing granule if a collectionId is provided', async (t) => {
+  const {
+    knex,
+    fakePGGranules,
+    testPgCollection,
+  } = t.context;
+
+  const collectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
+
+  const response = await request(app)
+    .get(`/granules/${collectionId}/${t.context.fakePGGranules[2].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[2].granule_id,
+    collection_cumulus_id: fakePGGranules[2].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(response.body, expectedGranule);
+});
+
+test.serial('GET returns a 400 response if the collectionId is in the wrong format', async (t) => {
+  const response = await request(app)
+    .get(`/granules/unknownCollection/${t.context.fakePGGranules[2].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(400);
+
+  t.is(response.status, 400);
+  const { message } = response.body;
+  t.is(message, 'invalid collectionId: "unknownCollection"');
+});
+
+test.serial('GET returns a 404 response if the granule\'s collection is not found', async (t) => {
+  const response = await request(app)
+    .get(`/granules/unknown___unknown/${t.context.fakePGGranules[2].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+
+  t.is(response.status, 404);
+  const { message } = response.body;
+  t.is(message, `No collection found for granuleId ${t.context.fakePGGranules[2].granule_id} with collectionId unknown___unknown`);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {

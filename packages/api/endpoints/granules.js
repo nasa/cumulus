@@ -479,7 +479,7 @@ async function del(req, res) {
 }
 
 /**
- * Query a single granule.
+ * Query a single granule by granuleId + collectionId.
  *
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -488,15 +488,73 @@ async function del(req, res) {
 async function get(req, res) {
   const {
     knex = await getKnexClient(),
+    collectionPgModel = new CollectionPgModel(),
+    granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
   const granuleId = req.params.granuleName;
+  const collectionId = req.params.collectionId;
+
+  let granule;
+  let pgCollection;
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex, deconstructCollectionId(collectionId)
+    );
+
+    granule = await granulePgModel.get(
+      knex,
+      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        return res.boom.notFound(`No collection found for granuleId ${granuleId} with collectionId ${collectionId}`);
+      }
+      if (granule === undefined) {
+        return res.boom.notFound('Granule not found');
+      }
+    }
+
+    throw error;
+  }
+
+  // Get related files, execution ARNs, provider, PDR, and collection and format
+  const result = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: granule,
+    knexOrTransaction: knex,
+  });
+
+  const recoveryStatus = getRecoveryStatus === 'true'
+    ? await getOrcaRecoveryStatusByGranuleId(granuleId)
+    : undefined;
+  return res.send({ ...result, recoveryStatus });
+}
+
+/**
+ * Query a single granule by granuleId only.
+ * DEPRECATED: use get() instead to fetch granules by
+ *   granuleId + collectionId
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function getByGranuleId(req, res) {
+  const {
+    knex = await getKnexClient(),
+  } = req.testContext || {};
+  const { getRecoveryStatus } = req.query;
+  const granuleId = req.params.granuleName;
+
   let granule;
   try {
     granule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound('Granule not found');
+      if (granule === undefined) {
+        return res.boom.notFound('Granule not found');
+      }
     }
 
     throw error;
@@ -645,7 +703,8 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.get('/:granuleName', get);
+router.get('/:granuleName', getByGranuleId);
+router.get('/:collectionId/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
