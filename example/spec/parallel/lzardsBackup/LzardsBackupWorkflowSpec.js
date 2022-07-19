@@ -16,10 +16,10 @@ const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 describe('The Lzards Backup workflow ', () => {
   let beforeAllFailed = false;
   let collection;
+  let config;
   let ingestBucket;
   let ingestPath;
   let lambdaOutput;
-  let lambdaStep;
   let prefix;
   let testId;
   let testSuffix;
@@ -27,7 +27,7 @@ describe('The Lzards Backup workflow ', () => {
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       testId = createTimestampedTestId(prefix, 'LzardsBackupWorkflow');
       testSuffix = createTestSuffix(testId);
@@ -58,12 +58,89 @@ describe('The Lzards Backup workflow ', () => {
           ],
         }
       );
+    } catch (error) {
+      beforeAllFailed = true;
+      throw error;
+    }
+  });
 
+  afterAll(async () => {
+    await deleteCollection({
+      prefix,
+      collectionName: get(collection, 'name'),
+      collectionVersion: get(collection, 'version'),
+    });
+  });
+
+  describe('works with a payload that contains collectionId', () => {
+    beforeAll(async () => {
+      try {
+        const payload = {
+          granules: [
+            {
+              granuleId: 'FakeGranule1',
+              collectionId: `${collection.name}___${collection.version}`,
+              files: [
+                {
+                  fileName: 'testGranule.jpg',
+                  bucket: ingestBucket,
+                  key: `${ingestPath}/testGranule.jpg`,
+                  checksumType: 'md5',
+                  checksum: '5799f9560b232baf54337d334179caa0',
+                },
+                {
+                  fileName: 'testGranule.dat',
+                  bucket: ingestBucket,
+                  key: `${ingestPath}/testGranule.dat`,
+                  checksumType: 'md5',
+                  checksum: '39a870a194a787550b6b5d1f49629236',
+                },
+              ],
+            },
+          ],
+        };
+        workflowExecution = await buildAndExecuteWorkflow(
+          prefix,
+          config.bucket,
+          'LzardsBackupTest',
+          collection,
+          undefined,
+          payload,
+          { urlType: 's3' }
+        );
+        const executionArn = workflowExecution.executionArn;
+        console.log(`Wait for completed execution ${executionArn}`);
+
+        await waitForCompletedExecution(executionArn);
+        const lambdaStep = new LambdaStep();
+        lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
+      } catch (error) {
+        beforeAllFailed = error;
+      }
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
+    });
+
+    it('executes succesfully when the payload granule contains collectionId', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      expect(workflowExecution.status).toEqual('completed');
+    });
+
+    it('has the expected step output', () => {
+      expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
+    });
+  });
+
+  describe('works with a payload that contains dataType and version', () => {
+    beforeAll(async () => {
       const payload = {
         granules: [
           {
             granuleId: 'FakeGranule1',
-            collectionId: `${collection.name}___${collection.version}`,
+            dataType: collection.name,
+            version: collection.version,
             files: [
               {
                 fileName: 'testGranule.jpg',
@@ -98,32 +175,84 @@ describe('The Lzards Backup workflow ', () => {
         console.log(`Wait for completed execution ${executionArn}`);
 
         await waitForCompletedExecution(executionArn);
-        lambdaStep = new LambdaStep();
+        const lambdaStep = new LambdaStep();
         lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
       } catch (error) {
         beforeAllFailed = error;
       }
-    } catch (error) {
-      beforeAllFailed = true;
-      throw error;
-    }
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
+    });
+
+    it('executes successfully when the payload granule contains dataType and version', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      expect(workflowExecution.status).toEqual('completed');
+    });
+
+    it('has the expected step output', () => {
+      expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
+    });
   });
 
-  it('executes succesfully', () => {
-    if (beforeAllFailed) fail(beforeAllFailed);
-    expect(workflowExecution.status).toEqual('completed');
-  });
+  describe('fails when dataType and version or collectionId is missing from the payload', () => {
+    beforeAll(async () => {
+      const payload = {
+        granules: [
+          {
+            granuleId: 'FakeGranule1',
+            files: [
+              {
+                fileName: 'testGranule.jpg',
+                bucket: ingestBucket,
+                key: `${ingestPath}/testGranule.jpg`,
+                checksumType: 'md5',
+                checksum: '5799f9560b232baf54337d334179caa0',
+              },
+              {
+                fileName: 'testGranule.dat',
+                bucket: ingestBucket,
+                key: `${ingestPath}/testGranule.dat`,
+                checksumType: 'md5',
+                checksum: '39a870a194a787550b6b5d1f49629236',
+              },
+            ],
+          },
+        ],
+      };
 
-  it('has the expected step output', () => {
-    expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
-  });
+      try {
+        workflowExecution = await buildAndExecuteWorkflow(
+          prefix,
+          config.bucket,
+          'LzardsBackupTest',
+          collection,
+          undefined,
+          payload,
+          { urlType: 's3' }
+        );
+        const executionArn = workflowExecution.executionArn;
+        console.log(`Wait for completed execution ${executionArn}`);
 
-  afterAll(async () => {
-    await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
-    await deleteCollection({
-      prefix,
-      collectionName: get(collection, 'name'),
-      collectionVersion: get(collection, 'version'),
+        await waitForCompletedExecution(executionArn);
+        const lambdaStep = new LambdaStep();
+        lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup', 'failure');
+      } catch (error) {
+        beforeAllFailed = error;
+      }
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
+    });
+
+    it('throws an error and fails', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      const errorCause = JSON.parse(lambdaOutput.cause);
+      const [message] = JSON.parse(errorCause.errorMessage);
+      expect(workflowExecution.status).toEqual('failed');
+      expect(message.reason.name).toEqual('CollectionIdentifiersNotProvidedError');
     });
   });
 });

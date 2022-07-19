@@ -11,6 +11,7 @@ const {
   recursivelyDeleteS3Bucket,
   deleteS3Object,
 } = require('@cumulus/aws-client/S3');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
@@ -717,13 +718,15 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
   const testCollection2 = fakeCollectionRecordFactory();
   await collectionPgModel.create(testKnex, testCollection1);
   await collectionPgModel.create(testKnex, testCollection2);
+  const collectionId1 = constructCollectionId(testCollection1.name, testCollection1.version);
+  const collectionId2 = constructCollectionId(testCollection2.name, testCollection2.version);
 
   const fakePayload = {
     input: {
       granules: [
         {
           granuleId: 'FakeGranule1',
-          collectionId: 'FakeCollectionId___001',
+          collectionId: collectionId1,
           files: [
             {
               bucket: fakeBucket1,
@@ -741,7 +744,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
         },
         {
           granuleId: 'FakeGranule2',
-          collectionId: 'FakeCollectionId___002',
+          collectionId: collectionId2,
           files: [
             {
               bucket: fakeBucket2,
