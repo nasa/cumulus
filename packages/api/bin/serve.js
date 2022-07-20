@@ -135,7 +135,10 @@ async function checkOrCreateTables(stackName) {
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   console.log(process.env.ES_HOST);
-  await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
+  await bootstrapElasticSearch({
+    host: process.env.ES_HOST,
+    index: process.env.ES_INDEX,
+  });
   await s3().createBucket({ Bucket: bucket });
 
   const { TopicArn } = await sns().createTopic({ Name: randomId('topicName') }).promise();
@@ -189,7 +192,10 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
 async function initializeLocalElasticsearch(stackName) {
   const es = await getESClientAndIndex(stackName);
   await eraseElasticsearchIndices(es.client, es.index);
-  return bootstrapElasticSearch(process.env.ES_HOST, es.index);
+  return bootstrapElasticSearch({
+    host: process.env.ES_HOST,
+    index: es.index,
+  });
 }
 
 /**

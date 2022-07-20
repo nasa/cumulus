@@ -6,15 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v11.1.4] 2022-07-18
-
-**Please note** changes in 11.1.4 may not yet be released in future versions, as
-this is a backport and patch release on the 11.1.x series of releases. Updates that
-are included in the future will have a corresponding CHANGELOG entry in future
-releases.
-
 ### MIGRATION notes
-
 
 - The changes introduced in CUMULUS-2962 will re-introduce a
   `files_granules_cumulus_id_index` on the `files` table in the RDS database.
@@ -118,11 +110,154 @@ releases.
 
   -----
 
+### Notable changes
+
+- **CUMULUS-2962**
+  - Re-added database structural migration to `files` table to add an index on `granule_cumulus_id`
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
 ### Changed
 
 - Updated Moment.js package to 2.29.4 to address security vulnerability
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
 
-## [v11.1.3] 2022-06-17
+### Fixed
+
+- **CUMULUS-2995**
+  - Updated Lerna package to 5.1.8 to address security vulnerability
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB
+
+## [v13.0.1] 2022-7-12
+
+- **CUMULUS-2995**
+  - Updated Moment.js package to 2.29.4 to address security vulnerability
+
+## [v13.0.0] 2022-06-13
+
+### MIGRATION NOTES
+
+- The changes introduced in CUMULUS-2955 should result in removal of
+  `files_granule_cumulus_id_index` from the `files` table (added in the v11.1.1
+  release).  The success of this operation is dependent on system ingest load.
+
+  In rare cases where data-persistence deployment fails because the
+  `postgres-db-migration` times out, it may be required to manually remove the
+  index and then redeploy:
+
+  ```text
+  DROP INDEX IF EXISTS files_granule_cumulus_id_index;
+  ```
+
+### Breaking Changes
+
+- **CUMULUS-2931**
+
+  - Updates CustomBootstrap lambda to default to failing if attempting to remove
+    a pre-existing `cumulus-alias` index that would collide with the required
+    `cumulus-alias` *alias*.   A configuration parameter
+    `elasticsearch_remove_index_alias_conflict`  on the `cumulus` and
+    `archive` modules has been added to enable the original behavior that would
+    remove the invalid index (and all it's data).
+  - Updates `@cumulus/es-client.bootstrapElasticSearch` signature to be
+    parameterized and accommodate a new parameter `removeAliasConflict` which
+    allows/disallows the deletion of a conflicting `cumulus-alias` index
+
+### Notable changes
+
+- **CUMULUS-2929**
+  - Updated `move-granule` task to check the optional collection configuration parameter
+    `meta.granuleMetadataFileExtension` to determine the granule metadata file.
+    If none is specified, the granule CMR metadata or ISO metadata file is used.
+
+### Added
+
+- **CUMULUS-2929**
+  - Added optional collection configuration `meta.granuleMetadataFileExtension` to specify CMR metadata
+    file extension for tasks that utilize metadata file lookups
+
+- **CUMULUS-2939**
+  - Added `@cumulus/api/lambdas/start-async-operation` to start an async operation
+
+- **CUMULUS-2953**
+  - Added `skipMetadataCheck` flag to config for Hyrax metadata updates task.
+  - If this config flag is set to `true`, and a granule has no CMR file, the task will simply return the input values.
+
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
+### Changed
+
+- **CUMULUS-2965**
+  - Update `cumulus-rds-tf` module to ignore `engine_version` lifecycle changes
+- **CUMULUS-2967**
+  - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
+    case of deletion race conditions
+- **CUMULUS-2955**
+  - Updates `20220126172008_files_granule_id_index` to *not* create an index on
+    `granule_cumulus_id` on the files table.
+  - Adds `20220609024044_remove_files_granule_id_index` migration to revert
+    changes from `20220126172008_files_granule_id_index` on any deployed stacks
+    that might have the index to ensure consistency in deployed stacks
+
+- **CUMULUS-2923**
+  - Changed public key setup for SFTP local testing.
+
+- **CUMULUS-2939**
+  - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
+    `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
+
+### Fixed
+
+- **CUMULUS-2863**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries
+    and 0 visibilityTimeout in rule's meta.
+- **CUMULUS-2961**
+  - Fixed `data-migration2` granule migration logic to allow for DynamoDb granules that have a null/empty string value for `execution`.   The migration will now migrate them without a linked execution.
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.
+
+- **CUMULUS-2959**
+  - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
+    when an old granule record is retrieved from DynamoDB.
+
+## [v12.0.0] 2022-05-20
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
+
+### Changed
+
+- **CUMULUS-2932**
+
+  - Updates `SyncGranule` task to include `disableOrDefaultAcl` function that uses
+    the configuration ACL parameter to set ACL to private by default or disable ACL.
+  - Updates `@cumulus/sync-granule` `download()` function to take in ACL parameter
+  - Updates `@cumulus/ingest` `proceed()` function to take in ACL parameter
+  - Updates `@cumulus/ingest` `addLock()` function to take in an optional ACL parameter
+  - Updates `SyncGranule` example worfklow config
+    `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
+    parameter.
+
+## [v11.1.3] 2022-06-24
 
 **Please note** changes in 11.1.3 may not yet be released in future versions, as
 this is a backport and patch release on the 11.1.x series of releases. Updates that
@@ -131,8 +266,6 @@ releases.
 
 ### Notable changes
 
-- **CUMULUS-2962**
-  - Re-added database structural migration to `files` table to add an index on `granule_cumulus_id`
 - **CUMULUS-2929**
   - Updated `move-granule` task to check the optional collection configuration parameter
     `meta.granuleMetadataFileExtension` to determine the granule metadata file.
@@ -213,6 +346,9 @@ releases.
     - `tasks/hyrax-metadata-updates`
     - `tasks/lzards-backup`
     - `tasks/sync-granule`
+- **CUMULUS-2886**
+  - Updated `@cumulus/aws-client` to use new AWS SDK v3 packages for API Gateway requests:
+    - `@aws-sdk/client-api-gateway`
 - **CUMULUS-2920**
   - Update npm version for Core build to 8.6
 - **CUMULUS-2922**
@@ -224,6 +360,9 @@ releases.
   - Updates CI to utilize `audit-ci` v6.2.0
   - Updates CI to utilize a on-container filesystem when building Core in 'uncached' mode
   - Updates CI to selectively bootstrap Core modules in the cleanup job phase
+- **CUMULUS-2934**
+  - Update CI Docker container build to install pipenv to prevent contention on parallel lambda builds
+
 
 ## [v11.1.0] 2022-04-07
 
@@ -283,8 +422,8 @@ migration notes from prior releases:
 ##### **After deploying the `data-persistence` module, but before deploying the main `cumulus` module**
 
 - Due to a bug in the PUT `/rules/<name>` endpoint, the rule records in PostgreSQL may be
-out of sync with records in DynamoDB. In order to bring the records into sync, re-run the
-[previously deployed `data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
+out of sync with records in DynamoDB. In order to bring the records into sync, re-deploy and re-run the
+[`data-migration1` Lambda](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds#3-deploy-and-run-data-migration1) with a payload of
 `{"forceRulesMigration": true}`:
 
 ```shell
@@ -732,6 +871,13 @@ for more on this tool if you are unfamiliar with the various options.
   - Updated localAPI to set additional env variable, and fixed `GET /executions/status` response
   - **CUMULUS-2877**
     - Ensure database records receive a timestamp when writing granules.
+
+## [v10.1.3] 2022-06-28 [BACKPORT]
+
+### Added
+
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
 
 ## [v10.1.2] 2022-03-11
 
@@ -6074,13 +6220,14 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.4...HEAD
-[v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
-[v11.1.3]: https://github.com/nasa/cumulus/compare/v11.1.2...v11.1.3
-[v11.1.2]: https://github.com/nasa/cumulus/compare/v11.1.1...v11.1.2
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.1...HEAD
+[v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
+[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.0...v13.0.0
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
-[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
+[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.3...v11.0.0
+[v10.1.3]: https://github.com/nasa/cumulus/compare/v10.1.2...v10.1.3
 [v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
