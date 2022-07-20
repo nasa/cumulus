@@ -77,7 +77,11 @@ test.beforeEach(async (t) => {
   esAlias = randomId('esalias');
   esIndex = randomId('esindex');
   process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   esClient = await Search.es();
 
   t.context.testDbName = `test_internal_recon_${cryptoRandomString({ length: 10 })}`;

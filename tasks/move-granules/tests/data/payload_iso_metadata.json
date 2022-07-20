@@ -19,8 +19,7 @@
         "type": "public"
       }
     },
-    "provider": "GES_DISC",
-    "entryTitle": "GLDAS Catchment Land Surface Model L4 daily 0.25 x 0.25 degree V2.0 (GLDAS_CLSM025_D) at GES DISC",
+    "distribution_endpoint": "https://something.api.us-east-1.amazonaws.com/",
     "collection": {
       "files": [
         {
@@ -39,8 +38,13 @@
           "bucket": "private"
         },
         {
-          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.foo$",
-          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.foo",
+          "regex": "^^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.iso\\.xml$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.iso.xml",
+          "bucket": "public"
+        },
+        {
+          "regex": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}\\.cmr\\.xml$",
+          "sampleFileName": "MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
           "bucket": "public"
         },
         {
@@ -55,7 +59,10 @@
           "url_path": "jpg/example/"
         }
       ],
-      "url_path": "example/{extractYear(cmrMetadata.Granule.Temporal.RangeDateTime.BeginningDateTime)}/",
+      "meta": {
+        "granuleMetadataFileExtension": ".iso.xml"
+      },
+      "url_path": "example/{dateFormat(cmrMetadata.gmd:DS_Series.gmd:composedOf.gmd:DS_DataSet.gmd:has.gmi:MI_Metadata.gmd:identificationInfo.gmd:MD_DataIdentification.gmd:extent.gmd:EX_Extent.gmd:temporalElement.gmd:EX_TemporalExtent.gmd:extent.gml:TimePeriod.gml:beginPosition, YYYY/MM/DD)}/",
       "name": "MOD11A1",
       "granuleId": "^MOD11A1\\.A[\\d]{7}\\.[\\S]{6}\\.006.[\\d]{13}$",
       "dataType": "MOD11A1",
@@ -71,23 +78,29 @@
         "granuleId": "MOD11A1.A2017200.h19v04.006.2017201090724",
         "files": [
           {
-            "bucket": "cumulus-internal",
             "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.hdf",
+            "bucket": "cumulus-internal",
             "type": "data"
           },
           {
-            "bucket": "cumulus-internal",
             "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_1.jpg",
+            "bucket": "cumulus-internal",
             "type": "browse"
           },
           {
-            "bucket": "cumulus-internal",
             "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724_2.jpg",
+            "bucket": "cumulus-internal",
             "type": "browse"
           },
           {
+            "fileName": "^MOD11A1.A2017200.h19v04.006.2017201090724.iso.xml",
             "bucket": "cumulus-internal",
-            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.foo",
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.iso.xml",
+            "type": "metadata"
+          },
+          {
+            "key": "file-staging/subdir/MOD11A1.A2017200.h19v04.006.2017201090724.cmr.xml",
+            "bucket": "cumulus-internal",
             "type": "metadata"
           }
         ]
