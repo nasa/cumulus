@@ -2,6 +2,7 @@
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { SQS } = require('@cumulus/aws-client');
+const { getISODate } = require('@cumulus/api/lambdas/write-db-dlq-records-to-s3.js');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   deleteS3Object,
@@ -10,6 +11,7 @@ const {
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 
 const { loadConfig } = require('../../helpers/testUtils');
+
 
 describe('When a bad record is sent on the DLQ', () => {
   let beforeAllSucceeded = false;
@@ -69,7 +71,7 @@ describe('When a bad record is sent on the DLQ', () => {
       if (!beforeAllSucceeded) fail('beforeAll() failed');
       else {
         console.log(`Waiting for the creation of failed message for execution ${executionName}`);
-        const prefix = `${stackName}/dead-letter-archive/sqs/${executionName}`;
+        const prefix = `${stackName}/dead-letter-archive/sqs/${getISODate()}/${executionName}`;
         try {
           await expectAsync(waitForListObjectsV2ResultCount({
             bucket: systemBucket,

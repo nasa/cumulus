@@ -42,6 +42,7 @@ async function handler(event) {
 
 module.exports = {
   determineExecutionName,
+  getISODate,
   handler,
   unwrapDeadLetterCumulusMessage,
 };
