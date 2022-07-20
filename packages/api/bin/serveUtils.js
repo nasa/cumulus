@@ -57,13 +57,11 @@ async function addCollections(collections) {
     },
   });
 
-  const collectionModel = new models.Collection();
   const es = await getESClientAndIndex();
   const collectionPgModel = new CollectionPgModel();
   return await Promise.all(
     collections.map(async (c) => {
-      const dynamoRecord = await collectionModel.create(c);
-      await indexer.indexCollection(es.client, dynamoRecord, es.index);
+      await indexer.indexCollection(es.client, c, es.index);
       const dbRecord = await translateApiCollectionToPostgresCollection(c);
       await collectionPgModel.create(knex, dbRecord);
     })
@@ -180,14 +178,12 @@ async function addPdrs(pdrs) {
     },
   });
 
-  const pdrModel = new models.Pdr();
   const es = await getESClientAndIndex();
   const pdrPgModel = new PdrPgModel();
   return await Promise.all(
     pdrs.map(async (p) => {
-      const dynamoRecord = await pdrModel.create(p);
-      await indexer.indexPdr(es.client, dynamoRecord, es.index);
-      const dbRecord = await translateApiPdrToPostgresPdr(dynamoRecord, knex);
+      await indexer.indexPdr(es.client, p, es.index);
+      const dbRecord = await translateApiPdrToPostgresPdr(p, knex);
       await pdrPgModel.create(knex, dbRecord);
     })
   );

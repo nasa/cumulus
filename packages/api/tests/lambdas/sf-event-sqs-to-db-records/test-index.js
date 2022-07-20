@@ -45,7 +45,6 @@ const {
   writeRecords,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
 const Granule = require('../../../models/granules');
-const Pdr = require('../../../models/pdrs');
 
 const {
   handler,
@@ -168,7 +167,6 @@ test.before(async (t) => {
 
   process.env.ExecutionsTable = randomString();
   process.env.GranulesTable = randomString();
-  process.env.PdrsTable = randomString();
 
   const fakeFileUtils = {
     buildDatabaseFiles: (params) => Promise.resolve(params.files),
@@ -182,10 +180,6 @@ test.before(async (t) => {
   });
   await granuleModel.createTable();
   t.context.granuleModel = granuleModel;
-
-  const pdrModel = new Pdr();
-  await pdrModel.createTable();
-  t.context.pdrModel = pdrModel;
 
   fixture = await loadFixture('execution-running-event.json');
 
@@ -294,12 +288,10 @@ test.beforeEach(async (t) => {
 
 test.after.always(async (t) => {
   const {
-    pdrModel,
     PdrsTopicArn,
     granuleModel,
     ExecutionsTopicArn,
   } = t.context;
-  await pdrModel.deleteTable();
   await granuleModel.deleteTable();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
@@ -333,7 +325,6 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   const {
     collectionCumulusId,
     cumulusMessage,
-    pdrModel,
     testKnex,
     executionArn,
     pdrName,
@@ -348,8 +339,6 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
     knex: testKnex,
     testOverrides,
   }));
-
-  t.false(await pdrModel.exists({ pdrName }));
 
   t.false(
     await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
@@ -369,7 +358,6 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
   const {
     collectionCumulusId,
     cumulusMessage,
-    pdrModel,
     testKnex,
     executionArn,
     pdrName,
@@ -378,8 +366,6 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
   } = t.context;
 
   await writeRecords({ cumulusMessage, knex: testKnex, testOverrides });
-
-  t.true(await pdrModel.exists({ pdrName }));
 
   t.true(
     await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
@@ -411,7 +397,6 @@ test.serial('writeRecords() discards an out of order message that is older than 
   const {
     collectionCumulusId,
     cumulusMessage,
-    pdrModel,
     testKnex,
     pdrName,
     granuleId,
@@ -432,8 +417,6 @@ test.serial('writeRecords() discards an out of order message that is older than 
   cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, testOverrides }));
 
-  t.is(timestamp, (await pdrModel.get({ pdrName })).createdAt);
-
   t.deepEqual(
     new Date(timestamp),
     (await granulePgModel.get(
@@ -451,7 +434,6 @@ test.serial('writeRecords() discards an out of order message that has an older s
   const {
     collectionCumulusId,
     cumulusMessage,
-    pdrModel,
     testKnex,
     executionArn,
     pdrName,
@@ -468,8 +450,6 @@ test.serial('writeRecords() discards an out of order message that has an older s
 
   cumulusMessage.meta.status = 'running';
   await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, testOverrides }));
-
-  t.is('completed', (await pdrModel.get({ pdrName })).status);
 
   t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
   t.is('completed', (await granulePgModel.get(
