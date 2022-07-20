@@ -1,19 +1,17 @@
 'use strict';
 
-const {
-  randomStringFromRegex,
-} = require('@cumulus/common/test-utils');
+const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const Logger = require('@cumulus/logger');
 
 const { fetchFakeProviderIp } = require('@cumulus/common/fake-provider');
-// eslint-disable-next-line no-unused-vars
-const { granules } = require('@cumulus/test-data');
 const replace = require('lodash/replace');
 const JSFtp = require('jsftp');
 const path = require('path');
 const fs = require('fs');
 
-const log = new Logger({ sender: '@cumulus/example/lambdas/ftpPopulateTestLambda' });
+const log = new Logger({
+  sender: '@cumulus/example/lambdas/ftpPopulateTestLambda',
+});
 
 const updateAndUploadTestFileToFtpHost = (params) => {
   const {
@@ -24,14 +22,11 @@ const updateAndUploadTestFileToFtpHost = (params) => {
     targetReplacementRegex,
     targetReplacementString,
   } = params;
-  let data;
+  let data = fs.readFileSync(file);
   if (replacements.length > 0) {
-    data = fs.readFileSync(file);
     replacements.forEach((replacement) => {
       data = replace(data, new RegExp(replacement.old, 'g'), replacement.new);
     });
-  } else {
-    data = fs.readFileSync(file);
   }
   let key = path.basename(file);
   if (targetReplacementRegex) {
@@ -64,9 +59,7 @@ const updateAndUploadTestFileToFtpHost = (params) => {
   }
 };
 
-const uploadFtpGranuleDataForDiscovery = async ({
-  prefix,
-}) => {
+const uploadFtpGranuleDataForDiscovery = async ({ prefix }) => {
   log.info('Starting lambda');
   const ftpData = [
     './granules/MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met',
@@ -85,24 +78,22 @@ const uploadFtpGranuleDataForDiscovery = async ({
   log.info(`Hostconfig is ${JSON.stringify(hostConfig)}`);
 
   const filePaths = await Promise.all(
-    ftpData.map(
-      async (file) => {
-        let objectKey;
-        try {
-          objectKey = await updateAndUploadTestFileToFtpHost({
-            file,
-            hostConfig,
-            prefix,
-            targetReplacementRegex: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
-            targetReplacementString: newGranuleId,
-          });
-        } catch (error) {
-          log.info('Error!', error);
-          throw error;
-        }
-        return objectKey;
+    ftpData.forEach(async (file) => {
+      let objectKey;
+      try {
+        objectKey = await updateAndUploadTestFileToFtpHost({
+          file,
+          hostConfig,
+          prefix,
+          targetReplacementRegex: 'MOD09GQ.A2016358.h13v04.006.2016360104606',
+          targetReplacementString: newGranuleId,
+        });
+      } catch (error) {
+        log.info('Error!', error);
+        throw error;
       }
-    )
+      return objectKey;
+    })
   );
   log.info(JSON.stringify(filePaths));
   return { filePaths, newGranuleId };
@@ -130,9 +121,7 @@ const deleteFtpGranule = async (filePath) => {
   });
 };
 
-const deleteFtpGranules = async ({
-  filePaths,
-}) => {
+const deleteFtpGranules = async ({ filePaths }) => {
   const deletions = await Promise.allSettled(
     filePaths.map((ftpFilePath) => deleteFtpGranule(ftpFilePath))
   );
