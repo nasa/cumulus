@@ -7,6 +7,7 @@ const granulesApi = require('../granules');
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
+  t.context.collectionId = 'fakeName___fakeVersion';
   t.context.status = 'queued';
 });
 
@@ -43,7 +44,7 @@ test('getGranule calls the callback with the expected object when there is query
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       queryStringParameters: query,
     },
   };
@@ -53,6 +54,7 @@ test('getGranule calls the callback with the expected object when there is query
     return Promise.resolve({
       body: JSON.stringify({
         granuleId: t.context.granuleId,
+        collectionId: t.context.collectionId,
       }),
     });
   };
@@ -61,6 +63,7 @@ test('getGranule calls the callback with the expected object when there is query
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     query,
   }));
 });
