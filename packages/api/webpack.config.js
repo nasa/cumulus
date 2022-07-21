@@ -28,7 +28,6 @@ module.exports = {
     cleanExecutions: './lambdas/cleanExecutions.js',
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
     distribution: './app/distribution.js',
-    executeMigrations: './lambdas/executeMigrations.js',
     indexFromDatabase: './lambdas/index-from-database.js',
     manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
