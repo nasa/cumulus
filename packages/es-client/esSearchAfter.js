@@ -18,6 +18,7 @@ class ESSearchAfter extends Search {
   _buildSearch() {
     const params = super._buildSearch();
     delete params.from;
+    delete params.to;
 
     if (this.params.searchContext) {
       params.body.search_after = JSON.parse(this.params.searchContext);

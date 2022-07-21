@@ -22,7 +22,6 @@ const {
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
-const { granuleSortParams } = require('@cumulus/es-client/esDefaults');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
@@ -75,13 +74,13 @@ async function list(req, res) {
   let es;
   if (queryStringParameters.searchContext) {
     es = new ESSearchAfter(
-      { queryStringParameters, sortParams: granuleSortParams },
+      { queryStringParameters },
       'granule',
       process.env.ES_INDEX
     );
   } else {
     es = new Search(
-      { queryStringParameters, sortParams: granuleSortParams },
+      { queryStringParameters },
       'granule',
       process.env.ES_INDEX
     );

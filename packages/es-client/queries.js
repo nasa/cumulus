@@ -9,6 +9,7 @@
 
 const omit = require('lodash/omit');
 
+const { defaultSortParams } = require('./esDefaults');
 const { convertTextField } = require('./textFields');
 
 const regexes = {
@@ -57,7 +58,7 @@ const build = {
         return { [sortField]: { order: key.startsWith('-') ? 'desc' : 'asc' } };
       });
     } else {
-      sort = [{ timestamp: { order: 'desc' } }];
+      sort = defaultSortParams;
     }
 
     return sort;

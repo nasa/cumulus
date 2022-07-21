@@ -7,7 +7,6 @@ const isEqual = require('lodash/isEqual');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const { Search } = require('../search');
 const ESSearchAfter = require('../esSearchAfter');
-const { granuleSortParams } = require('../esDefaults');
 const { loadGranules, granuleFactory } = require('./helpers/helpers');
 
 const sandbox = sinon.createSandbox();
@@ -111,7 +110,6 @@ test.serial(
     let esSearchAfter = new ESSearchAfter(
       { queryStringParameters: {
         limit: testSearchSize,
-        sortParams: granuleSortParams,
       } },
       'granule',
       t.context.esAlias
@@ -125,7 +123,6 @@ test.serial(
       esSearchAfter = new ESSearchAfter(
         { queryStringParameters: {
           limit: testSearchSize,
-          sortParams: granuleSortParams,
           searchContext: response.meta.searchContext,
         } },
         'granule',
