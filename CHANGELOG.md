@@ -12,6 +12,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `move-granule` task to check the optional collection configuration parameter
     `meta.granuleMetadataFileExtension` to determine the granule metadata file.
     If none is specified, the granule CMR metadata or ISO metadata file is used.
+- **CUMULUS-2930**
+  - The `GET /granules` endpoint has a new optional query parameter:
+    `searchContext`, which is used to resume listing within the same search
+    context. It is provided in every response from the endpoint as
+    `meta.searchContext`. The searchContext value must be submitted with every
+    consequent API call, and must be fetched from each new response to maintain
+    the context.
+    - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
+    The endpoint will only use search-after when the `searchContext` parameter
+    is provided in a request.
 
 ### Changed
 
@@ -98,16 +108,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
-- **CUMULUS-2930**
-  - The `GET /granules` endpoint has a new optional query parameter:
-    `searchContext`, which is used to resume listing within the same search
-    context. It is provided in every response from the endpoint as
-    `meta.searchContext`. The searchContext value must be submitted with every
-    consequent API call, and must be fetched from each new response to maintain
-    the context.
-    - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
-    The endpoint will only use search-after when the `searchContext` parameter
-    is provided in a request.
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
