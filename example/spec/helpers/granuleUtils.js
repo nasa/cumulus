@@ -19,7 +19,8 @@ const {
   listGranules,
   removePublishedGranule,
 } = require('@cumulus/api-client/granules');
-
+const { granules } = require('@cumulus/api-client');
+const { api: apiTestUtils } = require('@cumulus/integration-tests');
 const { waitForApiStatus } = require('./apiUtils');
 
 /**
@@ -48,14 +49,14 @@ const addUrlPathToGranuleFiles = (files, testId, collectionUrlPath) =>
 /**
  * Add test-unique filepath to granule file filepath/filenames.
  *
- * @param  {Array<Object>} granules - Array of granules with files to be updated
+ * @param  {Array<Object>} granuleList - Array of granules with files to be updated
  * @param  {string} filePath - Filepath to add
  * @returns {Array<Object>} deep copy of the specified granules with the
  *    specified file path inserted immediately preceding the last part of the
  *    path of each file of each granule
  */
-const addUniqueGranuleFilePathToGranuleFiles = (granules, filePath) =>
-  granules.map((originalGranule) => {
+const addUniqueGranuleFilePathToGranuleFiles = (granuleList, filePath) =>
+  granuleList.map((originalGranule) => {
     const granule = cloneDeep(originalGranule);
 
     granule.files.forEach((file) => {
@@ -144,11 +145,100 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
   ])(baseInputPayload);
 }
 
-const deleteGranules = async (prefix, granules) => {
+async function generatePayloadGranule(granule2Replicate, bucket, granuleRegex) {
+  const oldGranuleId = granule2Replicate.granuleId;
+  const newGranuleId = randomStringFromRegex(granuleRegex);
+
+  await createGranuleFiles(
+    granule2Replicate.files,
+    bucket,
+    oldGranuleId,
+    newGranuleId
+  );
+
+  return flow([
+    JSON.stringify,
+    replace(new RegExp(oldGranuleId, 'g'), newGranuleId),
+    JSON.parse,
+  ])(granule2Replicate);
+}
+
+/**
+ * Set up files in the S3 data location for numerous new granules to use for this
+ * test. Use the input payload and granuleCount to determine which files are needed and
+ * return updated input with a list of granules with new ids.
+ *
+ * @param {string} bucket - data bucket
+ * @param {string} inputPayloadJson - input payload as a JSON string
+ * @param {string} granuleCountPerPayload - number of granules per workflow
+ * @param {string} granuleRegex - regex to generate the new granule id
+ * @param {string} testSuffix - suffix for test-specific collection
+ * @param {string} testDataFolder - test data S3 path
+ * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
+ */
+async function setupBulkTestGranuleForIngest(bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '', testDataFolder = undefined) {
+  let payloadJson;
+
+  if (testDataFolder) {
+    payloadJson = replace(
+      new RegExp('cumulus-test-data/pdrs', 'g'),
+      testDataFolder,
+      inputPayloadJson
+    );
+  } else {
+    payloadJson = inputPayloadJson;
+  }
+  const baseInputPayload = JSON.parse(payloadJson);
+  baseInputPayload.granules[0].dataType += testSuffix;
+  const granule2Replicate = baseInputPayload.granules.shift();
+
+  console.log(`===== Create ${granuleCountPerPayload} granules per payload =====`);
+  const createS3GranuleFilesPromises = new Array(granuleCountPerPayload).fill().map(
+    async () => {
+      const replicatedGranule = await generatePayloadGranule(granule2Replicate, bucket, granuleRegex);
+      baseInputPayload.granules.push(replicatedGranule);
+    }
+  );
+  await Promise.all(createS3GranuleFilesPromises);
+  console.log(`===== Uploaded ${granuleCountPerPayload * granule2Replicate.files.length} granule files per payload =====`);
+
+  return baseInputPayload;
+}
+
+const cleanupBulkTestGranules = async (stackName, granuleList) => {
+  const granIds = granuleList.map((g) => g.granuleId);
+  const bulkDeleteResponse = await granules.bulkDeleteGranules({ prefix: stackName, body: { ids: granIds } });
+  const verifiedResponse = apiTestUtils.verifyCumulusApiResponse(bulkDeleteResponse, [202]);
+  const responseBody = JSON.parse(verifiedResponse.body);
+  console.log(`===== Async operation ID: ${JSON.stringify(responseBody)} =====`);
+
+  await pWaitFor(async () => {
+    let asyncOperation = {};
+    try {
+      asyncOperation = await apiTestUtils.getAsyncOperation({
+        prefix: stackName,
+        id: responseBody.id,
+      });
+    } catch (error) {
+      return false;
+    }
+    if (!asyncOperation.body) {
+      return false;
+    }
+    if (['RUNNER_FAILED', 'TASK_FAILED'].includes(JSON.parse(asyncOperation.body).status)) {
+      throw new Error(`Cleanup failed on delete granules async operation ${JSON.stringify(asyncOperation.body)}`);
+    }
+    return JSON.parse(asyncOperation.body).status === 'SUCCEEDED';
+  }, { interval: 10 * 1000, timeout: 15 * 60 * 1000 });
+
+  console.log(`===== Bulk Granule deletion succeeded! AsyncOperation ID: ${JSON.stringify(responseBody.id)} =====`);
+};
+
+const deleteGranules = async (prefix, granuleList) => {
   process.env.GranulesTable = `${prefix}-GranulesTable`;
   const granuleModel = new Granule();
   return await Promise.all(
-    granules.map(async (granule) => {
+    granuleList.map(async (granule) => {
       // Temporary fix to handle granules that are in a bad state
       // and cannot be deleted via the API
       try {
@@ -305,6 +395,8 @@ module.exports = {
   deleteGranules,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
+  setupBulkTestGranuleForIngest,
+  cleanupBulkTestGranules,
   waitForGranuleRecordsInList,
   waitForGranuleRecordsNotInList,
   waitForGranuleRecordUpdatedInList,

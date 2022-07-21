@@ -359,4 +359,5 @@ module.exports = {
   postBulkDelete,
   updateCollection,
   updateProvider,
+  verifyCumulusApiResponse,
 };
