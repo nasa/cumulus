@@ -72,7 +72,7 @@ describe('The Lzards Backup workflow ', () => {
     });
   });
 
-  describe('works with a payload that contains collectionId', () => {
+  describe('works with a payload that contains collectionId and not dataType and version', () => {
     beforeAll(async () => {
       try {
         const payload = {
@@ -133,7 +133,7 @@ describe('The Lzards Backup workflow ', () => {
     });
   });
 
-  describe('works with a payload that contains dataType and version', () => {
+  describe('works with a payload that contains dataType and version and not collectionId', () => {
     beforeAll(async () => {
       const payload = {
         granules: [
