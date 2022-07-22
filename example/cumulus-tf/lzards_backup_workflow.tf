@@ -1,4 +1,4 @@
-module "lzards_backup_test" {
+module "lzards_backup_workflow" {
     source = "../../tf-modules/workflow/"
 
     prefix          = var.prefix 
