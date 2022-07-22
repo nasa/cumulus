@@ -2,6 +2,7 @@
 
 const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
+const isNumber = require('lodash/isNumber');
 const uniqWith = require('lodash/uniqWith');
 
 const awsClients = require('@cumulus/aws-client/services');
@@ -29,18 +30,32 @@ const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
 const FileUtils = require('./FileUtils');
 
+/**
+ * translate an old-style granule file and numeric productVolume into the new schema
+ *
+ * @param {Object} granule - granule object to be translated
+ * @param {Function} fileUtils - utility to convert files to new schema
+ * @returns {Object} - translated granule object
+ */
 const translateGranule = async (
   granule,
   fileUtils = FileUtils
 ) => {
-  if (isNil(granule.files)) return granule;
+  let { files, productVolume } = granule;
+  if (!isNil(files)) {
+    files = await fileUtils.buildDatabaseFiles({
+      s3: awsClients.s3(),
+      files: granule.files,
+    });
+  }
+  if (!isNil(productVolume) && isNumber(productVolume)) {
+    productVolume = productVolume.toString();
+  }
 
   return {
     ...granule,
-    files: await fileUtils.buildDatabaseFiles({
-      s3: awsClients.s3(),
-      files: granule.files,
-    }),
+    ...(files && { files }),
+    ...(productVolume && { productVolume }),
   };
 };
 

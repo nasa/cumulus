@@ -494,17 +494,12 @@ test.serial('GET fails if execution is not found', async (t) => {
 });
 
 test.serial('DELETE deletes an execution', async (t) => {
-  const { originalDynamoExecution } = await createExecutionTestRecords(
+  const { originalPgRecord } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
   );
-  const { arn } = originalDynamoExecution;
+  const { arn } = originalPgRecord;
 
-  t.true(
-    await t.context.executionModel.exists(
-      { arn }
-    )
-  );
   t.true(
     await t.context.executionPgModel.exists(
       t.context.knex,
@@ -526,11 +521,6 @@ test.serial('DELETE deletes an execution', async (t) => {
   const { message } = response.body;
 
   t.is(message, 'Record deleted');
-  t.false(
-    await t.context.executionModel.exists(
-      { arn }
-    )
-  );
   const dbRecords = await t.context.executionPgModel
     .search(t.context.knex, { arn });
   t.is(dbRecords.length, 0);
@@ -541,67 +531,14 @@ test.serial('DELETE deletes an execution', async (t) => {
   );
 });
 
-test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+test.serial('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
-    originalDynamoExecution,
+    originalPgRecord,
   } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
   );
-  const { arn } = originalDynamoExecution;
-  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
-
-  const fakeExecutionModel = {
-    get: () => Promise.resolve(originalDynamoExecution),
-    delete: () => {
-      throw new Error('something bad');
-    },
-    create: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    params: {
-      arn,
-    },
-    testContext: {
-      knex: t.context.knex,
-      executionModel: fakeExecutionModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.deepEqual(
-    await t.context.executionModel.get({
-      arn,
-    }),
-    omit(originalDynamoExecution, 'parentArn')
-  );
-  t.true(
-    await t.context.executionPgModel.exists(t.context.knex, {
-      arn,
-    })
-  );
-  t.true(
-    await t.context.esExecutionsClient.exists(
-      arn
-    )
-  );
-});
-
-test.serial('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalDynamoExecution,
-  } = await createExecutionTestRecords(
-    t.context,
-    { parentArn: undefined }
-  );
-  const { arn } = originalDynamoExecution;
+  const { arn } = originalPgRecord;
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeExecutionPgModel = new ExecutionPgModel();
@@ -626,12 +563,6 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.executionModel.get({
-      arn,
-    }),
-    omit(originalDynamoExecution, 'parentArn')
-  );
   t.true(
     await t.context.executionPgModel.exists(t.context.knex, {
       arn,
@@ -644,14 +575,14 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
   );
 });
 
-test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+test.serial('del() does not remove from PostgreSQL if removing from Elasticsearch fails', async (t) => {
   const {
-    originalDynamoExecution,
+    originalPgRecord,
   } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
   );
-  const { arn } = originalDynamoExecution;
+  const { arn } = originalPgRecord;
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeEsClient = {
@@ -677,12 +608,6 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.executionModel.get({
-      arn,
-    }),
-    omit(originalDynamoExecution, 'parentArn')
-  );
   t.true(
     await t.context.executionPgModel.exists(t.context.knex, {
       arn,
@@ -704,14 +629,12 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
     name: 'test_execution',
   });
 
-  await executionModel.create(newExecution);
   const executionPgRecord = await translateApiExecutionToPostgresExecution(
     newExecution,
     knex
   );
   await executionPgModel.create(knex, executionPgRecord);
 
-  t.true(await executionModel.exists({ arn: newExecution.arn }));
   t.true(await executionPgModel.exists(knex, { arn: newExecution.arn }));
 
   await request(app)
@@ -720,9 +643,7 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  // Correct Dynamo and PG execution was deleted
-  t.false(await executionModel.exists({ arn: newExecution.arn }));
-
+  // Correct PG execution was deleted
   const dbRecords = await executionPgModel.search(t.context.knex, {
     arn: newExecution.arn,
   });
@@ -730,9 +651,6 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
   t.is(dbRecords.length, 0);
 
   // Previously created executions still exist
-  t.true(await executionModel.exists({ arn: fakeExecutions[0].arn }));
-  t.true(await executionModel.exists({ arn: fakeExecutions[1].arn }));
-
   const originalExecution1 = await executionPgModel.search(t.context.knex, {
     arn: fakeExecutions[0].arn,
   });

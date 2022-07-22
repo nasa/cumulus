@@ -546,11 +546,11 @@ class Rule extends Manager {
     }
 
     // update rule meta
-    if (!get(rule, 'meta.visibilityTimeout')) {
+    if (get(rule, 'meta.visibilityTimeout') === undefined) {
       set(rule, 'meta.visibilityTimeout', Number.parseInt(attributes.Attributes.VisibilityTimeout, 10));
     }
 
-    if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
+    if (get(rule, 'meta.retries') === undefined) set(rule, 'meta.retries', 3);
     return rule;
   }
 

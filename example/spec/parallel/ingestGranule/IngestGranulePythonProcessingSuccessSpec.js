@@ -73,7 +73,6 @@ describe('The TestPythonProcessing workflow', () => {
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.system_bucket = config.bucket;
       process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       providerData = {
