@@ -280,28 +280,36 @@ export const backupGranule = async (params: {
 }) => {
   let granuleCollection : CollectionRecord;
   let collectionId: string = '';
+  let name;
+  let version;
   const { granule, backupConfig } = params;
   const messageGranule = granule as MessageGranuleFromStepOutput;
   const apiGranule = granule as ApiGranule;
   log.info(`${granule.granuleId}: Backup called on granule: ${JSON.stringify(granule)}`);
+
   try {
     if (apiGranule.collectionId) {
+      const collectionNameAndVersion = deconstructCollectionId(apiGranule.collectionId);
+      name = collectionNameAndVersion.name;
+      version = collectionNameAndVersion.version;
       collectionId = apiGranule.collectionId;
-      const { name, version } = deconstructCollectionId(apiGranule.collectionId);
-      granuleCollection = await getGranuleCollection({
-        collectionName: name,
-        collectionVersion: version,
-      });
     } else if (messageGranule.dataType && messageGranule.version) {
-      granuleCollection = await getGranuleCollection({
-        collectionName: messageGranule.dataType,
-        collectionVersion: messageGranule.version,
-      });
-      collectionId = constructCollectionId(messageGranule.dataType, messageGranule.version);
-    } else if (!apiGranule.collectionId || !(messageGranule.dataType && messageGranule.version)) {
-      log.error(`${JSON.stringify(granule)}: Granule did not have [dataType and version] or [collectionId] and was unable to identify a collection.`);
+      name = messageGranule.dataType;
+      version = messageGranule.version;
+      collectionId = constructCollectionId(name, version);
+    } else {
+      if (!apiGranule.collectionId) {
+        log.error(`${JSON.stringify(granule)}: Granule did not have collectionId and was unable to identify a collection.`);
+      } else if (!messageGranule.dataType && !messageGranule.version) {
+        log.error(`${JSON.stringify(granule)}: Granule did not have dataType and version and was unable to identify a collection.`);
+      }
       throw new CollectionIdentifiersNotProvidedError('[dataType and version] or [collectionId] required.');
     }
+
+    granuleCollection = await getGranuleCollection({
+      collectionName: name,
+      collectionVersion: version,
+    });
 
     const backupFiles = granule.files.filter(
       (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
@@ -316,9 +324,8 @@ export const backupGranule = async (params: {
     })));
   } catch (error) {
     if (error.name === 'CollectionIdentifiersNotProvidedError') {
-      log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
-    }
-    if (error.name === 'CollectionNotDefinedError') {
+      log.error(`Unable to find collection for ${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
+    } else if (error.name === 'CollectionNotDefinedError') {
       log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the database`);
       log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
     }
