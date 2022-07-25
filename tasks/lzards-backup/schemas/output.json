@@ -52,7 +52,7 @@
             "version": {
               "type": "string"
             },
-            "collectionId": { 
+            "collectionId": {
               "type": "string"
             },
             "files": {
