@@ -10,9 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
   - **CUMULUS-2645**
-    - Removed dynamo strctural migrations and related code from `@cumulus/api`
-    - Removed `dbIndexer` lambda (lambda that was triggered by dynamoDb events to
-      index ES records) from `@cumulus/api`
+    - Removed dynamo structural migrations and related code from `@cumulus/api`
+    - Removed unused index functionality for all tables other than
+      `ReconciliationReportsTable` from `dbIndexer` lambda
     - Removed `executeMigrations` lambda
     - Removed `granuleFilesCacheUpdater` lambda
     - Removes dynamo files table from `data-persistence` module.  *This table and
