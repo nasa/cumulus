@@ -196,6 +196,70 @@ describe('The Lzards Backup workflow ', () => {
     });
   });
 
+  describe('works with a payload that contains dataType and version and collectionId', () => {
+    beforeAll(async () => {
+      const payload = {
+        granules: [
+          {
+            granuleId: 'FakeGranule1',
+            collectionId: `${collection.name}___${collection.version}`,
+            dataType: collection.name,
+            version: collection.version,
+            files: [
+              {
+                fileName: 'testGranule.jpg',
+                bucket: ingestBucket,
+                key: `${ingestPath}/testGranule.jpg`,
+                checksumType: 'md5',
+                checksum: '5799f9560b232baf54337d334179caa0',
+              },
+              {
+                fileName: 'testGranule.dat',
+                bucket: ingestBucket,
+                key: `${ingestPath}/testGranule.dat`,
+                checksumType: 'md5',
+                checksum: '39a870a194a787550b6b5d1f49629236',
+              },
+            ],
+          },
+        ],
+      };
+
+      try {
+        workflowExecution = await buildAndExecuteWorkflow(
+          prefix,
+          config.bucket,
+          'LzardsBackupTest',
+          collection,
+          undefined,
+          payload,
+          { urlType: 's3' }
+        );
+        const executionArn = workflowExecution.executionArn;
+        console.log(`Wait for completed execution ${executionArn}`);
+
+        await waitForCompletedExecution(executionArn);
+        const lambdaStep = new LambdaStep();
+        lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'LzardsBackup');
+      } catch (error) {
+        beforeAllFailed = error;
+      }
+    });
+
+    afterAll(async () => {
+      await deleteExecution({ prefix, executionArn: workflowExecution.executionArn });
+    });
+
+    it('executes successfully when the payload granule contains dataType and version', () => {
+      if (beforeAllFailed) fail(beforeAllFailed);
+      expect(workflowExecution.status).toEqual('completed');
+    });
+
+    it('has the expected step output', () => {
+      expect(lambdaOutput.payload.granules[0].granuleId).toEqual('FakeGranule1');
+    });
+  });
+
   describe('fails when dataType and version or collectionId is missing from the payload', () => {
     beforeAll(async () => {
       const payload = {
