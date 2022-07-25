@@ -15,7 +15,6 @@ const {
   ExecutionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
-  getGranuleByUniqueColumns,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -549,17 +548,9 @@ async function getByGranuleId(req, res) {
   const granuleId = req.params.granuleName;
 
   let granule;
-  let pgCollection;
-  try {
-    if (collectionId) {
-      pgCollection = await collectionPgModel.get(
-        knex, deconstructCollectionId(collectionId)
-      );
 
-      granule = await getGranuleByUniqueColumns(knex, granuleId, pgCollection.cumulus_id);
-    } else {
-      granule = await getUniqueGranuleByGranuleId(knex, granuleId);
-    }
+  try {
+    granule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
       if (granule === undefined) {
