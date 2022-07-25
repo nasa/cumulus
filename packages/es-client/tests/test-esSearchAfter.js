@@ -4,6 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
 const isEqual = require('lodash/isEqual');
+const orderBy = require('lodash/orderBy');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const { Search } = require('../search');
 const ESSearchAfter = require('../esSearchAfter');
@@ -134,3 +135,90 @@ test.serial(
     t.true(isEqual(granuleIds.sort(), resultGranuleIds.sort()));
   }
 );
+
+test.serial('Search_after with sort_key returns correctly ordered granules', async (t) => {
+  const testSearchSize = 5;
+  const numGranules = 10;
+
+  const timestamp = Date.now();
+  const granules = granuleFactory(numGranules, {}, {
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    timestamp,
+  });
+  console.log('granules', granules);
+  const sortedGranules = orderBy(granules, ['collectionId', 'status', 'granuleId'], ['desc', 'asc', 'asc']);
+  await loadGranules(granules, t);
+
+  const params = {
+    limit: testSearchSize,
+    page: 1,
+    sort_key: ['-collectionId', '+status', 'granuleId'],
+  };
+
+  const es = new ESSearchAfter(
+    { queryStringParameters: params },
+    'granule',
+    process.env.ES_INDEX
+  );
+
+  const queryResult = await es.query();
+  t.is(queryResult.meta.count, 10);
+  t.is(queryResult.results.length, 5);
+  const firstPage = queryResult.results;
+
+  const secondEs = new ESSearchAfter(
+    { queryStringParameters: { ...params, searchContext: queryResult.meta.searchContext } },
+    'granule',
+    process.env.ES_INDEX
+  );
+  const secondResult = await secondEs.query();
+  t.is(queryResult.meta.count, 10);
+  t.is(queryResult.results.length, 5);
+  const allResults = firstPage.concat(secondResult.results);
+  t.deepEqual(allResults.map((g) => g.granuleId), sortedGranules.map((g) => g.granuleId));
+});
+
+test.serial('Search with sort_by and order returns correctly ordered granules', async (t) => {
+  const testSearchSize = 5;
+  const numGranules = 10;
+
+  const timestamp = Date.now();
+  const granules = granuleFactory(numGranules, {}, {
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    timestamp,
+  });
+  console.log('granules', granules);
+  const sortedGranules = orderBy(granules, ['granuleId'], ['desc']);
+  await loadGranules(granules, t);
+
+  const params = {
+    limit: testSearchSize,
+    page: 1,
+    sort_by: 'granuleId',
+    order: 'desc',
+  };
+
+  const es = new ESSearchAfter(
+    { queryStringParameters: params },
+    'granule',
+    process.env.ES_INDEX
+  );
+
+  const queryResult = await es.query();
+  t.is(queryResult.meta.count, 10);
+  t.is(queryResult.results.length, 5);
+  const firstPage = queryResult.results;
+
+  const secondEs = new ESSearchAfter(
+    { queryStringParameters: { ...params, searchContext: queryResult.meta.searchContext } },
+    'granule',
+    process.env.ES_INDEX
+  );
+  const secondResult = await secondEs.query();
+  t.is(queryResult.meta.count, 10);
+  t.is(queryResult.results.length, 5);
+  const allResults = firstPage.concat(secondResult.results);
+  t.deepEqual(allResults.map((g) => g.granuleId), sortedGranules.map((g) => g.granuleId));
+});
