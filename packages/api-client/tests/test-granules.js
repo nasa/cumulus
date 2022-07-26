@@ -68,6 +68,34 @@ test('getGranule calls the callback with the expected object when there is query
   }));
 });
 
+test('getGranule accepts an optional collectionId', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+        collectionId: t.context.collectionId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
+  }));
+});
+
 test('waitForGranules calls getGranules with the expected payload', async (t) => {
   const callback = ({ prefix, payload }) => {
     t.true(payload.path.endsWith(t.context.granuleId));
