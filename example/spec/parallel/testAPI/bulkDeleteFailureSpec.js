@@ -73,7 +73,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     postBulkDeleteResponse = await bulkDeleteGranules({
       prefix: config.stackName,
       body: {
-        ids: [granule.granuleId],
+        granules: [{ granuleId: granule.granuleId, collectionId: constructCollectionId(collection.name, collection.version) }],
       },
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);

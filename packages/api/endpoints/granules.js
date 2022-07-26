@@ -696,6 +696,7 @@ async function getByGranuleId(req, res) {
   const granuleId = req.params.granuleName;
 
   let granule;
+
   try {
     granule = await getUniqueGranuleByGranuleId(knex, granuleId);
   } catch (error) {
@@ -730,8 +731,8 @@ async function bulkOperations(req, res) {
   let description;
   if (payload.query) {
     description = `Bulk run ${payload.workflowName} on ${payload.query.size} granules`;
-  } else if (payload.ids) {
-    description = `Bulk run ${payload.workflowName} on ${payload.ids.length} granules`;
+  } else if (payload.granules) {
+    description = `Bulk run ${payload.workflowName} on ${payload.granules.length} granules`;
   } else {
     description = `Bulk run on ${payload.workflowName}`;
   }
@@ -819,7 +820,7 @@ async function bulkDelete(req, res) {
 async function bulkReingest(req, res) {
   const payload = req.body;
   const numOfGranules = (payload.query && payload.query.size)
-    || (payload.ids && payload.ids.length);
+    || (payload.granules && payload.granules.length);
   const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;
 
   const asyncOperationId = uuidv4();
