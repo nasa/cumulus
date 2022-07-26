@@ -313,6 +313,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB.
 
+## [v12.0.1] 2022-07-18
+
+- **CUMULUS-2995**
+  - Updated Moment.js package to 2.29.4 to address security vulnerability
+
 ## [v12.0.0] 2022-05-20
 
 ### Breaking Changes
@@ -953,6 +958,13 @@ for more on this tool if you are unfamiliar with the various options.
   - Updated localAPI to set additional env variable, and fixed `GET /executions/status` response
   - **CUMULUS-2877**
     - Ensure database records receive a timestamp when writing granules.
+
+## [v10.1.3] 2022-06-28 [BACKPORT]
+
+### Added
+
+- **CUMULUS-2966**
+  - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
 
 ## [v10.1.2] 2022-03-11
 
@@ -6297,11 +6309,13 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v13.0.1...HEAD
 [v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
-[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.0...v13.0.0
+[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.1...v13.0.0
+[v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
 [v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
-[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.2...v11.0.0
+[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.3...v11.0.0
+[v10.1.3]: https://github.com/nasa/cumulus/compare/v10.1.2...v10.1.3
 [v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
 [v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
 [v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
