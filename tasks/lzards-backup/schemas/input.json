@@ -1,6 +1,6 @@
 {
   "title": "LzardsBackupInput",
-  "description": "Describes the input expected by the LzardsBackup task component",
+  "description": "Describes the input expected by the LzardsBackup task component. Either [dataType and version] or [collectionId] are required.",
   "type": "object",
   "required": [
     "granules"

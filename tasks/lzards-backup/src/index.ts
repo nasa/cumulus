@@ -298,11 +298,7 @@ export const backupGranule = async (params: {
       version = messageGranule.version;
       collectionId = constructCollectionId(name, version);
     } else {
-      if (!apiGranule.collectionId) {
-        log.error(`${JSON.stringify(granule)}: Granule did not have collectionId and was unable to identify a collection.`);
-      } else if (!messageGranule.dataType && !messageGranule.version) {
-        log.error(`${JSON.stringify(granule)}: Granule did not have dataType and version and was unable to identify a collection.`);
-      }
+      log.error(`${JSON.stringify(granule)}: Granule did not have [collectionId] or [dataType and version] and was unable to identify a collection.`);
       throw new CollectionIdentifiersNotProvidedError('[dataType and version] or [collectionId] required.');
     }
 
@@ -323,9 +319,9 @@ export const backupGranule = async (params: {
       granuleId: granule.granuleId,
     })));
   } catch (error) {
-    if (error.name === 'CollectionIdentifiersNotProvidedError') {
+    if (error instanceof CollectionIdentifiersNotProvidedError) {
       log.error(`Unable to find collection for ${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
-    } else if (error.name === 'CollectionNotDefinedError') {
+    } else if (error instanceof CollectionNotDefinedError) {
       log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the database`);
       log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
     }
