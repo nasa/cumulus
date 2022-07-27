@@ -252,6 +252,8 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
   });
   await updateGranule({
     prefix,
+    granuleId: granule.granuleId,
+    collectionId: granule.collectionId,
     body: {
       ...granule,
       files: updatedFiles,
@@ -961,6 +963,8 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
     await updateGranule({
       prefix: config.stackName,
+      granuleId: publishedGranuleId,
+      collectionId: activeCollectionId,
       body: {
         granuleId: publishedGranuleId,
         ...granuleBeforeUpdate,
