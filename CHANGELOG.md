@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2940**
+  - Updated bulk operation lambda to utilize system wide rds_connection_timing
+    configuration parameters from the main `cumulus` module
+
+## [v13.1.0] 2022-7-22
+
 ### MIGRATION notes
 
 - The changes introduced in CUMULUS-2962 will re-introduce a
@@ -121,9 +129,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-2940**
-  - Updated bulk operation lambda to utilize system wide rds_connection_timing
-    configuration parameters from the main `cumulus` module
 - Updated Moment.js package to 2.29.4 to address security vulnerability
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
@@ -6344,7 +6349,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.1.0...HEAD
+[v13.1.0]: https://github.com/nasa/cumulus/compare/v13.0.1...v13.1.0
 [v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
 [v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.1...v13.0.0
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
