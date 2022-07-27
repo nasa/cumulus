@@ -2196,7 +2196,7 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
     granuleParams: {
       status: 'running',
       execution: executionUrl,
-      collectionId: t.context.collectionId
+      collectionId: t.context.collectionId,
     },
   });
 
@@ -2281,7 +2281,7 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
     granuleParams: {
       collectionId: t.context.collectionId,
       status: 'running',
-      execution: executionUrl
+      execution: executionUrl,
     },
   });
 

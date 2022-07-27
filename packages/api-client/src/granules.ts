@@ -169,7 +169,14 @@ export const reingestGranule = async (params: {
   executionArn?: string | undefined,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, collectionId, workflowName, executionArn, callback = invokeApi } = params;
+  const {
+    prefix,
+    granuleId,
+    collectionId,
+    workflowName,
+    executionArn,
+    callback = invokeApi,
+  } = params;
 
   let path = `/granules/${collectionId}/${granuleId}`;
 
