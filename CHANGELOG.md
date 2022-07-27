@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased Phase 3
 
+### Breaking Changes
+
+- **CUMULUS-2688**
+  - Updated bulk operation logic to use collectionId in addition to granuleId to fetch granules.
+  - Tasks using the `bulk-operation` Lambda should provide collectionId and granuleId e.g. { granuleId: xxx, collectionId: xxx }
+
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
