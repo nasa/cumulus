@@ -344,11 +344,15 @@ async function put(req, res) {
   } = req.testContext || {};
 
   if (!req.body.action) {
-    if (req.body.granuleId === req.params.granuleName) {
+    if (
+      req.body.granuleId === req.params.granuleName &&
+      req.body.collectionId === req.params.collectionId
+    ) {
       return putGranule(req, res);
     }
+
     return res.boom.badRequest(
-      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+      `inputs :granuleName and :collectionId (${req.params.granuleName} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
     );
   }
 

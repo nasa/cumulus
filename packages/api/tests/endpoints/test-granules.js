@@ -626,7 +626,7 @@ test.serial('PUT without a body, fails to update granule.', async (t) => {
 
   t.is(response.status, 400);
   const { message } = response.body;
-  t.is(message, `input :granuleName (${t.context.fakePGGranules[0].granule_id}) must match body's granuleId (undefined)`);
+  t.is(message, `inputs :granuleName and :collectionId (${t.context.fakePGGranules[0].granule_id} and ${t.context.collectionId}) must match body's granuleId and collectionId (undefined and undefined)`);
 });
 
 // FUTURE: This test should be removed when deprecated putByGranuleId
@@ -2196,6 +2196,7 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
     granuleParams: {
       status: 'running',
       execution: executionUrl,
+      collectionId: t.context.collectionId
     },
   });
 
@@ -2277,7 +2278,11 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: { status: 'running', execution: executionUrl },
+    granuleParams: {
+      collectionId: t.context.collectionId,
+      status: 'running',
+      execution: executionUrl
+    },
   });
 
   const fakeEsClient = {
@@ -2486,11 +2491,13 @@ test.serial('PUT returns an updated granule with associated execution', async (t
 });
 
 test.serial('PUT returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
-  const newGranule = fakeGranuleFactoryV2({});
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+  });
   const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
 
   const { body } = await request(app)
-    .put(`/granules/${granuleName}`)
+    .put(`/granules/${newGranule.collectionId}/${granuleName}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -2498,7 +2505,26 @@ test.serial('PUT returns bad request when the path param granuleName does not ma
 
   t.is(body.statusCode, 400);
   t.is(body.error, 'Bad Request');
-  t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
+  t.is(body.message, `inputs :granuleName and :collectionId (${granuleName} and ${newGranule.collectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`);
+});
+
+test.serial('PUT returns bad request when the path param collectionId does not match the json collectionId', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+  });
+
+  const fakeCollectionId = `collection___${cryptoRandomString({ length: 6 })}`;
+
+  const { body } = await request(app)
+    .put(`/granules/${fakeCollectionId}/${newGranule.granuleId}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(body.statusCode, 400);
+  t.is(body.error, 'Bad Request');
+  t.is(body.message, `inputs :granuleName and :collectionId (${newGranule.granuleId} and ${fakeCollectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`);
 });
 
 test.serial('update (PUT) can set running granule status to queued', async (t) => {
