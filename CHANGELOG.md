@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable Changes
+- **CUMULUS-2930**
+  - The `GET /granules` endpoint has a new optional query parameter:
+    `searchContext`, which is used to resume listing within the same search
+    context. It is provided in every response from the endpoint as
+    `meta.searchContext`. The searchContext value must be submitted with every
+    consequent API call, and must be fetched from each new response to maintain
+    the context.
+    - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
+    The endpoint will only use search-after when the `searchContext` parameter
+    is provided in a request.
+
 ### Changed
 
 - **CUMULUS-2940**
@@ -126,16 +138,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `move-granule` task to check the optional collection configuration parameter
     `meta.granuleMetadataFileExtension` to determine the granule metadata file.
     If none is specified, the granule CMR metadata or ISO metadata file is used.
-- **CUMULUS-2930**
-  - The `GET /granules` endpoint has a new optional query parameter:
-    `searchContext`, which is used to resume listing within the same search
-    context. It is provided in every response from the endpoint as
-    `meta.searchContext`. The searchContext value must be submitted with every
-    consequent API call, and must be fetched from each new response to maintain
-    the context.
-    - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
-    The endpoint will only use search-after when the `searchContext` parameter
-    is provided in a request.
 
 ### Changed
 
