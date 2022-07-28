@@ -131,10 +131,8 @@ const deleteFtpGranules = async ({ filePaths }) => {
 
 const handler = async (event, _context) => {
   log.info(event);
-  if (event.command === 'delete') {
-    return await deleteFtpGranules(event);
-  }
-  return await uploadFtpGranuleDataForDiscovery(event);
+  if (event.command === 'delete') return deleteFtpGranules(event);
+  return uploadFtpGranuleDataForDiscovery(event);
 };
 
 module.exports = { handler };
