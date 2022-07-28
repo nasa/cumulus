@@ -92,6 +92,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2940**
+  - Updated bulk operation lambda to utilize system wide rds_connection_timing
+    configuration parameters from the main `cumulus` module
+
+## [v13.1.0] 2022-7-22
+
 ### MIGRATION notes
 
 - The changes introduced in CUMULUS-2962 will re-introduce a
@@ -211,6 +219,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
     case of deletion race conditions
+- **CUMULUS-2954**
+  - Updated Backup LZARDS task to run as a single task in a step function workflow.
+    - Updated task to allow user to provide `collectionId` in workflow input and 
+      updated task to use said `collectionId` to look up the corresponding collection record in RDS.
 
 ### Fixed
 
@@ -348,6 +360,122 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
 
+## [v11.1.4] 2022-07-18
+
+**Please note** changes in 11.1.4 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### MIGRATION notes
+
+
+- The changes introduced in CUMULUS-2962 will re-introduce a
+  `files_granules_cumulus_id_index` on the `files` table in the RDS database.
+  This index will be automatically created as part of the bootstrap lambda
+  function *on deployment* of the `data-persistence` module.
+
+  *In cases where the index is already applied, this update will have no effect*.
+
+  **Please Note**: In some cases where ingest is occurring at high volume levels and/or the
+  files table has > 150M file records, the migration may
+  fail on deployment due to timing required to both acquire the table state needed for the
+  migration and time to create the index given the resources available.
+
+  For reference a rx.5 large Aurora/RDS database
+  with *no activity* took roughly 6 minutes to create the index for a file table with 300M records and no active ingest, however timed out when the same migration was attempted
+  in production with possible activity on the table.
+
+  If you believe you are subject to the above consideration, you may opt to
+  manually create the `files` table index *prior* to deploying this version of
+  Core with the following procedure:
+
+  -----
+
+  - Verify you do not have the index:
+
+  ```text
+  select * from pg_indexes where tablename = 'files';
+
+   schemaname | tablename |        indexname        | tablespace |                                       indexdef
+  ------------+-----------+-------------------------+------------+---------------------------------------------------------------------------------------
+   public     | files     | files_pkey              |            | CREATE UNIQUE INDEX files_pkey ON public.files USING btree (cumulus_id)
+   public     | files     | files_bucket_key_unique |            | CREATE UNIQUE INDEX files_bucket_key_unique ON public.files USING btree (bucket, key)
+  ```
+
+  In this instance you should not see an `indexname` row with
+  `files_granules_cumulus_id_index` as the value.     If you *do*, you should be
+  clear to proceed with the installation.
+  - Quiesce ingest
+
+  Stop all ingest operations in Cumulus Core according to your operational
+  procedures.    You should validate that it appears there are no active queries that
+  appear to be inserting granules/files into the database as a secondary method
+  of evaluating the database system state:
+
+  ```text
+  select pid, query, state, wait_event_type, wait_event from pg_stat_activity where state = 'active';
+  ```
+
+  If query rows are returned with a `query` value that involves the files table,
+  make sure ingest is halted and no other granule-update activity is running on
+  the system.
+
+  Note: In rare instances if there are hung queries that are unable to resolve, it may be necessary to
+  manually use psql [Server Signaling
+  Functions](https://www.postgresql.org/docs/10/functions-admin.html#FUNCTIONS-ADMIN-SIGNAL)
+  `pg_cancel_backend` and/or
+  `pg_terminate_backend` if the migration will not complete in the next step.
+
+  - Create the Index
+
+  Run the following query to create the index.    Depending on the situation
+  this may take many minutes to complete, and you will note your CPU load and
+  disk I/O rates increase on your cluster:
+
+  ```text
+  CREATE INDEX files_granule_cumulus_id_index ON files (granule_cumulus_id);
+  ```
+
+  You should see a response like:
+
+  ```text
+  CREATE INDEX
+  ```
+
+  and can verify the index `files_granule_cumulus_id_index` was created:
+
+  ```text
+  => select * from pg_indexes where tablename = 'files';
+  schemaname | tablename |           indexname            | tablespace |                                           indexdef
+   ------------+-----------+--------------------------------+------------+----------------------------------------------------------------------------------------------
+   public     | files     | files_pkey                     |            | CREATE UNIQUE INDEX files_pkey ON public.files USING btree (cumulus_id)
+   public     | files     | files_bucket_key_unique        |            | CREATE UNIQUE INDEX files_bucket_key_unique ON public.files USING btree (bucket, key)
+   public     | files     | files_granule_cumulus_id_index |            | CREATE INDEX files_granule_cumulus_id_index ON public.files USING btree (granule_cumulus_id)
+  (3 rows)
+  ```
+
+  - Once this is complete, you may deploy this version of Cumulus as you
+    normally would.
+  **If you are unable to stop ingest for the above procedure** *and* cannot
+  migrate with deployment, you may be able to manually create the index while
+  writes are ongoing using postgres's `CONCURRENTLY` option for `CREATE INDEX`.
+  This can have significant impacts on CPU/write IO, particularly if you are
+  already using a significant amount of your cluster resources, and may result
+  in failed writes or an unexpected index/database state.
+
+  PostgreSQL's
+  [documentation](https://www.postgresql.org/docs/10/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY)
+  provides more information on this option.   Please be aware it is
+  **unsupported** by Cumulus at this time, so community members that opt to go
+  this route should proceed with caution.
+
+  -----
+
+### Changed
+
+- Updated Moment.js package to 2.29.4 to address security vulnerability
+
 ## [v11.1.3] 2022-06-24
 
 **Please note** changes in 11.1.3 may not yet be released in future versions, as
@@ -369,7 +497,6 @@ releases.
     file extension for tasks that utilize metadata file lookups
 - **CUMULUS-2966**
   - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
-
 ### Fixed
 
 - **CUMULUS-2863**
@@ -6312,11 +6439,15 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.1.0...HEAD
+[v13.1.0]: https://github.com/nasa/cumulus/compare/v13.0.1...v13.1.0
 [v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
 [v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.1...v13.0.0
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
-[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.1...v12.0.0
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.4...v12.0.0
+[v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
+[v11.1.3]: https://github.com/nasa/cumulus/compare/v11.1.2...v11.1.3
+[v11.1.2]: https://github.com/nasa/cumulus/compare/v11.1.1...v11.1.2
 [v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
 [v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
 [v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.3...v11.0.0
