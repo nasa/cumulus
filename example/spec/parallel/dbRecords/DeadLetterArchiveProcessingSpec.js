@@ -29,6 +29,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { putJsonS3Object } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
+const { getISODate } = require('@cumulus/api/lambdas/write-db-dlq-records-to-s3.js');
 
 const {
   waitForApiStatus,
@@ -131,7 +132,7 @@ describe('A dead letter record archive processing operation', () => {
         },
       });
 
-      archivePath = `${stackName}/dead-letter-archive-${testId}/sqs`;
+      archivePath = `${stackName}/dead-letter-archive-${testId}/sqs/${getISODate()}`;
       messageKey = `${archivePath}/${cumulusMessage.cumulus_meta.execution_name}`;
       await putJsonS3Object(systemBucket, messageKey, cumulusMessage);
 
