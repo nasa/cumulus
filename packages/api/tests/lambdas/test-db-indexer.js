@@ -129,7 +129,6 @@ test('getTableName() returns the full name of the DynamoDB table associated with
 
 test('getTableIndexDetails() returns undefined for unsupported table', (t) => {
   t.is(getTableIndexDetails('fake-table-name'), undefined);
-  t.is(getTableIndexDetails('foobar'), undefined);
 });
 
 test('getTableIndexDetails() returns a correct function name and index type', (t) => {
