@@ -67,12 +67,16 @@ test.after.always(async () => {
     accessTokenModel.deleteTable()]);
 });
 
-test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and list of IDs', async (t) => {
+test.serial('POST /granules/bulkReingest starts an async-operation with the correct payload and list of granules', async (t) => {
   const { asyncOperationStartStub } = t.context;
-  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
-    ids: expectedIds,
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
   };
 
   const response = await request(app)
@@ -113,10 +117,14 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
 
 test.serial('bulkReingest() uses correct caller lambda function name', async (t) => {
   const { asyncOperationStartStub } = t.context;
-  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
-    ids: expectedIds,
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
   };
 
   const functionName = randomId('lambda');
@@ -202,7 +210,7 @@ test.serial('POST /granules/bulkReingest returns 400 when a query is provided wi
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 400 when no IDs or query is provided', async (t) => {
+test.serial('POST /granules/bulkReingest returns 400 when no granules or query is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedIndex = 'my-index';
 
@@ -215,18 +223,18 @@ test.serial('POST /granules/bulkReingest returns 400 when no IDs or query is pro
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of ids or query is required/);
+    .expect(400, /One of granules or query is required/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 400 when IDs is not an array', async (t) => {
+test.serial('POST /granules/bulkReingest returns 400 when granules is not an array', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedIndex = 'my-index';
 
   const body = {
     index: expectedIndex,
-    ids: 'bad-value',
+    granules: 'bad-value',
   };
 
   await request(app)
@@ -234,18 +242,18 @@ test.serial('POST /granules/bulkReingest returns 400 when IDs is not an array', 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /ids should be an array of values/);
+    .expect(400, /granules should be an array of values/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkReingest returns 400 when IDs is an empty array', async (t) => {
+test.serial('POST /granules/bulkReingest returns 400 when granules is an empty array', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedIndex = 'my-index';
 
   const body = {
     index: expectedIndex,
-    ids: [],
+    granules: [],
   };
 
   await request(app)
@@ -253,7 +261,7 @@ test.serial('POST /granules/bulkReingest returns 400 when IDs is an empty array'
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /no values provided for ids/);
+    .expect(400, /no values provided for granules/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -292,7 +300,11 @@ test.serial('POST /granules/bulkReingest returns 500 if invoking StartAsyncOpera
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       workflowName: 'workflowName',
-      ids: [1, 2, 3],
+      granules: [
+        { granuleId: 1, collectionId: 1 },
+        { granuleId: 2, collectionId: 1 },
+        { granuleId: 3, collectionId: 1 },
+      ],
     });
   t.is(response.status, 500);
 });
