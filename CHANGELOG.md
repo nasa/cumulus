@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       `ReconciliationReportsTable` from `dbIndexer` lambda
     - Removed `executeMigrations` lambda
     - Removed `granuleFilesCacheUpdater` lambda
-    - Removes dynamo files table from `data-persistence` module.  *This table and
+    - Removed dynamo files table from `data-persistence` module.  *This table and
       all of its data will be removed on deployment*.
   - **CUMULUS-2398**
     - Remove all dynamoDB updates for `@cumulus/api/ecs/async-operation/*`
