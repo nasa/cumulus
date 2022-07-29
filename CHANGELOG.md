@@ -125,6 +125,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
     case of deletion race conditions
+- **CUMULUS-2913**
+  - Changed dead letter archive for failed processing jobs to new S3 location
 
 ### Fixed
 
