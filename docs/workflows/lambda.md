@@ -44,7 +44,7 @@ Make sure to include a `vpc_config` that matches the information you've provided
 
 ### Java Lambda
 
-Java Lambdas are created in much the same way as the Node.js example [above](#node.js-lambda).
+Java Lambdas are created in much the same way as the Node.js example [above](#nodejs-lambda).
 
 The source points to a folder with the compiled .class files and dependency libraries in the Lambda Java zip folder structure (details [here](https://docs.aws.amazon.com/lambda/latest/dg/create-deployment-pkg-zip-java.html)), not an uber-jar.
 
@@ -52,7 +52,7 @@ The deploy folder referenced here would contain a folder 'test_task/task/' which
 
 ### Python Lambda
 
-Python Lambdas are created the same way as the Node.js example [above](#node.js-lambda).
+Python Lambdas are created the same way as the Node.js example [above](#nodejs-lambda).
 
 ## Cumulus Message Adapter
 

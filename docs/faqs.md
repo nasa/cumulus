@@ -11,7 +11,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>How do I deploy a new instance in Cumulus?</summary>
 
-  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](../deployment/deployment-readme).
+  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](deployment/deployment-readme).
 </details>
 
 <details>
@@ -29,7 +29,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>How do I quickly troubleshoot an issue in Cumulus?</summary>
 
-  Answer: To troubleshoot and fix issues in Cumulus reference our recommended solutions in [Troubleshooting Cumulus](../troubleshooting/troubleshooting-readme).
+  Answer: To troubleshoot and fix issues in Cumulus reference our recommended solutions in [Troubleshooting Cumulus](troubleshooting/troubleshooting-readme).
 </details>
 
 <details>
@@ -60,7 +60,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What are the steps if I run into an issue during deployment?</summary>
 
-  Answer: If you encounter an issue with your deployment go to the [Troubleshooting Deployment](../troubleshooting/troubleshooting-deployment) guide.
+  Answer: If you encounter an issue with your deployment go to the [Troubleshooting Deployment](troubleshooting/troubleshooting-deployment) guide.
 </details>
 
 <details>
@@ -84,13 +84,13 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What is a Cumulus workflow?</summary>
 
-  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting [here](../workflows/workflows-readme).
+  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting [here](workflows/workflows-readme).
 </details>
 
 <details>
   <summary>How do I set up a Cumulus workflow?</summary>
 
-  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](../workflows/developing-a-cumulus-workflow).
+  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](workflows/developing-a-cumulus-workflow).
 </details>
 
 <details>
@@ -98,9 +98,9 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-* [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
-* [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
-* [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+* [Creating Cumulus Data Management Types](integrator-guide/create-cumulus-data-mgmt-types)
+* [Workflow: Add New Lambda](integrator-guide/workflow-add-new-lambda)
+* [Workflow: Troubleshoot Failed Step(s)](integrator-guide/workflow-ts-failed-step)
 
 </details>
 
@@ -129,14 +129,14 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-* [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest)
-* [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
-* [Granule Workflows](../operator-docs/granule-workflows)
+* [Kinesis Stream For Ingest](operator-docs/kinesis-stream-for-ingest)
+* [Create Rule In Cumulus](operator-docs/create-rule-in-cumulus)
+* [Granule Workflows](operator-docs/granule-workflows)
 
 </details>
 
 <details>
   <summary>Can you re-run a workflow execution in AWS?</summary>
 
-  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](../operator-docs/rerunning-workflow-executions) in the [Cumulus Operator Docs](../operator-docs/about-operator-docs).
+  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](operator-docs/rerunning-workflow-executions) in the [Cumulus Operator Docs](operator-docs/about-operator-docs).
 </details>
