@@ -22,7 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removed `executeMigrations` lambda
     - Removed `granuleFilesCacheUpdater` lambda
     - Removes dynamo files table from `data-persistence` module.  *This table and
-      all of it's data will be removed on deployment*.
+      all of its data will be removed on deployment*.
   - **CUMULUS-2398**
     - Remove all dynamoDB updates for `@cumulus/api/ecs/async-operation/*`
     - Updates all api endpoints with updated signature for
