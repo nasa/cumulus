@@ -6,6 +6,7 @@ import { Context } from 'aws-lambda';
 
 import { constructCollectionId } from '@cumulus/message/Collections';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
+import { deconstructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
 import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { getRequiredEnvVar } from '@cumulus/common/env';
@@ -25,11 +26,19 @@ import {
   ChecksumError,
   CollectionNotDefinedError,
   CollectionInvalidRegexpError,
+  CollectionIdentifiersNotProvidedError,
   GetAuthTokenError,
   InvalidUrlTypeError,
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
-import { MakeBackupFileRequestResult, HandlerEvent, MessageGranule, MessageGranuleFilesObject } from './types';
+import {
+  MakeBackupFileRequestResult,
+  HandlerEvent,
+  MessageGranule,
+  MessageGranuleFilesObject,
+  MessageGranuleFromStepOutput,
+  ApiGranule,
+} from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
@@ -202,6 +211,7 @@ export const makeBackupFileRequest = async (params: {
       Key,
       urlConfig: backupConfig,
     });
+    log.info(`collectionId: ${collectionId}`);
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
       authToken,
@@ -268,14 +278,35 @@ export const backupGranule = async (params: {
     cloudfrontEndpoint?: string,
   },
 }) => {
+  let granuleCollection : CollectionRecord;
+  let collectionId: string = '';
+  let name;
+  let version;
   const { granule, backupConfig } = params;
+  const messageGranule = granule as MessageGranuleFromStepOutput;
+  const apiGranule = granule as ApiGranule;
   log.info(`${granule.granuleId}: Backup called on granule: ${JSON.stringify(granule)}`);
+
   try {
-    const granuleCollection = await getGranuleCollection({
-      collectionName: granule.dataType,
-      collectionVersion: granule.version,
+    if (apiGranule.collectionId) {
+      const collectionNameAndVersion = deconstructCollectionId(apiGranule.collectionId);
+      name = collectionNameAndVersion.name;
+      version = collectionNameAndVersion.version;
+      collectionId = apiGranule.collectionId;
+    } else if (messageGranule.dataType && messageGranule.version) {
+      name = messageGranule.dataType;
+      version = messageGranule.version;
+      collectionId = constructCollectionId(name, version);
+    } else {
+      log.error(`${JSON.stringify(granule)}: Granule did not have [collectionId] or [dataType and version] and was unable to identify a collection.`);
+      throw new CollectionIdentifiersNotProvidedError('[dataType and version] or [collectionId] required.');
+    }
+
+    granuleCollection = await getGranuleCollection({
+      collectionName: name,
+      collectionVersion: version,
     });
-    const collectionId = constructCollectionId(granule.dataType, granule.version);
+
     const backupFiles = granule.files.filter(
       (file) => shouldBackupFile(path.basename(file.key), granuleCollection)
     );
@@ -288,7 +319,9 @@ export const backupGranule = async (params: {
       granuleId: granule.granuleId,
     })));
   } catch (error) {
-    if (error.name === 'CollectionNotDefinedError') {
+    if (error instanceof CollectionIdentifiersNotProvidedError) {
+      log.error(`Unable to find collection for ${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
+    } else if (error instanceof CollectionNotDefinedError) {
       log.error(`${granule.granuleId}: Granule did not have a properly defined collection and version, or refer to a collection that does not exist in the database`);
       log.error(`${granule.granuleId}: Granule (${granule.granuleId}) will not be backed up.`);
     }
