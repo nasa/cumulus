@@ -12,7 +12,6 @@ const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests'
 
 const { loadConfig } = require('../../helpers/testUtils');
 
-
 describe('When a bad record is sent on the DLQ', () => {
   let beforeAllSucceeded = false;
   let stackName;
