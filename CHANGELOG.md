@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2940**
   - Updated bulk operation lambda to utilize system wide rds_connection_timing
     configuration parameters from the main `cumulus` module
+- **CUMULUS-2954**
+  - Updated Backup LZARDS task to run as a single task in a step function workflow.
+    - Updated task to allow user to provide `collectionId` in workflow input and 
+      updated task to use said `collectionId` to look up the corresponding collection record in RDS.
 
 ## [v13.1.0] 2022-7-22
 
@@ -133,11 +137,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
     case of deletion race conditions
-- **CUMULUS-2954**
-  - Updated Backup LZARDS task to run as a single task in a step function workflow.
-    - Updated task to allow user to provide `collectionId` in workflow input and 
-      updated task to use said `collectionId` to look up the corresponding collection record in RDS.
-
 ### Fixed
 
 - **CUMULUS-2995**
