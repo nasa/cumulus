@@ -27,6 +27,7 @@ function determineIntegrationTestStackName(cb) {
     'Jennifer Tran': 'jtran-int',
     'Nate Pauzenga': 'np-ci',
     vpnguye2: 'vkn-ci',
+    'John Hedman': 'jhedman-ci'
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
