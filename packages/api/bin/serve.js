@@ -81,8 +81,6 @@ async function populateBucket(bucket, stackName) {
 }
 
 async function setTableEnvVariables(stackName) {
-  process.env.FilesTable = `${stackName}-FilesTable`;
-
   const tableModels = Object
     .keys(models)
     .filter((tableModel) => tableModel !== 'Manager');

@@ -3,7 +3,6 @@
 const get = require('lodash/get');
 const pEachSeries = require('p-each-series');
 const { AttributeValue } = require('dynamodb-data-types');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const Logger = require('@cumulus/logger');
 const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -20,45 +19,10 @@ const logger = new Logger({ sender: '@cumulus/dbIndexer' });
  */
 const getTableIndexDetails = (tableName) => {
   const indexTables = {
-    [process.env.AsyncOperationsTable]: {
-      indexFnName: 'indexAsyncOperation',
-      deleteFnName: 'deleteAsyncOperation',
-      indexType: 'asyncOperation',
-    },
-    [process.env.CollectionsTable]: {
-      indexFnName: 'indexCollection',
-      deleteFnName: 'deleteCollection',
-      indexType: 'collection',
-    },
-    [process.env.ExecutionsTable]: {
-      indexFnName: 'indexExecution',
-      deleteFnName: 'deleteExecution',
-      indexType: 'execution',
-    },
-    [process.env.GranulesTable]: {
-      indexFnName: 'indexGranule',
-      deleteFnName: 'deleteGranule',
-      indexType: 'granule',
-    },
-    [process.env.PdrsTable]: {
-      indexFnName: 'indexPdr',
-      deleteFnName: 'deletePdr',
-      indexType: 'pdr',
-    },
-    [process.env.ProvidersTable]: {
-      indexFnName: 'indexProvider',
-      deleteFnName: 'deleteProvider',
-      indexType: 'provider',
-    },
     [process.env.ReconciliationReportsTable]: {
       indexFnName: 'indexReconciliationReport',
       deleteFnName: 'deleteReconciliationReport',
       indexType: 'reconciliationReport',
-    },
-    [process.env.RulesTable]: {
-      indexFnName: 'indexRule',
-      deleteFnName: 'deleteRule',
-      indexType: 'rule',
     },
   };
   return indexTables[tableName];
@@ -72,28 +36,9 @@ const getTableIndexDetails = (tableName) => {
  */
 const mapIndexTypeToIdFieldName = (type) => {
   const idFieldsByType = {
-    collection: 'collectionId',
-    execution: 'arn',
-    granule: 'granuleId',
-    pdr: 'pdrName',
-    provider: 'id',
     reconciliationReport: 'name',
-    rule: 'name',
   };
   return idFieldsByType[type];
-};
-
-/**
- * Get the parent ID field name for a given record type.
- *
- * @param {string} type - type of record to index
- * @returns {string} ID field name
- */
-const mapIndexTypeToParentIdFieldName = (type) => {
-  const parentIdFieldsByType = {
-    granule: 'collectionId',
-  };
-  return parentIdFieldsByType[type];
 };
 
 /**
@@ -119,25 +64,8 @@ function getTableName(sourceArn) {
  * @returns {string} record ID
  */
 function getRecordId(type, record) {
-  if (type === 'collection') {
-    return constructCollectionId(record.name, record.version);
-  }
   const idFieldName = mapIndexTypeToIdFieldName(type);
   return record[idFieldName];
-}
-
-/**
- * Get parent record ID.
- *
- * @param {string} type - type of record to index
- * @param {Object} record - the record to be indexed
- * @returns {string|undefined} record ID
- */
-function getParentId(type, record) {
-  if (type === 'granule') {
-    return record.collectionId;
-  }
-  return undefined;
 }
 
 /**
@@ -164,7 +92,7 @@ function performIndex(indexFnName, esClient, data) {
  * @param {string} parentId     - ID of parent record
  * @returns {Promise<Object>}   - Elasticsearch response
  */
-function performDelete(deleteFnName, esClient, type, id, parentId) {
+function performDelete(deleteFnName, esClient, type, id) {
   logger.debug(`deleting type: ${type} id: ${id}`);
 
   const idFieldName = mapIndexTypeToIdFieldName(type);
@@ -174,11 +102,6 @@ function performDelete(deleteFnName, esClient, type, id, parentId) {
     type,
     index: process.env.ES_INDEX,
   };
-  if (parentId) {
-    const parentIdFieldName = mapIndexTypeToParentIdFieldName(type);
-    deleteParams[parentIdFieldName] = parentId;
-  }
-
   return indexer[deleteFnName](deleteParams);
 }
 
@@ -200,26 +123,23 @@ async function indexRecord(esClient, record) {
 
   const tableIndexDetails = getTableIndexDetails(tableName);
 
-  // Check if data from table name is suported for indexing.
+  // Check if data from table name is supported for indexing.
   if (!tableIndexDetails) return {};
 
   const { deleteFnName, indexFnName, indexType } = tableIndexDetails;
 
   const keys = unwrap(get(record, 'dynamodb.Keys'));
   const data = unwrap(get(record, 'dynamodb.NewImage'));
-  const oldData = unwrap(get(record, 'dynamodb.OldImage'));
 
   const id = getRecordId(indexType, keys);
 
   if (record.eventName === 'REMOVE') {
     logger.debug(`about to remove ${indexType}, id: ${id}`);
-    const parentId = getParentId(indexType, oldData);
     const deletedObject = await performDelete(
       deleteFnName,
       esClient,
       indexType,
-      id,
-      parentId
+      id
     );
     logger.debug(`finished removing ${indexType}, id: ${id}`);
     return deletedObject;
@@ -257,7 +177,6 @@ const handler = async ({ Records }) =>
 module.exports = {
   getTableName,
   getTableIndexDetails,
-  getParentId,
   getRecordId,
   handler,
   performDelete,

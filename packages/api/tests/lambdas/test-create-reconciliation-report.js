@@ -362,7 +362,6 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   process.env.GranulesTable = randomId('granulesTable');
-  process.env.FilesTable = randomId('filesTable');
   process.env.ReconciliationReportsTable = randomId('reconciliationTable');
 
   t.context.bucketsToCleanup = [];
