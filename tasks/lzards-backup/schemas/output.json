@@ -40,9 +40,7 @@
           "type": "object",
           "required": [
             "files",
-            "granuleId",
-            "dataType",
-            "version"
+            "granuleId"
           ],
           "properties": {
             "granuleId": {
@@ -52,6 +50,9 @@
               "type": "string"
             },
             "version": {
+              "type": "string"
+            },
+            "collectionId": {
               "type": "string"
             },
             "files": {
