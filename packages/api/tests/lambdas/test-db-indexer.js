@@ -19,7 +19,6 @@ const {
   getTableName,
   getTableIndexDetails,
   handler,
-  getParentId,
   getRecordId,
   performDelete,
   performIndex,
