@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2940**
   - Updated bulk operation lambda to utilize system wide rds_connection_timing
     configuration parameters from the main `cumulus` module
+- **CUMULUS-2980**
+  - Updated `ingestPdrWithNodeNameSpec.js` to use `deleteProvidersAndAllDependenciesByHost` function.
+  - Removed `deleteProvidersByHost`function.
 
 ## [v13.1.0] 2022-7-22
 

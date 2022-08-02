@@ -141,23 +141,6 @@ const waitForProviderRecordInOrNotInList = async (
   }
 );
 
-const deleteProvidersByHost = async (prefix, host) => {
-  const resp = await providersApi.getProviders({
-    prefix,
-    queryStringParameters: {
-      fields: 'id',
-      host,
-    },
-  });
-  const ids = JSON.parse(resp.body).results.map((p) => p.id);
-  const deletes = ids.map((id) => providersApi.deleteProvider({
-    prefix,
-    providerId: id,
-  }));
-  await Promise.all(deletes).catch(console.error);
-  await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
-};
-
 const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
   console.log('Starting Provider/Dependency Deletion');
 
@@ -246,7 +229,6 @@ module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
   createProvider,
-  deleteProvidersByHost,
   fetchFakeProviderIp,
   fetchFakeS3ProviderBuckets,
   waitForProviderRecordInOrNotInList,
