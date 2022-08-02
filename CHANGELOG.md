@@ -149,6 +149,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2959**
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB
+- Fixed the following links on Cumulus docs' [Getting Started](https://nasa.github.io/cumulus/docs/getting-started) page:
+    * Cumulus Deployment
+    * Terraform Best Practices
+    * Integrator Common Use Cases
+- Also corrected the _How to Deploy Cumulus_ link in the [Glossary](https://nasa.github.io/cumulus/docs/glossary)
+
 
 ## [v13.0.1] 2022-7-12
 
