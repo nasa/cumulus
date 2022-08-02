@@ -7,6 +7,14 @@ export class CollectionNotDefinedError extends Error {
   }
 }
 
+export class CollectionIdentifiersNotProvidedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CollectionIdentifiersNotProvidedError';
+    Error.captureStackTrace(this, CollectionIdentifiersNotProvidedError);
+  }
+}
+
 export class CollectionInvalidRegexpError extends Error {
   constructor(message: string) {
     super(message);
