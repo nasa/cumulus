@@ -217,7 +217,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
   Terraform is the tool that you will use for deployment and configuration of your Cumulus environment.
 
 * For more information on Terraform and how it works, see [Introduction to Terraform](https://www.terraform.io/intro/index.html).
-* For steps on how to use Terraform for Cumulus, see [How to Deploy Cumulus](../deployment/deployment-readme).
+* For steps on how to use Terraform for Cumulus, see [How to Deploy Cumulus](deployment/deployment-readme).
 
 ### Workflows
 
