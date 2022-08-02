@@ -45,7 +45,6 @@ class ESSearchAfter extends Search {
     meta.count = response.body.hits.total;
     meta.page = this.page;
     if (hits.length > 0) {
-      // FEEDBACK REQUESTED: Do we want to URI-encode in our response or leave it up to the caller?
       meta.searchContext = encodeURIComponent(JSON.stringify(hits[hits.length - 1].sort));
     }
     return {
