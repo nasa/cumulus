@@ -21,6 +21,7 @@ class ESSearchAfter extends Search {
     delete params.to;
 
     if (this.params.searchContext) {
+      // express seems to decode the URI params for us so we don't need to call decodeURIComponent
       params.body.search_after = JSON.parse(this.params.searchContext);
     }
     return params;
@@ -44,7 +45,8 @@ class ESSearchAfter extends Search {
     meta.count = response.body.hits.total;
     meta.page = this.page;
     if (hits.length > 0) {
-      meta.searchContext = JSON.stringify(hits[hits.length - 1].sort);
+      // FEEDBACK REQUESTED: Do we want to URI-encode in our response or leave it up to the caller?
+      meta.searchContext = encodeURIComponent(JSON.stringify(hits[hits.length - 1].sort));
     }
     return {
       meta,

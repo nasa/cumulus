@@ -335,7 +335,7 @@ class BaseSearch {
       meta.page = this.page;
       meta.count = response.body.hits.total;
       if (hits.length > 0) {
-        meta.searchContext = JSON.stringify(hits[hits.length - 1].sort);
+        meta.searchContext = encodeURIComponent(JSON.stringify(hits[hits.length - 1].sort));
       }
 
       return {
