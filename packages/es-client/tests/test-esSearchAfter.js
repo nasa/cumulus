@@ -68,7 +68,7 @@ test.serial('ESSearchAfter query can list all hits', async (t) => {
     esSearchAfter = new ESSearchAfter(
       { queryStringParameters: {
         limit: testSearchSize,
-        searchContext: response.meta.searchContext,
+        searchContext: decodeURIComponent(response.meta.searchContext),
       } },
       'granule',
       t.context.esAlias
@@ -124,7 +124,7 @@ test.serial(
       esSearchAfter = new ESSearchAfter(
         { queryStringParameters: {
           limit: testSearchSize,
-          searchContext: response.meta.searchContext,
+          searchContext: decodeURIComponent(response.meta.searchContext),
         } },
         'granule',
         t.context.esAlias
@@ -168,7 +168,10 @@ test.serial('Search_after with sort_key returns correctly ordered granules', asy
   const firstPage = queryResult.results;
 
   const secondEs = new ESSearchAfter(
-    { queryStringParameters: { ...params, searchContext: queryResult.meta.searchContext } },
+    { queryStringParameters: {
+      ...params,
+      searchContext: decodeURIComponent(queryResult.meta.searchContext),
+    } },
     'granule',
     process.env.ES_INDEX
   );
@@ -212,7 +215,10 @@ test.serial('Search with sort_by and order returns correctly ordered granules', 
   const firstPage = queryResult.results;
 
   const secondEs = new ESSearchAfter(
-    { queryStringParameters: { ...params, searchContext: queryResult.meta.searchContext } },
+    { queryStringParameters: {
+      ...params,
+      searchContext: decodeURIComponent(queryResult.meta.searchContext),
+    } },
     'granule',
     process.env.ES_INDEX
   );
