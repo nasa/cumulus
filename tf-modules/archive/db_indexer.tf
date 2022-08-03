@@ -25,7 +25,6 @@ resource "aws_lambda_function" "db_indexer" {
       CollectionsTable           = var.dynamo_tables.collections.name
       ExecutionsTable            = var.dynamo_tables.executions.name
       AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-      FilesTable                 = var.dynamo_tables.files.name
       GranulesTable              = var.dynamo_tables.granules.name
       PdrsTable                  = var.dynamo_tables.pdrs.name
       ProvidersTable             = var.dynamo_tables.providers.name
@@ -45,14 +44,6 @@ resource "aws_lambda_function" "db_indexer" {
       security_group_ids = local.lambda_security_group_ids
     }
   }
-}
-
-data "aws_dynamodb_table" "executions" {
-  name = var.dynamo_tables.executions.name
-}
-
-data "aws_dynamodb_table" "granules" {
-  name = var.dynamo_tables.granules.name
 }
 
 data "aws_dynamodb_table" "reconciliation_reports" {

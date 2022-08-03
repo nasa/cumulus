@@ -15,6 +15,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2645**
+    - Removed dynamo structural migrations and related code from `@cumulus/api`
+    - Removed unused index functionality for all tables other than
+      `ReconciliationReportsTable` from `dbIndexer` lambda
+    - Removed `executeMigrations` lambda
+    - Removed `granuleFilesCacheUpdater` lambda
+    - Removed dynamo files table from `data-persistence` module.  *This table and
+      all of its data will be removed on deployment*.
   - **CUMULUS-2398**
     - Remove all dynamoDB updates for `@cumulus/api/ecs/async-operation/*`
     - Updates all api endpoints with updated signature for

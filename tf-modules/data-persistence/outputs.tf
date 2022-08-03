@@ -16,10 +16,6 @@ output "dynamo_tables" {
       name = aws_dynamodb_table.executions_table.name
       arn  = aws_dynamodb_table.executions_table.arn
     }
-    files = {
-      name = aws_dynamodb_table.files_table.name
-      arn  = aws_dynamodb_table.files_table.arn
-    }
     granules = {
       name = aws_dynamodb_table.granules_table.name
       arn  = aws_dynamodb_table.granules_table.arn
