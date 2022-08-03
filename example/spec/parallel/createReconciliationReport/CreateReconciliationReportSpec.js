@@ -964,7 +964,7 @@ describe('When there are granule differences and granule reconciliation is run',
     await updateGranule({
       prefix: config.stackName,
       granuleId: publishedGranuleId,
-      collectionId: activeCollectionId,
+      collectionId: granuleBeforeUpdate.collectionId,
       body: {
         granuleId: publishedGranuleId,
         ...granuleBeforeUpdate,
