@@ -122,9 +122,9 @@ async function queueGranules(event, testMocks = {}) {
               status: 'queued',
               createdAt: queuedGranule.createdAt,
             },
-          }),
-          { concurrency: pMapConcurrency };
-        }
+          });
+        },
+        { concurrency: pMapConcurrency }
       );
       return await enqueueGranuleIngestMessageFn({
         granules: granuleBatch,
