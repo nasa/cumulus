@@ -345,8 +345,8 @@ async function put(req, res) {
 
   if (!req.body.action) {
     if (
-      req.body.granuleId === req.params.granuleName &&
-      req.body.collectionId === req.params.collectionId
+      req.body.granuleId === req.params.granuleName
+      && req.body.collectionId === req.params.collectionId
     ) {
       return putGranule(req, res);
     }
@@ -585,7 +585,7 @@ async function del(req, res) {
   const granuleId = req.params.granuleName;
   const collectionId = req.params.collectionId;
 
-  log.info(`granules.del ${granuleId}`);
+  log.info(`granules.del granuleId: ${granuleId}, collectionId: ${collectionId}`);
 
   let pgGranule;
   let pgCollection;
