@@ -415,7 +415,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
@@ -429,6 +429,8 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.updateGranule({
     callback,
     prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     body,
   }));
 });

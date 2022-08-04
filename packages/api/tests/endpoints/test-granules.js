@@ -606,7 +606,7 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
 
 test.serial('PUT fails if action is not supported', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'someUnsupportedAction' })
@@ -619,18 +619,19 @@ test.serial('PUT fails if action is not supported', async (t) => {
 
 test.serial('PUT without a body, fails to update granule.', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
 
   t.is(response.status, 400);
   const { message } = response.body;
-  t.is(message, `input :granuleName (${t.context.fakePGGranules[0].granule_id}) must match body's granuleId (undefined)`);
+  t.is(message, `inputs :granuleName and :collectionId (${t.context.fakePGGranules[0].granule_id} and ${t.context.collectionId}) must match body's granuleId and collectionId (undefined and undefined)`);
 });
 
-// This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('reingest a granule', async (t) => {
+// FUTURE: This test should be removed when deprecated putByGranuleId
+//  is removed.
+test.serial('PUT does not require a collectionId.', async (t) => {
   const fakeDescribeExecutionResult = {
     input: JSON.stringify({
       meta: {
@@ -660,6 +661,65 @@ test.serial('reingest a granule', async (t) => {
   t.is(body.status, 'SUCCESS');
   t.is(body.action, 'reingest');
   t.true(body.warning.includes('overwritten'));
+});
+
+test.serial('PUT returns a 404 if the collection is not found.', async (t) => {
+  const response = await request(app)
+    .put(`/granules/unknown___unknown/${t.context.fakePGGranules[2].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(404);
+
+  t.is(response.status, 404);
+  const { message } = response.body;
+  t.is(message, `No collection found for granuleId ${t.context.fakePGGranules[2].granule_id} with collectionId unknown___unknown`);
+});
+
+test.serial('PUT returns a 404 if the granule is not found.', async (t) => {
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/unknownGranuleId`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(404);
+
+  t.is(response.status, 404);
+  const { message } = response.body;
+  t.is(message, 'Granule not found');
+});
+
+// This needs to be serial because it is stubbing aws.sfn's responses
+test.serial('PUT reingests a granule', async (t) => {
+  const fakeDescribeExecutionResult = {
+    input: JSON.stringify({
+      meta: {
+        workflow_name: 'IngestGranule',
+      },
+      payload: {},
+    }),
+  };
+
+  // fake workflow
+  const message = JSON.parse(fakeDescribeExecutionResult.input);
+  const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
+  await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
+
+  const stub = sinon.stub(sfn(), 'describeExecution').returns({
+    promise: () => Promise.resolve(fakeDescribeExecutionResult),
+  });
+  t.teardown(() => stub.restore());
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ action: 'reingest' })
+    .expect(200);
+
+  const body = response.body;
+  t.is(body.status, 'SUCCESS');
+  t.is(body.action, 'reingest');
+  t.true(body.warning.includes('overwritten'));
 
   const updatedPgGranule = await getUniqueGranuleByGranuleId(
     t.context.knex,
@@ -669,7 +729,7 @@ test.serial('reingest a granule', async (t) => {
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('apply an in-place workflow to an existing granule', async (t) => {
+test.serial('PUT applies an in-place workflow to an existing granule', async (t) => {
   const fakeSFResponse = {
     execution: {
       input: JSON.stringify({
@@ -701,7 +761,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.teardown(() => stub.restore());
 
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -723,13 +783,14 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.is(updatedPgGranule.status, 'queued');
 });
 
-test.serial('remove a granule from CMR', async (t) => {
+test.serial('PUT removes a granule from CMR', async (t) => {
   const {
     s3Buckets,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     esClient: t.context.esClient,
+    collectionId: t.context.collectionId,
     granuleParams: { published: true },
   });
 
@@ -747,7 +808,7 @@ test.serial('remove a granule from CMR', async (t) => {
 
   try {
     const response = await request(app)
-      .put(`/granules/${granuleId}`)
+      .put(`/granules/${t.context.collectionId}/${granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -775,7 +836,7 @@ test.serial('remove a granule from CMR', async (t) => {
   ]));
 });
 
-test.serial('remove a granule from CMR with launchpad authentication', async (t) => {
+test.serial('PUT removes a granule from CMR with launchpad authentication', async (t) => {
   process.env.cmr_oauth_provider = 'launchpad';
   const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
 
@@ -791,7 +852,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
 
   try {
     const response = await request(app)
-      .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+      .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -826,6 +887,60 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
   t.true(response.body.message.includes('No record found'));
+});
+
+test.serial('DELETE returns 404 if collection does not exist', async (t) => {
+  const granuleId = randomString();
+  const response = await request(app)
+    .delete(`/granules/unknown___unknown/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(404);
+  t.true(response.body.message.includes(`No collection found for granuleId ${granuleId} with collectionId unknown___unknown`));
+});
+
+// FUTURE: This test should be removed when deprecated delByGranuleId is removed
+test.serial('DELETE does not require a collectionId', async (t) => {
+  const {
+    s3Buckets,
+    apiGranule,
+    newPgGranule,
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    granuleParams: { published: false },
+    esClient: t.context.esClient,
+  });
+
+  const response = await request(app)
+    .delete(`/granules/${apiGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.is(response.status, 200);
+  const { detail } = response.body;
+  t.is(detail, 'Record deleted');
+
+  const granuleId = apiGranule.granuleId;
+
+  // granule has been deleted from Postgres
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
+  ));
+
+  // verify the files are deleted from S3 and Postgres
+  await Promise.all(
+    apiGranule.files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
 });
 
 test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
@@ -869,7 +984,7 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 
   const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
+    .delete(`/granules/${newCollectionId}/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -930,7 +1045,7 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
   t.true(await esGranulesClient.exists(newGranule.granuleId));
 
   const response = await request(app)
-    .delete(`/granules/${newGranule.granuleId}`)
+    .delete(`/granules/${newCollectionId}/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -942,7 +1057,7 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 });
 
-test.serial('del() fails to delete a granule that has multiple entries in Elasticsearch, but no records in PostgreSQL', async (t) => {
+test.serial('DELETE fails to delete a granule that has multiple entries in Elasticsearch, but no records in PostgreSQL', async (t) => {
   const {
     knex,
   } = t.context;
@@ -982,6 +1097,7 @@ test.serial('del() fails to delete a granule that has multiple entries in Elasti
   const expressRequest = {
     params: {
       granuleName: newGranule.granuleId,
+      collectionId: newCollectionId,
     },
     testContext: {
       esGranulesClient: {
@@ -998,6 +1114,7 @@ test.serial('del() fails to delete a granule that has multiple entries in Elasti
 test.serial('DELETE deleting an existing granule that is published will fail and not delete records', async (t) => {
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
@@ -1005,17 +1122,10 @@ test.serial('DELETE deleting an existing granule that is published will fail and
     esClient: t.context.esClient,
   });
 
-  const collectionCumulusId = newPgGranule.collection_cumulus_id;
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: t.context.knex,
-  });
-
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   const response = await request(app)
-    .delete(`/granules/${granuleId}`)
+    .delete(`/granules/${apiGranule.collectionId}/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
@@ -1030,12 +1140,12 @@ test.serial('DELETE deleting an existing granule that is published will fail and
   // granule should still exist in Postgres
   t.true(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
   ));
 
   // Verify files still exist in S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1050,6 +1160,7 @@ test.serial('DELETE deleting an existing granule that is published will fail and
 test.serial('DELETE deleting an existing unpublished granule succeeds', async (t) => {
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
@@ -1057,15 +1168,8 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     esClient: t.context.esClient,
   });
 
-  const collectionCumulusId = newPgGranule.collection_cumulus_id;
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: t.context.knex,
-  });
-
   const response = await request(app)
-    .delete(`/granules/${newApiGranule.granuleId}`)
+    .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -1074,17 +1178,17 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   // granule has been deleted from Postgres
   t.false(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
   ));
 
   // verify the files are deleted from S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1097,21 +1201,14 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
 });
 
 test.serial('DELETE throws an error if the Postgres get query fails', async (t) => {
-  const { knex } = t.context;
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    esClient: t.context.esClient,
     granuleParams: { published: true },
-  });
-
-  const collectionCumulusId = newPgGranule.collection_cumulus_id;
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: knex,
+    esClient: t.context.esClient,
   });
 
   sinon
@@ -1120,7 +1217,7 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 
   try {
     const response = await request(app)
-      .delete(`/granules/${newApiGranule.granuleId}`)
+      .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`);
     t.is(response.status, 400);
@@ -1128,17 +1225,17 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
     GranulePgModel.prototype.get.restore();
   }
 
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   // granule has not been deleted from Postgres
   t.true(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+    { granule_id: granuleId, collection_cumulus_id: newPgGranule.collection_cumulus_id }
   ));
 
   // verify the files still exist in S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.true(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.true(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1151,25 +1248,20 @@ test.serial('DELETE throws an error if the Postgres get query fails', async (t) 
 });
 
 test.serial('DELETE publishes an SNS message after a successful granule delete', async (t) => {
-  const { knex } = t.context;
   const {
     s3Buckets,
+    apiGranule,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: t.context.knex,
-    esClient: t.context.esClient,
     granuleParams: { published: false },
-  });
-
-  const newApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: newPgGranule,
-    knexOrTransaction: knex,
+    esClient: t.context.esClient,
   });
 
   const timeOfResponse = Date.now();
 
   const response = await request(app)
-    .delete(`/granules/${newApiGranule.granuleId}`)
+    .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -1178,7 +1270,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
 
-  const granuleId = newApiGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(
@@ -1191,7 +1283,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
 
   // verify the files are deleted from S3 and Postgres
   await Promise.all(
-    newApiGranule.files.map(async (file) => {
+    apiGranule.files.map(async (file) => {
       t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
       t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
     })
@@ -1208,7 +1300,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.is(publishedMessage.record.granuleId, newApiGranule.granuleId);
+  t.is(publishedMessage.record.granuleId, apiGranule.granuleId);
   t.is(publishedMessage.event, 'Delete');
   t.true(publishedMessage.deletedAt > timeOfResponse);
   t.true(publishedMessage.deletedAt < Date.now());
@@ -1716,6 +1808,7 @@ test.serial('PUT with action move returns failure if one granule file exists', a
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: insertedPgGranules[0].granule_id,
     },
     body,
@@ -1752,6 +1845,7 @@ test.serial('put() with action move returns failure if more than one granule fil
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: insertedPgGranules[0].granule_id,
     },
     body,
@@ -2102,6 +2196,7 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
     granuleParams: {
       status: 'running',
       execution: executionUrl,
+      collectionId: t.context.collectionId,
     },
   });
 
@@ -2128,6 +2223,7 @@ test.serial('put() does not write to Elasticsearch/SNS if writing to PostgreSQL 
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: apiGranule.granuleId,
     },
     body: updatedGranule,
@@ -2182,7 +2278,11 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: { status: 'running', execution: executionUrl },
+    granuleParams: {
+      collectionId: t.context.collectionId,
+      status: 'running',
+      execution: executionUrl,
+    },
   });
 
   const fakeEsClient = {
@@ -2203,6 +2303,7 @@ test.serial('put() rolls back PostgreSQL records and does not write to SNS if wr
 
   const expressRequest = {
     params: {
+      collectionId: t.context.collectionId,
       granuleName: apiGranule.granuleId,
     },
     body: updatedGranule,
@@ -2390,11 +2491,13 @@ test.serial('PUT returns an updated granule with associated execution', async (t
 });
 
 test.serial('PUT returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
-  const newGranule = fakeGranuleFactoryV2({});
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+  });
   const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
 
   const { body } = await request(app)
-    .put(`/granules/${granuleName}`)
+    .put(`/granules/${newGranule.collectionId}/${granuleName}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -2402,7 +2505,26 @@ test.serial('PUT returns bad request when the path param granuleName does not ma
 
   t.is(body.statusCode, 400);
   t.is(body.error, 'Bad Request');
-  t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
+  t.is(body.message, `inputs :granuleName and :collectionId (${granuleName} and ${newGranule.collectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`);
+});
+
+test.serial('PUT returns bad request when the path param collectionId does not match the json collectionId', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+  });
+
+  const fakeCollectionId = `collection___${cryptoRandomString({ length: 6 })}`;
+
+  const { body } = await request(app)
+    .put(`/granules/${fakeCollectionId}/${newGranule.granuleId}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(body.statusCode, 400);
+  t.is(body.error, 'Bad Request');
+  t.is(body.message, `inputs :granuleName and :collectionId (${newGranule.granuleId} and ${fakeCollectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`);
 });
 
 test.serial('update (PUT) can set running granule status to queued', async (t) => {

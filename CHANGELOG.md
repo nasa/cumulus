@@ -90,6 +90,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Remove deletion of DynamoDB record from API endpoint DELETE /pdr/<pdrName>
   - **CUMULUS-2688**
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
+    - Add new endpoints to update and delete granules by collectionId as well as granuleId
 
 ### Fixed
 

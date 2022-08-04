@@ -8,6 +8,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   localStackConnectionEnv,
   generateLocalTestDb,
@@ -47,6 +48,10 @@ test.before(async (t) => {
 
   const fakeCollection = fakeCollectionRecordFactory({ name: 'FakeCollection', version: '006' });
   const [collectionPgRecord] = await collectionPgModel.create(t.context.knex, fakeCollection);
+  t.context.collectionId = constructCollectionId(
+    collectionPgRecord.name,
+    collectionPgRecord.version
+  );
   const collectionCumulusId = collectionPgRecord.cumulus_id;
 
   const fakeGranule = fakeGranuleRecordFactory(
@@ -87,6 +92,7 @@ test.after.always(async (t) => {
 test.serial('put request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
   const {
     granuleId,
+    collectionId,
   } = t.context;
 
   const granuleReingestStub = sinon.stub().resolves({ response: 'fakeResponse' });
@@ -99,6 +105,7 @@ test.serial('put request with reingest action queues granule and calls the reing
     body,
     params: {
       granuleName: granuleId,
+      collectionId,
     },
     testContext: {
       reingestHandler: granuleReingestStub,

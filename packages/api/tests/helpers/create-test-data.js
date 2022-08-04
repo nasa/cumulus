@@ -145,12 +145,6 @@ async function createGranuleAndFiles({
     dbClient
   );
   const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
-  const apiGranule = dynamoGranule || await translatePostgresGranuleToApiGranule({
-    knexOrTransaction: dbClient,
-    granulePgRecord: pgGranule,
-  });
-
-  await indexGranule(esClient, apiGranule, process.env.ES_INDEX);
 
   // create Postgres files
   await Promise.all(
@@ -166,6 +160,13 @@ async function createGranuleAndFiles({
     })
   );
 
+  const apiGranule = dynamoGranule || await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: dbClient,
+    granulePgRecord: pgGranule,
+  });
+
+  await indexGranule(esClient, apiGranule, process.env.ES_INDEX);
+
   const esGranulesClient = new Search(
     {},
     'granule',
@@ -177,6 +178,7 @@ async function createGranuleAndFiles({
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
     newDynamoGranule,
+    apiGranule,
     esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,
     s3Buckets: s3Buckets,

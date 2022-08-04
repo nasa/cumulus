@@ -17,7 +17,8 @@ const { granules } = require('@cumulus/api-client');
 
 const granule = await granules.getGranule({
   prefix: process.env.STACKNAME,
-  granuleId
+  granuleId,
+  collectionId
 });
 ```
 
