@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v13.2.0] 2022-8-04
+
 ### Changed
 
 - **CUMULUS-2940**
@@ -13,8 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     configuration parameters from the main `cumulus` module
 - **CUMULUS-2954**
   - Updated Backup LZARDS task to run as a single task in a step function workflow.
-    - Updated task to allow user to provide `collectionId` in workflow input and 
-      updated task to use said `collectionId` to look up the corresponding collection record in RDS.
+  - Updated task to allow user to provide `collectionId` in workflow input and
+    updated task to use said `collectionId` to look up the corresponding collection record in RDS.
 
 ## [v13.1.0] 2022-7-22
 
@@ -6358,7 +6360,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.2.0...HEAD
+[v13.2.0]: https://github.com/nasa/cumulus/compare/v13.1.0...v13.2.0
 [v13.1.0]: https://github.com/nasa/cumulus/compare/v13.0.1...v13.1.0
 [v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
 [v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.1...v13.0.0
