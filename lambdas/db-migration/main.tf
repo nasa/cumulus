@@ -69,7 +69,7 @@ resource "aws_lambda_function" "db_migration" {
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
   role             = aws_iam_role.db_migration.arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = var.lambda_timeout
   memory_size      = 512
 

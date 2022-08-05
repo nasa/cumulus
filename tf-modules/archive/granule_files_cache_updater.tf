@@ -61,7 +61,7 @@ resource "aws_lambda_function" "granule_files_cache_updater" {
   function_name    = "${var.prefix}-granuleFilesCacheUpdater"
   role             = aws_iam_role.granule_files_cache_updater_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 30
   memory_size      = 256
 

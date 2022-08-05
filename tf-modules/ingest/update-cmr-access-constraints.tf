@@ -4,7 +4,7 @@ resource "aws_lambda_function" "update_cmr_access_constraints_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/update-cmr-access-constraints/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 256
 

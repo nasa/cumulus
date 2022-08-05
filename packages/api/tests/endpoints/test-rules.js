@@ -89,7 +89,7 @@ test.before(async (t) => {
     FunctionName: randomId('messageConsumer'),
     Role: randomId('role'),
     Handler: 'index.handler',
-    Runtime: 'nodejs14.x',
+    Runtime: 'nodejs16.x',
   }).promise();
   process.env.messageConsumer = messageConsumer.FunctionName;
 

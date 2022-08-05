@@ -4,7 +4,7 @@ resource "aws_lambda_function" "sqs_message_remover" {
   source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 100
   memory_size      = 256
   environment {
