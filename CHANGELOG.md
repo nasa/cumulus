@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+- **CUMULUS-3002**
+  - Updated node and runtime packages from `v14.19.1-buster` to v16 `Gallium`
 
 ### Notable Changes
 - **CUMULUS-2930**
