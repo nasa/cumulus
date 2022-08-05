@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable Changes
+
+- **CUMULUS-2930**
+  - The `GET /granules` endpoint has a new optional query parameter:
+    `searchContext`, which is used to resume listing within the same search
+    context. It is provided in every response from the endpoint as
+    `meta.searchContext`. The searchContext value must be submitted with every
+    consequent API call, and must be fetched from each new response to maintain
+    the context.
+  - Use of the `searchContext` query string parameter allows listing past 10,000 results.
+  - Note that using the `from` query param in a request will cause the `searchContext` to
+    be ignored and also make the query subject to the 10,000 results cap again.
+  - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
+    The endpoint will only use search-after when the `searchContext` parameter
+    is provided in a request.
+
 ## [v13.2.0] 2022-8-04
 
 ### Changed
@@ -232,7 +248,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
-
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
