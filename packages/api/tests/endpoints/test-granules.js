@@ -417,6 +417,37 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
+test.serial('default paginates correctly with search_after', async (t) => {
+  const response = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.is(meta.page, 1);
+  t.truthy(meta.searchContext);
+
+  const newResponse = await request(app)
+    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+  t.truthy(newMeta.searchContext);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+  t.not(meta.searchContext === newMeta.searchContext);
+});
+
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/granules')
