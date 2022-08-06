@@ -35,7 +35,6 @@ const {
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
-const Granule = require('../../models/granules');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 const randomArn = () => `arn_${cryptoRandomString({ length: 10 })}`;
@@ -186,11 +185,8 @@ test.before(async (t) => {
   // create a fake bucket
   await createBucket(envVars.system_bucket);
 
-  await new Granule().createTable();
-
   applyWorkflowStub = sandbox.stub();
   reingestStub = sandbox.stub();
-  sandbox.stub(Granule.prototype, '_removeGranuleFromCmr').resolves();
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
@@ -403,7 +399,6 @@ test.serial('applyWorkflowToGranules sets the granules status to queued', async 
   await bulkOperation.applyWorkflowToGranules({
     granules: t.context.granules,
     workflowName,
-    granuleModel: new Granule(),
     knex: t.context.knex,
     applyWorkflowHandler: applyWorkflowStub,
   });
@@ -430,8 +425,8 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granules from Pos
   ]);
 
   const s3Buckets = granules[0].s3Buckets;
-  const dynamoGranuleId1 = granules[0].newPgGranule.granule_id;
-  const dynamoGranuleId2 = granules[1].newPgGranule.granule_id;
+  const apiGranuleId1 = granules[0].newPgGranule.granule_id;
+  const apiGranuleId2 = granules[1].newPgGranule.granule_id;
 
   const apiGranules = await Promise.all(
     granules.map((granule) => translatePostgresGranuleToApiGranule({
@@ -451,8 +446,8 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granules from Pos
   t.deepEqual(
     deletedGranules.sort(),
     [
-      dynamoGranuleId1,
-      dynamoGranuleId2,
+      apiGranuleId1,
+      apiGranuleId2,
     ].sort()
   );
 
@@ -462,11 +457,11 @@ test.serial('bulk operation BULK_GRANULE_DELETE deletes listed granules from Pos
 
   t.false(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: dynamoGranuleId1, collection_cumulus_id: pgCollectionCumulusId1 }
+    { granule_id: apiGranuleId1, collection_cumulus_id: pgCollectionCumulusId1 }
   ));
   t.false(await granulePgModel.exists(
     t.context.knex,
-    { granule_id: dynamoGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
+    { granule_id: apiGranuleId2, collection_cumulus_id: pgCollectionCumulusId2 }
   ));
 
   t.teardown(() => deleteS3Buckets([

@@ -1,12 +1,9 @@
 'use strict';
 
-const cloneDeep = require('lodash/cloneDeep');
 const isArray = require('lodash/isArray');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { CMR } = require('@cumulus/cmr-client');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
-const Logger = require('@cumulus/logger');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,
@@ -14,7 +11,6 @@ const {
 
 const Manager = require('./base');
 
-const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
   translateGranule,
@@ -22,8 +18,6 @@ const {
 const GranuleSearchQueue = require('../lib/GranuleSearchQueue');
 
 const granuleSchema = require('./schemas').granule;
-
-const logger = new Logger({ sender: '@cumulus/api/models/granules' });
 
 class Granule extends Manager {
   constructor({
@@ -65,27 +59,6 @@ class Granule extends Manager {
     this.cmrUtils = cmrUtils;
   }
 
-  async get(...args) {
-    return translateGranule(
-      await super.get(...args),
-      this.fileUtils
-    );
-  }
-
-  getRecord({ granuleId }) {
-    return super.get({ granuleId });
-  }
-
-  async batchGet(...args) {
-    const result = cloneDeep(await super.batchGet(...args));
-
-    result.Responses[this.tableName] = await Promise.all(
-      result.Responses[this.tableName].map((response) => translateGranule(response))
-    );
-
-    return result;
-  }
-
   async scan(...args) {
     const scanResponse = await super.scan(...args);
 
@@ -99,37 +72,6 @@ class Granule extends Manager {
     }
 
     return scanResponse;
-  }
-
-  /**
-   * Remove granule record from CMR
-   *
-   * @param {Object} granule - A granule record
-   * @throws {CumulusModelError|Error}
-   * @returns {Promise}
-   * @private
-   */
-  async _removeGranuleFromCmr(granule) {
-    logger.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
-
-    if (!granule.published || !granule.cmrLink) {
-      throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
-    }
-
-    const cmrSettings = await this.cmrUtils.getCmrSettings();
-    const cmr = new CMR(cmrSettings);
-    const metadata = await cmr.getGranuleMetadata(granule.cmrLink);
-
-    // Use granule UR to delete from CMR
-    await cmr.deleteGranule(metadata.title, granule.collectionId);
-  }
-
-  /*
-  * DEPRECATED: This has moved to /lib/granule-rmove-from-cmr.js
-  */
-  async removeGranuleFromCmrByGranule(granule) {
-    await this._removeGranuleFromCmr(granule);
-    return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
   }
 
   /**
@@ -221,40 +163,6 @@ class Granule extends Manager {
   }
 
   /**
-   * Delete a granule record and remove its files from S3.
-   *
-   * @param {Object} granule - A granule record
-   * @returns {Promise}
-   * @private
-   */
-  async _deleteRecord(granule) {
-    return await super.delete({ granuleId: granule.granuleId });
-  }
-
-  /**
-   * Delete a granule
-   *
-   * @param {Object} granule record
-   * @returns {Promise}
-   */
-  async delete(granule) {
-    if (granule.published) {
-      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-    }
-
-    return await this._deleteRecord(granule);
-  }
-
-  /**
-   * Only used for tests
-   */
-  async deleteGranules() {
-    const granules = await this.scan();
-    return await Promise.all(granules.Items.map((granule) =>
-      this.delete(granule)));
-  }
-
-  /**
    * Get the set of fields which are mutable based on the granule status.
    *
    * @param {Object} record - A granule record
@@ -265,93 +173,6 @@ class Granule extends Manager {
       return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
-  }
-
-  /**
-   * Store a granule record in DynamoDB.
-   *
-   * @param {Object} granuleRecord - A granule record.
-   * @returns {Promise<Object|undefined>}
-   */
-  async _storeGranuleRecord(granuleRecord) {
-    const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
-    const updateParams = this._buildDocClientUpdateParams({
-      item: granuleRecord,
-      itemKey: { granuleId: granuleRecord.granuleId },
-      mutableFieldNames,
-    });
-
-    // createdAt comes from cumulus_meta.workflow_start_time
-    // records should *not* be updating from createdAt times that are *older* start
-    // times than the existing record, whatever the status
-    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
-
-    // Only allow "running" granule to replace completed/failed
-    // granule if the execution has changed for granules with executions.
-    // Allow running granule to replace queued granule
-    if (granuleRecord.status === 'running' && granuleRecord.execution !== undefined) {
-      updateParams.ExpressionAttributeValues[':queued'] = 'queued';
-      updateParams.ConditionExpression += ' and (#status = :queued or #execution <> :execution)';
-    }
-
-    // Only allow "queued" granule to replace running/completed/failed
-    // granule if the execution has changed for granules with executions.
-    if (granuleRecord.status === 'queued' && granuleRecord.execution !== undefined) {
-      updateParams.ConditionExpression += ' and #execution <> :execution';
-    }
-
-    try {
-      return await this.dynamodbDocClient.update(updateParams);
-    } catch (error) {
-      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-        logger.error(`Did not process delayed event for granule: ${JSON.stringify(granuleRecord)}, cause:`, error);
-        return undefined;
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Validate and store a granule record.
-   *
-   * @param {Object} granuleRecord - A granule record.
-   * @returns {Promise}
-   */
-  async _validateAndStoreGranuleRecord(granuleRecord) {
-    // TODO: Refactor this all to use model.update() to avoid having to manually call
-    // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
-    return this._storeGranuleRecord(granuleRecord);
-  }
-
-  /**
-   * Stores a granule in dynamoDB
-   *
-   * @param {Object} granuleRecord - dynamoDB granule
-   * @returns {Object} dynamodbDocClient update responses
-   */
-  async storeGranule(granuleRecord) {
-    logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
-    const response = await this._validateAndStoreGranuleRecord(granuleRecord);
-    if (response) {
-      logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
-    } else {
-      logger.info(`Did not update granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} due to granule write constraints`);
-    }
-    return response;
-  }
-
-  // This logic has been moved to api/lib/granule.js, pending removal when the model gets removed P3
-  async describeGranuleExecution(executionArn) {
-    let executionDescription;
-    try {
-      executionDescription = await this.stepFunctionUtils.describeExecution({
-        executionArn,
-      });
-    } catch (error) {
-      logger.error(`Could not describe execution ${executionArn}`, error);
-    }
-    return executionDescription;
   }
 }
 
