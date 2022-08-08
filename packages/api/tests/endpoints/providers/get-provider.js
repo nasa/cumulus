@@ -83,7 +83,6 @@ test.beforeEach(async (t) => {
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await providerModel.deleteTable();
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
