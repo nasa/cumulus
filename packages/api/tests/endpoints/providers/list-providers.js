@@ -20,7 +20,6 @@ const {
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
-process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -28,7 +27,6 @@ process.env.TOKEN_SECRET = randomString();
 // import the express app after setting the env variables
 const { app } = require('../../../app');
 
-let providerModel;
 const esIndex = randomString();
 let esClient;
 
@@ -39,7 +37,6 @@ test.before(async () => {
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
   accessTokenModel = new models.AccessToken();
-  providerModel = new models.Provider();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);

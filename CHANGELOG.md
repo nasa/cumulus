@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2793**
+    - Removed Provider Dynamo model and related test code
   - **CUMULUS-2645**
     - Removed dynamo structural migrations and related code from `@cumulus/api`
     - Removed unused index functionality for all tables other than

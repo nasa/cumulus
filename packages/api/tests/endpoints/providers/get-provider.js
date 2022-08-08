@@ -28,7 +28,6 @@ const {
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
 
-process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -51,9 +50,6 @@ test.before(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-
-  providerModel = new models.Provider();
-  await providerModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
