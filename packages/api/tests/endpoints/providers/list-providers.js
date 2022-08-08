@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const request = require('supertest');
+const cryptoRandomString = require('crypto-random-string');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -11,10 +12,17 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
+const {
+  ProviderPgModel,
+  localStackConnectionEnv,
+  generateLocalTestDb,
+  migrationDir,
+  fakeProviderRecordFactory,
+  destroyLocalTestDb,
+} = require('@cumulus/db');
 const models = require('../../../models');
 const {
   createFakeJwtAuthToken,
-  fakeProviderFactory,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
@@ -33,7 +41,7 @@ let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 
-test.before(async () => {
+test.before(async (t) => {
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
   accessTokenModel = new models.AccessToken();
@@ -51,19 +59,31 @@ test.before(async () => {
       index: esIndex,
       alias: esAlias,
     }),
-    providerModel.createTable(),
   ]);
+
+  t.context.testDbName = `test_providers_${cryptoRandomString({ length: 10 })}`;
+
+  const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: t.context.testDbName,
+  };
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   esClient = await Search.es('fakehost');
 });
 
-test.after.always(() => Promise.all([
+test.after.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(process.env.system_bucket),
   accessTokenModel.deleteTable(),
   esClient.indices.delete({ index: esIndex }),
-  providerModel.deleteTable(),
+  destroyLocalTestDb({
+    ...t.context,
+  }),
 ]));
 
 test('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -87,10 +107,12 @@ test('CUMULUS-912 GET without pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user returns an unauthorized response');
 
-test('default returns list of providerModel', async (t) => {
-  const testProvider = fakeProviderFactory();
-  const record = await providerModel.create(testProvider);
-  await indexer.indexProvider(esClient, record, esIndex);
+test('default returns list of providers', async (t) => {
+  const testProvider = fakeProviderRecordFactory();
+  const providerPgModel = new ProviderPgModel();
+  const [providerCumulusId] = await providerPgModel.create(t.context.knex, testProvider);
+  const pgProvider = await providerPgModel.get(t.context.knex, { cumulus_id: providerCumulusId });
+  await indexer.indexProvider(esClient, pgProvider, esIndex);
 
   const response = await request(app)
     .get('/providers')
