@@ -145,16 +145,25 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
   ])(baseInputPayload);
 }
 
-async function generatePayloadGranule(granule2Replicate, bucket, granuleRegex) {
+async function generatePayloadGranule(passThrough, granule2Replicate, bucket, granuleRegex) {
   const oldGranuleId = granule2Replicate.granuleId;
   const newGranuleId = randomStringFromRegex(granuleRegex);
 
-  await createGranuleFiles(
-    granule2Replicate.files,
-    bucket,
-    oldGranuleId,
-    newGranuleId
-  );
+  if (passThrough) {
+    // Setup for Ingest Passthrough
+    granule2Replicate.files = granule2Replicate.files.map(
+      (file) => ({ ...file, bucket: bucket })
+    );
+
+    granule2Replicate.createdAt = Date.now();
+  } else {
+    await createGranuleFiles(
+      granule2Replicate.files,
+      bucket,
+      oldGranuleId,
+      newGranuleId
+    );
+  }
 
   return flow([
     JSON.stringify,
@@ -176,7 +185,7 @@ async function generatePayloadGranule(granule2Replicate, bucket, granuleRegex) {
  * @param {string} testDataFolder - test data S3 path
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
-async function setupBulkTestGranuleForIngest(bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '', testDataFolder = undefined) {
+async function setupLoadTestGranuleForIngest(bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '', testDataFolder = undefined) {
   let payloadJson;
 
   if (testDataFolder) {
@@ -195,7 +204,7 @@ async function setupBulkTestGranuleForIngest(bucket, inputPayloadJson, granuleCo
   console.log(`===== Create ${granuleCountPerPayload} granules per payload =====`);
   const createS3GranuleFilesPromises = new Array(granuleCountPerPayload).fill().map(
     async () => {
-      const replicatedGranule = await generatePayloadGranule(granule2Replicate, bucket, granuleRegex);
+      const replicatedGranule = await generatePayloadGranule(false, granule2Replicate, bucket, granuleRegex);
       baseInputPayload.granules.push(replicatedGranule);
     }
   );
@@ -205,12 +214,30 @@ async function setupBulkTestGranuleForIngest(bucket, inputPayloadJson, granuleCo
   return baseInputPayload;
 }
 
-const cleanupBulkTestGranules = async (stackName, granuleList) => {
+async function setupLoadTestGranuleForIngestPassthrough(bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '') {
+  const baseInputPayload = JSON.parse(inputPayloadJson);
+  baseInputPayload.granules[0].dataType = `MOD09GQ${testSuffix}`;
+  const granule2Replicate = baseInputPayload.granules.shift();
+
+  console.log(`===== Create ${granuleCountPerPayload} granules per payload =====`);
+  const createS3GranuleFilesPromises = new Array(granuleCountPerPayload).fill().map(
+    async () => {
+      const replicatedGranule = await generatePayloadGranule(true, granule2Replicate, bucket, granuleRegex);
+      baseInputPayload.granules.push(replicatedGranule);
+    }
+  );
+  await Promise.all(createS3GranuleFilesPromises);
+  console.log(`===== Uploaded ${granuleCountPerPayload * granule2Replicate.files.length} granule files per payload =====`);
+
+  return baseInputPayload;
+}
+
+const cleanupLoadTestGranules = async (stackName, granuleList) => {
   const granIds = granuleList.map((g) => g.granuleId);
   const bulkDeleteResponse = await granules.bulkDeleteGranules({ prefix: stackName, body: { ids: granIds } });
   const verifiedResponse = apiTestUtils.verifyCumulusApiResponse(bulkDeleteResponse, [202]);
   const responseBody = JSON.parse(verifiedResponse.body);
-  console.log(`===== Async operation ID: ${JSON.stringify(responseBody)} =====`);
+  console.log(`===== Bulk Granule deleting ${granIds.length}. Async operation ID: ${JSON.stringify(responseBody)} =====`);
 
   await pWaitFor(async () => {
     let asyncOperation = {};
@@ -395,8 +422,9 @@ module.exports = {
   deleteGranules,
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
-  setupBulkTestGranuleForIngest,
-  cleanupBulkTestGranules,
+  setupLoadTestGranuleForIngest,
+  setupLoadTestGranuleForIngestPassthrough,
+  cleanupLoadTestGranules,
   waitForGranuleRecordsInList,
   waitForGranuleRecordsNotInList,
   waitForGranuleRecordUpdatedInList,
