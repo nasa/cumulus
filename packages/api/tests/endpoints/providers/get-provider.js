@@ -32,7 +32,6 @@ process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
-let providerModel;
 const esIndex = randomString();
 let esClient;
 
