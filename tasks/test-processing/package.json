@@ -9,7 +9,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">="
   },
   "scripts": {
     "build": "../../node_modules/.bin/webpack",

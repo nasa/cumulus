@@ -15,7 +15,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">="
   },
   "scripts": {
     "build-lambda-zips": "(cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
