@@ -9,15 +9,20 @@ resource "aws_lambda_function" "bulk_operation" {
   memory_size      = 512
   environment {
     variables = {
-      METRICS_ES_HOST        = var.metrics_es_host
-      METRICS_ES_USER        = var.metrics_es_username
-      METRICS_ES_PASS        = var.metrics_es_password
-      ES_HOST                = var.elasticsearch_hostname
-      GranulesTable          = var.dynamo_tables.granules.name
-      granule_sns_topic_arn  = aws_sns_topic.report_granules_topic.arn
-      system_bucket          = var.system_bucket
-      invoke                 = var.schedule_sf_function_arn
-      stackName              = var.prefix
+      acquireTimeoutMillis         = var.rds_connection_timing_configuration.acquireTimeoutMillis
+      createRetryIntervalMillis    = var.rds_connection_timing_configuration.createRetryIntervalMillis
+      createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
+      ES_HOST                      = var.elasticsearch_hostname
+      granule_sns_topic_arn        = aws_sns_topic.report_granules_topic.arn
+      GranulesTable                = var.dynamo_tables.granules.name
+      idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
+      invoke                       = var.schedule_sf_function_arn
+      METRICS_ES_HOST              = var.metrics_es_host
+      METRICS_ES_PASS              = var.metrics_es_password
+      METRICS_ES_USER              = var.metrics_es_username
+      reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
+      stackName                    = var.prefix
+      system_bucket                = var.system_bucket
     }
   }
 

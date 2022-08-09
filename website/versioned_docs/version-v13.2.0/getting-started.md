@@ -1,7 +1,8 @@
 ---
-id: getting-started
+id: version-v13.2.0-getting-started
 title: Getting Started
 hide_title: false
+original_id: getting-started
 ---
 
 [Overview](#overview) | [Quick Tutorials](#quick-tutorials) | [Helpful Tips](#helpful-tips)

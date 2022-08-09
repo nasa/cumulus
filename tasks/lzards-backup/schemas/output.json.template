@@ -24,11 +24,12 @@
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["files", "granuleId", "dataType", "version"],
+          "required": ["files", "granuleId"],
           "properties": {
             "granuleId": { "type": "string" },
             "dataType": { "type": "string" },
             "version": { "type": "string" },
+            "collectionId": { "type": "string" },
             "files": "{{files}}"
           }
         }
