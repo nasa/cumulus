@@ -555,6 +555,9 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
     key: 'fake_key',
   }, '*');
 
+  // Ensure fakeFile was added to the files table
+  t.true(await filePgModel.exists(knex, { cumulus_id: fakeFile.cumulus_id }));
+
   await writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
@@ -568,7 +571,7 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
   t.deepEqual(updatedPgFiles.filter((file) => file.bucket === fakeFile.bucket), []);
 
   // We expect the files currently in the File table to be those files
-  // that previous existed plus the files from the cumulus message
+  // that previously existed plus the files from the cumulus message
   const filesFromCumulusMessage = cumulusMessage.payload.granules[0].files.map(
     (file) => file.bucket
   );
