@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 - **CUMULUS-3002**
-  - Updated node and runtime packages from `v14.19.1-buster` to v16 `Gallium`
+  - Updated node and runtime packages from `v14.19.1-buster` to `v16.16.0-buster`
+  - The minimum supported version for all published Cumulus Core npm packages is now Node `16.16.0`
 
 ### Notable Changes
 - **CUMULUS-2930**
