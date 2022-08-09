@@ -223,10 +223,12 @@ const _removeExcessFiles = async ({
   knex,
   writtenFiles,
 }) => {
+  console.log('in remove excess granules:::::::::');
   if (writtenFiles.length === 0) {
     throw new Error('_removeExcessFiles called with no written files');
   }
   const excludeCumulusIds = writtenFiles.map((file) => file.cumulus_id);
+  console.log('granuleCumulusId:::', granuleCumulusId);
   return await filePgModel.deleteExcluding({
     knexOrTransaction: knex,
     queryParams: { cumulus_id: granuleCumulusId },
@@ -413,6 +415,7 @@ const _writeGranuleFiles = async ({
       fileRecords,
       knex,
     });
+    console.log('about to remove excess files::::');
     await _removeExcessFiles({
       writtenFiles,
       granuleCumulusId,
@@ -583,7 +586,9 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
   snsEventType,
 }) => {
   const { files, status } = apiGranuleRecord;
+  console.log('status and files:::', status, files);
   if (isStatusFinalState(status) && files.length > 0) {
+    console.log('about to _writeGranuleFiles');
     await _writeGranuleFiles({
       granuleCumulusId: granuleCumulusId,
       granule: apiGranuleRecord,
@@ -628,7 +633,7 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
-
+  console.log('about to _writePostgresFilesFromApiGranuleFiles');
   await _writePostgresFilesFromApiGranuleFiles({
     apiGranuleRecord,
     granuleCumulusId: pgGranule.cumulus_id,
