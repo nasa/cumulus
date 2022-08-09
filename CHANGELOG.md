@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable Changes
 
+- **CUMULUS-3019**
+  - Fix File write logic to delete files by `granule_cumulus_id` instead of
+      `cumulus_id`. Previous logic removed files by matching `file.cumulus_id`
+      to `granule.cumulus_id`.
 - **CUMULUS-2930**
   - The `GET /granules` endpoint has a new optional query parameter:
     `searchContext`, which is used to resume listing within the same search
