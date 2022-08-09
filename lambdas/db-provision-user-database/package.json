@@ -3,7 +3,7 @@
   "version": "13.1.0",
   "description": "A Lambda function used for provisioning user databases",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">="
   },
   "private": true,
   "scripts": {
