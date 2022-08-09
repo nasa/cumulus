@@ -22,6 +22,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     The endpoint will only use search-after when the `searchContext` parameter
     is provided in a request.
 
+### Changed
+
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
+
+### Added
+
+- **CUMULUS-2787**
+  - Added `lzards-api-client` package to Cumulus with `submitGetRequestToLzards` method to support LZARDS reconciliation report
+
 ## [v13.2.0] 2022-8-04
 
 ### Changed
@@ -33,9 +43,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated Backup LZARDS task to run as a single task in a step function workflow.
   - Updated task to allow user to provide `collectionId` in workflow input and
     updated task to use said `collectionId` to look up the corresponding collection record in RDS.
-
-- **CUMULUS-2787**
-  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 
 ## [v13.1.0] 2022-7-22
 
@@ -151,11 +158,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `move-granule` task to check the optional collection configuration parameter
     `meta.granuleMetadataFileExtension` to determine the granule metadata file.
     If none is specified, the granule CMR metadata or ISO metadata file is used.
-
-### Added
-
-- **CUMULUS-2787**
-  - Added `lzards-api-client` package to Cumulus with `submitGetRequestToLzards` method to support LZARDS reconciliation report
 
 ### Changed
 
