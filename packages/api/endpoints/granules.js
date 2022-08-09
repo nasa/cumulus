@@ -21,6 +21,7 @@ const {
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
+const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
@@ -69,17 +70,25 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
  */
 async function list(req, res) {
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
-  const es = new Search(
-    { queryStringParameters },
-    'granule',
-    process.env.ES_INDEX
-  );
 
-  let result = await es.query();
-  if (getRecoveryStatus === 'true') {
-    result = await addOrcaRecoveryStatus(result);
+  let es;
+  if (queryStringParameters.searchContext) {
+    es = new ESSearchAfter(
+      { queryStringParameters },
+      'granule',
+      process.env.ES_INDEX
+    );
+  } else {
+    es = new Search(
+      { queryStringParameters },
+      'granule',
+      process.env.ES_INDEX
+    );
   }
-
+  const result = await es.query();
+  if (getRecoveryStatus === 'true') {
+    return res.send(await addOrcaRecoveryStatus(result));
+  }
   return res.send(result);
 }
 

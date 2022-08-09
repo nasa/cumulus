@@ -1,7 +1,8 @@
 ---
-id: glossary
+id: version-v13.2.0-glossary
 title: Glossary
 hide_title: false
+original_id: glossary
 ---
 
 ## AWS Glossary

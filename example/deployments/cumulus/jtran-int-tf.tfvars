@@ -6,28 +6,28 @@ cmr_oauth_provider = "launchpad"
 system_bucket     = "jtran-int-tf-internal"
 buckets = {
   glacier = {
-    name = "jtran-int-tf-orca-glacier"
+    name = "cumulus-test-sandbox-orca-glacier"
     type = "orca"
-  },
+  }
   internal = {
     name = "jtran-int-tf-internal"
     type = "internal"
   }
   private = {
-    name = "jtran-int-tf-private"
+    name = "cumulus-test-sandbox-private"
     type = "private"
   }
   protected = {
-    name = "jtran-int-tf-protected"
+    name = "cumulus-test-sandbox-protected"
     type = "protected"
   }
   protected-2 = {
-    name = "jtran-int-tf-protected-2"
+    name = "cumulus-test-sandbox-protected-2"
     type = "protected"
   }
   public = {
-    name = "jtran-int-tf-public"
+    name = "cumulus-test-sandbox-public"
     type = "public"
   }
 }
-orca_default_bucket = "jtran-int-tf-orca-glacier"
+orca_default_bucket = "cumulus-test-sandbox-orca-glacier"
