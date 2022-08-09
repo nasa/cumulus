@@ -12,7 +12,7 @@
     "directory": "tasks/add-missing-file-checksums"
   },
   "engines": {
-    "node": ">="
+    "node": ">=16.16.0"
   },
   "main": "dist/index.js",
   "directories": {
