@@ -515,7 +515,7 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
     providerCumulusId,
   } = t.context;
 
-  // Set message status to 'completed' to allow file writes due to current file write constraints 
+  // Set message status to 'completed' to allow file writes due to current file write constraints
   cumulusMessage.meta.status = 'completed';
 
   // Create granule in PG with multiple files. These records will exist in database
