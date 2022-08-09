@@ -6,7 +6,7 @@
     "cumulus-test": "./bin/cli.js"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">="
   },
   "main": "index.js",
   "publishConfig": {

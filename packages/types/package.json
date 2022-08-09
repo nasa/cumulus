@@ -9,7 +9,7 @@
   ],
   "types": "./index.d.ts",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">="
   },
   "publishConfig": {
     "access": "public"
