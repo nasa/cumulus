@@ -809,6 +809,8 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
         {
           granuleId: 'FakeGranule1',
           collectionId: collectionId1,
+          provider: 'FakeProvider',
+          createdAt: now,
           files: [
             {
               bucket: fakeBucket1,
@@ -827,6 +829,8 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
         {
           granuleId: 'FakeGranule2',
           collectionId: collectionId2,
+          provider: 'FakeProvider',
+          createdAt: now,
           files: [
             {
               bucket: fakeBucket2,
@@ -911,6 +915,8 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
         {
           granuleId: 'FakeGranule1',
           collectionId: collectionId1,
+          provider: 'FakeProvider',
+          createdAt: now,
           dataType: 'FakeGranuleType',
           version: '000',
           files: [
@@ -931,6 +937,8 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
         {
           granuleId: 'FakeGranule2',
           collectionId: collectionId2,
+          provider: 'FakeProvider',
+          createdAt: now,
           files: [
             {
               bucket: fakeBucket2,
@@ -1108,7 +1116,7 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1139,7 +1147,7 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload),
+    index.backupGranulesToLzards(fakePayload, fakeGetAuthToken),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
@@ -1152,7 +1160,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1184,7 +1192,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload),
+    index.backupGranulesToLzards(fakePayload, fakeGetAuthToken),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
@@ -1197,7 +1205,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1229,7 +1237,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload),
+    index.backupGranulesToLzards(fakePayload, fakeGetAuthToken),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
