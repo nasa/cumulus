@@ -1,11 +1,10 @@
 'use strict';
 
 import { LzardsApiGetRequestParameters } from './types';
-
+import { GetAuthTokenError } from './errors';
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { getLaunchpadToken } = require('@cumulus/launchpad-auth');
-import { GetAuthTokenError } from './errors';
 const got = require('got');
 const Logger = require('@cumulus/logger');
 const isEmpty = require('lodash/isEmpty');

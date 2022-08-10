@@ -1108,7 +1108,6 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
       SessionToken: 'FAKEToken',
     },
   });
-  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
