@@ -26,7 +26,6 @@ import {
   CollectionNotDefinedError,
   CollectionInvalidRegexpError,
   CollectionIdentifiersNotProvidedError,
-  GetAuthTokenError,
   InvalidUrlTypeError,
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';

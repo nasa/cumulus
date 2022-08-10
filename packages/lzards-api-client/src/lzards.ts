@@ -5,6 +5,7 @@ import { LzardsApiGetRequestParameters } from './types';
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
 const { getLaunchpadToken } = require('@cumulus/launchpad-auth');
+import { GetAuthTokenError } from './errors';
 const got = require('got');
 const Logger = require('@cumulus/logger');
 const isEmpty = require('lodash/isEmpty');
@@ -25,7 +26,7 @@ export async function getAuthToken(
   const api = getRequiredEnvVar('launchpad_api');
   const passphrase = await getSecretStringFunction(getRequiredEnvVar('lzards_launchpad_passphrase_secret_name'));
   if (!passphrase) {
-    throw new Error('The value stored in "launchpad_passphrase_secret_name" must be defined');
+    throw new GetAuthTokenError('The value stored in "launchpad_passphrase_secret_name" must be defined');
   }
   const certificate = getRequiredEnvVar('lzards_launchpad_certificate');
   const token = await getLaunchpadTokenFunction({

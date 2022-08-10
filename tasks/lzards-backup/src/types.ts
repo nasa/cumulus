@@ -46,6 +46,8 @@ export interface MessageGranuleFromStepOutput extends BaseMessageGranule {
 
 export interface ApiGranule extends BaseMessageGranule {
   collectionId: string,
+  provider: string,
+  createdAt: number,
 }
 
 export type MessageGranule = MessageGranuleFromStepOutput | ApiGranule;
