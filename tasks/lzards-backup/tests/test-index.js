@@ -795,7 +795,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
     },
   });
   const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
-
+  const now = new Date().getTime();
   const testCollection1 = fakeCollectionRecordFactory();
   const testCollection2 = fakeCollectionRecordFactory();
   await collectionPgModel.create(testKnex, testCollection1);
@@ -901,7 +901,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
     },
   });
   const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
-
+  const now = new Date().getTime();
   const testCollection1 = fakeCollectionRecordFactory();
   const testCollection2 = fakeCollectionRecordFactory();
   await collectionPgModel.create(testKnex, testCollection1);
