@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v13.2.1] 2022-8-10
+## [v13.2.1] 2022-8-10 [BACKPORT]
+
+### Notable changes
 
 - **CUMULUS-3019**
   - Fix file write logic to delete files by `granule_cumulus_id` instead of
