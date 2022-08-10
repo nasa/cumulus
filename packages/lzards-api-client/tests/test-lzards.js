@@ -124,5 +124,5 @@ test.serial('getAuthToken throws an error if getSecretString() fails to return s
   async (t) => {
     const fakeGetSecretString = sinon.stub().resolves(undefined);
     await t.throwsAsync(getAuthToken(fakeGetSecretString),
-      { name: 'Error', message: 'The value stored in "launchpad_passphrase_secret_name" must be defined' });
+      { name: 'GetAuthTokenError', message: 'The value stored in "launchpad_passphrase_secret_name" must be defined' });
   });
