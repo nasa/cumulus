@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v11.1.5] 2022-08-10 [BACKPORT]
+**Please note** changes in 11.1.4 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Notable Changes
+
+- **CUMULUS-3019**
+  - Fix file write logic to delete files by `granule_cumulus_id` instead of
+      `cumulus_id`. Previous logic removed files by matching `file.cumulus_id`
+      to `granule.cumulus_id`.
+
 ## [v11.1.4] 2022-07-18
 
 **Please note** changes in 11.1.4 may not yet be released in future versions, as
@@ -6074,7 +6087,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.4...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.5...HEAD
+[v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
 [v11.1.3]: https://github.com/nasa/cumulus/compare/v11.1.2...v11.1.3
 [v11.1.2]: https://github.com/nasa/cumulus/compare/v11.1.1...v11.1.2
