@@ -4,7 +4,7 @@
   "description": "LZARDS API Client Test Lambda",
   "private": true,
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "scripts": {
     "test": "true",

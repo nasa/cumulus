@@ -3,7 +3,7 @@
   "version": "13.2.1-alpha.1",
   "description": "A Node.js client to NASA's Level Zero and Repositories Data Store (LZARDS) API.",
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "scripts": {
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 2 --template templates/API.hbs CMR.js CMRSearchConceptQueue.js > API.md",
