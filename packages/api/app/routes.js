@@ -7,7 +7,6 @@ const { defaultErrorHandler } = require('./middleware');
 
 const collections = require('../endpoints/collections');
 const granules = require('../endpoints/granules');
-const granuleCsv = require('../endpoints/granule-csv');
 const providers = require('../endpoints/providers');
 const pdrs = require('../endpoints/pdrs');
 const rules = require('../endpoints/rules');

@@ -21,7 +21,6 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 
-const Granule = require('../../models/granules');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 

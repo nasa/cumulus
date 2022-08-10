@@ -21,7 +21,6 @@ const { deleteGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');
-const Granule = require('../../models/granules');
 
 const logger = new Logger({ sender: '@cumulus/api/granule-delete' });
 
@@ -50,13 +49,12 @@ const deleteS3Files = async (
  *
  * @param {Object} params
  * @param {Knex} params.knex - DB client
- * @param {Object} params.dynamoGranule - Granule from DynamoDB
+ * @param {Object} params.apiGranule - Granule from API
  * @param {PostgresGranule} params.pgGranule - Granule from Postgres
  * @param {number | undefined} params.collectionCumulusId - Optional Collection Cumulus ID
  * @param {FilePgModel} params.filePgModel - File Postgres model
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
- * @param {Object} params.granuleModelClient - Granule Dynamo model
  */
 const deleteGranuleAndFiles = async (params: {
   knex: Knex,
@@ -65,7 +63,6 @@ const deleteGranuleAndFiles = async (params: {
   filePgModel: FilePgModel,
   granulePgModel: GranulePgModel,
   collectionPgModel: CollectionPgModel,
-  granuleModelClient: typeof Granule,
   esClient: {
     delete(...args: any): any | any[];
   },

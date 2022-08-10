@@ -24,7 +24,6 @@ const {
 } = require('@cumulus/aws-client/services');
 
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
-const Granule = require('../../models/granules');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
@@ -40,8 +39,6 @@ test.before(async (t) => {
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);
-
-  await new Granule().createTable();
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
