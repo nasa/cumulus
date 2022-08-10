@@ -794,7 +794,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   const testCollection1 = fakeCollectionRecordFactory();
   const testCollection2 = fakeCollectionRecordFactory();
@@ -858,7 +858,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, fakeGetAuthToken);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -896,7 +896,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   const testCollection1 = fakeCollectionRecordFactory();
   const testCollection2 = fakeCollectionRecordFactory();
@@ -962,7 +962,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, fakeGetAuthToken);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -1108,6 +1108,7 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
       SessionToken: 'FAKEToken',
     },
   });
+  sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1151,7 +1152,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1196,7 +1197,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getAuthToken').returns('fakeAuthToken');
+  sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
