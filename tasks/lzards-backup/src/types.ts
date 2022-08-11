@@ -28,13 +28,21 @@ export type MessageGranuleFilesObject = {
   key: string,
 };
 
-export interface MessageGranule {
+export interface BaseMessageGranule {
   granuleId: string,
-  dataType: string,
-  version: string,
   files: MessageGranuleFilesObject[],
 }
 
+export interface MessageGranuleFromStepOutput extends BaseMessageGranule {
+  dataType: string,
+  version: string,
+}
+
+export interface ApiGranule extends BaseMessageGranule {
+  collectionId: string,
+}
+
+export type MessageGranule = MessageGranuleFromStepOutput | ApiGranule;
 export interface GetCollectionFunctionParams {
   prefix: string
   query: {

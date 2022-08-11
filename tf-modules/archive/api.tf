@@ -94,6 +94,7 @@ locals {
       public_buckets                   = join(",", local.public_buckets)
       reapIntervalMillis               = var.rds_connection_timing_configuration.reapIntervalMillis
       ReplaySqsMessagesLambda          = aws_lambda_function.replay_sqs_messages.arn
+      StartAsyncOperationLambda        = aws_lambda_function.start_async_operation.arn
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket
       TOKEN_REDIRECT_ENDPOINT          = local.api_redirect_uri
@@ -162,7 +163,7 @@ resource "aws_lambda_function" "private_api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs12.x"
+  runtime          = "nodejs14.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
@@ -187,7 +188,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs12.x"
+  runtime          = "nodejs14.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})
