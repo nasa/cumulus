@@ -19,9 +19,11 @@ const randomString = () => cryptoRandomString({ length: 6 });
 const randomId = (prefix, separator = '-') =>
   [prefix, randomString()].filter((x) => x).join(separator);
 
+process.env.OAUTH_PROVIDER = 'earthdata';
 process.env.OAUTH_CLIENT_ID = randomId('edlID');
 process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPW');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
+process.env.OAUTH_HOST_URL = 'https://sandbox.urs.earthdata.nasa.gov';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.AccessTokensTable = randomId('tokenTable');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
@@ -36,9 +38,11 @@ const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
     clientId: process.env.OAUTH_CLIENT_ID,
     clientPassword: process.env.OAUTH_CLIENT_PASSWORD,
-    loginUrl: 'https://uat.urs.earthdata.nasa.gov',
+    loginUrl: 'https://sandbox.urs.earthdata.nasa.gov',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
+
+const invalidToken = randomId('invalidToken');
 
 test.before(async (t) => {
   accessTokenModel = new models.AccessToken('token');
@@ -46,11 +50,28 @@ test.before(async (t) => {
 
   const stubbedAccessToken = fakeAccessTokenFactory();
   await accessTokenModel.create(stubbedAccessToken);
+  const getUserInfoResponse = { foo: 'bar', uid: stubbedAccessToken.username };
 
   sinon.stub(
     EarthdataLoginClient.prototype,
     'getAccessToken'
   ).callsFake(() => stubbedAccessToken);
+
+  sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getTokenUsername'
+  ).callsFake(({ token }) => {
+    if (token === invalidToken) throw new Error('Invalid token');
+    return stubbedAccessToken.username;
+  });
+
+  sinon.stub(
+    EarthdataLoginClient.prototype,
+    'getUserInfo'
+  ).callsFake(({ token }) => {
+    if (token === invalidToken) throw new Error('Invalid token');
+    return getUserInfoResponse;
+  });
 
   t.context = { stubbedAccessToken };
 });
@@ -60,12 +81,12 @@ test.after.always(async () => {
   sinon.reset();
 });
 
-test('An authorized s3credential request invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
+test.serial('An authorized s3credential request invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
   const username = randomId('username');
   const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
 
   const spy = sinon.spy(() => Promise.resolve(fakeCredential));
-  sinon.stub(awsServices, 'lambda').callsFake(() => ({
+  const stub = sinon.stub(awsServices, 'lambda').callsFake(() => ({
     invoke: (params) => ({
       promise: () => spy(params),
     }),
@@ -95,6 +116,7 @@ test('An authorized s3credential request invokes NGAPs request for credentials w
     FunctionName,
     Payload,
   });
+  stub.restore();
 });
 
 test('An s3credential request without access Token redirects to Oauth2 provider.', async (t) => {
@@ -154,7 +176,7 @@ test('handleTokenAuthRequest() saves the client name in the request, if provided
       'EDL-Token': 'my-token',
       'EDL-Client-Name': 'my-client-name',
     },
-    earthdataLoginClient: {
+    oauthClient: {
       getTokenUsername() {
         return Promise.resolve('my-username');
       },
@@ -176,7 +198,7 @@ test('handleTokenAuthRequest() with an invalid client name results in a "Bad Req
       'EDL-Token': 'my-token',
       'EDL-Client-Name': 'not valid',
     },
-    earthdataLoginClient: {
+    oauthClient: {
       getTokenUsername() {
         return Promise.resolve('my-username');
       },
@@ -216,3 +238,51 @@ test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true res
   });
 });
 /* eslint-enable lodash/prefer-noop */
+
+test.serial('An s3credential request with a valid bearer token invokes NGAPs request for credentials with username from token ', async (t) => {
+  const username = t.context.stubbedAccessToken.username;
+  const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
+
+  const spy = sinon.spy(() => Promise.resolve(fakeCredential));
+  const stub = sinon.stub(awsServices, 'lambda').callsFake(() => ({
+    invoke: (params) => ({
+      promise: () => spy(params),
+    }),
+  }));
+
+  process.env.STS_CREDENTIALS_LAMBDA = 'Fake-NGAP-Credential-Dispensing-Lambda';
+  const FunctionName = process.env.STS_CREDENTIALS_LAMBDA;
+  const Payload = JSON.stringify({
+    accesstype: 'sameregion',
+    returntype: 'lowerCamel',
+    duration: '3600',
+    rolesession: username,
+    userid: username,
+  });
+
+  await request(distributionApp)
+    .get('/s3credentials')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${randomId('token')}`)
+    .expect(200);
+
+  t.true(spy.called);
+  t.deepEqual(spy.args[0][0], {
+    FunctionName,
+    Payload,
+  });
+  stub.restore();
+});
+
+test('An s3credential request with a invalid bearer token redirects to Oauth2 provider', async (t) => {
+  const response = await request(distributionApp)
+    .get('/s3credentials')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${invalidToken}`)
+    .expect(307);
+
+  const authorizationUrl = buildEarthdataLoginClient().getAuthorizationUrl(response.req.path);
+
+  t.is(response.status, 307);
+  t.is(response.headers.location, authorizationUrl);
+});

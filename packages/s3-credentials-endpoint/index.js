@@ -107,7 +107,7 @@ const isTokenAuthRequest = (req) =>
 
 const handleTokenAuthRequest = async (req, res, next) => {
   try {
-    const userName = await req.authClient.getTokenUsername({
+    const userName = await req.oauthClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
       token: req.get('EDL-Token'),
       xRequestId: req.get('X-Request-Id'),
@@ -156,7 +156,7 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     oauthClient,
   } = await getConfigurations();
 
-  req.authClient = oauthClient;
+  req.oauthClient = oauthClient;
 
   if (isTokenAuthRequest(req)) {
     return handleTokenAuthRequest(req, res, next);
