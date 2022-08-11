@@ -184,7 +184,7 @@ resource "aws_lambda_function" "lzards_api_client_test" {
   source_code_hash = filebase64sha256("${path.module}/../lambdas/lzardsClientTest/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "nodejs12.x"
+  runtime          = "nodejs14.x"
 
   environment {
     variables = {

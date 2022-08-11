@@ -9,6 +9,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { putFile } = require('@cumulus/aws-client/S3');
 const { waitForCompletedExecution } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { randomString } = require('@cumulus/common/test-utils');
 
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -24,6 +25,10 @@ describe('The Lzards Backup workflow ', () => {
   let testId;
   let testSuffix;
   let workflowExecution;
+  let provider;
+
+  const now = new Date().getTime();
+  const tenMinutesAgo = now - (1000 * 60 * 10);
 
   beforeAll(async () => {
     try {
@@ -33,6 +38,7 @@ describe('The Lzards Backup workflow ', () => {
       testSuffix = createTestSuffix(testId);
       ingestBucket = config.buckets.protected.name;
       ingestPath = `${prefix}/lzardsBackupWorkflowSpec`;
+      provider = `FakeProvider_${randomString()}`;
 
       // Setup files for workflow
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
@@ -80,6 +86,8 @@ describe('The Lzards Backup workflow ', () => {
             {
               granuleId: 'FakeGranule1',
               collectionId: `${collection.name}___${collection.version}`,
+              provider,
+              createdAt: tenMinutesAgo,
               files: [
                 {
                   fileName: 'testGranule.jpg',
@@ -141,6 +149,8 @@ describe('The Lzards Backup workflow ', () => {
             granuleId: 'FakeGranule1',
             dataType: collection.name,
             version: collection.version,
+            provider,
+            createdAt: tenMinutesAgo,
             files: [
               {
                 fileName: 'testGranule.jpg',
@@ -205,6 +215,8 @@ describe('The Lzards Backup workflow ', () => {
             collectionId: `${collection.name}___${collection.version}`,
             dataType: collection.name,
             version: collection.version,
+            provider,
+            createdAt: tenMinutesAgo,
             files: [
               {
                 fileName: 'testGranule.jpg',
@@ -266,6 +278,8 @@ describe('The Lzards Backup workflow ', () => {
         granules: [
           {
             granuleId: 'FakeGranule1',
+            provider,
+            createdAt: tenMinutesAgo,
             files: [
               {
                 fileName: 'testGranule.jpg',
