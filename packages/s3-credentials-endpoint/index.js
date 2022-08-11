@@ -7,7 +7,6 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
 const {
-  EarthdataLoginClient,
   EarthdataLoginError,
 } = require('@cumulus/oauth-client');
 const express = require('express');
@@ -15,11 +14,14 @@ const hsts = require('hsts');
 const morgan = require('morgan');
 const urljoin = require('url-join');
 
-const { AccessToken } = require('@cumulus/api/models');
 const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
-const { useSecureCookies } = require('@cumulus/api/lib/distribution');
+const {
+  getConfigurations,
+  handleAuthBearerToken,
+  isAuthBearTokenRequest,
+  useSecureCookies,
+} = require('@cumulus/api/lib/distribution');
 const { handleCredentialRequest } = require('@cumulus/api/endpoints/s3credentials');
-const awsServices = require('@cumulus/aws-client/services');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const displayS3CredentialInstructions = require('@cumulus/api/endpoints/s3credentials-readme');
 
@@ -27,28 +29,6 @@ const displayS3CredentialInstructions = require('@cumulus/api/endpoints/s3creden
 const roleSessionNameRegex = /^[\w+,.=@-]{2,64}$/;
 
 const isValidRoleSessionNameString = (x) => roleSessionNameRegex.test(x);
-
-const buildEarthdataLoginClient = () =>
-  new EarthdataLoginClient({
-    clientId: process.env.EARTHDATA_CLIENT_ID,
-    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
-    loginUrl: process.env.EARTHDATA_BASE_URL || 'https://uat.urs.earthdata.nasa.gov/',
-    redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
-  });
-
-/**
- * Returns a configuration object
- *
- * @returns {Object} the configuration object needed to handle requests
- */
-function getConfigurations() {
-  return {
-    accessTokenModel: new AccessToken(),
-    authClient: buildEarthdataLoginClient(),
-    distributionUrl: process.env.DISTRIBUTION_ENDPOINT,
-    s3Client: awsServices.s3(),
-  };
-}
 
 /**
  * Helper function to pull bucket out of a path string.
@@ -90,13 +70,13 @@ function isPublicRequest(path) {
 async function handleRedirectRequest(req, res) {
   const {
     accessTokenModel,
-    authClient,
+    oauthClient,
     distributionUrl,
-  } = getConfigurations();
+  } = await getConfigurations();
 
   const { code, state } = req.query;
 
-  const getAccessTokenResponse = await authClient.getAccessToken(code);
+  const getAccessTokenResponse = await oauthClient.getAccessToken(code);
   // expirationTime is in seconds whereas Date is expecting milliseconds
   const expirationTime = getAccessTokenResponse.expirationTime * 1000;
 
@@ -127,7 +107,7 @@ const isTokenAuthRequest = (req) =>
 
 const handleTokenAuthRequest = async (req, res, next) => {
   try {
-    const userName = await req.earthdataLoginClient.getTokenUsername({
+    const userName = await req.authClient.getTokenUsername({
       onBehalfOf: req.get('EDL-Client-Id'),
       token: req.get('EDL-Token'),
       xRequestId: req.get('X-Request-Id'),
@@ -170,16 +150,23 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
     req.authorizedMetadata = { userName: 'unauthenticated user' };
     return next();
   }
-  req.earthdataLoginClient = buildEarthdataLoginClient();
+
+  const {
+    accessTokenModel,
+    oauthClient,
+  } = await getConfigurations();
+
+  req.authClient = oauthClient;
 
   if (isTokenAuthRequest(req)) {
     return handleTokenAuthRequest(req, res, next);
   }
-  const {
-    accessTokenModel,
-    authClient,
-  } = getConfigurations();
-  const redirectURLForAuthorizationCode = authClient.getAuthorizationUrl(req.path);
+
+  if (isAuthBearTokenRequest(req)) {
+    return handleAuthBearerToken(req, res, next);
+  }
+
+  const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
   if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
 
@@ -187,13 +174,12 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
   try {
     accessTokenRecord = await accessTokenModel.get({ accessToken });
   } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.redirect(307, redirectURLForAuthorizationCode);
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
     }
-    throw error;
   }
 
-  if (isAccessTokenExpired(accessTokenRecord)) {
+  if (!accessToken || !accessTokenRecord || isAccessTokenExpired(accessTokenRecord)) {
     return res.redirect(307, redirectURLForAuthorizationCode);
   }
   req.authorizedMetadata = { userName: accessTokenRecord.username };

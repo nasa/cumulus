@@ -26,6 +26,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     The endpoint will only use search-after when the `searchContext` parameter
     is provided in a request.
 
+### Added
+
+- **CUMULUS-2631**
+  - Added 'Bearer token' support to s3credentials endpoint
+
 ## [v13.2.0] 2022-8-04
 
 ### Changed

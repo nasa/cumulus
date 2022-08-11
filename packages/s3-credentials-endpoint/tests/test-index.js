@@ -19,8 +19,8 @@ const randomString = () => cryptoRandomString({ length: 6 });
 const randomId = (prefix, separator = '-') =>
   [prefix, randomString()].filter((x) => x).join(separator);
 
-process.env.EARTHDATA_CLIENT_ID = randomId('edlID');
-process.env.EARTHDATA_CLIENT_PASSWORD = randomId('edlPW');
+process.env.OAUTH_CLIENT_ID = randomId('edlID');
+process.env.OAUTH_CLIENT_PASSWORD = randomId('edlPW');
 process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'http://example.com';
 process.env.DISTRIBUTION_ENDPOINT = `https://${randomId('host')}/${randomId('path')}`;
 process.env.AccessTokensTable = randomId('tokenTable');
@@ -34,8 +34,8 @@ const {
 
 const buildEarthdataLoginClient = () =>
   new EarthdataLoginClient({
-    clientId: process.env.EARTHDATA_CLIENT_ID,
-    clientPassword: process.env.EARTHDATA_CLIENT_PASSWORD,
+    clientId: process.env.OAUTH_CLIENT_ID,
+    clientPassword: process.env.OAUTH_CLIENT_PASSWORD,
     loginUrl: 'https://uat.urs.earthdata.nasa.gov',
     redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
   });
