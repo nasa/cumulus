@@ -307,6 +307,13 @@ this is a backport and patch release on the 11.1.x series of releases. Updates t
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
 
+### Notable changes
+
+- **CUMULUS-3019**
+  - Fix file write logic to delete files by `granule_cumulus_id` instead of
+      `cumulus_id`. Previous logic removed files by matching `file.cumulus_id`
+      to `granule.cumulus_id`.
+
 ## [v11.1.4] 2022-07-18
 
 **Please note** changes in 11.1.4 may not yet be released in future versions, as
