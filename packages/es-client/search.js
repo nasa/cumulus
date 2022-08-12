@@ -329,20 +329,22 @@ class BaseSearch {
       if (!this.client) {
         this.client = await this.constructor.es(null, this.metrics);
       }
-      const result = await this.client.search(searchParams);
-      const response = result.body.hits.hits.map((s) => s._source);
+      const response = await this.client.search(searchParams);
+      const hits = response.body.hits.hits;
 
       const meta = this._metaTemplate();
       meta.limit = this.size;
       meta.page = this.page;
-      meta.count = result.body.hits.total;
+      meta.count = response.body.hits.total;
+      if (hits.length > 0) {
+        meta.searchContext = encodeURIComponent(JSON.stringify(hits[hits.length - 1].sort));
+      }
 
       return {
         meta,
-        results: response,
+        results: hits.map((s) => s._source),
       };
     } catch (error) {
-      //log.error(e, logDetails);
       return error;
     }
   }

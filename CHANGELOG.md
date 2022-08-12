@@ -94,14 +94,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
     - Add new endpoints to update and delete granules by collectionId as well as granuleId
 
-### Fixed
-
-- **CUMULUS-2810**
-  - Updated @cumulus/db/translate/translatePostgresProviderToApiProvider to
-    correctly return provider password and updated tests to prevent
-    reintroduction.
-
 ## Unreleased
+
+### Notable Changes
+- **CUMULUS-2930**
+  - The `GET /granules` endpoint has a new optional query parameter:
+    `searchContext`, which is used to resume listing within the same search
+    context. It is provided in every response from the endpoint as
+    `meta.searchContext`. The searchContext value must be submitted with every
+    consequent API call, and must be fetched from each new response to maintain
+    the context.
+  - Use of the `searchContext` query string parameter allows listing past 10,000 results.
+  - Note that using the `from` query param in a request will cause the `searchContext` to
+    be ignored and also make the query subject to the 10,000 results cap again.
+  - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
+    The endpoint will only use search-after when the `searchContext` parameter
+    is provided in a request.
 
 ### Changed
 
@@ -111,6 +119,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2954**
   - Updated Backup LZARDS task to run as a single task in a step function workflow.
     - Updated task to allow user to provide `collectionId` in workflow input and
+    - Updated task to allow user to provide `collectionId` in workflow input and 
       updated task to use said `collectionId` to look up the corresponding collection record in RDS.
 
 ## [v13.1.0] 2022-7-22
@@ -234,7 +243,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
     case of deletion race conditions
-
 ### Fixed
 
 - **CUMULUS-2995**
@@ -247,6 +255,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2959**
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB
+- Fixed the following links on Cumulus docs' [Getting Started](https://nasa.github.io/cumulus/docs/getting-started) page:
+    * Cumulus Deployment
+    * Terraform Best Practices
+    * Integrator Common Use Cases
+- Also corrected the _How to Deploy Cumulus_ link in the [Glossary](https://nasa.github.io/cumulus/docs/glossary)
+
 
 ## [v13.0.1] 2022-7-12
 
@@ -322,7 +336,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
-
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
