@@ -147,6 +147,8 @@ describe('The Lzards Backup Task ', () => {
   });
 
   it('has the expected backup information', () => {
+    const lzardsoutput = JSON.parse(lzardsBackupOutput.Payload);
+    console.log(lzardsoutput);
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
     console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
     expect(backupStatus[0].status).toBe('COMPLETED');
