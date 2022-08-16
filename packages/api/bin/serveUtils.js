@@ -101,14 +101,12 @@ async function addProviders(providers) {
     },
   });
 
-  const providerModel = new models.Provider();
   const es = await getESClientAndIndex();
   const providerPgModel = new ProviderPgModel();
   return await Promise.all(
-    providers.map(async (p) => {
-      const dynamoRecord = await providerModel.create(p);
-      await indexer.indexProvider(es.client, dynamoRecord, es.index);
-      const dbRecord = await translateApiProviderToPostgresProvider(dynamoRecord);
+    providers.map(async (provider) => {
+      await indexer.indexProvider(es.client, provider, es.index);
+      const dbRecord = await translateApiProviderToPostgresProvider(provider);
       await providerPgModel.create(knex, dbRecord);
     })
   );

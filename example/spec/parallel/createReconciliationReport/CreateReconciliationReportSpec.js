@@ -326,7 +326,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
       config = await loadConfig();
 
-      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 
       process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;

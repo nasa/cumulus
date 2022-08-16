@@ -37,8 +37,6 @@ describe('The DiscoverGranules workflow with a non-existent bucket', () => {
     process.env.stackName = stackName;
     process.env.system_bucket = bucket;
 
-    process.env.ProvidersTable = `${stackName}-ProvidersTable`;
-
     const testId = createTimestampedTestId(stackName, 'DiscoverGranulesS3Failure');
 
     // Create the provider

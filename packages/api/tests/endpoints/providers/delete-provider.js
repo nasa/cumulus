@@ -44,7 +44,6 @@ const { buildFakeExpressResponse } = require('../utils');
 
 const testDbName = randomId('db');
 
-process.env.ProvidersTable = randomId('provider');
 process.env.stackName = randomId('stack');
 process.env.system_bucket = randomId('sysbucket');
 process.env.TOKEN_SECRET = randomId('token');
