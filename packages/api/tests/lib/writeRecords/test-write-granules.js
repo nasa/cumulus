@@ -1357,7 +1357,49 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and
   t.true(await esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranuleFromApi() writes a granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
+test.serial('writeGranuleFromApi() given a partial granule updates only provided fields in PostgreSQL, DynamoDB, and Elasticsearch.', async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    esGranulesClient,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  // Update same granule with a partial granule object
+  const updatedGranule = {
+    granuleId,
+    collectionId: granule.collectionId,
+    cmrLink: 'updatedGranuled.com', // Only field we're changing
+  };
+
+  await writeGranuleFromApi({ ...updatedGranule }, knex, esClient, 'Update');
+
+  // validate that original properties were retained and all records match in all stores
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  const pgGranule = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  t.is(pgGranule.cmr_link, updatedGranule.cmrLink);
+  t.is(dynamoGranule.cmrLink, updatedGranule.cmrLink);
+  t.deepEqual(pgGranule, await translateApiGranuleToPostgresGranule(dynamoGranule, knex));
+});
+
+test.serial('writeGranuleFromApi() writes a full granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
   const {
     collectionCumulusId,
     esClient,

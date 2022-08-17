@@ -801,6 +801,8 @@ const writeGranuleFromApi = async (
       cmrUtils,
     });
 
+    // TODO if given a partial apiGranuleRecord, this will retain undefined columns
+    // and overwrite potentially valid data
     const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
       apiGranuleRecord,
       knex

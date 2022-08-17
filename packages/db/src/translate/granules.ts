@@ -179,7 +179,7 @@ export const translateApiGranuleToPostgresGranule = async (
     updated_at: new Date(dynamoRecord.updatedAt),
   };
 
-  return granuleRecord;
+  return <PostgresGranule>removeNilProperties(granuleRecord);
 };
 
 /**
