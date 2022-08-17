@@ -7,6 +7,7 @@ const sortBy = require('lodash/sortBy');
 const omit = require('lodash/omit');
 
 const { randomId } = require('@cumulus/common/test-utils');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   CollectionPgModel,
@@ -1378,16 +1379,19 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
   ));
   t.true(await esGranulesClient.exists(granuleId));
 
-  // Update same granule with a partial granule object
+  // Update existing granule with a partial granule object
   const updatedGranule = {
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
   };
 
   await writeGranuleFromApi({ ...updatedGranule }, knex, esClient, 'Update');
 
-  // validate that original properties were retained and all records match in all stores
   const dynamoGranule = await granuleModel.get({ granuleId });
   const pgGranule = await granulePgModel.get(
     knex,
@@ -1396,7 +1400,10 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
 
   t.is(pgGranule.cmr_link, updatedGranule.cmrLink);
   t.is(dynamoGranule.cmrLink, updatedGranule.cmrLink);
-  t.deepEqual(pgGranule, await translateApiGranuleToPostgresGranule(dynamoGranule, knex));
+  t.deepEqual(
+    omit(removeNilProperties(pgGranule), ['cumulus_id']),
+    await translateApiGranuleToPostgresGranule(dynamoGranule, knex)
+  );
 });
 
 test.serial('writeGranuleFromApi() writes a full granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
