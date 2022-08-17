@@ -37,19 +37,16 @@ describe('The Lzards Backup Task ', () => {
       prefix = config.stackName;
       ingestBucket = config.buckets.protected.name;
       ingestPath = `${prefix}/lzardsBackupSpec`;
-      console.log('about to add the files.');
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
       lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
-      console.log(`about to get lambda config for ${lzardsApiGetFunctionName}`);
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
       }).promise();
       granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
-      console.log('about to create a collection');
       // Create the collection
       collection = await createCollection(
         prefix,
@@ -131,14 +128,13 @@ describe('The Lzards Backup Task ', () => {
           },
         },
       });
-      console.log('about to invoke lambda');
+
       lzardsBackupOutput = await pTimeout(
         lambda().invoke({ FunctionName, Payload }).promise(),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
       beforeAllFailed = true;
-      console.log('inthe error output');
       throw error;
     }
   });
@@ -146,18 +142,11 @@ describe('The Lzards Backup Task ', () => {
   it('succeeds', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
-      console.log('there was no error????');
-      console.log(lzardsBackupOutput);
-      console.log('---');
-      console.log(lzardsBackupOutput.FunctionError);
       expect(lzardsBackupOutput.FunctionError).toBe(undefined);
     }
   });
 
   it('has the expected backup information', () => {
-    console.log('start of new test 155');
-    const kkoutput = JSON.parse(lzardsBackupOutput.Payload);
-    console.log(kkoutput);
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
     console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
     expect(backupStatus[0].status).toBe('COMPLETED');
