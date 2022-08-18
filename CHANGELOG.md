@@ -22,6 +22,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     The endpoint will only use search-after when the `searchContext` parameter
     is provided in a request.
 
+### Changed
+
+- **CUMULUS-3024**
+  - Update granule PUT endpoint to accept partial granule object
+
 ## [v13.2.1] 2022-8-10 [BACKPORT]
 
 ### Notable changes
