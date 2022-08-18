@@ -1,7 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const omit = require('lodash/omit');
-const lzardsApiClient = require('@cumulus/lzards-api-client');
 
 const sandbox = require('sinon').createSandbox();
 const proxyquire = require('proxyquire');
