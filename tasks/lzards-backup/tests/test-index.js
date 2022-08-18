@@ -687,7 +687,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
       SessionToken: 'FAKEToken',
     },
   });
-  const fakeGetAuthToken = sandbox.stub(lzardsApiClient, 'getAuthToken').resolves('fakeAuthToken');
+  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const fakePayload = {
     input: {
@@ -750,7 +750,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload, fakeGetAuthToken);
+  const actual = await index.backupGranulesToLzards(fakePayload);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [

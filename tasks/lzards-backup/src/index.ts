@@ -359,15 +359,15 @@ export const generateAccessCredentials = async () => {
   return roleCreds as AWS.STS.AssumeRoleResponse;
 };
 
+export const getToken = async () => getAuthToken();
+
 export const backupGranulesToLzards = async (
-  event: HandlerEvent,
-  getAuthTokenFunction: Function = getAuthToken
+  event: HandlerEvent
 ) => {
   // Given an array of granules, submit each file for backup.
   log.warn(`Running backup on ${JSON.stringify(event)}`);
-  console.log(getAuthTokenFunction);
   const roleCreds = await generateAccessCredentials();
-  const authToken = await getAuthTokenFunction();
+  const authToken = await getToken();
 
   const backupConfig = {
     ...event.config,
