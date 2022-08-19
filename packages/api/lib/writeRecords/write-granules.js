@@ -232,7 +232,7 @@ const _removeExcessFiles = async ({
   const excludeCumulusIds = writtenFiles.map((file) => file.cumulus_id);
   return await filePgModel.deleteExcluding({
     knexOrTransaction: knex,
-    queryParams: { cumulus_id: granuleCumulusId },
+    queryParams: { granule_cumulus_id: granuleCumulusId },
     excludeCumulusIds,
   });
 };
@@ -569,9 +569,6 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
-
-  // Reminder - this will only update the postgres files object
-  // if the granule is in a complete state
   await _writePostgresFilesFromApiGranuleFiles({
     apiGranuleRecord,
     granuleCumulusId: pgGranule.cumulus_id,
