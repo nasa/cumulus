@@ -11,8 +11,6 @@ const {
     env: {
       ...localStackConnectionEnv,
       migrationDir,
-      KNEX_ASYNC_STACK_TRACES: 'true',
-      KNEX_DEBUG: 'true'
     },
   });
 
