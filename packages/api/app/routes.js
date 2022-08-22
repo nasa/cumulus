@@ -47,9 +47,6 @@ router.use('/collections', ensureAuthorized, collections.router);
 // granules endpoints
 router.use('/granules', ensureAuthorized, granules.router);
 
-// granule csv endpoints
-router.use('/granule-csv', ensureAuthorized, granuleCsv);
-
 // provider endpoints
 router.use('/providers', ensureAuthorized, providers.router);
 
