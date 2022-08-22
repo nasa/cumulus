@@ -63,10 +63,6 @@ test.before(async (t) => {
     PG_DATABASE: testDbName,
   };
 
-  process.env.GranulesTable = randomString();
-  t.context.granulesModel = new Granule();
-  await t.context.granulesModel.createTable();
-
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
 
