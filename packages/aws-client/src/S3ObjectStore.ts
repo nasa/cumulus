@@ -8,6 +8,7 @@ import {
   GetObjectCommandInput,
   S3ClientConfig,
 } from '@aws-sdk/client-s3';
+import { RequestPresigningArguments } from '@aws-sdk/types';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 import Logger from '@cumulus/logger';
@@ -18,7 +19,9 @@ import awsClient from './client';
 
 const log = new Logger({ sender: '@cumulus/aws-client/S3ObjectStore' });
 
-type QueryParams = { [key: string]: number | string };
+type QueryParams = { [key: string]: string };
+
+const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 
 /**
  * Class to use when interacting with S3
@@ -47,7 +50,8 @@ class S3ObjectStore {
   }
 
   async getS3SignedUrlWithCustomQueryParams(
-    command: GetObjectCommand | HeadObjectCommand
+    command: GetObjectCommand | HeadObjectCommand,
+    presignOptions: RequestPresigningArguments = {}
   ) {
     this.s3.middlewareStack.addRelativeTo(
       (next: any) => (args: any) => {
@@ -64,7 +68,10 @@ class S3ObjectStore {
         toMiddleware: 'presignInterceptMiddleware',
       }
     );
-    const signedUrl = await getSignedUrl(this.s3, command);
+    const signedUrl = await getSignedUrl(
+      this.s3, command,
+      { expiresIn: S3_LINK_EXPIRY_SECONDS_DEFAULT, ...presignOptions }
+    );
     this.s3.middlewareStack.remove(this.middlewareName);
     return signedUrl;
   }
@@ -76,13 +83,15 @@ class S3ObjectStore {
    * @param {string} objectUrl - the URL of the object to sign
    * @param {string} [options] - options to pass to S3.getObject
    * @param {string} [queryParams] - a mapping of parameter key/values to put in the URL
+   * @param {RequestPresigningArguments} presignOptions - presignOptions
    * @returns {Promise<string>} a signed URL
    * @throws TypeError - if the URL is not a recognized protocol or cannot be parsed
    */
   async signGetObject(
     objectUrl: string,
     options: Partial<GetObjectCommandInput> = {},
-    queryParams: QueryParams = {}
+    queryParams: QueryParams = {},
+    presignOptions: RequestPresigningArguments = {}
   ): Promise<string> {
     log.info(`Executing signGetObject with objectUrl: ${objectUrl}, options: ${JSON.stringify(options)}, queryParams: ${JSON.stringify(queryParams)}`);
 
@@ -98,7 +107,7 @@ class S3ObjectStore {
     const command = new GetObjectCommand({ Bucket, Key, ...options });
 
     this.setQueryParams(queryParams);
-    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command);
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command, presignOptions);
 
     log.debug(`Signed GetObject request URL: ${signedUrl}`);
 
