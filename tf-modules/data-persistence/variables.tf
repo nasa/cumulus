@@ -100,3 +100,8 @@ variable "db_migration_lambda_timeout" {
   type = number
   default = 900
 }
+variable "db_migration_lambda_memory_size" {
+  description = "Memory size in MB for the database schema migration lambda.   Defaults to 1024 MB"
+  type = number
+  default = 1024
+}

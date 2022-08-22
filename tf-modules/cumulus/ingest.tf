@@ -34,6 +34,7 @@ module "ingest" {
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
 
   lambda_timeouts    = var.lambda_timeouts
+  lambda_memory_sizes = var.lambda_memory_sizes
   # Launchpad config
   launchpad_api         = var.launchpad_api
   launchpad_passphrase  = var.launchpad_passphrase

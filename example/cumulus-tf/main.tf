@@ -176,7 +176,8 @@ module "cumulus" {
     "menno.vandiermen",
     "mobrien84",
     "npauzenga",
-    "ds_jennifertran"
+    "ds_jennifertran",
+    "nnageswa"
   ]
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
