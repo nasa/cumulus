@@ -60,7 +60,7 @@ const {
 const { uploadS3GranuleDataForDiscovery } = require('../../helpers/discoverUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
-const { deleteProvidersByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
+const { deleteProvidersAndAllDependenciesByHost, waitForProviderRecordInOrNotInList } = require('../../helpers/Providers');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
@@ -101,7 +101,7 @@ describe('Ingesting from PDR', () => {
       provider = { id: `s3_provider${testSuffix}` };
 
       nodeName = config.pdrNodeNameProviderBucket;
-      await deleteProvidersByHost(config.stackName, nodeName);
+      await deleteProvidersAndAllDependenciesByHost(config.stackName, nodeName);
 
       nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
 
