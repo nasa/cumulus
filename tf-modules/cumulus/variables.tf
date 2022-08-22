@@ -112,12 +112,6 @@ variable "lambda_timeouts" {
   default = {}
 }
 
-variable "lambda_memory_sizes" {
-  description = "Configurable map of memory sizes for ingest task lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
-  type = map(string)
-  default = {}
-}
-
 variable "prefix" {
   description = "The unique prefix for your deployment resources"
   type        = string

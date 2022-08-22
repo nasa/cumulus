@@ -22,12 +22,6 @@ variable "lambda_timeout" {
   default = 900
 }
 
-variable "lambda_memory_size" {
-  description = "Memory size in MB for the database schema migration lambda.   Defaults to 1024MB"
-  type = number
-  default = 512
-}
-
 variable "subnet_ids" {
   type    = list(string)
   default = []

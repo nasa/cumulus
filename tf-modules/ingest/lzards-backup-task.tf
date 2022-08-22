@@ -7,7 +7,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs14.x"
   timeout          = lookup(var.lambda_timeouts, "lzards_backup_task_timeout", 900)
-  memory_size      = ceil(lookup(var.lambda_memory_sizes, "lzards_backup_task_memory_size", 512))
+  memory_size      = 512
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

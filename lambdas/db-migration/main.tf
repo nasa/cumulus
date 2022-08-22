@@ -71,7 +71,7 @@ resource "aws_lambda_function" "db_migration" {
   role             = aws_iam_role.db_migration.arn
   runtime          = "nodejs14.x"
   timeout          = var.lambda_timeout
-  memory_size      = var.memory_size
+  memory_size      = 512
 
   environment {
     variables = {

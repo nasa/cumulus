@@ -393,11 +393,6 @@ variable "lambda_timeouts" {
   default = {}
 }
 
-variable "lambda_memory_sizes" {
-  type = map(string)
-  default = {}
-}
-
 variable "optional_dynamo_tables" {
   type = map(object({ name = string, arn = string }))
   default = {}
