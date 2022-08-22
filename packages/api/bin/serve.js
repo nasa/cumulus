@@ -420,7 +420,6 @@ async function eraseDynamoTables(stackName, systemBucket) {
   process.env.stackName = stackName;
 
   // Remove all data from tables
-  const providerModel = new models.Provider();
   const rulesModel = new models.Rule();
   const executionModel = new models.Execution();
   const granulesModel = new models.Granule();
@@ -428,7 +427,6 @@ async function eraseDynamoTables(stackName, systemBucket) {
   try {
     await rulesModel.deleteRules();
     await Promise.allSettled([
-      providerModel.deleteProviders(),
       executionModel.deleteExecutions(),
       granulesModel.deleteGranules(),
     ]);

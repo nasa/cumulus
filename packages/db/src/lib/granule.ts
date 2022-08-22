@@ -278,3 +278,54 @@ export const getGranulesByApiPropertiesQuery = (
     .groupBy(`${collectionsTable}.cumulus_id`)
     .groupBy(`${providersTable}.cumulus_id`);
 };
+
+/**
+ * Get Postgres Granule and Collection objects for a granuleId + collectionId
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {Object} [collectionPgModel] - Collection PG model class instance
+ * @param {Object} [granulePgModel] - Granule PG model class instance
+ * @param {String} granuleId - primary ID for granule record
+ * @param {String} collectionId - collection ID in 'name___version' format
+ * @returns {Promise<object>} an object containing the Postgres Granule,
+ * Postgres Collection, and an optional "Not Found" error message
+ */
+export const getGranuleAndCollection = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  granulePgModel = new GranulePgModel(),
+  granuleId: string,
+  collectionId: string
+): Promise<object> => {
+  let pgGranule;
+  let pgCollection;
+  let notFoundError;
+
+  try {
+    pgCollection = await collectionPgModel.get(
+      knexOrTransaction, deconstructCollectionId(collectionId)
+    );
+
+    pgGranule = await granulePgModel.get(
+      knexOrTransaction,
+      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        notFoundError = `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`;
+      } else {
+        notFoundError = 'Granule not found';
+      }
+    } else {
+      throw error;
+    }
+  }
+
+  return {
+    pgGranule,
+    pgCollection,
+    notFoundError,
+  };
+};

@@ -252,6 +252,8 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
   });
   await updateGranule({
     prefix,
+    granuleId: granule.granuleId,
+    collectionId: granule.collectionId,
     body: {
       ...granule,
       files: updatedFiles,
@@ -324,7 +326,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
       config = await loadConfig();
 
-      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
       process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 
       process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
@@ -961,6 +962,8 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
     await updateGranule({
       prefix: config.stackName,
+      granuleId: publishedGranuleId,
+      collectionId: granuleBeforeUpdate.collectionId,
       body: {
         granuleId: publishedGranuleId,
         ...granuleBeforeUpdate,

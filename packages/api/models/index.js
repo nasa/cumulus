@@ -3,6 +3,7 @@
 const AccessToken = require('./access-tokens');
 const AsyncOperation = require('./async-operation');
 const Manager = require('./base');
+
 const Provider = require('./providers');
 const ReconciliationReport = require('./reconciliation-reports');
 const Rule = require('./rules');

@@ -125,6 +125,7 @@ describe('The Granules API', () => {
       discoveredGranule = await getGranule({
         prefix,
         granuleId,
+        collectionId,
       });
       expect(discoveredGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
@@ -157,6 +158,8 @@ describe('The Granules API', () => {
       };
       const response = await updateGranule({
         prefix,
+        granuleId: modifiedGranule.granuleId,
+        collectionId: modifiedGranule.collectionId,
         body: modifiedGranule,
       });
 
@@ -164,6 +167,7 @@ describe('The Granules API', () => {
       updatedGranuleFromApi = await getGranule({
         prefix,
         granuleId: modifiedGranule.granuleId,
+        collectionId: modifiedGranule.collectionId,
       });
       updatedGranuleFromApi.execution = undefined;
       expect(updatedGranuleFromApi).toEqual(jasmine.objectContaining(modifiedGranule));
@@ -188,6 +192,7 @@ describe('The Granules API', () => {
       updatedGranuleFromApi = await getGranule({
         prefix,
         granuleId,
+        collectionId,
       });
       expect(updatedGranuleFromApi.execution).toBe(executionRecord.execution);
     });

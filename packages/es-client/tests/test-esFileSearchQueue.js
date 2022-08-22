@@ -20,7 +20,7 @@ test.beforeEach(async (t) => {
     alias: t.context.esAlias,
   });
   t.context.esClient = await Search.es();
-  t.context.esClientSpy = sinon.spy(t.context.esClient, 'scroll');
+  t.context.esClientSpy = sandbox.spy(t.context.esClient, 'scroll');
 });
 
 test.afterEach.always(async (t) => {
@@ -96,7 +96,7 @@ test.serial('esFileQueue can handle paging.', async (t) => {
   const bucket = granules[0].files[0].bucket;
 
   const sq = new ESFileQueue({ bucket });
-  const spiedSq = sinon.spy(sq, 'fetchItems');
+  const spiedSq = sandbox.spy(sq, 'fetchItems');
 
   const fetched = [];
 
