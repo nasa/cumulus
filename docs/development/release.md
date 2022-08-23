@@ -124,7 +124,10 @@ It's useful to use the search feature of your code editor or `grep` to see if th
 In bash shell you can run
 
 ```bash
-find . -name package.json -exec grep -nH "@cumulus/.*[0-9]*\.[0-9]\.[0-9].*" {} \; | grep -v "@cumulus/.*MAJOR\.MINOR\.PATCH.*"
+    find . -name package.json -exec grep -nH "@cumulus/.*[0-9]*\.[0-9]\.[0-9].*" {} \; | grep -v "@cumulus/.*MAJOR\.MINOR\.PATCH.*"
+
+e.g.:
+    find . -name package.json -exec grep -nH "@cumulus/.*[0-9]*\.[0-9]\.[0-9].*" {} \; | grep -v "@cumulus/.*13\.1\.0.*"
 ```
 
 Verify that no results are returned where MAJOR, MINOR, or PATCH differ from the intended version, and no outdated `-alpha` or `-beta` versions are specified.
