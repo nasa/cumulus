@@ -121,13 +121,15 @@ class S3ObjectStore {
    * @param {string} objectUrl - the URL of the object to sign
    * @param {string} [options] - options to pass to S3.getObject
    * @param {string} [queryParams] - a mapping of parameter key/values to put in the URL
+   * @param {RequestPresigningArguments} presignOptions - presignOptions
    * @returns {Promise<string>} a signed URL
    * @throws TypeError - if the URL is not a recognized protocol or cannot be parsed
    */
   async signHeadObject(
     objectUrl: string,
     options: { [key: string]: string } = {},
-    queryParams: QueryParams
+    queryParams: QueryParams,
+    presignOptions: RequestPresigningArguments = {}
   ): Promise<string> {
     log.info(`Executing signHeadObject with objectUrl: ${objectUrl}, options: ${JSON.stringify(options)}, queryParams: ${JSON.stringify(queryParams)}`);
     const url = new URL(objectUrl);
@@ -140,7 +142,7 @@ class S3ObjectStore {
 
     const command = new HeadObjectCommand({ Bucket, Key, ...options });
     this.setQueryParams(queryParams);
-    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command);
+    const signedUrl = await this.getS3SignedUrlWithCustomQueryParams(command, presignOptions);
 
     log.debug(`Signed HeadObject request URL: ${signedUrl}`);
 
