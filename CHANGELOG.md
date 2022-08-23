@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- **CUMULUS-2986**
+  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled. 
+  - Initializes the lambda_memory_size(s) variable in the Terraform variable list
 ### Notable Changes
 
 - **CUMULUS-2930**
