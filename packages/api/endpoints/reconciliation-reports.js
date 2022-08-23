@@ -79,7 +79,6 @@ async function getReport(req, res) {
     if (Key.endsWith('.json') || Key.endsWith('.csv')) {
       const reportSize = await getObjectSize({ s3: s3(), bucket: Bucket, key: Key });
       // estimated payload size, add extra
-      //  this was an intentional change per Jonathan's PR comment #2976
       const estimatedPayloadSize = presignedS3Url.length + reportSize + 50;
       if (
         estimatedPayloadSize

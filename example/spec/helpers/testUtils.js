@@ -193,6 +193,34 @@ function isValidAsyncOperationId(asyncOperationId) {
   return /[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/.test(asyncOperationId);
 }
 
+function greenConsoleLog() {
+  const Bright = '\u001B[1m';
+  const colorReset = '\u001B[0m';
+  const FgGreen = '\u001B[32m';
+  return `${FgGreen}${Bright}%s${colorReset}`;
+}
+
+function redConsoleLog() {
+  const Bright = '\u001B[1m';
+  const colorReset = '\u001B[0m';
+  const FgRed = '\u001B[31m';
+  return `${FgRed}${Bright}%s${colorReset}`;
+}
+
+function blueConsoleLog() {
+  const Bright = '\u001B[1m';
+  const colorReset = '\u001B[0m';
+  const FgBlue = '\u001B[34m';
+  return `${FgBlue}${Bright}%s${colorReset}`;
+}
+
+function yellowConsoleLog() {
+  const Bright = '\u001B[1m';
+  const colorReset = '\u001B[0m';
+  const FgYellow = '\u001B[33m';
+  return `${FgYellow}${Bright}%s${colorReset}`;
+}
+
 module.exports = {
   createTestDataPath,
   createTestSuffix,
@@ -207,4 +235,8 @@ module.exports = {
   updateAndUploadTestFileToBucket,
   uploadTestDataToBucket,
   isValidAsyncOperationId,
+  greenConsoleLog,
+  redConsoleLog,
+  blueConsoleLog,
+  yellowConsoleLog,
 };

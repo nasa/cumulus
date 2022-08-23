@@ -1,4 +1,5 @@
 const fs = require('fs');
+const pMap = require('p-map');
 const {
   addCollections,
   addProviders,
@@ -7,9 +8,11 @@ const {
 } = require('@cumulus/integration-tests');
 const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { deleteExecution } = require('@cumulus/api-client/executions');
+
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getGranule } = require('@cumulus/api-client/granules');
 
+const { randomString } = require('@cumulus/common/test-utils');
 const {
   waitForApiStatus,
 } = require('../helpers/apiUtils');
@@ -19,62 +22,183 @@ const {
   loadConfig,
   createTimestampedTestId,
   createTestSuffix,
+  greenConsoleLog,
+  redConsoleLog,
+  yellowConsoleLog,
+  blueConsoleLog,
 } = require('../helpers/testUtils');
+
 const {
   cleanupLoadTestGranules,
-  setupLoadTestGranuleForIngestPassthrough,
+  setupGranulesForIngestLoadTestWithPassthroughWorkflow,
 } = require('../helpers/granuleUtils');
+
 const workflowName = 'QueueGranulesPassthrough';
+const inputPayloadFilename = './spec/loadTest/ingestLoadTestPassthrough.input.payload.json';
+const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
+
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
+const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 // ** Configurable Variables
 
-const granuleCountPerWorkflow = 100; // 425 granules per workflow is the max allowable by the API
-const totalWorkflowCount = 4; // number of workflows to fire off
+const granuleCountPerWorkflow = 50; // 450 granules per workflow is the max allowable by the API
+const totalWorkflowCount = 12; // number of workflows to fire off
 
-describe('Ingest Load Test ', () => {
-  let beforeAllFailed = false;
-  const testGranulesPerInputPayloads = [];
-  const testQueueGranulesExecutionArns = [];
-  const testQueueGranulesNestedExecutionArns = [];
-  const testSuffixes = [];
+const granuleCountThreshold = 0.95;
 
-  const inputPayloadFilename = './spec/loadTest/ingestLoadTestPassthrough.input.payload.json';
-  const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
+const totalInputPayloads = [];
+const queueGranulesExecutionArns = [];
+const queueGranulesChildExecutionArns = [];
+const testSuffixes = [];
+const totalGranulesCompleted = [];
 
-  let config;
+let config;
+let workflowExecution;
+let inputPayload;
+let beforeAllFailed = false;
+let colorConsoleLog = redConsoleLog();
 
+const batchGranulesProcessing = async (nthWorkflow) => {
+  console.log(yellowConsoleLog(), `\n___ Executing ${nthWorkflow}/${totalWorkflowCount} ${workflowName} workflows ___`);
+
+  const testId = createTimestampedTestId(config.stackName, 'GranuleIngestLoadTest');
+  const testSuffix = `${createTestSuffix(testId)}_${randomString()}`;
+
+  const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
+  const provider = { id: `s3_provider${testSuffix}` };
+
+  // populate collections, providers and test data
+  await Promise.all([
+    addCollections(
+      config.stackName,
+      config.bucket,
+      collectionsDir,
+      testSuffix
+    ),
+    addProviders(
+      config.stackName,
+      config.bucket,
+      providersDir,
+      config.bucket,
+      testSuffix
+    ),
+  ]);
+  await updateCollection({
+    prefix: config.stackName,
+    collection,
+    updateParams: { duplicateHandling: 'replace' },
+  });
+
+  inputPayload = await setupGranulesForIngestLoadTestWithPassthroughWorkflow(
+    config.bucket,
+    inputPayloadJson,
+    granuleCountPerWorkflow,
+    granuleRegex,
+    testSuffix
+  );
+  testSuffixes.push(testSuffix);
+
+  workflowExecution = await buildAndExecuteWorkflow(
+    config.stackName,
+    config.bucket,
+    workflowName,
+    collection,
+    provider,
+    inputPayload
+  );
+
+  queueGranulesExecutionArns.push(workflowExecution.executionArn);
+  totalInputPayloads.push(inputPayload);
+
+  if (workflowExecution.status === 'completed') {
+    console.log(greenConsoleLog(), `\n___ Execution of Workflow ${nthWorkflow} completed with success status ___`);
+  } else {
+    console.log(redConsoleLog(), `\n___ Execution of Workflow ${nthWorkflow} Failed ___\n ${JSON.stringify(workflowExecution)}\n`);
+  }
+
+  const lambdaOutput = await new LambdaStep().getStepOutput(
+    workflowExecution.executionArn,
+    'QueueGranules'
+  );
+  queueGranulesChildExecutionArns.push(lambdaOutput.payload);
+
+  if (lambdaOutput.payload.running.length === granuleCountPerWorkflow) {
+    colorConsoleLog = greenConsoleLog();
+  } else {
+    colorConsoleLog = redConsoleLog();
+    console.log(colorConsoleLog, '\n___ lambdaOutputPayload ExecutionArns ___');
+    lambdaOutput.payload.running.map((runningArn) =>
+      console.log(`${JSON.stringify(runningArn)}`));
+  }
+  console.log(colorConsoleLog,
+    `\n___ Lambda Output of Workflow ${nthWorkflow} has ${lambdaOutput.payload.running.length}/${granuleCountPerWorkflow} of expected arns ___`);
+
+  const completedGranules = [];
+  const expectedValues = ['completed', 'running'];
+
+  await Promise.all(
+    inputPayload.granules.map(async (granule) => {
+      const record = await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        },
+        expectedValues
+      );
+      if (record.status === 'completed') {
+        completedGranules.push(record);
+        totalGranulesCompleted.push(record);
+      }
+    })
+  );
+  colorConsoleLog =
+    (completedGranules.length === inputPayload.granules.length) ? greenConsoleLog() : redConsoleLog();
+
+  console.log(colorConsoleLog,
+    `\n___ ${completedGranules.length}/${inputPayload.granules.length} Granules ingested by workflow ${nthWorkflow} are set to completed status ___`);
+};
+
+describe('The Granule Ingest Load Test ', () => {
   beforeAll(async () => {
-    if (!Number.isFinite(Number(granuleCountPerWorkflow)) || granuleCountPerWorkflow > 425) {
-      beforeAllFailed = `===== Spec beforeAll() - Invalid input for number of granules per Workflow detected - ${granuleCountPerWorkflow} =====`;
+    if (!Number.isFinite(Number(granuleCountPerWorkflow)) || granuleCountPerWorkflow > 450) {
+      beforeAllFailed = `===== beforeAll() - Invalid input for number of granules per Workflow detected - ${granuleCountPerWorkflow} =====`;
       throw new Error(beforeAllFailed);
-    }
+    } else {
+      try {
+        config = await loadConfig();
 
-    try {
-      config = await loadConfig();
+        process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+        process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
+        process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
-    } catch (error) {
-      beforeAllFailed = `===== Spec beforeAll() failed =====\n ${error}`;
-      throw new Error(beforeAllFailed);
+        await pMap(
+          new Array(totalWorkflowCount).fill().map((_, index) => index + 1),
+          async (index) => {
+            await batchGranulesProcessing(index);
+          },
+          { concurrency: 8 }
+        );
+      } catch (error) {
+        beforeAllFailed = `===== beforeAll() failed =====\n ${error}`;
+        throw new Error(beforeAllFailed);
+      }
     }
   });
 
   afterAll(async () => {
     // clean up stack state added by test
-
     await Promise.all(
-      testGranulesPerInputPayloads.map(async (inPayload) =>
+      totalInputPayloads.map(async (inPayload) =>
         await cleanupLoadTestGranules(config.stackName, inPayload.granules))
     );
 
-    console.log('\n===== Delete lambdaOutputPayload ExecutionArns =====');
+    console.log(blueConsoleLog(), '\n===== Delete lambdaOutputPayload ExecutionArns =====');
     await Promise.all(
-      testQueueGranulesNestedExecutionArns.map(async (lambdaOutputPayload) => {
-        console.log(`${JSON.stringify(lambdaOutputPayload)}`);
+      queueGranulesChildExecutionArns.map(async (lambdaOutputPayload) => {
+        console.log(blueConsoleLog(), `${JSON.stringify(lambdaOutputPayload)}`);
         await lambdaOutputPayload.running.map(async (childExecutionArn) =>
           await deleteExecution({
             prefix: config.stackName,
@@ -82,10 +206,10 @@ describe('Ingest Load Test ', () => {
           }));
       })
     );
-    console.log('\n===== Delete queueGranules ExecutionArns =====');
+    console.log(blueConsoleLog(), '\n===== Delete queueGranules ExecutionArns =====');
     await Promise.all(
-      testQueueGranulesExecutionArns.map(async (qGranulesExecutionArn) => {
-        console.log(`${JSON.stringify(qGranulesExecutionArn)}`);
+      queueGranulesExecutionArns.map(async (qGranulesExecutionArn) => {
+        console.log(blueConsoleLog(), `${JSON.stringify(qGranulesExecutionArn)}`);
         await deleteExecution({
           prefix: config.stackName,
           executionArn: qGranulesExecutionArn,
@@ -111,128 +235,9 @@ describe('Ingest Load Test ', () => {
     );
   });
 
-  it('prepares the test suite successfully', () => {
-    if (beforeAllFailed) fail(beforeAllFailed);
+  it('writes to database the expected number of granules with status completed', () => {
+    const expectedGranuleCount = granuleCountPerWorkflow * totalWorkflowCount;
+    expect(expectedGranuleCount * granuleCountThreshold < totalGranulesCompleted.length && totalGranulesCompleted.length <= expectedGranuleCount).toBeTruthy();
+    console.log(colorConsoleLog, `\n*** The total ingested Granules = ${totalGranulesCompleted.length}/${expectedGranuleCount} ***`);
   });
-
-  function batchQueueGranuleWorkflowVerification() {
-    let workflowExecution;
-
-    describe(`The QueueGranules workflow in the total of ${totalWorkflowCount} workflows`, () => {
-      let lambdaStep;
-      let testSuffix;
-      let collection;
-      let provider;
-      let inputPayload;
-
-      beforeAll(async () => {
-        try {
-          lambdaStep = new LambdaStep();
-
-          const testId = createTimestampedTestId(config.stackName, 'GranuleIngestLoadTest');
-          testSuffix = createTestSuffix(testId);
-
-          collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-          provider = { id: `s3_provider${testSuffix}` };
-
-          // populate collections, providers and test data
-          await Promise.all([
-            addCollections(
-              config.stackName,
-              config.bucket,
-              collectionsDir,
-              testSuffix
-            ),
-            addProviders(
-              config.stackName,
-              config.bucket,
-              providersDir,
-              config.bucket,
-              testSuffix
-            ),
-          ]);
-          await updateCollection({
-            prefix: config.stackName,
-            collection,
-            updateParams: { duplicateHandling: 'replace' },
-          });
-
-          const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
-          // update test data filepaths
-          inputPayload = await setupLoadTestGranuleForIngestPassthrough(
-            config.bucket,
-            inputPayloadJson,
-            granuleCountPerWorkflow,
-            granuleRegex,
-            testSuffix
-          );
-          testSuffixes.push(testSuffix);
-
-          workflowExecution = await buildAndExecuteWorkflow(
-            config.stackName,
-            config.bucket,
-            workflowName,
-            collection,
-            provider,
-            inputPayload
-          );
-
-          testQueueGranulesExecutionArns.push(workflowExecution.executionArn);
-          testGranulesPerInputPayloads.push(inputPayload);
-        } catch (error) {
-          beforeAllFailed = `===== Block beforeAll() failed =====\n ${error}`;
-          throw new Error(beforeAllFailed);
-        }
-      });
-
-      it('completes execution with success status', () => {
-        // console.log(`==== workflowExecution =====\n ${JSON.stringify(workflowExecution)}\n`);
-        expect(workflowExecution.status).toEqual('completed');
-      });
-
-      describe('the QueueGranules Lambda function', () => {
-        it('sets granule status to completed', async () => {
-          const expectedValues = ['completed', 'running'];
-          await Promise.all(
-            inputPayload.granules.map(async (granule) => {
-              const record = await waitForApiStatus(
-                getGranule,
-                {
-                  prefix: config.stackName,
-                  granuleId: granule.granuleId,
-                },
-                expectedValues
-              );
-              expect(expectedValues).toContain(record.status);
-            })
-          );
-        });
-
-        it('has expected arns output', async () => {
-          const lambdaOutput = await lambdaStep.getStepOutput(
-            workflowExecution.executionArn,
-            'QueueGranules'
-          );
-          testQueueGranulesNestedExecutionArns.push(lambdaOutput.payload);
-          expect(lambdaOutput.payload.running.length).toEqual(granuleCountPerWorkflow);
-        });
-      });
-    });
-  }
-
-  const processWorkflows = async () => {
-    const workflowsTriggerPromises = new Array(totalWorkflowCount).fill().map(
-      async () => {
-        batchQueueGranuleWorkflowVerification();
-      }
-    );
-    await Promise.all(workflowsTriggerPromises);
-  };
-
-  try {
-    processWorkflows();
-  } catch (error) {
-    console.log(error);
-    throw error;
-  }
 });
