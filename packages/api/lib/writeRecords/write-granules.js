@@ -569,6 +569,9 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
+
+  // Reminder - this will only update the postgres files object
+  // if the granule is in a complete state
   await _writePostgresFilesFromApiGranuleFiles({
     apiGranuleRecord,
     granuleCumulusId: pgGranule.cumulus_id,
