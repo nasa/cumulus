@@ -63,21 +63,25 @@ const Granule = require('../../../models/granules');
  * Helper function for updating an existing granule with a static payload and validating
  *
  * @param {Object} t -- Used for the test context
+ * @param {boolean} writeFromMessage -- Calls writeGranulesFromMessage function if true,
+ *   writeGranuleFromApi otherwise
  * @returns {Object} -- Updated granule objects from each datastore and PG-translated payload
  *   updatedPgGranuleFields,
  *   pgGranule,
  *   esGranule,
  *   dynamoGranule,
  **/
-const updateGranule = async (t) => {
+const updateGranule = async (t, writeFromMessage = false) => {
   const {
     collectionCumulusId,
     esClient,
     esGranulesClient,
+    executionCumulusId,
     granule,
     granuleId,
     granuleModel,
     granulePgModel,
+    providerCumulusId,
     knex,
   } = t.context;
 
@@ -92,7 +96,33 @@ const updateGranule = async (t) => {
     status: granule.status,
   };
 
-  await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
+  if (writeFromMessage) {
+    const updatedCumulusMessage = {
+      cumulus_meta: {
+        workflow_start_time: t.context.workflowStartTime,
+        state_machine: t.context.stateMachineArn,
+        execution_name: t.context.executionName,
+      },
+      meta: {
+        status: 'completed', // FUTURE: A 'running' state will trigger an insert, not an update
+        collection: t.context.collection,
+        provider: t.context.provider,
+      },
+      payload: {
+        granules: [updateGranulePayload],
+      },
+    };
+
+    await writeGranulesFromMessage({
+      cumulusMessage: updatedCumulusMessage,
+      executionCumulusId,
+      providerCumulusId,
+      knex,
+      granuleModel,
+    });
+  } else {
+    await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
+  }
 
   const dynamoGranule = await granuleModel.get({ granuleId });
   const pgGranule = await granulePgModel.get(
@@ -562,6 +592,107 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
 
   const esRecord = await t.context.esGranulesClient.get(granuleId);
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
+});
+
+test.serial('writeGranulesFromMessage() given a partial granule updates only provided fields', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    esGranulesClient,
+    granuleModel,
+    granulePgModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  const originalpgGranule = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  const { updatedPgGranuleFields, pgGranule } = await updateGranule(t, true);
+
+  // FUTURE:
+  // 1. 'created_at' is updated during PUT/PATCH
+  // 2. 'published' defaults to false if not provided in the payload
+  // 3. 'duration' comes from the workflow and will be reset on update
+  // 4. 'product_volume' comes from a files object on the payload, which may not exist
+  //   in the case of partial granule updates
+  const omitList = [
+    'cumulus_id',
+    'updated_at',
+    'created_at',
+    'published',
+    'timestamp',
+    'duration',
+    'product_volume',
+  ];
+
+  // Postgres granule matches expected updatedGranule
+  t.deepEqual(
+    omit(removeNilProperties(pgGranule), omitList),
+    omit(removeNilProperties({ ...originalpgGranule, ...updatedPgGranuleFields }), omitList)
+  );
+});
+
+test.serial('writeGranulesFromMessage() given a partial granule updates all datastores with the same data', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    esGranulesClient,
+    granuleModel,
+    granulePgModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  const { esGranule, dynamoGranule, pgGranule } = await updateGranule(t, true);
+
+  // Postgres and ElasticSearch granules matches
+  t.deepEqual(
+    omit(removeNilProperties(pgGranule), ['cumulus_id']),
+    await translateApiGranuleToPostgresGranule(esGranule, knex)
+  );
+
+  // Postgres and Dynamo granules matches
+  t.deepEqual(
+    omit(removeNilProperties(pgGranule), ['cumulus_id']),
+    await translateApiGranuleToPostgresGranule(dynamoGranule, knex)
+  );
 });
 
 test.serial('writeGranulesFromMessage() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
