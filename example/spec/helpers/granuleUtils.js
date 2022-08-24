@@ -144,24 +144,20 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
 }
 
 const deleteGranules = async (prefix, granules) => {
-  return await Promise.all(
+  await Promise.all(
     granules.map(async (granule) => {
-      // Temporary fix to handle granules that are in a bad state
-      // and cannot be deleted via the API
-      try {
-        if (granule.published === true) {
-          return await removePublishedGranule({
-            prefix,
-            granuleId: granule.granuleId,
-          });
-        }
-        return await deleteGranule({
+    // Temporary fix to handle granules that are in a bad state
+    // and cannot be deleted via the API
+      if (granule.published === true) {
+        return await removePublishedGranule({
           prefix,
           granuleId: granule.granuleId,
         });
-      } catch (error) {
-        throw error;
       }
+      return await deleteGranule({
+        prefix,
+        granuleId: granule.granuleId,
+      });
     })
   );
 };

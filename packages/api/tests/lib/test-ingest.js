@@ -59,9 +59,6 @@ test.before(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
-  process.env.GranulesTable = randomString();
-  await new Granule().createTable();
-
   const { TopicArn } = await sns().createTopic({ Name: randomString() }).promise();
   t.context.granules_sns_topic_arn = TopicArn;
   process.env.granule_sns_topic_arn = t.context.granules_sns_topic_arn;
