@@ -1358,7 +1358,74 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and
   t.true(await esGranulesClient.exists(granuleId));
 });
 
-test.serial('writeGranuleFromApi() given a partial granule updates only provided fields in PostgreSQL, DynamoDB, and Elasticsearch.', async (t) => {
+test.serial('writeGranuleFromApi() given a partial granule updates only provided fields', async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    esGranulesClient,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  const originalpgGranule = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    cmrLink: 'updatedGranuled.com', // Only field we're changing
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
+
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  const pgGranule = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esGranule = await esGranulesClient.get(granuleId);
+
+  t.is(pgGranule.cmr_link, updateGranulePayload.cmrLink);
+  t.is(dynamoGranule.cmrLink, updateGranulePayload.cmrLink);
+  t.is(esGranule.cmrLink, updateGranulePayload.cmrLink);
+
+  const updatedPgGranuleFields = await translateApiGranuleToPostgresGranule(
+    { ...updateGranulePayload },
+    knex
+  );
+
+  // FUTURE:
+  // 1. 'created_at' is updated during PUT/PATCH
+  // 2. 'published' defaults to false if not provided in the payload
+  const omitList = ['cumulus_id', 'updated_at', 'created_at', 'published', 'timestamp'];
+
+  // Postgres granule matches expected updatedGranule
+  t.deepEqual(
+    omit(removeNilProperties(pgGranule), omitList),
+    omit(removeNilProperties({ ...originalpgGranule, ...updatedPgGranuleFields }), omitList)
+  );
+});
+
+test.serial('writeGranuleFromApi() given a partial granule updates all datastores with the same data', async (t) => {
   const {
     collectionCumulusId,
     esClient,
@@ -1399,27 +1466,10 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
   );
   const esGranule = await esGranulesClient.get(granuleId);
 
+  // Updates were applied to all datastores
   t.is(pgGranule.cmr_link, updateGranulePayload.cmrLink);
   t.is(dynamoGranule.cmrLink, updateGranulePayload.cmrLink);
   t.is(esGranule.cmrLink, updateGranulePayload.cmrLink);
-
-  const updatedGranule = await translateApiGranuleToPostgresGranule(
-    { ...granule, ...updateGranulePayload },
-    knex
-  );
-
-  // FUTURE: created_at should not be updated during PATCH/PUT
-  //  unless explicitly provided in a payload
-  const omitList = ['cumulus_id', 'updated_at', 'created_at'];
-
-  console.log('original granule + payload::::', updatedGranule);
-  console.log('PG Granule:::', pgGranule);
-
-  // Postgres granule matches expected updatedGranule
-  t.deepEqual(
-    omit(removeNilProperties(pgGranule), omitList),
-    omit(updatedGranule, omitList)
-  );
 
   // Postgres and ElasticSearch granules matches
   t.deepEqual(
