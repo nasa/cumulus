@@ -38,7 +38,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, AsyncOperation, Execution, Granule } = require('../../models');
+const { AccessToken, AsyncOperation, Execution } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -98,10 +98,6 @@ test.before(async (t) => {
     stackName: process.env.stackName,
   });
   await asyncOperationModel.createTable();
-
-  // create fake Granules table
-  granuleModel = new Granule();
-  await granuleModel.createTable();
 
   // create fake execution table
   executionModel = new Execution();

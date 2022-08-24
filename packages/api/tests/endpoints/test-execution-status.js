@@ -27,7 +27,7 @@ const {
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, Execution, Granule } = require('../../models');
+const { AccessToken, Execution } = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
@@ -245,10 +245,6 @@ test.before(async (t) => {
     t.context.fakeExecutionRecord
   );
   const expiredExecutionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
-
-  // create fake Granules table
-  granuleModel = new Granule();
-  await granuleModel.createTable();
 
   // create fake Executions table
   executionModel = new Execution();

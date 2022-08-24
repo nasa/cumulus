@@ -10,7 +10,6 @@ const path = require('path');
 const pWaitFor = require('p-wait-for');
 
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
-const { Granule } = require('@cumulus/api/models');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
@@ -145,8 +144,6 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
 }
 
 const deleteGranules = async (prefix, granules) => {
-  process.env.GranulesTable = `${prefix}-GranulesTable`;
-  const granuleModel = new Granule();
   return await Promise.all(
     granules.map(async (granule) => {
       // Temporary fix to handle granules that are in a bad state
@@ -163,9 +160,6 @@ const deleteGranules = async (prefix, granules) => {
           granuleId: granule.granuleId,
         });
       } catch (error) {
-        if (error.statusCode === 400 && JSON.parse(error.apiMessage).message.includes('validation errors')) { // TODO wat
-          return await granuleModel.delete({ granuleId: granule.granuleId });
-        }
         throw error;
       }
     })
