@@ -59,6 +59,66 @@ const {
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
+/**
+ * Helper function for updating an existing granule with a static payload and validating
+ *
+ * @param {Object} t -- Used for the test context
+ * @returns {Object} -- Updated granule objects from each datastore and PG-translated payload
+ *   updatedPgGranuleFields,
+ *   pgGranule,
+ *   esGranule,
+ *   dynamoGranule,
+ **/
+const updateGranule = async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    esGranulesClient,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    cmrLink: 'updatedGranuled.com', // Only field we're changing
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
+
+  const dynamoGranule = await granuleModel.get({ granuleId });
+  const pgGranule = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esGranule = await esGranulesClient.get(granuleId);
+
+  // Updates were applied to all datastores
+  t.is(pgGranule.cmr_link, updateGranulePayload.cmrLink);
+  t.is(dynamoGranule.cmrLink, updateGranulePayload.cmrLink);
+  t.is(esGranule.cmrLink, updateGranulePayload.cmrLink);
+
+  const updatedPgGranuleFields = await translateApiGranuleToPostgresGranule(
+    { ...updateGranulePayload },
+    knex
+  );
+
+  return {
+    updatedPgGranuleFields,
+    pgGranule,
+    esGranule,
+    dynamoGranule,
+  };
+};
+
 test.before(async (t) => {
   process.env.GranulesTable = `write-granules-${cryptoRandomString({ length: 10 })}`;
 
@@ -1384,34 +1444,7 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
-  // Update existing granule with a partial granule object
-  const updateGranulePayload = {
-    granuleId,
-    collectionId: granule.collectionId,
-    cmrLink: 'updatedGranuled.com', // Only field we're changing
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
-    status: granule.status,
-  };
-
-  await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
-
-  const dynamoGranule = await granuleModel.get({ granuleId });
-  const pgGranule = await granulePgModel.get(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  );
-  const esGranule = await esGranulesClient.get(granuleId);
-
-  t.is(pgGranule.cmr_link, updateGranulePayload.cmrLink);
-  t.is(dynamoGranule.cmrLink, updateGranulePayload.cmrLink);
-  t.is(esGranule.cmrLink, updateGranulePayload.cmrLink);
-
-  const updatedPgGranuleFields = await translateApiGranuleToPostgresGranule(
-    { ...updateGranulePayload },
-    knex
-  );
+  const { updatedPgGranuleFields, pgGranule } = await updateGranule(t);
 
   // FUTURE:
   // 1. 'created_at' is updated during PUT/PATCH
@@ -1446,30 +1479,7 @@ test.serial('writeGranuleFromApi() given a partial granule updates all datastore
   ));
   t.true(await esGranulesClient.exists(granuleId));
 
-  // Update existing granule with a partial granule object
-  const updateGranulePayload = {
-    granuleId,
-    collectionId: granule.collectionId,
-    cmrLink: 'updatedGranuled.com', // Only field we're changing
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
-    status: granule.status,
-  };
-
-  await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
-
-  const dynamoGranule = await granuleModel.get({ granuleId });
-  const pgGranule = await granulePgModel.get(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  );
-  const esGranule = await esGranulesClient.get(granuleId);
-
-  // Updates were applied to all datastores
-  t.is(pgGranule.cmr_link, updateGranulePayload.cmrLink);
-  t.is(dynamoGranule.cmrLink, updateGranulePayload.cmrLink);
-  t.is(esGranule.cmrLink, updateGranulePayload.cmrLink);
+  const { esGranule, dynamoGranule, pgGranule } = await updateGranule(t);
 
   // Postgres and ElasticSearch granules matches
   t.deepEqual(
