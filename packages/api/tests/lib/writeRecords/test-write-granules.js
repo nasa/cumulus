@@ -1380,7 +1380,7 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
   t.true(await esGranulesClient.exists(granuleId));
 
   // Update existing granule with a partial granule object
-  const updatedGranule = {
+  const updateGranulePayload = {
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
@@ -1390,16 +1390,44 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
     status: granule.status,
   };
 
-  await writeGranuleFromApi({ ...updatedGranule }, knex, esClient, 'Update');
+  await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
 
   const dynamoGranule = await granuleModel.get({ granuleId });
   const pgGranule = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
+  const esGranule = await esGranulesClient.get(granuleId);
 
-  t.is(pgGranule.cmr_link, updatedGranule.cmrLink);
-  t.is(dynamoGranule.cmrLink, updatedGranule.cmrLink);
+  t.is(pgGranule.cmr_link, updateGranulePayload.cmrLink);
+  t.is(dynamoGranule.cmrLink, updateGranulePayload.cmrLink);
+  t.is(esGranule.cmrLink, updateGranulePayload.cmrLink);
+
+  const updatedGranule = await translateApiGranuleToPostgresGranule(
+    { ...granule, ...updateGranulePayload },
+    knex
+  );
+
+  // FUTURE: created_at should not be updated during PATCH/PUT
+  //  unless explicitly provided in a payload
+  const omitList = ['cumulus_id', 'updated_at', 'created_at'];
+
+  console.log('original granule + payload::::', updatedGranule);
+  console.log('PG Granule:::', pgGranule);
+
+  // Postgres granule matches expected updatedGranule
+  t.deepEqual(
+    omit(removeNilProperties(pgGranule), omitList),
+    omit(updatedGranule, omitList)
+  );
+
+  // Postgres and ElasticSearch granules matches
+  t.deepEqual(
+    omit(removeNilProperties(pgGranule), ['cumulus_id']),
+    await translateApiGranuleToPostgresGranule(esGranule, knex)
+  );
+
+  // Postgres and Dynamo granules matches
   t.deepEqual(
     omit(removeNilProperties(pgGranule), ['cumulus_id']),
     await translateApiGranuleToPostgresGranule(dynamoGranule, knex)
