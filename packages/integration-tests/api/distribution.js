@@ -109,7 +109,7 @@ async function invokeTEADistributionLambda(
  * Invoke s3-credentials-endpoint lambda directly to get s3 credentials.=
  *
  * @param {string} path request path
- * @param {Object} headers requst header
+ * @param {Object} headers request header
  * @returns {string} temporary credentials for s3 access
  */
 async function invokeS3CredentialsLambda(path, headers) {

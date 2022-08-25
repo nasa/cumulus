@@ -239,7 +239,7 @@ test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true res
 });
 /* eslint-enable lodash/prefer-noop */
 
-test.serial('An s3credential request with a valid bearer token invokes NGAPs request for credentials with username from token ', async (t) => {
+test.serial('An s3credential request with a valid bearer token invokes NGAPs request for credentials with username from token', async (t) => {
   const username = t.context.stubbedAccessToken.username;
   const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
 
@@ -274,7 +274,7 @@ test.serial('An s3credential request with a valid bearer token invokes NGAPs req
   stub.restore();
 });
 
-test('An s3credential request with a invalid bearer token redirects to Oauth2 provider', async (t) => {
+test('An s3credential request with an invalid bearer token redirects to OAuth2 provider', async (t) => {
   const response = await request(distributionApp)
     .get('/s3credentials')
     .set('Accept', 'application/json')
