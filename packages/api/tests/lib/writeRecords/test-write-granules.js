@@ -577,8 +577,8 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
   );
 
   t.deepEqual(
-    existingPgFiles.map((file) => file.bucket).concat(filesFromCumulusMessage),
-    updatedPgFiles.map((file) => file.bucket)
+    existingPgFiles.map((file) => file.bucket).concat(filesFromCumulusMessage).sort(),
+    updatedPgFiles.map((file) => file.bucket).sort()
   );
 });
 
