@@ -10,7 +10,6 @@ const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { sqs } = require('@cumulus/aws-client/services');
 const { getGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -51,8 +50,8 @@ const queueUrl = 'https://sqs.us-east-1.amazonaws.com/596205514787/vkn-tf-startS
 
 // ** Configurable Variables
 
-const granuleCountPerWorkflow = 40; // 450 granules per workflow is the max allowable by the API
-const totalWorkflowCount = 12; // number of workflows to fire off
+const granuleCountPerWorkflow = 100; // 450 granules per workflow is the max allowable by the API
+const totalWorkflowCount = 5; // number of workflows to fire off
 
 const granuleCountThreshold = 0.95;
 
@@ -63,8 +62,6 @@ const testSuffixes = [];
 const totalGranulesCompleted = [];
 
 let config;
-let workflowExecution;
-let inputPayload;
 let beforeAllFailed = false;
 let colorConsoleLog = redConsoleLog();
 
@@ -76,6 +73,8 @@ const batchGranulesProcessing = async (nthWorkflow) => {
   const testDataFolder = `custom-staging-dir/${createTestDataPath(testId)}`;
   const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
   const provider = { id: `s3_provider${testSuffix}` };
+  let completedGranules;
+  let inputPayload;
 
   try {
   // populate collections, providers and test data
@@ -102,6 +101,7 @@ const batchGranulesProcessing = async (nthWorkflow) => {
     });
 
     inputPayload = await setupGranulesForIngestLoadTest(
+      false,
       config.bucket,
       inputPayloadJson,
       granuleCountPerWorkflow,
@@ -115,7 +115,7 @@ const batchGranulesProcessing = async (nthWorkflow) => {
       queueUrl,
     };
 
-    workflowExecution = await buildAndExecuteWorkflow(
+    const workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
       workflowName,
@@ -151,7 +151,7 @@ const batchGranulesProcessing = async (nthWorkflow) => {
     console.log(colorConsoleLog,
       `\n___ Lambda Output of Workflow ${nthWorkflow} has ${lambdaOutput.payload.running.length}/${granuleCountPerWorkflow} of expected arns ___`);
 
-    const completedGranules = [];
+    completedGranules = [];
     const expectedValues = ['completed'];
 
     await Promise.all(
@@ -168,14 +168,13 @@ const batchGranulesProcessing = async (nthWorkflow) => {
         totalGranulesCompleted.push(record);
       })
     );
-
+  } catch (error) {
+    beforeAllFailed = `===== batchGranulesProcessing() failed =====\n ${error}`;
+    // throw new Error(beforeAllFailed);
+  } finally {
     console.log(greenConsoleLog(),
       `\n___ ${completedGranules.length}/${inputPayload.granules.length} Granules ingested by workflow ${nthWorkflow} are set to completed status ___`);
-  } catch (error) {
-    beforeAllFailed = `===== beforeAll() failed =====\n ${error}`;
-    throw new Error(beforeAllFailed);
-  } finally {
-    console.log(blueConsoleLog(), `\n===== Delete S3TestDataFolder: ${testDataFolder} =====`);
+    console.log(blueConsoleLog(), `\n===== Clean up S3TestDataFolder: ${testDataFolder} =====`);
     await deleteFolder(config.bucket, testDataFolder);
   }
 };
@@ -209,50 +208,53 @@ describe('The Granule Ingest Load Test ', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    try {
+      await Promise.all(
+        totalInputPayloads.map(async (inPayload) =>
+          await cleanupLoadTestGranules(config.stackName, inPayload.granules))
+      );
 
-    await Promise.all(
-      totalInputPayloads.map(async (inPayload) =>
-        await cleanupLoadTestGranules(config.stackName, inPayload.granules))
-    );
-
-    console.log(blueConsoleLog(), '\n===== Delete lambdaOutputPayload ExecutionArns =====');
-    await Promise.all(
-      queueGranulesChildExecutionArns.map(async (lambdaOutputPayload) => {
-        console.log(blueConsoleLog(), `${JSON.stringify(lambdaOutputPayload)}`);
-        await lambdaOutputPayload.running.map(async (childExecutionArn) =>
+      console.log(blueConsoleLog(), '\n===== Delete lambdaOutputPayload ExecutionArns =====');
+      await Promise.all(
+        queueGranulesChildExecutionArns.map(async (lambdaOutputPayload) => {
+          // console.log(blueConsoleLog(), `${JSON.stringify(lambdaOutputPayload)}`);
+          await lambdaOutputPayload.running.map(async (childExecutionArn) =>
+            await deleteExecution({
+              prefix: config.stackName,
+              executionArn: childExecutionArn,
+            }));
+        })
+      );
+      console.log(blueConsoleLog(), '\n===== Delete queueGranules ExecutionArns =====');
+      await Promise.all(
+        queueGranulesExecutionArns.map(async (qGranulesExecutionArn) => {
+          console.log(`${JSON.stringify(qGranulesExecutionArn)}`);
           await deleteExecution({
             prefix: config.stackName,
-            executionArn: childExecutionArn,
-          }));
-      })
-    );
-    console.log(blueConsoleLog(), '\n===== Delete queueGranules ExecutionArns =====');
-    await Promise.all(
-      queueGranulesExecutionArns.map(async (qGranulesExecutionArn) => {
-        console.log(`${JSON.stringify(qGranulesExecutionArn)}`);
-        await deleteExecution({
-          prefix: config.stackName,
-          executionArn: qGranulesExecutionArn,
-        });
-      })
-    );
+            executionArn: qGranulesExecutionArn,
+          });
+        })
+      );
 
-    await Promise.all(
-      testSuffixes.map(async (testSuffix) => {
-        await cleanupCollections(
-          config.stackName,
-          config.bucket,
-          collectionsDir,
-          testSuffix
-        );
-        cleanupProviders(
-          config.stackName,
-          config.bucket,
-          providersDir,
-          testSuffix
-        );
-      })
-    );
+      await Promise.all(
+        testSuffixes.map(async (testSuffix) => {
+          await cleanupCollections(
+            config.stackName,
+            config.bucket,
+            collectionsDir,
+            testSuffix
+          );
+          cleanupProviders(
+            config.stackName,
+            config.bucket,
+            providersDir,
+            testSuffix
+          );
+        })
+      );
+    } catch (error) {
+      throw new Error(`===== afterAll() failed =====\n ${error}`);
+    }
   });
 
   it('writes to database the expected number of granules with status completed', () => {

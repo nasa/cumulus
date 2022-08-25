@@ -30,7 +30,7 @@ const {
 
 const {
   cleanupLoadTestGranules,
-  setupGranulesForIngestLoadTestWithPassthroughWorkflow,
+  setupGranulesForIngestLoadTest,
 } = require('../helpers/granuleUtils');
 
 const workflowName = 'QueueGranules';
@@ -56,8 +56,6 @@ const totalGranulesCompleted = [];
 
 let config;
 let queueUrl;
-let workflowExecution;
-let inputPayload;
 let beforeAllFailed = false;
 let colorConsoleLog = redConsoleLog();
 
@@ -92,7 +90,8 @@ const batchGranulesProcessing = async (nthWorkflow) => {
     updateParams: { duplicateHandling: 'replace' },
   });
 
-  inputPayload = await setupGranulesForIngestLoadTestWithPassthroughWorkflow(
+  const inputPayload = await setupGranulesForIngestLoadTest(
+    true,
     config.bucket,
     inputPayloadJson,
     granuleCountPerWorkflow,
@@ -105,7 +104,7 @@ const batchGranulesProcessing = async (nthWorkflow) => {
     queueUrl,
   };
 
-  workflowExecution = await buildAndExecuteWorkflow(
+  const workflowExecution = await buildAndExecuteWorkflow(
     config.stackName,
     config.bucket,
     workflowName,
@@ -193,7 +192,7 @@ describe('The Granule Ingest Load Test ', () => {
     }
   });
 
-  /* afterAll(async () => {
+  afterAll(async () => {
     // clean up stack state added by test
     console.log(blueConsoleLog(), `\n===== Delete QueueUrl =====\n ${JSON.stringify(queueUrl)}\n`);
     await sqs().deleteQueue({
@@ -232,7 +231,7 @@ describe('The Granule Ingest Load Test ', () => {
         );
       })
     );
-  }); */
+  });
 
   it('writes to database the expected number of granules with status queued', () => {
     const expectedGranuleCount = granuleCountPerWorkflow * totalWorkflowCount;

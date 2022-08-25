@@ -181,19 +181,20 @@ async function generatePayloadGranule(isPassThroughWorkflow = true, granuleToRep
 }
 
 /**
- * Set up files in the S3 data location for numerous new granules to use for load
- * testing. Use the input payload and granuleCount to determine which files are needed and
+ * Set up a workflow input payload with numerous new granules and associated files in the S3 data location if applicable
+ * for load testing. Use the input payload Json and granuleCountPerPayload to determine which files are needed and
  * return updated input with a list of granules with new ids.
  *
+ * @param {boolean} isPassThroughWorkflow - if test granules are being used with the QueueGranulesPassthrough workflow logic
  * @param {string} bucket - data bucket
  * @param {string} inputPayloadJson - input payload as a JSON string
  * @param {number} granuleCountPerPayload - number of granules per workflow
  * @param {string} granuleRegex - regex to generate the new granule id
  * @param {string} testSuffix - suffix for test-specific collection
- * @param {string} testDataFolder - test data S3 path
+ * @param {string} testDataFolder - test data S3 path. Only needed when isPassThroughWorkflow = false
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
-async function setupGranulesForIngestLoadTest(bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '', testDataFolder = undefined) {
+async function setupGranulesForIngestLoadTest(isPassThroughWorkflow = true, bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '', testDataFolder = undefined) {
   let payloadJson;
 
   if (testDataFolder) {
@@ -212,28 +213,15 @@ async function setupGranulesForIngestLoadTest(bucket, inputPayloadJson, granuleC
   console.log(blueConsoleLog(), `\n===== Create ${granuleCountPerPayload} granules per payload =====`);
   const createS3GranuleFilesPromises = new Array(granuleCountPerPayload).fill().map(
     async () => {
-      const replicatedGranule = await generatePayloadGranule(false, granuleToReplicate, bucket, granuleRegex);
+      const replicatedGranule = await generatePayloadGranule(isPassThroughWorkflow, granuleToReplicate, bucket, granuleRegex);
       baseInputPayload.granules.push(replicatedGranule);
     }
   );
   await Promise.all(createS3GranuleFilesPromises);
-  console.log(blueConsoleLog(), `===== Uploaded ${granuleCountPerPayload * granuleToReplicate.files.length} granule files per payload =====\n`);
 
-  return baseInputPayload;
-}
-
-async function setupGranulesForIngestLoadTestWithPassthroughWorkflow(bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '') {
-  const baseInputPayload = JSON.parse(inputPayloadJson);
-  baseInputPayload.granules[0].dataType = `MOD09GQ${testSuffix}`;
-  const granuleToReplicate = baseInputPayload.granules.shift();
-  const createS3GranuleFilesPromises = new Array(granuleCountPerPayload).fill().map(
-    async () => {
-      const replicatedGranule = await generatePayloadGranule(true, granuleToReplicate, bucket, granuleRegex);
-      baseInputPayload.granules.push(replicatedGranule);
-    }
-  );
-  await Promise.all(createS3GranuleFilesPromises);
-  console.log(blueConsoleLog(), `\n===== Create ${granuleCountPerPayload} granules per payload =====\n`);
+  if (isPassThroughWorkflow === false) {
+    console.log(blueConsoleLog(), `===== Uploaded ${granuleCountPerPayload * granuleToReplicate.files.length} granule files per payload =====\n`);
+  }
 
   return baseInputPayload;
 }
@@ -429,7 +417,6 @@ module.exports = {
   loadFileWithUpdatedGranuleIdPathAndCollection,
   setupTestGranuleForIngest,
   setupGranulesForIngestLoadTest,
-  setupGranulesForIngestLoadTestWithPassthroughWorkflow,
   cleanupLoadTestGranules,
   waitForGranuleRecordsInList,
   waitForGranuleRecordsNotInList,
