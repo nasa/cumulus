@@ -110,7 +110,7 @@
     "saml2-js": "^3.0.1",
     "semver": "^7.3.2",
     "split2": "^2.2.0",
-    "tough-cookie": "^2.4.3",
+    "tough-cookie": "~4.0.0",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1",
     "xml2js": "^0.4.22"
