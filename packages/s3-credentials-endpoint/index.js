@@ -168,14 +168,14 @@ async function ensureAuthorizedOrRedirect(req, res, next) {
 
   const redirectURLForAuthorizationCode = oauthClient.getAuthorizationUrl(req.path);
   const accessToken = req.cookies.accessToken;
-  if (!accessToken) return res.redirect(307, redirectURLForAuthorizationCode);
-
   let accessTokenRecord;
-  try {
-    accessTokenRecord = await accessTokenModel.get({ accessToken });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
+  if (accessToken) {
+    try {
+      accessTokenRecord = await accessTokenModel.get({ accessToken });
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
     }
   }
 
