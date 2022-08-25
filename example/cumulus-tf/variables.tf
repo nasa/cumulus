@@ -394,6 +394,7 @@ variable "lambda_timeouts" {
 }
 
 variable "lambda_memory_sizes" {
+  description = "Memory sizes for lambda functions"
   type = map(string)
   default = {}
 }
