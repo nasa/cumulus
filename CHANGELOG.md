@@ -25,7 +25,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-3024**
-  - Update granule PUT endpoint to accept partial granule object
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
 
 ### Added
 
