@@ -762,14 +762,14 @@ test('translateApiGranuleToPostgresGranule removes null/undefined fields', async
     pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
-    product_volume: apiGranule.productVolume, // Undefined on apiGranule
+    product_volume: undefined, // Undefined on apiGranule
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,
     published: apiGranule.published,
-    query_fields: apiGranule.queryFields, // Undefined on apiGranule
+    query_fields: undefined, // Undefined on apiGranule
     status: apiGranule.status,
     time_to_archive: apiGranule.timeToArchive,
-    time_to_process: apiGranule.timeToPreprocess, // Undefined on apiGranule
+    time_to_process: undefined, // Undefined on apiGranule
     timestamp: new Date(apiGranule.timestamp),
     updated_at: new Date(apiGranule.updatedAt),
   };
