@@ -583,6 +583,8 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
   snsEventType,
 }) => {
   const { files, status } = apiGranuleRecord;
+  // FUTURE: this will not allow removal of files if a user provides
+  // an empty files array in a granule update payload
   if (isStatusFinalState(status) && files.length > 0) {
     await _writeGranuleFiles({
       granuleCumulusId: granuleCumulusId,

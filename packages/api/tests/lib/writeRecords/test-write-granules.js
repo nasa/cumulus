@@ -63,6 +63,7 @@ const Granule = require('../../../models/granules');
  * Helper function for updating an existing granule with a static payload and validating
  *
  * @param {Object} t -- Used for the test context
+ * @param {Object} updateGranulePayload -- Request body for granule update
  * @param {boolean} writeFromMessage -- Calls writeGranulesFromMessage function if true,
  *   writeGranuleFromApi otherwise
  * @returns {Object} -- Updated granule objects from each datastore and PG-translated payload
@@ -71,30 +72,18 @@ const Granule = require('../../../models/granules');
  *   esGranule,
  *   dynamoGranule,
  **/
-const updateGranule = async (t, writeFromMessage = false) => {
+const updateGranule = async (t, updateGranulePayload, writeFromMessage = false) => {
   const {
     collectionCumulusId,
     esClient,
     esGranulesClient,
     executionCumulusId,
-    granule,
     granuleId,
     granuleModel,
     granulePgModel,
     providerCumulusId,
     knex,
   } = t.context;
-
-  // Update existing granule with a partial granule object
-  const updateGranulePayload = {
-    granuleId,
-    collectionId: granule.collectionId,
-    cmrLink: 'updatedGranuled.com', // Only field we're changing
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
-    status: granule.status,
-  };
 
   if (writeFromMessage) {
     const updatedCumulusMessage = {
@@ -130,11 +119,6 @@ const updateGranule = async (t, writeFromMessage = false) => {
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
   const esGranule = await esGranulesClient.get(granuleId);
-
-  // Updates were applied to all datastores
-  t.is(pgGranule.cmr_link, updateGranulePayload.cmrLink);
-  t.is(dynamoGranule.cmrLink, updateGranulePayload.cmrLink);
-  t.is(esGranule.cmrLink, updateGranulePayload.cmrLink);
 
   const updatedPgGranuleFields = await translateApiGranuleToPostgresGranule(
     { ...updateGranulePayload },
@@ -599,6 +583,7 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
     collectionCumulusId,
     cumulusMessage,
     esGranulesClient,
+    granule,
     granuleModel,
     granulePgModel,
     knex,
@@ -627,7 +612,23 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
-  const { updatedPgGranuleFields, pgGranule } = await updateGranule(t, true);
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    cmrLink: 'updatedGranuled.com', // Only field we're changing
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  const {
+    updatedPgGranuleFields,
+    pgGranule,
+    esGranule,
+    dynamoGranule,
+  } = await updateGranule(t, updateGranulePayload, true);
 
   // FUTURE:
   // 1. 'created_at' is updated during PUT/PATCH
@@ -650,37 +651,6 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
     omit(removeNilProperties(pgGranule), omitList),
     omit(removeNilProperties({ ...originalpgGranule, ...updatedPgGranuleFields }), omitList)
   );
-});
-
-test.serial('writeGranulesFromMessage() given a partial granule updates all datastores with the same data', async (t) => {
-  const {
-    collectionCumulusId,
-    cumulusMessage,
-    esGranulesClient,
-    granuleModel,
-    granulePgModel,
-    knex,
-    executionCumulusId,
-    providerCumulusId,
-    granuleId,
-  } = t.context;
-
-  await writeGranulesFromMessage({
-    cumulusMessage,
-    executionCumulusId,
-    providerCumulusId,
-    knex,
-    granuleModel,
-  });
-
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await granulePgModel.exists(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  ));
-  t.true(await esGranulesClient.exists(granuleId));
-
-  const { esGranule, dynamoGranule, pgGranule } = await updateGranule(t, true);
 
   // Postgres and ElasticSearch granules matches
   t.deepEqual(
@@ -695,7 +665,78 @@ test.serial('writeGranulesFromMessage() given a partial granule updates all data
   );
 });
 
-test.serial('writeGranulesFromMessage() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
+// FUTURE: This will need file write logic updates. Currently providing an empty
+// files array in a granule update payload will NOT overwrite existing files
+test.skip('writeGranulesFromMessage() given an empty files array will remove all files from DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
+  const {
+    collectionCumulusId,
+    esGranulesClient,
+    filePgModel,
+    granule,
+    granuleModel,
+    granulePgModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  // Need a message in 'completed' state to allow files writes
+  const completedCumulusMessage = {
+    cumulus_meta: {
+      workflow_start_time: t.context.workflowStartTime,
+      state_machine: t.context.stateMachineArn,
+      execution_name: t.context.executionName,
+    },
+    meta: {
+      status: 'completed',
+      collection: t.context.collection,
+      provider: t.context.provider,
+    },
+    payload: {
+      granules: [t.context.granule],
+    },
+  };
+
+  await writeGranulesFromMessage({
+    cumulusMessage: completedCumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  // Check that the files were written initially
+  const originalPgFiles = await filePgModel.search(knex, {});
+  t.deepEqual(
+    originalPgFiles.map((file) => file.bucket).sort(),
+    t.context.files.map((file) => file.bucket).sort()
+  );
+
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    files: [],
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  await updateGranule(t, updateGranulePayload, true);
+
+  const updatedPgFiles = await filePgModel.search(knex, {});
+  t.deepEqual(updatedPgFiles, []);
+});
+
+test.serial('writeGranulesFromMessage() removes preexisting granule file from PostgreSQL on granule update with disjoint files', async (t) => {
   const {
     cumulusMessage,
     filePgModel,
@@ -1575,7 +1616,18 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
 
-  const { updatedPgGranuleFields, pgGranule } = await updateGranule(t);
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    cmrLink: 'updatedGranuled.com', // Only field we're changing
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  const { updatedPgGranuleFields, pgGranule } = await updateGranule(t, updateGranulePayload);
 
   // FUTURE:
   // 1. 'created_at' is updated during PUT/PATCH
@@ -1610,7 +1662,18 @@ test.serial('writeGranuleFromApi() given a partial granule updates all datastore
   ));
   t.true(await esGranulesClient.exists(granuleId));
 
-  const { esGranule, dynamoGranule, pgGranule } = await updateGranule(t);
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    cmrLink: 'updatedGranuled.com', // Only field we're changing
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  const { esGranule, dynamoGranule, pgGranule } = await updateGranule(t, updateGranulePayload);
 
   // Postgres and ElasticSearch granules matches
   t.deepEqual(
