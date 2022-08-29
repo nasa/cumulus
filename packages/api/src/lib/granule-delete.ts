@@ -57,6 +57,7 @@ const deleteS3Files = async (
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
  * @param {Object} params.granuleModelClient - Granule Dynamo model
+ * @return {Object} - Granule Deletion details
  */
 const deleteGranuleAndFiles = async (params: {
   knex: Knex,
