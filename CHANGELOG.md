@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2631**
+  - Added 'Bearer token' support to s3credentials endpoint
+
+### Fixed
+
+- **CUMULUS-2971**
+  - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
+    its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
+
+## [v13.3.0] 2022-8-19
+
 ### Notable Changes
 
 - **CUMULUS-2930**
@@ -21,12 +34,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
     The endpoint will only use search-after when the `searchContext` parameter
     is provided in a request.
-
-### Fixed
-
-- **CUMULUS-2971**
-  - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
-    its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
 
 ## [v13.2.1] 2022-8-10 [BACKPORT]
 
