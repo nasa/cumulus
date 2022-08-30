@@ -44,7 +44,6 @@ const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
 const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 const CREDS_EXPIRY_SECONDS = S3_LINK_EXPIRY_SECOND_DEFAULT;
-const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 
 export const generateCloudfrontUrl = async (params: {
   Bucket: string,
