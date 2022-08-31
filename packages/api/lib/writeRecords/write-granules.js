@@ -59,6 +59,7 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 const {
   RecordDoesNotExist,
 } = require('@cumulus/errors');
+const { isArray } = require('lodash');
 const FileUtils = require('../FileUtils');
 const {
   getExecutionProcessingTimeInfo,
@@ -456,16 +457,21 @@ const _generateFilesFromGranule = async ({
   granule,
   provider,
 }) => {
-  const { files = [] } = granule;
   // This is necessary to set properties like
   // `key`, which is required for the PostgreSQL schema. And
   // `size` which is used to calculate the granule product
   // volume
-  return await FileUtils.buildDatabaseFiles({
+  const files = await FileUtils.buildDatabaseFiles({
     s3: s3(),
     providerURL: buildURL(provider),
-    files,
+    files: granule.files,
   });
+
+  if (isArray(files) && files.length > 0) {
+    return files;
+  }
+
+  return undefined;
 };
 
 const _writeGranuleRecords = async (params) => {
@@ -582,10 +588,10 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
   knex,
   snsEventType,
 }) => {
-  const { files, status } = apiGranuleRecord;
+  const { status } = apiGranuleRecord;
   // FUTURE: this will not allow removal of files if a user provides
   // an empty files array in a granule update payload
-  if (isStatusFinalState(status) && files.length > 0) {
+  if (isStatusFinalState(status) && ('files' in apiGranuleRecord)) {
     await _writeGranuleFiles({
       granuleCumulusId: granuleCumulusId,
       granule: apiGranuleRecord,
@@ -745,7 +751,7 @@ const writeGranuleFromApi = async (
     timeToPreprocess,
     timeToArchive,
     timestamp,
-    files = [],
+    files,
     beginningDateTime,
     endingDateTime,
     productionDateTime,

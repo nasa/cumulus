@@ -58,6 +58,7 @@ const {
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
+const { file } = require('../../../models/schemas');
 
 /**
  * Helper function for updating an existing granule with a static payload and validating
@@ -132,6 +133,17 @@ const updateGranule = async (t, updateGranulePayload, writeFromMessage = false) 
     dynamoGranule,
   };
 };
+
+/**
+ * Helper function for sorting a list of file objects by bucket
+ *
+ * @param {Object} f1 -- File object
+ * @param {Object} f2 -- File object to compare to the first
+ * @returns {Array} -- Sorted list of file objects
+ **/
+const sortfilesByBuckets = (f1, f2) => (
+  (f1.bucket > f2.bucket) ? 1 : ((f2.bucket > f1.bucket) ? -1 : 0)
+);
 
 test.before(async (t) => {
   process.env.GranulesTable = `write-granules-${cryptoRandomString({ length: 10 })}`;
@@ -578,7 +590,6 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
-test.serial('writeGranulesFromMessage() given a partial granule updates only provided fields', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -646,6 +657,21 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
     'product_volume',
   ];
 
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  esGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  dynamoGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  apiGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+
   // Postgres granule matches expected updatedGranule
   t.deepEqual(
     omit(removeNilProperties(pgGranule), omitList),
@@ -654,14 +680,14 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
 
   // Postgres and ElasticSearch granules matches
   t.deepEqual(
-    omit(removeNilProperties(pgGranule), ['cumulus_id']),
-    await translateApiGranuleToPostgresGranule(esGranule, knex)
+    apiGranule,
+    omit(esGranule, ['_id'])
   );
 
   // Postgres and Dynamo granules matches
   t.deepEqual(
-    omit(removeNilProperties(pgGranule), ['cumulus_id']),
-    await translateApiGranuleToPostgresGranule(dynamoGranule, knex)
+    apiGranule,
+    dynamoGranule
   );
 });
 
@@ -1675,16 +1701,32 @@ test.serial('writeGranuleFromApi() given a partial granule updates all datastore
 
   const { esGranule, dynamoGranule, pgGranule } = await updateGranule(t, updateGranulePayload);
 
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  // Files array order not guarunteed to match between datastores
+  esGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  dynamoGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  apiGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+
   // Postgres and ElasticSearch granules matches
   t.deepEqual(
-    omit(removeNilProperties(pgGranule), ['cumulus_id']),
-    await translateApiGranuleToPostgresGranule(esGranule, knex)
+    apiGranule,
+    omit(esGranule, ['_id'])
   );
 
   // Postgres and Dynamo granules matches
   t.deepEqual(
-    omit(removeNilProperties(pgGranule), ['cumulus_id']),
-    await translateApiGranuleToPostgresGranule(dynamoGranule, knex)
+    apiGranule,
+    dynamoGranule
   );
 });
 
