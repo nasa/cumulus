@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
+  
+### Changed
+
+- **CUMULUS-3027**
+  - Pinned typescript to ~4.7.x to address typing incompatibility issues
+    discussed in https://github.com/knex/knex/pull/5279
+  - Update generate-ts-build-cache script to always install root project dependencies
 
 ### Fixed
 
@@ -48,10 +55,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3027**
-  - Pinned typescript to ~4.7.x to address typing incompatibility issues
-    discussed in https://github.com/knex/knex/pull/5279
-  - Update generate-ts-build-cache script to always install root project dependencies
 - **CUMULUS-2940**
   - Updated bulk operation lambda to utilize system wide rds_connection_timing
     configuration parameters from the main `cumulus` module
