@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2631**
+  - Added 'Bearer token' support to s3credentials endpoint
+  
+### Changed
+
+- **CUMULUS-3027**
+  - Pinned typescript to ~4.7.x to address typing incompatibility issues
+    discussed in https://github.com/knex/knex/pull/5279
+  - Update generate-ts-build-cache script to always install root project dependencies
+
+### Fixed
+
+- **CUMULUS-2971**
+  - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
+    its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
+
+## [v13.3.0] 2022-8-19
+
 ### Notable Changes
 
 - **CUMULUS-2930**
@@ -22,11 +42,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     The endpoint will only use search-after when the `searchContext` parameter
     is provided in a request.
 
-### Added
-
-- **CUMULUS-2631**
-  - Added 'Bearer token' support to s3credentials endpoint
-
 ## [v13.2.1] 2022-8-10 [BACKPORT]
 
 ### Notable changes
@@ -40,10 +55,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3027**
-  - Pinned typescript to ~4.7.x to address typing incompatibility issues
-    discussed in https://github.com/knex/knex/pull/5279
-  - Update generate-ts-build-cache script to always install root project dependencies
 - **CUMULUS-2940**
   - Updated bulk operation lambda to utilize system wide rds_connection_timing
     configuration parameters from the main `cumulus` module
