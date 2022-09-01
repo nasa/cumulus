@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     allowed properties include:
       - discover_granules_task_memory_size
       - discover_pdrs_task_memory_size
-      - hyrax_metadata_update_task_memory_size
+      - hyrax_metadata_updates_task_memory_size
       - lzards_backup_task_memory_size
       - move_granules_task_memory_size
       - parse_pdr_task_memory_size

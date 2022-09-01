@@ -102,7 +102,7 @@ Currently the following values are supported:
 
 - discover_granules_task_memory_size
 - discover_pdrs_task_memory_size
-- hyrax_metadata_update_task_memory_size
+- hyrax_metadata_updates_task_memory_size
 - lzards_backup_task_memory_size
 - move_granules_task_memory_size
 - parse_pdr_task_memory_size
