@@ -380,7 +380,7 @@
             "distribution_endpoint": "{$.meta.distribution_endpoint}",
             "response-endpoint": "{$.meta.cnmResponseStream}",
             "region": "us-east-1",
-            "type": "kinesis",
+            "type": "{$.meta.cnmResponseMethod}",
             "WorkflowException": "{$.exception}",
             "cumulus_message": {
               "outputs": [
@@ -434,7 +434,7 @@
             "OriginalCNM": "{$.meta.cnm}",
             "response-endpoint": "{$.meta.cnmResponseStream}",
             "region": "us-east-1",
-            "type": "kinesis",
+            "type": "{$.meta.cnmResponseMethod}",
             "WorkflowException": "{$.exception}",
             "cumulus_message": {
               "outputs": [

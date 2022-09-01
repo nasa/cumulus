@@ -201,7 +201,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     scheduleQueueUrl = await getQueueUrlByName(`${testConfig.stackName}-backgroundProcessing`);
 
-    ruleDirectory = './spec/parallel/kinesisTests/data/rules';
+    ruleDirectory = './spec/parallel/kinesisTests/data/rules/kinesis';
     ruleOverride = {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
       collection: {
