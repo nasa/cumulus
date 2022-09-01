@@ -100,6 +100,7 @@ A configurable map of memory sizes (in MBs) for cumulus ingest module task lambd
 
 Currently the following values are supported:
 
+- add_missing_file_checksums_task_memory_size
 - discover_granules_task_memory_size
 - discover_pdrs_task_memory_size
 - hyrax_metadata_updates_task_memory_size
@@ -112,6 +113,7 @@ Currently the following values are supported:
 - queue_pdrs_task_memory_size
 - queue_workflow_task_memory_size
 - sync_granule_task_memory_size
+- update_cmr_acess_constraints_task_memory_size
 - update_granules_cmr_metadata_file_links_task_memory_size
 
 ### Example

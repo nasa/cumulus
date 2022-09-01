@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled
     allowed properties include:
+      - add_missing_file_checksums_task_memory_size
       - discover_granules_task_memory_size
       - discover_pdrs_task_memory_size
       - hyrax_metadata_updates_task_memory_size
@@ -21,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - queue_pdrs_task_memory_size
       - queue_workflow_task_memory_size
       - sync_granule_task_memory_size
+      - update_cmr_access_constraints_task_memory_size
       - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
 ### Notable Changes
