@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - update_cmr_access_constraints_task_memory_size
       - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
+  
 ### Notable Changes
 
 - **CUMULUS-2930**
