@@ -14,5 +14,5 @@
     "value": "arn:aws:kinesis:{{AWS_REGION}}:{{AWS_ACCOUNT_ID}}:stream/{{streamName}}"
   },
   "state": "ENABLED",
-  "workflow": "KinesisTriggerTest"
+  "workflow": "CNMExampleWorkflow"
 }

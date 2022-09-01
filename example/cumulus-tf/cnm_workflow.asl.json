@@ -1,5 +1,5 @@
 {
-  "Comment": "Tests Workflow from Kinesis Stream",
+  "Comment": "Tests CNM workflow",
   "StartAt": "TranslateMessage",
   "States": {
     "TranslateMessage": {

@@ -15,5 +15,5 @@
     "value": "{{queueUrl}}"
   },
   "state": "ENABLED",
-  "workflow": "KinesisTriggerTest"
+  "workflow": "CNMExampleWorkflow"
 }

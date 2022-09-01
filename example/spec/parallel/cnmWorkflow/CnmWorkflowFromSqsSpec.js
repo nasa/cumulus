@@ -56,9 +56,9 @@ let queues = {};
 const collectionsDir = './data/collections/ASCATB-L2-Coastal';
 const providersDir = './data/providers/PODAAC_SWOT/';
 
-const workflowName = 'KinesisTriggerTest';
+const workflowName = 'CNMExampleWorkflow';
 
-const ruleDirectory = './spec/parallel/kinesisTests/data/rules/sqs';
+const ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/sqs';
 
 const s3data = [
   '@cumulus/test-data/granules/ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc',
@@ -95,7 +95,7 @@ const waitForQueueMessageCount = (queueUrl, expectedCount) =>
     },
     {
       interval: 3000,
-      timeout: 30 * 1000,
+      timeout: 60 * 1000,
     }
   );
 
