@@ -590,9 +590,9 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
+test.serial('writeGranulesFromMessage() given a partial granule updates only provided fields', async (t) => {
   const {
     collectionCumulusId,
-    cumulusMessage,
     esGranulesClient,
     granule,
     granuleModel,
@@ -603,8 +603,25 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
     granuleId,
   } = t.context;
 
+  // Need a message in 'completed' state to allow files writes
+  const completedCumulusMessage = {
+    cumulus_meta: {
+      workflow_start_time: t.context.workflowStartTime,
+      state_machine: t.context.stateMachineArn,
+      execution_name: t.context.executionName,
+    },
+    meta: {
+      status: 'completed',
+      collection: t.context.collection,
+      provider: t.context.provider,
+    },
+    payload: {
+      granules: [t.context.granule],
+    },
+  };
+
   await writeGranulesFromMessage({
-    cumulusMessage,
+    cumulusMessage: completedCumulusMessage,
     executionCumulusId,
     providerCumulusId,
     knex,
