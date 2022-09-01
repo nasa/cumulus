@@ -30,10 +30,12 @@ test.before((t) => {
   t.context.validToken = 'valid-token';
   t.context.invalidToken = 'invalid-token';
 
+  process.env.OAUTH_PROVIDER = 'earthdata';
   process.env.DISTRIBUTION_REDIRECT_ENDPOINT = 'https://blah';
-  process.env.EARTHDATA_BASE_URL = 'https://uat.urs.earthdata.nasa.gov';
-  process.env.EARTHDATA_CLIENT_ID = 'this-client-id';
-  process.env.EARTHDATA_CLIENT_PASSWORD = 'this-client-password';
+  process.env.OAUTH_HOST_URL = 'https://uat.urs.earthdata.nasa.gov';
+  process.env.OAUTH_CLIENT_ID = 'this-client-id';
+  process.env.OAUTH_CLIENT_PASSWORD = 'this-client-password';
+  process.env.AccessTokensTable = 'this-tokenTable';
 
   nock.disableNetConnect();
 
@@ -56,13 +58,13 @@ test.before((t) => {
   ];
 
   nockInterceptors.forEach(({ token, statusCode, body }) => {
-    nock(process.env.EARTHDATA_BASE_URL)
+    nock(process.env.OAUTH_HOST_URL)
       .persist()
       .post(
         '/oauth/tokens/user',
         {
           token,
-          client_id: process.env.EARTHDATA_CLIENT_ID,
+          client_id: process.env.OAUTH_CLIENT_ID,
           on_behalf_of: t.context.callerClientId,
         }
       )
@@ -122,7 +124,7 @@ test('GET /s3credentials forwards the X-Request-Id header to Earthdata Login', a
   };
 
   const nockScope = nock(
-    process.env.EARTHDATA_BASE_URL,
+    process.env.OAUTH_HOST_URL,
     {
       reqheaders: {
         'X-Request-Id': event.headers['X-Request-Id'],
@@ -133,7 +135,7 @@ test('GET /s3credentials forwards the X-Request-Id header to Earthdata Login', a
       '/oauth/tokens/user',
       {
         token: event.headers['EDL-Token'],
-        client_id: process.env.EARTHDATA_CLIENT_ID,
+        client_id: process.env.OAUTH_CLIENT_ID,
         on_behalf_of: t.context.callerClientId,
       }
     )
