@@ -3,6 +3,7 @@
 const AggregateError = require('aggregate-error');
 const isEmpty = require('lodash/isEmpty');
 const omit = require('lodash/omit');
+const isArray = require('lodash/isArray');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -58,8 +59,9 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const {
   RecordDoesNotExist,
+  CumulusMessageError,
 } = require('@cumulus/errors');
-const { isArray } = require('lodash');
+
 const FileUtils = require('../FileUtils');
 const {
   getExecutionProcessingTimeInfo,
@@ -451,26 +453,29 @@ const _writeGranuleFiles = async ({
  * @param {Object} params.granule - An API granule object
  * @param {Object} params.provider - An API provider object
  *
-* @returns {Promise<Array>} - A list of file objects once resolved
+* @returns {Promise<Array> | undefined} - A list of file objects once resolved
  */
 const _generateFilesFromGranule = async ({
   granule,
   provider,
 }) => {
+  // FUTURE: null files are currently not supported in update payloads
+  // RDS Phase 3 should revise logic to accept an explict null value
+  if (granule.files === null) {
+    throw new CumulusMessageError('granule.files must not be null');
+  }
+
   // This is necessary to set properties like
   // `key`, which is required for the PostgreSQL schema. And
   // `size` which is used to calculate the granule product
   // volume
-  const files = await FileUtils.buildDatabaseFiles({
-    s3: s3(),
-    providerURL: buildURL(provider),
-    files: granule.files,
-  });
-
-  if (isArray(files) && files.length > 0) {
-    return files;
+  if (isArray(granule.files) && granule.files.length > 0) {
+    return await FileUtils.buildDatabaseFiles({
+      s3: s3(),
+      providerURL: buildURL(provider),
+      files: granule.files,
+    });
   }
-
   return undefined;
 };
 

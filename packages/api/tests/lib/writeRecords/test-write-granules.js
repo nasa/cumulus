@@ -113,7 +113,6 @@ const updateGranule = async (t, updateGranulePayload, writeFromMessage = false) 
   } else {
     await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
   }
-
   const dynamoGranule = await granuleModel.get({ granuleId });
   const pgGranule = await granulePgModel.get(
     knex,
@@ -706,6 +705,91 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
     apiGranule,
     dynamoGranule
   );
+});
+
+test.serial('writeGranulesFromMessage() given a null files key will throw an error', async (t) => {
+  const {
+    collectionCumulusId,
+    esGranulesClient,
+    granule,
+    granuleModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  // Need a message in 'completed' state to allow files writes
+  const completedCumulusMessage = {
+    cumulus_meta: {
+      workflow_start_time: t.context.workflowStartTime,
+      state_machine: t.context.stateMachineArn,
+      execution_name: t.context.executionName,
+    },
+    meta: {
+      status: 'completed',
+      collection: t.context.collection,
+      provider: t.context.provider,
+    },
+    payload: {
+      granules: [t.context.granule],
+    },
+  };
+
+  await writeGranulesFromMessage({
+    cumulusMessage: completedCumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  // Files exist in all datastores
+  const originalPgGranule = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+  const originalApiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: originalPgGranule,
+    knexOrTransaction: knex,
+  });
+  const originalDynamoGranule = await granuleModel.get({ granuleId });
+  const originalEsGranule = await esGranulesClient.get(granuleId);
+  const originalPayloadFiles = t.context.files;
+
+  originalApiGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  originalDynamoGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  originalEsGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  originalPayloadFiles.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+
+  t.deepEqual(originalApiGranule.files, originalPayloadFiles);
+  t.deepEqual(originalDynamoGranule.files, originalPayloadFiles);
+  t.deepEqual(originalEsGranule.files, originalPayloadFiles);
+
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    files: null,
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  const [error] = await t.throwsAsync(updateGranule(t, updateGranulePayload, true));
+  t.is(error.message, 'granule.files must not be null');
 });
 
 // FUTURE: This will need file write logic updates. Currently providing an empty
@@ -1744,6 +1828,69 @@ test.serial('writeGranuleFromApi() given a partial granule updates all datastore
   t.deepEqual(
     apiGranule,
     dynamoGranule
+  );
+});
+
+test.serial('writeGranuleFromApi() given a null files key will throw an error', async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    esGranulesClient,
+    granule,
+    granuleId,
+    granuleModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
+
+  // Files exist in all datastores
+  const originalPgGranule = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+  const originalApiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: originalPgGranule,
+    knexOrTransaction: knex,
+  });
+  const originalDynamoGranule = await granuleModel.get({ granuleId });
+  const originalEsGranule = await esGranulesClient.get(granuleId);
+  const originalPayloadFiles = t.context.files;
+
+  originalApiGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  originalDynamoGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  originalEsGranule.files.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+  originalPayloadFiles.sort(
+    (f1, f2) => sortfilesByBuckets(f1, f2)
+  );
+
+  t.deepEqual(originalApiGranule.files, originalPayloadFiles);
+  t.deepEqual(originalDynamoGranule.files, originalPayloadFiles);
+  t.deepEqual(originalEsGranule.files, originalPayloadFiles);
+
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    files: null,
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  await t.throwsAsync(
+    updateGranule(t, updateGranulePayload),
+    { message: 'granule.files must not be null' }
   );
 });
 
