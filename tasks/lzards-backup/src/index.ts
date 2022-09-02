@@ -40,8 +40,8 @@ import {
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
-const CREDS_EXPIRY_SECONDS = 1000;
 const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
+const CREDS_EXPIRY_SECONDS = S3_LINK_EXPIRY_SECONDS_DEFAULT;
 
 export const generateCloudfrontUrl = async (params: {
   Bucket: string,
@@ -68,10 +68,11 @@ export const generateDirectS3Url = async (params: {
   const secretAccessKey = roleCreds?.Credentials?.SecretAccessKey;
   const sessionToken = roleCreds?.Credentials?.SessionToken;
   const accessKeyId = roleCreds?.Credentials?.AccessKeyId;
+  const expiration = roleCreds?.Credentials?.Expiration;
 
-  const s3AccessTimeoutSeconds = (
-    process.env.lzards_s3_link_timeout || S3_LINK_EXPIRY_SECONDS_DEFAULT
-  );
+  const s3AccessTimeoutSeconds = process.env.lzards_s3_link_timeout
+    ? Number(process.env.lzards_s3_link_timeout) : S3_LINK_EXPIRY_SECONDS_DEFAULT;
+
   let s3Config;
   if ((!inTestMode() || usePassedCredentials) && (secretAccessKey && accessKeyId)) {
     s3Config = {
@@ -80,12 +81,13 @@ export const generateDirectS3Url = async (params: {
         secretAccessKey,
         accessKeyId,
         sessionToken,
+        expiration,
       },
     };
   }
   const s3ObjectStore = new S3ObjectStore(s3Config);
   const s3Uri = buildS3Uri(Bucket, Key);
-  return await s3ObjectStore.signGetObject(s3Uri, {}, { Expires: s3AccessTimeoutSeconds });
+  return await s3ObjectStore.signGetObject(s3Uri, {}, {}, { expiresIn: s3AccessTimeoutSeconds });
 };
 
 export const generateAccessUrl = async (params: {
