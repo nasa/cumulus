@@ -58,7 +58,6 @@ const {
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
-const { file } = require('../../../models/schemas');
 
 /**
  * Helper function for updating an existing granule with a static payload and validating
@@ -644,9 +643,6 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
     status: granule.status,
   };
 
@@ -782,9 +778,6 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
     granuleId,
     collectionId: granule.collectionId,
     files: null,
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
     status: granule.status,
   };
 
@@ -851,9 +844,6 @@ test.skip('writeGranulesFromMessage() given an empty files array will remove all
     granuleId,
     collectionId: granule.collectionId,
     files: [],
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
     status: granule.status,
   };
 
@@ -1748,13 +1738,15 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
     granuleId,
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
     status: granule.status,
   };
 
-  const { updatedPgGranuleFields, pgGranule } = await updateGranule(t, updateGranulePayload);
+  const {
+    updatedPgGranuleFields,
+    pgGranule,
+    esGranule,
+    dynamoGranule,
+  } = await updateGranule(t, updateGranulePayload);
 
   // FUTURE:
   // 1. 'created_at' is updated during PUT/PATCH
@@ -1766,41 +1758,6 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
     omit(removeNilProperties(pgGranule), omitList),
     omit(removeNilProperties({ ...originalpgGranule, ...updatedPgGranuleFields }), omitList)
   );
-});
-
-test.serial('writeGranuleFromApi() given a partial granule updates all datastores with the same data', async (t) => {
-  const {
-    collectionCumulusId,
-    esClient,
-    esGranulesClient,
-    granule,
-    granuleId,
-    granuleModel,
-    granulePgModel,
-    knex,
-  } = t.context;
-
-  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
-
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await granulePgModel.exists(
-    knex,
-    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  ));
-  t.true(await esGranulesClient.exists(granuleId));
-
-  // Update existing granule with a partial granule object
-  const updateGranulePayload = {
-    granuleId,
-    collectionId: granule.collectionId,
-    cmrLink: 'updatedGranuled.com', // Only field we're changing
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
-    status: granule.status,
-  };
-
-  const { esGranule, dynamoGranule, pgGranule } = await updateGranule(t, updateGranulePayload);
 
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
