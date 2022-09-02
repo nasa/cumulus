@@ -69,6 +69,9 @@ Currently the following values are supported:
 
 - discover_granules_task_timeout
 - discover_pdrs_task_timeout
+- fake_processing_task_timeout
+- files_to_granules_task_timeout
+- hello_world_task_timeout
 - hyrax_metadata_update_tasks_timeout
 - lzards_backup_task_timeout
 - move_granules_task_timeout
