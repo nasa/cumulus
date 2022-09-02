@@ -236,5 +236,7 @@ module.exports = {
   buildLoginErrorTemplateVars,
   ensureAuthorizedOrRedirect,
   getConfigurations,
+  handleAuthBearerToken,
+  isAuthBearTokenRequest,
   useSecureCookies,
 };
