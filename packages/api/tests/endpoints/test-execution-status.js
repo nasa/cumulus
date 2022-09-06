@@ -182,7 +182,6 @@ const executionExistsMock = (arn) => {
 
 let jwtAuthToken;
 let accessTokenModel;
-let granuleModel;
 let executionModel;
 let mockedSF;
 let mockedSFExecution;
@@ -297,9 +296,6 @@ test.before(async (t) => {
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', collectionId: t.context.collectionId }),
   ];
 
-  await granuleModel.create(t.context.fakeGranules[0]);
-  await granuleModel.create(t.context.fakeGranules[1]);
-
   // create fake Postgres granule records
   t.context.fakePGGranules = [
     fakeGranuleRecordFactory({
@@ -339,8 +335,6 @@ test.after.always(async (t) => {
   mockedSF.restore();
   mockedSFExecution.restore();
   await executionModel.deleteTable();
-  await granuleModel.deleteTable();
-
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,

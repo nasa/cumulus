@@ -97,7 +97,6 @@ test.after.always(async (t) => {
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
   }).promise();
-  await t.context.granulesModel.deleteTable();
   await destroyLocalTestDb({
     ...t.context,
     testDbName,

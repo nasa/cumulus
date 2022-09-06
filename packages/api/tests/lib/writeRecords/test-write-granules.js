@@ -274,7 +274,6 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     executionCumulusId,
     esClient,
     knex,
-    granuleModel,
     granuleId,
     collectionCumulusId,
     executionUrl,
@@ -292,7 +291,6 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     apiGranuleRecord,
     postgresGranuleRecord,
     executionCumulusId,
-    granuleModel,
     knex,
     esClient,
     snsEventType: 'Update',
@@ -344,7 +342,6 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     apiGranuleRecord: updatedapiGranuleRecord,
     postgresGranuleRecord: updatedPgGranuleRecord,
     executionCumulusId,
-    granuleModel,
     knex,
     esClient,
     snsEventType: 'Update',
@@ -373,7 +370,6 @@ test.serial('writeGranulesFromMessage() returns undefined if message has no gran
     knex,
     executionCumulusId,
     providerCumulusId,
-    granuleModel,
   } = t.context;
   const cumulusMessage = {};
   const actual = await writeGranulesFromMessage({
@@ -381,7 +377,6 @@ test.serial('writeGranulesFromMessage() returns undefined if message has no gran
     executionCumulusId,
     providerCumulusId,
     knex,
-    granuleModel,
   });
   t.is(actual, undefined);
 });
@@ -391,7 +386,6 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
     knex,
     executionCumulusId,
     providerCumulusId,
-    granuleModel,
   } = t.context;
   const cumulusMessage = { granules: [] };
   const actual = await writeGranulesFromMessage({
@@ -399,7 +393,6 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
     executionCumulusId,
     providerCumulusId,
     knex,
-    granuleModel,
   });
   t.is(actual, undefined);
 });
@@ -724,7 +717,6 @@ test.serial('writeGranulesFromMessage() handles successful and failing writes in
     cumulusMessage,
     executionCumulusId,
     granuleId,
-    granuleModel,
     knex,
     providerCumulusId,
     stepFunctionUtils,
@@ -741,7 +733,6 @@ test.serial('writeGranulesFromMessage() handles successful and failing writes in
   await t.throwsAsync(writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
-    granuleModel,
     knex,
     providerCumulusId,
     testOverrides: { stepFunctionUtils },

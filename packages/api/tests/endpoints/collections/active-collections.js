@@ -36,7 +36,6 @@ let esClient;
 
 let jwtAuthToken;
 let accessTokenModel;
-let granuleModel;
 
 test.before(async () => {
   const esAlias = randomId('esAlias');
@@ -47,9 +46,6 @@ test.before(async () => {
     alias: esAlias,
   });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
-
-  granuleModel = new models.Granule({ tableName: process.env.GranulesTable });
-  await granuleModel.createTable();
 
   const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);
@@ -95,7 +91,6 @@ test.before(async () => {
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });

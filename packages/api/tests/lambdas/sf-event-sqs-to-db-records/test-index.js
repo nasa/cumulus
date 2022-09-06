@@ -273,10 +273,8 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   const {
     PdrsTopicArn,
-    granuleModel,
     ExecutionsTopicArn,
   } = t.context;
-  await granuleModel.deleteTable();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,

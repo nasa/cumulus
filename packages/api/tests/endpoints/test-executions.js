@@ -70,7 +70,6 @@ let jwtAuthToken;
 let accessTokenModel;
 let asyncOperationModel;
 let executionModel;
-let granuleModel;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('asyncOperation');
 process.env.ExecutionsTable = randomId('executions');
@@ -265,10 +264,9 @@ test.beforeEach(async (t) => {
 
   // create fake Postgres granule records
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
-    const dynamoRecord = await granuleModel.create(fakeGranule);
-    await indexer.indexGranule(esClient, dynamoRecord, esIndex);
+    await indexer.indexGranule(esClient, fakeGranule, esIndex);
     const granulePgRecord = await translateApiGranuleToPostgresGranule(
-      dynamoRecord,
+      fakeGranule,
       t.context.knex
     );
     return granulePgRecord;
@@ -302,7 +300,6 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await asyncOperationModel.deleteTable();
   await executionModel.deleteTable();
-  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
