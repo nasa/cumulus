@@ -552,18 +552,15 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
   knex,
   snsEventType,
 }) => {
-  const { status } = apiGranuleRecord;
   // FUTURE: this will not allow removal of files if a user provides
   // an empty files array in a granule update payload
-  if (isStatusFinalState(status) && ('files' in apiGranuleRecord)) {
-    await _writeGranuleFiles({
-      granuleCumulusId: granuleCumulusId,
-      granule: apiGranuleRecord,
-      knex,
-      snsEventType,
-      granuleModel: new Granule(),
-    });
-  }
+  await _writeGranuleFiles({
+    granuleCumulusId: granuleCumulusId,
+    granule: apiGranuleRecord,
+    knex,
+    snsEventType,
+    granuleModel: new Granule(),
+  });
 };
 
 /**
@@ -600,12 +597,17 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
-  await _writePostgresFilesFromApiGranuleFiles({
-    apiGranuleRecord,
-    granuleCumulusId: pgGranule.cumulus_id,
-    knex,
-    snsEventType,
-  });
+
+  const { status } = apiGranuleRecord;
+
+  if (isStatusFinalState(status) && ('files' in apiGranuleRecord)) {
+    await _writePostgresFilesFromApiGranuleFiles({
+      apiGranuleRecord,
+      granuleCumulusId: pgGranule.cumulus_id,
+      knex,
+      snsEventType,
+    });
+  }
 
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
