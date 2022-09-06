@@ -180,20 +180,23 @@ describe('The Lzards Backup Task ', () => {
     it('returns info for a request for a single granule successfully backed up to lzards', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
+        console.log('in the else');
         const lzardsGetPayload = JSON.stringify({
           searchParams: {
             'metadata[collection]': `${collection.name}___${collection.version}`,
             'metadata[granuleId]': granuleId,
           },
         });
-
+        console.log('payload');
+        console.log(lzardsGetPayload);
         const lzardsApiGetOutput = await pTimeout(
           lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
           (functionConfig.Timeout + 10) * 1000
         );
 
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
-
+        console.log('payload2');
+        console.log(payload);
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(1);
         expect(payload.items[0].metadata.granuleId).toBe(granuleId);
