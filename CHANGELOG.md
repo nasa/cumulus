@@ -27,6 +27,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
 
+### Changed
+
+- **CUMULUS-2974**
+  - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
+    deletion, including collection, deleted granule ID, deleted files, and deletion time.
+
 ## [v13.2.1] 2022-8-10 [BACKPORT]
 
 ### Notable changes
