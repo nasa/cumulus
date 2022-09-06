@@ -136,7 +136,7 @@ resource "aws_lambda_function" "s3_credentials" {
   role             = aws_iam_role.s3_credentials_lambda[0].arn
   runtime          = "nodejs14.x"
   timeout          = 50
-  memory_size      = 320
+  memory_size      = 512
 
   vpc_config {
     subnet_ids         = var.subnet_ids
@@ -150,9 +150,9 @@ resource "aws_lambda_function" "s3_credentials" {
       CMR_ENVIRONMENT                = var.cmr_environment
       DISTRIBUTION_ENDPOINT          = var.tea_external_api_endpoint
       DISTRIBUTION_REDIRECT_ENDPOINT = "${var.tea_external_api_endpoint}redirect"
-      EARTHDATA_BASE_URL             = var.urs_url
-      EARTHDATA_CLIENT_ID            = var.urs_client_id
-      EARTHDATA_CLIENT_PASSWORD      = var.urs_client_password
+      OAUTH_CLIENT_ID                = var.urs_client_id
+      OAUTH_CLIENT_PASSWORD          = var.urs_client_password
+      OAUTH_HOST_URL                 = var.urs_url
       OAUTH_PROVIDER                 = "earthdata"
       STS_CREDENTIALS_LAMBDA         = var.sts_credentials_lambda_function_arn
       STS_POLICY_HELPER_LAMBDA       = var.sts_policy_helper_lambda_function_arn
