@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     in the payload will not be updated in the datastores.
   - If a `null` files key is provided in an update payload (e.g. `files: null`),
     an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - If an empty array is provided for the `files` key, all files will be removed in all datastores
 
 - **CUMULUS-3027**
   - Pinned typescript to ~4.7.x to address typing incompatibility issues

@@ -552,8 +552,6 @@ const _writePostgresFilesFromApiGranuleFiles = async ({
   knex,
   snsEventType,
 }) => {
-  // FUTURE: this will not allow removal of files if a user provides
-  // an empty files array in a granule update payload
   await _writeGranuleFiles({
     granuleCumulusId: granuleCumulusId,
     granule: apiGranuleRecord,
