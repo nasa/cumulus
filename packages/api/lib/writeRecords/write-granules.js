@@ -856,7 +856,7 @@ const writeGranulesFromMessage = async ({
   const results = await Promise.allSettled(granules.map(
     async (granule) => {
       // FUTURE: null files are currently not supported in update payloads
-      // RDS Phase 3 should revise logic to accept an explict null value
+      // RDS Phase 3 should revise logic to accept an explicit null value
       if (granule.files === null) {
         throw new CumulusMessageError('granule.files must not be null');
       }
