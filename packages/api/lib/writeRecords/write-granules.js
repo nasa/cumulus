@@ -226,9 +226,6 @@ const _removeExcessFiles = async ({
   knex,
   writtenFiles,
 }) => {
-  if (writtenFiles.length === 0) {
-    throw new Error('_removeExcessFiles called with no written files');
-  }
   const excludeCumulusIds = writtenFiles.map((file) => file.cumulus_id);
   return await filePgModel.deleteExcluding({
     knexOrTransaction: knex,
@@ -388,14 +385,9 @@ const updateGranuleStatusToFailed = async (params) => {
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
- * @param {Object} [params.files] - File objects
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
- * @param {Object} params.workflowError - Error from the workflow
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {string} params.snsEventType - SNS Event Type
- * @param {Object} [params.granuleModel] - Optional Granule DDB model override
- * @param {Object} [params.granulePgModel] - Optional Granule PG model override
  * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
@@ -405,7 +397,7 @@ const _writeGranuleFiles = async ({
 }) => {
   let fileRecords = [];
   const { files, granuleId, status, error: workflowError } = granule;
-  if (isStatusFinalState(status)) {
+  if (isStatusFinalState(status) && isArray(files) && files.length > 0) {
     fileRecords = _generateFilePgRecords({
       files,
       granuleCumulusId,
@@ -444,39 +436,6 @@ const _writeGranuleFiles = async ({
       error: errorsObject,
     });
   }
-};
-
-/**
- * Transform granule files to latest file API structure
- *
- * @param {Object} params
- * @param {Object} params.granule - An API granule object
- * @param {Object} params.provider - An API provider object
- *
-* @returns {Promise<Array> | undefined} - A list of file objects once resolved
- */
-const _generateFilesFromGranule = async ({
-  granule,
-  provider,
-}) => {
-  // FUTURE: null files are currently not supported in update payloads
-  // RDS Phase 3 should revise logic to accept an explict null value
-  if (granule.files === null) {
-    throw new CumulusMessageError('granule.files must not be null');
-  }
-
-  // This is necessary to set properties like
-  // `key`, which is required for the PostgreSQL schema. And
-  // `size` which is used to calculate the granule product
-  // volume
-  if (isArray(granule.files) && granule.files.length > 0) {
-    return await FileUtils.buildDatabaseFiles({
-      s3: s3(),
-      providerURL: buildURL(provider),
-      files: granule.files,
-    });
-  }
-  return undefined;
 };
 
 const _writeGranuleRecords = async (params) => {
@@ -894,8 +853,21 @@ const writeGranulesFromMessage = async ({
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
     async (granule) => {
-      // compute granule specific data.
-      const files = await _generateFilesFromGranule({ granule, provider });
+      // FUTURE: null files are currently not supported in update payloads
+      // RDS Phase 3 should revise logic to accept an explict null value
+      if (granule.files === null) {
+        throw new CumulusMessageError('granule.files must not be null');
+      }
+
+      // This is necessary to set properties like
+      // `key`, which is required for the PostgreSQL schema. And
+      // `size` which is used to calculate the granule product
+      // volume
+      const files = await FileUtils.buildDatabaseFiles({
+        s3: s3(),
+        providerURL: buildURL(provider),
+        files: granule.files,
+      });
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
       const productVolume = getGranuleProductVolume(files);
