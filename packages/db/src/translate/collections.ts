@@ -14,6 +14,7 @@ export const translatePostgresCollectionToApiCollection = (
   updatedAt: collectionRecord.updated_at.getTime(),
   name: collectionRecord.name,
   version: collectionRecord.version,
+  dataType: collectionRecord.data_type,
   process: collectionRecord.process,
   url_path: collectionRecord.url_path,
   duplicateHandling: collectionRecord.duplicate_handling,
@@ -39,6 +40,7 @@ export const translateApiCollectionToPostgresCollection = (
   const translatedRecord: PostgresCollection = {
     name: record.name,
     version: record.version,
+    data_type: record.dataType,
     process: record.process,
     url_path: record.url_path,
     duplicate_handling: record.duplicateHandling,

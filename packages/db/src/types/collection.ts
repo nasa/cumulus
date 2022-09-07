@@ -6,6 +6,7 @@ export interface PostgresCollection {
   granule_id_validation_regex: string,
   granule_id_extraction_regex: string,
   files: string,
+  data_type?: string,
   process?: string,
   duplicate_handling?: DuplicateHandling,
   report_to_ems?: boolean,

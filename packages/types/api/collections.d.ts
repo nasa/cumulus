@@ -14,6 +14,7 @@ export interface CollectionFile {
 }
 
 export interface PartialCollectionRecord {
+  dataType?: string,
   duplicateHandling?: DuplicateHandling,
   files?: CollectionFile[],
   granuleId?: string,
