@@ -428,48 +428,6 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
   );
 });
 
-test('translatePostgresGranuleToApiGranule omits files property from API granule if there are no PostgreSQL files', async (t) => {
-  const {
-    knex,
-    pdrPgModel,
-    providerPgModel,
-    collectionPgModel,
-    filePgModel,
-    collectionCumulusId,
-    collectionId,
-  } = t.context;
-
-  const [pgGranule] = await t.context.granulePgModel.create(
-    knex,
-    fakeGranuleRecordFactory({
-      collection_cumulus_id: collectionCumulusId,
-    }),
-    '*'
-  );
-
-  const expectedApiGranule = {
-    collectionId,
-    createdAt: pgGranule.created_at.getTime(),
-    granuleId: pgGranule.granule_id,
-    status: pgGranule.status,
-    updatedAt: pgGranule.updated_at.getTime(),
-  };
-
-  const result = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: pgGranule,
-    knexOrTransaction: knex,
-    collectionPgModel,
-    pdrPgModel,
-    providerPgModel,
-    filePgModel,
-  });
-
-  t.deepEqual(
-    result,
-    expectedApiGranule
-  );
-});
-
 test('translatePostgresGranuleToApiGranule throws an error if the Collection does not match', async (t) => {
   const {
     knex,
