@@ -12,7 +12,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { fakeCumulusMessageFactory } = require('../../lib/testUtils');
 
 const {
-  processDeadLetterArchive,
+  processDeadLetterArchive, generateNewArchiveKeyForFailedMessage,
 } = require('../../lambdas/process-s3-dead-letter-archive');
 
 test.before(async (t) => {
@@ -137,10 +137,10 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
   t.is(remainingDeadLetters.length, 0);
 });
 
-test('processDeadLetterArchive only deletes dead letters that process successfully', async (t) => {
+test('processDeadLetterArchive deletes dead letter that processed successfully', async (t) => {
   const { bucket, path } = t.context;
   const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
-  const failingMessageKey = t.context.messageKeys[0];
+  const processedMessageKey = t.context.messageKeys[1];
   const writeRecordsErrorThrower = ({ cumulusMessage }) => {
     if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
     throw new Error('write failure');
@@ -152,9 +152,76 @@ test('processDeadLetterArchive only deletes dead letters that process successful
     writeRecordsFunction: writeRecordsErrorThrower,
   });
 
-  const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
-  t.is(remainingDeadLetters.length, 1);
+  // Check that processed message key was deleted
+  const processedDeadLetterExists = await S3.fileExists(bucket, processedMessageKey);
+  t.is(processedDeadLetterExists, false);
+  t.deepEqual(output.processingSucceededKeys, [processedMessageKey]);
+});
+
+test('processDeadLetterArchive saves failed dead letters to different S3 and removes from previous S3 path', async (t) => {
+  const {
+    bucket,
+    path,
+    messageKeys,
+  } = t.context;
+  const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
+  const failingMessageKey = messageKeys[0];
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(failingMessageKey);
+  const writeRecordsErrorThrower = ({ cumulusMessage }) => {
+    if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
+    throw new Error('write failure');
+  };
+
+  const output = await processDeadLetterArchive({
+    bucket,
+    path,
+    writeRecordsFunction: writeRecordsErrorThrower,
+  });
+
+  // Check that failing message key was deleted
+  const remainingDeadLetterExists = await S3.fileExists(bucket, failingMessageKey);
+  t.is(remainingDeadLetterExists, false);
   t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
+
+  // Check that failing message key exists in new location
+  const savedDeadLetterExists = await S3.fileExists(bucket, s3KeyForFailedMessage);
+  t.not(savedDeadLetterExists, false);
+});
+
+test.serial('processDeadLetterArchive does not remove message from archive S3 path if transfer to new archive path fails', async (t) => {
+  const {
+    bucket,
+    path,
+    messageKeys,
+  } = t.context;
+  const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
+  const failingMessageKey = messageKeys[0];
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(failingMessageKey);
+  const writeRecordsErrorThrower = ({ cumulusMessage }) => {
+    if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
+    throw new Error('write failure');
+  };
+  const s3Stub = sinon.stub(S3, 's3PutObject').throws(
+    new Error('Failed to put object')
+  );
+
+  const output = await processDeadLetterArchive({
+    bucket,
+    path,
+    writeRecordsFunction: writeRecordsErrorThrower,
+  });
+
+  // Check that failing message key was not deleted
+  const remainingDeadLetterExists = await S3.fileExists(bucket, failingMessageKey);
+  t.not(remainingDeadLetterExists, false);
+  t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
+
+  // Check that failing message key does not exist in new location
+  const deadLetterExistsInNewLocation = await S3.fileExists(bucket, s3KeyForFailedMessage);
+  t.is(deadLetterExistsInNewLocation, false);
+  t.teardown(() => {
+    s3Stub.restore();
+  });
 });
 
 test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
