@@ -23,6 +23,7 @@ const {
 } = require('@cumulus/db');
 const { log } = require('console');
 const models = require('../models');
+const { fakeGranuleFactoryV2 } = require('../lib/testUtils');
 const { getESClientAndIndex } = require('./local-test-defaults');
 const {
   erasePostgresTables,
@@ -82,7 +83,7 @@ async function addGranules(granules) {
     granules.map(async (granule) => {
       const newGranule = fakeGranuleFactoryV2(
         {
-        ...granule, 
+          ...granule,
         }
       );
       await indexer.indexGranule(es.client, newGranule, es.index);
