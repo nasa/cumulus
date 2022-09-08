@@ -44,6 +44,8 @@ describe('The Lzards Backup Task ', () => {
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
       }).promise();
+      console.log(`functionconfig: ${functionConfig}`);
+      //console.log(functionConfig);
       granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 

@@ -30,8 +30,8 @@ const response = await sendGetRequestToLzards({ searchParams });
 ### Required Environment Variables
 | Name | Example |
 | ---- | ------- |
-| lzards_api | https://api.launchpad.nasa.gov/icam/api/sm/v1 |
-| launchpad_api | https://lzards.sit.earthdata.nasa.gov/api/backups |
+| launchpad_api | https://api.launchpad.nasa.gov/icam/api/sm/v1 |
+| lzards_api | https://lzards.sit.earthdata.nasa.gov/api/backups |
 | lzards_launchpad_passphrase_secret_name |abc-tf-lzards-api-client-test-launchpad-passphraseXXXXX lzards_launchpad_certificate launchpad.pfx |
 | stackName | abc-tf |
 | system_bucket | abc-tf-internal |
