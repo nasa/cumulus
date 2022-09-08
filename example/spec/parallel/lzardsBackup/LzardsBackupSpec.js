@@ -164,14 +164,15 @@ describe('The Lzards Backup Task ', () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
         const lzardsGetPayload = JSON.stringify({ searchParams: {} });
-
+        console.log('trying the first error, where does this fail? ln 167');
+        console.log(lzardsGetPayload);
         const lzardsApiGetOutput = await pTimeout(
           lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
           (functionConfig.Timeout + 10) * 1000
         );
-
+        console.log('trying the first error, where does this fail? ln 173');
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
-
+        console.log('trying the first error, where does this fail? ln 175');
         expect(lzardsApiGetOutput.FunctionError).toBe('Unhandled');
         expect(payload.errorMessage).toBe('The required searchParams is not provided or empty');
       }
@@ -191,12 +192,13 @@ describe('The Lzards Backup Task ', () => {
         console.log(lzardsGetPayload);
         const lzardsApiGetOutput = await pTimeout(
           lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
-          (functionConfig.Timeout + 10) * 1000
+          (functionConfig.Timeout + 50) * 1000
         );
 
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
-        console.log('payload2');
+        console.log('payload22');
         console.log(payload);
+        console.log(`output: ${lzardsApiGetOutput}`);
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(1);
         expect(payload.items[0].metadata.granuleId).toBe(granuleId);
