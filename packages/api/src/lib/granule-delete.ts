@@ -57,7 +57,8 @@ const deleteS3Files = async (
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
  * @param {Object} params.granuleModelClient - Granule Dynamo model
- * @return {Object} - Granule Deletion details
+ * @param {Object} params.esClient - Elasticsearch client
+ * @returns {Object} - Granule Deletion details
  */
 const deleteGranuleAndFiles = async (params: {
   knex: Knex,
@@ -99,9 +100,9 @@ const deleteGranuleAndFiles = async (params: {
       collection: dynamoGranule.collectionId,
       deletedGranuleId: dynamoGranule.granuleId,
       deletionTime: Date.now(),
-      deletedFiles: dynamoGranule.files
+      deletedFiles: dynamoGranule.files,
     };
-  } else if (pgGranule && pgGranule.published) {
+  } if (pgGranule && pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   } else {
     // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
