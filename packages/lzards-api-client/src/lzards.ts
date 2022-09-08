@@ -49,7 +49,7 @@ export async function sendGetRequestToLzards(
     getAuthTokenFunction = getAuthToken,
   }: LzardsApiGetRequestParameters
 ) {
-  console.log('line52')
+  console.log('line52');
   const lzardsApiUri = getRequiredEnvVar('lzards_api');
   console.log('in the sendGetRequestToLzards ln 54');
   console.log(lzardsApiUri);
