@@ -185,6 +185,8 @@ resource "aws_lambda_function" "lzards_api_client_test" {
   handler          = "index.handler"
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "nodejs14.x"
+  timeout          = 600
+  memory_size      = 512
 
   environment {
     variables = {
