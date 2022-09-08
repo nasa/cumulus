@@ -144,7 +144,7 @@ test.after.always(async (t) => {
 });
 
 test.serial('deleteGranuleAndFiles() throws an error if the granule is published', async (t) => {
-  const { newPgGranule, newDynamoGranule, s3Buckets } = await createGranuleAndFiles({
+  const { newPgGranule, s3Buckets } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     collectionId: t.context.collectionId,
     collectionCumulusId: t.context.collectionCumulusId,
@@ -155,7 +155,6 @@ test.serial('deleteGranuleAndFiles() throws an error if the granule is published
   await t.throwsAsync(
     deleteGranuleAndFiles({
       knex: t.context.knex,
-      dynamoGranule: newDynamoGranule,
       pgGranule: newPgGranule,
       esClient: t.context.esClient,
     }),
@@ -285,7 +284,6 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
 test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL granule delete fails', async (t) => {
   const {
     newPgGranule,
-    newDynamoGranule,
     files,
     s3Buckets,
   } = await createGranuleAndFiles({
@@ -306,7 +304,6 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
   await t.throwsAsync(
     deleteGranuleAndFiles({
       knex: t.context.knex,
-      dynamoGranule: newDynamoGranule,
       pgGranule: newPgGranule,
       granulePgModel: mockGranuleModel,
       esClient: t.context.esClient,
@@ -346,7 +343,6 @@ test.serial('deleteGranuleAndFiles() will not delete S3 Files if the PostgreSQL 
 test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the Elasticsearch granule delete fails', async (t) => {
   const {
     newPgGranule,
-    newDynamoGranule,
     files,
     s3Buckets,
   } = await createGranuleAndFiles({
@@ -369,7 +365,6 @@ test.serial('deleteGranuleAndFiles() will not delete granule or S3 files if the 
   await t.throwsAsync(
     deleteGranuleAndFiles({
       knex: t.context.knex,
-      dynamoGranule: newDynamoGranule,
       pgGranule: newPgGranule,
       esClient: fakeEsClient,
     }),
