@@ -10,13 +10,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
-  
+
 ### Changed
 
 - **CUMULUS-3027**
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
+- **CUMULUS-2913**
+  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
+    letter archive that fail to process to new S3 location.
 
 ### Fixed
 
