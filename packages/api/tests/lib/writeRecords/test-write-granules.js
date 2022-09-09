@@ -716,7 +716,7 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
   );
 });
 
-test.serial('writeGranulesFromMessage() given an empty files key will remove all existing files and keep Postgres/Dynamo/Elastic in-sync', async (t) => {
+test.serial('writeGranulesFromMessage() given an empty array as a files key will remove all existing files and keep Postgres/Dynamo/Elastic in-sync', async (t) => {
   const {
     collectionCumulusId,
     executionCumulusId,
@@ -1845,7 +1845,7 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
   );
 });
 
-test.serial('writeGranuleFromApi() given an empty files key will remove all existing files and keep Postgres/Dynamo/Elastic in-sync', async (t) => {
+test.serial('writeGranuleFromApi() given an empty array as a files key will remove all existing files and keep Postgres/Dynamo/Elastic in-sync', async (t) => {
   const {
     collectionCumulusId,
     esClient,
