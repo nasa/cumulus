@@ -133,12 +133,13 @@ describe('A dead letter record archive processing operation', () => {
         },
       });
 
+      const failingExecutionName = `execution-${randomString(16)}`;
       const failingMessage = {
         cumulus_meta: {
           workflow_start_time: 122,
           cumulus_version: '8.0.0',
           state_machine: 'arn:aws:states:us-east-1:1234:execution:state-machine-name:execution-name',
-          execution_name: executionArn.split(':').pop(),
+          execution_name: failingExecutionName,
         },
         meta: {
           status: 'failed',
@@ -154,7 +155,7 @@ describe('A dead letter record archive processing operation', () => {
       failingMessageKey = `${archivePath}/${failingMessage.cumulus_meta.execution_name}`;
       await Promise.all([
         putJsonS3Object(systemBucket, messageKey, cumulusMessage),
-        putJsonS3Object(systemBucket, messageKey, failingMessage),
+        putJsonS3Object(systemBucket, failingMessageKey, failingMessage),
       ]);
 
       const postRecoverResponse = await postRecoverCumulusMessages(
