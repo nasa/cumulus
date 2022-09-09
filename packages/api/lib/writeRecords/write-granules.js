@@ -855,11 +855,11 @@ const writeGranulesFromMessage = async ({
       // `key`, which is required for the PostgreSQL schema. And
       // `size` which is used to calculate the granule product
       // volume
-      const files = await FileUtils.buildDatabaseFiles({
+      const files = granule.files ? await FileUtils.buildDatabaseFiles({
         s3: s3(),
         providerURL: buildURL(provider),
         files: granule.files,
-      });
+      }) : undefined;
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
       const productVolume = getGranuleProductVolume(files);
