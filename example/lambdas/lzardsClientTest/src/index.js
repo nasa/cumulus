@@ -12,7 +12,6 @@ const log = new Logger({ sender: 'lzardsClientTest' });
  * @returns {Promise} confirmation of test pass or failure
  */
 async function handler(event) {
-  console.log('in the handler ln 15');
   const response = await sendGetRequestToLzards({ searchParams: event.searchParams });
 
   log.debug(`Response from lzards API: ${JSON.stringify(response.body)}`);
