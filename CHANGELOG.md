@@ -10,9 +10,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
-  
+
 ### Changed
 
+- **CUMULUS-2974**
+  - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
+    deletion, including collection, deleted granule ID, deleted files, and deletion time.
 - **CUMULUS-3027**
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
@@ -20,6 +23,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2969**
+  - Updated `@cumulus/api/models/rules.buildPayload` to only include
+    stepFunction name and arn in for the `definition` return value, excluding
+    step function definition and other extraneous step function object
+    key/values that are not used downstream, but were causing rules to exceed internal AWS limits.
 - **CUMULUS-2971**
   - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
     its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
