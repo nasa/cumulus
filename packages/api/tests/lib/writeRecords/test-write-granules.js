@@ -165,7 +165,7 @@ const updateGranule = async (t, updateGranulePayload, writeFromMessage = false) 
  * @param {Object} f2 -- File object to compare to the first
  * @returns {Array} -- Sorted list of file objects
  **/
-const sortfilesByBuckets = (f1, f2) => (
+const sortFilesByBuckets = (f1, f2) => (
   (f1.bucket > f2.bucket) ? 1 : ((f2.bucket > f1.bucket) ? -1 : 0)
 );
 
@@ -685,13 +685,13 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
   });
 
   esGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   dynamoGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   apiGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
 
   // Postgres granule matches expected updatedGranule
@@ -769,16 +769,16 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
   const originalPayloadFiles = files;
 
   originalPayloadFiles.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalApiGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalDynamoGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalEsGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
 
   // Files were written correctly in initial DB writes
@@ -871,7 +871,7 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
   });
 
   // Files exist in all datastores
-  const originalPgGranule = await t.context.granulePgModel.get(
+  const originalPGGranule = await t.context.granulePgModel.get(
     knex,
     {
       granule_id: granuleId,
@@ -879,7 +879,7 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
     }
   );
   const originalApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: originalPgGranule,
+    granulePgRecord: originalPGGranule,
     knexOrTransaction: knex,
   });
   const originalDynamoGranule = await granuleModel.get({ granuleId });
@@ -887,16 +887,16 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
   const originalPayloadFiles = t.context.files;
 
   originalApiGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalDynamoGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalEsGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalPayloadFiles.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
 
   t.deepEqual(originalApiGranule.files, originalPayloadFiles);
@@ -1823,13 +1823,13 @@ test.serial('writeGranuleFromApi() given a partial granule updates only provided
 
   // Files array order not guarunteed to match between datastores
   esGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   dynamoGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   apiGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
 
   // Postgres and ElasticSearch granules matches
@@ -1874,16 +1874,16 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
   const originalPayloadFiles = files;
 
   originalPayloadFiles.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalApiGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalDynamoGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalEsGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
 
   // Files were written correctly in initial DB writes
@@ -1949,7 +1949,7 @@ test.serial('writeGranuleFromApi() given a null files key will throw an error', 
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
 
   // Files exist in all datastores
-  const originalPgGranule = await t.context.granulePgModel.get(
+  const originalPGGranule = await t.context.granulePgModel.get(
     knex,
     {
       granule_id: granuleId,
@@ -1957,7 +1957,7 @@ test.serial('writeGranuleFromApi() given a null files key will throw an error', 
     }
   );
   const originalApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: originalPgGranule,
+    granulePgRecord: originalPGGranule,
     knexOrTransaction: knex,
   });
   const originalDynamoGranule = await granuleModel.get({ granuleId });
@@ -1965,16 +1965,16 @@ test.serial('writeGranuleFromApi() given a null files key will throw an error', 
   const originalPayloadFiles = t.context.files;
 
   originalApiGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalDynamoGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalEsGranule.files.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
   originalPayloadFiles.sort(
-    (f1, f2) => sortfilesByBuckets(f1, f2)
+    (f1, f2) => sortFilesByBuckets(f1, f2)
   );
 
   t.deepEqual(originalApiGranule.files, originalPayloadFiles);
