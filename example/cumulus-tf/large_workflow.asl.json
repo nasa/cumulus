@@ -1,0 +1,389 @@
+{
+  "Comment": "Returns Hello World",
+  "StartAt": "HelloWorld",
+  "States": {
+    "HelloWorld": {
+      "Parameters": {
+        "randomGarbage": "0aa35a74d6dcfbe693003a2453216a74010a93690679f430e87564871d759224fe9c2ad1872eefb598759a25a37e612fca4e0570f21e2e00aea9ba93ebbf5db16353b20234c20c62f5311c18faf851738e299430cb4b2fb0d043a248536d7c463bd2118cb10c1497fd72ba5b55eda40e64f11d0166c4b614971f6cadf6851a7fc0769721079417f7679ceb120e720290cc7d5350b1fdf0dc0f0dfe65bbfb1c7a7b4dcc529ba70ceffcd735d8a40338dcab4e44175b8d6be9cd8502ec7d814529b17ff4055d0ae4bfe6019c9bd9cc276dbf09efb38cfbfa467ee3b6dce35b1fdae5995146552c416cc4f683c7e896ffb35d945fbe3fb12635c18e060b811cbb5704b184ba7fe827e46e3b4408295cf8b1b4665c26fd984790d40937738cc2f03151b48f4d0304a6689811dec2a998f9fcba4c176cdf6e9fc7b5f46e3a90f858b8e531f4722067435bbdf3b28231a5e8829188e8778e1a96dc662ff4ff5607ef5a96721eb3a130e5bdb37736c5b22da1c88e8b9d17a4cef52fd06081ed8b8888d683df8b35cf353771650afb4d028dc06238fd1ba12861a1c375aaa440925022eef475788853e615588aef249ef69282a099e512718df7a5288a20f8bbd1c8bbfe049fbecd4e1306c46a7b460e87750e8be7b83354db3bde13ea53cea7b8f13403742c53d03e41ce6227ac7954296fcf1c0668d61a",
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld2"
+    },
+    "HelloWorld2": {
+      "Parameters": {
+        "randomGarbage": "0aa35a74d6dcfbe693003a2453216a74010a93690679f430e87564871d759224fe9c2ad1872eefb598759a25a37e612fca4e0570f21e2e00aea9ba93ebbf5db16353b20234c20c62f5311c18faf851738e299430cb4b2fb0d043a248536d7c463bd2118cb10c1497fd72ba5b55eda40e64f11d0166c4b614971f6cadf6851a7fc0769721079417f7679ceb120e720290cc7d5350b1fdf0dc0f0dfe65bbfb1c7a7b4dcc529ba70ceffcd735d8a40338dcab4e44175b8d6be9cd8502ec7d814529b17ff4055d0ae4bfe6019c9bd9cc276dbf09efb38cfbfa467ee3b6dce35b1fdae5995146552c416cc4f683c7e896ffb35d945fbe3fb12635c18e060b811cbb5704b184ba7fe827e46e3b4408295cf8b1b4665c26fd984790d40937738cc2f03151b48f4d0304a6689811dec2a998f9fcba4c176cdf6e9fc7b5f46e3a90f858b8e531f4722067435bbdf3b28231a5e8829188e8778e1a96dc662ff4ff5607ef5a96721eb3a130e5bdb37736c5b22da1c88e8b9d17a4cef52fd06081ed8b8888d683df8b35cf353771650afb4d028dc06238fd1ba12861a1c375aaa440925022eef475788853e615588aef249ef69282a099e512718df7a5288a20f8bbd1c8bbfe049fbecd4e1306c46a7b460e87750e8be7b83354db3bde13ea53cea7b8f13403742c53d03e41ce6227ac7954296fcf1c0668d61a",
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld3"
+    },
+    "HelloWorld3": {
+      "Parameters": {
+        "randomGarbage": "0aa35a74d6dcfbe693003a2453216a74010a93690679f430e87564871d759224fe9c2ad1872eefb598759a25a37e612fca4e0570f21e2e00aea9ba93ebbf5db16353b20234c20c62f5311c18faf851738e299430cb4b2fb0d043a248536d7c463bd2118cb10c1497fd72ba5b55eda40e64f11d0166c4b614971f6cadf6851a7fc0769721079417f7679ceb120e720290cc7d5350b1fdf0dc0f0dfe65bbfb1c7a7b4dcc529ba70ceffcd735d8a40338dcab4e44175b8d6be9cd8502ec7d814529b17ff4055d0ae4bfe6019c9bd9cc276dbf09efb38cfbfa467ee3b6dce35b1fdae5995146552c416cc4f683c7e896ffb35d945fbe3fb12635c18e060b811cbb5704b184ba7fe827e46e3b4408295cf8b1b4665c26fd984790d40937738cc2f03151b48f4d0304a6689811dec2a998f9fcba4c176cdf6e9fc7b5f46e3a90f858b8e531f4722067435bbdf3b28231a5e8829188e8778e1a96dc662ff4ff5607ef5a96721eb3a130e5bdb37736c5b22da1c88e8b9d17a4cef52fd06081ed8b8888d683df8b35cf353771650afb4d028dc06238fd1ba12861a1c375aaa440925022eef475788853e615588aef249ef69282a099e512718df7a5288a20f8bbd1c8bbfe049fbecd4e1306c46a7b460e87750e8be7b83354db3bde13ea53cea7b8f13403742c53d03e41ce6227ac7954296fcf1c0668d61a",
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld4"
+    },
+    "HelloWorld4": {
+      "Parameters": {
+        "randomGarbage": "0aa35a74d6dcfbe693003a2453216a74010a93690679f430e87564871d759224fe9c2ad1872eefb598759a25a37e612fca4e0570f21e2e00aea9ba93ebbf5db16353b20234c20c62f5311c18faf851738e299430cb4b2fb0d043a248536d7c463bd2118cb10c1497fd72ba5b55eda40e64f11d0166c4b614971f6cadf6851a7fc0769721079417f7679ceb120e720290cc7d5350b1fdf0dc0f0dfe65bbfb1c7a7b4dcc529ba70ceffcd735d8a40338dcab4e44175b8d6be9cd8502ec7d814529b17ff4055d0ae4bfe6019c9bd9cc276dbf09efb38cfbfa467ee3b6dce35b1fdae5995146552c416cc4f683c7e896ffb35d945fbe3fb12635c18e060b811cbb5704b184ba7fe827e46e3b4408295cf8b1b4665c26fd984790d40937738cc2f03151b48f4d0304a6689811dec2a998f9fcba4c176cdf6e9fc7b5f46e3a90f858b8e531f4722067435bbdf3b28231a5e8829188e8778e1a96dc662ff4ff5607ef5a96721eb3a130e5bdb37736c5b22da1c88e8b9d17a4cef52fd06081ed8b8888d683df8b35cf353771650afb4d028dc06238fd1ba12861a1c375aaa440925022eef475788853e615588aef249ef69282a099e512718df7a5288a20f8bbd1c8bbfe049fbecd4e1306c46a7b460e87750e8be7b83354db3bde13ea53cea7b8f13403742c53d03e41ce6227ac7954296fcf1c0668d61a",
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld5"
+    },
+    "HelloWorld5": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld6"
+    },
+    "HelloWorld6": {
+      "Parameters": {
+        "randomGarbage": "0aa35a74d6dcfbe693003a2453216a74010a93690679f430e87564871d759224fe9c2ad1872eefb598759a25a37e612fca4e0570f21e2e00aea9ba93ebbf5db16353b20234c20c62f5311c18faf851738e299430cb4b2fb0d043a248536d7c463bd2118cb10c1497fd72ba5b55eda40e64f11d0166c4b614971f6cadf6851a7fc0769721079417f7679ceb120e720290cc7d5350b1fdf0dc0f0dfe65bbfb1c7a7b4dcc529ba70ceffcd735d8a40338dcab4e44175b8d6be9cd8502ec7d814529b17ff4055d0ae4bfe6019c9bd9cc276dbf09efb38cfbfa467ee3b6dce35b1fdae5995146552c416cc4f683c7e896ffb35d945fbe3fb12635c18e060b811cbb5704b184ba7fe827e46e3b4408295cf8b1b4665c26fd984790d40937738cc2f03151b48f4d0304a6689811dec2a998f9fcba4c176cdf6e9fc7b5f46e3a90f858b8e531f4722067435bbdf3b28231a5e8829188e8778e1a96dc662ff4ff5607ef5a96721eb3a130e5bdb37736c5b22da1c88e8b9d17a4cef52fd06081ed8b8888d683df8b35cf353771650afb4d028dc06238fd1ba12861a1c375aaa440925022eef475788853e615588aef249ef69282a099e512718df7a5288a20f8bbd1c8bbfe049fbecd4e1306c46a7b460e87750e8be7b83354db3bde13ea53cea7b8f13403742c53d03e41ce6227ac7954296fcf1c0668d61a",
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld7"
+    },
+    "HelloWorld7": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld8"
+    },
+    "HelloWorld8": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld9"
+    },
+    "HelloWorld9": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld10"
+    },
+    "HelloWorld10": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld11"
+    },
+    "HelloWorld11": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld12"
+    },
+    "HelloWorld12": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld13"
+    },
+    "HelloWorld13": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "HelloWorld14"
+    },
+    "HelloWorld14": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "buckets": "{$.meta.buckets}",
+            "provider": "{$.meta.provider}",
+            "collection": "{$.meta.collection}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${hello_world_task_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "End": true
+    }
+  }
+}
