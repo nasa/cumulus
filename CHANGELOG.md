@@ -23,7 +23,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
     an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
   - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
-
+- **CUMULUS-2974**
+  - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
+    deletion, including collection, deleted granule ID, deleted files, and deletion time.
 - **CUMULUS-3027**
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
