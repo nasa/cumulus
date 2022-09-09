@@ -95,7 +95,6 @@ function fakeGranuleFactory(status = 'completed') {
     cmrLink: 'example.com',
     productVolume: '100',
     duration: 0,
-    files: [],
   };
 }
 
