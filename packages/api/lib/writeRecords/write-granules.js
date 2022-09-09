@@ -546,21 +546,6 @@ const _writeGranuleRecords = async (params) => {
   }
 };
 
-const _writePostgresFilesFromApiGranuleFiles = async ({
-  apiGranuleRecord,
-  granuleCumulusId,
-  knex,
-  snsEventType,
-}) => {
-  await _writeGranuleFiles({
-    granuleCumulusId: granuleCumulusId,
-    granule: apiGranuleRecord,
-    knex,
-    snsEventType,
-    granuleModel: new Granule(),
-  });
-};
-
 /**
  * Write a granule record to DynamoDB and PostgreSQL
  *
@@ -598,12 +583,17 @@ const _writeGranule = async ({
 
   const { status } = apiGranuleRecord;
 
+  // Files are only written to Postgres if the granule is in a "final" state
+  // (e.g. "status: completed") and there is a valid `files` key in the granule.
+  // An empty array of files will remove existing file records but a missing
+  // `files` key will not.
   if (isStatusFinalState(status) && ('files' in apiGranuleRecord)) {
-    await _writePostgresFilesFromApiGranuleFiles({
-      apiGranuleRecord,
+    await _writeGranuleFiles({
       granuleCumulusId: pgGranule.cumulus_id,
+      granule: apiGranuleRecord,
       knex,
       snsEventType,
+      granuleModel: new Granule(),
     });
   }
 
