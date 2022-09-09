@@ -397,6 +397,8 @@ const _writeGranuleFiles = async ({
 }) => {
   let fileRecords = [];
   const { files, granuleId, error: workflowError } = granule;
+  // Only try to generate file records if there are valid files.
+  // If `files` is an empty array, write the empty array
   if (isArray(files) && files.length > 0) {
     fileRecords = _generateFilePgRecords({
       files,
