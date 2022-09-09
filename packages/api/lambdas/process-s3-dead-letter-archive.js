@@ -3,7 +3,7 @@
 const log = require('@cumulus/common/log');
 
 const { s3 } = require('@cumulus/aws-client/services');
-const { getJsonS3Object, deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
+const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
 const S3 = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');

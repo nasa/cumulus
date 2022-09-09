@@ -261,7 +261,7 @@ describe('A dead letter record archive processing operation', () => {
   it('transfers the s3 objects corresponding to unsuccessfully processed dead letters to a new location in s3', async () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      const newArchivePath = generateNewArchiveKeyForFailedMessage(essageKey);
+      const newArchivePath = generateNewArchiveKeyForFailedMessage(failingMessageKey);
       await expectAsync(waitForListObjectsV2ResultCount({
         bucket: systemBucket,
         prefix: newArchivePath,
