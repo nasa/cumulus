@@ -396,8 +396,8 @@ const _writeGranuleFiles = async ({
   knex,
 }) => {
   let fileRecords = [];
-  const { files, granuleId, status, error: workflowError } = granule;
-  if (isStatusFinalState(status) && isArray(files) && files.length > 0) {
+  const { files, granuleId, error: workflowError } = granule;
+  if (isArray(files) && files.length > 0) {
     fileRecords = _generateFilePgRecords({
       files,
       granuleCumulusId,
