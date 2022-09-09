@@ -27,6 +27,7 @@ const {
   translateApiGranuleToPostgresGranule,
   migrationDir,
   createRejectableTransaction,
+  translateApiFiletoPostgresFile,
 } = require('@cumulus/db');
 const {
   sns,
@@ -504,7 +505,6 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
 
 test.serial('writeGranulesFromMessage() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
   const {
-    collectionCumulusId,
     cumulusMessage,
     filePgModel,
     granule,
@@ -513,17 +513,50 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
     knex,
     executionCumulusId,
     providerCumulusId,
-    granuleId,
   } = t.context;
 
+  // Set message status to 'completed' to allow file writes due to current file write constraints
+  cumulusMessage.meta.status = 'completed';
+
+  // Create granule in PG with multiple files. These records will exist in database
+  // during subsequent granule write from message
+  const files = [
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 5 }),
+  ];
+  const existingGranule = fakeGranuleFactoryV2({
+    files: files,
+    granuleId: cryptoRandomString({ length: 10 }),
+    collectionId: constructCollectionId(t.context.collection.name, t.context.collection.version),
+  });
+  const existingPgGranule = await translateApiGranuleToPostgresGranule(existingGranule, knex);
+  const [existingPgGranuleRecordId] = await granulePgModel.create(knex, existingPgGranule, '*');
+
+  await Promise.all(files.map(async (file) => {
+    const pgFile = await translateApiFiletoPostgresFile(file);
+    pgFile.granule_cumulus_id = existingPgGranuleRecordId.cumulus_id;
+    return filePgModel.create(knex, pgFile);
+  }));
+  const existingPgFiles = await filePgModel.search(knex, {});
+
+  // Create the message granule and associated file in PG.
+  // The fakeFile created here is NOT in the message and will be deleted
+  // in writeGranulesFromMessage
   const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
 
-  const fakeFile = await filePgModel.create(knex, {
+  const [fakeFile] = await filePgModel.create(knex, {
     granule_cumulus_id: returnedGranule[0].cumulus_id,
     bucket: 'fake_bucket',
     key: 'fake_key',
   }, '*');
+
+  // Ensure fakeFile was added to the files table
+  t.true(await filePgModel.exists(knex, { cumulus_id: fakeFile.cumulus_id }));
 
   await writeGranulesFromMessage({
     cumulusMessage,
@@ -533,18 +566,20 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from po
     granuleModel,
   });
 
-  const granuleRecord = await granulePgModel.get(
-    knex,
-    {
-      granule_id: granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    }
+  // Ensure fakeFile was removed
+  const updatedPgFiles = await filePgModel.search(knex, {});
+  t.deepEqual(updatedPgFiles.filter((file) => file.bucket === fakeFile.bucket), []);
+
+  // We expect the files currently in the File table to be those files
+  // that previously existed plus the files from the cumulus message
+  const filesFromCumulusMessage = cumulusMessage.payload.granules[0].files.map(
+    (file) => file.bucket
   );
 
-  const granuleFiles = await filePgModel.search(knex, {
-    granule_cumulus_id: granuleRecord.cumulus_id,
-  });
-  t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
+  t.deepEqual(
+    existingPgFiles.map((file) => file.bucket).concat(filesFromCumulusMessage).sort(),
+    updatedPgFiles.map((file) => file.bucket).sort()
+  );
 });
 
 test.serial('writeGranulesFromMessage() saves granule records to Dynamo/PostgreSQL/Elasticsearch with same created at, updated at and timestamp values', async (t) => {

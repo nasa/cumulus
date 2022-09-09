@@ -6,15 +6,73 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-2631**
+  - Added 'Bearer token' support to s3credentials endpoint
+
+### Changed
+
+- **CUMULUS-2974**
+  - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
+    deletion, including collection, deleted granule ID, deleted files, and deletion time.
+- **CUMULUS-3027**
+  - Pinned typescript to ~4.7.x to address typing incompatibility issues
+    discussed in https://github.com/knex/knex/pull/5279
+  - Update generate-ts-build-cache script to always install root project dependencies
+
+### Fixed
+
+- **CUMULUS-2969**
+  - Updated `@cumulus/api/models/rules.buildPayload` to only include
+    stepFunction name and arn in for the `definition` return value, excluding
+    step function definition and other extraneous step function object
+    key/values that are not used downstream, but were causing rules to exceed internal AWS limits.
+- **CUMULUS-2971**
+  - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
+    its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
+
+## [v13.3.0] 2022-8-19
+
+### Notable Changes
+
+- **CUMULUS-2930**
+  - The `GET /granules` endpoint has a new optional query parameter:
+    `searchContext`, which is used to resume listing within the same search
+    context. It is provided in every response from the endpoint as
+    `meta.searchContext`. The searchContext value must be submitted with every
+    consequent API call, and must be fetched from each new response to maintain
+    the context.
+  - Use of the `searchContext` query string parameter allows listing past 10,000 results.
+  - Note that using the `from` query param in a request will cause the `searchContext` to
+    be ignored and also make the query subject to the 10,000 results cap again.
+  - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
+    The endpoint will only use search-after when the `searchContext` parameter
+    is provided in a request.
+
+## [v13.2.1] 2022-8-10 [BACKPORT]
+
+### Notable changes
+
+- **CUMULUS-3019**
+  - Fix file write logic to delete files by `granule_cumulus_id` instead of
+    `cumulus_id`. Previous logic removed files by matching `file.cumulus_id`
+    to `granule.cumulus_id`.
+
+## [v13.2.0] 2022-8-04
+
 ### Changed
 
 - **CUMULUS-2940**
   - Updated bulk operation lambda to utilize system wide rds_connection_timing
     configuration parameters from the main `cumulus` module
+- **CUMULUS-2980**
+  - Updated `ingestPdrWithNodeNameSpec.js` to use `deleteProvidersAndAllDependenciesByHost` function.
+  - Removed `deleteProvidersByHost`function.
 - **CUMULUS-2954**
   - Updated Backup LZARDS task to run as a single task in a step function workflow.
-    - Updated task to allow user to provide `collectionId` in workflow input and 
-      updated task to use said `collectionId` to look up the corresponding collection record in RDS.
+  - Updated task to allow user to provide `collectionId` in workflow input and
+    updated task to use said `collectionId` to look up the corresponding collection record in RDS.
 
 ## [v13.1.0] 2022-7-22
 
@@ -230,7 +288,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2923**
   - Changed public key setup for SFTP local testing.
-
 - **CUMULUS-2939**
   - Updated `@cumulus/api` `granules/bulk*`, `elasticsearch/index-from-database` and
     `POST reconciliationReports` endpoints to invoke StartAsyncOperation lambda
@@ -248,6 +305,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2959**
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB.
+
+## [v12.0.2] 2022-08-10 [BACKPORT]
+
+**Please note** changes in 12.0.2 may not yet be released in future versions, as
+this is a backport and patch release on the 12.0.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Notable Changes
+
+- **CUMULUS-3019**
+  - Fix file write logic to delete files by `granule_cumulus_id` instead of
+      `cumulus_id`. Previous logic removed files by matching `file.cumulus_id`
+      to `granule.cumulus_id`.
 
 ## [v12.0.1] 2022-07-18
 
@@ -278,6 +349,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+
+## [v11.1.5] 2022-08-10 [BACKPORT]
+**Please note** changes in 11.1.4 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Notable changes
+
+- **CUMULUS-3019**
+  - Fix file write logic to delete files by `granule_cumulus_id` instead of
+      `cumulus_id`. Previous logic removed files by matching `file.cumulus_id`
+      to `granule.cumulus_id`.
 
 ## [v11.1.4] 2022-07-18
 
@@ -6358,12 +6442,16 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.2.1...HEAD
+[v13.2.1]: https://github.com/nasa/cumulus/compare/v13.2.0...v13.2.1
+[v13.2.0]: https://github.com/nasa/cumulus/compare/v13.1.0...v13.2.0
 [v13.1.0]: https://github.com/nasa/cumulus/compare/v13.0.1...v13.1.0
 [v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
-[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.1...v13.0.0
+[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.2...v13.0.0
+[v12.0.2]: https://github.com/nasa/cumulus/compare/v12.0.1...v12.0.2
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
-[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.4...v12.0.0
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.5...v12.0.0
+[v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
 [v11.1.3]: https://github.com/nasa/cumulus/compare/v11.1.2...v11.1.3
 [v11.1.2]: https://github.com/nasa/cumulus/compare/v11.1.1...v11.1.2
