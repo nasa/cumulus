@@ -5,10 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+  
+### Added
 
-<<<<<<< HEAD
 - **CUMULUS-2986**
-  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled
+  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled, the default size is 2 times what the previous defaults were. (ex. previous default = 256, new default = 512)
     allowed properties include:
       - add_missing_file_checksums_task_memory_size
       - discover_granules_task_memory_size
@@ -26,9 +27,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - update_cmr_access_constraints_task_memory_size
       - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
-  
-=======
-### Added
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
