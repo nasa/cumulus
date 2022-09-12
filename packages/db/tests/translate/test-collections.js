@@ -1,4 +1,6 @@
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
+const pick = require('lodash/pick');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
   translateApiCollectionToPostgresCollection,
@@ -34,6 +36,19 @@ test('translatePostgresCollectionToApiCollection converts Postgres collection to
   t.deepEqual(actual, expected);
 });
 
+test('translatePostgresCollectionToApiCollection converts optional fields from Postgres collection to API', (t) => {
+  const collectionRecord = fakeCollectionRecordFactory({
+    data_type: `${cryptoRandomString({ length: 10 })}date_type`,
+  });
+
+  const fieldsToCheck = ['dataType'];
+  const expected = {
+    dataType: collectionRecord.data_type,
+  };
+  const actual = translatePostgresCollectionToApiCollection(collectionRecord);
+  t.deepEqual(pick(actual, fieldsToCheck), expected);
+});
+
 test('translateApiCollectionToPostgresCollection converts API collection to Postgres', (t) => {
   const apiCollection = {
     name: 'COLL',
@@ -61,4 +76,23 @@ test('translateApiCollectionToPostgresCollection converts API collection to Post
     removeNilProperties(translateApiCollectionToPostgresCollection(apiCollection)),
     expectedPostgresCollection
   );
+});
+
+test('translateApiCollectionToPostgresCollection converts optional fields from API collection to Postgres', (t) => {
+  const apiCollection = {
+    name: 'COLL',
+    version: '001',
+    granuleIdExtraction: '.*',
+    granuleId: '.*',
+    files: [],
+    dataType: `${cryptoRandomString({ length: 10 })}dateType`,
+  };
+
+  const fieldsToCheck = ['data_type'];
+  const expected = {
+    data_type: apiCollection.dataType,
+  };
+
+  const actual = translateApiCollectionToPostgresCollection(apiCollection);
+  t.deepEqual(pick(actual, fieldsToCheck), expected);
 });

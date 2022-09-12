@@ -1,7 +1,7 @@
 {
   "name": "MOD09GQ",
   "version": "006",
-  "dataType": "MOD09GQ",
+  "dataType": "MODIS09",
   "process": "modis",
   "duplicateHandling": "replace",
   "granuleId": "^MOD09GQ\\.A[\\d]{7}\\.[\\S]{6}\\.006\\.[\\d]{13}$",

@@ -21,12 +21,14 @@ const {
   migrateCollectionRecord,
   migrateCollections,
 } = require('../dist/lambda/collections');
+const { cmp } = require('semver');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
 const generateFakeCollection = (params) => ({
   name: `${cryptoRandomString({ length: 10 })}collection`,
   version: '0.0.0',
+  dataType: `${cryptoRandomString({ length: 10 })}dateType`,
   duplicateHandling: 'replace',
   granuleId: '^MOD09GQ\\.A[\\d]{7}\.[\\S]{6}\\.006\\.[\\d]{13}$',
   granuleIdExtraction: '(MOD09GQ\\.(.*))\\.hdf',
@@ -45,7 +47,7 @@ const generateFakeCollection = (params) => ({
 
 let collectionsModel;
 let rulesModel;
-const collectionOmitList = ['granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt'];
+const collectionOmitList = ['dataType', 'granuleId', 'granuleIdExtraction', 'sampleFileName', 'granuleIdValidationRegex', 'granuleIdExtractionRegex', 'ignoreFilesConfigForDiscovery', 'duplicateHandling', 'reportToEms', 'createdAt', 'updatedAt'];
 
 test.before(async (t) => {
   process.env.stackName = cryptoRandomString({ length: 10 });
@@ -99,6 +101,7 @@ test.serial('migrateCollectionRecord correctly migrates collection record', asyn
     omit(
       {
         ...fakeCollection,
+        data_type: fakeCollection.dataType,
         sample_file_name: fakeCollection.sampleFileName,
         granule_id_validation_regex: fakeCollection.granuleId,
         granule_id_extraction_regex: fakeCollection.granuleIdExtraction,
@@ -148,6 +151,7 @@ test.serial('migrateCollectionRecord handles nullable fields on source collectio
     omit(
       {
         ...fakeCollection,
+        data_type: null,
         sample_file_name: fakeCollection.sampleFileName,
         granule_id_validation_regex: fakeCollection.granuleId,
         granule_id_extraction_regex: fakeCollection.granuleIdExtraction,

@@ -135,9 +135,7 @@ async function post(req, res) {
       await createRejectableTransaction(knex, async (trx) => {
         const [pgCollection] = await collectionPgModel.create(trx, dbRecord);
         const translatedCollection = await translatePostgresCollectionToApiCollection(pgCollection);
-        dynamoRecord = await collectionsModel.create(
-          omit(collection, 'dataType')
-        );
+        dynamoRecord = await collectionsModel.create(collection);
         // process.env.ES_INDEX is only used to isolate the index for
         // each unit test suite
         await indexCollection(esClient, dynamoRecord, process.env.ES_INDEX);
