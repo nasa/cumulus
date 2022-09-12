@@ -9,14 +9,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### MIGRATION notes
 
 - The changes introduced in CUMULUS-3000 requires *deployment* of the `data-persistence` module.
-- The optional `collection.dataType` won't be populated for the existing collections.  To use this
-  property, collections must be updated from Cumulus Dashboard or collections API with full 
-  collection records.
+- The optional `collection.dataType` property won't be populated for the existing collections.
+  To use this property, collections must be updated from Cumulus Dashboard or collections API with
+  the full collection records.   The `collection.dataType` field is deprecated in collection
+  schema, please use `collection.name` field instead when possible.
 
 ### Notable Changes
 
 - **CUMULUS-3000**
   - Add optional `data_type` property to the postgres collections table
+
 ### Added
 
 - **CUMULUS-2631**
