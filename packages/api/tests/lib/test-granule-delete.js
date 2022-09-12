@@ -218,12 +218,19 @@ test.serial('deleteGranuleAndFiles() removes granule PostgreSQL/DynamoDB/Elastic
     })
   );
 
-  await deleteGranuleAndFiles({
+  const details = await deleteGranuleAndFiles({
     knex: t.context.knex,
     dynamoGranule: newDynamoGranule,
     pgGranule: newPgGranule,
     esClient: t.context.esClient,
   });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newDynamoGranule.granuleId,
+  });
+  t.is(details.deletedFiles.length, newDynamoGranule.files.length);
 
   t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
@@ -285,12 +292,19 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
   });
   const newDynamoGranule = await granuleModel.get({ granuleId: newGranule.granuleId });
 
-  await deleteGranuleAndFiles({
+  const details = await deleteGranuleAndFiles({
     knex: t.context.knex,
     dynamoGranule: newDynamoGranule,
     pgGranule: newPgGranule,
     esClient: t.context.esClient,
   });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newDynamoGranule.granuleId,
+  });
+  t.is(details.deletedFiles.length, 0);
 
   t.false(
     await granuleModel.exists({ granuleId: newDynamoGranule.granuleId })
@@ -553,12 +567,19 @@ test.serial('deleteGranuleAndFiles() does not require a PostgreSQL granule', asy
   // create a new Dynamo granule
   await granuleModel.create(newGranule);
 
-  await deleteGranuleAndFiles({
+  const details = await deleteGranuleAndFiles({
     knex: t.context.knex,
     dynamoGranule: newGranule,
     pgGranule: undefined,
     esClient: t.context.esClient,
   });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.is(details.deletedFiles.length, newGranule.files.length);
 
   // Granule should have been removed from Dynamo
   t.false(
