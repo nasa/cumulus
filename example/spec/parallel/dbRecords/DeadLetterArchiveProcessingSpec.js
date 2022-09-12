@@ -283,6 +283,9 @@ describe('A dead letter record archive processing operation', () => {
   it('transfers the s3 objects corresponding to unsuccessfully processed dead letters to a new location in s3', async () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     else {
+      // Unsuccessfully processed dead letters should be deleted from old location
+      expect(await s3ObjectExists({ Bucket: systemBucket, Key: failingMessageKey })).toBeFalse();
+
       newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey);
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: newArchiveKey })).toBeTrue();
     }
