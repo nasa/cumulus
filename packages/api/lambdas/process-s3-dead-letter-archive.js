@@ -16,7 +16,7 @@ const { writeRecords } = require('./sf-event-sqs-to-db-records');
  * @param {Date}   [date] - date
  * @returns {string}
  */
-const getISODate = (date = new Date()) => `${date.getFullYear()}-${date.getUTCMonth()}-${date.getDate()}`;
+const getISODate = (date = new Date()) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
 /**
  * Generates new archive key for unprocessed dead letter message
