@@ -1,6 +1,5 @@
 'use strict';
 
-const omit = require('lodash/omit');
 const router = require('express-promise-router')();
 const {
   InvalidRegexError,
