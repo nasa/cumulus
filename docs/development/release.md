@@ -124,16 +124,13 @@ It's useful to use the search feature of your code editor or `grep` to see if th
 In bash shell you can run
 
 ```bash
-find . -name package.json -exec grep -nH "@cumulus/.*MAJOR\.MINOR\.PATCH.*" {} \;
+    find . -name package.json -exec grep -nH "@cumulus/.*[0-9]*\.[0-9]\.[0-9].*" {} \; | grep -v "@cumulus/.*MAJOR\.MINOR\.PATCH.*"
+
+e.g.:
+    find . -name package.json -exec grep -nH "@cumulus/.*[0-9]*\.[0-9]\.[0-9].*" {} \; | grep -v "@cumulus/.*13\.1\.0.*"
 ```
 
-Verify that each of those is updated to the **_new_** `MAJOR.MINOR.PATCH` verion you are trying to release.
-
-A similar search for alpha and beta versions should be run on the release version and any problems should be fixed.
-
-```bash
-find . -name package.json -exec grep -nHE "MAJOR\.MINOR\.PATCH.*(alpha|beta)" {} \;
-```
+Verify that no results are returned where MAJOR, MINOR, or PATCH differ from the intended version, and no outdated `-alpha` or `-beta` versions are specified.
 
 ### 3. Check Cumulus Dashboard PRs for Version Bump
 
