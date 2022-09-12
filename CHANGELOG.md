@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-2986**
-  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled, the default size is 2 times what the previous defaults were. (ex. previous default = 256, new default = 512)
+  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
     allowed properties include:
       - add_missing_file_checksums_task_memory_size
       - discover_granules_task_memory_size
