@@ -51,20 +51,19 @@ const transferUnprocessedMessage = async (deadLetterMessage, bucket) => {
       Body: deadLetterMessage.Body,
     });
     log.info(`Saved message to S3 s3://${bucket}/${s3KeyForFailedMessage}`);
-
-    // Delete failed key from old path
-    try {
-      log.info(`Attempting to delete message that failed to process from old path ${bucket}/${deadLetterMessage.Key}`);
-      await deleteS3Object(bucket, deadLetterMessage.Key);
-    } catch (error) {
-      log.error(`Failed to delete S3 Object s3://${bucket}/${deadLetterMessage.Key}`);
-      throw error;
-    }
-    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterMessage.Key}`);
   } catch (error) {
     log.error(`Could not write to bucket. ${error}`);
     throw error;
   }
+  // Delete failed key from old path
+  try {
+    log.info(`Attempting to delete message that failed to process from old path ${bucket}/${deadLetterMessage.Key}`);
+    await deleteS3Object(bucket, deadLetterMessage.Key);
+  } catch (error) {
+    log.error(`Failed to delete S3 Object s3://${bucket}/${deadLetterMessage.Key}`);
+    throw error;
+  }
+  log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterMessage.Key}`);
 };
 
 /**
