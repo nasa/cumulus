@@ -21,7 +21,6 @@ const {
   migrateCollectionRecord,
   migrateCollections,
 } = require('../dist/lambda/collections');
-const { cmp } = require('semver');
 
 const testDbName = `data_migration_1_${cryptoRandomString({ length: 10 })}`;
 
