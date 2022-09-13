@@ -90,15 +90,15 @@ const apiOmitList = [
  *
  * @param {Object} t -- Used for the test context
  * @param {Object} updateGranulePayload -- Request body for granule update
- * @param {boolean} writeFromMessage -- Calls writeGranulesFromMessage function if true,
- *   writeGranuleFromApi otherwise
+ * @param {boolean} granuleWriteVia -- Either 'api' (default) or 'message'. Switches
+ *   The granule write mechanism
  * @returns {Object} -- Updated granule objects from each datastore and PG-translated payload
  *   updatedPgGranuleFields,
  *   pgGranule,
  *   esGranule,
  *   dynamoGranule,
  **/
-const updateGranule = async (t, updateGranulePayload, writeFromMessage = false) => {
+const updateGranule = async (t, updateGranulePayload, granuleWriteVia = 'api') => {
   const {
     collectionCumulusId,
     esClient,
@@ -111,7 +111,7 @@ const updateGranule = async (t, updateGranulePayload, writeFromMessage = false) 
     knex,
   } = t.context;
 
-  if (writeFromMessage) {
+  if (granuleWriteVia === 'message') {
     const updatedCumulusMessage = {
       cumulus_meta: {
         workflow_start_time: t.context.workflowStartTime,
@@ -698,7 +698,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
     pgGranule,
     esGranule,
     dynamoGranule,
-  } = await updateGranule(t, updateGranulePayload, true);
+  } = await updateGranule(t, updateGranulePayload, 'message');
 
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
@@ -783,7 +783,7 @@ test.serial('writeGranulesFromMessage() given a partial granule updates only pro
     pgGranule,
     esGranule,
     dynamoGranule,
-  } = await updateGranule(t, updateGranulePayload, true);
+  } = await updateGranule(t, updateGranulePayload, 'message');
 
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
@@ -905,7 +905,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
     pgGranule,
     esGranule,
     dynamoGranule,
-  } = await updateGranule(t, updateGranulePayload, true);
+  } = await updateGranule(t, updateGranulePayload, 'message');
 
   // Postgres granule matches expected updatedGranule
   t.deepEqual(
@@ -1005,7 +1005,7 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
     status: granule.status,
   };
 
-  const [error] = await t.throwsAsync(updateGranule(t, updateGranulePayload, true));
+  const [error] = await t.throwsAsync(updateGranule(t, updateGranulePayload, 'message'));
   t.is(error.message, 'granule.files must not be null');
 });
 
