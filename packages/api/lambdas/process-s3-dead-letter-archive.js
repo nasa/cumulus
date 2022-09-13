@@ -29,7 +29,7 @@ const generateNewArchiveKeyForFailedMessage = (failedKey) => {
   const splitKey = failedKey.split('/sqs/');
   const pathPrefix = splitKey[0];
   const messageId = splitKey[1];
-  return `${pathPrefix}/sqs/${getISODate()}/${messageId}`;
+  return `${pathPrefix}/failed-sqs/${getISODate()}/${messageId}`;
 };
 
 /**
