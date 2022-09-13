@@ -720,7 +720,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
   t.deepEqual(esGranule.files, originalPayloadFiles);
 });
 
-test.serial('writeGranulesFromMessage() given a partial granule updates only provided fields', async (t) => {
+test.serial('writeGranulesFromMessage() given a partial granule overwrites only provided fields', async (t) => {
   const {
     collectionCumulusId,
     esGranulesClient,
@@ -1945,7 +1945,7 @@ test.serial('writeGranuleFromApi() given a payload with undefined files, keeps e
   t.deepEqual(esGranule.files, originalPayloadFiles);
 });
 
-test.serial('writeGranuleFromApi() given a partial granule updates only provided fields', async (t) => {
+test.serial('writeGranuleFromApi() given a partial granule overwrites only provided fields', async (t) => {
   const {
     collectionCumulusId,
     esClient,
