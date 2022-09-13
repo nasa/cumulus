@@ -10,8 +10,8 @@ const { updateCollection } = require('@cumulus/integration-tests/api/api');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { sqs } = require('@cumulus/aws-client/services');
 const { getGranule } = require('@cumulus/api-client/granules');
-
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   waitForApiStatus,
@@ -33,7 +33,7 @@ const {
   setupGranulesForIngestLoadTest,
 } = require('../helpers/granuleUtils');
 
-const workflowName = 'QueueGranulesPassthrough';
+const workflowName = 'QueueGranules';
 const inputPayloadFilename = './spec/loadTest/ingestLoadTestPassthrough.input.payload.json';
 const inputPayloadJson = fs.readFileSync(inputPayloadFilename, 'utf8');
 
@@ -43,10 +43,11 @@ const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
 // ** Configurable Variables
 
+const granuleThresholdPerWorkflow = 450;
 const granuleCountPerWorkflow = 50; // 450 granules per workflow is the max allowable by the API
-const totalWorkflowCount = 8; // number of workflows to fire off
+const totalWorkflowCount = 12; // number of workflows to fire off
 
-const granuleCountThreshold = 0.95;
+const granuleCountThreshold = 0.95; // Percent granules to count as a successful batch on ingest timeout
 
 const totalInputPayloads = [];
 const queueGranulesExecutionArns = [];
@@ -55,6 +56,7 @@ const testSuffixes = [];
 const totalGranulesCompleted = [];
 
 let config;
+let queueUrl;
 let beforeAllFailed = false;
 let colorConsoleLog = redConsoleLog();
 
@@ -99,13 +101,18 @@ const batchGranulesProcessing = async (nthWorkflow) => {
   );
   testSuffixes.push(testSuffix);
 
+  const inputMeta = {
+    queueUrl,
+  };
+
   const workflowExecution = await buildAndExecuteWorkflow(
     config.stackName,
     config.bucket,
     workflowName,
     collection,
     provider,
-    inputPayload
+    inputPayload,
+    inputMeta
   );
 
   queueGranulesExecutionArns.push(workflowExecution.executionArn);
@@ -134,51 +141,39 @@ const batchGranulesProcessing = async (nthWorkflow) => {
   console.log(colorConsoleLog,
     `\n___ Lambda Output of Workflow ${nthWorkflow} has ${lambdaOutput.payload.running.length}/${granuleCountPerWorkflow} of expected arns ___`);
 
-  const completedGranules = [];
-  const incompletedGranules = [];
-
-  const expectedValues = ['completed'];
+  const queuedGranules = [];
+  const expectedValues = ['queued'];
 
   await Promise.all(
     inputPayload.granules.map(async (granule) => {
-      try {
-        const record = await waitForApiStatus(
-          getGranule,
-          {
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-          },
-          expectedValues
-        );
-        completedGranules.push(record);
-        totalGranulesCompleted.push(record);
-      } catch (error) {
-        incompletedGranules.push({ granuleId: granule.granuleId, err: error });
-      }
+      const record = await waitForApiStatus(
+        getGranule,
+        {
+          prefix: config.stackName,
+          granuleId: granule.granuleId,
+        },
+        expectedValues
+      );
+      queuedGranules.push(record);
+      totalGranulesCompleted.push(record);
     })
   );
 
   console.log(greenConsoleLog(),
-    `\n___ ${completedGranules.length}/${inputPayload.granules.length} Granules completed by workflow ${nthWorkflow} ___`);
-
-  if (completedGranules.length !== inputPayload.granules.length) {
-    console.log(redConsoleLog(),
-      `\n___ ${incompletedGranules.length}/${inputPayload.granules.length} Granules incompleted by workflow ${nthWorkflow} ___`);
-
-    incompletedGranules.map((granuleError) =>
-      console.log(redConsoleLog(),
-        `\n${JSON.stringify(granuleError.granuleId)} - ${granuleError.err}`));
-  }
+    `\n___ ${queuedGranules.length}/${inputPayload.granules.length} Granules ingested by workflow ${nthWorkflow} are set to queued status ___`);
 };
 
 describe('The Granule Ingest Load Test ', () => {
   beforeAll(async () => {
-    if (!Number.isFinite(Number(granuleCountPerWorkflow)) || granuleCountPerWorkflow > 450) {
+    if (!Number.isFinite(Number(granuleCountPerWorkflow)) || granuleCountPerWorkflow > granuleThresholdPerWorkflow) {
       beforeAllFailed = `===== beforeAll() - Invalid input for number of granules per Workflow detected - ${granuleCountPerWorkflow} =====`;
       throw new Error(beforeAllFailed);
     } else {
       try {
         config = await loadConfig();
+        const QueueName = randomString();
+        const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+        queueUrl = QueueUrl;
 
         process.env.GranulesTable = `${config.stackName}-GranulesTable`;
         process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
@@ -200,32 +195,26 @@ describe('The Granule Ingest Load Test ', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
+    console.log(blueConsoleLog(), `\n===== Delete QueueUrl =====\n ${JSON.stringify(queueUrl)}\n`);
+    await sqs().deleteQueue({
+      QueueUrl: queueUrl,
+    }).promise();
+
     await Promise.all(
       totalInputPayloads.map(async (inPayload) =>
         await cleanupLoadTestGranules(config.stackName, inPayload.granules))
     );
 
-    console.log(blueConsoleLog(), '\n===== Delete lambdaOutputPayload ExecutionArns =====');
-    queueGranulesChildExecutionArns.forEach((lambdaOutputPayload) => {
-      lambdaOutputPayload.running.forEach((childExecutionArn) => {
-        deleteExecution({
-          prefix: config.stackName,
-          executionArn: childExecutionArn,
-        });
-        // console.log(blueConsoleLog(), `${JSON.stringify(childExecutionArn)}`);
-      });
-    });
-
-    if (queueGranulesExecutionArns !== undefined) {
-      console.log(blueConsoleLog(), '\n===== Delete queueGranules ExecutionArns =====');
-      queueGranulesExecutionArns.forEach((qGranulesExecutionArn) => {
-        deleteExecution({
+    console.log(blueConsoleLog(), '\n===== Delete queueGranules ExecutionArns =====');
+    await Promise.all(
+      queueGranulesExecutionArns.map(async (qGranulesExecutionArn) => {
+        console.log(`${JSON.stringify(qGranulesExecutionArn)}`);
+        await deleteExecution({
           prefix: config.stackName,
           executionArn: qGranulesExecutionArn,
         });
-        console.log(blueConsoleLog(), `${JSON.stringify(qGranulesExecutionArn)}`);
-      });
-    }
+      })
+    );
 
     await Promise.all(
       testSuffixes.map(async (testSuffix) => {
@@ -245,7 +234,7 @@ describe('The Granule Ingest Load Test ', () => {
     );
   });
 
-  it('writes to database the expected number of granules with status completed', () => {
+  it('writes to database the expected number of granules with status queued', () => {
     const expectedGranuleCount = granuleCountPerWorkflow * totalWorkflowCount;
     expect(expectedGranuleCount * granuleCountThreshold < totalGranulesCompleted.length && totalGranulesCompleted.length <= expectedGranuleCount).toBeTruthy();
     console.log(colorConsoleLog, `\n*** The total ingested Granules = ${totalGranulesCompleted.length}/${expectedGranuleCount} ***`);

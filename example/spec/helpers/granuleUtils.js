@@ -250,7 +250,7 @@ const cleanupLoadTestGranules = async (stackName, granuleList) => {
       throw new Error(`Cleanup failed on delete granules async operation ${JSON.stringify(asyncOperation.body)}`);
     }
     return JSON.parse(asyncOperation.body).status === 'SUCCEEDED';
-  }, { interval: 60 * 1000, timeout: 15 * 60 * 1000 });
+  }, { interval: 30 * 1000, timeout: 15 * 60 * 1000 });
 
   console.log(blueConsoleLog(), `===== Bulk Granule deletion succeeded! AsyncOperation ID: ${JSON.stringify(responseBody.id)} =====`);
 };

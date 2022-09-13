@@ -50,10 +50,11 @@ const queueUrl = 'https://sqs.us-east-1.amazonaws.com/596205514787/vkn-tf-startS
 
 // ** Configurable Variables
 
-const granuleCountPerWorkflow = 100; // 450 granules per workflow is the max allowable by the API
+const granuleThresholdPerWorkflow = 425;
+const granuleCountPerWorkflow = 100; // 425 granules per workflow is the max allowable by the API
 const totalWorkflowCount = 5; // number of workflows to fire off
 
-const granuleCountThreshold = 0.95;
+const granuleCountThreshold = 0.95; // Percent granules to count as a successful batch on ingest timeout
 
 const totalInputPayloads = [];
 const queueGranulesExecutionArns = [];
@@ -177,7 +178,6 @@ const batchGranulesProcessing = async (nthWorkflow) => {
     );
   } catch (error) {
     beforeAllFailed = `===== batchGranulesProcessing() failed =====\n ${error}`;
-    // throw new Error(beforeAllFailed);
   } finally {
     console.log(greenConsoleLog(),
       `\n___ ${completedGranules.length}/${inputPayload.granules.length} Granules completed by workflow ${nthWorkflow} ___`);
@@ -198,7 +198,7 @@ const batchGranulesProcessing = async (nthWorkflow) => {
 
 describe('The Granule Ingest Load Test ', () => {
   beforeAll(async () => {
-    if (!Number.isFinite(Number(granuleCountPerWorkflow)) || granuleCountPerWorkflow > 425) {
+    if (!Number.isFinite(Number(granuleCountPerWorkflow)) || granuleCountPerWorkflow > granuleThresholdPerWorkflow) {
       beforeAllFailed = `===== beforeAll() - Invalid input for number of granules per Workflow detected - ${granuleCountPerWorkflow} =====`;
       throw new Error(beforeAllFailed);
     } else {
@@ -237,7 +237,6 @@ describe('The Granule Ingest Load Test ', () => {
           prefix: config.stackName,
           executionArn: childExecutionArn,
         });
-        // console.log(blueConsoleLog(), `${JSON.stringify(childExecutionArn)}`);
       });
     });
 
