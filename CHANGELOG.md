@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2557**
+  - Updated `@cumulus/aws-client/S3/moveObject` such that moveGranules operations with zero byte
+    files (0 byte files) will succeed and not throw MalformedXML errors. Updated moveGranules tests
+    in cover such operations, and added comments for the issue. 
 - **CUMULUS-2969**
   - Updated `@cumulus/api/models/rules.buildPayload` to only include
     stepFunction name and arn in for the `definition` return value, excluding

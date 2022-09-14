@@ -8,9 +8,7 @@ import {
   CreateMultipartUploadRequest,
   UploadPartCopyRequest,
 } from '@aws-sdk/client-s3';
-
 import { s3 } from '../services';
-
 export interface CompleteMultipartUploadOutput extends AWS.S3.CompleteMultipartUploadOutput {
   ETag: string
 }
@@ -42,7 +40,7 @@ const MB = 1024 * 1024;
 export const createMultipartChunks = (
   objectSize: number,
   chunkSize = 250 * MB
-): Chunk[] =>
+): Chunk[] => {
   range(0, objectSize, chunkSize)
     .map(
       (start) => ({
@@ -50,6 +48,7 @@ export const createMultipartChunks = (
         end: Math.min(start + chunkSize, objectSize) - 1,
       })
     );
+};
 
 export const createMultipartUpload = async (
   params: CreateMultipartUploadRequest
