@@ -1,22 +1,16 @@
 'use strict';
 
+const moment = require('moment');
+
 const log = require('@cumulus/common/log');
 
+const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
-const S3 = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
-
-/**
- * Returns string of ISO Date Year/Month/Day
- *
- * @param {Date}   [date] - date
- * @returns {string}
- */
-const getISODate = (date = new Date()) => `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 
 /**
  * Generates new archive key for unprocessed dead letter message
@@ -29,7 +23,8 @@ const generateNewArchiveKeyForFailedMessage = (failedKey) => {
   const splitKey = failedKey.split('/sqs/');
   const pathPrefix = splitKey[0];
   const messageId = splitKey[1];
-  return `${pathPrefix}/failed-sqs/${getISODate()}/${messageId}`;
+  const date = moment.utc().format('YYYY-MM-DD');
+  return `${pathPrefix}/failed-sqs/${date}/${messageId}`;
 };
 
 /**
@@ -51,19 +46,15 @@ const transferUnprocessedMessage = async (deadLetterMessage, bucket) => {
       Body: deadLetterMessage.Body,
     });
     log.info(`Saved message to S3 s3://${bucket}/${s3KeyForFailedMessage}`);
-  } catch (error) {
-    log.error(`Could not write to bucket. ${error}`);
-    throw error;
-  }
-  // Delete failed key from old path
-  try {
+
+    // Delete failed key from old path
     log.info(`Attempting to delete message that failed to process from old path ${bucket}/${deadLetterMessage.Key}`);
     await deleteS3Object(bucket, deadLetterMessage.Key);
+    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterMessage.Key}`);
   } catch (error) {
-    log.error(`Failed to delete S3 Object s3://${bucket}/${deadLetterMessage.Key}`);
+    log.error(`Failed to transfer S3 Object s3://${bucket}/${deadLetterMessage.Key} due to error: ${error}`);
     throw error;
   }
-  log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterMessage.Key}`);
 };
 
 /**
@@ -163,7 +154,6 @@ async function handler(event) {
 
 module.exports = {
   handler,
-  getISODate,
   generateNewArchiveKeyForFailedMessage,
   processDeadLetterArchive,
 };

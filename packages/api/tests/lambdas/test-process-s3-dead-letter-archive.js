@@ -179,13 +179,13 @@ test('processDeadLetterArchive saves failed dead letters to different S3 and rem
   });
 
   // Check that failing message key was deleted
-  const remainingDeadLetterExists = await S3.fileExists(bucket, failingMessageKey);
-  t.is(remainingDeadLetterExists, false);
+  const failingMessageRemainsInOldLocation = await S3.fileExists(bucket, failingMessageKey);
+  t.is(failingMessageRemainsInOldLocation, false);
   t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
 
   // Check that failing message key exists in new location
   const savedDeadLetterExists = await S3.fileExists(bucket, s3KeyForFailedMessage);
-  t.not(savedDeadLetterExists, false);
+  t.truthy(savedDeadLetterExists);
 });
 
 test.serial('processDeadLetterArchive does not remove message from archive S3 path if transfer to new archive path fails', async (t) => {
@@ -217,8 +217,8 @@ test.serial('processDeadLetterArchive does not remove message from archive S3 pa
   t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
 
   // Check that failing message key does not exist in new location
-  const deadLetterExistsInNewLocation = await S3.fileExists(bucket, s3KeyForFailedMessage);
-  t.is(deadLetterExistsInNewLocation, false);
+  const failingMessageExistsInNewLocation = await S3.fileExists(bucket, s3KeyForFailedMessage);
+  t.is(failingMessageExistsInNewLocation, false);
   t.teardown(() => {
     s3Stub.restore();
   });
