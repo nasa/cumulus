@@ -213,7 +213,7 @@ test.serial('processDeadLetterArchive does not remove message from archive S3 pa
 
   // Check that failing message key was not deleted
   const remainingDeadLetterExists = await S3.fileExists(bucket, failingMessageKey);
-  t.not(remainingDeadLetterExists, false);
+  t.truthy(remainingDeadLetterExists);
   t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
 
   // Check that failing message key does not exist in new location
