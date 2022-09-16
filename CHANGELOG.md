@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2943**
+  - Bulk granule deletion will continue with DDB/ES if the granule does not exist in PG.
 - **CUMULUS-2974**
   - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
     deletion, including collection, deleted granule ID, deleted files, and deletion time.
