@@ -679,6 +679,7 @@ test.serial('generateAccessUrl switches correctly based on urlType', async (t) =
 
 test.serial('backupGranulesToLzards returns the expected payload with "workflow output" type input granule containing dataType and version', async (t) => {
   const { fakeBucket1, fakeBucket2 } = t.context;
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -686,7 +687,8 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
+
+  process.env.OAUTH_PROVIDER = 'earthdata';
   const now = new Date().getTime();
   const fakePayload = {
     input: {
@@ -749,7 +751,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -786,6 +788,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
     fakeBucket2,
     testKnex,
   } = t.context;
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -793,7 +796,6 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const testCollection1 = fakeCollectionRecordFactory();
   const testCollection2 = fakeCollectionRecordFactory();
@@ -861,7 +863,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -898,6 +900,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
     fakeBucket2,
     testKnex,
   } = t.context;
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -905,7 +908,6 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const testCollection1 = fakeCollectionRecordFactory();
   const testCollection2 = fakeCollectionRecordFactory();
@@ -975,7 +977,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -1006,6 +1008,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
 });
 
 test.serial('backupGranulesToLzards returns empty record if no files to archive', async (t) => {
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -1013,7 +1016,6 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const fakePayload = {
     input: {
@@ -1042,7 +1044,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [],
@@ -1053,6 +1055,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
 
 test.serial('backupGranulesToLzards returns failed record if missing archive checksum', async (t) => {
   const { fakeBucket1 } = t.context;
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -1060,7 +1063,6 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
   const now = new Date().getTime();
   const fakePayload = {
     input: {
@@ -1098,7 +1100,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload);
+  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -1120,6 +1122,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
 });
 
 test.serial('backupGranulesToLzards throws an error with a granule missing collection information', async (t) => {
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -1127,7 +1130,6 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1158,12 +1160,13 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload),
+    index.backupGranulesToLzards(fakePayload, getAuthTokenMethod),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
 
 test.serial('backupGranulesToLzards throws an error with a granule incomplete collection information, containing only dataType', async (t) => {
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -1171,7 +1174,6 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1203,12 +1205,13 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload),
+    index.backupGranulesToLzards(fakePayload, getAuthTokenMethod),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
 
 test.serial('backupGranulesToLzards throws an error with a granule incomplete collection information, containing only version', async (t) => {
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
     Credentials: {
       SecretAccessKey: 'FAKEKey',
@@ -1216,7 +1219,6 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
       SessionToken: 'FAKEToken',
     },
   });
-  sandbox.stub(index, 'getToken').resolves('fakeAuthToken');
 
   getCollectionStub.returns(fakeCollection);
   const fakePayload = {
@@ -1248,7 +1250,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload),
+    index.backupGranulesToLzards(fakePayload, getAuthTokenMethod),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
