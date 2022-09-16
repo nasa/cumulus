@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- **CUMULUS-2988**
+- **CUMULUS-2998**
   - Added Memory Size and Timeout terraform variable configuration for remaining Cumulus Tasks including:
     - fake_processing_task_timeout and fake_processing_task_memory_size
     - files_to_granules_task_timeout and files_to_granule_task_memory_size
