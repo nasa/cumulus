@@ -100,11 +100,9 @@ async function bulkGranuleDelete(
         if (error instanceof RecordDoesNotExist) {
           log.info(error.message);
         }
-
-        return;
       }
 
-      if (pgGranule.published && forceRemoveFromCmr) {
+      if (forceRemoveFromCmr && pgGranule && pgGranule.published) {
         ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc({
           knex,
           pgGranuleRecord: pgGranule,

@@ -54,9 +54,9 @@ const unpublishGranule = async ({
 }) => {
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
-  const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
   let dynamoGranuleDeleted = false;
   try {
+    const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
     return await createRejectableTransaction(knex, async (trx) => {
       const [pgGranule] = await granulePgModel.update(
         trx,

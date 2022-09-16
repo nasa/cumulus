@@ -92,7 +92,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
+test.serial('bulkGranuleDelete does not fail on published granules if payload.forceRemoveFromCmr is true', async (t) => {
   const {
     knex,
     esClient,
@@ -179,6 +179,40 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
   );
 
   const s3Buckets = granules[0].s3Buckets;
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
+
+test.serial('bulkGranuleDelete does not fail if granule is not in PG', async (t) => {
+  const {
+    knex,
+    esClient,
+  } = t.context;
+
+  const granuleModel = new Granule();
+  const granulePgModel = new GranulePgModel();
+
+  const granule = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient: esClient,
+  });
+
+  const granuleId = granule.newPgGranule.granule_id;
+
+  await granulePgModel.delete(knex, {
+    cumulus_id: granule.newPgGranule.cumulus_id,
+  });
+
+  const { deletedGranules } = await bulkGranuleDelete({ ids: [granuleId] });
+
+  t.deepEqual(deletedGranules, [granuleId]);
+
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const s3Buckets = granule.s3Buckets;
   t.teardown(() => deleteS3Buckets([
     s3Buckets.protected.name,
     s3Buckets.public.name,
