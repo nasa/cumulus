@@ -8,14 +8,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-2631**
+  - Added 'Bearer token' support to s3credentials endpoint
 - **CUMULUS-2787**
   - Added `lzards-api-client` package to Cumulus with `submitGetRequestToLzards` method to support LZARDS reconciliation report
 
-- **CUMULUS-2631**
-  - Added 'Bearer token' support to s3credentials endpoint
-
 ### Changed
 
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
+- **CUMULUS-2913**
+  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
+    letter archive that fail to process to new S3 location.
 - **CUMULUS-2974**
   - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
     deletion, including collection, deleted granule ID, deleted files, and deletion time.
@@ -23,9 +27,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
-  
-- **CUMULUS-2787**
-  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 
 ### Fixed
 
@@ -6448,7 +6449,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.2.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.3.0...HEAD
+[v13.3.0]: https://github.com/nasa/cumulus/compare/v13.2.1...v13.3.0
 [v13.2.1]: https://github.com/nasa/cumulus/compare/v13.2.0...v13.2.1
 [v13.2.0]: https://github.com/nasa/cumulus/compare/v13.1.0...v13.2.0
 [v13.1.0]: https://github.com/nasa/cumulus/compare/v13.0.1...v13.1.0

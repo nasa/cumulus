@@ -23,9 +23,6 @@ jl-rds-tf:
 kk2-tf:
   bucket: kk2-tf-internal
 
-jtran-int-tf:
-  bucket: jtran-int-tf-internal
-
 jtran-tf:
   bucket: jtran-internal
 
