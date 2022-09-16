@@ -218,3 +218,40 @@ test.serial('bulkGranuleDelete does not fail if granule is not in PG', async (t)
     s3Buckets.public.name,
   ]));
 });
+
+test.serial('bulkGranuleDelete does not fail if granule is not in PG and payload.forceRemoveFromCmr is true', async (t) => {
+  const {
+    knex,
+    esClient,
+  } = t.context;
+
+  const granuleModel = new Granule();
+  const granulePgModel = new GranulePgModel();
+
+  const granule = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient: esClient,
+  });
+
+  const granuleId = granule.newPgGranule.granule_id;
+
+  await granulePgModel.delete(knex, {
+    cumulus_id: granule.newPgGranule.cumulus_id,
+  });
+
+  const { deletedGranules } = await bulkGranuleDelete({
+    ids: [granuleId],
+    forceRemoveFromCmr: true,
+  });
+
+  t.deepEqual(deletedGranules, [granuleId]);
+
+  t.false(await granuleModel.exists({ granuleId }));
+  t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const s3Buckets = granule.s3Buckets;
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
