@@ -235,7 +235,7 @@ async function getCollection({ prefix, collectionName, collectionVersion }) {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/collections/${collectionName}/${collectionVersion}`,
+      path: `/collections/${collectionName}/${encodeURIComponent(collectionVersion)}`,
     },
   });
   return verifyCumulusApiResponse(response);
@@ -303,7 +303,7 @@ async function updateCollection({ prefix, collection, updateParams }) {
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: `/collections/${collection.name}/${collection.version}`,
+      path: `/collections/${collection.name}/${encodeURIComponent(collection.version)}`,
       headers: {
         'Content-Type': 'application/json',
       },
