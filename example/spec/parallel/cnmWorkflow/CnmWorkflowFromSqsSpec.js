@@ -12,7 +12,8 @@ const {
   getQueueUrlByName,
   sendSQSMessage,
 } = require('@cumulus/aws-client/SQS');
-const { getGranule } = require('@cumulus/api-client/granules');
+const { deleteExecution } = require('@cumulus/api-client/executions');
+const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 
@@ -20,6 +21,7 @@ const {
   addCollections,
   addRules,
   addProviders,
+  cleanupCollections,
   cleanupProviders,
   readJsonFilesFromDir,
   deleteRules,
@@ -29,7 +31,6 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
-const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { waitForTestSfForRecord } = require('../../helpers/kinesisHelpers');
 
 const {
@@ -52,6 +53,7 @@ let cnmResponseStream;
 let granuleId;
 let collection;
 let queues = {};
+let workflowExecution;
 
 const collectionsDir = './data/collections/ASCATB-L2-Coastal';
 const providersDir = './data/providers/PODAAC_SWOT/';
@@ -69,16 +71,15 @@ async function cleanUp() {
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
-  await removeCollectionAndAllDependencies({
-    prefix: config.stackName,
-    collection,
-  });
+  await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
+  await removePublishedGranule({ prefix: config.stackName, granuleId });
 
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
     deleteQueue(queues.sourceQueueUrl),
     deleteQueue(queues.deadLetterQueueUrl),
     sns().deleteTopic({ TopicArn: cnmResponseStream }).promise(),
+    cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
   ]);
 }
@@ -107,7 +108,6 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
   let ruleList;
   let scheduleQueueUrl;
   let workflowArn;
-  let workflowExecution;
 
   const maxWaitForExecutionSecs = 60 * 5;
   const maxWaitForSFExistSecs = 60 * 4;
