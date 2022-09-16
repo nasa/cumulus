@@ -1,0 +1,21 @@
+{
+  "version": "1.4",
+  "provider": "PODAAC_SWOT",
+  "collection": "ASCATB-L2-Coastal",
+  "submissionTime": "2022-08-10T17:49:30.477188",
+  "identifier": "<<REPLACED with random string>>",
+  "product": {
+    "name": "ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2",
+    "files": [
+      {
+        "uri": "s3://<replace-bucket>/cumulus-test-data/pdrs/ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc",
+        "checksum": "f8a8fd0c4464252abb2e4815f643a185",
+        "size": 3183706,
+        "type": "data",
+        "name": "ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc",
+        "checksumType": "md5"
+      }
+    ],
+    "dataVersion": "Operational/Near-Real-Time"
+  }
+}

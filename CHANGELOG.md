@@ -15,6 +15,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
 - **CUMULUS-2557**
   - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
+- **CUMULUS-3021**
+  - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
+    collection version in the URI path
 
 ## [v12.0.2] 2022-08-10 [BACKPORT]
 
