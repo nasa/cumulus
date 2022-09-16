@@ -35,7 +35,7 @@ export async function getAuthToken(
 }
 
 /**
- * Send GET request to LZARDS
+ * Submit query to LZARDS
  *
  * @param {Object}   params
  * @param {string}   params.lzardsApiUri - LZARDS endpoint url
@@ -43,7 +43,7 @@ export async function getAuthToken(
  * @param {Function} params.getAuthTokenFunction - function used to get a launchpad auth token
  * @returns {Promise<Object>} - resolves to the LZARDS return
  */
-export async function sendGetRequestToLzards(
+export async function submitQueryToLzards(
   {
     searchParams,
     getAuthTokenFunction = getAuthToken,
@@ -72,7 +72,7 @@ export async function sendGetRequestToLzards(
       }
     );
   } catch (error) {
-    log.error('sendGetRequestToLzards encountered error:', error);
+    log.error('submitQueryToLzards encountered error:', error);
     throw error;
   }
 }

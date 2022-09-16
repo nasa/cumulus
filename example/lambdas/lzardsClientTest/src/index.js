@@ -1,6 +1,6 @@
 'use strict';
 
-const { sendGetRequestToLzards } = require('@cumulus/lzards-api-client/lzards');
+const { submitQueryToLzards } = require('@cumulus/lzards-api-client/lzards');
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: 'lzardsClientTest' });
@@ -12,7 +12,7 @@ const log = new Logger({ sender: 'lzardsClientTest' });
  * @returns {Promise} confirmation of test pass or failure
  */
 async function handler(event) {
-  const response = await sendGetRequestToLzards({ searchParams: event.searchParams });
+  const response = await submitQueryToLzards({ searchParams: event.searchParams });
 
   log.debug(`Response from lzards API: ${JSON.stringify(response.body)}`);
 

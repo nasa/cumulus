@@ -11,7 +11,7 @@ npm install @cumulus/lzards-api-client
 ### Example
 
 ```javascript
-const { sendGetRequestToLzards } = require('@cumulus/lzards-api-client/lzards');
+const { submitQueryToLzards } = require('@cumulus/lzards-api-client/lzards');
 
 const now = new Date().getTime();
 const thirtyMinutesAgo = now - (1000 * 60 * 30);
@@ -24,7 +24,7 @@ const searchParams = {
     'metadata[createdAt][lte]': twoMinutesAgo,
 }
 
-const response = await sendGetRequestToLzards({ searchParams });
+const response = await submitQueryToLzards({ searchParams });
 ```
 
 ### Required Environment Variables

@@ -1,4 +1,4 @@
 export {
-  sendGetRequestToLzards,
+  submitQueryToLzards,
   getAuthToken,
 } from './lzards';

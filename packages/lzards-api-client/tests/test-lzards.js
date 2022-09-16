@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const got = require('got');
 const { randomId } = require('@cumulus/common/test-utils');
 const {
-  sendGetRequestToLzards,
+  submitQueryToLzards,
   getAuthToken,
 } = require('../lzards');
 
@@ -37,32 +37,32 @@ test.after.always(() => {
   sandbox.restore();
 });
 
-test.serial('sendGetRequestToLzards returns error status when lzards_api environment is not set',
+test.serial('submitQueryToLzards returns error status when lzards_api environment is not set',
   async (t) => {
     delete process.env.lzards_api;
     const searchParams = {
       test: 1,
     };
 
-    await t.throwsAsync(sendGetRequestToLzards({ searchParams }),
+    await t.throwsAsync(submitQueryToLzards({ searchParams }),
       { name: 'MissingRequiredEnvVarError', message: 'The lzards_api environment variable must be set' });
   });
 
-test.serial('sendGetRequestToLzards returns error status when searchParams are not provided',
+test.serial('submitQueryToLzards returns error status when searchParams are not provided',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
-    await t.throwsAsync(sendGetRequestToLzards({ }),
+    await t.throwsAsync(submitQueryToLzards({ }),
       { name: 'Error', message: 'The required searchParams is not provided or empty' });
   });
 
-test.serial('sendGetRequestToLzards returns error status when searchParams is empty',
+test.serial('submitQueryToLzards returns error status when searchParams is empty',
   async (t) => {
     process.env.lzards_api = 'fake_lzards_api';
-    await t.throwsAsync(sendGetRequestToLzards({ searchParams: {} }),
+    await t.throwsAsync(submitQueryToLzards({ searchParams: {} }),
       { name: 'Error', message: 'The required searchParams is not provided or empty' });
   });
 
-test.serial('sendGetRequestToLzards sends request to lzards api',
+test.serial('submitQueryToLzards sends request to lzards api',
   async (t) => {
     const granuleId = randomId('granId');
     const collection = randomId('collectionId');
@@ -87,7 +87,7 @@ test.serial('sendGetRequestToLzards sends request to lzards api',
 
     sinon.replace(got, 'get', sinon.stub().resolves({ statusCode: 200 }));
 
-    const response = await sendGetRequestToLzards(
+    const response = await submitQueryToLzards(
       {
         searchParams,
         getAuthTokenFunction: fakeGetAuthToken,

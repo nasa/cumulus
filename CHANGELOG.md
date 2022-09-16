@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
 - **CUMULUS-2787**
-  - Added `lzards-api-client` package to Cumulus with `submitGetRequestToLzards` method to support LZARDS reconciliation report
+  - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
 
 ### Changed
 
