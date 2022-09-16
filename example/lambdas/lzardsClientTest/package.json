@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-lzards-api-lambda",
-  "version": "13.2.1",
+  "version": "13.3.0",
   "description": "LZARDS API Client Test Lambda",
   "private": true,
   "engines": {
@@ -21,6 +21,6 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/lzards-api-client": "13.2.2-alpha.2",
-    "@cumulus/logger": "13.2.1"
+    "@cumulus/logger": "13.3.0"
   }
 }
