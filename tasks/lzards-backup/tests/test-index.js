@@ -751,7 +751,7 @@ test.serial('backupGranulesToLzards returns the expected payload with "workflow 
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
+  const actual = await index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -863,7 +863,7 @@ test.serial('backupGranulesToLzards returns the expected payload with API type i
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
+  const actual = await index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -977,7 +977,7 @@ test.serial('backupGranulesToLzards returns the expected payload with input gran
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
+  const actual = await index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -1044,7 +1044,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
+  const actual = await index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [],
@@ -1100,7 +1100,7 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
 
   await validateInput(t, fakePayload.input);
   await validateConfig(t, fakePayload.config);
-  const actual = await index.backupGranulesToLzards(fakePayload, getAuthTokenMethod);
+  const actual = await index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod);
   await validateOutput(t, actual);
   const expected = {
     backupResults: [
@@ -1160,7 +1160,7 @@ test.serial('backupGranulesToLzards throws an error with a granule missing colle
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload, getAuthTokenMethod),
+    index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
@@ -1205,7 +1205,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload, getAuthTokenMethod),
+    index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
@@ -1250,7 +1250,7 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
   process.env.lzards_provider = 'fakeProvider';
   process.env.stackName = 'fakeStack';
   await t.throwsAsync(
-    index.backupGranulesToLzards(fakePayload, getAuthTokenMethod),
+    index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
 });
