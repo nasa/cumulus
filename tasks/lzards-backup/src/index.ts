@@ -364,13 +364,12 @@ export const generateAccessCredentials = async () => {
 export const backupGranulesToLzards = async (
   event: HandlerEvent,
   _context?: Context,
-  getAuthTokenMethod?: typeof getAuthToken
+  getAuthTokenMethod: typeof getAuthToken = getAuthToken
 ) => {
   // Given an array of granules, submit each file for backup.
   log.warn(`Running backup on ${JSON.stringify(event)}`);
   const roleCreds = await generateAccessCredentials();
-  const authMethod = getAuthTokenMethod ?? getAuthToken;
-  const authToken = await authMethod();
+  const authToken = await getAuthTokenMethod();
 
   const backupConfig = {
     ...event.config,
