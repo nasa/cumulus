@@ -98,9 +98,10 @@ class GranuleFetcher {
    * @param {string} kwargs.bucket - s3 bucket to use for files
    * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
    *    checksum files
+   * @param {string | undefined} kwargs.ACL
    * @returns {Promise<Object>} return granule object
    */
-  async ingest({ granule, bucket, syncChecksumFiles = false }) {
+  async ingest({ granule, bucket, syncChecksumFiles = false, ACL }) {
     // for each granule file
     // download / verify integrity / upload
 
@@ -129,7 +130,8 @@ class GranuleFetcher {
     const downloadPromises = filesToDownload.map((file) => this.ingestFile(
       file,
       bucket,
-      this.duplicateHandling
+      this.duplicateHandling,
+      ACL
     ));
     log.debug('awaiting all download.Files');
     const downloadResults = await Promise.all(downloadPromises);
@@ -337,6 +339,7 @@ class GranuleFetcher {
    * @param {Object} file - file to download
    * @param {string} destinationBucket - bucket to put file in
    * @param {string} duplicateHandling - how to handle duplicate files
+   * @param {string | undefined} ACL
    * value can be
    * 'error' to throw an error,
    * 'replace' to replace the duplicate,
@@ -344,7 +347,7 @@ class GranuleFetcher {
    * 'version' to keep both files if they have different checksums
    * @returns {Array<Object>} returns the staged file and the renamed existing duplicates if any
    */
-  async ingestFile(file, destinationBucket, duplicateHandling) {
+  async ingestFile(file, destinationBucket, duplicateHandling, ACL) {
     let duplicateFound;
     const fileRemotePath = path.join(file.path, file.name);
     const sourceBucket = file.source_bucket;
@@ -381,7 +384,7 @@ class GranuleFetcher {
 
       // bind arguments to sync function
       const syncFileFunction = providerClient.sync.bind(
-        providerClient
+        providerClient,
       );
 
       if (s3ObjAlreadyExists) {
@@ -398,12 +401,14 @@ class GranuleFetcher {
           fileRemotePath,
         });
       } else {
+        log.debug(`sync file call with ACL param ${ACL}`);
         log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
         await syncFileFunction({
           destinationBucket,
           destinationKey,
           bucket: sourceBucket,
           fileRemotePath,
+          ACL
         });
         // Verify file integrity
         log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);

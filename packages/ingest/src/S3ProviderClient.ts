@@ -1,6 +1,7 @@
 import * as S3 from '@cumulus/aws-client/S3';
 import * as log from '@cumulus/common/log';
 import * as errors from '@cumulus/errors';
+import { ObjectCannedACL } from '@aws-sdk/client-s3';
 import { basename, dirname, join } from 'path';
 import { ProviderClient, S3ProviderClientListItem, isS3ObjectListItem } from './types';
 
@@ -81,6 +82,7 @@ class S3ProviderClient implements ProviderClient {
    *
    * @param {Object} params - the full path to the remote file to be fetched
    * @param {string} params.sourceKey - the full path to the remote file to be fetched
+   * @param {string} params.ACL 
    * @param {string} params.bucket - destination s3 bucket of the file
    * @param {string} params.destinationBucket - destination s3 bucket of the file
    * @param {string} params.destinationKey - destination s3 key of the file
@@ -89,13 +91,14 @@ class S3ProviderClient implements ProviderClient {
    */
   async sync(
     params: {
+      ACL?: ObjectCannedACL,
       bucket?: string,
       destinationBucket: string,
       destinationKey: string,
       fileRemotePath: string,
     }
   ): Promise<{ s3uri: string, etag: string }> {
-    const { fileRemotePath, destinationBucket, destinationKey, bucket } = params;
+    const { fileRemotePath, destinationBucket, destinationKey, bucket, ACL } = params;
     const sourceBucket = bucket || this.bucket;
     const sourceKey = fileRemotePath;
 
@@ -132,7 +135,7 @@ class S3ProviderClient implements ProviderClient {
         sourceObject,
         destinationBucket,
         destinationKey,
-        ACL: 'private',
+        ACL,
         copyTags: true,
       });
       return { s3uri, etag };

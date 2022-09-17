@@ -40,6 +40,7 @@ export interface ProviderClient {
       destinationBucket: string,
       destinationKey: string,
       bucket?: string,
+      ACL?: string,
     }
   ): Promise<{ s3uri: string, etag?: string }>
 }

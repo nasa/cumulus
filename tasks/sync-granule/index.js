@@ -58,6 +58,7 @@ async function download({
         granule,
         bucket,
         syncChecksumFiles,
+        ACL,
       });
       const endTime = Date.now();
 
