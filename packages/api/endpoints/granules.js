@@ -111,7 +111,7 @@ const create = async (req, res) => {
 
   try {
     const pgGranule = await translateApiGranuleToPostgresGranule({
-      granule,
+      dynamoRecord: granule,
       knexOrTransaction: knex,
     });
     if (
