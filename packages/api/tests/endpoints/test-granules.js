@@ -844,7 +844,10 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
     }
   );
   await granuleModel.create(newGranule);
-  const newPgGranule = await translateApiGranuleToPostgresGranule(newGranule, knex);
+  const newPgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newGranule,
+    knexOrTransaction: knex,
+  });
   const [createdPgGranule] = await granulePgModel.create(knex, newPgGranule);
 
   t.true(await granulePgModel.exists(
@@ -1469,10 +1472,10 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
 
   await granuleModel.create(newGranule);
 
-  const postgresNewGranule = await translateApiGranuleToPostgresGranule(
-    newGranule,
-    t.context.knex
-  );
+  const postgresNewGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newGranule,
+    knexOrTransaction: t.context.knex,
+  });
   postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
 
   const [postgresGranule] = await granulePgModel.create(
@@ -1587,10 +1590,10 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     },
   ];
 
-  const postgresNewGranule = await translateApiGranuleToPostgresGranule(
-    newGranule,
-    t.context.knex
-  );
+  const postgresNewGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newGranule,
+    knexOrTransaction: t.context.knex,
+  });
   postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
 
   const [postgresGranule] = await granulePgModel.create(

@@ -159,7 +159,11 @@ export const migrateGranuleRecord = async (
     throw new InvalidArgument('Invalid migration parameters detected, migrateOnlyFiles cannot be set to true if migrateAndOverwrite is also set to true');
   }
 
-  const granule = await translateApiGranuleToPostgresGranule(record, trx);
+  const granule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: record,
+    knexOrTransaction: trx,
+    preserveNilProperties: true,
+  });
 
   const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
     trx,

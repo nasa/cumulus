@@ -119,22 +119,33 @@ export const translatePostgresGranuleToApiGranule = async ({
 /**
  * Generate a Postgres granule record from a DynamoDB record.
  *
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ * @param {Object} params
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
  *   Record from DynamoDB
- * @param {Knex | Knex.Transaction} knexOrTransaction
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {Object} collectionPgModel - Instance of the collection database model
- * @param {Object} pdrPgModel - Instance of the pdr database model
- * @param {Object} providerPgModel - Instance of the provider database model
+ * @param {boolean} params.preserveNilProperties - Set to true to not remove null/undefined properties
+ *   defaults to false
+ * @param {Object} params.collectionPgModel - Instance of the collection database model
+ * @param {Object} params.pdrPgModel - Instance of the pdr database model
+ * @param {Object} params.providerPgModel - Instance of the provider database model
  * @returns {Object} A granule PG record
  */
-export const translateApiGranuleToPostgresGranule = async (
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knexOrTransaction: Knex | Knex.Transaction,
+export const translateApiGranuleToPostgresGranule = async ({
+  dynamoRecord,
+  knexOrTransaction,
+  preserveNilProperties = false,
   collectionPgModel = new CollectionPgModel(),
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel()
-): Promise<PostgresGranule> => {
+}: {
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knexOrTransaction: Knex | Knex.Transaction,
+  preserveNilProperties: boolean,
+  collectionPgModel?: CollectionPgModel,
+  pdrPgModel?: PdrPgModel,
+  providerPgModel?: ProviderPgModel,
+}): Promise<PostgresGranule> => {
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const granuleRecord: PostgresGranule = {
     granule_id: dynamoRecord.granuleId,
@@ -178,6 +189,10 @@ export const translateApiGranuleToPostgresGranule = async (
     created_at: new Date(dynamoRecord.createdAt),
     updated_at: new Date(dynamoRecord.updatedAt),
   };
+
+  if (preserveNilProperties) {
+    return granuleRecord;
+  }
 
   return removeNilProperties(granuleRecord);
 };

@@ -7,6 +7,7 @@ const Granule = require('@cumulus/api/models/granules');
 const s3Utils = require('@cumulus/aws-client/S3');
 const Logger = require('@cumulus/logger');
 const { InvalidArgument } = require('@cumulus/errors');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const { dynamodbDocClient } = require('@cumulus/aws-client/services');
 const { fakeFileFactory } = require('@cumulus/api/lib/testUtils');
@@ -336,7 +337,10 @@ test.serial('migrateFileRecord correctly migrates file record', async (t) => {
   } = t.context;
 
   const testFile = testGranule.files[0];
-  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
+  const granule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: testGranule,
+    knexOrTransaction: knex,
+  });
   const [pgGranule] = await granulePgModel.create(knex, granule);
   const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
@@ -378,7 +382,10 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
   });
   testGranule.files = [testFile];
 
-  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
+  const granule = await await translateApiGranuleToPostgresGranule({
+    dynamoRecord: testGranule,
+    knexOrTransaction: knex,
+  });
   const [pgGranule] = await granulePgModel.create(knex, granule);
   const granuleCumulusId = pgGranule.cumulus_id;
   await migrateFileRecord(testFile, granuleCumulusId, knex);
@@ -591,6 +598,61 @@ test.serial('migrateGranuleRecord updates an already migrated record if the upda
   t.deepEqual(record.updated_at, new Date(newerGranule.updatedAt));
 });
 
+test.serial('migrateGranuleRecord supports undefined values in dynamo and overwrites defined values in Postgres when re-migrating', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    testCollection,
+    testExecution,
+  } = t.context;
+
+  const testGranule = generateTestGranule({
+    collectionId: constructCollectionId(testCollection.name, testCollection.version),
+    queryFields: { foo: cryptoRandomString({ length: 8 }) },
+    execution: testExecution.url,
+    status: 'completed',
+    updatedAt: Date.now() - 1000,
+  });
+
+  await createRejectableTransaction(knex, (trx) => migrateGranuleRecord(testGranule, trx));
+
+  const newerGranule = {
+    ...testGranule,
+    cmrLink: undefined,
+    queryFields: undefined,
+    updatedAt: Date.now(),
+  };
+
+  const granuleCumulusId = await createRejectableTransaction(
+    knex,
+    (trx) => migrateGranuleRecord(newerGranule, trx)
+  );
+  const record = await granulePgModel.get(knex, {
+    cumulus_id: granuleCumulusId,
+  });
+
+  // Convert the granule payload we're migrating to the Postgres Granule format
+  const expectedPgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newerGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: record.cumulus_id });
+  });
+
+  // The expectedPgGranule is an object created outside of PG and does not have foreign keys
+  // Remove null properties from the PG record before comparison. The second migration should have
+  // replaced valid values with null values.
+  const omitList = ['cumulus_id', 'pdr_cumulus_id', 'provider_cumulus_id'];
+  t.deepEqual(omit(removeNilProperties(record), omitList), expectedPgGranule);
+
+  // Redundant check explicitly asserting the undefined fields we passed in the second migration
+  // are null.
+  t.is(record.cmr_link, null);
+  t.is(record.query_fields, null);
+});
+
 test.serial('migrateGranuleRecord updates an already migrated record if migrateAndOverwrite is set to "true"', async (t) => {
   const {
     knex,
@@ -707,7 +769,10 @@ test.serial('migrateFileRecord handles nullable fields on source file data', asy
   delete testFile.source;
   delete testFile.type;
 
-  const granule = await translateApiGranuleToPostgresGranule(testGranule, knex);
+  const granule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: testGranule,
+    knexOrTransaction: knex,
+  });
   const [pgGranule] = await granulePgModel.create(knex, granule);
   const granuleCumulusId = pgGranule.cumulus_id;
   t.teardown(async () => {
@@ -802,6 +867,12 @@ test.serial('migrateGranuleAndFilesViaTransaction processes granule with no file
     await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
   });
 });
+
+// FUTURE
+test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an undefined files key', async (t) => {});
+
+// FUTURE
+test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an empty array of files', async (t) => {});
 
 test.serial('queryAndMigrateGranuleDynamoRecords only processes records for specified collection', async (t) => {
   const {

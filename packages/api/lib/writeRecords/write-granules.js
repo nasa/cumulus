@@ -765,10 +765,10 @@ const writeGranuleFromApi = async (
       cmrUtils,
     });
 
-    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-      apiGranuleRecord,
-      knex
-    );
+    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranuleRecord,
+      knexOrTransaction: knex,
+    });
 
     await _writeGranule({
       postgresGranuleRecord,
@@ -891,10 +891,10 @@ const writeGranulesFromMessage = async ({
         cmrUtils,
       });
 
-      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-        apiGranuleRecord,
-        knex
-      );
+      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+        dynamoRecord: apiGranuleRecord,
+        knexOrTransaction: knex,
+      });
 
       return _writeGranule({
         postgresGranuleRecord,

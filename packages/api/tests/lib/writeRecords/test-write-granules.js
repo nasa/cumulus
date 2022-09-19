@@ -145,10 +145,10 @@ const updateGranule = async (t, updateGranulePayload, granuleWriteVia = 'api') =
   );
   const esGranule = await esGranulesClient.get(granuleId);
 
-  const updatedPgGranuleFields = await translateApiGranuleToPostgresGranule(
-    { ...updateGranulePayload },
-    knex
-  );
+  const updatedPgGranuleFields = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: { ...updateGranulePayload },
+    knexOrTransaction: knex,
+  });
 
   return {
     updatedPgGranuleFields,
@@ -403,10 +403,10 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     ...granule,
     status: 'completed',
   };
-  const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-    apiGranuleRecord,
-    knex
-  );
+  const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: apiGranuleRecord,
+    knexOrTransaction: knex,
+  });
   await _writeGranule({
     apiGranuleRecord,
     postgresGranuleRecord,
@@ -456,10 +456,10 @@ test.serial('_writeGranule will not allow a running status to replace a complete
     status: 'running',
   };
 
-  let updatedPgGranuleRecord = await translateApiGranuleToPostgresGranule(
-    updatedapiGranuleRecord,
-    knex
-  );
+  let updatedPgGranuleRecord = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: updatedapiGranuleRecord,
+    knexOrTransaction: knex,
+  });
 
   updatedPgGranuleRecord = {
     ...updatedPgGranuleRecord,
@@ -1039,7 +1039,10 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from Po
     granuleId: cryptoRandomString({ length: 10 }),
     collectionId: constructCollectionId(t.context.collection.name, t.context.collection.version),
   });
-  const existingPgGranule = await translateApiGranuleToPostgresGranule(existingGranule, knex);
+  const existingPgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: existingGranule,
+    knexOrTransaction: knex,
+  });
   const [existingPgGranuleRecordId] = await granulePgModel.create(knex, existingPgGranule, '*');
 
   await Promise.all(files.map(async (file) => {
@@ -1052,7 +1055,10 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from Po
   // Create the message granule and associated file in PG.
   // The fakeFile created here is NOT in the message and will be deleted
   // in writeGranulesFromMessage
-  const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+  const pgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: knex,
+  });
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
 
   const [fakeFile] = await filePgModel.create(knex, {
@@ -1694,7 +1700,10 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
   } = t.context;
 
   const snsEventType = 'Create';
-  const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+  const pgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: knex,
+  });
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
 
   const fakeFile = await filePgModel.create(knex, {
@@ -2777,10 +2786,10 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
     ...granule,
     status: 'completed',
   };
-  const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-    apiGranuleRecord,
-    knex
-  );
+  const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: apiGranuleRecord,
+    knexOrTransaction: knex,
+  });
 
   await _writeGranule({
     apiGranuleRecord,

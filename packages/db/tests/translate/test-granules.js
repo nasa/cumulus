@@ -690,13 +690,13 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     updated_at: new Date(apiGranule.updatedAt),
   };
 
-  const result = await translateApiGranuleToPostgresGranule(
-    apiGranule,
-    fakeDbClient,
-    fakeCollectionPgModel,
-    fakePdrPgModel,
-    fakeProviderPgModel
-  );
+  const result = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: apiGranule,
+    knexOrTransaction: fakeDbClient,
+    collectionPgModel: fakeCollectionPgModel,
+    pdrPgModel: fakePdrPgModel,
+    providerPgModel: fakeProviderPgModel,
+  });
 
   t.deepEqual(
     result,
@@ -774,13 +774,13 @@ test('translateApiGranuleToPostgresGranule removes null/undefined fields', async
     updated_at: new Date(apiGranule.updatedAt),
   };
 
-  const result = await translateApiGranuleToPostgresGranule(
-    apiGranule,
-    fakeDbClient,
-    fakeCollectionPgModel,
-    fakePdrPgModel,
-    fakeProviderPgModel
-  );
+  const result = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: apiGranule,
+    knexOrTransaction: fakeDbClient,
+    collectionPgModel: fakeCollectionPgModel,
+    pdrPgModel: fakePdrPgModel,
+    providerPgModel: fakeProviderPgModel,
+  });
 
   t.deepEqual(
     result,
