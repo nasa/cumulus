@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
+- **CUMULUS-2787**
+  - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
 
 ### Changed
 
@@ -23,6 +25,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
     an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
   - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
+- **CUMULUS-2913**
+  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
+    letter archive that fail to process to new S3 location.
 - **CUMULUS-2974**
   - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
     deletion, including collection, deleted granule ID, deleted files, and deletion time.
@@ -41,6 +48,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2971**
   - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
     its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
+
+- **CUMULUS-3021**
+  - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
+    collection version in the URI path
 
 ## [v13.3.0] 2022-8-19
 

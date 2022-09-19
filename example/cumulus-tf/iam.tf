@@ -59,3 +59,20 @@ resource "aws_iam_role_policy" "lambda_processing_access_fake_s3_provider" {
   role   = split("/", module.cumulus.lambda_processing_role_arn)[1]
   policy = data.aws_iam_policy_document.lambda_processing_access_fake_s3_provider.json
 }
+
+data "aws_iam_policy_document" "lzards_api_client_test_processing_role_get_secrets" {
+  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    resources = [
+      aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.arn,
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "lzards_api_client_test_processing_role_get_secrets" {
+  count  = length(var.launchpad_passphrase) == 0 ? 0 : 1
+  name   = "${var.prefix}_lzards_api_client_test_processing_role_get_secrets_policy"
+  role   = split("/", module.cumulus.lambda_processing_role_arn)[1]
+  policy = data.aws_iam_policy_document.lzards_api_client_test_processing_role_get_secrets[0].json
+}
