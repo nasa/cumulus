@@ -869,10 +869,10 @@ test.serial('migrateGranuleAndFilesViaTransaction processes granule with no file
 });
 
 // FUTURE
-test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an undefined files key', async (t) => {});
+test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an undefined files key', async () => {});
 
 // FUTURE
-test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an empty array of files', async (t) => {});
+test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an empty array of files', async () => {});
 
 test.serial('queryAndMigrateGranuleDynamoRecords only processes records for specified collection', async (t) => {
   const {

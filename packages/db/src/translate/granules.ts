@@ -124,8 +124,8 @@ export const translatePostgresGranuleToApiGranule = async ({
  *   Record from DynamoDB
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {boolean} params.preserveNilProperties - Set to true to not remove null/undefined properties
- *   defaults to false
+ * @param {boolean} params.preserveNilProperties - Set to true to not remove
+ *   null/undefined properties. Defaults to false
  * @param {Object} params.collectionPgModel - Instance of the collection database model
  * @param {Object} params.pdrPgModel - Instance of the pdr database model
  * @param {Object} params.providerPgModel - Instance of the provider database model
@@ -137,7 +137,7 @@ export const translateApiGranuleToPostgresGranule = async ({
   preserveNilProperties = false,
   collectionPgModel = new CollectionPgModel(),
   pdrPgModel = new PdrPgModel(),
-  providerPgModel = new ProviderPgModel()
+  providerPgModel = new ProviderPgModel(),
 }: {
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knexOrTransaction: Knex | Knex.Transaction,
