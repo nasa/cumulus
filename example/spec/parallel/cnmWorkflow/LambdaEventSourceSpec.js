@@ -40,7 +40,7 @@ const {
   waitForAllTestSfForRecord,
 } = require('../../helpers/kinesisHelpers');
 
-const ruleDirectory = './spec/parallel/kinesisTests/data/lambdaEventSourceTestRules';
+const ruleDirectory = './spec/parallel/cnmWorkflow/data/lambdaEventSourceTestRules';
 const s3data = ['@cumulus/test-data/granules/L2_HR_PIXC_product_0001-of-4154.h5'];
 
 // When kinesis-type rules exist, the Cumulus lambda messageConsumer is

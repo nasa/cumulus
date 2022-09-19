@@ -71,7 +71,7 @@ The following are steps that are required to set up your Cumulus instance to run
 
 In this example, we're going to trigger a workflow by creating a Kinesis rule and sending a record to a Kinesis stream.
 
-The following [workflow definition](workflows/README.md) should be added to a new `.tf` workflow resource (e.g. `cnm_workflow.tf`) in your deployment directory.  For the complete CNM workflow example, see [examples/cumulus-tf/kinesis_trigger_test_workflow.tf](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/kinesis_trigger_test_workflow.tf).
+The following [workflow definition](workflows/README.md) should be added to a new `.tf` workflow resource (e.g. `cnm_workflow.tf`) in your deployment directory.  For the complete CNM workflow example, see [examples/cumulus-tf/cnm_workflow.tf](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_workflow.tf).
 
 Add the following to the new terraform file in your deployment directory, updating the following:
 
