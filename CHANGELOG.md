@@ -10,9 +10,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
+- **CUMULUS-2787**
+  - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
 
 ### Changed
 
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
+- **CUMULUS-2913**
+  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
+    letter archive that fail to process to new S3 location.
 - **CUMULUS-2974**
   - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
     deletion, including collection, deleted granule ID, deleted files, and deletion time.
@@ -20,9 +27,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
-- **CUMULUS-2913**
-  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
-    letter archive that fail to process to new S3 location.
 
 ### Fixed
 
