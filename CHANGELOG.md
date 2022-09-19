@@ -55,6 +55,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
     its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
 
+- **CUMULUS-3021**
+  - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
+    collection version in the URI path
+
 ## [v13.3.0] 2022-8-19
 
 >>>>>>> master

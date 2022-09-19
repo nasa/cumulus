@@ -48,7 +48,7 @@ const {
 describe('The Kinesis Replay API', () => {
   const maxWaitForSFExistSecs = 60 * 3;
 
-  const ruleDir = './spec/parallel/kinesisTests/data/kinesisReplayRules';
+  const ruleDir = './spec/parallel/cnmWorkflow/data/kinesisReplayRules';
   const providersDir = './data/providers/PODAAC_SWOT/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006/';
 
