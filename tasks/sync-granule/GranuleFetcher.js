@@ -401,8 +401,7 @@ class GranuleFetcher {
           fileRemotePath,
         });
       } else {
-        log.debug(`sync file call with ACL param ${ACL}`);
-        log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey}`);
+        log.debug(`await sync file ${fileRemotePath} to s3://${destinationBucket}/${destinationKey} with ACL ${ACL}`);
         await syncFileFunction({
           destinationBucket,
           destinationKey,

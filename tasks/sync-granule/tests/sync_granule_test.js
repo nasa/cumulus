@@ -1062,6 +1062,53 @@ test.serial('download multiple granules from S3 provider to staging directory', 
   }
 });
 
+test.serial('download() ingests multiple granules from S3 provider to staging directory with ACL', async (t) => {
+  t.context.event.input.granules = t.context.event_multigran.input.granules;
+  try {
+    await prepareS3DownloadEvent(t);
+    t.context.event.config.ACL = 'disabled';
+
+    const output = await syncGranule(t.context.event);
+
+    await validateOutput(t, output);
+
+    t.is(output.granules.length, 3);
+
+    const config = t.context.event.config;
+
+    // verify the files are downloaded to the correct staging area
+    for (let i = 0; i < output.granules.length; i += 1) {
+      for (let j = 0; j < output.granules[i].files.length; j += 1) {
+        const collectionId = constructCollectionId(
+          output.granules[i].dataType, output.granules[i].version
+        );
+        const keypath = `${config.fileStagingDir}/${config.stack}/${collectionId}`;
+        const granuleFileName = t.context.event.input.granules[i].files[j].name;
+        t.is(
+          `${output.granules[i].files[j].bucket}/${output.granules[i].files[j].key}`,
+          `${t.context.internalBucketName}/${keypath}/${granuleFileName}`
+        );
+
+        t.true(
+          // eslint-disable-next-line no-await-in-loop
+          await s3ObjectExists({
+            Bucket: t.context.internalBucketName,
+            Key: `${keypath}/${granuleFileName}`,
+          })
+        );
+        const objectACL = await s3().getObjectAcl({
+          Bucket: t.context.internalBucketName,
+          Key: `${keypath}/${granuleFileName}`,
+        });
+        t.is(objectACL.Grants[0].Permission, 'FULL_CONTROL');
+      }
+    }
+  } finally {
+    // Clean up
+    recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+  }
+});
+
 test('disableOrDefaultAcl defaults ACL to private when none is supplied in the config', async (t) => {
   const ACL = undefined;
 

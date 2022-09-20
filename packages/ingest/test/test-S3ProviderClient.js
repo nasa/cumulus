@@ -7,6 +7,7 @@ const test = require('ava');
 const { randomString } = require('@cumulus/common/test-utils');
 const errors = require('@cumulus/errors');
 const S3 = require('@cumulus/aws-client/S3');
+const { s3 } = require('@cumulus/aws-client/services');
 
 const S3ProviderClient = require('../S3ProviderClient');
 
@@ -157,4 +158,39 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
       message: `Source file not found s3://${t.context.sourceBucket}/non-existent`,
     }
   );
+});
+
+test.serial('S3ProviderClient.sync syncs a file with an ACL parameter specified', async (t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
+  const targetKey = 'someTargetKey1.json';
+
+  await s3ProviderClient.sync({
+    ACL: 'log-delivery-write' ,
+    destinationBucket: t.context.targetBucket,
+    destinationKey: targetKey,
+    fileRemotePath: t.context.sourceKey,
+  });
+  const objectACL = await s3().getObjectAcl({
+    Bucket: t.context.targetBucket,
+    Key: targetKey
+  });
+  t.is(objectACL.Grants[0].Permission, 'FULL_CONTROL');
+});
+
+
+test.serial('S3ProviderClient.sync syncs a file when ACL parameter is not specified', async (t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
+  const targetKey = 'someTargetKey2.json';
+
+  await s3ProviderClient.sync({
+    ACL: undefined,
+    destinationBucket: t.context.targetBucket,
+    destinationKey: targetKey,
+    fileRemotePath: t.context.sourceKey,
+  });
+  const objectACL = await s3().getObjectAcl({
+    Bucket: t.context.targetBucket,
+    Key: targetKey
+  });
+  t.is(objectACL.Grants[0].Permission, 'FULL_CONTROL');
 });

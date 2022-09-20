@@ -90,6 +90,7 @@ async function download({
 * @returns {string | undefined }
 */
 function disableOrDefaultAcl(acl) {
+  log.debug(`ACL from config is: ${acl}`);
   if (acl === 'disabled') {
     return undefined;
   }
@@ -169,7 +170,7 @@ function syncGranule(event) {
     log.debug(`SyncGranule Complete. Returning output: ${JSON.stringify(output)}`);
     return output;
   }).catch((error) => {
-    log.debug('SyncGranule errored.');
+    log.debug(`SyncGranule errored: ${error}`);
 
     let errorToThrow = error;
     if (error.toString().includes('ECONNREFUSED')) {
