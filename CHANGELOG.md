@@ -11,15 +11,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
 
-<<<<<<< HEAD
 - **CUMULUS-2926**
   - Added ingest load tests to ensure users still able to ingest collections of +200K granules with Cumulus framework when code changes being introduced in a new release or feature.
-  - ingestLoad_queueGranSFQueued - exits the test after executing the QueueGranules task in the QueueGranules workflow to ingest granules into Cumulus with "queued" status.
-  - ingestLoad_queueGranSFCompleted - ingest granules with "completed" status via execution of the QueueGranules workflow and Ingest workflow for the official route of ingestion. 
-  - queueGranulePassThroughStepFunction - utilizes the QueueGranulesPassthrough workflow where the ingested granules status will be set to “completed” after the initial “queued".
-  
-=======
->>>>>>> master
+  - queueGranuleQueuedLoadTest - exits the test after executing the QueueGranules task in the QueueGranules workflow to ingest granules into Cumulus with "queued" status.
+  - queueGranuleCompletedLoadTest - ingest granules with "completed" status via execution of the QueueGranules workflow and Ingest workflow for the official route of ingestion.
+  - queueGranulePassThroughLoadTest - utilizes the QueueGranulesPassthrough workflow where the ingested granules status will be set to “completed” after the initial “queued".
+
 ### Changed
 
 - **CUMULUS-2974**
@@ -61,7 +58,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `GET /granules` endpoint to leverage ElasticSearch search-after API.
     The endpoint will only use search-after when the `searchContext` parameter
     is provided in a request.
-  
+
 ## [v13.2.1] 2022-8-10 [BACKPORT]
 
 ### Notable changes

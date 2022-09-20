@@ -1,6 +1,6 @@
-# ingestLoad_queueGranPassThruSF
+# queueGranulePassThroughLoadTest
 
-- This test script validates Cumulus framework being able to handle ingestion of +200K granules by executing the QueueGranulesPassthrough workflow to ingest granules into the database on "completed" status. No S3 data staging is involved in this test. 
+- This test script validates Cumulus framework being able to handle ingestion of +200K granules by executing the QueueGranulesPassthrough workflow to ingest granules into the database on "completed" status. No S3 data staging is involved in this test.
 
 ## Test In-line Configuration
     - workflowName: QueueGranulesPassthrough
@@ -10,9 +10,9 @@
 
 ## Usage
 
-`../node_modules/.bin/jasmine spec/loadTest/ingestLoad_queueGranPassThruSF.js`
+`../node_modules/.bin/jasmine spec/loadTest/queueGranulePassThroughLoadTest.js`
 
-# ingestLoad_queueGranSFCompleted
+# queueGranuleCompletedLoadTest
 
 - This script performs a load test toward Cumulus components by executing the QueueGranlues workflow to ingest granules into the database on "completed" status. Granule files test data will be staged in S3 since the ingestion is going through the IngestGranule workflow.
 
@@ -24,9 +24,9 @@
 
 ## Usage
 
-`../node_modules/.bin/jasmine spec/loadTest/ingestLoad_queueGranSFCompleted.js`
+`../node_modules/.bin/jasmine spec/loadTest/queueGranuleCompletedLoadTest.js`
 
-# ingestLoad_queueGranSFQueued
+# queueGranuleQueuedLoadTest
 
 - This script accomplishes a load ingestion of granules into the database on "queued" status by executing the QueueGranlues workflow, but without triggering the downstream granuleIngestWorkflow in the definition which is the IngestGranule workflow. This is achieved by not providing the queueUrl in the event.config. No S3 data staging is involved in this test.
 
@@ -38,4 +38,4 @@
 
 ## Usage
 
-`../node_modules/.bin/jasmine spec/loadTest/ingestLoad_queueGranSFQueued.js`
+`../node_modules/.bin/jasmine spec/loadTest/queueGranuleQueuedLoadTest.js`
