@@ -16,7 +16,10 @@ export interface HandlerEvent {
 export type MakeBackupFileRequestResult = {
   statusCode?: number
   granuleId: string,
+  collectionId: string,
   filename: string,
+  provider: string,
+  createdAt: number,
   body?: string,
   status: 'COMPLETED' | 'FAILED',
 };
@@ -36,10 +39,15 @@ export interface BaseMessageGranule {
 export interface MessageGranuleFromStepOutput extends BaseMessageGranule {
   dataType: string,
   version: string,
+  files: MessageGranuleFilesObject[],
+  provider: string,
+  createdAt: number,
 }
 
 export interface ApiGranule extends BaseMessageGranule {
   collectionId: string,
+  provider: string,
+  createdAt: number,
 }
 
 export type MessageGranule = MessageGranuleFromStepOutput | ApiGranule;

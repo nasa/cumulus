@@ -8,12 +8,15 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["filename", "status", "granuleId"],
+        "required": ["filename", "status", "granuleId", "collectionId", "provider", "createdAt"],
         "properties": {
           "body": { "type": "string" },
           "filename": { "type": "string" },
           "status": { "type": "string" },
           "granuleId": { "type": "string" },
+          "collectionId": { "type": "string" },
+          "provider": { "type": "string" },
+          "createdAt": { "type": "number" },
           "statusCode": { "type": "number" }
         }
       },

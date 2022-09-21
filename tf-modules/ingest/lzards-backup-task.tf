@@ -13,16 +13,16 @@ resource "aws_lambda_function" "lzards_backup_task" {
 
   environment {
     variables = {
-      stackName                        = var.prefix
-      CUMULUS_MESSAGE_ADAPTER_DIR      = "/opt/"
-      system_bucket                    = var.system_bucket
-      launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_launchpad_passphrase[0].name
-      launchpad_certificate            = var.lzards_launchpad_certificate
-      launchpad_api	                   = var.launchpad_api
-      backup_role_arn                  = aws_iam_role.lambda_backup_role[0].arn
-      lzards_api                       = var.lzards_api
-      lzards_provider                  = var.lzards_provider
-      lzards_s3_link_timeout           = var.lzards_s3_link_timeout
+      stackName                               = var.prefix
+      CUMULUS_MESSAGE_ADAPTER_DIR             = "/opt/"
+      system_bucket                           = var.system_bucket
+      lzards_launchpad_passphrase_secret_name = length(var.lzards_launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_launchpad_passphrase[0].name
+      lzards_launchpad_certificate            = var.lzards_launchpad_certificate
+      launchpad_api	                          = var.launchpad_api
+      backup_role_arn                         = aws_iam_role.lambda_backup_role[0].arn
+      lzards_api                              = var.lzards_api
+      lzards_provider                         = var.lzards_provider
+      lzards_s3_link_timeout                  = var.lzards_s3_link_timeout
     }
   }
 
