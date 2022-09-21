@@ -54,8 +54,6 @@ const granuleThresholdPerWorkflow = 425;
 const granuleCountPerWorkflow = 100; // 425 granules per workflow is the max allowable by the API
 const totalWorkflowCount = 5; // number of workflows to fire off
 
-const granuleCountThreshold = 0.95; // Percent granules to count as a successful batch on ingest timeout
-
 const totalInputPayloads = [];
 const queueGranulesExecutionArns = [];
 const queueGranulesChildExecutionArns = [];
@@ -167,7 +165,8 @@ const batchGranulesProcessing = async (nthWorkflow) => {
               prefix: config.stackName,
               granuleId: granule.granuleId,
             },
-            expectedValues
+            expectedValues,
+            { interval: 60 * 1000, timeout: 15 * 60 * 1000 }
           );
           completedGranules.push(record);
           totalGranulesCompleted.push(record);
@@ -271,7 +270,7 @@ describe('The Granule Ingest Load Test ', () => {
 
   it('writes to database the expected number of granules with status completed', () => {
     const expectedGranuleCount = granuleCountPerWorkflow * totalWorkflowCount;
-    expect(expectedGranuleCount * granuleCountThreshold < totalGranulesCompleted.length && totalGranulesCompleted.length <= expectedGranuleCount).toBeTruthy();
+    expect(expectedGranuleCount).toEqual(totalGranulesCompleted.length);
     console.log(colorConsoleLog, `\n*** The total ingested Granules = ${totalGranulesCompleted.length}/${expectedGranuleCount} ***`);
   });
 });
