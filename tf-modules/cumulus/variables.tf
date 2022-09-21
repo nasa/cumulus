@@ -106,6 +106,12 @@ variable "elasticsearch_security_group_id" {
   default     = ""
 }
 
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for ingest task lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  type = map(string)
+  default = {}
+}
+
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for ingest task lambdas in the form <lambda_identifier>_timeout: <timeout>"
   type = map(string)
