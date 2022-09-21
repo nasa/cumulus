@@ -383,9 +383,7 @@ class GranuleFetcher {
       await providerClient.connect();
 
       // bind arguments to sync function
-      const syncFileFunction = providerClient.sync.bind(
-        providerClient,
-      );
+      const syncFileFunction = providerClient.sync.bind(providerClient);
 
       if (s3ObjAlreadyExists) {
         duplicateFound = { bucket: destinationBucket, key: destinationKey };
@@ -407,7 +405,7 @@ class GranuleFetcher {
           destinationKey,
           bucket: sourceBucket,
           fileRemotePath,
-          ACL
+          ACL,
         });
         // Verify file integrity
         log.debug(`await verifyFile ${JSON.stringify(file)}, s3://${destinationBucket}/${destinationKey}`);

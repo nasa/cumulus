@@ -165,18 +165,17 @@ test.serial('S3ProviderClient.sync syncs a file with an ACL parameter specified'
   const targetKey = 'someTargetKey1.json';
 
   await s3ProviderClient.sync({
-    ACL: 'log-delivery-write' ,
+    ACL: 'log-delivery-write',
     destinationBucket: t.context.targetBucket,
     destinationKey: targetKey,
     fileRemotePath: t.context.sourceKey,
   });
   const objectACL = await s3().getObjectAcl({
     Bucket: t.context.targetBucket,
-    Key: targetKey
+    Key: targetKey,
   });
   t.is(objectACL.Grants[0].Permission, 'FULL_CONTROL');
 });
-
 
 test.serial('S3ProviderClient.sync syncs a file when ACL parameter is not specified', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
@@ -190,7 +189,7 @@ test.serial('S3ProviderClient.sync syncs a file when ACL parameter is not specif
   });
   const objectACL = await s3().getObjectAcl({
     Bucket: t.context.targetBucket,
-    Key: targetKey
+    Key: targetKey,
   });
   t.is(objectACL.Grants[0].Permission, 'FULL_CONTROL');
 });

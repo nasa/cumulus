@@ -82,7 +82,7 @@ class S3ProviderClient implements ProviderClient {
    *
    * @param {Object} params - the full path to the remote file to be fetched
    * @param {string} params.sourceKey - the full path to the remote file to be fetched
-   * @param {string} params.ACL 
+   * @param {string} params.ACL
    * @param {string} params.bucket - destination s3 bucket of the file
    * @param {string} params.destinationBucket - destination s3 bucket of the file
    * @param {string} params.destinationKey - destination s3 key of the file

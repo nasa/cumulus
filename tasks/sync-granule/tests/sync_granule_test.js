@@ -1096,6 +1096,7 @@ test.serial('download() ingests multiple granules from S3 provider to staging di
             Key: `${keypath}/${granuleFileName}`,
           })
         );
+        // eslint-disable-next-line no-await-in-loop
         const objectACL = await s3().getObjectAcl({
           Bucket: t.context.internalBucketName,
           Key: `${keypath}/${granuleFileName}`,
