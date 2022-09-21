@@ -65,7 +65,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v13.3.0] 2022-8-19
 
->>>>>>> master
 ### Notable Changes
 
 - **CUMULUS-2930**
