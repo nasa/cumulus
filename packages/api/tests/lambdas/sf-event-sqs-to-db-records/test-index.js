@@ -44,7 +44,6 @@ const {
 const {
   writeRecords,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
-const Granule = require('../../../models/granules');
 
 const {
   handler,
@@ -166,21 +165,6 @@ test.before(async (t) => {
   t.context.providerPgModel = new ProviderPgModel();
 
   process.env.ExecutionsTable = randomString();
-  process.env.GranulesTable = randomString();
-
-  const fakeFileUtils = {
-    buildDatabaseFiles: (params) => Promise.resolve(params.files),
-  };
-  const fakeStepFunctionUtils = {
-    describeExecution: () => Promise.resolve({}),
-  };
-  const granuleModel = new Granule({
-    fileUtils: fakeFileUtils,
-    stepFunctionUtils: fakeStepFunctionUtils,
-  });
-  await granuleModel.createTable();
-  t.context.granuleModel = granuleModel;
-
   fixture = await loadFixture('execution-running-event.json');
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
@@ -289,10 +273,8 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   const {
     PdrsTopicArn,
-    granuleModel,
     ExecutionsTopicArn,
   } = t.context;
-  await granuleModel.deleteTable();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,

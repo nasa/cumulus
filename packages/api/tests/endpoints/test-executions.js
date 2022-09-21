@@ -38,7 +38,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, AsyncOperation, Execution, Granule } = require('../../models');
+const { AccessToken, AsyncOperation, Execution } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -70,7 +70,6 @@ let jwtAuthToken;
 let accessTokenModel;
 let asyncOperationModel;
 let executionModel;
-let granuleModel;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('asyncOperation');
 process.env.ExecutionsTable = randomId('executions');
@@ -98,10 +97,6 @@ test.before(async (t) => {
     stackName: process.env.stackName,
   });
   await asyncOperationModel.createTable();
-
-  // create fake Granules table
-  granuleModel = new Granule();
-  await granuleModel.createTable();
 
   // create fake execution table
   executionModel = new Execution();
@@ -269,10 +264,9 @@ test.beforeEach(async (t) => {
 
   // create fake Postgres granule records
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
-    const dynamoRecord = await granuleModel.create(fakeGranule);
-    await indexer.indexGranule(esClient, dynamoRecord, esIndex);
+    await indexer.indexGranule(esClient, fakeGranule, esIndex);
     const granulePgRecord = await translateApiGranuleToPostgresGranule(
-      dynamoRecord,
+      fakeGranule,
       t.context.knex
     );
     return granulePgRecord;
@@ -306,7 +300,6 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await asyncOperationModel.deleteTable();
   await executionModel.deleteTable();
-  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,

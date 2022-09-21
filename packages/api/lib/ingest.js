@@ -20,7 +20,6 @@ const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules')
    * @param {Object} params.apiGranule - the granule object
    * @param {Object} params.queueUrl - SQS queue URL to use for sending messages
    * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
-   * @param {Granule} [params.granuleModel] - API Granule model (optional, for testing)
    * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
    * (optional, for testing)
    * @param {updateGranuleStatusToQueuedMethod} [params.updateGranuleStatusToQueuedMethod]

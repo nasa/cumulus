@@ -137,11 +137,9 @@ async function createGranuleAndFiles({
     }
   );
 
-  let dynamoGranule;
-
   // create a new Postgres granule
   const newPgGranule = await translateApiGranuleToPostgresGranule(
-    dynamoGranule || newGranule,
+    newGranule,
     dbClient
   );
   const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
@@ -160,7 +158,7 @@ async function createGranuleAndFiles({
     })
   );
 
-  const apiGranule = dynamoGranule || await translatePostgresGranuleToApiGranule({
+  const apiGranule = await translatePostgresGranuleToApiGranule({
     knexOrTransaction: dbClient,
     granulePgRecord: pgGranule,
   });
@@ -173,11 +171,8 @@ async function createGranuleAndFiles({
     process.env.ES_INDEX
   );
 
-  let newDynamoGranule;
-
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
-    newDynamoGranule,
     apiGranule,
     esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,

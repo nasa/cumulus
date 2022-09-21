@@ -21,7 +21,6 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 
-const Granule = require('../../models/granules');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 
@@ -64,10 +63,6 @@ test.before(async (t) => {
     PG_DATABASE: testDbName,
   };
 
-  process.env.GranulesTable = randomString();
-  t.context.granulesModel = new Granule();
-  await t.context.granulesModel.createTable();
-
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.granulePgModel = new GranulePgModel();
 
@@ -102,7 +97,6 @@ test.after.always(async (t) => {
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
   }).promise();
-  await t.context.granulesModel.deleteTable();
   await destroyLocalTestDb({
     ...t.context,
     testDbName,

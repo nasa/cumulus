@@ -778,8 +778,6 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {Object} [params.granuleModel]
- *   Optional override for the granule model writing to DynamoDB
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
  * @returns {Promise<Object[]>}

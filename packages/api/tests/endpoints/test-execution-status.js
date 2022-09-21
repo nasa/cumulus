@@ -27,7 +27,7 @@ const {
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, Execution, Granule } = require('../../models');
+const { AccessToken, Execution } = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
@@ -182,7 +182,6 @@ const executionExistsMock = (arn) => {
 
 let jwtAuthToken;
 let accessTokenModel;
-let granuleModel;
 let executionModel;
 let mockedSF;
 let mockedSFExecution;
@@ -246,10 +245,6 @@ test.before(async (t) => {
   );
   const expiredExecutionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
 
-  // create fake Granules table
-  granuleModel = new Granule();
-  await granuleModel.createTable();
-
   // create fake Executions table
   executionModel = new Execution();
   await executionModel.createTable();
@@ -301,9 +296,6 @@ test.before(async (t) => {
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', collectionId: t.context.collectionId }),
   ];
 
-  await granuleModel.create(t.context.fakeGranules[0]);
-  await granuleModel.create(t.context.fakeGranules[1]);
-
   // create fake Postgres granule records
   t.context.fakePGGranules = [
     fakeGranuleRecordFactory({
@@ -343,8 +335,6 @@ test.after.always(async (t) => {
   mockedSF.restore();
   mockedSFExecution.restore();
   await executionModel.deleteTable();
-  await granuleModel.deleteTable();
-
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,

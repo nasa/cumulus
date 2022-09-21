@@ -23,6 +23,7 @@ const {
 } = require('@cumulus/db');
 const { log } = require('console');
 const models = require('../models');
+const { fakeGranuleFactoryV2 } = require('../lib/testUtils');
 const { getESClientAndIndex } = require('./local-test-defaults');
 const {
   erasePostgresTables,
@@ -76,16 +77,19 @@ async function addGranules(granules) {
     },
   });
 
-  const granuleModel = new models.Granule();
   const executionPgModel = new ExecutionPgModel();
   const es = await getESClientAndIndex();
   return await Promise.all(
-    granules.map(async (g) => {
-      const dynamoRecord = await granuleModel.create(g);
-      await indexer.indexGranule(es.client, dynamoRecord, es.index);
-      const dbRecord = await translateApiGranuleToPostgresGranule(dynamoRecord, knex);
+    granules.map(async (granule) => {
+      const newGranule = fakeGranuleFactoryV2(
+        {
+          ...granule,
+        }
+      );
+      await indexer.indexGranule(es.client, newGranule, es.index);
+      const dbRecord = await translateApiGranuleToPostgresGranule(newGranule, knex);
       const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
-        url: g.execution,
+        url: granule.execution,
       });
 
       await upsertGranuleWithExecutionJoinRecord(knex, dbRecord, executionCumulusId);

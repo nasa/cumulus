@@ -25,7 +25,7 @@ const {
   fakeCollectionFactory,
 } = require('../../lib/testUtils');
 
-const { Granule, Rule } = require('../../models');
+const { Rule } = require('../../models');
 
 const {
   reingestGranule,
@@ -58,9 +58,6 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-
-  process.env.GranulesTable = randomString();
-  await new Granule().createTable();
 
   const { TopicArn } = await sns().createTopic({ Name: randomString() }).promise();
   t.context.granules_sns_topic_arn = TopicArn;
@@ -149,7 +146,6 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   } = t.context;
   const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
 
-  const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
   const queueUrl = 'testqueueUrl';
 
@@ -166,7 +162,6 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   await reingestGranule({
     apiGranule,
     queueUrl,
-    granuleModel,
     granulePgModel,
   });
   // Rule.buildPayload has its own unit tests to ensure the queue name
