@@ -8,6 +8,7 @@ const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   translateApiGranuleToPostgresGranule,
+  translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
   translatePostgresGranuleToApiGranule,
 } = require('../../dist/translate/granules');
 
@@ -615,7 +616,7 @@ test('translatePostgresGranuleToApiGranule handles granule with no associated ex
   );
 });
 
-test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
+test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granule to Postgres', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
   const pdrCumulusId = 4;
@@ -690,7 +691,7 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     updated_at: new Date(apiGranule.updatedAt),
   };
 
-  const result = await translateApiGranuleToPostgresGranule({
+  const result = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
     dynamoRecord: apiGranule,
     knexOrTransaction: fakeDbClient,
     collectionPgModel: fakeCollectionPgModel,

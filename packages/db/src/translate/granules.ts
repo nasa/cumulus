@@ -124,24 +124,20 @@ export const translatePostgresGranuleToApiGranule = async ({
  *   Record from DynamoDB
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {boolean} params.preserveNilProperties - Set to true to not remove
- *   null/undefined properties. Defaults to false
  * @param {Object} params.collectionPgModel - Instance of the collection database model
  * @param {Object} params.pdrPgModel - Instance of the pdr database model
  * @param {Object} params.providerPgModel - Instance of the provider database model
  * @returns {Object} A granule PG record
  */
-export const translateApiGranuleToPostgresGranule = async ({
+export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   dynamoRecord,
   knexOrTransaction,
-  preserveNilProperties = false,
   collectionPgModel = new CollectionPgModel(),
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel(),
 }: {
   dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
   knexOrTransaction: Knex | Knex.Transaction,
-  preserveNilProperties: boolean,
   collectionPgModel?: CollectionPgModel,
   pdrPgModel?: PdrPgModel,
   providerPgModel?: ProviderPgModel,
@@ -190,12 +186,44 @@ export const translateApiGranuleToPostgresGranule = async ({
     updated_at: new Date(dynamoRecord.updatedAt),
   };
 
-  if (preserveNilProperties) {
-    return granuleRecord;
-  }
-
-  return removeNilProperties(granuleRecord);
+  return granuleRecord;
 };
+
+/**
+ * Generate a Postgres granule record from a DynamoDB record. Removes
+ *   any null/undefined properties.
+ *
+ * @param {Object} params
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ *   Record from DynamoDB
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {Object} params.collectionPgModel - Instance of the collection database model
+ * @param {Object} params.pdrPgModel - Instance of the pdr database model
+ * @param {Object} params.providerPgModel - Instance of the provider database model
+ * @returns {Object} A granule PG record with null/undefined properties removed
+ */
+export const translateApiGranuleToPostgresGranule = async ({
+  dynamoRecord,
+  knexOrTransaction,
+  collectionPgModel = new CollectionPgModel(),
+  pdrPgModel = new PdrPgModel(),
+  providerPgModel = new ProviderPgModel(),
+}: {
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel?: CollectionPgModel,
+  pdrPgModel?: PdrPgModel,
+  providerPgModel?: ProviderPgModel,
+}): Promise<PostgresGranule> => removeNilProperties(
+  await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+    dynamoRecord,
+    knexOrTransaction,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+  })
+);
 
 /**
  * Translate a custom database result into an API granule
