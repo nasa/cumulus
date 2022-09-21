@@ -12,9 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added 'Bearer token' support to s3credentials endpoint
 
 - **CUMULUS-2926**
-  - Added ingest load tests to ensure users still able to ingest collections of +200K granules with Cumulus framework when code changes being introduced in a new release or feature.
-  - queueGranuleQueuedLoadTest - exits the test after executing the QueueGranules task in the QueueGranules workflow to ingest granules into Cumulus with "queued" status.
-  - queueGranuleCompletedLoadTest - ingest granules with "completed" status via execution of the QueueGranules workflow and Ingest workflow for the official route of ingestion.
+  - Added ingest load test to ensure users still able to ingest collections of +200K granules with Cumulus framework when code changes being introduced in a new release or feature.
   - queueGranulePassThroughLoadTest - utilizes the QueueGranulesPassthrough workflow where the ingested granules status will be set to “completed” after the initial “queued".
 
 ### Changed
