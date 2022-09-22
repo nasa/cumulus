@@ -5,14 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
-
+  
 ### Added
+
+- **CUMULUS-2986**
+  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
+    allowed properties include:
+      - add_missing_file_checksums_task_memory_size
+      - discover_granules_task_memory_size
+      - discover_pdrs_task_memory_size
+      - hyrax_metadata_updates_task_memory_size
+      - lzards_backup_task_memory_size
+      - move_granules_task_memory_size
+      - parse_pdr_task_memory_size
+      - pdr_status_check_task_memory_size
+      - post_to_cmr_task_memory_size
+      - queue_granules_task_memory_size
+      - queue_pdrs_task_memory_size
+      - queue_workflow_task_memory_size
+      - sync_granule_task_memory_size
+      - update_cmr_access_constraints_task_memory_size
+      - update_granules_cmr_task_memory_size
+  - Initializes the lambda_memory_size(s) variable in the Terraform variable list
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
+- **CUMULUS-2787**
+  - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
 
 ### Changed
 
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
+- **CUMULUS-2913**
+  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
+    letter archive that fail to process to new S3 location.
 - **CUMULUS-2974**
   - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
     deletion, including collection, deleted granule ID, deleted files, and deletion time.
@@ -36,6 +63,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2971**
   - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
     its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
+
+- **CUMULUS-3021**
+  - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
+    collection version in the URI path
 
 ## [v13.3.0] 2022-8-19
 
