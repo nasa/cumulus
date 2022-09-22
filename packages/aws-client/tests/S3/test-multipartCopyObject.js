@@ -1,11 +1,5 @@
 'use strict';
 
-/*
-* For multipartCopyObject, Localstack does not behave the same as S3, in that it does not error in
-* the same way. Therefore, for some tasks (e.g. syncGranules and moveGranules) that utilize it, we
-* have tests specifically against S3.
-*/
-
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs');

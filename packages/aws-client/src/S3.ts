@@ -1004,12 +1004,7 @@ const uploadPartCopy = async (
  * @returns {Promise.<{ etag: string }>} object containing the ETag of the
  *    destination object
  *
- * note: with CUMULUS-2557 and https://github.com/nasa/cumulus/pull/2117, it was discovered that
- * a file size of 0 will error with `MalformedXML: The XML you provided was not well-formed or did
- * not validate against our published schema`. Also, chunks are not created for a filesize of 0 and
- * if a chunk of {start:0,end:0} is force created, it will throw a different error `InvalidArgument:
- * Range specified is not valid for source object of size: 0`
- * Files with a size of 1 byte or larger should succeed.
+ * note: this method may error if used with zero byte files. see CUMULUS-2557 and https://github.com/nasa/cumulus/pull/2117.
  */
 export const multipartCopyObject = async (
   params: {

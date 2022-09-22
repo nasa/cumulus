@@ -88,6 +88,8 @@ describe('The MoveGranules task', () => {
           ],
         },
       });
+
+      movedFile = moveGranulesResponse.granules[0].files[0];
     } catch (error) {
       beforeAllFailed = true;
       throw error;
@@ -112,8 +114,6 @@ describe('The MoveGranules task', () => {
   it('succeeds moving the 0 byte file', async () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
-    movedFile = moveGranulesResponse.granules[0].files[0];
-
     const existCheck = await s3ObjectExists({ Bucket: movedFile.bucket, Key: movedFile.key });
     const object = await headObject(movedFile.bucket, movedFile.key);
     const objectSize = object.ContentLength;
@@ -126,8 +126,6 @@ describe('The MoveGranules task', () => {
     if (beforeAllFailed) fail('beforeAll() failed');
 
     // Verify that the tags of the moved granule match the tags of the source
-    movedFile = moveGranulesResponse.granules[0].files[0];
-
     const movedFileTags = await s3GetObjectTagging(
       movedFile.bucket,
       movedFile.key
