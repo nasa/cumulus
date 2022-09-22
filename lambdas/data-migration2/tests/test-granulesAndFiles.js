@@ -28,6 +28,7 @@ const {
   translateApiGranuleToPostgresGranule,
   migrationDir,
   createRejectableTransaction,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { RecordAlreadyMigrated, PostgresUpdateFailed } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -604,22 +605,43 @@ test.serial('migrateGranuleRecord supports undefined values in dynamo and overwr
     granulePgModel,
     testCollection,
     testExecution,
+    testProvider,
+    testPdr,
   } = t.context;
 
   const testGranule = generateTestGranule({
     collectionId: constructCollectionId(testCollection.name, testCollection.version),
     queryFields: { foo: cryptoRandomString({ length: 8 }) },
     execution: testExecution.url,
+    provider: testProvider.name,
+    pdrName: testPdr.name,
     status: 'completed',
+    version: cryptoRandomString({ length: 3 }),
     updatedAt: Date.now() - 1000,
   });
 
   await createRejectableTransaction(knex, (trx) => migrateGranuleRecord(testGranule, trx));
 
+  // get a list of nullable granule keys
+  const nonNullablefields = [
+    'granuleId',
+    'collectionId',
+    'createdAt',
+    'updatedAt',
+    'status',
+    'execution',
+  ];
+  const nullableGranuleFields = omit(testGranule, nonNullablefields);
+
+  // Create object with only nullable fields as { field: undefined }
+  const undefinedGranuleFields = {};
+  Object.keys(nullableGranuleFields).forEach((field) => {
+    undefinedGranuleFields[field] = undefined;
+  });
+
   const newerGranule = {
     ...testGranule,
-    cmrLink: undefined,
-    queryFields: undefined,
+    ...undefinedGranuleFields,
     updatedAt: Date.now(),
   };
 
@@ -647,10 +669,18 @@ test.serial('migrateGranuleRecord supports undefined values in dynamo and overwr
   const omitList = ['cumulus_id', 'pdr_cumulus_id', 'provider_cumulus_id'];
   t.deepEqual(omit(removeNilProperties(record), omitList), expectedPgGranule);
 
+  // Translate PG granule because `nullableGranuleFields` is in the API
+  // Granule format
+  const translatedApiRecord = await translatePostgresGranuleToApiGranule(
+    { granulePgRecord: record, knexOrTransaction: knex }
+  );
+
   // Redundant check explicitly asserting the undefined fields we passed in the second migration
-  // are null.
-  t.is(record.cmr_link, null);
-  t.is(record.query_fields, null);
+  // are null or undefined.
+  Object.keys(nullableGranuleFields).forEach((field) => {
+    console.log(field, translatedApiRecord[field]);
+    t.true(translatedApiRecord[field] === undefined);
+  });
 });
 
 test.serial('migrateGranuleRecord updates an already migrated record if migrateAndOverwrite is set to "true"', async (t) => {
