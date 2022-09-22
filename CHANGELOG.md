@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2913**
   - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
     letter archive that fail to process to new S3 location.
+- **CUMULUS-3051**
+  - Changed `S3ProviderClient.sync()` to include optional ACL parameter
 
 ### Fixed
 
