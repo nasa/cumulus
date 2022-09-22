@@ -149,29 +149,18 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
 /**
  * Replicate a granule object from a provided sample to be added to the granules payload of a workflow.
  * No S3 data staging if the replicated granule being used with the QueueGranulesPassThrough Workflow
- * @param {boolean} isPassThroughWorkflow - if granuleToReplicate is being used with the QueueGranulesPassthrough workflow logic
  * @param {Object} granuleToReplicate - granule being replicated
  * @param {string} bucket - S3 data bucket if NOT using QueueGranulesPassthrough workflow logic
  * @param {string} granuleRegex - regex to generate the new granule id
  * @returns {Promise<Object>} - a granule JS object with the updated granule ids
  */
-async function generatePayloadGranule(isPassThroughWorkflow = true, granuleToReplicate, bucket, granuleRegex) {
+function generatePayloadGranule(granuleToReplicate, bucket, granuleRegex) {
   const oldGranuleId = granuleToReplicate.granuleId;
   const newGranuleId = randomStringFromRegex(granuleRegex);
-
-  if (isPassThroughWorkflow === true) {
-    // Setup for Ingest using QueueGranulesPassthrough workflow logic
-    granuleToReplicate.files = granuleToReplicate.files.map(
-      (file) => ({ ...file, bucket: bucket })
-    );
-  } else {
-    await createGranuleFiles(
-      granuleToReplicate.files,
-      bucket,
-      oldGranuleId,
-      newGranuleId
-    );
-  }
+  // Setup for Ingest using QueueGranulesPassthrough workflow logic
+  granuleToReplicate.files = granuleToReplicate.files.map(
+    (file) => ({ ...file, bucket: bucket })
+  );
 
   return flow([
     JSON.stringify,
@@ -185,44 +174,26 @@ async function generatePayloadGranule(isPassThroughWorkflow = true, granuleToRep
  * for load testing. Use the input payload Json and granuleCountPerPayload to determine which files are needed and
  * return updated input with a list of granules with new ids.
  *
- * @param {boolean} isPassThroughWorkflow - if test granules are being used with the QueueGranulesPassthrough workflow logic
  * @param {string} bucket - data bucket
  * @param {string} inputPayloadJson - input payload as a JSON string
  * @param {number} granuleCountPerPayload - number of granules per workflow
  * @param {string} granuleRegex - regex to generate the new granule id
  * @param {string} testSuffix - suffix for test-specific collection
- * @param {string} testDataFolder - test data S3 path. Only needed when isPassThroughWorkflow = false
  * @returns {Promise<Object>} - input payload as a JS object with the updated granule ids
  */
-async function setupGranulesForIngestLoadTest(isPassThroughWorkflow = true, bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '', testDataFolder = undefined) {
-  let payloadJson;
-
-  if (testDataFolder) {
-    payloadJson = replace(
-      new RegExp('cumulus-test-data/pdrs', 'g'),
-      testDataFolder,
-      inputPayloadJson
-    );
-  } else {
-    payloadJson = inputPayloadJson;
-  }
-  const baseInputPayload = JSON.parse(payloadJson);
+async function setupGranulesForIngestLoadTest(bucket, inputPayloadJson, granuleCountPerPayload, granuleRegex, testSuffix = '') {
+  const baseInputPayload = JSON.parse(inputPayloadJson);
   baseInputPayload.granules[0].dataType += testSuffix;
   const granuleToReplicate = baseInputPayload.granules.shift();
 
   console.log(blueConsoleLog(), `\n===== Create ${granuleCountPerPayload} granules per payload =====`);
   const createS3GranuleFilesPromises = new Array(granuleCountPerPayload).fill().map(
     async () => {
-      const replicatedGranule = await generatePayloadGranule(isPassThroughWorkflow, granuleToReplicate, bucket, granuleRegex);
+      const replicatedGranule = await generatePayloadGranule(granuleToReplicate, bucket, granuleRegex);
       baseInputPayload.granules.push(replicatedGranule);
     }
   );
   await Promise.all(createS3GranuleFilesPromises);
-
-  if (isPassThroughWorkflow === false) {
-    console.log(blueConsoleLog(), `===== Uploaded ${granuleCountPerPayload * granuleToReplicate.files.length} granule files per payload =====\n`);
-  }
-
   return baseInputPayload;
 }
 

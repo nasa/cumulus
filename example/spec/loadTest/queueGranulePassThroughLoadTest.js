@@ -89,7 +89,6 @@ const batchGranulesProcessing = async (nthWorkflow) => {
   });
 
   const inputPayload = await setupGranulesForIngestLoadTest(
-    true,
     config.bucket,
     inputPayloadJson,
     granuleCountPerWorkflow,
