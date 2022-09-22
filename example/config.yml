@@ -23,17 +23,14 @@ jl-rds-tf:
 kk2-tf:
   bucket: kk2-tf-internal
 
-jtran-int-tf:
-  bucket: jtran-int-tf-internal
-
 jtran-tf:
   bucket: jtran-internal
 
 vkn-ci-tf:
-  bucket: vkn-ci-tf-internal 
+  bucket: vkn-ci-tf-internal
 
 vkn-tf:
   bucket: vkn-tf-internal
-  
+
 np:
   bucket: npauzenga-internal

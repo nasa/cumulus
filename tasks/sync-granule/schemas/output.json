@@ -39,7 +39,9 @@
           "granuleId",
           "dataType",
           "version",
-          "files"
+          "files",
+          "createdAt",
+          "provider"
         ],
         "properties": {
           "granuleId": {
@@ -95,6 +97,12 @@
                 }
               }
             }
+          },
+          "createdAt": {
+            "type": "number"
+          },
+          "provider": {
+            "type": "string"
           }
         }
       }

@@ -88,3 +88,38 @@ lambda_timeouts = {
   discover_granules_task_timeout = 300
 }
 ```
+
+## lambda_memory_sizes
+
+A configurable map of memory sizes (in MBs) for cumulus ingest module task lambdas in the form:
+
+```hcl
+<lambda_identifier>_memory_size: <memory_size>
+  type = map(string)
+```
+
+Currently the following values are supported:
+
+- add_missing_file_checksums_task_memory_size
+- discover_granules_task_memory_size
+- discover_pdrs_task_memory_size
+- hyrax_metadata_updates_task_memory_size
+- lzards_backup_task_memory_size
+- move_granules_task_memory_size
+- parse_pdr_task_memory_size
+- pdr_status_check_task_memory_size
+- post_to_cmr_task_memory_size
+- queue_granules_task_memory_size
+- queue_pdrs_task_memory_size
+- queue_workflow_task_memory_size
+- sync_granule_task_memory_size
+- update_cmr_acess_constraints_task_memory_size
+- update_granules_cmr_metadata_file_links_task_memory_size
+
+### Example
+
+```tf
+lambda_memory_sizes = {
+  queue_granules_task_memory_size = 1036
+}
+```
