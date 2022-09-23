@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v11.1.6] 2022-10-03 [BACKPORT]
+
+### Fixed
+
+- **CUMULUS-2557**
+  - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
+
 ## [v11.1.5] 2022-08-10 [BACKPORT]
+
 **Please note** changes in 11.1.4 may not yet be released in future versions, as
 this is a backport and patch release on the 11.1.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
@@ -6087,7 +6095,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.5...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.6...HEAD
+[v11.1.6]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.6
 [v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
 [v11.1.3]: https://github.com/nasa/cumulus/compare/v11.1.2...v11.1.3
