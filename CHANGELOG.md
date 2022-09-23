@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   
 ### Added
 
+- **CUMULUS-2998**
+  - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
+    - fake_processing_task_timeout and fake_processing_task_memory_size
+    - files_to_granules_task_timeout and files_to_granule_task_memory_size
+    - hello_world_task_timeout and hello_world_task_memory_size
+    - sf_sqs_report_task_timeout and sf_sqs_report_task_memory_size
+
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
     allowed properties include:
@@ -52,6 +59,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2557**
+  - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
 - **CUMULUS-2969**
   - Updated `@cumulus/api/models/rules.buildPayload` to only include
     stepFunction name and arn in for the `definition` return value, excluding
