@@ -666,8 +666,10 @@ test.serial('migrateGranuleRecord supports undefined values in dynamo and overwr
   // The expectedPgGranule is an object created outside of PG and does not have foreign keys
   // Remove null properties from the PG record before comparison. The second migration should have
   // replaced valid values with null values.
-  const omitList = ['cumulus_id', 'pdr_cumulus_id', 'provider_cumulus_id'];
-  t.deepEqual(omit(removeNilProperties(record), omitList), expectedPgGranule);
+  t.deepEqual(removeNilProperties(record), {
+    ...expectedPgGranule,
+    cumulus_id: record.cumulus_id,
+  });
 
   // Translate PG granule because `nullableGranuleFields` is in the API
   // Granule format
