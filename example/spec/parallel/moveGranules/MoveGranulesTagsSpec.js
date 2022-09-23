@@ -1,5 +1,7 @@
 'use strict';
 
+// TODO: rename this file to be clear it is also testing moving zero byte files
+
 /**
  * LocalStack has a bug where it ignores the `Tagging` parameter to the
  * `s3.createMultipartUpload` method. Since we are unable to verify that
