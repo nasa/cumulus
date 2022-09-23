@@ -1003,6 +1003,8 @@ const uploadPartCopy = async (
  * @param {number} [params.chunkSize] - chunk size of the S3 multipart uploads
  * @returns {Promise.<{ etag: string }>} object containing the ETag of the
  *    destination object
+ *
+ * note: this method may error if used with zero byte files. see CUMULUS-2557 and https://github.com/nasa/cumulus/pull/2117.
  */
 export const multipartCopyObject = async (
   params: {
@@ -1114,14 +1116,48 @@ export const moveObject = async (
     chunkSize?: number
   }
 ) => {
-  await multipartCopyObject({
-    sourceBucket: params.sourceBucket,
-    sourceKey: params.sourceKey,
-    destinationBucket: params.destinationBucket,
-    destinationKey: params.destinationKey,
-    ACL: <ObjectCannedACL>params.ACL,
-    copyTags: isBoolean(params.copyTags) ? params.copyTags : true,
-    chunkSize: params.chunkSize,
-  });
-  return await deleteS3Object(params.sourceBucket, params.sourceKey);
+  const {
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey,
+    ACL,
+    copyTags,
+    chunkSize,
+  } = params;
+
+  const sourceObject = await headObject(sourceBucket, sourceKey);
+
+  if (sourceObject.ContentLength === 0) {
+    // 0 byte files cannot be copied with multipart upload,
+    // so use a regular S3 PUT
+    const s3uri = buildS3Uri(destinationBucket, destinationKey);
+
+    const { CopyObjectResult } = await s3CopyObject({
+      CopySource: path.join(sourceBucket, sourceKey),
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    });
+    // This error should never actually be reached in practice. It's a
+    // necessary workaround for bad typings in the AWS SDK.
+    // https://github.com/aws/aws-sdk-js/issues/1719
+    if (!CopyObjectResult || !CopyObjectResult.ETag) {
+      throw new Error(
+        `ETag could not be determined for copy of ${buildS3Uri(sourceBucket, sourceKey)} to ${s3uri}`
+      );
+    }
+  } else {
+    await multipartCopyObject({
+      sourceBucket: sourceBucket,
+      sourceKey: sourceKey,
+      destinationBucket: destinationBucket,
+      destinationKey: destinationKey,
+      sourceObject: sourceObject,
+      ACL: <ObjectCannedACL>ACL,
+      copyTags: isBoolean(copyTags) ? copyTags : true,
+      chunkSize: chunkSize,
+    });
+  }
+  const deleteS3ObjRes = await deleteS3Object(sourceBucket, sourceKey);
+  return deleteS3ObjRes;
 };
