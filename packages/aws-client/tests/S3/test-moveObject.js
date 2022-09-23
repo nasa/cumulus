@@ -82,3 +82,38 @@ test('moveObject() deletes the source file', async (t) => {
     })
   );
 });
+
+test('moveObject() moves a 0 byte file', async (t) => {
+  // This test doesn't really prove anything since Localstack does not behave exactly like S3.
+  // However, if Localstack fixes multipart upload handling to match real S3 behavior, this will
+  // be a useful test.
+  const { sourceBucket, destinationBucket } = t.context;
+
+  const sourceKey = randomId('source-key');
+  const destinationKey = '0byte.dat';
+
+  await s3PutObject({
+    Bucket: sourceBucket,
+    Key: sourceKey,
+    // ensure file has 0 bytes
+    Body: '',
+  });
+
+  await moveObject({
+    sourceBucket,
+    sourceKey,
+    destinationBucket,
+    destinationKey,
+    chunkSize: 5 * MB,
+  });
+
+  t.true(
+    await s3ObjectExists({
+      Bucket: destinationBucket,
+      Key: destinationKey,
+    })
+  );
+
+  const copiedObject = await getS3Object(destinationBucket, destinationKey);
+  t.is(await getObjectStreamContents(copiedObject.Body), '');
+});
