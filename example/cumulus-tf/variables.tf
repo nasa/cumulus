@@ -30,11 +30,6 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
   description = "Layer version ARN of the Lambda layer for the Cumulus Message Adapter"
 }
 
-variable "cmr_oauth_provider" {
-  type    = string
-  default = "launchpad"
-}
-
 variable "csdap_client_id" {
   type        = string
   description = "The csdap client id"
