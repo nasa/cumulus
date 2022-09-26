@@ -5,14 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
-
+  
 ### Added
+
+- **CUMULUS-2998**
+  - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
+    - fake_processing_task_timeout and fake_processing_task_memory_size
+    - files_to_granules_task_timeout and files_to_granule_task_memory_size
+    - hello_world_task_timeout and hello_world_task_memory_size
+    - sf_sqs_report_task_timeout and sf_sqs_report_task_memory_size
+
+- **CUMULUS-2986**
+  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
+    allowed properties include:
+      - add_missing_file_checksums_task_memory_size
+      - discover_granules_task_memory_size
+      - discover_pdrs_task_memory_size
+      - hyrax_metadata_updates_task_memory_size
+      - lzards_backup_task_memory_size
+      - move_granules_task_memory_size
+      - parse_pdr_task_memory_size
+      - pdr_status_check_task_memory_size
+      - post_to_cmr_task_memory_size
+      - queue_granules_task_memory_size
+      - queue_pdrs_task_memory_size
+      - queue_workflow_task_memory_size
+      - sync_granule_task_memory_size
+      - update_cmr_access_constraints_task_memory_size
+      - update_granules_cmr_task_memory_size
+  - Initializes the lambda_memory_size(s) variable in the Terraform variable list
 
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
+- **CUMULUS-2787**
+  - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
 
 ### Changed
 
+- **CUMULUS-2787**
+  - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
+- **CUMULUS-2913**
+  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
+    letter archive that fail to process to new S3 location.
 - **CUMULUS-2943**
   - Bulk granule deletion will continue with DDB/ES if the granule does not exist in PG.
 - **CUMULUS-2974**
@@ -22,12 +56,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
-- **CUMULUS-2913**
-  - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
-    letter archive that fail to process to new S3 location.
 
 ### Fixed
 
+- **CUMULUS-2557**
+  - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
 - **CUMULUS-2969**
   - Updated `@cumulus/api/models/rules.buildPayload` to only include
     stepFunction name and arn in for the `definition` return value, excluding
