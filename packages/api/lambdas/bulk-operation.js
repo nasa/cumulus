@@ -109,6 +109,9 @@ async function bulkGranuleDelete(
         }));
       } else {
         dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
+        if (forceRemoveFromCmr && dynamoGranule && dynamoGranule.published) {
+          dynamoGranuleModel.removeGranuleFromCmrByGranule(dynamoGranule);
+        } // reconcile/remove when granules model is deleted
       }
 
       await deleteGranuleAndFiles({

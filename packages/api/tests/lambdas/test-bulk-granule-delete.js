@@ -8,6 +8,7 @@ const {
   migrationDir,
   destroyLocalTestDb,
 } = require('@cumulus/db');
+const { DeletePublishedGranule } = require('@cumulus/errors');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('@cumulus/es-client/search');
@@ -185,6 +186,43 @@ test.serial('bulkGranuleDelete does not fail on published granules if payload.fo
   ]));
 });
 
+test.serial('bulkGranuleDelete fails if granule is published and payload.forceRemoveFromCmr is false', async (t) => {
+  const {
+    knex,
+    esClient,
+  } = t.context;
+
+  const granuleModel = new Granule();
+  const granulePgModel = new GranulePgModel();
+
+  const granule = await createGranuleAndFiles({
+    dbClient: knex,
+    granuleParams: { published: true },
+    esClient: esClient,
+  });
+
+  const granuleId = granule.newPgGranule.granule_id;
+  const collectionCumulusId = granule.newPgGranule.collection_cumulus_id;
+
+  await t.throwsAsync(
+    () => bulkGranuleDelete({ ids: [granuleId] }), // eslint-disable-next-line max-len
+    { message: /DeletePublishedGranule: You cannot delete a granule that is published to CMR\. Remove it from CMR first.*/s }
+  );
+
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await t.context.esGranulesClient.exists(granuleId));
+
+  const s3Buckets = granule.s3Buckets;
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
+
 test.serial('bulkGranuleDelete does not fail if granule is not in PG', async (t) => {
   const {
     knex,
@@ -248,6 +286,42 @@ test.serial('bulkGranuleDelete does not fail if granule is not in PG and payload
 
   t.false(await granuleModel.exists({ granuleId }));
   t.false(await t.context.esGranulesClient.exists(granuleId));
+
+  const s3Buckets = granule.s3Buckets;
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
+
+test.serial('bulkGranuleDelete fails if granule is not in PG, dynamoGranule.published is true and payload.forceRemoveFromCmr is false', async (t) => {
+  const {
+    knex,
+    esClient,
+  } = t.context;
+
+  const granuleModel = new Granule();
+  const granulePgModel = new GranulePgModel();
+
+  const granule = await createGranuleAndFiles({
+    dbClient: knex,
+    granuleParams: { published: true },
+    esClient: esClient,
+  });
+
+  const granuleId = granule.newPgGranule.granule_id;
+
+  await granulePgModel.delete(knex, {
+    cumulus_id: granule.newPgGranule.cumulus_id,
+  });
+
+  await t.throwsAsync(
+    () => bulkGranuleDelete({ ids: [granuleId] }), // eslint-disable-next-line max-len
+    { message: /DeletePublishedGranule: You cannot delete a granule that is published to CMR\. Remove it from CMR first.*/s }
+  );
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await t.context.esGranulesClient.exists(granuleId));
 
   const s3Buckets = granule.s3Buckets;
   t.teardown(() => deleteS3Buckets([
