@@ -42,6 +42,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Updated `example/cumulus-tf/main.tf` to set `cmr_oauth_provider` to `launchpad`
+
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 - **CUMULUS-2913**

@@ -122,7 +122,7 @@ module "cumulus" {
 
   cmr_search_client_config = var.cmr_search_client_config
 
-  cmr_oauth_provider = var.cmr_oauth_provider
+  cmr_oauth_provider = "launchpad"
 
   default_s3_multipart_chunksize_mb = var.default_s3_multipart_chunksize_mb
 
