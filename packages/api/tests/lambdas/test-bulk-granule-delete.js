@@ -8,7 +8,6 @@ const {
   migrationDir,
   destroyLocalTestDb,
 } = require('@cumulus/db');
-const { DeletePublishedGranule } = require('@cumulus/errors');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('@cumulus/es-client/search');
