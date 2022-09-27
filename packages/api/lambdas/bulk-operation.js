@@ -108,19 +108,26 @@ async function bulkGranuleDelete(
           pgGranuleRecord: pgGranule,
         }));
       } else {
-        dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
-        if (forceRemoveFromCmr && dynamoGranule && dynamoGranule.published) {
-          dynamoGranuleModel.removeGranuleFromCmrByGranule(dynamoGranule);
-        } // reconcile/remove when granules model is deleted
+        try {
+          dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
+          if (forceRemoveFromCmr && dynamoGranule && dynamoGranule.published) {
+            dynamoGranuleModel.removeGranuleFromCmrByGranule(dynamoGranule);
+          } // reconcile/remove when granules model is deleted
+        } catch (error) {
+          if (error instanceof RecordDoesNotExist) {
+            log.info(error.message);
+          }
+        }
       }
 
-      await deleteGranuleAndFiles({
-        knex,
-        dynamoGranule,
-        pgGranule,
-      });
-
-      deletedGranules.push(granuleId);
+      if (pgGranule || dynamoGranule) {
+        await deleteGranuleAndFiles({
+          knex,
+          dynamoGranule,
+          pgGranule,
+        });
+        deletedGranules.push(granuleId);
+      }
     },
     {
       concurrency: 10, // is this necessary?
