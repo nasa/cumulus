@@ -69,6 +69,9 @@ Currently the following values are supported:
 
 - discover_granules_task_timeout
 - discover_pdrs_task_timeout
+- fake_processing_task_timeout
+- files_to_granules_task_timeout
+- hello_world_task_timeout
 - hyrax_metadata_update_tasks_timeout
 - lzards_backup_task_timeout
 - move_granules_task_timeout
@@ -78,6 +81,7 @@ Currently the following values are supported:
 - queue_granules_task_timeout
 - queue_pdrs_task_timeout
 - queue_workflow_task_timeout
+- sf_sqs_report_task_timeout
 - sync_granule_task_timeout
 - update_granules_cmr_metadata_file_links_task_timeout
 
@@ -103,6 +107,7 @@ Currently the following values are supported:
 - add_missing_file_checksums_task_memory_size
 - discover_granules_task_memory_size
 - discover_pdrs_task_memory_size
+- fake_processing_task_memory_size
 - hyrax_metadata_updates_task_memory_size
 - lzards_backup_task_memory_size
 - move_granules_task_memory_size
@@ -112,6 +117,7 @@ Currently the following values are supported:
 - queue_granules_task_memory_size
 - queue_pdrs_task_memory_size
 - queue_workflow_task_memory_size
+- sf_sqs_report_task_memory_size
 - sync_granule_task_memory_size
 - update_cmr_acess_constraints_task_memory_size
 - update_granules_cmr_metadata_file_links_task_memory_size

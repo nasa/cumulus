@@ -5,8 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
-  
+
 ### Added
+
+- **CUMULUS-2998**
+  - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
+    - fake_processing_task_timeout and fake_processing_task_memory_size
+    - files_to_granules_task_timeout and files_to_granule_task_memory_size
+    - hello_world_task_timeout and hello_world_task_memory_size
+    - sf_sqs_report_task_timeout and sf_sqs_report_task_memory_size
 
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
@@ -42,6 +49,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Given a partial Granule object, the /granules update endpoint now operates
     with behavior more consistent with a PATCH operation where fields not provided
     in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
   - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
     an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
   - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
@@ -60,6 +69,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-2557**
+  - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
 - **CUMULUS-2969**
   - Updated `@cumulus/api/models/rules.buildPayload` to only include
     stepFunction name and arn in for the `definition` return value, excluding
