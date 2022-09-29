@@ -16,11 +16,13 @@ const {
   GranulesExecutionsPgModel,
   GranulePgModel,
   FilePgModel,
+  PdrPgModel,
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeFileRecordFactory,
   fakeGranuleRecordFactory,
   fakeProviderRecordFactory,
+  fakePdrRecordFactory,
   generateLocalTestDb,
   destroyLocalTestDb,
   TableNames,
@@ -125,6 +127,7 @@ const updateGranule = async (t, updateGranulePayload, granuleWriteVia = 'api') =
       },
       payload: {
         granules: [updateGranulePayload],
+        pdr: { name: t.context.pdrName },
       },
     };
 
@@ -183,15 +186,15 @@ test.before(async (t) => {
     stepFunctionUtils: fakeStepFunctionUtils,
   });
   await granuleModel.createTable();
-  t.context.granuleModel = granuleModel;
 
+  t.context.pdrPgModel = new PdrPgModel();
+  t.context.granuleModel = granuleModel;
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();
   t.context.filePgModel = new FilePgModel();
   t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
   t.context.providerPgModel = new ProviderPgModel();
-
   t.context.testDbName = `writeGranules_${cryptoRandomString({ length: 10 })}`;
 
   const { knexAdmin, knex } = await generateLocalTestDb(
@@ -262,29 +265,6 @@ test.beforeEach(async (t) => {
     fakeFileFactory({ size: 5 }),
     fakeFileFactory({ size: 5 }),
   ];
-  t.context.granule = fakeGranuleFactoryV2({
-    files: t.context.files,
-    granuleId: t.context.granuleId,
-    collectionId: constructCollectionId(t.context.collection.name, t.context.collection.version),
-    execution: execution.url,
-  });
-
-  t.context.workflowStartTime = Date.now();
-  t.context.cumulusMessage = {
-    cumulus_meta: {
-      workflow_start_time: t.context.workflowStartTime,
-      state_machine: t.context.stateMachineArn,
-      execution_name: t.context.executionName,
-    },
-    meta: {
-      status: 'running',
-      collection: t.context.collection,
-      provider: t.context.provider,
-    },
-    payload: {
-      granules: [t.context.granule],
-    },
-  };
 
   const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
@@ -302,6 +282,43 @@ test.beforeEach(async (t) => {
     t.context.knex,
     t.context.provider
   );
+
+  // Generate and create a PDR for reference in postgres
+  t.context.pdr = fakePdrRecordFactory({
+    collection_cumulus_id: t.context.collectionCumulusId,
+    provider_cumulus_id: t.context.providerCumulusId,
+  });
+
+  [t.context.providerPdrId] = await t.context.pdrPgModel.create(
+    t.context.knex,
+    t.context.pdr
+  );
+
+  t.context.granule = fakeGranuleFactoryV2({
+    files: t.context.files,
+    granuleId: t.context.granuleId,
+    collectionId: constructCollectionId(t.context.collection.name, t.context.collection.version),
+    execution: execution.url,
+    pdrName: t.context.pdr.name,
+  });
+
+  t.context.workflowStartTime = Date.now();
+  t.context.cumulusMessage = {
+    cumulus_meta: {
+      workflow_start_time: t.context.workflowStartTime,
+      state_machine: t.context.stateMachineArn,
+      execution_name: t.context.executionName,
+    },
+    meta: {
+      status: 'running',
+      collection: t.context.collection,
+      provider: t.context.provider,
+    },
+    payload: {
+      granules: [t.context.granule],
+      pdr: t.context.pdr,
+    },
+  };
 });
 
 test.afterEach.always(async (t) => {
@@ -584,7 +601,7 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
   // Only test fields that are stored in Postgres on the Granule record.
   // The following fields are populated by separate queries during translation
   // or elasticsearch.
-  const omitList = ['files', 'execution', 'pdrName', 'provider', '_id'];
+  const omitList = ['files', '_id'];
 
   await writeGranulesFromMessage({
     cumulusMessage,
@@ -747,6 +764,7 @@ test.serial('writeGranulesFromMessage() given a partial granule overwrites only 
     },
     payload: {
       granules: [t.context.granule],
+      pdr: { name: t.context.pdrName },
     },
   };
 
