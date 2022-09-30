@@ -10,6 +10,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3024**
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
+  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
+    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
 - **CUMULUS-2557**
   - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
 - **CUMULUS-2971**
