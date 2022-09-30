@@ -94,6 +94,7 @@ export {
 } from './translate/executions';
 export {
   translateApiGranuleToPostgresGranule,
+  translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
   translatePostgresGranuleToApiGranule,
   translatePostgresGranuleResultToApiGranule,
 } from './translate/granules';
