@@ -124,16 +124,17 @@ describe('The TestPythonProcessing workflow', () => {
 
   afterAll(async () => {
     // clean up stack state added by test
-    await apiTestUtils.deletePdr({
-      prefix: config.stackName,
-      pdr: pdrFilename,
-    });
     await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
     });
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
     await deleteProvider({ prefix: config.stackName, providerId: provider.id });
     await deleteExecution({ prefix: config.stackName, executionArn: workflowExecutionArn });
+
     await Promise.all([
       deleteFolder(config.bucket, testDataFolder),
       deleteCollection({
