@@ -32,7 +32,7 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
 
 variable "cmr_oauth_provider" {
   type    = string
-  default = "earthdata"
+  default = "launchpad"
 }
 
 variable "csdap_client_id" {
