@@ -6,7 +6,33 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v11.1.6] 2022-10-03 [BACKPORT]
+
+### Fixed
+
+- **CUMULUS-3024**
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
+  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
+    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
+- **CUMULUS-2971**
+  - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
+    its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
+- **CUMULUS-2557**
+  - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
+- **CUMULUS-3021**
+  - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
+    collection version in the URI path
+
 ## [v11.1.5] 2022-08-10 [BACKPORT]
+
 **Please note** changes in 11.1.4 may not yet be released in future versions, as
 this is a backport and patch release on the 11.1.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
@@ -6087,7 +6113,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.5...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.6...HEAD
+[v11.1.6]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.6
 [v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
 [v11.1.3]: https://github.com/nasa/cumulus/compare/v11.1.2...v11.1.3

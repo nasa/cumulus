@@ -119,7 +119,10 @@ const setUpExistingDatabaseRecords = async (t) => {
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const translatedGranules = await Promise.all(t.context.granules.map(async (granule) =>
-    await translateApiGranuleToPostgresGranule(granule, t.context.knex)));
+    await translateApiGranuleToPostgresGranule({
+      dynamoRecord: granule,
+      knexOrTransaction: t.context.knex,
+    })));
 
   const pgGranules = await granulePgModel.create(
     t.context.knex,

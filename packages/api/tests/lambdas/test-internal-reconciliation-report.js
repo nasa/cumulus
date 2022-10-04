@@ -238,7 +238,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   await Promise.all(
     dbGranules.map(async (granule) => {
-      const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+      const pgGranule = await translateApiGranuleToPostgresGranule({
+        dynamoRecord: granule,
+        knexOrTransaction: knex,
+      });
       let pgExecution = {};
       if (granule.execution) {
         const pgExecutionData = fakeExecutionRecordFactory({
@@ -393,7 +396,10 @@ test.serial('internalRecReportForGranules handles generated granules with custom
       processingTimeInfo,
       cmrTemporalInfo,
     });
-    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+    const pgGranule = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranule,
+      knexOrTransaction: knex,
+    });
 
     let pgExecution = {};
     if (apiGranule.execution) {
@@ -446,7 +452,10 @@ test.serial('internalRecReportForGranules handles granules with files', async (t
       workflowStartTime: Date.now(),
       cmrUtils: fakeCmrUtils,
     });
-    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+    const pgGranule = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranule,
+      knexOrTransaction: knex,
+    });
 
     const pgExecutionData = fakeExecutionRecordFactory({
       url: apiGranule.execution,
