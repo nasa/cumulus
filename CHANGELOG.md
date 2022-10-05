@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v11.1.6] 2022-10-03 [BACKPORT]
 
-# Fixed
+### Fixed
 
 - **CUMULUS-3024**
   - Update PUT /granules endpoint to operate consistently across datastores
