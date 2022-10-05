@@ -3,6 +3,7 @@
 const AggregateError = require('aggregate-error');
 const isEmpty = require('lodash/isEmpty');
 const omit = require('lodash/omit');
+const isArray = require('lodash/isArray');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -58,7 +59,9 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const {
   RecordDoesNotExist,
+  CumulusMessageError,
 } = require('@cumulus/errors');
+
 const FileUtils = require('../FileUtils');
 const {
   getExecutionProcessingTimeInfo,
@@ -223,9 +226,6 @@ const _removeExcessFiles = async ({
   knex,
   writtenFiles,
 }) => {
-  if (writtenFiles.length === 0) {
-    throw new Error('_removeExcessFiles called with no written files');
-  }
   const excludeCumulusIds = writtenFiles.map((file) => file.cumulus_id);
   return await filePgModel.deleteExcluding({
     knexOrTransaction: knex,
@@ -385,14 +385,9 @@ const updateGranuleStatusToFailed = async (params) => {
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
- * @param {Object} [params.files] - File objects
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
- * @param {Object} params.workflowError - Error from the workflow
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {string} params.snsEventType - SNS Event Type
- * @param {Object} [params.granuleModel] - Optional Granule DDB model override
- * @param {Object} [params.granulePgModel] - Optional Granule PG model override
  * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
@@ -401,8 +396,10 @@ const _writeGranuleFiles = async ({
   knex,
 }) => {
   let fileRecords = [];
-  const { files, granuleId, status, error: workflowError } = granule;
-  if (isStatusFinalState(status)) {
+  const { files, granuleId, error: workflowError } = granule;
+  // Only try to generate file records if there are valid files.
+  // If `files` is an empty array, write the empty array
+  if (isArray(files) && files.length > 0) {
     fileRecords = _generateFilePgRecords({
       files,
       granuleCumulusId,
@@ -441,31 +438,6 @@ const _writeGranuleFiles = async ({
       error: errorsObject,
     });
   }
-};
-
-/**
- * Transform granule files to latest file API structure
- *
- * @param {Object} params
- * @param {Object} params.granule - An API granule object
- * @param {Object} params.provider - An API provider object
- *
-* @returns {Promise<Array>} - A list of file objects once resolved
- */
-const _generateFilesFromGranule = async ({
-  granule,
-  provider,
-}) => {
-  const { files = [] } = granule;
-  // This is necessary to set properties like
-  // `key`, which is required for the PostgreSQL schema. And
-  // `size` which is used to calculate the granule product
-  // volume
-  return await FileUtils.buildDatabaseFiles({
-    s3: s3(),
-    providerURL: buildURL(provider),
-    files,
-  });
 };
 
 const _writeGranuleRecords = async (params) => {
@@ -576,24 +548,6 @@ const _writeGranuleRecords = async (params) => {
   }
 };
 
-const _writePostgresFilesFromApiGranuleFiles = async ({
-  apiGranuleRecord,
-  granuleCumulusId,
-  knex,
-  snsEventType,
-}) => {
-  const { files, status } = apiGranuleRecord;
-  if (isStatusFinalState(status) && files.length > 0) {
-    await _writeGranuleFiles({
-      granuleCumulusId: granuleCumulusId,
-      granule: apiGranuleRecord,
-      knex,
-      snsEventType,
-      granuleModel: new Granule(),
-    });
-  }
-};
-
 /**
  * Write a granule record to DynamoDB and PostgreSQL
  *
@@ -628,12 +582,22 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
-  await _writePostgresFilesFromApiGranuleFiles({
-    apiGranuleRecord,
-    granuleCumulusId: pgGranule.cumulus_id,
-    knex,
-    snsEventType,
-  });
+
+  const { status } = apiGranuleRecord;
+
+  // Files are only written to Postgres if the granule is in a "final" state
+  // (e.g. "status: completed") and there is a valid `files` key in the granule.
+  // An empty array of files will remove existing file records but a missing
+  // `files` key will not.
+  if (isStatusFinalState(status) && ('files' in apiGranuleRecord)) {
+    await _writeGranuleFiles({
+      granuleCumulusId: pgGranule.cumulus_id,
+      granule: apiGranuleRecord,
+      knex,
+      snsEventType,
+      granuleModel: new Granule(),
+    });
+  }
 
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
@@ -743,7 +707,7 @@ const writeGranuleFromApi = async (
     timeToPreprocess,
     timeToArchive,
     timestamp,
-    files = [],
+    files,
     beginningDateTime,
     endingDateTime,
     productionDateTime,
@@ -801,10 +765,10 @@ const writeGranuleFromApi = async (
       cmrUtils,
     });
 
-    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-      apiGranuleRecord,
-      knex
-    );
+    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranuleRecord,
+      knexOrTransaction: knex,
+    });
 
     await _writeGranule({
       postgresGranuleRecord,
@@ -881,8 +845,21 @@ const writeGranulesFromMessage = async ({
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
     async (granule) => {
-      // compute granule specific data.
-      const files = await _generateFilesFromGranule({ granule, provider });
+      // FUTURE: null files are currently not supported in update payloads
+      // RDS Phase 3 should revise logic to accept an explicit null value
+      if (granule.files === null) {
+        throw new CumulusMessageError('granule.files must not be null');
+      }
+
+      // This is necessary to set properties like
+      // `key`, which is required for the PostgreSQL schema. And
+      // `size` which is used to calculate the granule product
+      // volume
+      const files = granule.files ? await FileUtils.buildDatabaseFiles({
+        s3: s3(),
+        providerURL: buildURL(provider),
+        files: granule.files,
+      }) : undefined;
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
       const productVolume = getGranuleProductVolume(files);
@@ -914,10 +891,10 @@ const writeGranulesFromMessage = async ({
         cmrUtils,
       });
 
-      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-        apiGranuleRecord,
-        knex
-      );
+      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+        dynamoRecord: apiGranuleRecord,
+        knexOrTransaction: knex,
+      });
 
       return _writeGranule({
         postgresGranuleRecord,
