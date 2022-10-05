@@ -6,6 +6,8 @@ const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
 const omit = require('lodash/omit');
+const omitBy = require('lodash/omitBy');
+
 const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
 const {
@@ -331,7 +333,7 @@ test.beforeEach(async (t) => {
     ),
   ];
 
-  await Promise.all(
+  t.context.fakePGGranuleRecords = await Promise.all(
     t.context.fakePGGranules.map((granule) =>
       upsertGranuleWithExecutionJoinRecord(
         t.context.knex,
@@ -1974,6 +1976,113 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
       timestamp: updatedEsRecord.timestamp,
     }
   );
+});
+
+test.serial('PUT creates a granule if one does not already exist in all data stores', async (t) => {
+  const {
+    knex,
+  } = t.context;
+
+  const granuleId = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    granuleId,
+    status: 'completed',
+    execution: t.context.executionUrl,
+    duration: 47.125,
+  });
+
+  await request(app)
+    .put(`/granules/${fakeGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(fakeGranule)
+    .expect(201);
+
+  const fakePgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: fakeGranule,
+    knexOrTransaction: knex,
+  });
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: fakeGranule.granuleId,
+  });
+
+  t.deepEqual(actualGranule, {
+    ...fakeGranule,
+    error: {},
+    timestamp: actualGranule.timestamp,
+  });
+
+  const actualPgGranule = await t.context.granulePgModel.get(knex, {
+    granule_id: actualGranule.granuleId,
+    collection_cumulus_id: t.context.collectionCumulusId,
+  });
+
+  t.deepEqual(
+    omitBy(actualPgGranule, (x) => x === null),
+    {
+      ...fakePgGranule,
+      error: {},
+      timestamp: actualPgGranule.timestamp,
+      cumulus_id: actualPgGranule.cumulus_id,
+    }
+  );
+
+  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    fakeGranule.granuleId
+  );
+  t.deepEqual(
+    updatedEsRecord,
+    {
+      ...fakeGranule,
+      error: {},
+      timestamp: actualGranule.timestamp,
+      _id: updatedEsRecord._id,
+    }
+  );
+});
+
+test.serial('PUT sets correct default value for published on new granule creation', async (t) => {
+  const {
+    knex,
+  } = t.context;
+
+  const granuleId = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+
+  const fakeGranule = fakeGranuleFactoryV2({
+    granuleId,
+    status: 'completed',
+    execution: t.context.executionUrl,
+    duration: 47.125,
+  });
+  delete fakeGranule.published;
+
+  await request(app)
+    .put(`/granules/${fakeGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(fakeGranule)
+    .expect(201);
+
+  const fakeDynamoGranule = await t.context.granuleModel.get({
+    granuleId: fakeGranule.granuleId,
+  });
+
+  const fakePgGranule = await t.context.granulePgModel.get(knex, {
+    granule_id: fakeGranule.granuleId,
+    collection_cumulus_id: t.context.collectionCumulusId,
+  });
+
+  const fakeEsRecord = await t.context.esGranulesClient.get(
+    fakeGranule.granuleId
+  );
+
+  t.is(fakeDynamoGranule.published, false);
+  t.is(fakePgGranule.published, false);
+  t.is(fakeEsRecord.published, false);
 });
 
 test.serial('PUT replaces an existing granule in all data stores with correct timestamps', async (t) => {

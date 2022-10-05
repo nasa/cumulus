@@ -16,6 +16,7 @@ const {
   generateMoveFileParams,
 } = require('@cumulus/ingest/granule');
 
+
 const Manager = require('./base');
 
 const { CumulusModelError } = require('./errors');
@@ -353,10 +354,11 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async _validateAndStoreGranuleRecord(granuleRecord) {
+    const clonedGranuleRecord = cloneDeep(granuleRecord);
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
-    return this._storeGranuleRecord(granuleRecord);
+    await this.constructor.recordIsValid(clonedGranuleRecord, this.schema, this.removeAdditional);
+    return this._storeGranuleRecord(clonedGranuleRecord);
   }
 
   /**

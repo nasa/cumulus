@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-3070**
+  - Remove granules dynamoDb model logic that sets default publish value on record
+    validation
+  - Update API granule write logic to not set default publish value on record
+    updates to avoid overwrite (PATCH behavior)
+  - Update API granule write logic to  publish to false on record
+    creation if not specified
+  - Update message granule write logic to set default publish value on record
+    creation update.
+  - Removed dataType/version from api granule schema
+
 - **CUMULUS-2998**
   - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
     - fake_processing_task_timeout and fake_processing_task_memory_size

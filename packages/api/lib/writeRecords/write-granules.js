@@ -724,6 +724,7 @@ const writeGranuleFromApi = async (
 ) => {
   try {
     const granule = { granuleId, cmrLink, published, files };
+
     const processingTimeInfo = {
       processingStartDateTime,
       processingEndDateTime,
@@ -869,8 +870,13 @@ const writeGranulesFromMessage = async ({
       const updatedAt = now;
       const timestamp = now;
 
+      let published = granule.published;
+      if (published === undefined) {
+        published = false;
+      }
+
       const apiGranuleRecord = await generateGranuleApiRecord({
-        granule,
+        granule: { ...granule, published },
         executionUrl,
         collectionId,
         provider: provider.id,
