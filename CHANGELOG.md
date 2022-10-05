@@ -30,6 +30,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3021**
   - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
     collection version in the URI path
+- **CUMULUS-3027**
+  - Pinned typescript to ~4.7.x to address typing incompatibility issues
+    discussed in https://github.com/knex/knex/pull/5279
+  - Update generate-ts-build-cache script to always install root project dependencies
 
 ## [v11.1.5] 2022-08-10 [BACKPORT]
 
