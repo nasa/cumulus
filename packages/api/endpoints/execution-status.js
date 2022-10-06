@@ -1,10 +1,15 @@
 'use strict';
 
 const router = require('express-promise-router')();
+const moment = require('moment');
 const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executions');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
+const S3ObjectStore = require('@cumulus/aws-client/S3ObjectStore');
+const { s3 } = require('@cumulus/aws-client/services');
+const { buildS3Uri } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const Logger = require('@cumulus/logger');
 const {
   getApiGranuleExecutionCumulusIdsByExecution,
   getKnexClient,
@@ -13,6 +18,10 @@ const {
   CollectionPgModel,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
+const { filenamify } = require('../lib/utils');
+
+const logger = new Logger({ sender: '@cumulus/api/execution-status' });
+const maxResponsePayloadSizeBytes = 6 * 1000 * 1000;
 
 /**
  * fetchRemote fetches remote message from S3
@@ -23,6 +32,36 @@ const {
 async function fetchRemote(eventMessage) {
   const updatedEventMessage = await pullStepFunctionEvent(eventMessage);
   return JSON.stringify(updatedEventMessage);
+}
+
+/**
+ * return a presigned S3 url for execution status
+ * @param {Object} executionStatus - execution status
+ * @returns {string} presigned S3 url
+ */
+async function createPresignedS3UrlForExecutionStatus(executionStatus) {
+  const systemBucket = process.env.system_bucket;
+  const stackName = process.env.stackName;
+  const formatString = 'YYYYMMDDTHHmmssSSS';
+  const key = `${stackName}/data/execution-status/${filenamify(executionStatus.execution.name)}-${moment.utc().format(formatString)}.json`;
+  const downloadFile = key.split('/').pop();
+  // the s3 object will be deleted by the life cyle policy on the bucket based on prefix
+  await s3().putObject({
+    Bucket: systemBucket,
+    Key: key,
+    Body: JSON.stringify(executionStatus, undefined, 2),
+  });
+
+  const s3ObjectUrl = buildS3Uri(systemBucket, key);
+  const s3ObjectStoreClient = new S3ObjectStore();
+  const presignedS3Url = await s3ObjectStoreClient.signGetObject(
+    s3ObjectUrl,
+    {
+      ResponseContentDisposition: `attachment; filename="${downloadFile}"`,
+    }
+  );
+
+  return presignedS3Url;
 }
 
 /**
@@ -122,7 +161,26 @@ async function get(req, res) {
     }
     status.executionHistory.events = await Promise.all(updatedEvents);
     status.execution.granules = mappedGranules;
-    return res.send(status);
+
+    const presignedS3Url = await createPresignedS3UrlForExecutionStatus(status);
+    // estimated payload size, add extra
+    const objectString = JSON.stringify(status, undefined, 2);
+    const estimatedPayloadSize = presignedS3Url.length + objectString.length + 50;
+    logger.debug(`Sending json file with contentLength ${objectString.length}`);
+    if (
+      estimatedPayloadSize
+        > (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
+    ) {
+      return res.json({
+        presignedS3Url,
+        data: `Error: Execution Status for ${status.execution.name} exceeded maximum allowed payload size`,
+      });
+    }
+
+    return res.json({
+      presignedS3Url,
+      data: status,
+    });
   }
 
   // get the execution information from database
