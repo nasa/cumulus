@@ -16,7 +16,6 @@ const {
   generateMoveFileParams,
 } = require('@cumulus/ingest/granule');
 
-
 const Manager = require('./base');
 
 const { CumulusModelError } = require('./errors');

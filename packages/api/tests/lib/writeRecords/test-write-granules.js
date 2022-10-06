@@ -683,7 +683,6 @@ test.serial('writeGranulesFromMessage() sets a default value of false for `publi
   t.is(translatedPgRecord.published, false);
 });
 
-
 test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => {
   const {
     collectionCumulusId,
