@@ -1978,6 +1978,63 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
   );
 });
 
+// FUTURE: this is explicitly a PATCH behavior test -
+// moving this is part of CUMULUS-3069/CUMULUS-3072
+test.serial(
+  'PUT does not overwrite existing duration of an existing granule if not specified in the payload',
+  async (t) => {
+    const { esClient, executionUrl, knex } = t.context;
+
+    const unmodifiedDuration = 100;
+    const { newPgGranule, newDynamoGranule, esRecord } =
+      await createGranuleAndFiles({
+        dbClient: knex,
+        esClient,
+        execution: executionUrl,
+        granuleParams: {
+          duration: unmodifiedDuration,
+          status: 'completed',
+        },
+      });
+
+    // Verify returned objects have correct status
+    t.is(newDynamoGranule.status, 'completed');
+    t.is(newPgGranule.status, 'completed');
+    t.is(esRecord.status, 'completed');
+
+    const newQueryFields = {
+      foo: randomString(),
+    };
+    const updatedGranule = {
+      granuleId: newDynamoGranule.granuleId,
+      collectionId: newDynamoGranule.collectionId,
+      status: 'completed',
+      queryFields: newQueryFields,
+    };
+
+    await request(app)
+      .put(`/granules/${newDynamoGranule.granuleId}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .send(updatedGranule)
+      .expect(200);
+
+    const actualGranule = await t.context.granuleModel.get({
+      granuleId: newDynamoGranule.granuleId,
+    });
+    const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: newPgGranule.cumulus_id,
+    });
+    const actualEsGranule = await t.context.esGranulesClient.get(
+      newDynamoGranule.granuleId
+    );
+
+    t.is(actualGranule.duration, unmodifiedDuration);
+    t.is(actualPgGranule.duration, unmodifiedDuration);
+    t.is(actualEsGranule.duration, unmodifiedDuration);
+  }
+);
+
 test.serial('PUT creates a granule if one does not already exist in all data stores', async (t) => {
   const {
     knex,
