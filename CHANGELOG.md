@@ -71,6 +71,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-xxxx**
+  - Pin `@aws-sdk/client-s3` to `~3.58.0` to avoid breaking change
 - **CUMULUS-2557**
   - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
 - **CUMULUS-2969**
@@ -554,6 +556,7 @@ releases.
     file extension for tasks that utilize metadata file lookups
 - **CUMULUS-2966**
   - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
 ### Fixed
 
 - **CUMULUS-2863**
