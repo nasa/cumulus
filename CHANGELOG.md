@@ -71,6 +71,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-xxxx**
+  - Pin `@aws-sdk/client-s3` version to avoid breaking change in 3.185
 - **CUMULUS-2557**
   - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
 - **CUMULUS-2969**
