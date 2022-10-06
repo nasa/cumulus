@@ -460,7 +460,6 @@ test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
   t.is(record.status, 'failed');
   t.is(record.execution, executionUrl);
   t.is(record.granuleId, granule.granuleId);
-  t.is(record.published, false);
   t.is(record.error.Error, error.Error);
   t.is(record.error.Cause, error.Cause);
 });
