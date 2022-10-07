@@ -132,6 +132,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let testDataFolder;
   let workflowExecutionArn;
   let granuleWasDeleted = false;
+  let reingestExecutionArn;
 
   beforeAll(async () => {
     try {
@@ -271,6 +272,12 @@ describe('The S3 Ingest Granules workflow', () => {
         }
       }
     }
+    await apiTestUtils.deletePdr({
+      prefix: config.stackName,
+      pdr: pdrFilename,
+    });
+
+    await deleteExecution({ prefix: config.stackName, executionArn: reingestExecutionArn });
 
     // clean up stack state added by test
     await providersApi.deleteProvider({
@@ -935,7 +942,6 @@ describe('The S3 Ingest Granules workflow', () => {
         let reingestGranuleId;
         let fakeGranuleId;
         let asyncOperationId;
-        let reingestExecutionArn;
         let bulkReingestResponse;
         let reingestBeforeAllError;
 
@@ -956,15 +962,6 @@ describe('The S3 Ingest Granules workflow', () => {
           } catch (error) {
             reingestBeforeAllError = error;
           }
-        });
-
-        afterAll(async () => {
-          await apiTestUtils.deletePdr({
-            prefix: config.stackName,
-            pdr: pdrFilename,
-          });
-
-          await deleteExecution({ prefix: config.stackName, executionArn: reingestExecutionArn });
         });
 
         it('generates an async operation through the Cumulus API', () => {
@@ -1211,9 +1208,19 @@ describe('The S3 Ingest Granules workflow', () => {
             Key: destinationKey,
           });
 
+          // eslint-disable-next-line promise/param-names
+          await new Promise((res) => setTimeout(res, 2000));
+
           // Sanity check
           const fileExists = await s3ObjectExists({ Bucket: config.bucket, Key: destinationKey });
           expect(fileExists).toBe(true);
+
+          const granRecord = await getGranule({
+            prefix: config.stackName,
+            granuleId: inputPayload.granules[0].granuleId,
+          });
+
+          console.log('Granule Record*****:', granRecord);
 
           let moveGranuleResponseError;
           try {

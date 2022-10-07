@@ -40,10 +40,10 @@ const createGranuleInDynamoAndPG = async (t, params) => {
   });
   const originalDynamoGranule = await t.context.granulesModel.create(granule);
 
-  const translatedGranule = await translateApiGranuleToPostgresGranule(
-    granule,
-    t.context.knex
-  );
+  const translatedGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: t.context.knex,
+  });
   const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
     translatedGranule
