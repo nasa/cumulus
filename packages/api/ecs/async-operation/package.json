@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ecs-async-operation",
-  "version": "11.1.6",
+  "version": "11.1.7",
   "description": "The docker image for running async operations",
   "keywords": [
     "NASA",
@@ -20,10 +20,10 @@
     "test": "../../../../node_modules/.bin/ava"
   },
   "dependencies": {
-    "@cumulus/aws-client": "11.1.6",
-    "@cumulus/db": "11.1.6",
-    "@cumulus/es-client": "11.1.6",
-    "@cumulus/logger": "11.1.6",
+    "@cumulus/aws-client": "11.1.7",
+    "@cumulus/db": "11.1.7",
+    "@cumulus/es-client": "11.1.7",
+    "@cumulus/logger": "11.1.7",
     "aws-sdk": "^2.585.0",
     "crypto-random-string": "^3.2.0",
     "got": "^11.7.0",
