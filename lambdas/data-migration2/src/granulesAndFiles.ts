@@ -20,7 +20,7 @@ import {
   upsertGranuleWithExecutionJoinRecord,
   FilePgModel,
   PostgresFile,
-  translateApiGranuleToPostgresGranule,
+  translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
   createRejectableTransaction,
 } from '@cumulus/db';
 import { envUtils } from '@cumulus/common';
@@ -153,7 +153,10 @@ export const migrateGranuleRecord = async (
     throw new InvalidArgument('Invalid migration parameters detected, migrateOnlyFiles cannot be set to true if migrateAndOverwrite is also set to true');
   }
 
-  const granule = await translateApiGranuleToPostgresGranule(record, trx);
+  const granule = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+    dynamoRecord: record,
+    knexOrTransaction: trx,
+  });
 
   const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
     trx,

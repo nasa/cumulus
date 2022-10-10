@@ -855,7 +855,9 @@ Copy an S3 object to another location in S3 using a multipart copy
 
 **Kind**: inner method of [<code>S3</code>](#module_S3)  
 **Returns**: <code>Promise.&lt;{etag: string}&gt;</code> - object containing the ETag of the
-   destination object  
+   destination object
+
+note: this method may error if used with zero byte files. see CUMULUS-2557 and https://github.com/nasa/cumulus/pull/2117.  
 
 | Param | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -1163,12 +1165,12 @@ Class to use when interacting with S3
 **Kind**: global class  
 
 * [S3ObjectStore](#S3ObjectStore)
-    * [.signGetObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signGetObject) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.signHeadObject(objectUrl, [options], [queryParams])](#S3ObjectStore+signHeadObject) ⇒ <code>Promise.&lt;string&gt;</code>
+    * [.signGetObject(objectUrl, [options], [queryParams], presignOptions)](#S3ObjectStore+signGetObject) ⇒ <code>Promise.&lt;string&gt;</code>
+    * [.signHeadObject(objectUrl, [options], [queryParams], presignOptions)](#S3ObjectStore+signHeadObject) ⇒ <code>Promise.&lt;string&gt;</code>
 
 <a name="S3ObjectStore+signGetObject"></a>
 
-### s3ObjectStore.signGetObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
+### s3ObjectStore.signGetObject(objectUrl, [options], [queryParams], presignOptions) ⇒ <code>Promise.&lt;string&gt;</code>
 Returns an HTTPS URL that can be used to perform a GET on the given object
 store URL
 
@@ -1184,10 +1186,11 @@ store URL
 | objectUrl | <code>string</code> | the URL of the object to sign |
 | [options] | <code>string</code> | options to pass to S3.getObject |
 | [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
+| presignOptions | <code>RequestPresigningArguments</code> | presignOptions |
 
 <a name="S3ObjectStore+signHeadObject"></a>
 
-### s3ObjectStore.signHeadObject(objectUrl, [options], [queryParams]) ⇒ <code>Promise.&lt;string&gt;</code>
+### s3ObjectStore.signHeadObject(objectUrl, [options], [queryParams], presignOptions) ⇒ <code>Promise.&lt;string&gt;</code>
 Returns an HTTPS URL that can be used to perform a HEAD on the given object
 store URL
 
@@ -1203,6 +1206,7 @@ store URL
 | objectUrl | <code>string</code> | the URL of the object to sign |
 | [options] | <code>string</code> | options to pass to S3.getObject |
 | [queryParams] | <code>string</code> | a mapping of parameter key/values to put in the URL |
+| presignOptions | <code>RequestPresigningArguments</code> | presignOptions |
 
 
 ## About Cumulus

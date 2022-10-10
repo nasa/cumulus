@@ -15,6 +15,7 @@ function determineIntegrationTestStackName(cb) {
   if (branch === 'master') return cb('cumulus-source');
 
   const stacks = {
+    'Charles Huang': 'ch-ci-tf',
     'Jenny Liu': 'jl-rds',
     jennyhliu: 'jl-rds',
     kkelly51: 'kk2',
