@@ -18,9 +18,9 @@ Download a given granule from a given provider to S3
 | stack             | string |                |                                                                                                                                                                                                                                | The name of the deployment stack to use. Useful as a prefix.                                                                                                                      |
 | workflowStartTime | integer | | | Specifies the start time (as a timestamp) for the current workflow and will be used as the createdAt time for granules output. If the specified timestamp is in the future, then the current time will be used instead.
 
-## Disabling ACLs
+## Configuring ACLs
 
-If you would like to disable ACLs, you can update your workflow's `*.asl.json` file. Update the `task_config` field in your `SyncGranule` step to include the ACL parameter to allow it to be configured through the `Metadata` field in the Cumulus dashboard:
+If you would like to configure an ACL value, you can update your workflow's `*.asl.json` file. Update the `task_config` field in your `SyncGranule` step to include the ACL parameter to allow it to be configured through the `Metadata` field in the Cumulus dashboard:
 
 ```json
 {
@@ -45,7 +45,7 @@ If you would like to disable ACLs, you can update your workflow's `*.asl.json` f
 }
 ```
 
-Alternatively, you can hardcode the `ACL` value to be `"disabled"` like so:
+To disable ACLs, you can hardcode the `ACL` value to be `"disabled"` like so:
 
 ```json
 ...
@@ -56,6 +56,18 @@ Alternatively, you can hardcode the `ACL` value to be `"disabled"` like so:
             .
             .
 }
+```
+
+ACLs can also be any one of the canned ACL strings that AWS defines:
+
+```json
+"authenticated-read"
+"aws-exec-read"
+"bucket-owner-full-control"
+"bucket-owner-read"
+"private"
+"public-read"
+"public-read-write"
 ```
 
 ## About Cumulus
