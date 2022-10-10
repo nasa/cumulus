@@ -25,6 +25,7 @@ const {
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
+const S3ProviderClient = require('../../../packages/ingest/S3ProviderClient');
 const {
   disableOrDefaultAcl,
   syncGranule,
@@ -1064,6 +1065,7 @@ test.serial('download multiple granules from S3 provider to staging directory', 
 
 test.serial('download() ingests multiple granules from S3 provider to staging directory with ACL', async (t) => {
   t.context.event.input.granules = t.context.event_multigran.input.granules;
+  const s3ProviderClientSpy = sinon.spy(S3ProviderClient.prototype, 'sync');
   try {
     await prepareS3DownloadEvent(t);
     t.context.event.config.ACL = 'disabled';
@@ -1096,17 +1098,13 @@ test.serial('download() ingests multiple granules from S3 provider to staging di
             Key: `${keypath}/${granuleFileName}`,
           })
         );
-        // eslint-disable-next-line no-await-in-loop
-        const objectACL = await s3().getObjectAcl({
-          Bucket: t.context.internalBucketName,
-          Key: `${keypath}/${granuleFileName}`,
-        });
-        t.is(objectACL.Grants[0].Permission, 'FULL_CONTROL');
+        t.true(s3ProviderClientSpy.lastCall.calledWithMatch({ ACL: undefined }));
       }
     }
   } finally {
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
+    s3ProviderClientSpy.restore();
   }
 });
 
