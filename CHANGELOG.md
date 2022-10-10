@@ -405,10 +405,12 @@ releases.
     parameter.
 
 ## [v11.1.7] 2022-10-05 [BACKPORT]
+
 **Please note** changes in 11.1.7 may not yet be released in future versions, as
 this is a backport and patch release on the 11.1.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
+
 ### Fixed
 
 - **CUMULUS-3024**
@@ -437,6 +439,7 @@ releases.
   - Update generate-ts-build-cache script to always install root project dependencies
 
 ## [v11.1.5] 2022-08-10 [BACKPORT]
+
 **Please note** changes in 11.1.5 may not yet be released in future versions, as
 this is a backport and patch release on the 11.1.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
