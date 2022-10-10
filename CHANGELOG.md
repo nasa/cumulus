@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v13.3.1] 2022-10-03
+## [v13.3.2] 2022-10-10 [BACKPORT]
+
+**Please note** changes in 13.3.2 may not yet be released in future versions, as
+this is a backport and patch release on the 13.3.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
 
 ### Fixed
 
@@ -6442,8 +6447,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.3.1...HEAD
-[v13.3.1]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.1
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.3.2...HEAD
+[v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2
 [v13.3.0]: https://github.com/nasa/cumulus/compare/v13.2.1...v13.3.0
 [v13.2.1]: https://github.com/nasa/cumulus/compare/v13.2.0...v13.2.1
 [v13.2.0]: https://github.com/nasa/cumulus/compare/v13.1.0...v13.2.0
