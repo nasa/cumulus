@@ -286,10 +286,10 @@ test.beforeEach(async (t) => {
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
     const dynamoRecord = await granuleModel.create(fakeGranule);
     await indexer.indexGranule(esClient, dynamoRecord, esIndex);
-    const granulePgRecord = await translateApiGranuleToPostgresGranule(
+    const granulePgRecord = await translateApiGranuleToPostgresGranule({
       dynamoRecord,
-      t.context.knex
-    );
+      knexOrTransaction: t.context.knex,
+    });
     return granulePgRecord;
   }));
 

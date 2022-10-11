@@ -26,7 +26,6 @@ buckets = {
     type = "public"
   }
 }
-cmr_oauth_provider = "launchpad"
 oauth_provider   = "launchpad"
 
 saml_entity_id                  = "https://cumulus-sandbox.earthdata.nasa.gov/jl-tf"
