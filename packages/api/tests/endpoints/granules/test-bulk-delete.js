@@ -16,7 +16,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const AccessToken = require('../../../models/access-tokens');
-const granuleIds = require('./granulesList');
+const { granuleIds } = require('./granulesList');
 
 let accessTokenModel;
 let jwtAuthToken;
