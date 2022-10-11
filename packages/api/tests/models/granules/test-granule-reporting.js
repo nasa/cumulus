@@ -570,7 +570,6 @@ test('storeGranule() correctly stores granule record', async (t) => {
     granuleModel,
     collectionId,
     provider,
-    workflowStartTime,
     workflowStatus,
   } = t.context;
 
@@ -590,13 +589,12 @@ test('storeGranule() correctly stores granule record', async (t) => {
     files: granule1.files,
   });
 
-  const granuleRecord = await generateGranuleApiRecord({ // TODO -- fix
+  const granuleRecord = await generateGranuleApiRecord({
     granule: granule1,
     files,
     executionUrl: 'http://execution-url.com',
     collectionId,
     provider: provider.id,
-    workflowStartTime, // TODO -- fix
     workflowStatus,
     status: getGranuleStatus(workflowStatus, granule1),
     cmrUtils,
