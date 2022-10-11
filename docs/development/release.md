@@ -273,7 +273,7 @@ The CI release scripts will automatically create a GitHub release based on the r
 
 Make sure to verify the appropriate .zip files are present on Github after the release process is complete.
 
-- **Important** Copy the release notes for the new version to the description for the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
+- **Important** Copy the release notes for the new version from the changelog to the description of the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
 
 - **Optional** The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_
   the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
