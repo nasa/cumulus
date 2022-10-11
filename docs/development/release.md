@@ -288,7 +288,7 @@ If this is the latest version, you can simply create a PR to merge the minor ver
 
 Do not merge `master` back into the release branch since we want the release branch to _just_ have the code from the release.  Instead, create a new branch off of the release branch and merge that to master. You can freely merge master into this branch and delete it when it is merged to master.
 
-If this is a backport, you will need to create a PR that ports the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example, fixes in backport version `1.14.5` may not be available in `1.15.0` because the fix was introduced in `1.15.3`.
+**Please Note** If this is a backport, you will need to create a PR that merges **ONLY** the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example, fixes in backport version `1.14.5` may not be available in `1.15.0` because the fix was introduced in `1.15.3`.
 
 ## Troubleshooting
 
