@@ -70,7 +70,7 @@ app.use(boom());
 app.use(morgan('combined'));
 app.use(cors());
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ limit: '1mb', extended: true }));
 app.use(jsonBodyParser);
 app.use(hsts({ maxAge: 31536000 }));
 

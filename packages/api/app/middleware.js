@@ -52,7 +52,7 @@ const jsonBodyParser = (req, res, next) => {
     }
   };
 
-  bodyParser.json()(req, res, nextWithErrorHandling);
+  bodyParser.json({ limit: '1mb' })(req, res, nextWithErrorHandling);
 };
 
 module.exports = {
