@@ -396,7 +396,7 @@ test.serial('internalRecReportForGranules handles generated granules with custom
       ...fakeGranule,
       granule: fakeGranule,
       executionUrl: fakeGranule.execution,
-      workflowStartTime: Date.now(),
+      createdAt: Date.now(),
       processingTimeInfo,
       cmrTemporalInfo,
     });
@@ -453,7 +453,6 @@ test.serial('internalRecReportForGranules handles granules with files', async (t
       ...fakeGranule,
       granule: fakeGranule,
       executionUrl: fakeGranule.execution,
-      workflowStartTime: Date.now(),
       cmrUtils: fakeCmrUtils,
     });
     const pgGranule = await translateApiGranuleToPostgresGranule({

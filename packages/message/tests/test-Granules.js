@@ -214,7 +214,6 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     },
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     status,
     duration,
@@ -372,7 +371,6 @@ test('generateGranuleApiRecord() builds granule record with correct processing a
     cmrTemporalInfo,
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     status,
     duration,
@@ -402,7 +400,6 @@ test('generateGranuleApiRecord() honors granule.createdAt if it exists', async (
   const {
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
   } = t.context;
 
@@ -416,7 +413,6 @@ test('generateGranuleApiRecord() honors granule.createdAt if it exists', async (
     executionUrl,
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     cmrUtils: t.context.fakeCmrUtils,
     files: granule.files,
@@ -429,7 +425,6 @@ test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
   const {
     collectionId,
     provider,
-    workflowStartTime,
   } = t.context;
   const granule = granuleFailure.payload.granules[0];
   const executionUrl = cryptoRandomString({ length: 10 });
@@ -443,7 +438,6 @@ test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
     executionUrl,
     provider,
     collectionId,
-    workflowStartTime,
     status,
     error,
     cmrUtils: t.context.fakeCmrUtils,

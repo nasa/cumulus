@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update message granule write logic to set default publish value on record
     creation update.
   - Removed dataType/version from api granule schema
+  - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
+    logic for PUT/PATCH endpoint
 
 - **CUMULUS-2998**
   - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:

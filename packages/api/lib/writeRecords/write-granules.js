@@ -462,6 +462,14 @@ const _writeGranuleRecords = async (params) => {
         trx,
         granulePgModel,
       });
+
+      // Future: refactor to cover the entire object?
+      // Ensure PG default createdAt value is propagated to DynamoDB/ES
+      // in the case where _writeGranule is called without createdAt set
+      if (!apiGranuleRecord.createdAt) {
+        apiGranuleRecord.createdAt = pgGranule.created_at.getTime();
+      }
+
       await granuleModel.storeGranule(apiGranuleRecord);
       await upsertGranule({
         esClient,
@@ -699,8 +707,8 @@ const writeGranuleFromApi = async (
     published,
     pdrName,
     provider,
-    error = {},
-    createdAt = new Date().valueOf(),
+    error = {}, // Future -- Move this logic to calling methods
+    createdAt,
     updatedAt,
     duration,
     productVolume,
@@ -723,7 +731,7 @@ const writeGranuleFromApi = async (
   snsEventType
 ) => {
   try {
-    const granule = { granuleId, cmrLink, published, files };
+    const granule = { granuleId, cmrLink, published, files, createdAt };
 
     const processingTimeInfo = {
       processingStartDateTime,
@@ -755,7 +763,6 @@ const writeGranuleFromApi = async (
       productVolume,
       duration,
       status,
-      workflowStartTime: createdAt,
       files,
       error,
       pdrName,
@@ -835,12 +842,28 @@ const writeGranulesFromMessage = async ({
   const executionDescription = await granuleModel.describeGranuleExecution(executionArn);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
   const provider = getMessageProvider(cumulusMessage);
-  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const error = parseException(cumulusMessage.exception);
   const workflowStatus = getMetaStatus(cumulusMessage);
   const collectionId = getCollectionIdFromMessage(cumulusMessage);
   const pdrName = getMessagePdrName(cumulusMessage);
   const queryFields = getGranuleQueryFields(cumulusMessage);
+
+  let workflowStartTime;
+  try {
+    workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+    if (!workflowStartTime) {
+      throw new Error(
+        'writeGranulesFromMessage called without a valid workflow start time in the Cumulus Message, all granules failed to write'
+      );
+    }
+  } catch (wfError) {
+    log.error(
+      `Granule writes failed for ${JSON.stringify(
+        cumulusMessage
+      )} due to no workflow start time being set`
+    );
+    throw wfError;
+  }
 
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
@@ -876,7 +899,7 @@ const writeGranulesFromMessage = async ({
       }
 
       const apiGranuleRecord = await generateGranuleApiRecord({
-        granule: { ...granule, published },
+        granule: { ...granule, published, createdAt: granule.createdAt || workflowStartTime },
         executionUrl,
         collectionId,
         provider: provider.id,

@@ -316,10 +316,16 @@ class Granule extends Manager {
       mutableFieldNames,
     });
 
-    // createdAt comes from cumulus_meta.workflow_start_time
-    // records should *not* be updating from createdAt times that are *older* start
-    // times than the existing record, whatever the status
-    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+    if (granuleRecord.createdAt) {
+      // createdAt comes from cumulus_meta.workflow_start_time
+      // records should *not* be updating from createdAt times that are *older* start
+      // times than the existing record, whatever the status
+      // Because both API write and message write chains use the granule model to store records, in
+      // cases where createdAt does not exist on the granule, we assume overwrite protections are
+      // undesired behavior via business logic on the message write logic
+      updateParams.ConditionExpression =
+        '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+    }
 
     // Only allow "running" granule to replace completed/failed
     // granule if the execution has changed for granules with executions.

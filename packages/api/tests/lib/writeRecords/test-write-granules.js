@@ -47,6 +47,10 @@ const {
   getExecutionUrlFromArn,
 } = require('@cumulus/message/Executions');
 const {
+  CumulusMessageError,
+} = require('@cumulus/errors');
+
+const {
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
   writeFilesViaTransaction,
@@ -56,7 +60,6 @@ const {
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,
 } = require('../../../lib/writeRecords/write-granules');
-
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
@@ -1791,7 +1794,27 @@ test.serial('writeGranulesFromMessage() honors granule.createdAt time if provide
   t.is(pgGranule.created_at.getTime(), expectedCreatedAt);
 });
 
-test.serial('writeGranulesFromMessage() falls back to workflow_start_time if granule.createdAt is not provided in cumulus_message', async (t) => {
+test.serial('writeGranulesFromMesasge() throws if workflow_start_time is not provided on the message', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleModel,
+  } = t.context;
+
+  delete cumulusMessage.cumulus_meta.workflow_start_time;
+
+  await t.throwsAsync(writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  }), { instanceOf: CumulusMessageError });
+});
+
+test.serial('writeGranulesFromMessage() falls back to workflow_start_time if granule.createdAt is not provided in cumulus_message for a granule', async (t) => {
   const {
     cumulusMessage,
     knex,
@@ -2385,7 +2408,7 @@ test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and
   t.is(postgresRecord.timestamp.getTime(), esRecord.timestamp);
 });
 
-test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same default time values.', async (t) => {
+test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same default time values for a new granule', async (t) => {
   const {
     esClient,
     knex,

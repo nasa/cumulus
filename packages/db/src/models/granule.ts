@@ -1,6 +1,8 @@
 import { Knex } from 'knex';
 
 import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
+import Logger from '@cumulus/logger';
+
 import { TableNames } from '../tables';
 import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
 
@@ -8,6 +10,8 @@ import { BasePgModel } from './base';
 import { ExecutionPgModel } from './execution';
 import { translateDateToUTC } from '../lib/timestamp';
 import { getSortFields } from '../lib/sort';
+
+const log = new Logger({ sender: '@cumulus/db/models/granule' });
 
 interface RecordSelect {
   cumulus_id: number
@@ -114,12 +118,14 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionCumulusId?: number,
     executionPgModel = new ExecutionPgModel()
   ) {
-    if (!granule.created_at) {
-      throw new Error(
-        `To upsert granule record must have 'created_at' set: ${JSON.stringify(
-          granule
-        )}`
+    let comparisonCreatedAt;
+    if (granule.created_at) {
+      comparisonCreatedAt = translateDateToUTC(granule.created_at);
+    } else {
+      log.warn(
+        'Upserting without created_at set, using current time for created_at/overriding granule write constraints'
       );
+      comparisonCreatedAt = translateDateToUTC(new Date());
     }
     if (granule.status === 'running' || granule.status === 'queued') {
       const upsertQuery = knexOrTrx(this.tableName)
@@ -129,13 +135,11 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
-          created_at: granule.created_at,
+          created_at: granule.created_at, //TODO test/check undefined
         })
         .where(
           knexOrTrx.raw(
-            `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(
-              granule.created_at
-            )})`
+            `${this.tableName}.created_at <= to_timestamp(${comparisonCreatedAt})`
           )
         );
 
@@ -163,9 +167,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       .merge()
       .where(
         knexOrTrx.raw(
-          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(
-            granule.created_at
-          )})`
+          `${this.tableName}.created_at <= to_timestamp(${comparisonCreatedAt})`
         )
       )
       .returning('*');

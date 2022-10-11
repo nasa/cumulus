@@ -61,6 +61,10 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
   );
 }
 
+function _createNewCreatedAtDate() {
+  return new Date().valueOf();
+}
+
 /**
  * List all granules for a given collection.
  *
@@ -133,6 +137,9 @@ const create = async (req, res) => {
     if (!granule.published) {
       granule.published = false;
     }
+    if (!granule.createdAt) {
+      granule.createdAt = _createNewCreatedAtDate();
+    }
     await createGranuleFromApi(granule, knex, esClient);
   } catch (error) {
     log.error('Could not write granule', error);
@@ -192,8 +199,14 @@ const putGranule = async (req, res) => {
   }
 
   try {
-    if (isNewRecord === true && !apiGranule.published) {
-      apiGranule.published = false;
+    // Set API defaults if new record
+    if (isNewRecord === true) {
+      if (!apiGranule.published) {
+        apiGranule.published = false;
+      }
+      if (!apiGranule.createdAt) {
+        apiGranule.createdAt = _createNewCreatedAtDate();
+      }
     }
     await updateGranuleFromApi(apiGranule, knex, esClient);
   } catch (error) {

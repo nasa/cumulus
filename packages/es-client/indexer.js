@@ -315,6 +315,27 @@ async function upsertGranule({
 
   const upsertDoc = updates;
 
+  // Because both API write and message write chains use the granule model to store records, in
+  // cases where createdAt does not exist on the granule, we assume overwrite protections are
+  // undesired behavior via business logic on the message write logic
+  let inline = `
+  if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
+    && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
+    ctx._source.putAll(params.doc);
+  } else {
+    ctx.op = 'none';
+  }
+  `;
+  if (!updates.createdAt) {
+    inline = `
+      if (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution)) {
+      ctx._source.putAll(params.doc);
+    } else {
+      ctx.op = 'none';
+    }
+    `;
+  }
+
   return await esClient.update({
     index,
     type,
@@ -323,14 +344,7 @@ async function upsertGranule({
     body: {
       script: {
         lang: 'painless',
-        inline: `
-          if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
-            && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
-            ctx._source.putAll(params.doc);
-          } else {
-            ctx.op = 'none';
-          }
-        `,
+        inline,
         params: {
           doc: upsertDoc,
         },
