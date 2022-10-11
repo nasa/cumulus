@@ -55,8 +55,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
+- **CUMULUS-3070**
+  - Updated API granule write logic to no longer require createdAt value in
+    dynamo/API granule validation.   Write-time createdAt defaults will be set in the case
+    of new API granule writes without the value set, and createdAt will be
+    overwritten if it already exists.
+  - Refactored granule write logic to allow PATCH behavior on API granule update
+    such that existing createdAt values will be retained in case of overwrite
+    across all granule writes.
+  - Updated granule write code to validate written createdAt is synced between
+    datastores in the write logic instead of the endpoint/message logic.
+  - Updated out-of-order write logic in all datastores to assume granules being written without
+    createdAt set are intended to patch/update the existing granule and are not
+    subject to timing rules.
 
+- Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
 - **CUMULUS-3024**
   - Update PUT /granules endpoint to operate consistently across datastores
     (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
