@@ -414,6 +414,83 @@ test('GranulePgModel.upsert() will allow a running status to replace a non-runni
   t.is(record.status, 'running');
 });
 
+test('GranulePgModel.upsert() will allow a newer running status to replace an older non-running status for different execution', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    completedExecutionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, completedExecutionCumulusId);
+
+  const [newExecution] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+  const newExecutionCumulusId = newExecution.cumulus_id;
+
+  const updatedDate = new Date();
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+    created_at: updatedDate,
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(record.status, 'running');
+  t.deepEqual(record.created_at, updatedDate);
+});
+
+test('GranulePgModel.upsert() will not allow an older running status to replace a newer non-running status for different execution', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    completedExecutionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, completedExecutionCumulusId);
+
+  const [newExecution] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+  const newExecutionCumulusId = newExecution.cumulus_id;
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+    created_at: new Date(1),
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(record.status, 'completed');
+  t.deepEqual(record.created_at, granule.created_at);
+});
+
 test('GranulePgModel.upsert() will not allow a queued status to replace a completed status for same execution', async (t) => {
   const {
     collectionCumulusId,
