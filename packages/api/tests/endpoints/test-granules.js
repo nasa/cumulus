@@ -866,8 +866,14 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newCollectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newGranule.files.length);
 
   t.false(await granulePgModel.exists(
     knex,
@@ -926,8 +932,14 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newCollectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newGranule.files.length);
 
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 });
@@ -990,6 +1002,8 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     esClient: t.context.esClient,
   });
 
+  const granuleId = newDynamoGranule.granuleId;
+
   const response = await request(app)
     .delete(`/granules/${newDynamoGranule.granuleId}`)
     .set('Accept', 'application/json')
@@ -997,10 +1011,14 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  const granuleId = newDynamoGranule.granuleId;
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newDynamoGranule.collectionId,
+    deletedGranuleId: granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newDynamoGranule.files.length);
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(
@@ -1082,6 +1100,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     esClient: t.context.esClient,
   });
   const timeOfResponse = Date.now();
+  const granuleId = newDynamoGranule.granuleId;
 
   const response = await request(app)
     .delete(`/granules/${newDynamoGranule.granuleId}`)
@@ -1090,10 +1109,14 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  const granuleId = newDynamoGranule.granuleId;
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newDynamoGranule.collectionId,
+    deletedGranuleId: granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newDynamoGranule.files.length);
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(

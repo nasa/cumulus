@@ -458,7 +458,13 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('adds LZARDS backup output', () => {
+      const dataType = lambdaOutput.meta.input_granules[0].dataType;
+      const version = lambdaOutput.meta.input_granules[0].version;
+      const expectedCollectionId = constructCollectionId(dataType, version);
       expect(true, lambdaOutput.meta.backupStatus.every((file) => file.status === 'COMPLETED'));
+      expect(lambdaOutput.meta.backupStatus[0].provider).toBe(provider.id);
+      expect(lambdaOutput.meta.backupStatus[0].createdAt).toBe(lambdaOutput.meta.input_granules[0].createdAt);
+      expect(lambdaOutput.meta.backupStatus[0].collectionId).toBe(expectedCollectionId);
     });
   });
 
@@ -494,6 +500,7 @@ describe('The S3 Ingest Granules workflow', () => {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
         createdAt: lambdaOutput.meta.input_granules[0].createdAt,
+        provider: lambdaOutput.meta.input_granules[0].provider,
       };
 
       const updatedPayload = {
@@ -509,6 +516,7 @@ describe('The S3 Ingest Granules workflow', () => {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
         createdAt: lambdaOutput.meta.input_granules[0].createdAt,
+        provider: lambdaOutput.meta.input_granules[0].provider,
       };
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
     });

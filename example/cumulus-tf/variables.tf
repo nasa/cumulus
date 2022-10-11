@@ -32,7 +32,7 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
 
 variable "cmr_oauth_provider" {
   type    = string
-  default = "earthdata"
+  default = "launchpad"
 }
 
 variable "csdap_client_id" {
@@ -389,6 +389,12 @@ variable "orca_default_bucket" {
 }
 
 variable "lambda_timeouts" {
+  type = map(string)
+  default = {}
+}
+
+variable "lambda_memory_sizes" {
+  description = "Memory sizes for lambda functions"
   type = map(string)
   default = {}
 }
