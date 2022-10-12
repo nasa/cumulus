@@ -193,6 +193,10 @@ function isValidAsyncOperationId(asyncOperationId) {
   return /[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}/.test(asyncOperationId);
 }
 
+/**
+ * Before using these functions, please review this Jira CUMULUS-3093
+ */
+
 function greenConsoleLog() {
   const Bright = '\u001B[1m';
   const colorReset = '\u001B[0m';
