@@ -358,6 +358,36 @@ releases.
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB.
 
+## [v12.0.3] 2022-10-03 [BACKPORT]
+
+**Please note** changes in 11.1.7 may not yet be released in future versions, as
+this is a backport and patch release on the 12.0.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Fixed
+
+- **CUMULUS-3024**
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
+  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
+    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
+- **CUMULUS-2971**
+  - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
+    its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
+- **CUMULUS-2557**
+  - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
+- **CUMULUS-3021**
+  - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
+    collection version in the URI path
+
 ## [v12.0.2] 2022-08-10 [BACKPORT]
 
 **Please note** changes in 12.0.2 may not yet be released in future versions, as
@@ -6536,7 +6566,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v13.2.0]: https://github.com/nasa/cumulus/compare/v13.1.0...v13.2.0
 [v13.1.0]: https://github.com/nasa/cumulus/compare/v13.0.1...v13.1.0
 [v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
-[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.2...v13.0.0
+[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.3...v13.0.0
+[v12.0.3]: https://github.com/nasa/cumulus/compare/v12.0.2...v12.0.3
 [v12.0.2]: https://github.com/nasa/cumulus/compare/v12.0.1...v12.0.2
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
 [v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.7...v12.0.0
