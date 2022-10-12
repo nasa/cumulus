@@ -286,6 +286,7 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
   const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId3 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
@@ -301,6 +302,13 @@ test.beforeEach(async (t) => {
       execution: t.context.executionUrl,
       duration: 52.235,
     }),
+    fakeGranuleFactoryV2({
+      granuleId: granuleId3,
+      status: 'failed',
+      execution: t.context.executionUrl,
+      duration: 0,
+      productVolume: '0',
+    })
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
@@ -329,6 +337,16 @@ test.beforeEach(async (t) => {
         timestamp: new Date(Date.now()),
       }
     ),
+    fakeGranuleRecordFactory(
+      {
+        granule_id: granuleId3,
+        status: 'failed',
+        collection_cumulus_id: t.context.collectionCumulusId,
+        duration: 0,
+        timestamp: new Date(Date.now()),
+        productVolume: 0,
+      }
+    )
   ];
 
   await Promise.all(
@@ -565,6 +583,32 @@ test.serial('GET returns the expected existing granule', async (t) => {
   });
 
   t.deepEqual(response.body, expectedGranule);
+});
+
+test.serial('GET returns a granule that has no files with the correct empty array files field', async(t) => {
+  const {
+    knex,
+    fakePGGranules,
+  } = t.context;
+
+  const response = await request(app)
+  .get(`/granules/${t.context.fakePGGranules[2].granule_id}`)
+  .set('Accept', 'application/json')
+  .set('Authorization', `Bearer ${jwtAuthToken}`)
+  .expect(200);
+
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[2].granule_id,
+    collection_cumulus_id: fakePGGranules[2].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(response.body.files, []);
+  t.deepEqual(expectedGranule.files, []);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {

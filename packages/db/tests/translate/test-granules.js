@@ -429,7 +429,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
   );
 });
 
-test('translatePostgresGranuleToApiGranule omits files property from API granule if there are no PostgreSQL files', async (t) => {
+test('translatePostgresGranuleToApiGranule has an empty array for its files property if there are no PostgreSQL files', async (t) => {
   const {
     knex,
     pdrPgModel,
@@ -454,6 +454,7 @@ test('translatePostgresGranuleToApiGranule omits files property from API granule
     granuleId: pgGranule.granule_id,
     status: pgGranule.status,
     updatedAt: pgGranule.updated_at.getTime(),
+    files : []
   };
 
   const result = await translatePostgresGranuleToApiGranule({
