@@ -614,7 +614,7 @@ test('GranulePgModel.upsert() will allow a completed status to replace a queued 
   t.is(record.status, 'completed');
 });
 
-test('GranulePgModel.upsert() will allow a running status to replace a queued status for the same execution', async (t) => {
+test('GranulePgModel.upsert() will allow a running granule status to replace a queued status for the same execution', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -643,7 +643,7 @@ test('GranulePgModel.upsert() will allow a running status to replace a queued st
   t.is(record.status, 'running');
 });
 
-test('GranulePgModel.upsert() will not allow a final state from an older execution to overwrite the completed state from a newer execution', async (t) => {
+test('GranulePgModel.upsert() will not allow a final granule status from an older completed execution to overwrite the completed granule status from a newer execution', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -680,7 +680,7 @@ test('GranulePgModel.upsert() will not allow a final state from an older executi
   t.is(record.status, 'completed');
 });
 
-test('GranulePgModel.upsert() will not allow a running state from an older execution to overwrite the completed state from a newer execution', async (t) => {
+test('GranulePgModel.upsert() will not allow a running state from an older failed execution to overwrite the completed state from a newer execution', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -717,6 +717,80 @@ test('GranulePgModel.upsert() will not allow a running state from an older execu
   t.is(record.status, 'completed');
 });
 
+test.serial('GranulePgModel.upsert() will allow a running state granule with a running state execution to overwrite the completed state from a different execution when no createdAt is provided', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+
+  const [newExecution] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+  const newExecutionCumulusId = newExecution.cumulus_id;
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(record.status, 'running');
+  t.deepEqual(record.created_at, granule.created_at);
+});
+
+test.serial('GranulePgModel.upsert() will allow a running state granule with a completed state execution to overwrite the completed state from a different execution when no createdAt is provided', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord(knex, granule, executionCumulusId);
+
+  const [newExecution] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'completed' })
+  );
+  const newExecutionCumulusId = newExecution.cumulus_id;
+
+  const updatedGranule = {
+    ...granule,
+    status: 'running',
+  };
+
+  await granulePgModel.upsert(knex, updatedGranule, newExecutionCumulusId);
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.is(record.status, 'running');
+  t.deepEqual(record.created_at, granule.created_at);
+});
+
 test('GranulePgModel.upsert() succeeds without an execution for completed granule', async (t) => {
   const {
     knex,
@@ -731,6 +805,24 @@ test('GranulePgModel.upsert() succeeds without an execution for completed granul
 
   await granulePgModel.upsert(knex, granule);
   t.true(await granulePgModel.exists(knex, granule));
+});
+
+test('GranulePgModel.upsert() succeeds for a granule without createdAt set and sets a default value', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  const response = await granulePgModel.upsert(knex, granule, executionCumulusId);
+  t.truthy(response[0].created_at);
+  t.false(granule.created_at === response[0].created_at);
 });
 
 test('GranulePgModel.upsert() succeeds without an execution for running granule', async (t) => {
