@@ -16,7 +16,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const AccessToken = require('../../../models/access-tokens');
-const { granuleIds } = require('../../helpers/granulesList');
+const { generateListOfGranules } = require('../../helpers/create-test-data');
 
 let accessTokenModel;
 let jwtAuthToken;
@@ -345,7 +345,7 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking St
 });
 
 test.serial('POST /granules/bulkDelete starts an async-operation with a large list of IDs as input', async (t) => {
-  const expectedIds = granuleIds;
+  const expectedIds = generateListOfGranules();
 
   const body = {
     ids: expectedIds,
