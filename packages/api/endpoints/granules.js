@@ -71,6 +71,16 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
 async function list(req, res) {
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
+  if (queryStringParameters.postgres === true) {
+    const {
+      granulePgModel = new GranulePgModel(),
+      knex = await getKnexClient(),
+    } = req.testContext || {};
+
+    const result = granulePgModel.search(knex, {});
+    return res.send(result);
+  }
+
   let es;
   if (queryStringParameters.searchContext) {
     es = new ESSearchAfter(
