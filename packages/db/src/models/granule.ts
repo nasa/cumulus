@@ -103,9 +103,12 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     knexOrTrx: Knex | Knex.Transaction,
     status: 'queued' | 'running'
   ) {
+    // if granule is queued, search for existing execution entry and
+    // don't allow queued update in case of existing execution entry
     const queryBuilder = executionPgModel.queryBuilderSearch(knexOrTrx, {
       cumulus_id: executionCumulusId,
     });
+    // if granule is running, make sure the execution doesn't exist in a *completed* status
     if (status === 'running') {
       queryBuilder.whereIn('status', ExecutionPgModel.nonActiveStatuses);
     }
@@ -145,6 +148,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
 
       // In reality, the only place where executionCumulusId should be
       // undefined is from the data migrations OR a queued granule from reingest
+      // OR a patch API request
       if (executionCumulusId) {
         const exclusionClause = this._buildExclusionClause(
           executionPgModel,
