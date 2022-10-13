@@ -185,22 +185,23 @@ async function createGranuleAndFiles({
 
 /**
  * Helper for creating array of granule IDs of variable length
- * 
+ *
  * @param {number} count - defaults to 5000
  * @returns {Array<string>} returns array of granule IDs
  */
 const generateListOfGranules = (count = 5000) => {
-  const granuleRegString = () => randomStringFromRegex("^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$");
-  const granuleLongString = () => randomStringFromRegex("^SWOT_L2_HR_Raster_\\_[\\w]{6}\\_[\\w]{1}\\_[\\d]{20}\\_[\\w]{6}\\_[\\d]{13}$");
-  let granuleIds = [];
-  let halfOfCount = count/2;
-  for (let i = 0; i < halfOfCount; i++) {
+  const granuleRegString = () => randomStringFromRegex('^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$');
+  const granuleLongString = () => randomStringFromRegex('^SWOT_L2_HR_Raster_\\_[\\w]{6}\\_[\\w]{1}\\_[\\d]{20}\\_[\\w]{6}\\_[\\d]{13}$');
+  const granuleIds = [];
+  const halfOfCount = count / 2;
+  for (let i = 0; i < halfOfCount; i += 1) {
     granuleIds.push(granuleRegString());
     granuleIds.push(granuleLongString());
   }
   return granuleIds;
-}
+};
+
 module.exports = {
   createGranuleAndFiles,
-  generateListOfGranules
+  generateListOfGranules,
 };
