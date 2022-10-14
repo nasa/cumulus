@@ -52,7 +52,8 @@ const jsonBodyParser = (req, res, next) => {
     }
   };
 
-  bodyParser.json({ limit: '1mb' })(req, res, nextWithErrorHandling);
+  // Setting limit to 6 MB which is the AWS lambda limit https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
+  bodyParser.json({ limit: '6mb' })(req, res, nextWithErrorHandling);
 };
 
 module.exports = {
