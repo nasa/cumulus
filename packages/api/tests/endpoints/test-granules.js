@@ -250,8 +250,8 @@ test.before(async (t) => {
     name: collectionName,
     version: collectionVersion,
   });
-  const collectionPgModel = new CollectionPgModel();
-  const [pgCollection] = await collectionPgModel.create(
+  t.context.collectionPgModel = new CollectionPgModel();
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
@@ -817,6 +817,7 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
 
 test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
   const {
+    collectionPgModel,
     esGranulesClient,
     knex,
   } = t.context;
@@ -829,7 +830,6 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
     testPgCollection.version
   );
 
-  const collectionPgModel = new CollectionPgModel();
   await collectionPgModel.create(
     knex,
     testPgCollection
@@ -886,6 +886,7 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
 
 test.serial('DELETE deletes a granule that exists in Elasticsearch but not PostgreSQL successfully', async (t) => {
   const {
+    collectionPgModel,
     esClient,
     esIndex,
     esGranulesClient,
@@ -900,7 +901,6 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
     testPgCollection.version
   );
 
-  const collectionPgModel = new CollectionPgModel();
   const [pgCollection] = await collectionPgModel.create(
     knex,
     testPgCollection
@@ -1881,6 +1881,61 @@ test.serial('create (POST) returns bad request if a granule is submitted with a 
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
+test.serial.only('create (POST) rejects if a granule with same granuleId already exists in postgres', async (t) => {
+  const { collectionPgModel } = t.context;
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: undefined,
+  });
+
+  const collectionName = 'fakeCollection';
+  const collectionVersion = 'v2';
+  const newCollectionId = constructCollectionId(
+    collectionName,
+    collectionVersion
+  );
+
+  t.context.testCollection = fakeCollectionFactory({
+    name: collectionName,
+    version: collectionVersion,
+    duplicateHandling: 'error',
+  });
+
+  const testPgCollection = fakeCollectionRecordFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+  await collectionPgModel.create(
+    t.context.knex,
+    testPgCollection
+  );
+
+  const newGranuleWithSameId = fakeGranuleFactoryV2({
+    granuleId: newGranule.granuleId,
+    collectionId: newCollectionId,
+    execution: undefined,
+  })
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranuleWithSameId)
+    .expect(409);
+
+    console.log('RESPONSE', response);
+  const errorText = JSON.parse(response.error.text);
+  t.is(errorText.statusCode, 409);
+  t.is(errorText.error, 'Conflict');
+  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
+});
 test.serial('PUT replaces an existing granule in all data stores', async (t) => {
   const {
     esClient,

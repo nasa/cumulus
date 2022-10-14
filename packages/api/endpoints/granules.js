@@ -124,7 +124,21 @@ const create = async (req, res) => {
       })
     ) {
       return res.boom.conflict(
-        `A granule already exists for granule_id: ${granule.granuleId}`
+        `A granule already exists for granule_id: ${granule.granuleId} with collection ID ${granule.collectionId}`
+      );
+    }
+
+    const pgGranuleRecords = await granulePgModel.search(knex, { granule_id: pgGranule.granule_id });
+    if (pgGranuleRecords.length > 0)
+    // Can't use exists because it calls "get.first()" 
+    // if (
+    //   await granulePgModel.exists(knex, {
+    //     granule_id: pgGranule.granule_id,
+    //   })
+    // )
+    {
+      return res.boom.conflict(
+        `A granule already exists for granule_id: ${granule.granuleId} across another collection`
       );
     }
   } catch (error) {
