@@ -90,7 +90,6 @@ async function list(req, res) {
         granulePgRecord: granule,
       })
     ));
-
     return res.send(response);
   }
 

@@ -59,10 +59,7 @@ async function list(req, res) {
     const results = await collectionPgModel.search(knex, {});
 
     response.results = await Promise.all(results.map(
-      (collection) => translatePostgresCollectionToApiCollection({
-        knexOrTransaction: knex,
-        granulePgRecord: collection,
-      })
+      (collection) => translatePostgresCollectionToApiCollection(collection)
     ));
 
     return res.send(response);

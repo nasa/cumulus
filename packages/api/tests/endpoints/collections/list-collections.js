@@ -3,6 +3,7 @@
 const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
+const cryptoRandomString = require('crypto-random-string');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -11,6 +12,14 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const EsCollection = require('@cumulus/es-client/collections');
 const { Search } = require('@cumulus/es-client/search');
+const {
+  CollectionPgModel,
+  generateLocalTestDb,
+  localStackConnectionEnv,
+  migrationDir,
+  fakeCollectionRecordFactory,
+  translateApiCollectionToPostgresCollection,
+} = require('@cumulus/db');
 
 const models = require('../../../models');
 const {
@@ -30,13 +39,24 @@ process.env.TOKEN_SECRET = randomString();
 const { app } = require('../../../app');
 
 const esIndex = randomString();
-let esClient;
+const testDbName = `collections_${cryptoRandomString({ length: 10 })}`;
 
+let esClient;
 let jwtAuthToken;
 let accessTokenModel;
 let collectionModel;
 
-test.before(async () => {
+test.before(async (t) => {
+  process.env = {
+    ...process.env,
+    ...localStackConnectionEnv,
+    PG_DATABASE: testDbName,
+  };
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.knex = knex;
+  t.context.knexAdmin = knexAdmin;
+
   const esAlias = randomString();
   process.env.ES_INDEX = esAlias;
   await bootstrapElasticSearch({
@@ -62,6 +82,15 @@ test.before(async () => {
 test.beforeEach(async (t) => {
   t.context.testCollection = fakeCollectionFactory();
   await collectionModel.create(t.context.testCollection);
+
+  const collectionPgModel = new CollectionPgModel();
+  t.context.testPgCollection = translateApiCollectionToPostgresCollection(
+    t.context.testCollection
+  );
+  await collectionPgModel.create(
+    t.context.knex,
+    t.context.testPgCollection
+  );
 });
 
 test.after.always(async () => {
@@ -122,5 +151,42 @@ test.serial('returns list of collections with stats when requested', async (t) =
   const { results } = response.body;
   t.is(results.length, 1);
   t.is(results[0].name, t.context.testCollection.name);
+  stub.restore();
+});
+
+// Development only, do not merge
+// Test setup creates collections before EACH test so running these
+// in serial will have different results than running in isolation
+test.skip('default returns list of collections from postgres is queryparam is true', async (t) => {
+  const response = await request(app)
+    .get('/collections?postgres=true')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+
+  // TODO the number of results will vary depending on how test is run.
+  t.is(results.length, 1);
+  t.is(results[0].name, t.context.testCollection.name);
+});
+
+// Testing only, do not merge
+test.skip('ElasticSearch and Postgres LIST results are identical', async (t) => {
+  const stub = sinon.stub(EsCollection.prototype, 'query').returns({ results: [t.context.testCollection] });
+  const elasticResponse = await request(app)
+    .get('/collections')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const pgResponse = await request(app)
+    .get('/collections?postgres=true')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+  console.log(elasticResponse.body);
+  console.log(pgResponse.body);
+  t.deepEqual(elasticResponse.body, pgResponse.body);
   stub.restore();
 });
