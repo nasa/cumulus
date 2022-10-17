@@ -1861,7 +1861,7 @@ test.serial('create (POST) rejects if a granule already exists in postgres', asy
   const errorText = JSON.parse(response.error.text);
   t.is(errorText.statusCode, 409);
   t.is(errorText.error, 'Conflict');
-  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
+  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId} with collection ID ${t.context.collectionId}`);
 });
 
 test.serial('create (POST) returns bad request if a granule is submitted with a bad collectionId', async (t) => {
@@ -1881,13 +1881,14 @@ test.serial('create (POST) returns bad request if a granule is submitted with a 
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
-test.serial.only('create (POST) rejects if a granule with same granuleId already exists in postgres', async (t) => {
+test.serial('create (POST) rejects if a granule with same granuleId already exists in postgres', async (t) => {
   const { collectionPgModel } = t.context;
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
   });
 
+  // Create new collection for new granule with same granuleId
   const collectionName = 'fakeCollection';
   const collectionVersion = 'v2';
   const newCollectionId = constructCollectionId(
@@ -1930,12 +1931,12 @@ test.serial.only('create (POST) rejects if a granule with same granuleId already
     .send(newGranuleWithSameId)
     .expect(409);
 
-    console.log('RESPONSE', response);
   const errorText = JSON.parse(response.error.text);
   t.is(errorText.statusCode, 409);
   t.is(errorText.error, 'Conflict');
-  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
+  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId} across another collection`);
 });
+
 test.serial('PUT replaces an existing granule in all data stores', async (t) => {
   const {
     esClient,
