@@ -110,8 +110,6 @@ async function get(req, res) {
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();
-  let isInDatabase = true;
-  let mappedGranules;
 
   // get the execution information from database
   let response;
@@ -119,39 +117,35 @@ async function get(req, res) {
     response = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      isInDatabase = false;
+      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
     }
   }
 
-  if (isInDatabase) {
-    // include associated granules
-    const granuleCumulusIds = await getApiGranuleExecutionCumulusIdsByExecution(knex, [response]);
-    const granules = await granulePgModel.searchByCumulusIds(knex, granuleCumulusIds);
-    const apiGranules = await Promise.all(granules
-      .map(async (pgGranule) => {
-        const pgCollection = await collectionPgModel.get(
-          knex,
-          { cumulus_id: pgGranule.collection_cumulus_id }
-        );
+  // include associated granules
+  const granuleCumulusIds = await getApiGranuleExecutionCumulusIdsByExecution(knex, [response]);
+  const granules = await granulePgModel.searchByCumulusIds(knex, granuleCumulusIds);
+  const apiGranules = await Promise.all(granules
+    .map(async (pgGranule) => {
+      const pgCollection = await collectionPgModel.get(
+        knex,
+        { cumulus_id: pgGranule.collection_cumulus_id }
+      );
 
-        return await translatePostgresGranuleToApiGranule({
-          granulePgRecord: pgGranule,
-          collectionPgRecord: pgCollection,
-          knexOrTransaction: knex,
-        });
-      }));
-    mappedGranules = apiGranules.map((granule) =>
-      ({ granuleId: granule.granuleId, collectionId: granule.collectionId }));
-  }
+      return await translatePostgresGranuleToApiGranule({
+        granulePgRecord: pgGranule,
+        collectionPgRecord: pgCollection,
+        knexOrTransaction: knex,
+      });
+    }));
+  const mappedGranules = apiGranules.map((granule) =>
+    ({ granuleId: granule.granuleId, collectionId: granule.collectionId }));
 
   // if the execution exists in SFN API, retrieve its information, if not, get from database
   if (await StepFunctions.executionExists(arn)) {
     const status = await StepFunctions.getExecutionStatus(arn);
 
     // if execution output is stored remotely, fetch it from S3 and replace it
-    const executionOutput = status.execution.output;
-
-    if (executionOutput) {
+    if (status.execution.output) {
       status.execution.output = await fetchRemote(JSON.parse(status.execution.output));
     }
     const updatedEvents = [];
@@ -183,23 +177,12 @@ async function get(req, res) {
     });
   }
 
-  // get the execution information from database
-  try {
-    response = await executionPgModel.get(knex, { arn });
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
-    }
-  }
-  if (!isInDatabase) {
-    return res.boom.notFound('Execution not found in API or database');
-  }
-
   const warning = 'Execution does not exist in Step Functions API';
+  const name = response.name || arn.split(':').pop();
   const execution = {
-    executionArn: response.arn,
-    stateMachineArn: getStateMachineArnFromExecutionArn(response.arn),
-    name: response.name,
+    executionArn: arn,
+    stateMachineArn: getStateMachineArnFromExecutionArn(arn),
+    name,
     status: response.status === 'completed' ? 'SUCCEEDED' : response.status.toUpperCase(),
     startDate: response.created_at,
     stopDate: new Date(response.created_at.getTime() + response.duration * 1000),
@@ -207,7 +190,7 @@ async function get(req, res) {
     ...(response.original_payload && { input: JSON.stringify(response.original_payload) }),
     ...(response.final_payload && { output: JSON.stringify(response.final_payload) }),
   };
-  return res.send({ warning, execution });
+  return res.send({ warning, data: { execution } });
 }
 
 router.get('/:arn', get);
