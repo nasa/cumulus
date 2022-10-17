@@ -44,6 +44,30 @@ const log = new Logger({ sender: '@cumulus/api/collections' });
  */
 async function list(req, res) {
   const { getMMT, includeStats, ...queryStringParameters } = req.query;
+
+  if (queryStringParameters.postgres) {
+    const {
+      collectionPgModel = new CollectionPgModel(),
+      knex = await getKnexClient(),
+    } = req.testContext || {};
+
+    // TODO Replicate ES behavior in PG
+    // ES response includes a meta object, which includes e.g. "count"
+    // ES supports searchContext
+    // etc.
+    const response = {};
+    const results = await collectionPgModel.search(knex, {});
+
+    response.results = await Promise.all(results.map(
+      (collection) => translatePostgresCollectionToApiCollection({
+        knexOrTransaction: knex,
+        granulePgRecord: collection,
+      })
+    ));
+
+    return res.send(response);
+  }
+
   const collection = new Collection(
     { queryStringParameters },
     undefined,
