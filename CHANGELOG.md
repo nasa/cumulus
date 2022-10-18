@@ -41,7 +41,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
-- Pinned @aws-sdk v3 packages to ~3.186.0 to address syntax issues
+- Pinned @aws-sdk v3 packages to ~3.188.0 to address syntax issues
 - Upgraded saml2-js from 3.1.0 to 4.0.0
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports

@@ -25,9 +25,9 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "~3.186.0",
-    "@aws-sdk/lib-dynamodb": "~3.186.0",
-    "@aws-sdk/util-dynamodb": "~3.186.0",
+    "@aws-sdk/client-dynamodb": "~3.188.0",
+    "@aws-sdk/lib-dynamodb": "~3.188.0",
+    "@aws-sdk/util-dynamodb": "~3.188.0",
     "@cumulus/api": "13.3.2",
     "@cumulus/aws-client": "13.3.2",
     "@cumulus/common": "13.3.2",
