@@ -307,7 +307,6 @@ test.beforeEach(async (t) => {
       status: 'failed',
       execution: t.context.executionUrl,
       duration: 0,
-      productVolume: '0',
     }),
   ];
 
