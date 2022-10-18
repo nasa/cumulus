@@ -21,7 +21,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - files_to_granules_task_timeout and files_to_granule_task_memory_size
     - hello_world_task_timeout and hello_world_task_memory_size
     - sf_sqs_report_task_timeout and sf_sqs_report_task_memory_size
-
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
     allowed properties include:
@@ -41,7 +40,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - update_cmr_access_constraints_task_memory_size
       - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
-
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
 - **CUMULUS-2787**
@@ -50,19 +48,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
-
-- **CUMULUS-3024**
-  - Update PUT /granules endpoint to operate consistently across datastores
-    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
-    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
-  - Given a partial Granule object, the /granules update endpoint now operates
-    with behavior more consistent with a PATCH operation where fields not provided
-    in the payload will not be updated in the datastores.
-  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
-    granule formats.
-  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
-    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
-  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 - **CUMULUS-2913**
@@ -76,22 +61,35 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
 
+## [v13.3.2] 2022-10-10 [BACKPORT]
+
+**Please note** changes in 13.3.2 may not yet be released in future versions, as
+this is a backport and patch release on the 13.3.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
 ### Fixed
 
 - **CUMULUS-2557**
   - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
-- **CUMULUS-2969**
-  - Updated `@cumulus/api/models/rules.buildPayload` to only include
-    stepFunction name and arn in for the `definition` return value, excluding
-    step function definition and other extraneous step function object
-    key/values that are not used downstream, but were causing rules to exceed internal AWS limits.
 - **CUMULUS-2971**
   - Updated `@cumulus/aws-client/S3ObjectStore` class to take string query parameters and
     its methods `signGetObject` and `signHeadObject` to take parameter presignOptions
-
 - **CUMULUS-3021**
   - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
     collection version in the URI path
+- **CUMULUS-3024**
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
+  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
+    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
 
 ## [v13.3.0] 2022-8-19
 
@@ -6568,7 +6566,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.3.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.3.2...HEAD
+[v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2
 [v13.3.0]: https://github.com/nasa/cumulus/compare/v13.2.1...v13.3.0
 [v13.2.1]: https://github.com/nasa/cumulus/compare/v13.2.0...v13.2.1
 [v13.2.0]: https://github.com/nasa/cumulus/compare/v13.1.0...v13.2.0
