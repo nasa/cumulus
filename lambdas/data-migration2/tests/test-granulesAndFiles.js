@@ -630,7 +630,7 @@ test.serial('migrateGranuleRecord supports undefined values in dynamo and overwr
     'updatedAt',
     'status',
     'execution',
-    'files'
+    'files',
   ];
   const nullableGranuleFields = omit(testGranule, nonNullablefields);
 
