@@ -43,6 +43,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
+- Upgraded saml2-js from 3.1.0 to 4.0.0
 
 - **CUMULUS-3024**
   - Update PUT /granules endpoint to operate consistently across datastores
