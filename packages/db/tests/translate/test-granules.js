@@ -454,7 +454,7 @@ test('translatePostgresGranuleToApiGranule has an empty array for its files prop
     granuleId: pgGranule.granule_id,
     status: pgGranule.status,
     updatedAt: pgGranule.updated_at.getTime(),
-    files : []
+    files: [],
   };
 
   const result = await translatePostgresGranuleToApiGranule({
