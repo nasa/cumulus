@@ -53,6 +53,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
+**CUMULUS-3104**
+  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+    Sets default async_operation_image_version to 43.
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
