@@ -41,8 +41,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
-- Pinned @aws-sdk v3 packages to ~3.188.0 to address syntax issues
-- Upgraded saml2-js from 3.1.0 to 4.0.0
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 - **CUMULUS-2913**
@@ -55,6 +53,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
+- **CUMULUS-3104**
+  - Pinned @aws-sdk v3 packages to ~3.188.0 to address syntax issues
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
