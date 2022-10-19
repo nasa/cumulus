@@ -758,7 +758,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     delete matchingGranule.execution;
     delete callArgs[0].granule.execution;
 
-    const omitList = ['dataType', 'version'];
+    const omitList = ['dataType', 'version', 'files'];
 
     t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
@@ -811,6 +811,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
       knexOrTransaction: knex,
     });
 
+    callArgs[0].granule.files = [];
     t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
