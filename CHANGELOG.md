@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable changes
+
+- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+
 ### Added
 
 - **CUMULUS-2998**
@@ -37,6 +41,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added 'Bearer token' support to s3credentials endpoint
 - **CUMULUS-2787**
   - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
+- **CUMULUS-2944**
+  - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
 
 ### Changed
 
@@ -53,6 +59,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
+- **CUMULUS-3104**
+  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+  - Sets default async_operation_image version to 43.
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
@@ -1258,7 +1268,7 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 ### Changed
 
 - **CUMULUS-NONE**
-  - Adds logging to ecs/async-operation Docker conatiner that launches async
+  - Adds logging to ecs/async-operation Docker container that launches async
     tasks on ECS. Sets default async_operation_image_version to 39.
 
 - **CUMULUS-2845**
