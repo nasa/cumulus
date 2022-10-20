@@ -8,12 +8,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v13.3.3-alpha] 2022-11-8
 
+### Notable changes
+
+  - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
 ### Fixed
+
   - **CUMULUS-3116**
     - Reverted ElasticSearch sort behavior to pre-13.3.0. Introducing a fallback sort on
       `_uid` is thought to add additional latency to ElasticSearch requests
   - **CUMULUS-3104**
     - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
+
+### Changed
+
+  - **CUMULUS-3104**
+    - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+    - Sets default async_operation_image version to 43.
+    - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
@@ -1153,7 +1164,7 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 ### Changed
 
 - **CUMULUS-NONE**
-  - Adds logging to ecs/async-operation Docker conatiner that launches async
+  - Adds logging to ecs/async-operation Docker container that launches async
     tasks on ECS. Sets default async_operation_image_version to 39.
 
 - **CUMULUS-2845**
