@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
+### Notable changes
+
+- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+
 ### Changed
 
 - **CUMULUS-3104**
@@ -829,7 +833,7 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 ### Changed
 
 - **CUMULUS-NONE**
-  - Adds logging to ecs/async-operation Docker conatiner that launches async
+  - Adds logging to ecs/async-operation Docker container that launches async
     tasks on ECS. Sets default async_operation_image_version to 39.
 
 - **CUMULUS-2845**
