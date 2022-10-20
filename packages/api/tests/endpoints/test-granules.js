@@ -302,12 +302,12 @@ test.beforeEach(async (t) => {
       execution: t.context.executionUrl,
       duration: 52.235,
     }),
-    /*fakeGranuleFactoryV2({
+    fakeGranuleFactoryV2({
       granuleId: granuleId3,
       status: 'failed',
       execution: t.context.executionUrl,
       duration: 0,
-    }),*/
+    }),
   ];
 
   await Promise.all(t.context.fakeGranules.map((granule) =>
@@ -336,7 +336,7 @@ test.beforeEach(async (t) => {
         timestamp: new Date(Date.now()),
       }
     ),
-    /*fakeGranuleRecordFactory(
+    fakeGranuleRecordFactory(
       {
         granule_id: granuleId3,
         status: 'failed',
@@ -345,7 +345,7 @@ test.beforeEach(async (t) => {
         timestamp: new Date(Date.now()),
         productVolume: 0,
       }
-    ),*/
+    ),
   ];
 
   await Promise.all(
