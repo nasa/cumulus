@@ -17,7 +17,6 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
-  fakeCollectionRecordFactory,
   translateApiCollectionToPostgresCollection,
 } = require('@cumulus/db');
 
