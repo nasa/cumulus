@@ -284,7 +284,7 @@ describe('The Granules API', () => {
         version: undefined,
         execution: undefined,
         files: [granuleFile],
-      })); 
+      }));
       const response = await createGranule({
         prefix,
         body: granuleToWrite,
@@ -294,14 +294,14 @@ describe('The Granules API', () => {
       const granuleWithDiffCollection = {
         ...granuleToWrite,
         collectionId: diffCollectionId,
-      }
+      };
 
       expect(response.statusCode).toBe(200);
       try {
         await createGranule({
-        prefix,
-        body: granuleWithDiffCollection,
-      });
+          prefix,
+          body: granuleWithDiffCollection,
+        });
       } catch (error) {
         const apiError = JSON.parse(error.apiMessage);
         expect(apiError.statusCode).toBe(409);

@@ -1915,7 +1915,7 @@ test.serial('create (POST) rejects if a granule with same granuleId already exis
     granuleId: newGranule.granuleId,
     collectionId: newCollectionId,
     execution: undefined,
-  })
+  });
 
   await request(app)
     .post('/granules')

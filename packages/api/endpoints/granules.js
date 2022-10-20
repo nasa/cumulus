@@ -128,9 +128,10 @@ const create = async (req, res) => {
       );
     }
 
-    const pgGranuleRecords = await granulePgModel.search(knex, { granule_id: pgGranule.granule_id });
-    if (pgGranuleRecords.length > 0)
-    {
+    const pgGranuleRecords = await granulePgModel.search(knex, {
+      granule_id: pgGranule.granule_id,
+    });
+    if (pgGranuleRecords.length > 0) {
       log.error('Could not write granule. It exists across another collection', pgGranuleRecords);
       return res.boom.conflict(
         `A granule already exists for granule_id: ${granule.granuleId} across another collection`
