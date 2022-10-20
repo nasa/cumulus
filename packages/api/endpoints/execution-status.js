@@ -171,7 +171,7 @@ async function get(req, res) {
     ) {
       data = `Error: Execution Status for ${status.execution.name} exceeded maximum allowed payload size`;
     }
-    return res.json({ presignedS3Url, data });
+    return res.send({ presignedS3Url, data });
   }
 
   if (!isInDatabase) {
@@ -191,7 +191,9 @@ async function get(req, res) {
     ...(response.original_payload && { input: JSON.stringify(response.original_payload) }),
     ...(response.final_payload && { output: JSON.stringify(response.final_payload) }),
   };
-  return res.send({ warning, data: { execution } });
+  const data = { execution };
+  const presignedS3Url = await createPresignedS3UrlForExecutionStatus(data);
+  return res.send({ warning, presignedS3Url, data });
 }
 
 router.get('/:arn', get);
