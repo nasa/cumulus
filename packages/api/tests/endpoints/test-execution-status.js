@@ -72,8 +72,8 @@ const cumulusMetaOutput = () => ({
   },
 });
 
-const expiredExecutionArn = 'fakeExpiredExecutionArn';
-const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
+const expiredExecutionArn = 'arn:aws:states:us-east-1:xxx:execution:HelloWorldWorkflow:fakeExpiredExecutionArn';
+const expiredMissingExecutionArn = 'arn:aws:states:us-east-1:xxx:execution:HelloWorldWorkflow:fakeMissingExpiredExecutionArn';
 
 const testDbName = randomId('execution-status_test');
 const replaceObject = (lambdaEvent = true) => ({
@@ -476,7 +476,7 @@ test('when execution is no longer in step function API, returns status from data
   t.falsy(executionStatus.executionHistory);
   t.falsy(executionStatus.stateMachine);
   t.is(executionStatus.execution.executionArn, t.context.fakeExecutionRecord.arn);
-  t.is(executionStatus.execution.name, t.context.fakeExecutionRecord.name);
+  t.is(executionStatus.execution.name, t.context.fakeExecutionRecord.arn.split(':').pop());
   t.is(
     executionStatus.execution.input,
     JSON.stringify(t.context.fakeExecutionRecord.original_payload)
@@ -504,7 +504,7 @@ test('when execution not found in step function API nor database, returns not fo
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
 
-  const executionStatus = response.body.data;
-  t.is(executionStatus.error, 'Not Found');
-  t.is(executionStatus.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
+  const responseBody = response.body;
+  t.is(responseBody.error, 'Not Found');
+  t.is(responseBody.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
 });

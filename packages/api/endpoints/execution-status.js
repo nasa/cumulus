@@ -110,6 +110,8 @@ async function get(req, res) {
   const granulePgModel = new GranulePgModel();
   const collectionPgModel = new CollectionPgModel();
   const executionPgModel = new ExecutionPgModel();
+  let isInDatabase = true;
+  let mappedGranules;
 
   // get the execution information from database
   let response;
@@ -117,28 +119,30 @@ async function get(req, res) {
     response = await executionPgModel.get(knex, { arn });
   } catch (error) {
     if (error instanceof RecordDoesNotExist) {
-      return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
+      isInDatabase = false;
     }
   }
 
-  // include associated granules
-  const granuleCumulusIds = await getApiGranuleExecutionCumulusIdsByExecution(knex, [response]);
-  const granules = await granulePgModel.searchByCumulusIds(knex, granuleCumulusIds);
-  const apiGranules = await Promise.all(granules
-    .map(async (pgGranule) => {
-      const pgCollection = await collectionPgModel.get(
-        knex,
-        { cumulus_id: pgGranule.collection_cumulus_id }
-      );
+  if (isInDatabase) {
+    // include associated granules
+    const granuleCumulusIds = await getApiGranuleExecutionCumulusIdsByExecution(knex, [response]);
+    const granules = await granulePgModel.searchByCumulusIds(knex, granuleCumulusIds);
+    const apiGranules = await Promise.all(granules
+      .map(async (pgGranule) => {
+        const pgCollection = await collectionPgModel.get(
+          knex,
+          { cumulus_id: pgGranule.collection_cumulus_id }
+        );
 
-      return await translatePostgresGranuleToApiGranule({
-        granulePgRecord: pgGranule,
-        collectionPgRecord: pgCollection,
-        knexOrTransaction: knex,
-      });
-    }));
-  const mappedGranules = apiGranules.map((granule) =>
-    ({ granuleId: granule.granuleId, collectionId: granule.collectionId }));
+        return await translatePostgresGranuleToApiGranule({
+          granulePgRecord: pgGranule,
+          collectionPgRecord: pgCollection,
+          knexOrTransaction: knex,
+        });
+      }));
+    mappedGranules = apiGranules.map((granule) =>
+      ({ granuleId: granule.granuleId, collectionId: granule.collectionId }));
+  }
 
   // if the execution exists in SFN API, retrieve its information, if not, get from database
   if (await StepFunctions.executionExists(arn)) {
@@ -161,20 +165,17 @@ async function get(req, res) {
     const objectString = JSON.stringify(status, undefined, 2);
     const estimatedPayloadSize = presignedS3Url.length + objectString.length + 50;
     logger.debug(`Sending json file with contentLength ${objectString.length}`);
-    if (
-      estimatedPayloadSize
+    let data = status;
+    if (estimatedPayloadSize
         > (process.env.maxResponsePayloadSizeBytes || maxResponsePayloadSizeBytes)
     ) {
-      return res.json({
-        presignedS3Url,
-        data: `Error: Execution Status for ${status.execution.name} exceeded maximum allowed payload size`,
-      });
+      data = `Error: Execution Status for ${status.execution.name} exceeded maximum allowed payload size`;
     }
+    return res.json({ presignedS3Url, data });
+  }
 
-    return res.json({
-      presignedS3Url,
-      data: status,
-    });
+  if (!isInDatabase) {
+    return res.boom.notFound(`Execution record with identifiers ${JSON.stringify(req.params)} does not exist.`);
   }
 
   const warning = 'Execution does not exist in Step Functions API';
