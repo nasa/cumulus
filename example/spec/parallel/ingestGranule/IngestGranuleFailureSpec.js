@@ -145,7 +145,7 @@ describe('The Ingest Granule failure workflow', () => {
         prefix: config.stackName,
         arn: executionArn,
       });
-      executionStatus = JSON.parse(executionStatusResponse.body);
+      executionStatus = JSON.parse(executionStatusResponse.body).data;
 
       // Wait for execution to be failed before getting execution record, so that
       // the record should have the correct status

@@ -460,7 +460,7 @@ describe('Ingesting from PDR', () => {
               arn: parsePdrExecutionArn,
             });
             console.log(`Execution status request status: ${executionStatusResponse.status}`);
-            executionStatus = JSON.parse(executionStatusResponse.body);
+            executionStatus = JSON.parse(executionStatusResponse.body).data;
           } catch (error) {
             console.log(`Error parsing JSON ${executionStatusResponse}`);
             beforeAllFailed = error;

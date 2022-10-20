@@ -1349,7 +1349,7 @@ describe('The S3 Ingest Granules workflow', () => {
             arn: workflowExecutionArn,
           });
 
-          executionStatus = JSON.parse(executionStatusResponse.body);
+          executionStatus = JSON.parse(executionStatusResponse.body).data;
         } catch (error) {
           subTestSetupError = error;
         }

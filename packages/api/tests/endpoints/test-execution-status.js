@@ -395,7 +395,7 @@ test('returns ARNs for execution and state machine', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
   t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
 });
@@ -407,7 +407,7 @@ test('returns granules for execution in Step Function API', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
 });
 
@@ -418,7 +418,7 @@ test('returns full message when it is already included in the output', async (t)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   t.deepEqual(fullMessageOutput(), JSON.parse(executionStatus.execution.output));
 });
 
@@ -429,7 +429,7 @@ test('fetches messages from S3 when remote message (for both SF execution histor
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   const expectedResponse = {
     execution: {
       ...executionStatusCommon,
@@ -452,7 +452,7 @@ test('when execution is still running, still returns status and fetches SF execu
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   const expectedResponse = {
     execution: executionStatusCommon,
     executionHistory: {
@@ -472,7 +472,7 @@ test('when execution is no longer in step function API, returns status from data
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   t.falsy(executionStatus.executionHistory);
   t.falsy(executionStatus.stateMachine);
   t.is(executionStatus.execution.executionArn, t.context.fakeExecutionRecord.arn);
@@ -504,7 +504,7 @@ test('when execution not found in step function API nor database, returns not fo
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   t.is(executionStatus.error, 'Not Found');
   t.is(executionStatus.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
 });
