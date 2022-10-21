@@ -286,7 +286,6 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
   const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
-  // const granuleId3 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
@@ -301,12 +300,6 @@ test.beforeEach(async (t) => {
       status: 'failed',
       execution: t.context.executionUrl,
       duration: 52.235,
-    }),
-    fakeGranuleFactoryV2({
-      granuleId: granuleId3,
-      status: 'failed',
-      execution: t.context.executionUrl,
-      duration: 0,
     }),
   ];
 
@@ -334,16 +327,6 @@ test.beforeEach(async (t) => {
         collection_cumulus_id: t.context.collectionCumulusId,
         duration: 52.235,
         timestamp: new Date(Date.now()),
-      }
-    ),
-    fakeGranuleRecordFactory(
-      {
-        granule_id: granuleId3,
-        status: 'failed',
-        collection_cumulus_id: t.context.collectionCumulusId,
-        duration: 0,
-        timestamp: new Date(Date.now()),
-        productVolume: 0,
       }
     ),
   ];
