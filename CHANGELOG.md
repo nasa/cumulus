@@ -48,6 +48,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added 'Bearer token' support to s3credentials endpoint
 - **CUMULUS-2787**
   - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
+- **CUMULUS-2944**
+  - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
 
 ### Changed
 
