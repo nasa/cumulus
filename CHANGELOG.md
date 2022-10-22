@@ -43,6 +43,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
 - **CUMULUS-2944**
   - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
+-**CUMULUS-3100**
+  - Updated `POST` granules endpoint to check if granuleId exists across a different collection.
+  - Udpated logic for writing granules from a message to check if granuleId exists across a different collection.
 
 ### Changed
 
@@ -81,8 +84,6 @@ releases.
 - **CUMULUS-3021**
   - Updated `@cumulus/api-client/collections` and `@cumulus/integration-tests/api` to encode
     collection version in the URI path
--**CUMULUS-3100**
-  - Updated `POST` granules endpoint to check if granuleId exists across a different collection.
 - **CUMULUS-3024**
   - Update PUT /granules endpoint to operate consistently across datastores
     (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a

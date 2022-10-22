@@ -1024,3 +1024,44 @@ test('getUniqueGranuleByGranuleId() throws an error if no granules are found', a
     { instanceOf: RecordDoesNotExist }
   );
 });
+
+test('getGranulesWithDifferentCollection() returns a record when a granule that exists with a specific collection_cumulus_id is called with a granule_id and different collection_cumulus_id', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const [granule] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  const randomCollectionCumulusId = 2;
+
+  const params = {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: randomCollectionCumulusId,
+  };
+  const records = await granulePgModel.getGranulesWithDifferentCollection(knex, params);
+  t.deepEqual(records, granule);
+  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+});
+
+test('getGranulesWithDifferentCollection() returns no record when called with the granule_id and collection_cumulus_id of a non-existent granule', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const granuleId = 'fakeGranuleId';
+  const fakeGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+    granule_id: granuleId,
+  });
+
+  const params = { granule_id: fakeGranule.granule_id, collection_cumulus_id: collectionCumulusId };
+  const records = await granulePgModel.getGranulesWithDifferentCollection(knex, params);
+  t.is(records, undefined);
+});

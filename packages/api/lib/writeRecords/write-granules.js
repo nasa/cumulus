@@ -573,6 +573,23 @@ const _writeGranule = async ({
   knex,
   snsEventType,
 }) => {
+  const { status } = apiGranuleRecord;
+  const granuleIdWithDiffCollection = await granulePgModel.getGranulesWithDifferentCollection(
+    knex,
+    {
+      granule_id: postgresGranuleRecord.granule_id,
+      collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id,
+    }
+  );
+
+  if (granuleIdWithDiffCollection) {
+    log.error('Could not write granule. It exists across another collection', granuleIdWithDiffCollection);
+    const conflictError = new Error(
+      `A granule already exists for granule_id: ${postgresGranuleRecord.granule_id} across another collection.`
+    );
+    throw conflictError;
+  }
+
   const pgGranule = await _writeGranuleRecords({
     postgresGranuleRecord,
     apiGranuleRecord,
@@ -582,8 +599,6 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
-
-  const { status } = apiGranuleRecord;
 
   // Files are only written to Postgres if the granule is in a "final" state
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
@@ -807,6 +822,7 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
  *   Optional override for the granule model writing to DynamoDB
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
+ * @param {Object}  params.esClient - Elasticsearch client
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules

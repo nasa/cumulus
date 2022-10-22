@@ -1934,7 +1934,7 @@ test.serial('create (POST) rejects if a granule with same granuleId already exis
   const errorText = JSON.parse(response.error.text);
   t.is(errorText.statusCode, 409);
   t.is(errorText.error, 'Conflict');
-  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId} across another collection`);
+  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId} across another collection.`);
 });
 
 test.serial('PUT replaces an existing granule in all data stores', async (t) => {
@@ -2241,6 +2241,7 @@ test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to Po
       created_at: new Date(),
     }],
     get: () => ({}),
+    getGranulesWithDifferentCollection: () => Promise.resolve(undefined),
   };
 
   const updatedGranule = {

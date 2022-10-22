@@ -208,6 +208,25 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       });
     return granules;
   }
+
+  /**
+   * Get granules from table where granule_id matches provided granule_id
+   * and where not collection_cumulus_id
+   * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+   * @param {PostgresGranuleUniqueColumns} params - An object
+   *          of PostgresGranuleUniqueColumns
+   * @returns {Promise<PostgresGranuleRecord | undefined>} The returned record
+   */
+  async getGranulesWithDifferentCollection(
+    knexOrTransaction: Knex | Knex.Transaction,
+    params: PostgresGranuleUniqueColumns
+  ): Promise<PostgresGranuleRecord | undefined> {
+    const record: PostgresGranuleRecord = await knexOrTransaction(this.tableName)
+      .where({ granule_id: params.granule_id })
+      .andWhereNot({ collection_cumulus_id: params.collection_cumulus_id })
+      .first();
+    return record;
+  }
 }
 
 export { GranulePgModel };

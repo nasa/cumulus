@@ -128,13 +128,18 @@ const create = async (req, res) => {
       );
     }
 
-    const pgGranuleRecords = await granulePgModel.search(knex, {
-      granule_id: pgGranule.granule_id,
-    });
-    if (pgGranuleRecords.length > 0) {
-      log.error('Could not write granule. It exists across another collection', pgGranuleRecords);
+    const granuleIdWithDiffCollection = await granulePgModel.getGranulesWithDifferentCollection(
+      knex,
+      {
+        granule_id: pgGranule.granule_id,
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
+      }
+    );
+
+    if (granuleIdWithDiffCollection) {
+      log.error('Could not write granule. It exists across another collection', granuleIdWithDiffCollection);
       return res.boom.conflict(
-        `A granule already exists for granule_id: ${granule.granuleId} across another collection`
+        `A granule already exists for granule_id: ${granule.granuleId} across another collection.`
       );
     }
   } catch (error) {
