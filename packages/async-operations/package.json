@@ -32,6 +32,7 @@
     "@cumulus/db": "13.3.2",
     "@cumulus/errors": "13.3.2",
     "@cumulus/es-client": "13.3.2",
+    "@cumulus/logger": "13.3.2",
     "@cumulus/types": "13.3.2",
     "knex": "0.95.15",
     "uuid": "8.3.2"
