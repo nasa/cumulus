@@ -91,7 +91,7 @@ test('createBucket() creates a bucket', async (t) => {
   }
 });
 
-test('deleteS3Objects() deletes s3 objects', async (t) => {
+test.skip('deleteS3Objects() deletes s3 objects', async (t) => {
   const bucketName = randomString();
   await createBucket(bucketName);
 
