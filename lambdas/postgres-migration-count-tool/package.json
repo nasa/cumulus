@@ -27,6 +27,8 @@
     "@cumulus/db": "11.1.8",
     "@cumulus/message": "11.1.8",
     "@cumulus/types": "11.1.8",
+    "@cumulus/aws-client": "13.3.2",
+    "@cumulus/logger": "13.3.2",
     "knex": "0.95.15",
     "p-map": "^4.0.0",
     "pg": "^8.3.0"

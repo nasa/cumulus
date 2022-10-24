@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
+### Changed
+
+- **CUMULUS-3104**
+  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+  - Sets default async_operation_image version to 43.
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
+  - Fixed TS compilation error caused by @aws-sdk/client-s3 3.190->3.193 upgrade
+
 ### Fixed
 
 - **CUMULUS-3080**

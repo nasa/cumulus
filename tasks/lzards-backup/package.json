@@ -50,6 +50,8 @@
     "@cumulus/launchpad-auth": "11.1.8",
     "@cumulus/logger": "11.1.8",
     "@cumulus/message": "11.1.8",
+    "@cumulus/db": "13.3.2",
+    "@cumulus/lzards-api-client": "13.3.2-alpha.0",
     "got": "11.8.3"
   },
   "devDependencies": {
