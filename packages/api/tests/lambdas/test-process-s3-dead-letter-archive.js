@@ -68,6 +68,7 @@ test.after(async (t) => {
   await S3.recursivelyDeleteS3Bucket(t.context.bucket);
 });
 
+// TODO enable all the skipped tests after CUMULUS-3106 fix
 test.skip('processDeadLetterArchive calls writeRecords for each dead letter Cumulus message', async (t) => {
   const writeRecordsFunctionSpy = sinon.spy();
   const { bucket, path } = t.context;
