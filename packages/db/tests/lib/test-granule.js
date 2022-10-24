@@ -91,11 +91,11 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
 
   const [pgGranule] = await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId,
       granule,
-      executionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
   const granuleCumulusId = pgGranule.cumulus_id;
 
@@ -140,11 +140,11 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
 
   const [pgGranule] = await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId,
       granule,
-      executionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
   const granuleCumulusId = pgGranule.cumulus_id;
 
@@ -156,11 +156,11 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: secondExecutionCumulusId,
       granule,
-      secondExecutionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
 
   const granuleRecord = await granulePgModel.get(
@@ -209,13 +209,12 @@ test('upsertGranuleWithExecutionJoinRecord() does not write anything if upsertin
     createRejectableTransaction(
       knex,
       (trx) =>
-        upsertGranuleWithExecutionJoinRecord(
-          trx,
-          granule,
+        upsertGranuleWithExecutionJoinRecord({
           executionCumulusId,
-          undefined,
-          fakeGranulesExecutionsPgModel
-        )
+          granule,
+          granulesExecutionsPgModel: fakeGranulesExecutionsPgModel,
+          knexTransaction: trx,
+        })
     )
   );
 
@@ -253,11 +252,11 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     status: 'completed',
   });
 
-  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
-    knex,
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord({
+    executionCumulusId,
     granule,
-    executionCumulusId
-  );
+    knexTransaction: knex,
+  });
   const granuleCumulusId = pgGranule.cumulus_id;
 
   const [secondExecution] = await executionPgModel.create(
@@ -271,11 +270,11 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     status: 'running',
   };
 
-  await upsertGranuleWithExecutionJoinRecord(
-    knex,
-    updatedGranule,
-    secondExecutionCumulusId
-  );
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: updatedGranule,
+    executionCumulusId: secondExecutionCumulusId,
+  });
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -315,11 +314,11 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
     status: 'completed',
   });
 
-  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
-    knex,
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
     granule,
-    completedExecutionCumulusId
-  );
+    executionCumulusId: completedExecutionCumulusId,
+  });
   const granuleCumulusId = pgGranule.cumulus_id;
 
   const updatedGranule = {
@@ -327,11 +326,11 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
     status: 'running',
   };
 
-  await upsertGranuleWithExecutionJoinRecord(
-    knex,
-    updatedGranule,
-    completedExecutionCumulusId
-  );
+  await upsertGranuleWithExecutionJoinRecord({
+    executionCumulusId: completedExecutionCumulusId,
+    granule: updatedGranule,
+    knexTransaction: knex,
+  });
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -378,11 +377,11 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId,
       granule,
-      executionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
 
   const [secondExecution] = await executionPgModel.create(
@@ -393,11 +392,11 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: secondExecutionCumulusId,
       granule,
-      secondExecutionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
 
   const granules = [
@@ -448,14 +447,12 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
     status: 'running',
   });
 
-  await createRejectableTransaction(
-    knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule1,
-      executionCumulusId
-    )
-  );
+  await createRejectableTransaction(knex, (trx) =>
+    upsertGranuleWithExecutionJoinRecord({
+      granule: granule1,
+      knexTransaction: trx,
+      executionCumulusId,
+    }));
 
   const [secondExecution] = await executionPgModel.create(
     knex,
@@ -465,20 +462,20 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule1,
-      secondExecutionCumulusId
-    )
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      knexTransaction: trx,
+      granule: granule1,
+      executionCumulusId: secondExecutionCumulusId,
+    })
   );
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule2,
-      secondExecutionCumulusId
-    )
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      knexTransaction: trx,
+      granule: granule2,
+      executionCumulusId: secondExecutionCumulusId,
+    })
   );
 
   const granules = [

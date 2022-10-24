@@ -66,7 +66,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { put } = require('../../endpoints/granules');
+const { create, put, putGranule } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
@@ -335,12 +335,12 @@ test.beforeEach(async (t) => {
 
   t.context.fakePGGranuleRecords = await Promise.all(
     t.context.fakePGGranules.map((granule) =>
-      upsertGranuleWithExecutionJoinRecord(
-        t.context.knex,
+      upsertGranuleWithExecutionJoinRecord({
+        knexTransaction: t.context.knex,
         granule,
-        t.context.testExecutionCumulusId,
-        t.context.granulePgModel
-      ))
+        executionCumulusId: t.context.testExecutionCumulusId,
+        granulePgModel: t.context.granulePgModel,
+      }))
   );
 
   const topicName = randomString();
@@ -2303,6 +2303,88 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
   t.is(publishedMessage.event, 'Update');
 });
 
+test.serial("create() sets a default createdAt value for passed granule if it's not set by the user", async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+
+  const {
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
+  });
+
+  const newGranuleId = randomId('granule');
+  const createGranuleFromApiMethodStub = sinon.stub();
+  const updatedGranule = {
+    ...newDynamoGranule,
+    granuleId: newGranuleId,
+  };
+  delete updatedGranule.createdAt;
+  const expressRequest = {
+    params: {
+      granuleName: updatedGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      createGranuleFromApiMethod: createGranuleFromApiMethodStub,
+    },
+  };
+  const response = buildFakeExpressResponse();
+  await create(expressRequest, response);
+
+  t.truthy(createGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
+});
+
+test.serial("put() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+
+  const {
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+    },
+  });
+
+  const newGranuleId = randomId('granule');
+  const updateGranuleFromApiMethodStub = sinon.stub();
+  const updatedGranule = {
+    ...newDynamoGranule,
+    granuleId: newGranuleId,
+  };
+  delete updatedGranule.createdAt;
+  const expressRequest = {
+    params: {
+      granuleName: updatedGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      updateGranuleFromApiMethod: updateGranuleFromApiMethodStub,
+    },
+  };
+  const response = buildFakeExpressResponse();
+  await putGranule(expressRequest, response);
+
+  t.truthy(updateGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
+});
+
 test.serial('put() does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
   const {
     esClient,
@@ -2745,7 +2827,7 @@ test.serial('update (PUT) can set running granule status to queued', async (t) =
   });
 });
 
-test.serial('PUT will not set completed status to queued', async (t) => {
+test.serial('PUT will set completed status to queued', async (t) => {
   const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
     .put(`/granules/${granuleId}`)
@@ -2766,7 +2848,7 @@ test.serial('PUT will not set completed status to queued', async (t) => {
     granuleId,
   });
 
-  t.is(fetchedDynamoRecord.status, 'completed');
+  t.is(fetchedDynamoRecord.status, 'queued');
 });
 
 test.serial('PUT can create a new granule with status queued', async (t) => {
@@ -2844,6 +2926,8 @@ test.serial('associateExecution (POST) associates an execution with a granule cr
     timestamp,
     execution: undefined,
   });
+
+  delete newGranule.createdAt;
 
   await request(app)
     .post('/granules')

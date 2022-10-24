@@ -1899,11 +1899,11 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
         dynamoRecord: gran,
         knexOrTransaction: knex,
       });
-      await upsertGranuleWithExecutionJoinRecord(
-        knex,
-        pgGranule,
-        executionCumulusId
-      );
+      await upsertGranuleWithExecutionJoinRecord({
+        executionCumulusId,
+        granule: pgGranule,
+        knexTransaction: knex,
+      });
     })
   );
 

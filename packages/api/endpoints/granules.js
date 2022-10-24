@@ -109,6 +109,7 @@ const create = async (req, res) => {
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
+    createGranuleFromApiMethod = createGranuleFromApi,
   } = req.testContext || {};
 
   const granule = req.body || {};
@@ -140,7 +141,7 @@ const create = async (req, res) => {
     if (!granule.createdAt) {
       granule.createdAt = _createNewCreatedAtDate();
     }
-    await createGranuleFromApi(granule, knex, esClient);
+    await createGranuleFromApiMethod(granule, knex, esClient);
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
@@ -161,6 +162,7 @@ const putGranule = async (req, res) => {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
   const apiGranule = req.body || {};
 
@@ -208,7 +210,7 @@ const putGranule = async (req, res) => {
         apiGranule.createdAt = _createNewCreatedAtDate();
       }
     }
-    await updateGranuleFromApi(apiGranule, knex, esClient);
+    await updateGranuleFromApiMethod(apiGranule, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
@@ -704,9 +706,11 @@ router.post(
 router.delete('/:granuleName', del);
 
 module.exports = {
+  bulkDelete,
   bulkOperations,
   bulkReingest,
-  bulkDelete,
+  create,
   put,
+  putGranule,
   router,
 };

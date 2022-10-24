@@ -40,18 +40,27 @@ export const getGranuleCollectionId = async (
  *   Granules/executions PG model class instance
  * @returns {Promise<PostgresGranuleRecord[]>}
  */
-export const upsertGranuleWithExecutionJoinRecord = async (
-  knexTransaction: Knex.Transaction,
-  granule: PostgresGranule,
-  executionCumulusId?: number,
+export const upsertGranuleWithExecutionJoinRecord = async ({
+  knexTransaction,
+  granule,
+  executionCumulusId,
   granulePgModel = new GranulePgModel(),
-  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-): Promise<PostgresGranuleRecord[]> => {
-  const [pgGranule] = await granulePgModel.upsert(
-    knexTransaction,
-    granule,
-    executionCumulusId
-  );
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
+  writeConstraints = true,
+}: {
+  knexTransaction: Knex.Transaction;
+  granule: PostgresGranule;
+  executionCumulusId?: number;
+  granulePgModel?: GranulePgModel;
+  granulesExecutionsPgModel?: GranulesExecutionsPgModel;
+  writeConstraints?: boolean;
+}): Promise<PostgresGranuleRecord[]> => {
+  const [pgGranule] = await granulePgModel.upsert({
+    knexOrTrx: knexTransaction,
+    granule: granule,
+    executionCumulusId,
+    writeConstraints,
+  });
   // granuleCumulusId could be undefined if the upsert affected no rows due to its
   // conditional logic. In that case, we assume that the execution history for the
   // granule was already written and return early. Execution history cannot be written
@@ -60,13 +69,10 @@ export const upsertGranuleWithExecutionJoinRecord = async (
     return [];
   }
   if (executionCumulusId) {
-    await granulesExecutionsPgModel.upsert(
-      knexTransaction,
-      {
-        granule_cumulus_id: pgGranule.cumulus_id,
-        execution_cumulus_id: executionCumulusId,
-      }
-    );
+    await granulesExecutionsPgModel.upsert(knexTransaction, {
+      granule_cumulus_id: pgGranule.cumulus_id,
+      execution_cumulus_id: executionCumulusId,
+    });
   }
   return [pgGranule];
 };

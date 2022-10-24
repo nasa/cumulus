@@ -1,7 +1,6 @@
 import { Knex } from 'knex';
 
 import { RecordDoesNotExist, InvalidArgument } from '@cumulus/errors';
-import Logger from '@cumulus/logger';
 
 import { TableNames } from '../tables';
 import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } from '../types/granule';
@@ -10,8 +9,6 @@ import { BasePgModel } from './base';
 import { ExecutionPgModel } from './execution';
 import { translateDateToUTC } from '../lib/timestamp';
 import { getSortFields } from '../lib/sort';
-
-const log = new Logger({ sender: '@cumulus/db/models/granule' });
 
 interface RecordSelect {
   cumulus_id: number
@@ -115,21 +112,19 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     return queryBuilder;
   }
 
-  async upsert(
-    knexOrTrx: Knex | Knex.Transaction,
-    granule: PostgresGranule,
-    executionCumulusId?: number,
-    executionPgModel = new ExecutionPgModel()
-  ) {
-    let comparisonCreatedAt;
-    if (granule.created_at) {
-      comparisonCreatedAt = translateDateToUTC(granule.created_at);
-    } else {
-      log.warn(
-        'Upserting without created_at set, using current time for created_at/overriding granule write constraints'
-      );
-      comparisonCreatedAt = translateDateToUTC(new Date());
-    }
+  async upsert({
+    knexOrTrx,
+    granule,
+    executionCumulusId,
+    executionPgModel = new ExecutionPgModel(),
+    writeConstraints = true,
+  }: {
+    knexOrTrx: Knex | Knex.Transaction;
+    granule: PostgresGranule;
+    executionCumulusId?: number;
+    executionPgModel?: ExecutionPgModel;
+    writeConstraints: boolean;
+  }) {
     if (granule.status === 'running' || granule.status === 'queued') {
       const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
@@ -139,42 +134,63 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
           created_at: granule.created_at, //TODO test/check undefined
-        })
-        .where(
+        });
+
+      // If upsert called with optional write constraints
+      if (writeConstraints) {
+        if (!granule.created_at) {
+          throw new Error(
+            `Granule upsert called with write constraints but no updatedAt set: ${JSON.stringify(granule)}`
+          );
+        }
+        upsertQuery.where(
           knexOrTrx.raw(
-            `${this.tableName}.created_at <= to_timestamp(${comparisonCreatedAt})`
+            `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`
           )
         );
 
-      // In reality, the only place where executionCumulusId should be
-      // undefined is from the data migrations OR a queued granule from reingest
-      // OR a patch API request
-      if (executionCumulusId) {
-        const exclusionClause = this._buildExclusionClause(
-          executionPgModel,
-          executionCumulusId,
-          knexOrTrx,
-          granule.status
-        );
-        // Only do the upsert if there is no execution that matches the exclusionClause
-        // For running granules, this means the execution does not exist in a state other
-        // than 'running'.  For queued granules, this means that the execution does not
-        // exist at all
-        upsertQuery.whereNotExists(exclusionClause);
+        // In reality, the only place where executionCumulusId should be
+        // undefined is from the data migrations OR a queued granule from reingest
+        // OR a patch API request
+        if (executionCumulusId) {
+          const exclusionClause = this._buildExclusionClause(
+            executionPgModel,
+            executionCumulusId,
+            knexOrTrx,
+            granule.status
+          );
+          // Only do the upsert if there is no execution that matches the exclusionClause
+          // For running granules, this means the execution does not exist in a state other
+          // than 'running'.  For queued granules, this means that the execution does not
+          // exist at all
+          upsertQuery.whereNotExists(exclusionClause);
+        }
       }
       upsertQuery.returning('*');
       return await upsertQuery;
     }
-    return await knexOrTrx(this.tableName)
+
+    const upsertQuery = knexOrTrx(this.tableName)
       .insert(granule)
       .onConflict(['granule_id', 'collection_cumulus_id'])
-      .merge()
-      .where(
+      .merge();
+
+    if (writeConstraints) {
+      if (!granule.created_at) {
+        throw new Error(
+          `Granule upsert called with write constraints but no updatedAt set: ${JSON.stringify(granule)}`
+        );
+      }
+      upsertQuery.where(
         knexOrTrx.raw(
-          `${this.tableName}.created_at <= to_timestamp(${comparisonCreatedAt})`
+          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(
+            granule.created_at
+          )})`
         )
-      )
-      .returning('*');
+      );
+    }
+    upsertQuery.returning('*');
+    return await upsertQuery;
   }
 
   /**

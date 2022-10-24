@@ -180,13 +180,15 @@ const _writePostgresGranuleViaTransaction = async ({
   executionCumulusId,
   trx,
   granulePgModel,
+  writeConstraints = true,
 }) => {
-  const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
-    trx,
-    granuleRecord,
+  const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: trx,
+    granule: granuleRecord,
     executionCumulusId,
-    granulePgModel
-  );
+    granulePgModel,
+    writeConstraints,
+  });
   // Ensure that we get a granule for the files even if the
   // upsert query returned an empty result
   const pgGranule = await getGranuleFromQueryResultOrLookup({
@@ -449,8 +451,10 @@ const _writeGranuleRecords = async (params) => {
     granuleModel,
     executionCumulusId,
     granulePgModel,
+    writeConstraints = true,
   } = params;
   let pgGranule;
+
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
 
@@ -461,6 +465,7 @@ const _writeGranuleRecords = async (params) => {
         executionCumulusId,
         trx,
         granulePgModel,
+        writeConstraints,
       });
 
       // Future: refactor to cover the entire object?
@@ -470,12 +475,12 @@ const _writeGranuleRecords = async (params) => {
         apiGranuleRecord.createdAt = pgGranule.created_at.getTime();
       }
 
-      await granuleModel.storeGranule(apiGranuleRecord);
+      await granuleModel.storeGranule(apiGranuleRecord, writeConstraints);
       await upsertGranule({
         esClient,
         updates: apiGranuleRecord,
         index: process.env.ES_INDEX,
-      });
+      }, writeConstraints);
     });
     log.info(
       `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.`,
@@ -580,15 +585,17 @@ const _writeGranule = async ({
   granulePgModel,
   knex,
   snsEventType,
+  writeConstraints = true,
 }) => {
   const pgGranule = await _writeGranuleRecords({
-    postgresGranuleRecord,
     apiGranuleRecord,
-    knex,
     esClient,
-    granuleModel,
     executionCumulusId,
+    granuleModel,
     granulePgModel,
+    knex,
+    postgresGranuleRecord,
+    writeConstraints,
   });
 
   const { status } = apiGranuleRecord;
@@ -644,13 +651,13 @@ const writeGranuleRecordAndPublishSns = async ({
   snsEventType = 'Update',
 }) => {
   const pgGranule = await _writeGranuleRecords({
-    postgresGranuleRecord,
     apiGranuleRecord,
-    knex,
     esClient,
-    granuleModel,
     executionCumulusId,
+    granuleModel,
     granulePgModel,
+    knex,
+    postgresGranuleRecord,
   });
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
@@ -779,14 +786,15 @@ const writeGranuleFromApi = async (
     });
 
     await _writeGranule({
-      postgresGranuleRecord,
       apiGranuleRecord,
+      esClient,
       executionCumulusId,
-      knex,
       granuleModel,
       granulePgModel,
-      esClient,
+      knex,
+      postgresGranuleRecord,
       snsEventType,
+      writeConstraints: false,
     });
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {
@@ -899,7 +907,7 @@ const writeGranulesFromMessage = async ({
       }
 
       const apiGranuleRecord = await generateGranuleApiRecord({
-        granule: { ...granule, published, createdAt: granule.createdAt || workflowStartTime },
+        granule: { ...granule, published, createdAt: granule.createdAt || workflowStartTime }, // TODO make sure this is tested
         executionUrl,
         collectionId,
         provider: provider.id,
@@ -926,14 +934,15 @@ const writeGranulesFromMessage = async ({
       });
 
       return _writeGranule({
-        postgresGranuleRecord,
         apiGranuleRecord,
+        esClient,
         executionCumulusId,
-        knex,
         granuleModel,
         granulePgModel,
-        esClient,
+        knex,
+        postgresGranuleRecord,
         snsEventType: 'Update',
+        writeConstraints: true,
       });
     }
   ));

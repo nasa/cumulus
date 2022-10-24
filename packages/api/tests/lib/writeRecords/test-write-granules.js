@@ -2634,6 +2634,21 @@ test.serial('writeGranuleFromApi() stores error on granule if any file fails', a
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
+/* test.serial('writeGranuleFromApi()
+//allows overwrite of granule records in all datastores if older granule exists with same execution in a completed state', async (t) => {
+
+});
+
+test.serial('writeGranuleFromApi()
+//allows overwrite of granule records in all datastores if  granule exists with newer createdAt and has same execution in a completed state', async (t) => {
+
+});
+
+test.serial('writeGranuleFromApi()
+//allows overwrite of granule records in all datastores and associates with new execution if granule exists with newer createdAt and an existing execution is', async (t) => {
+
+}); */
+
 test.serial('updateGranuleStatusToQueued() updates granule status in DynamoDB/PostgreSQL/Elasticsearch and publishes SNS message', async (t) => {
   const {
     collectionCumulusId,
