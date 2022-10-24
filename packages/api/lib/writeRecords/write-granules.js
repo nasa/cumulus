@@ -471,6 +471,7 @@ const _writeGranuleRecords = async (params) => {
       // Future: refactor to cover the entire object?
       // Ensure PG default createdAt value is propagated to DynamoDB/ES
       // in the case where _writeGranule is called without createdAt set
+      // TODO: Test this
       if (!apiGranuleRecord.createdAt) {
         apiGranuleRecord.createdAt = pgGranule.created_at.getTime();
       }
@@ -527,7 +528,7 @@ const _writeGranuleRecords = async (params) => {
             knexOrTransaction: knex,
           }
         );
-        await granuleModel.storeGranule(alignedDynamoRecord);
+        await granuleModel.storeGranule(alignedDynamoRecord, writeConstraints);
       }
 
       // If granule is in a final state and the error thrown

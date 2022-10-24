@@ -134,7 +134,8 @@ const create = async (req, res) => {
     }
   } catch (error) {
     return res.boom.badRequest(errorify(error));
-  } try {
+  }
+  try {
     if (!granule.published) {
       granule.published = false;
     }
@@ -201,7 +202,7 @@ const putGranule = async (req, res) => {
   }
 
   try {
-    // Set API defaults if new record
+    // Set API defaults only if new record
     if (isNewRecord === true) {
       if (!apiGranule.published) {
         apiGranule.published = false;

@@ -394,12 +394,12 @@ class Granule extends Manager {
    * Validate and store a granule record.
    *
    * @param {Object} granuleRecord           - A granule record.
-   * @param {boolean} useCreatedAtComparison - boolean toggle restricting if updates.createdAt
-   *                                           should be compared to existing record to determine
+   * @param {boolean} writeConstraints       - boolean toggle restricting if constraints
+   *                                           should be used to determine
    *                                           write eligibility
    * @returns {Promise}
    */
-  async _validateAndStoreGranuleRecord(granuleRecord, useCreatedAtComparison) {
+  async _validateAndStoreGranuleRecord(granuleRecord, writeConstraints) {
     const clonedGranuleRecord = cloneDeep(granuleRecord);
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
@@ -410,7 +410,7 @@ class Granule extends Manager {
     );
     return this._storeGranuleRecord(
       clonedGranuleRecord,
-      useCreatedAtComparison
+      writeConstraints
     );
   }
 
@@ -418,18 +418,18 @@ class Granule extends Manager {
    * Stores a granule in dynamoDB
    *
    * @param {Object} granuleRecord           - dynamoDB granule
-   * @param {boolean} useCreatedAtComparison - boolean toggle restricting if updates.createdAt
-   *                                           should be compared to existing record to determine
+   * @param {boolean} writeConstraints       - boolean toggle restricting if constraints
+   *                                           should be used to determine
    *                                           write eligibility
    * @returns {Object} dynamodbDocClient update responses
    */
-  async storeGranule(granuleRecord, useCreatedAtComparison = false) {
+  async storeGranule(granuleRecord, writeConstraints = true) {
     logger.info(
       `About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`
     );
     const response = await this._validateAndStoreGranuleRecord(
       granuleRecord,
-      useCreatedAtComparison
+      writeConstraints
     );
     if (response) {
       logger.info(
