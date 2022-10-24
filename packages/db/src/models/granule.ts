@@ -125,7 +125,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionPgModel?: ExecutionPgModel;
     writeConstraints: boolean;
   }) {
-    if (granule.status === 'running' || granule.status === 'queued') {
+    if (writeConstraints && (granule.status === 'running' || granule.status === 'queued')) {
       const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
         .onConflict(['granule_id', 'collection_cumulus_id'])
@@ -137,34 +137,32 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         });
 
       // If upsert called with optional write constraints
-      if (writeConstraints) {
-        if (!granule.created_at) {
-          throw new Error(
-            `Granule upsert called with write constraints but no updatedAt set: ${JSON.stringify(granule)}`
-          );
-        }
-        upsertQuery.where(
-          knexOrTrx.raw(
-            `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`
-          )
+      if (!granule.created_at) {
+        throw new Error(
+          `Granule upsert called with write constraints but no updatedAt set: ${JSON.stringify(granule)}`
         );
+      }
+      upsertQuery.where(
+        knexOrTrx.raw(
+          `${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(granule.created_at)})`
+        )
+      );
 
-        // In reality, the only place where executionCumulusId should be
-        // undefined is from the data migrations OR a queued granule from reingest
-        // OR a patch API request
-        if (executionCumulusId) {
-          const exclusionClause = this._buildExclusionClause(
-            executionPgModel,
-            executionCumulusId,
-            knexOrTrx,
-            granule.status
-          );
-          // Only do the upsert if there is no execution that matches the exclusionClause
-          // For running granules, this means the execution does not exist in a state other
-          // than 'running'.  For queued granules, this means that the execution does not
-          // exist at all
-          upsertQuery.whereNotExists(exclusionClause);
-        }
+      // In reality, the only place where executionCumulusId should be
+      // undefined is from the data migrations OR a queued granule from reingest
+      // OR a patch API request
+      if (executionCumulusId) {
+        const exclusionClause = this._buildExclusionClause(
+          executionPgModel,
+          executionCumulusId,
+          knexOrTrx,
+          granule.status
+        );
+        // Only do the upsert if there is no execution that matches the exclusionClause
+        // For running granules, this means the execution does not exist in a state other
+        // than 'running'.  For queued granules, this means that the execution does not
+        // exist at all
+        upsertQuery.whereNotExists(exclusionClause);
       }
       upsertQuery.returning('*');
       return await upsertQuery;
@@ -178,7 +176,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     if (writeConstraints) {
       if (!granule.created_at) {
         throw new Error(
-          `Granule upsert called with write constraints but no updatedAt set: ${JSON.stringify(granule)}`
+          `Granule upsert called with write constraints but no created_at set: ${JSON.stringify(granule)}`
         );
       }
       upsertQuery.where(
