@@ -940,7 +940,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
   });
 
   // Files were removed from all datastores
-  t.is(apiGranule.files, []);
+  t.deepEqual(apiGranule.files, []);
   t.deepEqual(dynamoGranule.files, []);
   t.deepEqual(esGranule.files, []);
 });
