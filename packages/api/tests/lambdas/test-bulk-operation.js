@@ -809,8 +809,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
     });
-
-    callArgs[0].granule.files = [];
+    
     t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
