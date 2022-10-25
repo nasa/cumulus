@@ -39,7 +39,7 @@ test.beforeEach((t) => {
   t.context.workflowStatus = 'completed';
 });
 
-test('_storeGranuleRecord() can be used to create a new running granule when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() can be used to create a new running granule when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -53,7 +53,7 @@ test('_storeGranuleRecord() can be used to create a new running granule when wri
   t.is(fetchedItem.status, 'running');
 });
 
-test('_storeGranuleRecord() can be used to create a new running granule when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() can be used to create a new running granule when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -67,7 +67,7 @@ test('_storeGranuleRecord() can be used to create a new running granule when wri
   t.is(fetchedItem.status, 'running');
 });
 
-test('_storeGranuleRecord() can be used to create a new completed granule when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() can be used to create a new completed granule when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -79,7 +79,7 @@ test('_storeGranuleRecord() can be used to create a new completed granule when w
   t.is(fetchedItem.status, 'completed');
 });
 
-test('_storeGranuleRecord() can be used to create a new completed granule when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() can be used to create a new completed granule when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -91,7 +91,7 @@ test('_storeGranuleRecord() can be used to create a new completed granule when w
   t.is(fetchedItem.status, 'completed');
 });
 
-test('_storeGranuleRecord() can be used to create a new failed granule when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() can be used to create a new failed granule when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -104,7 +104,7 @@ test('_storeGranuleRecord() can be used to create a new failed granule when writ
   t.deepEqual(fetchedItem, granule);
 });
 
-test('_storeGranuleRecord() can be used to create a new failed granule when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() can be used to create a new failed granule when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -117,7 +117,7 @@ test('_storeGranuleRecord() can be used to create a new failed granule when writ
   t.deepEqual(fetchedItem, granule);
 });
 
-test('_storeGranuleRecord() can be used to create a new queued granule when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() can be used to create a new queued granule when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -132,7 +132,7 @@ test('_storeGranuleRecord() can be used to create a new queued granule when writ
   t.deepEqual(fetchedItem, granule);
 });
 
-test('_storeGranuleRecord() can be used to create a new queued granule when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() can be used to create a new queued granule when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({
@@ -147,7 +147,7 @@ test('_storeGranuleRecord() can be used to create a new queued granule when writ
   t.deepEqual(fetchedItem, granule);
 });
 
-test('_storeGranuleRecord() can be used to update a completed granule when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() can be used to update a completed granule when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -166,7 +166,7 @@ test('_storeGranuleRecord() can be used to update a completed granule when write
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() can be used to update a completed granule when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() can be used to update a completed granule when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -185,7 +185,7 @@ test('_storeGranuleRecord() can be used to update a completed granule when write
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() can be used to update a failed granule when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() can be used to update a failed granule when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -207,7 +207,7 @@ test('_storeGranuleRecord() can be used to update a failed granule when write co
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() can be used to update a failed granule  when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() can be used to update a failed granule  when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -229,7 +229,7 @@ test('_storeGranuleRecord() can be used to update a failed granule  when write c
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() will allow a completed status to replace a running status for same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will allow a completed status to replace a running status for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -248,7 +248,7 @@ test('_storeGranuleRecord() will allow a completed status to replace a running s
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() will allow a completed status to replace a running status for same execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a completed status to replace a running status for same execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -267,7 +267,7 @@ test('_storeGranuleRecord() will allow a completed status to replace a running s
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() will allow a failed status to replace a running status for same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will allow a failed status to replace a running status for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -286,7 +286,7 @@ test('_storeGranuleRecord() will allow a failed status to replace a running stat
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() will allow a failed status to replace a running status for same execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a failed status to replace a running status for same execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -305,7 +305,7 @@ test('_storeGranuleRecord() will allow a failed status to replace a running stat
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() will not allow a running status to replace a completed status for same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will not allow a running status to replace a completed status for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -324,7 +324,7 @@ test('_storeGranuleRecord() will not allow a running status to replace a complet
   t.deepEqual(fetchedItem, granule);
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a completed status for same execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a completed status for same execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -343,7 +343,7 @@ test('_storeGranuleRecord() will allow a running status to replace a completed s
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() will not allow a running status to replace a failed status for same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will not allow a running status to replace a failed status for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -362,7 +362,7 @@ test('_storeGranuleRecord() will not allow a running status to replace a failed 
   t.deepEqual(fetchedItem, granule);
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a failed status for same execution  when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a failed status for same execution  when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -381,7 +381,7 @@ test('_storeGranuleRecord() will allow a running status to replace a failed stat
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a completed status for a new execution when write constraints is set to true ', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a completed status for a new execution when writeConstraints is set to true ', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -411,7 +411,7 @@ test('_storeGranuleRecord() will allow a running status to replace a completed s
   );
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a completed status for a new execution when write constraints is set to false ', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a completed status for a new execution when writeConstraints is set to false ', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -441,7 +441,7 @@ test('_storeGranuleRecord() will allow a running status to replace a completed s
   );
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a failed status for a new execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a failed status for a new execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -471,7 +471,7 @@ test('_storeGranuleRecord() will allow a running status to replace a failed stat
   );
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a failed status for a new execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a failed status for a new execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
@@ -501,7 +501,7 @@ test('_storeGranuleRecord() will allow a running status to replace a failed stat
   );
 });
 
-test('_storeGranuleRecord() will allow a completed status to replace a queued status for a new execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will allow a completed status to replace a queued status for a new execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
@@ -531,7 +531,7 @@ test('_storeGranuleRecord() will allow a completed status to replace a queued st
   );
 });
 
-test('_storeGranuleRecord() will allow a completed status to replace a queued status for a new execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a completed status to replace a queued status for a new execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
@@ -591,7 +591,7 @@ test('_storeGranuleRecord() will allow a running status to replace a queued stat
   );
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a queued status for a new execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a queued status for a new execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
@@ -621,7 +621,7 @@ test('_storeGranuleRecord() will allow a running status to replace a queued stat
   );
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a queued status for the same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a queued status for the same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
@@ -649,7 +649,7 @@ test('_storeGranuleRecord() will allow a running status to replace a queued stat
   );
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a queued status for the same execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a queued status for the same execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
@@ -677,7 +677,7 @@ test('_storeGranuleRecord() will allow a running status to replace a queued stat
   );
 });
 
-test('_storeGranuleRecord() will allow a queued status to replace a running status for a new execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will allow a queued status to replace a running status for a new execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -707,7 +707,7 @@ test('_storeGranuleRecord() will allow a queued status to replace a running stat
   );
 });
 
-test('_storeGranuleRecord() will allow a queued status to replace a running status for a new execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a queued status to replace a running status for a new execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -737,7 +737,7 @@ test('_storeGranuleRecord() will allow a queued status to replace a running stat
   );
 });
 
-test('_storeGranuleRecord() will not allow a queued status to replace running for same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will not allow a queued status to replace running for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -762,7 +762,7 @@ test('_storeGranuleRecord() will not allow a queued status to replace running fo
   );
 });
 
-test('_storeGranuleRecord() will allow a queued status to replace running for same execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a queued status to replace running for same execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'running' });
@@ -784,7 +784,7 @@ test('_storeGranuleRecord() will allow a queued status to replace running for sa
   );
 });
 
-test('_storeGranuleRecord() will not allow a queued status to replace completed/failed for same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will not allow a queued status to replace completed/failed for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'completed' });
@@ -809,7 +809,7 @@ test('_storeGranuleRecord() will not allow a queued status to replace completed/
   );
 });
 
-test('_storeGranuleRecord() will allow a queued status to replace completed/failed for same execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a queued status to replace completed/failed for same execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'completed' });
@@ -831,7 +831,7 @@ test('_storeGranuleRecord() will allow a queued status to replace completed/fail
   );
 });
 
-test('_storeGranuleRecord() will allow a completed status to replace queued for same execution when write constraints is set to true', async (t) => {
+test('_storeGranuleRecord() will allow a completed status to replace queued for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
@@ -856,7 +856,7 @@ test('_storeGranuleRecord() will allow a completed status to replace queued for 
   );
 });
 
-test('_storeGranuleRecord() will allow a completed status to replace queued for same execution when write constraints is set to false', async (t) => {
+test('_storeGranuleRecord() will allow a completed status to replace queued for same execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
@@ -881,7 +881,7 @@ test('_storeGranuleRecord() will allow a completed status to replace queued for 
   );
 });
 
-test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution when write constraints is set to true ', async (t) => {
+test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution when writeConstraints is set to true ', async (t) => {
   const { granuleModel } = t.context;
 
   const timeVal = Date.now();
@@ -909,7 +909,7 @@ test('_validateAndStoreGranuleRecord() will not allow a final status for an olde
   t.deepEqual(fetchedItem, originalGranule);
 });
 
-test('_validateAndStoreGranuleRecord() will allow a final status for an older execution to replace a running status for a newer execution when write constraints is set to false ', async (t) => {
+test('_validateAndStoreGranuleRecord() will allow a final status for an older execution to replace a running status for a newer execution when writeConstraints is set to false ', async (t) => {
   const { granuleModel } = t.context;
 
   const timeVal = Date.now();
@@ -937,7 +937,7 @@ test('_validateAndStoreGranuleRecord() will allow a final status for an older ex
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a final status for a newer execution when write constraints is set to true', async (t) => {
+test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a final status for a newer execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const timeVal = Date.now();
@@ -964,7 +964,7 @@ test('_validateAndStoreGranuleRecord() will not allow a final status for an olde
   t.deepEqual(fetchedItem, originalGranule);
 });
 
-test('_validateAndStoreGranuleRecord() will allow a final status for an older execution to replace a final status for a newer execution when write constraints is set to false', async (t) => {
+test('_validateAndStoreGranuleRecord() will allow a final status for an older execution to replace a final status for a newer execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const timeVal = Date.now();
@@ -1068,7 +1068,7 @@ test('_validateAndStoreGranuleRecord() will allow a running status for an newer 
   );
 });
 
-test('_validateAndStoreGranuleRecord() will allow a final status for a new execution to replace a final status for an older execution when write constraints is set to true', async (t) => {
+test('_validateAndStoreGranuleRecord() will allow a final status for a new execution to replace a final status for an older execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -1092,7 +1092,7 @@ test('_validateAndStoreGranuleRecord() will allow a final status for a new execu
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
-test('_validateAndStoreGranuleRecord() will allow a final status for a new execution to replace a final status for an older execution when write constraints is set to false', async (t) => {
+test('_validateAndStoreGranuleRecord() will allow a final status for a new execution to replace a final status for an older execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2();
@@ -1126,7 +1126,7 @@ test('_validateAndStoreGranuleRecord() throws validation error when an invalid g
   await t.throwsAsync(granuleModel._validateAndStoreGranuleRecord(granule));
 });
 
-test('_validateAndStoreGranuleRecord() does not update record if trying to update granule to failed -> running without a new execution when write constraints is set to true', async (t) => {
+test('_validateAndStoreGranuleRecord() does not update record if trying to update granule to failed -> running without a new execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'failed' });
