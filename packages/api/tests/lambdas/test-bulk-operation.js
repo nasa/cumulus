@@ -106,6 +106,7 @@ const setUpExistingDatabaseRecords = async (t) => {
     granuleModel.create(fakeGranuleFactoryV2({
       granuleId,
       collectionId: t.context.collectionId,
+      files: [],
     }))));
 
   const granulePgModel = new GranulePgModel();

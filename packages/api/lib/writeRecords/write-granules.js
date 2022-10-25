@@ -589,7 +589,7 @@ const _writeGranule = async ({
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
   // An empty array of files will remove existing file records but a missing
   // `files` key will not.
-  if (isStatusFinalState(status) && ('files' in apiGranuleRecord)) {
+  if (isStatusFinalState(status) && (apiGranuleRecord.files.length > 0)) {
     await _writeGranuleFiles({
       granuleCumulusId: pgGranule.cumulus_id,
       granule: apiGranuleRecord,
@@ -858,7 +858,7 @@ const writeGranulesFromMessage = async ({
       const files = granule.files ? await FileUtils.buildDatabaseFiles({
         s3: s3(),
         providerURL: buildURL(provider),
-        files: granule.files,
+        files: (granule.files.length > 0 ? granule.files : []),
       }) : [];
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
