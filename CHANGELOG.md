@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     creation if not specified
   - Update message granule write logic to set default publish value on record
     creation update.
+  - Update granule write logic to set published to default value of `false` if
+    `null` is explicitly set with intention to delete the value.
   - Removed dataType/version from api granule schema
 
 - **CUMULUS-2998**
