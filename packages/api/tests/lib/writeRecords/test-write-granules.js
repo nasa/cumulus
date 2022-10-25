@@ -2121,7 +2121,7 @@ test.serial('writeGranuleFromApi() when called on a granuleId that exists in the
   ));
   t.true(await esGranulesClient.exists(granuleId));
 
-  const originalpgGranule = await granulePgModel.get(
+  const originalPgGranule = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
@@ -2135,17 +2135,12 @@ test.serial('writeGranuleFromApi() when called on a granuleId that exists in the
   };
 
   const {
-    updatedPgGranuleFields,
     pgGranule,
     esGranule,
     dynamoGranule,
   } = await updateGranule(t, updateGranulePayload);
 
-  // Postgres granule matches expected updatedGranule
-  t.deepEqual(
-    omit(removeNilProperties(pgGranule), apiOmitList),
-    omit(removeNilProperties({ ...originalpgGranule, ...updatedPgGranuleFields }), apiOmitList)
-  );
+  t.is(pgGranule.published, originalPgGranule.published);
 
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
