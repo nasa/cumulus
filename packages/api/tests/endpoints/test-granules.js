@@ -61,7 +61,7 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { removeNilProperties } =  require('@cumulus/common/util');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
@@ -1979,7 +1979,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
   );
 });
 
-test.only('PUT creates a granule if one does not already exist in all data stores', async (t) => {
+test.serial('PUT creates a granule if one does not already exist in all data stores', async (t) => {
   const {
     knex,
   } = t.context;
@@ -2032,16 +2032,16 @@ test.only('PUT creates a granule if one does not already exist in all data store
 
   t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
 
-  const updatedEsRecord = await t.context.esGranulesClient.get(
+  const esRecord = await t.context.esGranulesClient.get(
     fakeGranule.granuleId
   );
   t.deepEqual(
-    updatedEsRecord,
+    esRecord,
     {
       ...fakeGranule,
       error: {},
       timestamp: actualGranule.timestamp,
-      _id: updatedEsRecord._id,
+      _id: esRecord._id,
     }
   );
 });
