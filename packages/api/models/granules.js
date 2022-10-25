@@ -344,7 +344,7 @@ class Granule extends Manager {
         // Because both API write and message write chains use the granule model to store records,in
         // cases where createdAt does not exist on the granule, we assume overwrite protections are
         // undesired behavior via business logic on the message write logic
-        updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)'; // TODO test this logic change
+        updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
       }
 
       // Only allow "running" granule to replace completed/failed
