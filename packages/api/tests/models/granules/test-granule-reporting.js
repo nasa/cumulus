@@ -441,7 +441,6 @@ test('_storeGranuleRecord() will allow a running status to replace a completed s
   );
 });
 
-
 test('_storeGranuleRecord() will allow a running status to replace a failed status for a new execution when write constraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
