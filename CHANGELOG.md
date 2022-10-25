@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-3070/3074**
+  - Updated granule PUT/POST endpoints to no longer respect message write
+    constraints.  Functionally this means that:
+    - Granules with older createdAt values will replace newer ones, instead of
+        ignoring the write request
+    - Granules that attempt to set a non-complete state (e.g. 'queued' and
+        'running') will now ignore execution state/state change and always write
+    - Granules being set to non-complete state will update all values passed in,
+      instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
+      'status', 'execution']`
+
 ### Added
 
 - **CUMULUS-3070**
@@ -13,7 +26,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     validation
   - Update API granule write logic to not set default publish value on record
     updates to avoid overwrite (PATCH behavior)
-  - Update API granule write logic to  publish to false on record
+  - Update API granule write logic to publish to false on record
     creation if not specified
   - Update message granule write logic to set default publish value on record
     creation update.
@@ -31,21 +44,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
     allowed properties include:
-      - add_missing_file_checksums_task_memory_size
-      - discover_granules_task_memory_size
-      - discover_pdrs_task_memory_size
-      - hyrax_metadata_updates_task_memory_size
-      - lzards_backup_task_memory_size
-      - move_granules_task_memory_size
-      - parse_pdr_task_memory_size
-      - pdr_status_check_task_memory_size
-      - post_to_cmr_task_memory_size
-      - queue_granules_task_memory_size
-      - queue_pdrs_task_memory_size
-      - queue_workflow_task_memory_size
-      - sync_granule_task_memory_size
-      - update_cmr_access_constraints_task_memory_size
-      - update_granules_cmr_task_memory_size
+    - add_missing_file_checksums_task_memory_size
+    - discover_granules_task_memory_size
+    - discover_pdrs_task_memory_size
+    - hyrax_metadata_updates_task_memory_size
+    - lzards_backup_task_memory_size
+    - move_granules_task_memory_size
+    - parse_pdr_task_memory_size
+    - pdr_status_check_task_memory_size
+    - post_to_cmr_task_memory_size
+    - queue_granules_task_memory_size
+    - queue_pdrs_task_memory_size
+    - queue_workflow_task_memory_size
+    - sync_granule_task_memory_size
+    - update_cmr_access_constraints_task_memory_size
+    - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
 
 - **CUMULUS-2631**
@@ -62,12 +75,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     overwritten if it already exists.
   - Refactored granule write logic to allow PATCH behavior on API granule update
     such that existing createdAt values will be retained in case of overwrite
-    across all granule writes.
+    across all API granule writes.
   - Updated granule write code to validate written createdAt is synced between
-    datastores in the write logic instead of the endpoint/message logic.
-  - Updated out-of-order write logic in all datastores to assume granules being written without
-    createdAt set are intended to patch/update the existing granule and are not
-    subject to timing rules.
+    datastores in cases where granule.createdAt is not provided for a new granule.
 
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
 - **CUMULUS-3024**
