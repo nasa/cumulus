@@ -2046,7 +2046,7 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
   );
 });
 
-test.serial('PUT sets correct default value for published on new granule creation', async (t) => {
+test.serial('PUT sets a default value of false for `published` if one is not set', async (t) => {
   const {
     knex,
   } = t.context;
