@@ -6,7 +6,6 @@ const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
 const omit = require('lodash/omit');
-const omitBy = require('lodash/omitBy');
 
 const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
@@ -62,6 +61,8 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { removeNilProperties } =  require('@cumulus/common/util');
+
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -1978,7 +1979,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
   );
 });
 
-test.serial('PUT creates a granule if one does not already exist in all data stores', async (t) => {
+test.only('PUT creates a granule if one does not already exist in all data stores', async (t) => {
   const {
     knex,
   } = t.context;
@@ -2020,7 +2021,7 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
   });
 
   t.deepEqual(
-    omitBy(actualPgGranule, (x) => x === null),
+    removeNilProperties(actualPgGranule),
     {
       ...fakePgGranule,
       error: {},
