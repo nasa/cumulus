@@ -907,7 +907,6 @@ const writeGranulesFromMessage = async ({
       }
 
       const apiGranuleRecord = await generateGranuleApiRecord({
-        // TODO make sure this is tested
         granule: { ...granule, published, createdAt: granule.createdAt || workflowStartTime },
         executionUrl,
         collectionId,
