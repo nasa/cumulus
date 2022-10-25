@@ -133,7 +133,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           status: granule.status,
           timestamp: granule.timestamp,
           updated_at: granule.updated_at,
-          created_at: granule.created_at, //TODO test/check undefined
+          created_at: granule.created_at,
         });
 
       // If upsert called with optional write constraints
