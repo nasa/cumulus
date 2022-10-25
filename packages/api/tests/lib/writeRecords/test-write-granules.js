@@ -561,13 +561,19 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
 test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch/SNS if PostgreSQL write is enabled', async (t) => {
   const {
     cumulusMessage,
+    esGranulesClient,
+    granule,
     granuleModel,
+    granulePgModel,
     knex,
     collectionCumulusId,
     executionCumulusId,
     providerCumulusId,
     granuleId,
   } = t.context;
+
+  // Message must be completed or files will not update
+  cumulusMessage.meta.status = 'completed';
 
   await writeGranulesFromMessage({
     cumulusMessage,
@@ -577,12 +583,34 @@ test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/Postgr
     granuleModel,
   });
 
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await t.context.granulePgModel.exists(
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  ));
-  t.true(await t.context.esGranulesClient.exists(granuleId));
+  );
+  const esRecord = await esGranulesClient.get(granuleId);
+  const expectedGranule = {
+    ...granule,
+    createdAt: dynamoRecord.createdAt,
+    duration: dynamoRecord.duration,
+    error: {},
+    productVolume: dynamoRecord.productVolume,
+    status: cumulusMessage.meta.status,
+    timestamp: dynamoRecord.timestamp,
+    updatedAt: dynamoRecord.updatedAt,
+  };
+  t.like(dynamoRecord, expectedGranule);
+  t.like(esRecord, expectedGranule);
+
+  const postgresActual = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: postgresRecord,
+  });
+
+  t.like(
+    { ...postgresActual, files: orderBy(postgresActual.files, ['bucket', 'key']) },
+    { ...expectedGranule, files: orderBy(expectedGranule.files, ['bucket', 'key']) }
+  );
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
