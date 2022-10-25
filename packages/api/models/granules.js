@@ -306,11 +306,14 @@ class Granule extends Manager {
   /**
    * Get the set of fields which are mutable based on the granule status.
    *
-   * @param {Object} record - A granule record
+   * @param {Object} record                  - A granule record
+   * @param {boolean} writeConstraints       - boolean toggle restricting if write conditionals
+   *                                           should be compared to existing record to determine
+   *                                           write eligibility
    * @returns {Array} - The array of mutable field names
    */
-  _getMutableFieldNames(record) {
-    if (record.status === 'running') {
+  _getMutableFieldNames(record, writeConstraints = true) {
+    if (record.status === 'running' && writeConstraints === true) {
       return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
@@ -326,7 +329,7 @@ class Granule extends Manager {
    * @returns {Promise<Object|undefined>}
    */
   async _storeGranuleRecord(granuleRecord, writeConstraints = true) {
-    const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
+    const mutableFieldNames = this._getMutableFieldNames(granuleRecord, writeConstraints);
     const updateParams = this._buildDocClientUpdateParams({
       item: granuleRecord,
       itemKey: { granuleId: granuleRecord.granuleId },

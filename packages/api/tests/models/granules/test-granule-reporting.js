@@ -991,6 +991,83 @@ test('_validateAndStoreGranuleRecord() will allow a final status for an older ex
   t.deepEqual(fetchedItem, updatedGranule);
 });
 
+test('_validateAndStoreGranuleRecord() will allow a running status for an newer execution to update only expected fields if write constraints is set to true', async (t) => {
+  const { granuleModel } = t.context;
+
+  const timeVal = Date.now();
+
+  const granule = fakeGranuleFactoryV2();
+
+  const originalGranule = {
+    ...granule,
+    createdAt: timeVal + 1000000,
+    status: 'completed',
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(originalGranule);
+
+  const updatedGranule = {
+    ...granule,
+    createdAt: originalGranule.createdAt + 1,
+    updatedAt: 1,
+    timestamp: 1,
+    status: 'running',
+    cmrLink: 'updatedLink',
+    execution: 'newExecution',
+    duration: 100,
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule, true);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+  t.deepEqual(
+    fetchedItem,
+    {
+      ...granule,
+      createdAt: updatedGranule.createdAt,
+      updatedAt: updatedGranule.updatedAt,
+      timestamp: updatedGranule.timestamp,
+      status: 'running',
+      execution: updatedGranule.execution,
+    }
+  );
+});
+
+test('_validateAndStoreGranuleRecord() will allow a running status for an newer execution to update all fields if write constraints is set to false', async (t) => {
+  const { granuleModel } = t.context;
+
+  const timeVal = Date.now();
+
+  const granule = fakeGranuleFactoryV2();
+
+  const originalGranule = {
+    ...granule,
+    createdAt: timeVal + 1000000,
+    status: 'completed',
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(originalGranule);
+
+  const updatedGranule = {
+    ...granule,
+    createdAt: originalGranule.createdAt + 1,
+    updatedAt: 1,
+    timestamp: 1,
+    status: 'running',
+    cmrLink: 'updatedLink',
+    execution: 'newExecution',
+    duration: 100,
+  };
+
+  await granuleModel._validateAndStoreGranuleRecord(updatedGranule, false);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+  t.deepEqual(
+    fetchedItem,
+    updatedGranule
+  );
+});
+
 test('_validateAndStoreGranuleRecord() will allow a final status for a new execution to replace a final status for an older execution when write constraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 

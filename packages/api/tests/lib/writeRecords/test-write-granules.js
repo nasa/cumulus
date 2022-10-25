@@ -1,5 +1,6 @@
 'use strict';
 
+const orderBy = require('lodash/orderBy');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
@@ -1957,12 +1958,38 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL, DynamoDB, and
 
   t.is(result, `Wrote Granule ${granuleId}`);
 
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await granulePgModel.exists(
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
     knex,
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
-  ));
-  t.true(await esGranulesClient.exists(granuleId));
+  );
+  const esRecord = await esGranulesClient.get(granuleId);
+
+  t.like(
+    dynamoRecord,
+    {
+      ...granule,
+      createdAt: dynamoRecord.createdAt,
+      timestamp: dynamoRecord.timestamp,
+      error: {},
+    }
+  );
+  t.like(esRecord, {
+    ...granule,
+    createdAt: dynamoRecord.createdAt,
+    timestamp: dynamoRecord.timestamp,
+    error: {},
+  });
+
+  const postgresActual = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: postgresRecord,
+  });
+
+  t.like(
+    { ...postgresActual, files: orderBy(postgresActual.files, ['bucket', 'key']) },
+    { ...granule, files: orderBy(granule.files, ['bucket', 'key']) }
+  );
 });
 
 test.serial('writeGranuleFromApi() given a payload with undefined files, keeps existing files in all datastores', async (t) => {
@@ -2406,6 +2433,140 @@ test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and
   t.is(postgresRecord.created_at.getTime(), esRecord.createdAt);
   t.is(postgresRecord.updated_at.getTime(), esRecord.updatedAt);
   t.is(postgresRecord.timestamp.getTime(), esRecord.timestamp);
+});
+
+test.serial('writeGranuleFromApi() saves updated values for running granule record to Dynamo, Postgres and ElasticSearch on rewrite', async (t) => {
+  const {
+    esClient,
+    esGranulesClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex, esClient, 'Create');
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  const createdAt = Date.now() - 24 * 60 * 60 * 1000;
+  const updatedAt = Date.now() - 100000;
+  const timestamp = Date.now();
+  const updatedDuration = 100;
+  const updatedCmrLink = 'updatedLink';
+  const result = await writeGranuleFromApi(
+    {
+      ...granule,
+      createdAt,
+      updatedAt,
+      timestamp,
+      cmrLink: updatedCmrLink,
+      duration: updatedDuration,
+      status: 'running',
+    },
+    knex,
+    esClient,
+    'Create'
+  );
+
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.truthy(dynamoRecord.timestamp);
+  t.is(postgresRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(postgresRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+  t.is(postgresRecord.timestamp.getTime(), dynamoRecord.timestamp);
+
+  t.is(postgresRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(postgresRecord.updated_at.getTime(), esRecord.updatedAt);
+  t.is(postgresRecord.timestamp.getTime(), esRecord.timestamp);
+
+  t.is(postgresRecord.duration, updatedDuration);
+  t.is(dynamoRecord.duration, updatedDuration);
+  t.is(esRecord.duration, updatedDuration);
+
+  t.is(postgresRecord.cmr_link, updatedCmrLink);
+  t.is(dynamoRecord.cmrLink, updatedCmrLink);
+  t.is(esRecord.cmrLink, updatedCmrLink);
+});
+
+test.serial('writeGranuleFromApi() saves updated values for queued granule record to Dynamo, Postgres and ElasticSearch on rewrite', async (t) => {
+  const {
+    esClient,
+    esGranulesClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex, esClient, 'Create');
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  const createdAt = Date.now() - 24 * 60 * 60 * 1000;
+  const updatedAt = Date.now() - 100000;
+  const timestamp = Date.now();
+  const updatedDuration = 100;
+  const updatedCmrLink = 'updatedLink';
+  const result = await writeGranuleFromApi(
+    {
+      ...granule,
+      createdAt,
+      updatedAt,
+      timestamp,
+      cmrLink: updatedCmrLink,
+      duration: updatedDuration,
+      status: 'queued',
+    },
+    knex,
+    esClient,
+    'Create'
+  );
+
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.truthy(dynamoRecord.timestamp);
+  t.is(postgresRecord.created_at.getTime(), dynamoRecord.createdAt);
+  t.is(postgresRecord.updated_at.getTime(), dynamoRecord.updatedAt);
+  t.is(postgresRecord.timestamp.getTime(), dynamoRecord.timestamp);
+
+  t.is(postgresRecord.created_at.getTime(), esRecord.createdAt);
+  t.is(postgresRecord.updated_at.getTime(), esRecord.updatedAt);
+  t.is(postgresRecord.timestamp.getTime(), esRecord.timestamp);
+
+  t.is(postgresRecord.duration, updatedDuration);
+  t.is(dynamoRecord.duration, updatedDuration);
+  t.is(esRecord.duration, updatedDuration);
+
+  t.is(postgresRecord.cmr_link, updatedCmrLink);
+  t.is(dynamoRecord.cmrLink, updatedCmrLink);
+  t.is(esRecord.cmrLink, updatedCmrLink);
 });
 
 test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same default time values for a new granule', async (t) => {

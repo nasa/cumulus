@@ -2249,6 +2249,69 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
   t.is(actualPgGranule.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
+test.serial('PUT replaces an existing granule in all datastores with a granule that violates message-path write constraints, ignoring message write constraints and field selection', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newPgGranule,
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'completed',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      execution: executionUrl,
+    },
+  });
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    updatedAt: 1,
+    createdAt: 1,
+    duration: 100,
+    cmrLink: 'updatedLink',
+    status: 'running',
+  };
+
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+
+  t.is(actualGranule.updatedAt, updatedGranule.updatedAt);
+  t.is(actualGranule.createdAt, updatedGranule.createdAt);
+  // PG and Dynamo records have the same timestamps
+  t.is(actualPgGranule.created_at.getTime(), actualGranule.createdAt);
+  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
+  t.is(actualPgGranule.created_at.getTime(), updatedEsRecord.createdAt);
+  t.is(actualPgGranule.updated_at.getTime(), updatedEsRecord.updatedAt);
+
+  t.is(actualGranule.cmrLink, updatedGranule.cmrLink);
+  t.is(actualPgGranule.cmr_link, updatedGranule.cmrLink);
+  t.is(updatedEsRecord.cmrLink, updatedGranule.cmrLink);
+
+  t.is(actualGranule.duration, updatedGranule.duration);
+  t.is(actualPgGranule.duration, updatedGranule.duration);
+  t.is(updatedEsRecord.duration, updatedGranule.duration);
+});
+
 test.serial('PUT publishes an SNS message after a successful granule update', async (t) => {
   const {
     collectionCumulusId,

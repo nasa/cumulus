@@ -1,6 +1,5 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const { truncate } = require('fs');
 
 const {
   CollectionPgModel,
@@ -252,6 +251,132 @@ test('GranulePgModel.upsert() creates a new running granule if writeConstraints 
   t.like(
     await granulePgModel.get(knex, granule),
     granule
+  );
+});
+
+test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if update is to status running, and writeConstraints is set to true and write conditions are met', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule,
+    executionCumulusId,
+  });
+
+  const [newExecution] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+  const newExecutionCumulusId = newExecution.cumulus_id;
+
+  const updatedGranule = {
+    ...fakeGranuleRecordFactory({
+      status: 'running',
+      collection_cumulus_id: collectionCumulusId,
+      granule_id: granule.granule_id,
+      published: true,
+      duration: 100,
+      time_to_archive: 100,
+      time_to_process: 100,
+      product_volume: 100,
+      error: {},
+      cmr_link: 'testvalue',
+      query_fields: {},
+    }),
+    timestamp: new Date(Date.now() + 1000),
+    updated_at: new Date(Date.now() + 1000),
+    created_at: new Date(Date.now() + 1000),
+  };
+
+  await granulePgModel.upsert({
+    knexOrTrx: knex,
+    granule: updatedGranule,
+    executionCumulusId: newExecutionCumulusId,
+    writeConstraints: true,
+  });
+
+  t.like(
+    await granulePgModel.get(knex, {
+      granule_id: granule.granule_id,
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    {
+      ...granule,
+      timestamp: updatedGranule.timestamp,
+      updated_at: updatedGranule.updated_at,
+      created_at: updatedGranule.created_at,
+      status: 'running',
+    }
+  );
+});
+
+test('GranulePgModel.upsert() overwrites all fields of a granule if update is to status running, and writeConstraints is set to false', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule,
+    executionCumulusId,
+  });
+
+  const [newExecution] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+  const newExecutionCumulusId = newExecution.cumulus_id;
+
+  const updatedGranule = {
+    ...fakeGranuleRecordFactory({
+      status: 'running',
+      collection_cumulus_id: collectionCumulusId,
+      granule_id: granule.granule_id,
+      published: true,
+      duration: 100,
+      time_to_archive: 100,
+      time_to_process: 100,
+      product_volume: '100',
+      error: {},
+      cmr_link: 'testvalue',
+      query_fields: {},
+    }),
+    timestamp: new Date(Date.now() + 1000),
+    updated_at: new Date(Date.now() + 1000),
+    created_at: new Date(Date.now() + 1000),
+  };
+
+  await granulePgModel.upsert({
+    knexOrTrx: knex,
+    granule: updatedGranule,
+    executionCumulusId: newExecutionCumulusId,
+    writeConstraints: false,
+  });
+
+  t.like(
+    await granulePgModel.get(knex, {
+      granule_id: granule.granule_id,
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    updatedGranule
   );
 });
 
