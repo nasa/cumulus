@@ -724,8 +724,13 @@ const writeGranuleFromApi = async (
   snsEventType
 ) => {
   try {
-    const granule = { granuleId, cmrLink, published, files };
-
+    // If published is set to null, set default value to false
+    // instead of allowing nullish value
+    let publishedValue = published;
+    if (published === null) {
+      publishedValue = false;
+    }
+    const granule = { granuleId, cmrLink, published: publishedValue, files };
     const processingTimeInfo = {
       processingStartDateTime,
       processingEndDateTime,

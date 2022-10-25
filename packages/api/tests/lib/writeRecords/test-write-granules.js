@@ -3016,6 +3016,42 @@ test.serial('updateGranuleStatusToFailed() throws error if record does not exist
   );
 });
 
+test.serial('writeGranuleFromApi() saves granule record with publish set to null with publish value set to false to all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi({ ...granule, published: true }, knex, esClient, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const originalPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  t.true(originalPostgresRecord.published);
+
+  const updateResult = await writeGranuleFromApi({ ...granule, published: null }, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.false(dynamoRecord.published);
+  t.false(postgresRecord.published);
+  t.false(esRecord.published);
+});
+
 test.serial('writeGranulesFromMessage() sets `published` to false if null value is set', async (t) => {
   const {
     collectionCumulusId,
