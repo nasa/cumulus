@@ -1,9 +1,10 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
-const isEmpty = require('lodash/isEmpty');
-const omit = require('lodash/omit');
 const isArray = require('lodash/isArray');
+const isEmpty = require('lodash/isEmpty');
+const isNil = require('lodash/isNil');
+const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -871,7 +872,7 @@ const writeGranulesFromMessage = async ({
       const timestamp = now;
 
       let published = granule.published;
-      if (published === undefined) {
+      if (isNil(published)) {
         published = false;
       }
 
