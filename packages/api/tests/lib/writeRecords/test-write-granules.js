@@ -720,6 +720,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
+    files: [],
   });
 
   esGranule.files.sort(
