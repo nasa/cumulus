@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+-**CUMULUS-3075**
+  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
+    undefined, now changed to an empty array. 
+  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
+  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
+
 - **CUMULUS-2998**
   - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
     - fake_processing_task_timeout and fake_processing_task_memory_size
@@ -46,12 +53,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
--**CUMULUS-3075**
-  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
-    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
-    undefined, now changed to an empty array. 
-  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
-  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports

@@ -106,7 +106,6 @@ const setUpExistingDatabaseRecords = async (t) => {
     granuleModel.create(fakeGranuleFactoryV2({
       granuleId,
       collectionId: t.context.collectionId,
-      files: [],
     }))));
 
   const granulePgModel = new GranulePgModel();
@@ -758,6 +757,8 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     t.true(t.context.executionArns.includes(callArgs[0].granule.execution));
     delete matchingGranule.execution;
     delete callArgs[0].granule.execution;
+    callArgs[0].granule.files = [];
+    matchingGranule.files = [];
     const omitList = ['dataType', 'version'];
 
     t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
@@ -810,7 +811,8 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
       granulePgRecord: pgGranule,
       knexOrTransaction: knex,
     });
-    
+
+    callArgs[0].granule.files = [];
     t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });

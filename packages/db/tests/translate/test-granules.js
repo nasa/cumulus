@@ -429,7 +429,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
   );
 });
 
-test('translatePostgresGranuleToApiGranule returns an empty array for its files property if there are no PostgreSQL files', async (t) => {
+test('translatePostgresGranuleToApiGranule has an empty array for its files property if there are no PostgreSQL files', async (t) => {
   const {
     knex,
     pdrPgModel,
