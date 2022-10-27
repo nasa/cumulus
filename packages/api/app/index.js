@@ -70,7 +70,8 @@ app.use(boom());
 app.use(morgan('combined'));
 app.use(cors());
 app.use(cookieParser());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Setting limit to 6 MB which is the AWS lambda limit https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
+app.use(bodyParser.urlencoded({ limit: '6mb', extended: true }));
 app.use(jsonBodyParser);
 app.use(hsts({ maxAge: 31536000 }));
 

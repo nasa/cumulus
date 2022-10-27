@@ -71,6 +71,28 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
 async function list(req, res) {
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
+  if (queryStringParameters.postgres) {
+    const {
+      granulePgModel = new GranulePgModel(),
+      knex = await getKnexClient(),
+    } = req.testContext || {};
+
+    // TODO Replicate ES behavior in PG
+    // ES response includes a meta object, which includes e.g. "count"
+    // ES supports searchContext
+    // etc.
+    const response = {};
+    const results = await granulePgModel.search(knex, {});
+
+    response.results = await Promise.all(results.map(
+      (granule) => translatePostgresGranuleToApiGranule({
+        knexOrTransaction: knex,
+        granulePgRecord: granule,
+      })
+    ));
+    return res.send(response);
+  }
+
   let es;
   if (queryStringParameters.searchContext) {
     es = new ESSearchAfter(

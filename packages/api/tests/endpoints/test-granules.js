@@ -403,6 +403,7 @@ test.serial('default returns list of granules', async (t) => {
     .expect(200);
 
   const { meta, results } = response.body;
+
   t.is(results.length, 2);
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
@@ -411,6 +412,51 @@ test.serial('default returns list of granules', async (t) => {
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
+});
+
+// Development only, do not merge
+// Test setup creates collections before EACH test so running these
+// in serial will have different results than running in isolation
+test.skip('default returns list of granules from postgres is queryparam is true', async (t) => {
+  const response = await request(app)
+    .get('/granules?postgres=true')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+
+  // TODO we will have 4 granules when this is run in serial because of the test
+  // setup. When run independently, it will be 2.
+  t.is(results.length, 2);
+
+  // TODO meta is missing from PG query
+  // t.is(meta.stack, process.env.stackName);
+  // t.is(meta.table, 'granule');
+  // t.is(meta.count, 2);
+
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
+  results.forEach((r) => {
+    t.true(granuleIds.includes(r.granuleId));
+  });
+});
+
+// Testing only, do not merge
+test.skip('ElasticSearch and Postgres LIST results are identical', async (t) => {
+  const elasticResponse = await request(app)
+    .get('/granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const pgResponse = await request(app)
+    .get('/granules?postgres=true')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  t.deepEqual(elasticResponse.body, pgResponse.body);
 });
 
 test.serial('default paginates correctly with search_after', async (t) => {
