@@ -383,7 +383,7 @@ test.serial('migrateFileRecord correctly migrates file record with filename inst
   });
   testGranule.files = [testFile];
 
-  const granule = await await translateApiGranuleToPostgresGranule({
+  const granule = await translateApiGranuleToPostgresGranule({
     dynamoRecord: testGranule,
     knexOrTransaction: knex,
   });
@@ -900,11 +900,343 @@ test.serial('migrateGranuleAndFilesViaTransaction processes granule with no file
   });
 });
 
-// FUTURE
-test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an undefined files key', async () => {});
+test.serial('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an undefined files key', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
 
-// FUTURE
-test.skip('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an empty array of files', async () => {});
+  // migrate 1st time
+  await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+  });
+
+  // change api (dynamo) granule to have files undefined
+  testGranule.files = undefined;
+
+  // migrate 2nd time
+  const result = await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+    migrateAndOverwrite: 'true',
+  });
+
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
+  const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
+  t.is(records.length, 1);
+  t.is(fileRecords.length, 0);
+
+  t.deepEqual(result, {
+    filesResult: {
+      total_dynamo_db_records: 0,
+      failed: 0,
+      skipped: 0,
+      migrated: 0,
+    },
+    granulesResult: {
+      total_dynamo_db_records: 1,
+      failed: 0,
+      skipped: 0,
+      migrated: 1,
+    },
+  });
+
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
+    // shouldn't need to delete file...
+  });
+});
+
+test.serial('migrateGranuleAndFilesViaTransaction removes previously migrated files if a granule is re-migrated with an empty array of files', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
+
+  // migrate 1st time
+  await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+  });
+
+  // change api (dynamo) granule to have empty array
+  testGranule.files = [];
+
+  // migrate 2nd time
+  const result = await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+    migrateAndOverwrite: 'true',
+  });
+
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
+  const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
+  t.is(records.length, 1);
+  t.is(fileRecords.length, 0);
+
+  t.deepEqual(result, {
+    filesResult: {
+      total_dynamo_db_records: 0,
+      failed: 0,
+      skipped: 0,
+      migrated: 0,
+    },
+    granulesResult: {
+      total_dynamo_db_records: 1,
+      failed: 0,
+      skipped: 0,
+      migrated: 1,
+    },
+  });
+
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
+    // shouldn't need to delete file...
+  });
+});
+
+test.serial('migrateGranuleAndFilesViaTransaction updates previously migrated files correctly if a granule is re-migrated with different files', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
+
+  const testFile1 = testGranule.files[0];
+  const fakeFile2 = fakeFileFactory({
+    bucket,
+    key: cryptoRandomString({ length: 10 }),
+    size: 1098034,
+    fileName: cryptoRandomString({ length: 20 }),
+    checksum: 'checkSum02',
+    checksumType: 'md5',
+    type: 'data',
+    source: 'source2',
+  });
+  testGranule.files.push(fakeFile2);
+
+  // migrate 1st time
+  const firstResult = await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+  });
+
+  t.deepEqual(firstResult, {
+    filesResult: {
+      total_dynamo_db_records: 2,
+      failed: 0,
+      skipped: 0,
+      migrated: 2,
+    },
+    granulesResult: {
+      total_dynamo_db_records: 1,
+      failed: 0,
+      skipped: 0,
+      migrated: 1,
+    },
+  });
+
+  const fakeFile3 = fakeFileFactory({
+    bucket,
+    key: cryptoRandomString({ length: 10 }),
+    size: 1234567,
+    filename: cryptoRandomString({ length: 20 }),
+    checksum: 'checkSum03',
+    checksumType: 'md5',
+    type: 'data',
+    source: 'source3',
+  });
+
+  const fakeFile4 = fakeFileFactory({
+    bucket,
+    key: cryptoRandomString({ length: 10 }),
+    size: 1987654,
+    filename: cryptoRandomString({ length: 20 }),
+    checksum: 'checkSum04',
+    checksumType: 'md5',
+    type: 'data',
+    source: 'source4',
+  });
+
+  // change api (dynamo) granule files
+  testGranule.files = [testFile1, fakeFile3, fakeFile4];
+
+  // migrate 2nd time
+  const secondResult = await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+    migrateAndOverwrite: 'true',
+  });
+
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
+  const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
+  t.is(records.length, 1);
+  t.is(fileRecords.length, 3);
+
+  t.deepEqual(secondResult, {
+    filesResult: {
+      total_dynamo_db_records: 3,
+      failed: 0,
+      skipped: 0,
+      migrated: 3,
+    },
+    granulesResult: {
+      total_dynamo_db_records: 1,
+      failed: 0,
+      skipped: 0,
+      migrated: 1,
+    },
+  });
+
+  t.deepEqual(
+    omit(fileRecords[0], fileOmitList),
+    {
+      bucket: testFile1.bucket,
+      checksum_value: testFile1.checksum,
+      checksum_type: testFile1.checksumType,
+      key: testFile1.key,
+      path: null,
+      file_size: testFile1.size.toString(),
+      file_name: testFile1.fileName,
+      source: testFile1.source,
+      type: testFile1.type,
+    }
+  );
+  t.deepEqual(
+    omit(fileRecords[1], fileOmitList),
+    {
+      bucket: fakeFile3.bucket,
+      checksum_value: fakeFile3.checksum,
+      checksum_type: fakeFile3.checksumType,
+      key: fakeFile3.key,
+      path: null,
+      file_size: fakeFile3.size.toString(),
+      file_name: fakeFile3.fileName,
+      source: fakeFile3.source,
+      type: fakeFile3.type,
+    }
+  );
+  t.deepEqual(
+    omit(fileRecords[2], fileOmitList),
+    {
+      bucket: fakeFile4.bucket,
+      checksum_value: fakeFile4.checksum,
+      checksum_type: fakeFile4.checksumType,
+      key: fakeFile4.key,
+      path: null,
+      file_size: fakeFile4.size.toString(),
+      file_name: fakeFile4.fileName,
+      source: fakeFile4.source,
+      type: fakeFile4.type,
+    }
+  );
+
+  t.teardown(async () => {
+    await t.context.granulePgModel.delete(t.context.knex, { cumulus_id: records[0].cumulus_id });
+    // shouldn't need to delete files???
+  });
+});
+
+test.only('migrateGranuleAndFilesViaTransaction updates previously migrated file records correctly if the files are modified and the granule is re-migrated', async (t) => {
+  const {
+    knex,
+    testGranule,
+  } = t.context;
+
+  const testFile1 = testGranule.files[0];
+  const fakeFile2 = fakeFileFactory({
+    bucket,
+    key: cryptoRandomString({ length: 10 }),
+    size: 1098034,
+    fileName: cryptoRandomString({ length: 20 }),
+    checksum: 'checkSum02',
+    checksumType: 'md5',
+    type: 'data',
+    source: 'source2',
+  });
+  testGranule.files.push(fakeFile2);
+
+  // migrate 1st time
+  await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+  });
+
+  delete testFile1.size;
+  delete testFile1.checksum;
+  delete testFile1.checksumType;
+  delete testFile1.source;
+  delete testFile1.type;
+
+  fakeFile2.key = 'new key 2';
+  fakeFile2.size = 98765;
+  fakeFile2.checksum = 'newCheckSum02';
+  fakeFile2.source = 'newSource2';
+  fakeFile2.fileName = 'newFileName02';
+
+  const result = await migrateGranuleAndFilesViaTransaction({
+    dynamoRecord: testGranule,
+    knex,
+    loggingInterval: 1,
+    migrateAndOverwrite: 'true',
+  });
+
+  const records = await t.context.granulePgModel.search(t.context.knex, {});
+  const fileRecords = await t.context.filePgModel.search(t.context.knex, {});
+  t.is(records.length, 1);
+  t.is(fileRecords.length, 2);
+
+  t.deepEqual(result, {
+    filesResult: {
+      total_dynamo_db_records: 2,
+      failed: 0,
+      skipped: 0,
+      migrated: 2,
+    },
+    granulesResult: {
+      total_dynamo_db_records: 1,
+      failed: 0,
+      skipped: 0,
+      migrated: 1,
+    },
+  });
+
+  t.deepEqual(
+    omit(fileRecords[0], fileOmitList),
+    {
+      bucket: testFile1.bucket,
+      checksum_value: null,
+      checksum_type: null,
+      key: testFile1.key,
+      path: null,
+      file_size: null,
+      file_name: testFile1.fileName,
+      source: null,
+      type: null,
+    }
+  );
+  t.deepEqual(
+    omit(fileRecords[1], fileOmitList),
+    {
+      bucket: fakeFile2.bucket,
+      checksum_value: 'newCheckSum02',
+      checksum_type: fakeFile2.checksumType,
+      key: 'new key 2',
+      path: null,
+      file_size: fakeFile2.size.toString(),
+      file_name: 'newFileName02',
+      source: fakeFile2.source,
+      type: fakeFile2.type,
+    }
+  );
+});
 
 test.serial('queryAndMigrateGranuleDynamoRecords only processes records for specified collection', async (t) => {
   const {

@@ -40,6 +40,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3077**
+  - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
@@ -360,7 +362,7 @@ releases.
 
 ## [v12.0.3] 2022-10-03 [BACKPORT]
 
-**Please note** changes in 11.1.7 may not yet be released in future versions, as
+**Please note** changes in 12.0.3 may not yet be released in future versions, as
 this is a backport and patch release on the 12.0.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
