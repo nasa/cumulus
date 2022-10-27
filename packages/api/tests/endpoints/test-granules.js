@@ -6,7 +6,6 @@ const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
 const omit = require('lodash/omit');
-const omitBy = require('lodash/omitBy');
 
 const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
@@ -62,6 +61,8 @@ const indexer = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const launchpad = require('@cumulus/launchpad-auth');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
+const { removeNilProperties } = require('@cumulus/common/util');
+
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -2131,7 +2132,7 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
   });
 
   t.deepEqual(
-    omitBy(actualPgGranule, (x) => x === null),
+    removeNilProperties(actualPgGranule),
     {
       ...fakePgGranule,
       error: {},
@@ -2142,21 +2143,21 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
 
   t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
 
-  const updatedEsRecord = await t.context.esGranulesClient.get(
+  const esRecord = await t.context.esGranulesClient.get(
     fakeGranule.granuleId
   );
   t.deepEqual(
-    updatedEsRecord,
+    esRecord,
     {
       ...fakeGranule,
       error: {},
       timestamp: actualGranule.timestamp,
-      _id: updatedEsRecord._id,
+      _id: esRecord._id,
     }
   );
 });
 
-test.serial('PUT sets correct default value for published on new granule creation', async (t) => {
+test.serial('PUT sets a default value of false for `published` if one is not set', async (t) => {
   const {
     knex,
   } = t.context;

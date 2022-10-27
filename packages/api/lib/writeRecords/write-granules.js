@@ -1,9 +1,10 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
-const isEmpty = require('lodash/isEmpty');
-const omit = require('lodash/omit');
 const isArray = require('lodash/isArray');
+const isEmpty = require('lodash/isEmpty');
+const isNil = require('lodash/isNil');
+const omit = require('lodash/omit');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -738,8 +739,13 @@ const writeGranuleFromApi = async (
   snsEventType
 ) => {
   try {
-    const granule = { granuleId, cmrLink, published, files, createdAt };
-
+    // If published is set to null, set default value to false
+    // instead of allowing nullish value
+    let publishedValue = published;
+    if (published === null) {
+      publishedValue = false;
+    }
+    const granule = { granuleId, cmrLink, published: publishedValue, files, createdAt };
     const processingTimeInfo = {
       processingStartDateTime,
       processingEndDateTime,
@@ -902,7 +908,7 @@ const writeGranulesFromMessage = async ({
       const timestamp = now;
 
       let published = granule.published;
-      if (published === undefined) {
+      if (isNil(published)) {
         published = false;
       }
 
