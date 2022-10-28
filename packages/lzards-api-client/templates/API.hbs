@@ -6,18 +6,30 @@ The Level Zero and Repositories Data Store (LZARDS) is the "backup of last resor
 cloud-native missions and datasets, should the AWS-hosted data become inaccessible for any reason, 
 including government policy, breach of contract, financial outage, or catastrophic vendor failure.
 
+
 ## Usage
 
 ```js
 npm install @cumulus/lzards-api-client
 ```
 
-## LZARDS API Docs
+## Example
+```js
+const { submitQueryToLzards } = require('@cumulus/lzards-api-client/lzards');
 
-LZARDS API documentation is here:
+const now = new Date().getTime();
+const thirtyMinutesAgo = now - (1000 * 60 * 30);
+const twoMinutesAgo = now - (1000 * 60 * 2);
 
-- https://wiki.earthdata.nasa.gov/display/LZARDS/LZARDS+User+Guide
-- https://wiki.earthdata.nasa.gov/display/LZARDS/Advanced+Query+Functionality
+const searchParams = {
+    pageLimit: 25,
+    'metadata[provider]': provider,
+    'metadata[createdAt][gte]': thirtyMinutesAgo,
+    'metadata[createdAt][lte]': twoMinutesAgo,
+}
+
+const response = await submitQueryToLzards({ searchParams });
+```
 
 ## Test
 
