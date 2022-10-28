@@ -131,7 +131,7 @@ class Granule extends Manager {
   }
 
   /*
-   * DEPRECATED: This has moved to /lib/granule-rmove-from-cmr.js
+   * DEPRECATED: This has moved to /lib/granule-remove-from-cmr.js
    */
   async removeGranuleFromCmrByGranule(granule) {
     await this._removeGranuleFromCmr(granule);
