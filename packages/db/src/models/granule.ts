@@ -139,7 +139,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
       // If upsert called with optional write constraints
       if (!granule.created_at) {
         throw new Error(
-          `Granule upsert called with write constraints but no updatedAt set: ${JSON.stringify(granule)}`
+          `Granule upsert called with write constraints but no createdAt set: ${JSON.stringify(granule)}`
         );
       }
       upsertQuery.where(
