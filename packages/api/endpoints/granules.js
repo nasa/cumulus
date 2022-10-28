@@ -117,10 +117,7 @@ const create = async (req, res) => {
     if (
       await granulePgModel.exists(knex, {
         granule_id: pgGranule.granule_id,
-        collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
-          knex,
-          deconstructCollectionId(granule.collectionId)
-        ),
+        collection_cumulus_id: pgGranule.collection_cumulus_id,
       })
     ) {
       return res.boom.conflict(
