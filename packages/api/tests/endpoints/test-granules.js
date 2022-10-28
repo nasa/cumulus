@@ -2059,7 +2059,7 @@ test.serial('PUT does not overwrite existing createdAt of an existing granule if
     t.is(newPgGranule.status, 'completed');
     t.is(esRecord.status, 'completed');
     t.is(newDynamoGranule.createdAt, createdAt);
-    t.deepEqual(`${newPgGranule.created_at}`, `${new Date(createdAt)}`);
+    t.deepEqual(newPgGranule.created_at, new Date(createdAt));
     t.is(esRecord.createdAt, createdAt);
 
     const updatedGranule = {
