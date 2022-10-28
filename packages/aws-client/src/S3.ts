@@ -1013,7 +1013,7 @@ export const multipartCopyObject = async (
     destinationBucket: string,
     destinationKey: string,
     sourceObject?: HeadObjectOutput,
-    ACL?: ObjectCannedACL,
+    ACL?: ObjectCannedACL | string,
     copyTags?: boolean,
     chunkSize?: number
   }
@@ -1036,7 +1036,7 @@ export const multipartCopyObject = async (
     sourceKey,
     destinationBucket,
     destinationKey,
-    ACL,
+    ACL: <ObjectCannedACL>ACL,
     copyTags,
     contentType: sourceObject.ContentType,
   });

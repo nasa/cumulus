@@ -23,8 +23,10 @@
   "dependencies": {
     "@cumulus/api": "13.3.2",
     "@cumulus/api-client": "13.3.2",
+    "@cumulus/aws-client": "13.3.2",
     "@cumulus/common": "13.3.2",
     "@cumulus/db": "13.3.2",
+    "@cumulus/logger": "13.3.2",
     "@cumulus/message": "13.3.2",
     "@cumulus/types": "13.3.2",
     "knex": "0.95.15",
