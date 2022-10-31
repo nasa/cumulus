@@ -551,7 +551,7 @@ const _writeGranuleRecords = async (params) => {
 
 /**
  * Returns true if granule object in list exists with a collection_cumulus_id
- * that doesn't match what is provided, false otherwise.
+ * that doesn't match input collectionCumulusId, returns false otherwise.
  * @param {Array} granuleList          - list of granules
  * @param {string} collectionCumulusId - collection cumulus ID
  * @returns {boolean}
