@@ -18,6 +18,7 @@ const {
   fakeGranuleRecordFactory,
   fakeProviderRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
+  getGranulesWithGranuleId,
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
   migrationDir,
@@ -1025,43 +1026,57 @@ test('getUniqueGranuleByGranuleId() throws an error if no granules are found', a
   );
 });
 
-test('getGranulesWithDifferentCollection() returns a record when a granule that exists with a specific collection_cumulus_id is called with a granule_id and different collection_cumulus_id', async (t) => {
+test('getGranulesWithGranuleId() returns a list of records that match the given granuleId', async (t) => {
   const {
     collectionCumulusId,
     knex,
     granulePgModel,
   } = t.context;
-  const [granule] = await granulePgModel.create(
+  const granuleId = 'granule-1234';
+  const [granule1] = await granulePgModel.create(
     knex,
     fakeGranuleRecordFactory({
+      granule_id: granuleId,
       collection_cumulus_id: collectionCumulusId,
     }),
     '*'
   );
-  const randomCollectionCumulusId = 2;
-
-  const params = {
-    granule_id: granule.granule_id,
-    collection_cumulus_id: randomCollectionCumulusId,
-  };
-  const records = await granulePgModel.getGranulesWithDifferentCollection(knex, params);
-  t.deepEqual(records, granule);
-  t.teardown(() => granulePgModel.delete(knex, { cumulus_id: granule.cumulus_id }));
+  const collection2 = fakeCollectionRecordFactory();
+  const collectionResponse = await t.context.collectionPgModel.create(
+    knex,
+    collection2
+  );
+  const collectionCumulusId2 = collectionResponse[0].cumulus_id;
+  const [granule2] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId2,
+    }),
+    '*'
+  );
+  const records = await getGranulesWithGranuleId(knex, granuleId);
+  t.deepEqual(records, [granule1, granule2]);
+  t.teardown(async () => await Promise.all([
+    granulePgModel.delete(knex, { cumulus_id: granule1.cumulus_id }),
+    granulePgModel.delete(knex, { cumulus_id: granule2.cumulus_id }),
+  ]));
 });
 
-test('getGranulesWithDifferentCollection() returns no record when called with the granule_id and collection_cumulus_id of a non-existent granule', async (t) => {
+test('getGranulesWithGranuleId() returns empty list when called with a granuleId that does not exist', async (t) => {
   const {
     collectionCumulusId,
     knex,
     granulePgModel,
   } = t.context;
   const granuleId = 'fakeGranuleId';
-  const fakeGranule = fakeGranuleRecordFactory({
-    collection_cumulus_id: collectionCumulusId,
-    granule_id: granuleId,
-  });
-
-  const params = { granule_id: fakeGranule.granule_id, collection_cumulus_id: collectionCumulusId };
-  const records = await granulePgModel.getGranulesWithDifferentCollection(knex, params);
-  t.is(records, undefined);
+  await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  const records = await getGranulesWithGranuleId(knex, granuleId);
+  t.deepEqual(records, []);
 });

@@ -2241,7 +2241,6 @@ test.serial('put() does not write to DynamoDB/Elasticsearch/SNS if writing to Po
       created_at: new Date(),
     }],
     get: () => ({}),
-    getGranulesWithDifferentCollection: () => Promise.resolve(undefined),
   };
 
   const updatedGranule = {

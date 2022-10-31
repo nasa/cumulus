@@ -1412,7 +1412,6 @@ test.serial('writeGranulesFromMessage() does not write to DynamoDB/PostgreSQL/El
     },
     exists: () => Promise.resolve(false),
     search: () => Promise.resolve([]),
-    getGranulesWithDifferentCollection: () => Promise.resolve(undefined),
   };
 
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
@@ -2473,7 +2472,6 @@ test.serial('writeGranuleFromApi() does not persist records to Dynamo or Postgre
       throw new Error('Granules Postgres error');
     },
     exists: () => Promise.resolve(false),
-    getGranulesWithDifferentCollection: () => Promise.resolve(undefined),
   };
 
   const error = await t.throwsAsync(writeGranuleFromApi(
@@ -2800,7 +2798,6 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL or Elastic
     update: () => {
       throw new Error('DynamoDB failure');
     },
-    getGranulesWithDifferentCollection: () => Promise.resolve(undefined),
   };
 
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');

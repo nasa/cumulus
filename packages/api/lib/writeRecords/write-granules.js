@@ -14,6 +14,7 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
+  getGranulesWithGranuleId,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
   upsertGranuleWithExecutionJoinRecord,
@@ -549,6 +550,20 @@ const _writeGranuleRecords = async (params) => {
 };
 
 /**
+ * Returns true if granule object in list exists with a collection_cumulus_id
+ * that doesn't match what is provided, false otherwise.
+ * @param {Array} granuleList          - list of granules
+ * @param {string} collectionCumulusId - collection cumulus ID
+ * @returns {boolean}
+ */
+function listHasUnmatchingCollectionId(granuleList, collectionCumulusId) {
+  if (granuleList.length === 0) {
+    return false;
+  }
+  return granuleList.some((granule) => granule.collection_cumulus_id !== collectionCumulusId);
+}
+
+/**
  * Write a granule record to DynamoDB and PostgreSQL
  *
  * @param {Object}          params
@@ -574,12 +589,10 @@ const _writeGranule = async ({
   snsEventType,
 }) => {
   const { status } = apiGranuleRecord;
-  const granuleIdWithDiffCollection = await granulePgModel.getGranulesWithDifferentCollection(
-    knex,
-    {
-      granule_id: postgresGranuleRecord.granule_id,
-      collection_cumulus_id: postgresGranuleRecord.collection_cumulus_id,
-    }
+  const granulesWithId = await getGranulesWithGranuleId(knex, postgresGranuleRecord.granule_id);
+  const granuleIdWithDiffCollection = listHasUnmatchingCollectionId(
+    granulesWithId,
+    postgresGranuleRecord.collection_cumulus_id
   );
 
   if (granuleIdWithDiffCollection) {
@@ -994,6 +1007,7 @@ module.exports = {
   createGranuleFromApi,
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
+  listHasUnmatchingCollectionId,
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,

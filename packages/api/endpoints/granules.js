@@ -15,6 +15,7 @@ const {
   ExecutionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
+  getGranulesWithGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -28,6 +29,7 @@ const { chooseTargetExecution } = require('../lib/executions');
 const startAsyncOperation = require('../lib/startAsyncOperation');
 const {
   createGranuleFromApi,
+  listHasUnmatchingCollectionId,
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
   writeGranuleRecordAndPublishSns,
@@ -102,7 +104,6 @@ async function list(req, res) {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
   } = req.testContext || {};
@@ -114,25 +115,18 @@ const create = async (req, res) => {
       dynamoRecord: granule,
       knexOrTransaction: knex,
     });
-    if (
-      await granulePgModel.exists(knex, {
-        granule_id: pgGranule.granule_id,
-        collection_cumulus_id: pgGranule.collection_cumulus_id,
-      })
-    ) {
+    const granulesWithGranuleId = await getGranulesWithGranuleId(knex, pgGranule.granule_id);
+    if (granulesWithGranuleId.some((granule) => granule.granule_id === pgGranule.granule_id)) {
       return res.boom.conflict(
         `A granule already exists for granule_id: ${granule.granuleId} with collection ID ${granule.collectionId}`
       );
     }
 
-    const granuleIdWithDiffCollection = await granulePgModel.getGranulesWithDifferentCollection(
-      knex,
-      {
-        granule_id: pgGranule.granule_id,
-        collection_cumulus_id: pgGranule.collection_cumulus_id,
-      }
+    // Check if granule list contains record with a different collectionId
+    const granuleIdWithDiffCollection = listHasUnmatchingCollectionId(
+      granulesWithGranuleId,
+      pgGranule.collection_cumulus_id
     );
-
     if (granuleIdWithDiffCollection) {
       log.error('Could not write granule. It exists across another collection', granuleIdWithDiffCollection);
       return res.boom.conflict(
