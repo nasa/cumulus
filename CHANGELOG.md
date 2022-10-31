@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v13.4.0] 10/31/2022
 ### Notable changes
 
 - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
@@ -6570,7 +6571,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v13.3.2...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v13.4.0...HEAD
+[v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
 [v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2
 [v13.3.0]: https://github.com/nasa/cumulus/compare/v13.2.1...v13.3.0
 [v13.2.1]: https://github.com/nasa/cumulus/compare/v13.2.0...v13.2.1
