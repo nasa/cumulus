@@ -31,7 +31,6 @@
 * Matt Savoie
 * Menno Van Diermen
 * Naga Nages
-* Nagavenkata Nageswaran
 * Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn
