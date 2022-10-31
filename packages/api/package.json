@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "13.3.2",
+  "version": "13.4.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -52,26 +52,26 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "13.3.2",
-    "@cumulus/async-operations": "13.3.2",
-    "@cumulus/aws-client": "13.3.2",
-    "@cumulus/cmr-client": "13.3.2",
-    "@cumulus/cmrjs": "13.3.2",
-    "@cumulus/collection-config-store": "13.3.2",
-    "@cumulus/common": "13.3.2",
-    "@cumulus/db": "13.3.2",
-    "@cumulus/distribution-utils": "13.3.2",
-    "@cumulus/errors": "13.3.2",
-    "@cumulus/es-client": "13.3.2",
-    "@cumulus/ingest": "13.3.2",
-    "@cumulus/launchpad-auth": "13.3.2",
-    "@cumulus/logger": "13.3.2",
-    "@cumulus/message": "13.3.2",
-    "@cumulus/oauth-client": "13.3.2",
-    "@cumulus/object-store": "13.3.2",
-    "@cumulus/pvl": "13.3.2",
-    "@cumulus/sftp-client": "13.3.2",
-    "@cumulus/types": "13.3.2",
+    "@cumulus/api-client": "13.4.0",
+    "@cumulus/async-operations": "13.4.0",
+    "@cumulus/aws-client": "13.4.0",
+    "@cumulus/cmr-client": "13.4.0",
+    "@cumulus/cmrjs": "13.4.0",
+    "@cumulus/collection-config-store": "13.4.0",
+    "@cumulus/common": "13.4.0",
+    "@cumulus/db": "13.4.0",
+    "@cumulus/distribution-utils": "13.4.0",
+    "@cumulus/errors": "13.4.0",
+    "@cumulus/es-client": "13.4.0",
+    "@cumulus/ingest": "13.4.0",
+    "@cumulus/launchpad-auth": "13.4.0",
+    "@cumulus/logger": "13.4.0",
+    "@cumulus/message": "13.4.0",
+    "@cumulus/oauth-client": "13.4.0",
+    "@cumulus/object-store": "13.4.0",
+    "@cumulus/pvl": "13.4.0",
+    "@cumulus/sftp-client": "13.4.0",
+    "@cumulus/types": "13.4.0",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
@@ -116,6 +116,6 @@
     "xml2js": "^0.4.22"
   },
   "devDependencies": {
-    "@cumulus/test-data": "13.3.2"
+    "@cumulus/test-data": "13.4.0"
   }
 }
