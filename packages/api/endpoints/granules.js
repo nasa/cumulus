@@ -104,7 +104,6 @@ async function list(req, res) {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
   } = req.testContext || {};
 
@@ -116,7 +115,7 @@ const create = async (req, res) => {
       knexOrTransaction: knex,
     });
     const granulesWithGranuleId = await getGranulesWithGranuleId(knex, pgGranule.granule_id);
-    if (granulesWithGranuleId.some((granule) => granule.granule_id === pgGranule.granule_id)) {
+    if (granulesWithGranuleId.some((g) => g.granule_id === pgGranule.granule_id)) {
       return res.boom.conflict(
         `A granule already exists for granule_id: ${granule.granuleId} with collection ID ${granule.collectionId}`
       );
