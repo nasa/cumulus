@@ -24,7 +24,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 - Python
 - [pipenv](https://pypi.org/project/pipenv/)
   
-  > Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+> Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
 </details>
 
 <details>
@@ -56,8 +56,8 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following options are available for assistance:
 
-* Cumulus: Outside NASA users should file a [GitHub issue](https://github.com/nasa/cumulus/issues) and inside NASA users should file a Cumulus JIRA ticket.
-* AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
+- Cumulus: Outside NASA users should file a [GitHub issue](https://github.com/nasa/cumulus/issues) and inside NASA users should file a Cumulus JIRA ticket.
+- AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
 > For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
 </details>
@@ -99,9 +99,9 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: Those who are working within Cumulus and AWS for deployments and to manage workflows. They may perform the following functions:
 
-* Configure and deploy Cumulus to the AWS environment
-* Configure Cumulus workflows
-* Write custom workflow tasks
+- Configure and deploy Cumulus to the AWS environment
+- Configure Cumulus workflows
+- Write custom workflow tasks
 
 </details>
 
@@ -134,9 +134,9 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-* [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
-* [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
-* [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+- [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
+- [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
+- [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
 
 </details>
 
@@ -149,14 +149,14 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: Those that ingests, archives, and troubleshoots datasets (called collections in Cumulus). Your daily activities might include but not limited to the following:
 
-* Ingesting datasets
-* Maintaining historical data ingest
-* Starting and stopping data handlers
-* Managing collections
-* Managing provider definitions
-* Creating, enabling, and disabling rules
-* Investigating errors for granules and deleting or re-ingesting granules
-* Investigating errors in executions and isolating failed workflow step(s)
+- Ingesting datasets
+- Maintaining historical data ingest
+- Starting and stopping data handlers
+- Managing collections
+- Managing provider definitions
+- Creating, enabling, and disabling rules
+- Investigating errors for granules and deleting or re-ingesting granules
+- Investigating errors in executions and isolating failed workflow step(s)
 
 </details>
 
@@ -165,9 +165,9 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-* [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest)
-* [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
-* [Granule Workflows](../operator-docs/granule-workflows)
+- [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest)
+- [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
+- [Granule Workflows](../operator-docs/granule-workflows)
 
 Explore more Cumulus operator best practices and how-tos in the dedicated [Operator Docs](../operator-docs/).
 </details>
