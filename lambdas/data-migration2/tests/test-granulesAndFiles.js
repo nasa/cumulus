@@ -1205,7 +1205,6 @@ test.serial('migrateGranuleAndFilesViaTransaction updates previously migrated fi
   const modifiedTestFile1 = omit(testFile1, ['size', 'checksum', 'checksumType', 'source', 'type']);
   const modifiedFakeFile2 = {
     ...fakeFile2,
-    key: 'new key 2',
     size: 98765,
     checksum: 'newCheckSum02',
     source: 'newSource2',
