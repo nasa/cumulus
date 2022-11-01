@@ -9,15 +9,18 @@ Below are some commonly asked questions that you may encounter that can assist y
 ### General
 
 <details>
-  <summary>How do I deploy a new instance in Cumulus?</summary>
-
-  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](../deployment/deployment-readme).
-</details>
-
-<details>
   <summary>What prerequisites are needed to setup Cumulus?</summary>
+  Answer: Here is a list of the tools and access that you will need in order to get started. To maintain the up-to-date versions that we are using please visit our [Cumulus main README](https://github.com/nasa/cumulus) for details.
 
-  Answer: You will need access to the AWS console and an [Earthdata login](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+- [NVM](https://github.com/creationix/nvm) for node versioning
+- [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
+- Bash
+- Docker (only required for testing)
+- docker-compose (only required for testing `pip install docker-compose`)
+- Python
+- [pipenv](https://pypi.org/project/pipenv/)
+  
+  > Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
 </details>
 
 <details>
@@ -26,6 +29,10 @@ Below are some commonly asked questions that you may encounter that can assist y
   Answer: Our preferred web browser is the latest version of [Google Chrome](https://www.google.com/chrome/).
 </details>
 
+<details>
+  <summary>How do I deploy a new instance in Cumulus?</summary>
+
+  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](../deployment/deployment-readme).
 </details>
 
 <details>
@@ -41,12 +48,6 @@ Below are some commonly asked questions that you may encounter that can assist y
 </details>
 
 <details>
-  <summary>Are there any third-party workflows or applications that I can use with Cumulus?</summary>
-
-  Answer: The Cumulus team works with various partners to help build a robust framework. You can visit our [External Contributions](../external-contributions/external-contributions) section to see what other options are available to help you customize Cumulus for your needs.
-</details>
-
-<details>
   <summary>Where can I get support help?</summary>
 
   Answer: The following options are available for assistance:
@@ -55,6 +56,34 @@ Below are some commonly asked questions that you may encounter that can assist y
 * AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
 > For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
+</details>
+
+---
+
+### Workflows
+
+<details>
+  <summary>What is a Cumulus workflow?</summary>
+
+  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting the [Workflows](../workflows/workflows-readme) section.
+</details>
+
+<details>
+  <summary>How do I set up a Cumulus workflow?</summary>
+
+  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](../workflows/developing-a-cumulus-workflow).
+</details>
+
+<details>
+  <summary>Where can I find a list of workflow tasks?</summary>
+
+  Answer: You can access a list of reusable tasks for Cumulus development at [Cumulus Tasks](../tasks).
+</details>
+
+<details>
+  <summary>Are there any third-party workflows or applications that I can use with Cumulus?</summary>
+
+  Answer: The Cumulus team works with various partners to help build a robust framework. You can visit our [External Contributions](../external-contributions/external-contributions) section to see what other options are available to help you customize Cumulus for your needs.
 </details>
 
 ---
@@ -94,18 +123,6 @@ Below are some commonly asked questions that you may encounter that can assist y
   <summary>Where do I find Terraform module variables</summary>
 
   Answer: Go [here](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf) for a list of Cumulus maintained variables.
-</details>
-
-<details>
-  <summary>What is a Cumulus workflow?</summary>
-
-  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting the [Worfklows](../workflows/workflows-readme) section.
-</details>
-
-<details>
-  <summary>How do I set up a Cumulus workflow?</summary>
-
-  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](../workflows/developing-a-cumulus-workflow).
 </details>
 
 <details>
