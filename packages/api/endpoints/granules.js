@@ -29,7 +29,6 @@ const { chooseTargetExecution } = require('../lib/executions');
 const startAsyncOperation = require('../lib/startAsyncOperation');
 const {
   createGranuleFromApi,
-  listHasUnmatchingCollectionId,
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
   writeGranuleRecordAndPublishSns,
@@ -114,22 +113,12 @@ const create = async (req, res) => {
       dynamoRecord: granule,
       knexOrTransaction: knex,
     });
+    // Check if granule already exists across all collections
     const granulesWithGranuleId = await getGranulesWithGranuleId(knex, pgGranule.granule_id);
-    if (granulesWithGranuleId.some((g) => g.granule_id === pgGranule.granule_id)) {
+    if (granulesWithGranuleId.length > 0) {
+      log.error('Could not write granule. It already exists.');
       return res.boom.conflict(
-        `A granule already exists for granule_id: ${granule.granuleId} with collection ID ${granule.collectionId}`
-      );
-    }
-
-    // Check if granule list contains record with a different collectionId
-    const granuleIdWithDiffCollection = listHasUnmatchingCollectionId(
-      granulesWithGranuleId,
-      pgGranule.collection_cumulus_id
-    );
-    if (granuleIdWithDiffCollection) {
-      log.error('Could not write granule. It exists across another collection', granuleIdWithDiffCollection);
-      return res.boom.conflict(
-        `A granule already exists for granule_id: ${granule.granuleId} across another collection.`
+        `A granule already exists for granuleId: ${pgGranule.granule_id}`
       );
     }
   } catch (error) {

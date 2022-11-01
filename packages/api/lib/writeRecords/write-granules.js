@@ -550,20 +550,6 @@ const _writeGranuleRecords = async (params) => {
 };
 
 /**
- * Returns true if granule object in list exists with a collection_cumulus_id
- * that doesn't match input collectionCumulusId, returns false otherwise.
- * @param {Array} granuleList          - list of granules
- * @param {string} collectionCumulusId - collection cumulus ID
- * @returns {boolean}
- */
-function listHasUnmatchingCollectionId(granuleList, collectionCumulusId) {
-  if (granuleList.length === 0) {
-    return false;
-  }
-  return granuleList.some((granule) => granule.collection_cumulus_id !== collectionCumulusId);
-}
-
-/**
  * Write a granule record to DynamoDB and PostgreSQL
  *
  * @param {Object}          params
@@ -589,20 +575,6 @@ const _writeGranule = async ({
   snsEventType,
 }) => {
   const { status } = apiGranuleRecord;
-  const granulesWithId = await getGranulesWithGranuleId(knex, postgresGranuleRecord.granule_id);
-  const granuleIdWithDiffCollection = listHasUnmatchingCollectionId(
-    granulesWithId,
-    postgresGranuleRecord.collection_cumulus_id
-  );
-
-  if (granuleIdWithDiffCollection) {
-    log.error('Could not write granule. It exists across another collection', granuleIdWithDiffCollection);
-    const conflictError = new Error(
-      `A granule already exists for granule_id: ${postgresGranuleRecord.granule_id} across another collection.`
-    );
-    throw conflictError;
-  }
-
   const pgGranule = await _writeGranuleRecords({
     postgresGranuleRecord,
     apiGranuleRecord,
@@ -925,6 +897,16 @@ const writeGranulesFromMessage = async ({
         knexOrTransaction: knex,
       });
 
+      // Check if granuleId exists across another collection
+      const granulesWithGranuleId = await getGranulesWithGranuleId(knex, postgresGranuleRecord.granule_id);
+      if (granulesWithGranuleId.some((g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id)) {
+        log.error('Could not write granule. It already exists across another collection');
+        const conflictError = new Error(
+          `A granule already exists for granuleId: ${apiGranuleRecord.granuleId} with collectionId: ${apiGranuleRecord.collectionId}`
+        );
+        throw conflictError;
+      }
+    
       return _writeGranule({
         postgresGranuleRecord,
         apiGranuleRecord,
@@ -1007,7 +989,6 @@ module.exports = {
   createGranuleFromApi,
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
-  listHasUnmatchingCollectionId,
   updateGranuleFromApi,
   updateGranuleStatusToQueued,
   updateGranuleStatusToFailed,
