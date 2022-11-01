@@ -65,6 +65,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
   - Fixed TS compilation error caused by @aws-sdk/client-s3 3.190->3.193 upgrade
 
+- **CUMULUS-3045**
+  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
+
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
 **Please note** changes in 13.3.2 may not yet be released in future versions, as
