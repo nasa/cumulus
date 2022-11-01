@@ -1855,7 +1855,7 @@ test.serial('writeGranulesFromMessage does not write a granule to Postgres or Dy
     granulePgModel,
   }));
 
-  t.true(error.message.includes(`A granule already exists for granuleId: ${pgGranule.granule_id} with collectionId ${collectionCumulusId}`));
+  t.true(error.message.includes(`A granule already exists for granuleId: ${pgGranule.granule_id}`));
   t.false(await granuleModel.exists({ granuleId }));
   t.false(
     await t.context.granulePgModel.exists(knex, {
