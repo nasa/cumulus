@@ -26,6 +26,14 @@ Below are some commonly asked questions that you may encounter that can assist y
   Answer: Our preferred web browser is the latest version of [Google Chrome](https://www.google.com/chrome/).
 </details>
 
+</details>
+
+<details>
+  <summary>Where can I find Cumulus release notes?</summary>
+
+  Answer: To get the latest information about updates to Cumulus go to [Cumulus Versions](https://nasa.github.io/cumulus/versions).
+</details>
+
 <details>
   <summary>How do I quickly troubleshoot an issue in Cumulus?</summary>
 
@@ -33,13 +41,20 @@ Below are some commonly asked questions that you may encounter that can assist y
 </details>
 
 <details>
+  <summary>Are there any third-party workflows or applications that I can use with Cumulus?</summary>
+
+  Answer: The Cumulus team works with various partners to help build a robust framework. You can visit our [External Contributions](../external-contributions/external-contributions) section to see what other options are available to help you customize Cumulus for your needs.
+</details>
+
+<details>
   <summary>Where can I get support help?</summary>
 
   Answer: The following options are available for assistance:
 
-* Cumulus: Outside NASA users should file a GitHub issue and inside NASA users should file a JIRA issue.
+* Cumulus: Outside NASA users should file a [GitHub issue](https://github.com/nasa/cumulus/issues) and inside NASA users should file a Cumulus JIRA ticket.
 * AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
+> For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
 </details>
 
 ---
@@ -84,7 +99,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What is a Cumulus workflow?</summary>
 
-  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting [here](../workflows/workflows-readme).
+  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting the [Worfklows](../workflows/workflows-readme) section.
 </details>
 
 <details>
@@ -133,6 +148,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 * [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
 * [Granule Workflows](../operator-docs/granule-workflows)
 
+Explore more Cumulus operator best practices and how-tos in the dedicated [Operator Docs](../operator-docs/).
 </details>
 
 <details>
