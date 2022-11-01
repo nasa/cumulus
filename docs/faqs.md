@@ -6,6 +6,10 @@ hide_title: false
 
 Below are some commonly asked questions that you may encounter that can assist you along the way when working with Cumulus.
 
+[General](#general) | [Workflows](#workflows) | [Integrators & Developers](#integrators--developers) | [Operators](#operators)
+
+---
+
 ### General
 
 <details>
