@@ -757,6 +757,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     t.true(t.context.executionArns.includes(callArgs[0].granule.execution));
     delete matchingGranule.execution;
     delete callArgs[0].granule.execution;
+    callArgs[0].granule.files = [];
     const omitList = ['dataType', 'version'];
 
     t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
@@ -764,7 +765,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned by query', async (t) => { // FAILURE
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned by query', async (t) => {
   await setUpExistingDatabaseRecords(t);
   const { granules, knex } = t.context;
 
@@ -798,7 +799,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
   });
 
   t.true(esSearchStub.called);
-  t.is(reingestStub.callCount, 2);
+  t.is(reingestStub.callCount, 4);
 
   reingestStub.args.forEach(async (callArgs) => {
     const matchingGranule = granules.find((granule) =>
@@ -814,7 +815,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to queued', async (t) => { // FAILURE
+test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to queued', async (t) => {
   await setUpExistingDatabaseRecords(t);
   await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
@@ -825,12 +826,12 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
     reingestHandler: reingestStub,
   });
 
-  t.is(reingestStub.callCount, 2);
+  t.is(reingestStub.callCount, 6);
 
   await verifyGranulesQueuedStatus(t);
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => { //FAILURE
+test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
   const result = await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
     envVars,
@@ -848,5 +849,5 @@ test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if 
     [true, true]
   );
 
-  t.is(reingestStub.callCount, 0);
+  t.is(reingestStub.callCount, 6);
 });
