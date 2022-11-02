@@ -631,7 +631,7 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
-test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => {
+test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => { // FAILURE
   const {
     collectionCumulusId,
     esGranulesClient,
@@ -720,7 +720,6 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: pgGranule,
     knexOrTransaction: knex,
-    files: [],
   });
 
   esGranule.files.sort(

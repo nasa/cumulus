@@ -726,7 +726,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs'
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs with a workflowName', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs with a workflowName', async (t) => { // FAILURE
   await setUpExistingDatabaseRecords(t);
   const {
     granules,
@@ -757,14 +757,14 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     t.true(t.context.executionArns.includes(callArgs[0].granule.execution));
     delete matchingGranule.execution;
     delete callArgs[0].granule.execution;
-    const omitList = ['dataType', 'version', 'files'];
+    const omitList = ['dataType', 'version'];
 
     t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned by query', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned by query', async (t) => { // FAILURE
   await setUpExistingDatabaseRecords(t);
   const { granules, knex } = t.context;
 
@@ -814,7 +814,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to queued', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to queued', async (t) => { // FAILURE
   await setUpExistingDatabaseRecords(t);
   await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
@@ -830,7 +830,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
   await verifyGranulesQueuedStatus(t);
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => { //FAILURE
   const result = await bulkOperation.handler({
     type: 'BULK_GRANULE_REINGEST',
     envVars,
