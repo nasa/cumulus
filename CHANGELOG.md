@@ -8,11 +8,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Notable changes
 
-- **CUMULUS-3104**
-  - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
-
 - **CUMULUS-2915**
   - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
+
+### Changed
+
+- **CUMULUS-2915**
+  - Updated API endpoint GET `/executions/status/${executionArn}` to return the
+    presigned s3 URL in addition to execution status data
+
+## [v13.4.0] 2022-10-31
+
+### Notable changes
+
+- **CUMULUS-3104**
+  - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
 
 ### Added
 
@@ -56,9 +66,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2913**
   - Changed `process-dead-letter-archive` lambda to put messages from S3 dead
     letter archive that fail to process to new S3 location.
-- **CUMULUS-2915**
-  - Updated API endpoint GET `/executions/status/${executionArn}` to return the
-    presigned s3 URL in addition to execution status data
 - **CUMULUS-2974**
   - The `DELETE /granules/<granuleId>` endpoint now includes additional details about granule
     deletion, including collection, deleted granule ID, deleted files, and deletion time.
