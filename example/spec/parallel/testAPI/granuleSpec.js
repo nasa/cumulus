@@ -306,7 +306,7 @@ describe('The Granules API', () => {
         const apiError = JSON.parse(error.apiMessage);
         expect(apiError.statusCode).toBe(409);
         expect(apiError.error).toBe('Conflict');
-        expect(apiError.message).toContain('A granule already exists for granule_id');
+        expect(apiError.message).toContain('A granule already exists for granuleId');
         expect(apiError.message).toContain(granuleWithDiffCollection.granuleId);
       }
     });
