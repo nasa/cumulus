@@ -5,8 +5,7 @@ const moment = require('moment');
 const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executions');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const S3ObjectStore = require('@cumulus/aws-client/S3ObjectStore');
-const { s3 } = require('@cumulus/aws-client/services');
-const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, s3PutObject } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
@@ -46,7 +45,7 @@ async function createPresignedS3UrlForExecutionStatus(executionStatus) {
   const key = `${stackName}/data/execution-status/${filenamify(executionStatus.execution.name)}-${moment.utc().format(formatString)}.json`;
   const downloadFile = key.split('/').pop();
   // the s3 object will be deleted by the life cyle policy on the bucket based on prefix
-  await s3().putObject({
+  await s3PutObject({
     Bucket: systemBucket,
     Key: key,
     Body: JSON.stringify(executionStatus, undefined, 2),
