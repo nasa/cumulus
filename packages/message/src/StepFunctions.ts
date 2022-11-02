@@ -227,7 +227,7 @@ export const getCumulusMessageFromExecutionEvent = async (executionEvent: EventB
   } else if (executionEvent.detail.status === 'SUCCEEDED') {
     cumulusMessage = JSON.parse(executionEvent.detail.output);
   } else {
-    const inputMessage = JSON.parse(get(executionEvent, 'detail.input', '{}'));
+    const inputMessage = JSON.parse(get(executionEvent, 'detail.input') || '{}');
     cumulusMessage = await getFailedExecutionMessage(inputMessage);
   }
 
