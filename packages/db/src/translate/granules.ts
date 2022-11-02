@@ -1,9 +1,11 @@
 import { Knex } from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
-import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
+import { ApiGranule, ApiGranuleRecord, GranuleStatus } from '@cumulus/types/api/granules';
 import { removeNilProperties } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
+import isNil from 'lodash/isNil';
+import isNull from 'lodash/isNull';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
@@ -50,7 +52,7 @@ export const translatePostgresGranuleToApiGranule = async ({
   pdrPgModel?: PdrPgModel,
   providerPgModel?: ProviderPgModel,
   filePgModel?: FilePgModel,
-}): Promise<ApiGranule> => {
+}): Promise<ApiGranuleRecord> => {
   const collection = collectionPgRecord || await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
   );
@@ -86,7 +88,9 @@ export const translatePostgresGranuleToApiGranule = async ({
     );
   }
 
-  const apiGranule: ApiGranule = removeNilProperties({
+  // Explicit annotation here to defend against only .js usage
+  // of this translation method
+  const apiGranule: ApiGranuleRecord = removeNilProperties({
     beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
     cmrLink: granulePgRecord.cmr_link,
     collectionId: constructCollectionId(collection.name, collection.version),
@@ -107,6 +111,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     published: granulePgRecord.published,
     queryFields: granulePgRecord.query_fields,
     status: granulePgRecord.status as GranuleStatus,
+    // TODO set this as an explicit type in PostgresGranule
     timestamp: granulePgRecord.timestamp?.getTime(),
     timeToArchive: granulePgRecord.time_to_archive,
     timeToPreprocess: granulePgRecord.time_to_process,
@@ -114,6 +119,26 @@ export const translatePostgresGranuleToApiGranule = async ({
   });
 
   return apiGranule;
+};
+
+const returnNullOrDate = (dateVal: string | number | null) => {
+  if (dateVal === null) return dateVal;
+  return new Date(dateVal);
+};
+
+const validateApiToPostgresGranuleObject = (apiGranule : ApiGranule) => {
+  if (isNil(apiGranule.collectionId)) {
+    throw new ValidationError('collectionId cannot be undefined on a granule, granules must have a collection and a granule ID');
+  }
+  if (isNil(apiGranule.granuleId)) {
+    throw new ValidationError('granuleId cannot be undefined on a granule, granules must have a collection and a granule ID');
+  }
+  if (isNull(apiGranule.status)) {
+    throw new ValidationError('status cannot be null on a granule, granules must have a collection and a granule ID');
+  }
+  if (isNull(apiGranule.files)) {
+    throw new ValidationError('files cannot be null on an api Granule object');
+  }
 };
 
 /**
@@ -136,13 +161,38 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel(),
 }: {
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  dynamoRecord: ApiGranule,
   knexOrTransaction: Knex | Knex.Transaction,
   collectionPgModel?: CollectionPgModel,
   pdrPgModel?: PdrPgModel,
   providerPgModel?: ProviderPgModel,
 }): Promise<PostgresGranule> => {
+  // Inappropriate Null values must be validated as the primary use in Core
+  // is the non-typescript API package
+  validateApiToPostgresGranuleObject(dynamoRecord);
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  let pdr_cumulus_id;
+  if (!isNil(dynamoRecord.pdrName)) {
+    pdr_cumulus_id = await pdrPgModel.getRecordCumulusId(knexOrTransaction, {
+      name: dynamoRecord.pdrName,
+    });
+  } else {
+    pdr_cumulus_id = dynamoRecord.pdrName;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  let provider_cumulus_id : null | undefined | number;
+  if (isNil(dynamoRecord.provider)) {
+    provider_cumulus_id = dynamoRecord.provider;
+  } else {
+    provider_cumulus_id = await providerPgModel.getRecordCumulusId(
+      knexOrTransaction,
+      { name: dynamoRecord.provider }
+    );
+  }
+
   const granuleRecord: PostgresGranule = {
     granule_id: dynamoRecord.granuleId,
     status: dynamoRecord.status,
@@ -154,36 +204,50 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
     duration: dynamoRecord.duration,
     time_to_archive: dynamoRecord.timeToArchive,
     time_to_process: dynamoRecord.timeToPreprocess,
-    product_volume: dynamoRecord.productVolume,
+    product_volume: isNil(dynamoRecord.productVolume)
+      ? dynamoRecord.productVolume
+      : dynamoRecord.productVolume,
     error: dynamoRecord.error,
     cmr_link: dynamoRecord.cmrLink,
-    pdr_cumulus_id: dynamoRecord.pdrName
-      ? await pdrPgModel.getRecordCumulusId(
-        knexOrTransaction,
-        { name: dynamoRecord.pdrName }
-      )
-      : undefined,
-    provider_cumulus_id: dynamoRecord.provider ? await providerPgModel.getRecordCumulusId(
-      knexOrTransaction,
-      { name: dynamoRecord.provider }
-    ) : undefined,
+    pdr_cumulus_id,
+    provider_cumulus_id,
     query_fields: dynamoRecord.queryFields,
-    beginning_date_time: dynamoRecord.beginningDateTime
-      ? new Date(dynamoRecord.beginningDateTime) : undefined,
-    ending_date_time: dynamoRecord.endingDateTime
-      ? new Date(dynamoRecord.endingDateTime) : undefined,
-    last_update_date_time: dynamoRecord.lastUpdateDateTime
-      ? new Date(dynamoRecord.lastUpdateDateTime) : undefined,
-    processing_end_date_time: dynamoRecord.processingEndDateTime
-      ? new Date(dynamoRecord.processingEndDateTime) : undefined,
-    processing_start_date_time: dynamoRecord.processingStartDateTime
-      ? new Date(dynamoRecord.processingStartDateTime) : undefined,
-    production_date_time: dynamoRecord.productionDateTime
-      ? new Date(dynamoRecord.productionDateTime) : undefined,
-    timestamp: dynamoRecord.timestamp
-      ? new Date(dynamoRecord.timestamp) : undefined,
-    created_at: dynamoRecord.createdAt ? new Date(dynamoRecord.createdAt) : undefined,
-    updated_at: new Date(dynamoRecord.updatedAt),
+    beginning_date_time:
+      dynamoRecord.beginningDateTime === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.beginningDateTime),
+    ending_date_time:
+      dynamoRecord.endingDateTime === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.endingDateTime),
+    last_update_date_time:
+      dynamoRecord.lastUpdateDateTime === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.lastUpdateDateTime),
+    processing_end_date_time:
+      dynamoRecord.processingEndDateTime === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.processingEndDateTime),
+    processing_start_date_time:
+      dynamoRecord.processingStartDateTime === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.processingStartDateTime),
+    production_date_time:
+      dynamoRecord.productionDateTime === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.productionDateTime),
+    timestamp:
+      dynamoRecord.timestamp === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.timestamp),
+    created_at:
+      dynamoRecord.createdAt === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.createdAt),
+    updated_at:
+      dynamoRecord.updatedAt === undefined
+        ? undefined
+        : returnNullOrDate(dynamoRecord.updatedAt),
   };
 
   return granuleRecord;
@@ -210,7 +274,7 @@ export const translateApiGranuleToPostgresGranule = async ({
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel(),
 }: {
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  dynamoRecord: ApiGranule,
   knexOrTransaction: Knex | Knex.Transaction,
   collectionPgModel?: CollectionPgModel,
   pdrPgModel?: PdrPgModel,

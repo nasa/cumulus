@@ -9,7 +9,7 @@
  */
 
 import isInteger from 'lodash/isInteger';
-import isNil from 'lodash/isNil';
+import isUndefined from 'lodash/isUndefined';
 import mapValues from 'lodash/mapValues';
 import omitBy from 'lodash/omitBy';
 
@@ -130,6 +130,18 @@ function isProcessingTimeInfo(
 }
 
 /**
+ * ** Private **
+ * Convert date string to standard ISO format, retaining null values if they exist
+ *
+ * @param {string} date - Date string, possibly in multiple formats
+ * @returns {string} Standardized ISO date string
+ */
+const convertDateToISOStringPreservingNull = (date: string | null) => {
+  if (date === null) return null;
+  return convertDateToISOString(date);
+};
+
+/**
  * Convert granule processing timestamps to a standardized ISO string
  * format for compatibility across database systems.
  *
@@ -145,7 +157,7 @@ export const getGranuleProcessingTimeInfo = (
     : {};
   return mapValues(
     updatedProcessingTimeInfo,
-    convertDateToISOString
+    convertDateToISOStringPreservingNull
   );
 };
 
@@ -186,7 +198,7 @@ export const getGranuleCmrTemporalInfo = async ({
     : await cmrUtils.getGranuleTemporalInfo(granule);
   return mapValues(
     temporalInfo,
-    convertDateToISOString
+    convertDateToISOStringPreservingNull
   );
 };
 
@@ -291,5 +303,5 @@ export const generateGranuleApiRecord = async ({
     queryFields,
   };
 
-  return <ApiGranule>omitBy(record, isNil);
+  return <ApiGranule>omitBy(record, isUndefined);
 };
