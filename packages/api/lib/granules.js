@@ -47,6 +47,8 @@ const translateGranule = async (
       s3: awsClients.s3(),
       files: granule.files,
     });
+  }else{
+    files = [];
   }
   if (!isNil(productVolume) && isNumber(productVolume)) {
     productVolume = productVolume.toString();
