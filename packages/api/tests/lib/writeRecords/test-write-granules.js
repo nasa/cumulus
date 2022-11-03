@@ -708,7 +708,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
     status: granule.status,
-    // files is undefined
+    files: [],
   };
 
   const {
@@ -731,7 +731,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
   apiGranule.files.sort(
     (f1, f2) => sortFilesByBuckets(f1, f2)
   );
-
+  
   t.deepEqual(apiGranule.files, originalPayloadFiles);
   t.deepEqual(dynamoGranule.files, originalPayloadFiles);
   t.deepEqual(esGranule.files, originalPayloadFiles);

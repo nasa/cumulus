@@ -268,7 +268,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
   sandbox.restore();
 });
-
+ 
 test.serial('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async (t) => {
   await setUpExistingDatabaseRecords(t);
   const workflowName = 'test-workflow';
@@ -757,7 +757,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs 
     t.true(t.context.executionArns.includes(callArgs[0].granule.execution));
     delete matchingGranule.execution;
     delete callArgs[0].granule.execution;
-    callArgs[0].granule.files = [];
+    matchingGranule.files = [];
     const omitList = ['dataType', 'version'];
 
     t.deepEqual(omit(matchingGranule, omitList), callArgs[0].granule);
@@ -799,7 +799,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granule IDs returned
   });
 
   t.true(esSearchStub.called);
-  t.is(reingestStub.callCount, 4);
+  t.is(reingestStub.callCount, 2);
 
   reingestStub.args.forEach(async (callArgs) => {
     const matchingGranule = granules.find((granule) =>
@@ -826,10 +826,11 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
     reingestHandler: reingestStub,
   });
 
-  t.is(reingestStub.callCount, 6);
+  t.is(reingestStub.callCount, 2);
 
   await verifyGranulesQueuedStatus(t);
 });
+
 
 test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
   const result = await bulkOperation.handler({
@@ -849,5 +850,5 @@ test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if 
     [true, true]
   );
 
-  t.is(reingestStub.callCount, 6);
+  t.is(reingestStub.callCount, 0);
 });
