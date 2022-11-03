@@ -38,7 +38,7 @@
     "@cumulus/errors": "13.3.2",
     "@cumulus/launchpad-auth": "13.3.2",
     "@cumulus/logger": "13.3.2",
-    "got": "11.8.5",
+    "got": "^11.8.5",
     "lodash": "^4.17.21"
   }
 }

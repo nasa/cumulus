@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking changes
+
+- **CUMULUS-2915**
+  - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
+  - The user (dashboard) must read the `s3SignedURL` and `data` from the return
+
+### Changed
+
+- **CUMULUS-2915**
+  - Updated API endpoint GET `/executions/status/${executionArn}` to return the
+    presigned s3 URL in addition to execution status data
 - **CUMULUS-3080**
   - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
 
@@ -15,9 +26,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
 
 ## [v13.4.0] 2022-10-31
+
 ### Notable changes
 
-- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+- **CUMULUS-3104**
+  - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
 
 ### Added
 
@@ -2780,7 +2793,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
 - **CUMULUS-2321**
   - Updated API endpoint GET `/reconciliationReports/{name}` to return the
-    pre-signe s3 URL in addition to report data
+    presigned s3 URL in addition to report data
 
 ### Fixed
 
