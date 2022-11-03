@@ -15,7 +15,7 @@ const {
   ExecutionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
-  getGranulesWithGranuleId,
+  getGranulesByGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -114,8 +114,8 @@ const create = async (req, res) => {
       knexOrTransaction: knex,
     });
     // Check if granule already exists across all collections
-    const granulesWithGranuleId = await getGranulesWithGranuleId(knex, pgGranule.granule_id);
-    if (granulesWithGranuleId.length > 0) {
+    const granulesByGranuleId = await getGranulesByGranuleId(knex, pgGranule.granule_id);
+    if (granulesByGranuleId.length > 0) {
       log.error('Could not write granule. It already exists.');
       return res.boom.conflict(
         `A granule already exists for granuleId: ${pgGranule.granule_id}`

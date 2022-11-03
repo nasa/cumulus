@@ -14,7 +14,7 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
-  getGranulesWithGranuleId,
+  getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
   upsertGranuleWithExecutionJoinRecord,
@@ -898,8 +898,8 @@ const writeGranulesFromMessage = async ({
       });
 
       // Check if granuleId exists across another collection
-      const granulesWithGranuleId = await getGranulesWithGranuleId(knex, granule.granuleId);
-      const granuleExistsAcrossCollection = granulesWithGranuleId.some(
+      const granulesByGranuleId = await getGranulesByGranuleId(knex, granule.granuleId);
+      const granuleExistsAcrossCollection = granulesByGranuleId.some(
         (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
       );
       if (granuleExistsAcrossCollection) {

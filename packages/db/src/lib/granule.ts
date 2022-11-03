@@ -257,7 +257,7 @@ export const getGranulesByApiPropertiesQuery = (
  * @param {string} granuleId - Granule ID
  * @returns {Promise<Array<PostgresGranuleRecord>} The returned list of record
  */
-export const getGranulesWithGranuleId = async (
+export const getGranulesByGranuleId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleId: string
 ): Promise<Array<PostgresGranuleRecord>> => {

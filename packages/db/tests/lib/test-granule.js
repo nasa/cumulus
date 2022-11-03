@@ -18,7 +18,7 @@ const {
   fakeGranuleRecordFactory,
   fakeProviderRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
-  getGranulesWithGranuleId,
+  getGranulesByGranuleId,
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
   migrationDir,
@@ -1026,7 +1026,7 @@ test('getUniqueGranuleByGranuleId() throws an error if no granules are found', a
   );
 });
 
-test('getGranulesWithGranuleId() returns a list of records that match the given granuleId', async (t) => {
+test('getGranulesByGranuleId() returns a list of records that match the given granuleId', async (t) => {
   const {
     collectionCumulusId,
     knex,
@@ -1055,7 +1055,7 @@ test('getGranulesWithGranuleId() returns a list of records that match the given 
     }),
     '*'
   );
-  const records = await getGranulesWithGranuleId(knex, granuleId);
+  const records = await getGranulesByGranuleId(knex, granuleId);
   t.deepEqual(records, [granule1, granule2]);
   t.teardown(async () => await Promise.all([
     granulePgModel.delete(knex, { cumulus_id: granule1.cumulus_id }),
@@ -1063,7 +1063,7 @@ test('getGranulesWithGranuleId() returns a list of records that match the given 
   ]));
 });
 
-test('getGranulesWithGranuleId() returns empty list when called with a granuleId that does not exist', async (t) => {
+test('getGranulesByGranuleId() returns empty list when called with a granuleId that does not exist', async (t) => {
   const {
     collectionCumulusId,
     knex,
@@ -1077,6 +1077,6 @@ test('getGranulesWithGranuleId() returns empty list when called with a granuleId
     }),
     '*'
   );
-  const records = await getGranulesWithGranuleId(knex, granuleId);
+  const records = await getGranulesByGranuleId(knex, granuleId);
   t.deepEqual(records, []);
 });
