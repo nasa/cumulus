@@ -1884,6 +1884,7 @@ test.serial('create (POST) returns bad request if a granule is submitted with a 
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
+// TODO -- is this test testing PUT behavior?
 test.serial('PUT replaces an existing granule in all data stores', async (t) => {
   const {
     esClient,
@@ -1937,11 +1938,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
     timestamp,
     queryFields: newQueryFields,
     updatedAt: actualGranule.updatedAt,
-    error: {},
-    beginningDateTime: actualGranule.beginningDateTime,
-    endingDateTime: actualGranule.endingDateTime,
-    productionDateTime: actualGranule.productionDateTime,
-    lastUpdateDateTime: actualGranule.lastUpdateDateTime,
+    // TODO - why was this specified?   Was it a default?
   });
 
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
@@ -1954,7 +1951,6 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
     status: 'completed',
     query_fields: newQueryFields,
     updated_at: actualPgGranule.updated_at,
-    error: {},
     last_update_date_time: actualPgGranule.last_update_date_time,
     beginning_date_time: actualPgGranule.beginning_date_time,
     ending_date_time: actualPgGranule.ending_date_time,
@@ -2122,7 +2118,6 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
 
   t.deepEqual(actualGranule, {
     ...fakeGranule,
-    error: {},
     timestamp: actualGranule.timestamp,
   });
 
@@ -2135,7 +2130,6 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
     removeNilProperties(actualPgGranule),
     {
       ...fakePgGranule,
-      error: {},
       timestamp: actualPgGranule.timestamp,
       cumulus_id: actualPgGranule.cumulus_id,
     }
@@ -2150,7 +2144,6 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
     esRecord,
     {
       ...fakeGranule,
-      error: {},
       timestamp: actualGranule.timestamp,
       _id: esRecord._id,
     }

@@ -375,6 +375,7 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   );
 });
 
+// TODO -- elasticsearch
 test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) => {
   const {
     collectionCumulusId,

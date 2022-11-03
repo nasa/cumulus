@@ -881,37 +881,6 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved throws on in
   }), { instanceOf: ValidationError });
 });
 
-test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved throws on inappropriate nullification of files', async (t) => {
-  const collectionCumulusId = 1;
-  const providerCumulusId = 2;
-  const pdrCumulusId = 4;
-
-  const fakeCollectionPgModel = {
-    getRecordCumulusId: () => Promise.resolve(collectionCumulusId),
-  };
-  const fakeProviderPgModel = {
-    getRecordCumulusId: () => Promise.resolve(providerCumulusId),
-  };
-  const fakePdrPgModel = {
-    getRecordCumulusId: () => Promise.resolve(pdrCumulusId),
-  };
-
-  const apiGranule = {
-    granuleId: cryptoRandomString({ length: 5 }),
-    collectionId: collectionCumulusId,
-    status: 'complete',
-    files: null,
-  };
-
-  await t.throwsAsync(translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
-    dynamoRecord: apiGranule,
-    knexOrTransaction: {},
-    collectionPgModel: fakeCollectionPgModel,
-    pdrPgModel: fakePdrPgModel,
-    providerPgModel: fakeProviderPgModel,
-  }), { instanceOf: ValidationError });
-});
-
 test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granule to Postgres, preserving null values', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
