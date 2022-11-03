@@ -8,9 +8,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v13.3.3-alpha] 2022-11-8
 
-- **CUMULUS-3116**
-  - Reverted ElasticSearch sort behavior to pre-13.3.0. Introducing a fallback sort on
-    `_uid` is thought to add additional latency to ElasticSearch requests.
+### Fixed
+  - **CUMULUS-3116**
+    - Reverted ElasticSearch sort behavior to pre-13.3.0. Introducing a fallback sort on
+      `_uid` is thought to add additional latency to ElasticSearch requests
+  - **CUMULUS-3104**
+    - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
