@@ -268,7 +268,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
   sandbox.restore();
 });
- 
+
 test.serial('applyWorkflowToGranules passed on queueUrl to applyWorkflow', async (t) => {
   await setUpExistingDatabaseRecords(t);
   const workflowName = 'test-workflow';
@@ -830,7 +830,6 @@ test.serial('bulk operation BULK_GRANULE_REINGEST sets the granules status to qu
 
   await verifyGranulesQueuedStatus(t);
 });
-
 
 test.serial('bulk operation BULK_GRANULE_REINGEST does not reingest granules if they do not exist in PostgreSQL', async (t) => {
   const result = await bulkOperation.handler({

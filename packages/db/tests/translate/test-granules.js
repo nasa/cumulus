@@ -470,7 +470,7 @@ test('translatePostgresGranuleToApiGranule returns an empty array for its files 
     result,
     expectedApiGranule
   );
-}); 
+});
 
 test('translatePostgresGranuleToApiGranule throws an error if the Collection does not match', async (t) => {
   const {
