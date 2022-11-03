@@ -2098,6 +2098,7 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
     status: 'completed',
     execution: t.context.executionUrl,
     duration: 47.125,
+    error: {},
   });
 
   await request(app)
