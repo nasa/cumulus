@@ -747,15 +747,31 @@ const writeGranuleFromApi = async (
   snsEventType
 ) => {
   try {
+    // TODO -- test
     // If published is set to null, set default value to false
     // instead of allowing nullish value
-    let publishedValue = published;
-    if (published === null) {
-      publishedValue = false;
-    }
+    const publishedValue = isNull(published) ? false : published;
     const defaultSetError = isNull(error) ? {} : error;
     const defaultSetFiles = isNull(files) ? [] : files;
     const defaultCreatedAt = isNull(createdAt) ? Date.now() : createdAt;
+    // Validate fields that cannot/shouldn't be null aren't
+    const invalidNullableFields = {
+      status,
+      createdAt,
+      updatedAt,
+      granuleId,
+      collectionId,
+      execution,
+    };
+    Object.entries(invalidNullableFields).forEach(([key, field]) => {
+      if (isNull(invalidNullableFields[field])) {
+        throw new Error(`granule.'${key}' cannot be removed as it is required and/or set to a default value on PUT.  Please set a value and try your request again`);
+      }
+    });
+    // Throw for invalid nullish value
+    if (isNull(execution)) {
+      throw new Error('Granule execution cannot be null, granules can only be assigned to an existing execution via the API object or POST /:granuleName/executions');
+    }
 
     const granule = {
       granuleId,
@@ -781,10 +797,7 @@ const writeGranuleFromApi = async (
       if (executionCumulusId === undefined) {
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
-    } else if (execution === null) {
-      throw new Error('Granule execution cannot be null, granules can only be assigned to an existing execution via the API object or POST /:granuleName/executions');
     }
-
     const apiGranuleRecord = await generateGranuleApiRecord({
       cmrTemporalInfo,
       cmrUtils,
@@ -918,6 +931,7 @@ const writeGranulesFromMessage = async ({
       // volume
       let files;
       if (isNull(granule.files)) files = [];
+
       files = granule.files ? await FileUtils.buildDatabaseFiles({
         s3: s3(),
         providerURL: buildURL(provider),
