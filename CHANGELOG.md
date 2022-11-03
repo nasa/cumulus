@@ -18,6 +18,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
 
+### Fixed
+
+- **CUMULUS-3104**
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
+
 ## [v13.4.0] 2022-10-31
 
 ### Notable changes
@@ -74,6 +79,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
+
+### Fixed
 - **CUMULUS-3104**
   - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
   - Sets default async_operation_image version to 43.
