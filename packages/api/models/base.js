@@ -1,6 +1,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const isEqual = require('lodash/isEqual');
 const Ajv = require('ajv');
 const pWaitFor = require('p-wait-for');
 
@@ -163,6 +164,9 @@ class Manager {
       },
     });
     this.removeAdditional = false;
+
+    this.allowNulls = false;
+    this.parseEmptyFilesArrayAsNull = false;
 
     this.validate = get(params, 'validate', true);
   }
@@ -455,7 +459,22 @@ class Manager {
     Object.entries(item).forEach(([fieldName, value]) => {
       if (itemKeyFieldNames.includes(fieldName)) return;
       if (value === undefined) return;
-
+      if (this.allowNulls) {
+        if (value === null) {
+          fieldsToDelete.push(`#${fieldName}`);
+          ExpressionAttributeNames[`#${fieldName}`] = fieldName;
+          return;
+        }
+      }
+      if (this.parseEmptyFilesArrayAsNull) {
+        // If files are [], assume removal of record as this value
+        // has that effect for PostGres
+        if (fieldName === 'files' && isEqual(value, [])) {
+          fieldsToDelete.push(`#${fieldName}`);
+          ExpressionAttributeNames[`#${fieldName}`] = fieldName;
+          return;
+        }
+      }
       ExpressionAttributeNames[`#${fieldName}`] = fieldName;
       ExpressionAttributeValues[`:${fieldName}`] = value;
 

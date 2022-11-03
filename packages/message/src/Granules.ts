@@ -250,15 +250,16 @@ export const generateGranuleApiRecord = async ({
   timeToArchive: number,
 }): Promise<ApiGranule> => {
   if (!granule.granuleId) throw new CumulusMessageError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
-
   if (!collectionId) {
     throw new CumulusMessageError('collectionId required to generate a granule record');
   }
-
-  // FUTURE: null files are currently not supported in update payloads
-  // RDS Phase 3 should revise logic to accept an explicit null value
+  // null files cannot be supported in generated API records
+  // TODO -- test this/validate nullable values are checked here
   if (files === null) {
     throw new CumulusMessageError('granule.files must not be null');
+  }
+  if (error === null) {
+    throw new CumulusMessageError('granule.error must not be null');
   }
 
   const {

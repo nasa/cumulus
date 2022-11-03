@@ -2,6 +2,8 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const cloneDeep = require('lodash/cloneDeep');
+
 const { v4: uuidv4 } = require('uuid');
 
 const Logger = require('@cumulus/logger');
@@ -150,6 +152,54 @@ const create = async (req, res) => {
   return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` });
 };
 
+const _setPutGranuleDefaults = (incomingApiGranule, isNewRecord) => {
+  const apiGranule = cloneDeep(incomingApiGranule);
+
+  // Throw on null for required values
+  // TODO dry this up
+  if (apiGranule.status === null) {
+    throw new Error('granule `status` field cannot be removed  as it is a required field'); // TODO - better error code
+  }
+  if (apiGranule.createdAt === null) {
+    throw new Error('granule `createdAt` field cannot be removed  as it is a required field'); // TODO - better error code
+  }
+  if (apiGranule.updatedAt === null) {
+    throw new Error('granule `updatedAt` field cannot be removed  as it is a required field'); // TODO - better error code
+  }
+  if (apiGranule.granuleId === null) {
+    throw new Error('granule `granuleId` field cannot be removed  as it is a required field'); // TODO - better error code
+  }
+  if (apiGranule.execution === 'null') {
+    throw new Error('executions cannot be directly modified via granule object API calls'); // TODO - better error code
+  }
+  if (apiGranule.error === null) {
+    apiGranule.error = {};
+  }
+
+  // Set API defaults only if new record
+  // TODO DRY this up
+  if (isNewRecord === true) {
+    if (!apiGranule.published) {
+      apiGranule.published = false;
+    }
+    if (!apiGranule.createdAt) {
+      apiGranule.createdAt = _createNewCreatedAtDate();
+    }
+    if (!apiGranule.updatedAt) { // TODO add write code to ensure values are the same
+      apiGranule.updatedAt = _createNewCreatedAtDate(); // TODO - rename?
+    }
+    if (!apiGranule.status) {
+      throw new Error('granule `status` field must be set'); // TODO - better error code
+    }
+  }
+
+  // Set nullish delete defaults
+  if (apiGranule.files === null) {
+    apiGranule.files = [];
+  }
+  return apiGranule;
+};
+
 /**
  * Update existing granule
  *
@@ -202,16 +252,8 @@ const putGranule = async (req, res) => {
   }
 
   try {
-    // Set API defaults only if new record
-    if (isNewRecord === true) {
-      if (!apiGranule.published) {
-        apiGranule.published = false;
-      }
-      if (!apiGranule.createdAt) {
-        apiGranule.createdAt = _createNewCreatedAtDate();
-      }
-    }
-    await updateGranuleFromApiMethod(apiGranule, knex, esClient);
+    const defaultedApiGranule = _setPutGranuleDefaults(apiGranule, isNewRecord);
+    await updateGranuleFromApiMethod(defaultedApiGranule, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));

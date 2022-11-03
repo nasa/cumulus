@@ -11,11 +11,13 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
 
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { IndexExistsError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const { Search, defaultIndexAlias } = require('./search');
 const mappings = require('./config/mappings.json');
@@ -315,9 +317,27 @@ async function upsertGranule({
   };
   await esClient.delete(delGranParams, { ignore: [404] });
 
-  const upsertDoc = updates;
+  // Remove nils in case there isn't a collision
+  const upsertDoc = removeNilProperties(updates);
+  let removeString = '';
 
-  let inline = 'ctx._source.putAll(params.doc)';
+  Object.entries(updates).forEach(([fieldName, value]) => {
+    // File removal is a special case as null gets set to []
+    if (fieldName === 'files' && isEqual(value, [])) {
+      removeString += `ctx._source.remove('${fieldName}'); `;
+    }
+    if (value === null) {
+      removeString += `ctx._source.remove('${fieldName}'); `;
+    }
+  });
+
+  let inlineDocWriteString = 'ctx._source.putAll(params.doc);';
+  if (removeString !== '') {
+    inlineDocWriteString += removeString;
+  }
+  let inline = inlineDocWriteString;
+  // Remove nullified values -- TODO test this in the es-client
+
   if (writeConstraints === true) {
     // Because both API write and message write chains use the granule model to store records, in
     // cases where createdAt does not exist on the granule, we assume overwrite protections are
@@ -325,7 +345,7 @@ async function upsertGranule({
     inline = `
     if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
       && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
-      ctx._source.putAll(params.doc);
+      ${inlineDocWriteString}
     } else {
       ctx.op = 'none';
     }
@@ -333,14 +353,18 @@ async function upsertGranule({
     if (!updates.createdAt) {
       inline = `
         if (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution)) {
-        ctx._source.putAll(params.doc);
-      } else {
+          ${inlineDocWriteString}
+        } else {
         ctx.op = 'none';
       }
       `;
     }
   }
-
+  /*   // Remove nullified values -- TODO test this in the es-client
+  if (removeString !== '') {
+    inline += removeString;
+  }
+ */
   return await esClient.update({
     index,
     type,
@@ -354,7 +378,7 @@ async function upsertGranule({
           doc: upsertDoc,
         },
       },
-      upsert: upsertDoc,
+      upsert: upsertDoc, // Todo remove null
     },
     refresh: refresh !== undefined ? refresh : inTestMode(),
     retry_on_conflict: 3,

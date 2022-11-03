@@ -5,6 +5,8 @@ const isArray = require('lodash/isArray');
 const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
 const omit = require('lodash/omit');
+const isUndefined = require('lodash/isUndefined');
+const omitBy = require('lodash/omitBy');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -16,8 +18,8 @@ const {
   FilePgModel,
   GranulePgModel,
   translateApiFiletoPostgresFile,
-  translateApiGranuleToPostgresGranule,
   upsertGranuleWithExecutionJoinRecord,
+  translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
 } = require('@cumulus/db');
 const {
   upsertGranule,
@@ -59,9 +61,11 @@ const { parseException } = require('@cumulus/message/utils');
 const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/translate/granules');
 
 const {
-  RecordDoesNotExist,
   CumulusMessageError,
+  RecordDoesNotExist,
 } = require('@cumulus/errors');
+
+const isNull = require('lodash/isNull');
 
 const FileUtils = require('../FileUtils');
 const {
@@ -75,7 +79,6 @@ const {
   getExecutionCumulusId,
   isStatusFinalState,
 } = require('./utils');
-
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
 /**
@@ -672,9 +675,14 @@ const writeGranuleRecordAndPublishSns = async ({
  * directly.
  *
  * @param {Object} granule -- API Granule object
- * @param {string} granule.granuleId - granule's id
- * @param {string} granule.collectionId - granule's collection id
- * @param {GranuleStatus} granule.status - ['running','failed','completed', 'queued']
+ * @param {string} [granule.files] - **May not be null, set [] to remove** -- granule files object
+ * @param {GranuleStatus} granule.status - **required field, may not be null,
+ *                                         or undefined**
+ *                                         -- ['running','failed','completed', 'queued']
+ * @param {string} [granule.granuleId] - *required field,may not be null,or undefined*
+ *                                        granule's id
+ * @param {string} [granule.collectionId] - *required field,may not be null,or undefined*
+ *                                        granule's collection id
  * @param {string} [granule.execution] - Execution URL to associate with this granule
  *                               must already exist in database.
  * @param {string} [granule.cmrLink] - url to CMR information for this granule.
@@ -709,14 +717,14 @@ const writeGranuleFromApi = async (
   {
     granuleId,
     collectionId,
+    createdAt,
     status,
     execution,
     cmrLink,
     published,
     pdrName,
     provider,
-    error = {}, // Future -- Move this logic to calling methods
-    createdAt,
+    error, // TODO test change?
     updatedAt,
     duration,
     productVolume,
@@ -745,7 +753,17 @@ const writeGranuleFromApi = async (
     if (published === null) {
       publishedValue = false;
     }
-    const granule = { granuleId, cmrLink, published: publishedValue, files, createdAt };
+    const defaultSetError = isNull(error) ? {} : error;
+    const defaultSetFiles = isNull(files) ? [] : files;
+    const defaultCreatedAt = isNull(createdAt) ? Date.now() : createdAt;
+
+    const granule = {
+      granuleId,
+      cmrLink,
+      published: publishedValue,
+      createdAt: defaultCreatedAt,
+      error: defaultSetError,
+    };
     const processingTimeInfo = {
       processingStartDateTime,
       processingEndDateTime,
@@ -763,30 +781,33 @@ const writeGranuleFromApi = async (
       if (executionCumulusId === undefined) {
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
+    } else if (execution === null) {
+      throw new Error('Granule execution cannot be null, granules can only be assigned to an existing execution via the API object or POST /:granuleName/executions');
     }
 
     const apiGranuleRecord = await generateGranuleApiRecord({
-      granule,
-      executionUrl: execution,
-      collectionId,
-      provider,
-      timeToArchive,
-      timeToPreprocess,
-      timestamp,
-      productVolume,
-      duration,
-      status,
-      files,
-      error,
-      pdrName,
-      queryFields,
-      processingTimeInfo,
-      updatedAt,
       cmrTemporalInfo,
       cmrUtils,
+      collectionId,
+      createdAt: defaultCreatedAt,
+      duration,
+      executionUrl: execution,
+      error: defaultSetError,
+      files: defaultSetFiles,
+      granule,
+      pdrName,
+      processingTimeInfo,
+      productVolume,
+      provider,
+      queryFields,
+      status,
+      timestamp,
+      timeToArchive,
+      timeToPreprocess,
+      updatedAt,
     });
 
-    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+    const postgresGranuleRecord = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
       dynamoRecord: apiGranuleRecord,
       knexOrTransaction: knex,
     });
@@ -798,7 +819,9 @@ const writeGranuleFromApi = async (
       granuleModel,
       granulePgModel,
       knex,
-      postgresGranuleRecord,
+      // TODO explicit test for this method re: undefined keys/values
+      // from translate.   Consider further refactor
+      postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
       snsEventType,
       writeConstraints: false,
     });
@@ -893,7 +916,9 @@ const writeGranulesFromMessage = async ({
       // `key`, which is required for the PostgreSQL schema. And
       // `size` which is used to calculate the granule product
       // volume
-      const files = granule.files ? await FileUtils.buildDatabaseFiles({
+      let files;
+      if (isNull(granule.files)) files = [];
+      files = granule.files ? await FileUtils.buildDatabaseFiles({
         s3: s3(),
         providerURL: buildURL(provider),
         files: granule.files,
@@ -904,7 +929,7 @@ const writeGranulesFromMessage = async ({
       const now = Date.now();
       const duration = getWorkflowDuration(workflowStartTime, now);
       const status = getGranuleStatus(workflowStatus, granule);
-      const updatedAt = now;
+      const updatedAt = now; // TODO make sure this default is consistent with api writes (?)
       const timestamp = now;
 
       let published = granule.published;
@@ -931,10 +956,11 @@ const writeGranulesFromMessage = async ({
         processingTimeInfo,
         queryFields,
         updatedAt,
-        cmrUtils,
+        cmrUtils, // TODO --do we pass this in in api granules?   Should the API do this *at all*?
       });
 
-      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule({
+      // Todo - do we need to just make this method remove only undefined?
+      const postgresGranuleRecord = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
         dynamoRecord: apiGranuleRecord,
         knexOrTransaction: knex,
       });
@@ -946,7 +972,7 @@ const writeGranulesFromMessage = async ({
         granuleModel,
         granulePgModel,
         knex,
-        postgresGranuleRecord,
+        postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
         snsEventType: 'Update',
         writeConstraints: true,
       });
@@ -956,7 +982,7 @@ const writeGranulesFromMessage = async ({
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to Dynamo', aggregateError);
+    log.error('Failed writing some granules to Dynamo/Postgres/Elasticsearch', aggregateError);
     throw aggregateError;
   }
   return results;

@@ -16,8 +16,10 @@ const {
   generateMoveFileParams,
 } = require('@cumulus/ingest/granule');
 
-const Manager = require('./base');
+const omitBy = require('lodash/omitBy');
+const isNull = require('lodash/isNull');
 
+const Manager = require('./base');
 const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
@@ -69,6 +71,8 @@ class Granule extends Manager {
     this.fileUtils = fileUtils;
     this.stepFunctionUtils = stepFunctionUtils;
     this.cmrUtils = cmrUtils;
+    this.allowNulls = true;
+    this.parseEmptyFilesArrayAsNull = true;
   }
 
   async get(...args) {
@@ -409,7 +413,10 @@ class Granule extends Manager {
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(
-      clonedGranuleRecord,
+      // Allow null values for PATCH deletion
+      // Functionally for new granules they're undefined and
+      // and should pass validation
+      omitBy(clonedGranuleRecord, isNull),
       this.schema,
       this.removeAdditional
     );

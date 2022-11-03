@@ -136,9 +136,6 @@ const validateApiToPostgresGranuleObject = (apiGranule : ApiGranule) => {
   if (isNull(apiGranule.status)) {
     throw new ValidationError('status cannot be null on a granule, granules must have a collection and a granule ID');
   }
-  if (isNull(apiGranule.files)) {
-    throw new ValidationError('files cannot be null on an api Granule object');
-  }
 };
 
 /**
