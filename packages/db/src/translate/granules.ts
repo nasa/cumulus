@@ -88,8 +88,6 @@ export const translatePostgresGranuleToApiGranule = async ({
     );
   }
 
-  // Explicit annotation here to defend against only .js usage
-  // of this translation method
   const apiGranule: ApiGranuleRecord = removeNilProperties({
     beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
     cmrLink: granulePgRecord.cmr_link,
@@ -111,7 +109,6 @@ export const translatePostgresGranuleToApiGranule = async ({
     published: granulePgRecord.published,
     queryFields: granulePgRecord.query_fields,
     status: granulePgRecord.status as GranuleStatus,
-    // TODO set this as an explicit type in PostgresGranule
     timestamp: granulePgRecord.timestamp?.getTime(),
     timeToArchive: granulePgRecord.time_to_archive,
     timeToPreprocess: granulePgRecord.time_to_process,
