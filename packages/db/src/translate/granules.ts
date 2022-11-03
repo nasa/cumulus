@@ -126,6 +126,15 @@ const returnNullOrDate = (dateVal: string | number | null) => {
   return new Date(dateVal);
 };
 
+/**
+ * Validate translation request doesn't contain invalid null files based
+ * on onPostgresGranule typings.  Throw if invalid nulls detected
+ *
+ * @param {Object} params
+ * @param {ApiGranule} apiGranule
+ *   Record from DynamoDB
+ * @returns {undefined}
+ */
 const validateApiToPostgresGranuleObject = (apiGranule : ApiGranule) => {
   if (isNil(apiGranule.collectionId)) {
     throw new ValidationError('collectionId cannot be undefined on a granule, granules must have a collection and a granule ID');
@@ -142,14 +151,14 @@ const validateApiToPostgresGranuleObject = (apiGranule : ApiGranule) => {
  * Generate a Postgres granule record from a DynamoDB record.
  *
  * @param {Object} params
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ * @param {ApiGranule} params.dynamoRecord
  *   Record from DynamoDB
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {Object} params.collectionPgModel - Instance of the collection database model
- * @param {Object} params.pdrPgModel - Instance of the pdr database model
- * @param {Object} params.providerPgModel - Instance of the provider database model
- * @returns {Object} A granule PG record
+ * @param {CollectionPgModel} params.collectionPgModel - Instance of the collection database model
+ * @param {PdrPgModel} params.pdrPgModel - Instance of the pdr database model
+ * @param {ProviderPgModel} params.providerPgModel - Instance of the provider database model
+ * @returns {PostgresGranule} A granule PG record
  */
 export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   dynamoRecord,
@@ -164,9 +173,10 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   pdrPgModel?: PdrPgModel,
   providerPgModel?: ProviderPgModel,
 }): Promise<PostgresGranule> => {
-  // Inappropriate Null values must be validated as the primary use in Core
-  // is the non-typescript API package
+  // Invalid Null values should be validated as the primary use in Core
+  // is the non-typescripted API package.
   validateApiToPostgresGranuleObject(dynamoRecord);
+
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -255,14 +265,14 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
  *   any null/undefined properties.
  *
  * @param {Object} params
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ * @param {ApiGranule} params.dynamoRecord
  *   Record from DynamoDB
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {Object} params.collectionPgModel - Instance of the collection database model
- * @param {Object} params.pdrPgModel - Instance of the pdr database model
- * @param {Object} params.providerPgModel - Instance of the provider database model
- * @returns {Object} A granule PG record with null/undefined properties removed
+ * @param {CollectionPgModel} params.collectionPgModel - Instance of the collection database model
+ * @param {PdrPgModel} params.pdrPgModel - Instance of the pdr database model
+ * @param {ProviderPgModel} params.providerPgModel - Instance of the provider database model
+ * @returns {PostgresGranule} A granule PG record with null/undefined properties removed
  */
 export const translateApiGranuleToPostgresGranule = async ({
   dynamoRecord,

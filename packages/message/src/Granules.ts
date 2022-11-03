@@ -253,6 +253,7 @@ export const generateGranuleApiRecord = async ({
   if (!collectionId) {
     throw new CumulusMessageError('collectionId required to generate a granule record');
   }
+
   // null files cannot be supported in generated API records
   // TODO -- test this/validate nullable values are checked here
   if (files === null) {
