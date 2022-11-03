@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     undefined, now changed to an empty array. 
   - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
   - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
+- **CUMULUS-3080**
+  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
 
 ### Fixed
 
