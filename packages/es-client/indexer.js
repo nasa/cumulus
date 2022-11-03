@@ -360,11 +360,7 @@ async function upsertGranule({
       `;
     }
   }
-  /*   // Remove nullified values -- TODO test this in the es-client
-  if (removeString !== '') {
-    inline += removeString;
-  }
- */
+
   return await esClient.update({
     index,
     type,
