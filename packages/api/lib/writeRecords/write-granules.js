@@ -859,7 +859,7 @@ const writeGranulesFromMessage = async ({
         s3: s3(),
         providerURL: buildURL(provider),
         files: granule.files,
-      }) : [];
+      }) : undefined;
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
       const productVolume = getGranuleProductVolume(files);

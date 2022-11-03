@@ -708,7 +708,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
     collectionId: granule.collectionId,
     cmrLink: 'updatedGranuled.com', // Only field we're changing
     status: granule.status,
-    files: [],
+    // files is undefined
   };
 
   const {
