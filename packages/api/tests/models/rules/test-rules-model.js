@@ -132,10 +132,6 @@ test('Creates and deletes a onetime rule', async (t) => {
   const rule = await rulesModel.create(ruleWithTrigger);
 
   t.is(rule.name, onetimeRule.name);
-
-  // delete rule
-  await rulesModel.delete(rule);
-  t.false(await rulesModel.exists(rule.name));
 });
 
 test('Creating a rule with an invalid name throws an error', async (t) => {
@@ -194,8 +190,6 @@ test('Enabling a disabled rule updates the state', async (t) => {
   t.is(updatedRule.name, rule.name);
   t.is(updatedRule.type, rule.type);
   t.is(updatedRule.state, 'ENABLED');
-
-  await rulesModel.delete(rule);
 });
 
 test.serial('Updating a valid rule to have an invalid schema throws an error and does not update triggers', async (t) => {
@@ -210,24 +204,6 @@ test.serial('Updating a valid rule to have an invalid schema throws an error and
     () => rulesModel.updateRuleTrigger(rule, updates),
     { name: 'SchemaValidationError' }
   );
-});
-
-test.serial('Deleting a kinesis style rule removes event mappings', async (t) => {
-  const { kinesisRule } = t.context;
-
-  // create and delete rule
-  const ruleWithTrigger = await rulesModel.createRuleTrigger(kinesisRule);
-  const createdRule = await rulesModel.create(ruleWithTrigger);
-  t.true(await rulesModel.exists(createdRule.name));
-
-  await rulesModel.delete(createdRule);
-
-  const kinesisEventMappings = await getKinesisEventMappings();
-  const consumerEventMappings = kinesisEventMappings[0].EventSourceMappings;
-  const logEventMappings = kinesisEventMappings[1].EventSourceMappings;
-
-  t.is(consumerEventMappings.length, 0);
-  t.is(logEventMappings.length, 0);
 });
 
 test.serial('Updating a kinesis type rule state does not change event source mappings', async (t) => {
@@ -250,7 +226,6 @@ test.serial('Updating a kinesis type rule state does not change event source map
   t.is(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
   // clean up
-  await rulesModel.delete(rule);
   await deleteKinesisEventSourceMappings();
 });
 
@@ -280,7 +255,6 @@ test.serial('Updating a kinesis type rule value results in new event source mapp
   t.truthy(updatedRule.rule.logEventArn);
   t.not(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
-  await rulesModel.delete(rule);
   await deleteKinesisEventSourceMappings();
 });
 
@@ -295,7 +269,6 @@ test.serial('Calling updateRuleTrigger() with a kinesis type rule value does not
 
   const rule = await rulesModel.get({ name: kinesisRule.name });
   t.teardown(async () => {
-    await rulesModel.delete(rule);
     await deleteKinesisEventSourceMappings();
   });
 
@@ -359,7 +332,6 @@ test.serial('Calling updateRuleTrigger() with an SNS type rule value does not de
   const updatedRule = await rulesModel.update(ruleWithUpdatedTrigger);
 
   t.teardown(async () => {
-    await rulesModel.delete(updatedRule);
     await awsServices.sns().deleteTopic({ TopicArn: topic1.TopicArn }).promise();
     await awsServices.sns().deleteTopic({ TopicArn: topic2.TopicArn }).promise();
   });
@@ -381,7 +353,6 @@ test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', as
   await rulesModel.create(ruleWithTrigger);
 
   const rule = await rulesModel.get({ name: kinesisRule.name });
-  t.teardown(() => rulesModel.delete(rule));
 
   const [
     consumerEventMappingsBefore,
@@ -466,7 +437,6 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
   t.truthy(updatedRule.rule.logEventArn);
   t.is(updatedRule.rule.logEventArn, rule.rule.logEventArn);
 
-  await rulesModel.delete(rule);
   await deleteKinesisEventSourceMappings();
 });
 
@@ -494,8 +464,6 @@ test.serial('Creating a kinesis type rule using existing event source mappings d
   t.is(newRule.rule.arn, rule.rule.arn);
   t.is(newRule.rule.logEventArn, rule.rule.logEventArn);
 
-  await rulesModel.delete(rule);
-  await rulesModel.delete(newRule);
   await deleteKinesisEventSourceMappings();
 });
 
@@ -522,7 +490,6 @@ test.serial('It does not delete event source mappings if they exist for other ru
   t.is(ruleTwo.rule.logEventArn, rule.rule.logEventArn);
 
   // delete the second rule, it should not delete the event source mapping
-  await rulesModel.delete(ruleTwo);
 
   // create third rule, it should use the existing event source mapping
   const ruleWithTrigger3 = await rulesModel.createRuleTrigger(kinesisRuleThree);
@@ -532,8 +499,6 @@ test.serial('It does not delete event source mappings if they exist for other ru
   t.is(ruleThree.rule.logEventArn, rule.rule.logEventArn);
 
   // Cleanup -- this is required for repeated local testing, else localstack retains rules
-  await rulesModel.delete(rule);
-  await rulesModel.delete(ruleThree);
   await deleteKinesisEventSourceMappings();
 });
 
@@ -721,8 +686,6 @@ test('Creating, updating, and deleting SQS type rule succeeds', async (t) => {
   t.is(updatedRule.rule.value, newQueues.queueUrl);
   t.is(get(updatedRule, 'meta.visibilityTimeout'), updates.meta.visibilityTimeout);
   t.is(get(updatedRule, 'meta.retries'), updates.meta.retries);
-
-  await rulesModel.delete(updatedRule);
 
   const queuesToDelete = [
     queues.queueUrl,

@@ -67,31 +67,6 @@ class Rule extends Manager {
     return r.RuleArn;
   }
 
-  async delete(item) {
-    switch (item.rule.type) {
-    case 'scheduled': {
-      const name = this.buildCloudWatchRuleName(item);
-      await CloudwatchEvents.deleteTarget(this.targetId, name);
-      await CloudwatchEvents.deleteEvent(name);
-      break;
-    }
-    case 'kinesis': {
-      await this.deleteKinesisEventSources(item);
-      break;
-    }
-    case 'sns': {
-      if (item.state === 'ENABLED') {
-        await this.deleteSnsTrigger(item);
-      }
-      break;
-    }
-    case 'sqs':
-    default:
-      break;
-    }
-    return super.delete({ name: item.name });
-  }
-
   async getAllRules() {
     return await this.dynamoDbClient.scan({
       names: {
@@ -552,76 +527,6 @@ class Rule extends Manager {
 
     if (get(rule, 'meta.retries') === undefined) set(rule, 'meta.retries', 3);
     return rule;
-  }
-
-  /**
-   * `queryRules` scans and returns rules in the DynamoDB table based on:
-   *
-   * - `rule.type`
-   * - `rule.state` (ENABLED or DISABLED)
-   * - sourceArn in the `rule.value` field
-   * - collection name and version in `rule.collection`
-   *
-   * @param {Object} queryParams - query params for filtering rules
-   * @param {string} queryParams.name - a collection name
-   * @param {string} queryParams.version - a collection version
-   * @param {string} queryParams.sourceArn - the ARN of the message source for the rule
-   * @param {string} queryParams.state - "ENABLED" or "DISABLED"
-   * @param {string} queryParams.type - "kinesis", "sns" "sqs", or "onetime"
-   * @returns {Array} List of zero or more rules found from table scan
-   * @throws {Error}
-   */
-  async queryRules({
-    name,
-    version,
-    sourceArn,
-    state = 'ENABLED',
-    type,
-  }) {
-    if (!['kinesis', 'sns', 'sqs', 'onetime'].includes(type)) {
-      throw new Error(`Unrecognized rule type: ${type}. Expected "kinesis", "sns", "sqs", or "onetime"`);
-    }
-    const names = {
-      '#st': 'state',
-      '#rl': 'rule',
-      '#tp': 'type',
-    };
-    let filter = '#st = :enabledState AND #rl.#tp = :ruleType';
-    const values = {
-      ':enabledState': state,
-      ':ruleType': type,
-    };
-    if (name) {
-      values[':collectionName'] = name;
-      names['#col'] = 'collection';
-      names['#nm'] = 'name';
-      filter += ' AND #col.#nm = :collectionName';
-    }
-    if (version) {
-      values[':collectionVersion'] = version;
-      names['#col'] = 'collection';
-      names['#vr'] = 'version';
-      filter += ' AND #col.#vr = :collectionVersion';
-    }
-    if (sourceArn) {
-      values[':ruleValue'] = sourceArn;
-      names['#vl'] = 'value';
-      filter += ' AND #rl.#vl = :ruleValue';
-    }
-    const rulesQueryResultsForSourceArn = await this.scan({
-      names,
-      filter,
-      values,
-    });
-
-    const rules = rulesQueryResultsForSourceArn.Items || [];
-    if (rules.length === 0) {
-      throw new Error(
-        `No rules found that matched any/all of source ARN ${sourceArn} and `
-        + `collection { name: ${name}, version: ${version} }`
-      );
-    }
-    return rules;
   }
 
   /**
