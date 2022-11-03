@@ -118,7 +118,8 @@ export const translatePostgresGranuleToApiGranule = async ({
   return apiGranule;
 };
 
-const returnNullOrDate = (dateVal: string | number | null) => {
+const returnNullOrUndefinedOrDate = (dateVal: string | number | null | undefined) => {
+  if (dateVal === undefined) return undefined;
   if (dateVal === null) return dateVal;
   return new Date(dateVal);
 };
@@ -216,42 +217,15 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
     pdr_cumulus_id,
     provider_cumulus_id,
     query_fields: dynamoRecord.queryFields,
-    beginning_date_time:
-      dynamoRecord.beginningDateTime === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.beginningDateTime),
-    ending_date_time:
-      dynamoRecord.endingDateTime === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.endingDateTime),
-    last_update_date_time:
-      dynamoRecord.lastUpdateDateTime === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.lastUpdateDateTime),
-    processing_end_date_time:
-      dynamoRecord.processingEndDateTime === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.processingEndDateTime),
-    processing_start_date_time:
-      dynamoRecord.processingStartDateTime === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.processingStartDateTime),
-    production_date_time:
-      dynamoRecord.productionDateTime === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.productionDateTime),
-    timestamp:
-      dynamoRecord.timestamp === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.timestamp),
-    created_at:
-      dynamoRecord.createdAt === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.createdAt),
-    updated_at:
-      dynamoRecord.updatedAt === undefined
-        ? undefined
-        : returnNullOrDate(dynamoRecord.updatedAt),
+    beginning_date_time: returnNullOrUndefinedOrDate(dynamoRecord.beginningDateTime),
+    ending_date_time: returnNullOrUndefinedOrDate(dynamoRecord.endingDateTime),
+    last_update_date_time: returnNullOrUndefinedOrDate(dynamoRecord.lastUpdateDateTime),
+    processing_end_date_time: returnNullOrUndefinedOrDate(dynamoRecord.processingEndDateTime),
+    processing_start_date_time: returnNullOrUndefinedOrDate(dynamoRecord.processingStartDateTime),
+    production_date_time: returnNullOrUndefinedOrDate(dynamoRecord.productionDateTime),
+    timestamp: returnNullOrUndefinedOrDate(dynamoRecord.timestamp),
+    created_at: returnNullOrUndefinedOrDate(dynamoRecord.createdAt),
+    updated_at: returnNullOrUndefinedOrDate(dynamoRecord.updatedAt),
   };
 
   return granuleRecord;
