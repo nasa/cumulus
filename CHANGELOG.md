@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v11.1.8] 2022-11-09 [BACKPORT]
+
+### Changed
+
+- **CUMULUS-3080**
+  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
+
 ## [v11.1.7] 2022-10-05 [BACKPORT]
 
 ### Fixed
