@@ -1,6 +1,6 @@
 {
   "lerna": "3.20.2",
-  "version": "13.3.2",
+  "version": "13.4.0",
   "packages": [
     "example",
     "example/lambdas/*",

@@ -430,7 +430,7 @@ test.serial('migrateGranuleRecord handles nullable fields on source granule data
   delete testGranule.cmrLink;
   delete testGranule.published;
   delete testGranule.duration;
-  delete testGranule.files;
+  testGranule.files = [];
   delete testGranule.error;
   delete testGranule.productVolume;
   delete testGranule.timeToPreprocess;
@@ -630,6 +630,7 @@ test.serial('migrateGranuleRecord supports undefined values in dynamo and overwr
     'updatedAt',
     'status',
     'execution',
+    'files',
   ];
   const nullableGranuleFields = omit(testGranule, nonNullablefields);
 
@@ -882,7 +883,7 @@ test.serial('migrateGranuleAndFilesViaTransaction processes granule with no file
     testGranule,
   } = t.context;
 
-  delete testGranule.files;
+  testGranule.files = [];
 
   await migrateGranuleAndFilesViaTransaction({
     dynamoRecord: testGranule,

@@ -107,9 +107,9 @@ describe('The Ingest Granule failure workflow', () => {
         },
       });
     } catch (error) {
-      console.log(`*** error.apiMessage ${error.apiMessage}`);
-      const apiMessage = JSON.parse(error.apiMessage);
-      if (apiMessage.name !== 'NoSuchBucket') {
+      console.log(`***error deleteGranule ${error.statusCode} ***${error.apiMessage}`);
+      const apiMessage = JSON.parse(error.apiMessage || '{}');
+      if (apiMessage.name && apiMessage.name !== 'NoSuchBucket') {
         throw new Error(`Could not complete test cleanup ${error.apiMessage}`);
       }
     }
@@ -146,7 +146,7 @@ describe('The Ingest Granule failure workflow', () => {
         prefix: config.stackName,
         arn: executionArn,
       });
-      executionStatus = JSON.parse(executionStatusResponse.body);
+      executionStatus = JSON.parse(executionStatusResponse.body).data;
 
       // Wait for execution to be failed before getting execution record, so that
       // the record should have the correct status

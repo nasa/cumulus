@@ -245,7 +245,7 @@ test('compareEsGranuleAndApiGranule returns true for matching granules', (t) => 
   const granule = {
     granuleId: cryptoRandomString({ length: 5 }),
   };
-  const granule2 = { ...granule };
+  const granule2 = { ...granule, files: [] };
   t.true(compareEsGranuleAndApiGranule(granule, granule2));
 });
 
