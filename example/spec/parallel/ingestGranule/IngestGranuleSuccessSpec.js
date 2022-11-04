@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
+const got = require('got');
 const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
@@ -1339,7 +1340,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('When accessing a workflow execution via the API', () => {
       let executionStatus;
-
+      let presignedS3Url;
       let subTestSetupError;
 
       beforeAll(async () => {
@@ -1349,7 +1350,7 @@ describe('The S3 Ingest Granules workflow', () => {
             arn: workflowExecutionArn,
           });
 
-          executionStatus = JSON.parse(executionStatusResponse.body);
+          ({ data: executionStatus, presignedS3Url } = JSON.parse(executionStatusResponse.body));
         } catch (error) {
           subTestSetupError = error;
         }
@@ -1358,6 +1359,15 @@ describe('The S3 Ingest Granules workflow', () => {
       beforeEach(() => {
         if (beforeAllError) fail(beforeAllError);
         if (subTestSetupError) fail(subTestSetupError);
+      });
+
+      it('returns the presignedS3Url for download execution status', async () => {
+        failOnSetupError([beforeAllError, subTestSetupError]);
+
+        expect(presignedS3Url).toBeTruthy();
+        expect(executionStatus).toBeTruthy();
+        const executionStatusFromS3 = await got(presignedS3Url).json();
+        expect(executionStatusFromS3).toEqual(executionStatus);
       });
 
       it('returns the inputs and outputs for the entire workflow', () => {
