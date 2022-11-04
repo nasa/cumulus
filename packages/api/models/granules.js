@@ -11,6 +11,7 @@ const Logger = require('@cumulus/logger');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,
+  ValidationError,
 } = require('@cumulus/errors');
 const {
   generateMoveFileParams,
@@ -73,6 +74,14 @@ class Granule extends Manager {
     this.cmrUtils = cmrUtils;
     this.allowNulls = true;
     this.parseEmptyFilesArrayAsNull = true;
+    this.invalidNullFields = [
+      'granuleId',
+      'collectionId',
+      'status',
+      'updatedAt',
+      'execution',
+      'createdAt',
+    ];
   }
 
   async get(...args) {
@@ -334,6 +343,13 @@ class Granule extends Manager {
    */
   async _storeGranuleRecord(granuleRecord, writeConstraints = true) {
     const mutableFieldNames = this._getMutableFieldNames(granuleRecord, writeConstraints);
+    // Validate values that shouldn't be set to null are not
+    Object.keys(granuleRecord).forEach((key) => {
+      if (granuleRecord[key] === null && this.invalidNullFields.includes(key)) {
+        throw new ValidationError(`Attempted DynamoDb write with invalid key ${key} set to null.  Please remove or change this field and retry`);
+      }
+    });
+
     const updateParams = this._buildDocClientUpdateParams({
       item: granuleRecord,
       itemKey: { granuleId: granuleRecord.granuleId },

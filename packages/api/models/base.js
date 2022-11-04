@@ -457,19 +457,21 @@ class Manager {
     const itemKeyFieldNames = Object.keys(itemKey);
 
     Object.entries(item).forEach(([fieldName, value]) => {
+      // If the value is the index key, don't include it in the params
       if (itemKeyFieldNames.includes(fieldName)) return;
+
       if (value === undefined) return;
       if (this.allowNulls) {
-        if (value === null) {
+        if (value === null && mutableFieldNames.includes(fieldName)) {
           fieldsToDelete.push(`#${fieldName}`);
           ExpressionAttributeNames[`#${fieldName}`] = fieldName;
           return;
         }
       }
       if (this.parseEmptyFilesArrayAsNull) {
-        // If files are [], assume removal of record as this value
+        // If files are [], *and* files are assume removal of record as this value
         // has that effect for PostGres
-        if (fieldName === 'files' && isEqual(value, [])) {
+        if (fieldName === 'files' && mutableFieldNames.includes(fieldName) && isEqual(value, [])) {
           fieldsToDelete.push(`#${fieldName}`);
           ExpressionAttributeNames[`#${fieldName}`] = fieldName;
           return;
