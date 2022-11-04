@@ -15,7 +15,7 @@ const isEqual = require('lodash/isEqual');
 
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { IndexExistsError } = require('@cumulus/errors');
+const { IndexExistsError, ValidationError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeNilProperties } = require('@cumulus/common/util');
 
@@ -286,6 +286,15 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
   );
 }
 
+const granuleInvalidNullFields = [
+  'granuleId',
+  'collectionId',
+  'status',
+  'updatedAt',
+  'execution',
+  'createdAt',
+];
+
 /**
  * Upserts a granule in Elasticsearch
  *
@@ -306,6 +315,11 @@ async function upsertGranule({
   type = 'granule',
   refresh,
 }, writeConstraints = true) {
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] === null && granuleInvalidNullFields.includes(key)) {
+      throw new ValidationError(`Attempted DynamoDb write with invalid key ${key} set to null.  Please remove or change this field and retry`);
+    }
+  });
   // If the granule exists in 'deletedgranule', delete it first before inserting the granule
   // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
   const delGranParams = {
@@ -321,6 +335,7 @@ async function upsertGranule({
   const upsertDoc = removeNilProperties(updates);
   let removeString = '';
 
+  // Set field removal for null values
   Object.entries(updates).forEach(([fieldName, value]) => {
     // File removal is a special case as null gets set to []
     if (fieldName === 'files' && isEqual(value, [])) {
@@ -336,7 +351,6 @@ async function upsertGranule({
     inlineDocWriteString += removeString;
   }
   let inline = inlineDocWriteString;
-  // Remove nullified values -- TODO test this in the es-client
 
   if (writeConstraints === true) {
     // Because both API write and message write chains use the granule model to store records, in
@@ -748,4 +762,5 @@ module.exports = {
   deleteGranule,
   deleteExecution,
   deleteReconciliationReport,
+  granuleInvalidNullFields,
 };
