@@ -183,6 +183,23 @@ const sortFilesByBuckets = (f1, f2) => (
   (f1.bucket > f2.bucket) ? 1 : ((f2.bucket > f1.bucket) ? -1 : 0)
 );
 
+const createGranuleExecution = async (t, status, stateMachineName) => {
+  const executionName = cryptoRandomString({ length: 5 });
+  const executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${executionName}`;
+  const executionUrl = getExecutionUrlFromArn(executionArn);
+  const execution = fakeExecutionRecordFactory({
+    arn: executionArn,
+    url: executionUrl,
+    status,
+  });
+
+  const [pgExecution] = await t.context.executionPgModel.create(
+    t.context.knex,
+    execution
+  );
+  return { pgExecution, executionName, executionUrl };
+};
+
 test.before(async (t) => {
   process.env.GranulesTable = `write-granules-${cryptoRandomString({ length: 10 })}`;
 
@@ -251,11 +268,11 @@ test.beforeEach(async (t) => {
     Token: SubscriptionArn,
   }).promise();
 
-  const stateMachineName = cryptoRandomString({ length: 5 });
-  t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;
+  t.context.stateMachineName = cryptoRandomString({ length: 5 });
+  t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${t.context.stateMachineName}`;
 
   t.context.executionName = cryptoRandomString({ length: 5 });
-  t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${stateMachineName}:${t.context.executionName}`;
+  t.context.executionArn = `arn:aws:states:us-east-1:12345:execution:${t.context.stateMachineName}:${t.context.executionName}`;
   t.context.executionUrl = getExecutionUrlFromArn(t.context.executionArn);
   const execution = fakeExecutionRecordFactory({
     arn: t.context.executionArn,
@@ -776,6 +793,163 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
   );
   t.deepEqual(dynamoRecord, removeNilProperties(expectedGranule));
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
+});
+
+test.serial('writeGranulesFromMessage() on re-write saves granule records to DynamoDB/PostgreSQL/Elasticsearch/SNS with expected values nullified when granule is updating to running', async (t) => {
+  const {
+    collection,
+    collectionCumulusId,
+    cumulusMessage,
+    esGranulesClient,
+    executionCumulusId,
+    files,
+    granuleModel,
+    granulePgModel,
+    knex,
+    pdr,
+    provider,
+    providerCumulusId,
+  } = t.context;
+
+  const validNullableGranuleKeys = [
+    'beginningDateTime',
+    'cmrLink',
+    'createdAt',
+    'duration',
+    'endingDateTime',
+    'lastUpdateDateTime',
+    'pdrName',
+    'processingEndDateTime',
+    'processingStartDateTime',
+    'productionDateTime',
+    'productVolume',
+    'provider',
+    'published',
+    'queryFields',
+    'timestamp',
+    'timeToArchive',
+    'timeToPreprocess',
+    'updatedAt',
+  ];
+
+  // TODO: t.context this
+  const completeGranule = fakeGranuleFactoryV2({
+    beginningDateTime: new Date().toString(),
+    cmrLink: 'example.com',
+    collectionId: constructCollectionId(collection.name, collection.version),
+    duration: 1000,
+    endingDateTime: new Date().toString(),
+    error: { errorKey: 'errorValue' },
+    files: files,
+    lastUpdateDateTime: new Date().toString(),
+    pdrName: pdr.name,
+    processingEndDateTime: new Date().toString(),
+    processingStartDateTime: new Date().toString(),
+    productionDateTime: new Date().toString(),
+    productVolume: '1000',
+    provider: provider.name,
+    published: true,
+    queryFields: { queryFieldsKey: 'queryFieldsValue' },
+    status: 'completed',
+    timeToArchive: 1000,
+    timeToPreprocess: 1000,
+    updatedAt: Date.now(),
+  });
+
+  const granuleId = completeGranule.granuleId;
+
+  // Message must be completed or files will not update
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.granules[0] = completeGranule;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const originalPostgresGranuleRecord = await granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const originalApiFormattedPostgresGranule =
+  await translatePostgresGranuleToApiGranule({
+    granulePgRecord: originalPostgresGranuleRecord,
+    knexOrTransaction: knex,
+  });
+  const { executionName, pgExecution, executionUrl } = await createGranuleExecution(t, 'running', t.context.stateMachineName);
+
+  const updatedGranule = {
+    ...completeGranule,
+    timestamp: Date.now(),
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    execution: executionName,
+  };
+
+  validNullableGranuleKeys.forEach((key) => {
+    updatedGranule[key] = null;
+  });
+  cumulusMessage.payload.granules[0] = updatedGranule;
+  cumulusMessage.cumulus_meta.workflow_start_time = Date.now();
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.cumulus_meta.execution_name = executionName;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    providerCumulusId,
+    knex,
+    granuleModel,
+    executionCumulusId: pgExecution.cumulus_id,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const apiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
+      granulePgRecord: postgresRecord,
+      knexOrTransaction: knex,
+    });
+  const esRecord = await esGranulesClient.get(granuleId);
+
+  // We expect nothing other than these fields to change because of the write rules:
+  const expectedGranule = {
+    ...originalApiFormattedPostgresGranule,
+    createdAt: cumulusMessage.cumulus_meta.workflow_start_time,
+    timestamp: dynamoRecord.timestamp,
+    updatedAt: dynamoRecord.updatedAt,
+    status: cumulusMessage.meta.status,
+    execution: executionUrl,
+  };
+
+  // Files array order is not promised to match between datastores
+  [esRecord, dynamoRecord, expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
+  // Translated postgres granule matches expected updatedGranule
+  // minus model defaults
+  t.deepEqual(
+    apiFormattedPostgresGranule,
+    expectedGranule
+  );
+  t.deepEqual(dynamoRecord, expectedGranule);
+  // ES fails here because of bad write logic in <TICKET>
+  // This test is explicitly called out to be fixed, but for now set it to validate
+  // invalid running behavior:
+  const expectedEsGranule = {
+    ...expectedGranule,
+    published: false,
+    duration: esRecord.duration,
+  };
+  delete expectedEsGranule.cmrLink;
+
+  t.deepEqual(omit(esRecord, ['_id']), expectedEsGranule);
 });
 
 test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
