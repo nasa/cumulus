@@ -4184,7 +4184,7 @@ test.serial('writeGranuleFromApi() saves granule record with error set with expe
     granulePgModel,
   } = t.context;
 
-  const result = await writeGranuleFromApi({ ...granule, error: null } , knex, esClient, 'Create');
+  const result = await writeGranuleFromApi({ ...granule, error: null }, knex, esClient, 'Create');
   t.is(result, `Wrote Granule ${granuleId}`);
 
   const updatedError = { fakeErrorKey: 'fakeErrorValue' };
