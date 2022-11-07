@@ -169,7 +169,7 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord) => {
       }
     });
     if (!apiGranule.status) {
-      throw new Error('granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request'); // TODO - better error code
+      throw new Error('granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request');
     }
   }
   return apiGranule;
