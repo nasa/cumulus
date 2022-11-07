@@ -95,7 +95,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
     error: granulePgRecord.error,
     execution: executionUrls[0] ? executionUrls[0].url : undefined,
-    files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : undefined,
+    files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
     granuleId: granulePgRecord.granule_id,
     lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
     pdrName: pdr ? pdr.name : undefined,

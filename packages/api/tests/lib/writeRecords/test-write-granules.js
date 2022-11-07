@@ -992,7 +992,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
   });
 
   // Files were removed from all datastores
-  t.is(apiGranule.files, undefined);
+  t.deepEqual(apiGranule.files, []);
   t.deepEqual(dynamoGranule.files, []);
   t.deepEqual(esGranule.files, []);
 });
@@ -2224,7 +2224,7 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
   });
 
   // Files were removed from all datastores
-  t.is(apiGranule.files, undefined);
+  t.deepEqual(apiGranule.files, []);
   t.deepEqual(dynamoGranule.files, []);
   t.deepEqual(esGranule.files, []);
 });
