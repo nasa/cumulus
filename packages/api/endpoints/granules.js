@@ -162,7 +162,6 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord) => {
     error: {},
   };
   // Set API defaults only if new record
-  // TODO -- Test
   if (isNewRecord === true) {
     Object.keys(newGranuleDefaults).forEach((key) => {
       if (!apiGranule[key]) {
