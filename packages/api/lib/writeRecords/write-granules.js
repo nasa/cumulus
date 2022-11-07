@@ -940,7 +940,7 @@ const writeGranulesFromMessage = async ({
       const now = Date.now();
       const duration = getWorkflowDuration(workflowStartTime, now);
       const status = getGranuleStatus(workflowStatus, granule);
-      const updatedAt = now; // TODO make sure this default is consistent with api writes (?)
+      const updatedAt = now;
       const timestamp = now;
 
       let published = granule.published;
@@ -967,10 +967,8 @@ const writeGranulesFromMessage = async ({
         processingTimeInfo,
         queryFields,
         updatedAt,
-        cmrUtils, // TODO --do we pass this in in api granules?   Should the API do this *at all*?
+        cmrUtils,
       });
-
-      // Todo - do we need to just make this method remove only undefined?
       const postgresGranuleRecord = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
         dynamoRecord: apiGranuleRecord,
         knexOrTransaction: knex,
