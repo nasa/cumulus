@@ -4108,6 +4108,172 @@ test.serial('writeGranuleFromApi() saves granule record with publish set to null
   t.false(esRecord.published);
 });
 
+test.serial('writeGranuleFromApi() saves granule record with publish set to true with publish value set to true to all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi({ ...granule, published: false }, knex, esClient, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const originalPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  t.true(originalPostgresRecord.published);
+
+  const updateResult = await writeGranuleFromApi({ ...granule, published: true }, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.true(dynamoRecord.published);
+  t.true(postgresRecord.published);
+  t.true(esRecord.published);
+});
+
+test.serial('writeGranuleFromApi() saves granule record with error set to null with error value set to "{}" to all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi(granule, knex, esClient, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const updateResult = await writeGranuleFromApi({ ...granule, error: null }, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.deepEqual(dynamoRecord.error, {});
+  t.deepEqual(granulePgRecord.error, {});
+  t.deepEqual(esRecord.error, {});
+});
+
+test.serial('writeGranuleFromApi() saves granule record with error set with expected value to all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi({ ...granule, error: null } , knex, esClient, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const updatedError = { fakeErrorKey: 'fakeErrorValue' };
+  const updateResult = await writeGranuleFromApi({ ...granule, error: updatedError }, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.deepEqual(dynamoRecord.error, updatedError);
+  t.deepEqual(granulePgRecord.error, updatedError);
+  t.deepEqual(esRecord.error, updatedError);
+});
+
+test.serial('writeGranuleFromApi() saves granule record with files set to null with file value set to undefined to all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi(granule, knex, esClient, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const updateResult = await writeGranuleFromApi({ ...granule, files: null }, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+  t.deepEqual(dynamoRecord.files, undefined);
+  t.deepEqual(translatedPgRecord.files, undefined);
+  t.deepEqual(esRecord.files, undefined);
+});
+
+test.serial('writeGranuleFromApi() saves granule record on overwrite with files set to all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi({ ...granule, files: null }, knex, esClient, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const updateResult = await writeGranuleFromApi(granule, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+
+  [esRecord, dynamoRecord, granule, translatedPgRecord].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
+  t.deepEqual(dynamoRecord.files, granule.files);
+  t.deepEqual(translatedPgRecord.files, granule.files);
+  t.deepEqual(esRecord.files, granule.files);
+});
+
 test.serial('writeGranulesFromMessage() sets `published` to false if null value is set', async (t) => {
   const {
     collectionCumulusId,

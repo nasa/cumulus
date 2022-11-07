@@ -747,7 +747,6 @@ const writeGranuleFromApi = async (
   snsEventType
 ) => {
   try {
-    // TODO -- test
     // If published is set to null, set default value to false
     // instead of allowing nullish value
     const publishedValue = isNull(published) ? false : published;
