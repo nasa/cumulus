@@ -831,8 +831,6 @@ const writeGranuleFromApi = async (
       granuleModel,
       granulePgModel,
       knex,
-      // TODO explicit test for this method re: undefined keys/values
-      // from translate.   Consider further refactor
       postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
       snsEventType,
       writeConstraints: false,
