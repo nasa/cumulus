@@ -208,11 +208,21 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
     })
   );
 
-  await deleteGranuleAndFiles({
-    knex: knex,
+  const details = await deleteGranuleAndFiles({
+    knex: t.context.knex,
+    dynamoGranule: newDynamoGranule,
     pgGranule: newPgGranule,
     esClient,
   });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newDynamoGranule.granuleId,
+  });
+  t.is(details.deletedFiles.length, newDynamoGranule.files.length);
+
+  t.false(await granuleModel.exists({ granuleId: newDynamoGranule.granuleId }));
 
   t.false(await granulePgModel.exists(
     knex,
@@ -260,11 +270,22 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
     cumulus_id: pgGranule.cumulus_id,
   });
 
-  await deleteGranuleAndFiles({
+  const details = await deleteGranuleAndFiles({
     knex: t.context.knex,
     pgGranule: newPgGranule,
     esClient: t.context.esClient,
   });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newDynamoGranule.granuleId,
+  });
+  t.is(details.deletedFiles.length, 0);
+
+  t.false(
+    await granuleModel.exists({ granuleId: newDynamoGranule.granuleId })
+  );
 
   t.false(await granulePgModel.exists(
     t.context.knex,
@@ -454,19 +475,30 @@ test.serial(
 
     // Add granule to elasticsearch
 
-    const esGranulesClient = new Search(
-      {},
-      'granule',
-      process.env.ES_INDEX
-    );
+  const details = await deleteGranuleAndFiles({
+    knex: t.context.knex,
+    dynamoGranule: newGranule,
+    pgGranule: undefined,
+    esClient: t.context.esClient,
+  });
 
-    await t.context.esClient.index({
-      index: t.context.esIndex,
-      type: 'granule',
-      id: newGranule.granuleId,
-      parent: 'fakeCollectionId',
-      body: newGranule,
-    });
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.is(details.deletedFiles.length, newGranule.files.length);
+
+  // Granule should have been removed from Dynamo
+  t.false(
+    await granuleModel.exists({ granuleId })
+  );
+  t.false(
+    await t.context.esGranulesClient.exists(
+      granuleId,
+      newGranule.collectionId
+    )
+  );
 
     await deleteGranuleAndFiles({
       knex: t.context.knex,

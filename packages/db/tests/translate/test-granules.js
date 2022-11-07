@@ -3,10 +3,12 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { ValidationError } = require('@cumulus/errors');
+const { removeNilProperties } = require('@cumulus/common/util');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   translateApiGranuleToPostgresGranule,
+  translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
   translatePostgresGranuleToApiGranule,
 } = require('../../dist/translate/granules');
 
@@ -430,7 +432,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
   );
 });
 
-test('translatePostgresGranuleToApiGranule omits files property from API granule if there are no PostgreSQL files', async (t) => {
+test('translatePostgresGranuleToApiGranule returns an empty array for its files property if there are no PostgreSQL files', async (t) => {
   const {
     knex,
     pdrPgModel,
@@ -455,6 +457,7 @@ test('translatePostgresGranuleToApiGranule omits files property from API granule
     granuleId: pgGranule.granule_id,
     status: pgGranule.status,
     updatedAt: pgGranule.updated_at.getTime(),
+    files: [],
   };
 
   const result = await translatePostgresGranuleToApiGranule({
@@ -618,7 +621,7 @@ test('translatePostgresGranuleToApiGranule handles granule with no associated ex
   );
 });
 
-test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
+test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granule to Postgres', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
   const pdrCumulusId = 4;
@@ -632,6 +635,9 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     pdrName: 'pdr-name',
     provider: 'provider',
     published: false,
+    queryFields: {
+      foo: cryptoRandomString({ length: 8 }),
+    },
     status: 'running',
     files: [
       {
@@ -682,7 +688,7 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,
     published: apiGranule.published,
-    query_fields: apiGranule.query_fields,
+    query_fields: apiGranule.queryFields,
     status: apiGranule.status,
     time_to_archive: apiGranule.timeToArchive,
     time_to_process: apiGranule.timeToPreprocess,
@@ -690,17 +696,274 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     updated_at: new Date(apiGranule.updatedAt),
   };
 
-  const result = await translateApiGranuleToPostgresGranule(
-    apiGranule,
-    fakeDbClient,
-    fakeCollectionPgModel,
-    fakePdrPgModel,
-    fakeProviderPgModel
-  );
+  const result = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+    dynamoRecord: apiGranule,
+    knexOrTransaction: fakeDbClient,
+    collectionPgModel: fakeCollectionPgModel,
+    pdrPgModel: fakePdrPgModel,
+    providerPgModel: fakeProviderPgModel,
+  });
 
   t.deepEqual(
     result,
     expectedPostgresGranule
+  );
+});
+
+test('translateApiGranuleToPostgresGranuleWithoutNilsRemoved does not remove null/undefined fields', async (t) => {
+  const collectionCumulusId = 1;
+  const providerCumulusId = 2;
+  const pdrCumulusId = 4;
+  const dateString = new Date().toString();
+
+  const apiGranule = {
+    cmrLink: cryptoRandomString({ length: 10 }),
+    duration: 10,
+    granuleId: cryptoRandomString({ length: 5 }),
+    collectionId: constructCollectionId('name', 'version'),
+    pdrName: 'pdr-name',
+    provider: 'provider',
+    published: false,
+    status: 'running',
+    files: [
+      {
+        bucket: 'null',
+        key: 'null',
+      },
+    ],
+    beginningDateTime: dateString,
+    createdAt: Date.now() - 200 * 1000,
+    endingDateTime: dateString,
+    error: {},
+    lastUpdateDateTime: dateString,
+    processingEndDateTime: dateString,
+    processingStartDateTime: dateString,
+    productionDateTime: dateString,
+    timestamp: Date.now(),
+    timeToArchive: 0,
+    updatedAt: Date.now(),
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(collectionCumulusId),
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: () => Promise.resolve(providerCumulusId),
+  };
+  const fakePdrPgModel = {
+    getRecordCumulusId: () => Promise.resolve(pdrCumulusId),
+  };
+
+  const expectedPostgresGranule = {
+    beginning_date_time: new Date(apiGranule.beginningDateTime),
+    cmr_link: apiGranule.cmrLink,
+    collection_cumulus_id: collectionCumulusId,
+    created_at: new Date(apiGranule.createdAt),
+    duration: apiGranule.duration,
+    ending_date_time: new Date(apiGranule.endingDateTime),
+    error: apiGranule.error,
+    granule_id: apiGranule.granuleId,
+    last_update_date_time: new Date(apiGranule.lastUpdateDateTime),
+    pdr_cumulus_id: pdrCumulusId,
+    processing_end_date_time: new Date(apiGranule.processingEndDateTime),
+    processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    product_volume: undefined, // Undefined on apiGranule
+    production_date_time: new Date(apiGranule.productionDateTime),
+    provider_cumulus_id: providerCumulusId,
+    published: apiGranule.published,
+    query_fields: undefined, // Undefined on apiGranule
+    status: apiGranule.status,
+    time_to_archive: apiGranule.timeToArchive,
+    time_to_process: undefined, // Undefined on apiGranule
+    timestamp: new Date(apiGranule.timestamp),
+    updated_at: new Date(apiGranule.updatedAt),
+  };
+
+  const result = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+    dynamoRecord: apiGranule,
+    knexOrTransaction: fakeDbClient,
+    collectionPgModel: fakeCollectionPgModel,
+    pdrPgModel: fakePdrPgModel,
+    providerPgModel: fakeProviderPgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedPostgresGranule
+  );
+});
+
+test('translateApiGranuleToPostgresGranule converts API granule to Postgres', async (t) => {
+  const collectionCumulusId = 1;
+  const providerCumulusId = 2;
+  const pdrCumulusId = 4;
+  const dateString = new Date().toString();
+
+  const apiGranule = {
+    cmrLink: cryptoRandomString({ length: 10 }),
+    duration: 10,
+    granuleId: cryptoRandomString({ length: 5 }),
+    collectionId: constructCollectionId('name', 'version'),
+    pdrName: 'pdr-name',
+    provider: 'provider',
+    published: false,
+    queryFields: {
+      foo: cryptoRandomString({ length: 8 }),
+    },
+    status: 'running',
+    files: [
+      {
+        bucket: 'null',
+        key: 'null',
+      },
+    ],
+    beginningDateTime: dateString,
+    createdAt: Date.now() - 200 * 1000,
+    endingDateTime: dateString,
+    error: {},
+    lastUpdateDateTime: dateString,
+    processingEndDateTime: dateString,
+    processingStartDateTime: dateString,
+    productionDateTime: dateString,
+    productVolume: '1119742',
+    timestamp: Date.now(),
+    timeToArchive: 0,
+    timeToPreprocess: 0,
+    updatedAt: Date.now(),
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(collectionCumulusId),
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: () => Promise.resolve(providerCumulusId),
+  };
+  const fakePdrPgModel = {
+    getRecordCumulusId: () => Promise.resolve(pdrCumulusId),
+  };
+
+  const expectedPostgresGranule = {
+    beginning_date_time: new Date(apiGranule.beginningDateTime),
+    cmr_link: apiGranule.cmrLink,
+    collection_cumulus_id: collectionCumulusId,
+    created_at: new Date(apiGranule.createdAt),
+    duration: apiGranule.duration,
+    ending_date_time: new Date(apiGranule.endingDateTime),
+    error: apiGranule.error,
+    granule_id: apiGranule.granuleId,
+    last_update_date_time: new Date(apiGranule.lastUpdateDateTime),
+    pdr_cumulus_id: pdrCumulusId,
+    processing_end_date_time: new Date(apiGranule.processingEndDateTime),
+    processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    product_volume: apiGranule.productVolume,
+    production_date_time: new Date(apiGranule.productionDateTime),
+    provider_cumulus_id: providerCumulusId,
+    published: apiGranule.published,
+    query_fields: apiGranule.queryFields,
+    status: apiGranule.status,
+    time_to_archive: apiGranule.timeToArchive,
+    time_to_process: apiGranule.timeToPreprocess,
+    timestamp: new Date(apiGranule.timestamp),
+    updated_at: new Date(apiGranule.updatedAt),
+  };
+
+  const result = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: apiGranule,
+    knexOrTransaction: fakeDbClient,
+    collectionPgModel: fakeCollectionPgModel,
+    pdrPgModel: fakePdrPgModel,
+    providerPgModel: fakeProviderPgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedPostgresGranule
+  );
+});
+
+test('translateApiGranuleToPostgresGranule removes null/undefined fields', async (t) => {
+  const collectionCumulusId = 1;
+  const providerCumulusId = 2;
+  const pdrCumulusId = 4;
+  const dateString = new Date().toString();
+
+  const apiGranule = {
+    cmrLink: cryptoRandomString({ length: 10 }),
+    duration: 10,
+    granuleId: cryptoRandomString({ length: 5 }),
+    collectionId: constructCollectionId('name', 'version'),
+    pdrName: 'pdr-name',
+    provider: 'provider',
+    published: false,
+    status: 'running',
+    files: [
+      {
+        bucket: 'null',
+        key: 'null',
+      },
+    ],
+    beginningDateTime: dateString,
+    createdAt: Date.now() - 200 * 1000,
+    endingDateTime: dateString,
+    error: {},
+    lastUpdateDateTime: dateString,
+    processingEndDateTime: dateString,
+    processingStartDateTime: dateString,
+    productionDateTime: dateString,
+    timestamp: Date.now(),
+    timeToArchive: 0,
+    updatedAt: Date.now(),
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(collectionCumulusId),
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: () => Promise.resolve(providerCumulusId),
+  };
+  const fakePdrPgModel = {
+    getRecordCumulusId: () => Promise.resolve(pdrCumulusId),
+  };
+
+  const expectedPostgresGranule = {
+    beginning_date_time: new Date(apiGranule.beginningDateTime),
+    cmr_link: apiGranule.cmrLink,
+    collection_cumulus_id: collectionCumulusId,
+    created_at: new Date(apiGranule.createdAt),
+    duration: apiGranule.duration,
+    ending_date_time: new Date(apiGranule.endingDateTime),
+    error: apiGranule.error,
+    granule_id: apiGranule.granuleId,
+    last_update_date_time: new Date(apiGranule.lastUpdateDateTime),
+    pdr_cumulus_id: pdrCumulusId,
+    processing_end_date_time: new Date(apiGranule.processingEndDateTime),
+    processing_start_date_time: new Date(apiGranule.processingStartDateTime),
+    product_volume: undefined, // Undefined on apiGranule
+    production_date_time: new Date(apiGranule.productionDateTime),
+    provider_cumulus_id: providerCumulusId,
+    published: apiGranule.published,
+    query_fields: undefined, // Undefined on apiGranule
+    status: apiGranule.status,
+    time_to_archive: apiGranule.timeToArchive,
+    time_to_process: undefined, // Undefined on apiGranule
+    timestamp: new Date(apiGranule.timestamp),
+    updated_at: new Date(apiGranule.updatedAt),
+  };
+
+  const result = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: apiGranule,
+    knexOrTransaction: fakeDbClient,
+    collectionPgModel: fakeCollectionPgModel,
+    pdrPgModel: fakePdrPgModel,
+    providerPgModel: fakeProviderPgModel,
+  });
+
+  t.deepEqual(
+    result,
+    removeNilProperties(expectedPostgresGranule)
   );
 });
 

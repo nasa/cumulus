@@ -571,24 +571,21 @@ test.serial('GET returns the expected existing granule if a collectionId is NOT 
   t.deepEqual(response.body, expectedGranule);
 });
 
-test.serial('GET returns the expected existing granule if a collectionId is provided', async (t) => {
+test.serial('GET returns a granule that has no files with the correct empty array files field', async (t) => {
   const {
     knex,
     fakePGGranules,
-    testPgCollection,
   } = t.context;
 
-  const collectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
-
   const response = await request(app)
-    .get(`/granules/${collectionId}/${t.context.fakePGGranules[2].granule_id}`)
+    .get(`/granules/${t.context.fakePGGranules[1].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
   const pgGranule = await granulePgModel.get(knex, {
-    granule_id: fakePGGranules[2].granule_id,
-    collection_cumulus_id: fakePGGranules[2].collection_cumulus_id,
+    granule_id: fakePGGranules[1].granule_id,
+    collection_cumulus_id: fakePGGranules[1].collection_cumulus_id,
   });
 
   const expectedGranule = await translatePostgresGranuleToApiGranule({
@@ -596,31 +593,8 @@ test.serial('GET returns the expected existing granule if a collectionId is prov
     knexOrTransaction: knex,
   });
 
-  t.deepEqual(response.body, expectedGranule);
-});
-
-test.serial('GET returns a 400 response if the collectionId is in the wrong format', async (t) => {
-  const response = await request(app)
-    .get(`/granules/unknownCollection/${t.context.fakePGGranules[2].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(400);
-
-  t.is(response.status, 400);
-  const { message } = response.body;
-  t.is(message, 'invalid collectionId: "unknownCollection"');
-});
-
-test.serial('GET returns a 404 response if the granule\'s collection is not found', async (t) => {
-  const response = await request(app)
-    .get(`/granules/unknown___unknown/${t.context.fakePGGranules[2].granule_id}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(404);
-
-  t.is(response.status, 404);
-  const { message } = response.body;
-  t.is(message, `No collection found for granuleId ${t.context.fakePGGranules[2].granule_id} with collectionId unknown___unknown`);
+  t.deepEqual(response.body.files, []);
+  t.deepEqual(expectedGranule.files, []);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
@@ -1002,7 +976,11 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
       files: [],
     }
   );
-  const newPgGranule = await translateApiGranuleToPostgresGranule(newGranule, knex);
+  await granuleModel.create(newGranule);
+  const newPgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newGranule,
+    knexOrTransaction: knex,
+  });
   const [createdPgGranule] = await granulePgModel.create(knex, newPgGranule);
 
   t.true(await granulePgModel.exists(
@@ -1021,8 +999,14 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newCollectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newGranule.files.length);
 
   t.false(await granulePgModel.exists(
     knex,
@@ -1082,8 +1066,14 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newCollectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newGranule.files.length);
 
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 });
@@ -1199,6 +1189,8 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     esClient: t.context.esClient,
   });
 
+  const granuleId = newDynamoGranule.granuleId;
+
   const response = await request(app)
     .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
@@ -1206,10 +1198,14 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  const granuleId = apiGranule.granuleId;
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newDynamoGranule.collectionId,
+    deletedGranuleId: granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newDynamoGranule.files.length);
 
   // granule has been deleted from Postgres
   t.false(await granulePgModel.exists(
@@ -1290,6 +1286,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   });
 
   const timeOfResponse = Date.now();
+  const granuleId = newDynamoGranule.granuleId;
 
   const response = await request(app)
     .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
@@ -1298,10 +1295,14 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  const granuleId = apiGranule.granuleId;
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newDynamoGranule.collectionId,
+    deletedGranuleId: granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newDynamoGranule.files.length);
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(
@@ -1614,10 +1615,12 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
     },
   ];
 
-  const postgresNewGranule = await translateApiGranuleToPostgresGranule(
-    newGranule,
-    t.context.knex
-  );
+  await granuleModel.create(newGranule);
+
+  const postgresNewGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newGranule,
+    knexOrTransaction: t.context.knex,
+  });
   postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
 
   const [postgresGranule] = await granulePgModel.create(
@@ -1731,10 +1734,10 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
     },
   ];
 
-  const postgresNewGranule = await translateApiGranuleToPostgresGranule(
-    newGranule,
-    t.context.knex
-  );
+  const postgresNewGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newGranule,
+    knexOrTransaction: t.context.knex,
+  });
   postgresNewGranule.collection_cumulus_id = t.context.collectionCumulusId;
 
   const [postgresGranule] = await granulePgModel.create(

@@ -115,7 +115,10 @@ const create = async (req, res) => {
   const granule = req.body || {};
 
   try {
-    const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+    const pgGranule = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: granule,
+      knexOrTransaction: knex,
+    });
     if (
       await granulePgModel.exists(knex, {
         granule_id: pgGranule.granule_id,
@@ -561,14 +564,22 @@ async function delByGranuleId(req, res) {
     }
   }
 
-  await deleteGranuleAndFiles({
+  try {
+    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
+  } catch (error) {
+    if (!(error instanceof RecordDoesNotExist)) {
+      throw error;
+    }
+  }
+
+  const deletionDetails = await deleteGranuleAndFiles({
     knex,
     apiGranule: esResult,
     pgGranule: pgGranule,
     esClient,
   });
 
-  return res.send({ detail: 'Record deleted' });
+  return res.send({ detail: 'Record deleted', ...deletionDetails });
 }
 
 /**

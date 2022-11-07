@@ -6,7 +6,7 @@ resource "aws_lambda_function" "pdr_status_check_task" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs14.x"
   timeout          = lookup(var.lambda_timeouts, "pdr_status_check_task_timeout", 300)
-  memory_size      = 1024
+  memory_size      = lookup(var.lambda_memory_sizes, "pdr_status_check_task_memory_size", 1024)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

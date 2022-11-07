@@ -35,3 +35,5 @@ website/**
 /packages/api/src/**/*.d.ts
 /packages/object-store/*.d.ts
 /packages/object-store/*.js
+/packages/lzards-api-client/*.d.ts
+/packages/lzards-api-client/*.js

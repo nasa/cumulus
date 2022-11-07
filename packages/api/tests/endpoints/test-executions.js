@@ -264,11 +264,12 @@ test.beforeEach(async (t) => {
 
   // create fake Postgres granule records
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
-    await indexer.indexGranule(esClient, fakeGranule, esIndex);
-    const granulePgRecord = await translateApiGranuleToPostgresGranule(
-      fakeGranule,
-      t.context.knex
-    );
+    const dynamoRecord = await granuleModel.create(fakeGranule);
+    await indexer.indexGranule(esClient, dynamoRecord, esIndex);
+    const granulePgRecord = await translateApiGranuleToPostgresGranule({
+      dynamoRecord,
+      knexOrTransaction: t.context.knex,
+    });
     return granulePgRecord;
   }));
 

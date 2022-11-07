@@ -114,12 +114,11 @@ const setUpExistingDatabaseRecords = async (t) => {
   );
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 
-  const generatedPgGranules = t.context.granuleUniqueKeys.map((
-    granule
-  ) => fakeGranuleRecordFactory({
-    granule_id: granule.granuleId,
-    collection_cumulus_id: t.context.collectionCumulusId,
-  }));
+  const translatedGranules = await Promise.all(t.context.granules.map(async (granule) =>
+    await translateApiGranuleToPostgresGranule({
+      dynamoRecord: granule,
+      knexOrTransaction: t.context.knex,
+    })));
 
   const pgGranules = await granulePgModel.create(
     t.context.knex,
@@ -637,7 +636,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules', a
   });
 });
 
-test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules with a workflowName', async (t) => {
+test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granule IDs with a workflowName', async (t) => { // FAILURE
   await setUpExistingDatabaseRecords(t);
   const {
     granules,
@@ -664,8 +663,8 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules wit
 
     t.true(t.context.executionArns.includes(callArgs[0].apiGranule.execution));
     delete matchingGranule.execution;
-    delete callArgs[0].apiGranule.execution;
-
+    delete callArgs[0].granule.execution;
+    matchingGranule.files = [];
     const omitList = ['dataType', 'version'];
 
     t.deepEqual(omit(matchingGranule, omitList), callArgs[0].apiGranule);
@@ -714,7 +713,12 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
-    t.deepEqual(matchingGranule, callArgs[0].apiGranule);
+    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const translatedGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+    t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });

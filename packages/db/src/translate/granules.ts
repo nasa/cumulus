@@ -95,7 +95,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     endingDateTime: granulePgRecord.ending_date_time?.toISOString(),
     error: granulePgRecord.error,
     execution: executionUrls[0] ? executionUrls[0].url : undefined,
-    files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : undefined,
+    files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
     granuleId: granulePgRecord.granule_id,
     lastUpdateDateTime: granulePgRecord.last_update_date_time?.toISOString(),
     pdrName: pdr ? pdr.name : undefined,
@@ -119,22 +119,29 @@ export const translatePostgresGranuleToApiGranule = async ({
 /**
  * Generate a Postgres granule record from a DynamoDB record.
  *
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ * @param {Object} params
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
  *   Record from DynamoDB
- * @param {Knex | Knex.Transaction} knexOrTransaction
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {Object} collectionPgModel - Instance of the collection database model
- * @param {Object} pdrPgModel - Instance of the pdr database model
- * @param {Object} providerPgModel - Instance of the provider database model
+ * @param {Object} params.collectionPgModel - Instance of the collection database model
+ * @param {Object} params.pdrPgModel - Instance of the pdr database model
+ * @param {Object} params.providerPgModel - Instance of the provider database model
  * @returns {Object} A granule PG record
  */
-export const translateApiGranuleToPostgresGranule = async (
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
-  knexOrTransaction: Knex | Knex.Transaction,
+export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
+  dynamoRecord,
+  knexOrTransaction,
   collectionPgModel = new CollectionPgModel(),
   pdrPgModel = new PdrPgModel(),
-  providerPgModel = new ProviderPgModel()
-): Promise<PostgresGranule> => {
+  providerPgModel = new ProviderPgModel(),
+}: {
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel?: CollectionPgModel,
+  pdrPgModel?: PdrPgModel,
+  providerPgModel?: ProviderPgModel,
+}): Promise<PostgresGranule> => {
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
   const granuleRecord: PostgresGranule = {
     granule_id: dynamoRecord.granuleId,
@@ -181,6 +188,42 @@ export const translateApiGranuleToPostgresGranule = async (
 
   return granuleRecord;
 };
+
+/**
+ * Generate a Postgres granule record from a DynamoDB record. Removes
+ *   any null/undefined properties.
+ *
+ * @param {Object} params
+ * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ *   Record from DynamoDB
+ * @param {Knex | Knex.Transaction} params.knexOrTransaction
+ *   Knex client for reading from RDS database
+ * @param {Object} params.collectionPgModel - Instance of the collection database model
+ * @param {Object} params.pdrPgModel - Instance of the pdr database model
+ * @param {Object} params.providerPgModel - Instance of the provider database model
+ * @returns {Object} A granule PG record with null/undefined properties removed
+ */
+export const translateApiGranuleToPostgresGranule = async ({
+  dynamoRecord,
+  knexOrTransaction,
+  collectionPgModel = new CollectionPgModel(),
+  pdrPgModel = new PdrPgModel(),
+  providerPgModel = new ProviderPgModel(),
+}: {
+  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel?: CollectionPgModel,
+  pdrPgModel?: PdrPgModel,
+  providerPgModel?: ProviderPgModel,
+}): Promise<PostgresGranule> => removeNilProperties(
+  await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+    dynamoRecord,
+    knexOrTransaction,
+    collectionPgModel,
+    pdrPgModel,
+    providerPgModel,
+  })
+);
 
 /**
  * Translate a custom database result into an API granule

@@ -32,7 +32,7 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
 
 variable "cmr_oauth_provider" {
   type    = string
-  default = "earthdata"
+  default = "launchpad"
 }
 
 variable "csdap_client_id" {
@@ -350,7 +350,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "44"
+  default = "43"
 }
 
 variable "cumulus_process_activity_version" {
@@ -389,6 +389,12 @@ variable "orca_default_bucket" {
 }
 
 variable "lambda_timeouts" {
+  type = map(string)
+  default = {}
+}
+
+variable "lambda_memory_sizes" {
+  description = "Memory sizes for lambda functions"
   type = map(string)
   default = {}
 }
