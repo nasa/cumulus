@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-lzards-api-lambda",
-  "version": "13.3.2",
+  "version": "13.3.3-alpha.0",
   "description": "LZARDS API Client Test Lambda",
   "private": true,
   "engines": {
