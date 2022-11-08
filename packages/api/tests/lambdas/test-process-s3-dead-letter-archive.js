@@ -138,11 +138,7 @@ test.skip('processDeadLetterArchive is able to handle processing multiple batche
   t.is(remainingDeadLetters.length, 0);
 });
 
-<<<<<<< HEAD
-test('processDeadLetterArchive only deletes dead letters that process successfully', async (t) => {
-=======
 test.skip('processDeadLetterArchive deletes dead letter that processed successfully', async (t) => {
->>>>>>> 56e237489a (CUMULUS-3104: Fixed TS compilation error caused by @aws-sdk/client-s3 upgrade (#3132))
   const { bucket, path } = t.context;
   const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
   const failingMessageKey = t.context.messageKeys[0];
@@ -157,11 +153,6 @@ test.skip('processDeadLetterArchive deletes dead letter that processed successfu
     writeRecordsFunction: writeRecordsErrorThrower,
   });
 
-<<<<<<< HEAD
-  const remainingDeadLetters = await S3.listS3ObjectsV2({ Bucket: bucket, Prefix: path });
-  t.is(remainingDeadLetters.length, 1);
-  t.deepEqual(output.processingFailedKeys, [failingMessageKey]);
-=======
   // Check that processed message key was deleted
   const processedDeadLetterExists = await S3.fileExists(bucket, processedMessageKey);
   t.is(processedDeadLetterExists, false);
@@ -232,7 +223,6 @@ test.serial.skip('processDeadLetterArchive does not remove message from archive 
   t.teardown(() => {
     s3Stub.restore();
   });
->>>>>>> 56e237489a (CUMULUS-3104: Fixed TS compilation error caused by @aws-sdk/client-s3 upgrade (#3132))
 });
 
 test.serial.skip('processDeadLetterArchive processes a SQS Message', async (t) => {
