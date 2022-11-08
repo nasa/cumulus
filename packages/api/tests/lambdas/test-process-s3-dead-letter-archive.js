@@ -12,7 +12,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { fakeCumulusMessageFactory } = require('../../lib/testUtils');
 
 const {
-  processDeadLetterArchive,
+  processDeadLetterArchive, generateNewArchiveKeyForFailedMessage,
 } = require('../../lambdas/process-s3-dead-letter-archive');
 
 test.before(async (t) => {
@@ -141,7 +141,7 @@ test.skip('processDeadLetterArchive is able to handle processing multiple batche
 test.skip('processDeadLetterArchive deletes dead letter that processed successfully', async (t) => {
   const { bucket, path } = t.context;
   const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
-  const failingMessageKey = t.context.messageKeys[0];
+  const processedMessageKey = t.context.messageKeys[1];
   const writeRecordsErrorThrower = ({ cumulusMessage }) => {
     if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
     throw new Error('write failure');
