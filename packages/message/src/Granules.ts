@@ -9,7 +9,7 @@
  */
 
 import isInteger from 'lodash/isInteger';
-import isNil from 'lodash/isNil';
+import isUndefined from 'lodash/isUndefined';
 import mapValues from 'lodash/mapValues';
 import omitBy from 'lodash/omitBy';
 
@@ -130,6 +130,18 @@ function isProcessingTimeInfo(
 }
 
 /**
+ * ** Private **
+ * Convert date string to standard ISO format, retaining null values if they exist
+ *
+ * @param {string} date - Date string, possibly in multiple formats
+ * @returns {string} Standardized ISO date string
+ */
+const convertDateToISOStringPreservingNull = (date: string | null) => {
+  if (date === null) return null;
+  return convertDateToISOString(date);
+};
+
+/**
  * Convert granule processing timestamps to a standardized ISO string
  * format for compatibility across database systems.
  *
@@ -145,7 +157,7 @@ export const getGranuleProcessingTimeInfo = (
     : {};
   return mapValues(
     updatedProcessingTimeInfo,
-    convertDateToISOString
+    convertDateToISOStringPreservingNull
   );
 };
 
@@ -186,7 +198,7 @@ export const getGranuleCmrTemporalInfo = async ({
     : await cmrUtils.getGranuleTemporalInfo(granule);
   return mapValues(
     temporalInfo,
-    convertDateToISOString
+    convertDateToISOStringPreservingNull
   );
 };
 
@@ -203,7 +215,6 @@ export const generateGranuleApiRecord = async ({
   executionUrl,
   collectionId,
   provider,
-  workflowStartTime,
   error,
   pdrName,
   status,
@@ -223,7 +234,6 @@ export const generateGranuleApiRecord = async ({
   executionUrl?: string,
   collectionId: string,
   provider?: string,
-  workflowStartTime: number,
   error?: Object,
   pdrName?: string,
   status: GranuleStatus,
@@ -240,15 +250,17 @@ export const generateGranuleApiRecord = async ({
   timeToArchive: number,
 }): Promise<ApiGranule> => {
   if (!granule.granuleId) throw new CumulusMessageError(`Could not create granule record, invalid granuleId: ${granule.granuleId}`);
-
   if (!collectionId) {
     throw new CumulusMessageError('collectionId required to generate a granule record');
   }
 
-  // FUTURE: null files are currently not supported in update payloads
-  // RDS Phase 3 should revise logic to accept an explicit null value
+  // null files cannot be supported in generated API records
+  // TODO -- test this/validate nullable values are checked here
   if (files === null) {
     throw new CumulusMessageError('granule.files must not be null');
+  }
+  if (error === null) {
+    throw new CumulusMessageError('granule.error must not be null');
   }
 
   const {
@@ -281,7 +293,7 @@ export const generateGranuleApiRecord = async ({
     files,
     error,
     published,
-    createdAt: createdAt || workflowStartTime,
+    createdAt,
     timestamp: recordTimestamp,
     updatedAt: recordUpdatedAt,
     duration,
@@ -293,5 +305,5 @@ export const generateGranuleApiRecord = async ({
     queryFields,
   };
 
-  return <ApiGranule>omitBy(record, isNil);
+  return <ApiGranule>omitBy(record, isUndefined);
 };
