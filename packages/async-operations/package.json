@@ -28,20 +28,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/aws-client": "11.1.8",
     "@cumulus/db": "11.1.8",
     "@cumulus/errors": "11.1.8",
     "@cumulus/es-client": "11.1.8",
     "@cumulus/types": "11.1.8",
-=======
-    "@cumulus/aws-client": "13.3.2",
-    "@cumulus/db": "13.3.2",
-    "@cumulus/errors": "13.3.2",
-    "@cumulus/es-client": "13.3.2",
     "@cumulus/logger": "13.3.2",
-    "@cumulus/types": "13.3.2",
->>>>>>> 56e237489a (CUMULUS-3104: Fixed TS compilation error caused by @aws-sdk/client-s3 upgrade (#3132))
     "knex": "0.95.15",
     "uuid": "8.3.2"
   },
