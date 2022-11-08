@@ -20,9 +20,9 @@ const { removeNilProperties } = require('@cumulus/common/util');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
-const Rule = require('../models/rules');
 
 const log = new Logger({ sender: '@cumulus/rulesHelpers' });
+
 /**
  * fetch all rules in the Cumulus API
  *
@@ -125,7 +125,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
     payload: eventObject,
   };
 
-  const payload = await Rule.buildPayload(item);
+  const payload = await buildPayload(item);
   return handleScheduleEvent(payload);
 }
 
@@ -673,9 +673,26 @@ async function createRuleTrigger(ruleItem) {
   return newRuleItem;
 }
 
+async function deleteOldEventSourceMappings(item) {
+  switch (item.rule.type) {
+  case 'kinesis':
+    await deleteKinesisEventSources(item);
+    break;
+  case 'sns': {
+    if (item.rule.arn) {
+      await deleteSnsTrigger(item);
+    }
+    break;
+  }
+  default:
+    break;
+  }
+}
+
 module.exports = {
   buildPayload,
   createRuleTrigger,
+  deleteOldEventSourceMappings,
   deleteKinesisEventSource,
   deleteKinesisEventSources,
   deleteRuleResources,

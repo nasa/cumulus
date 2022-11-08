@@ -8,8 +8,7 @@ const proxyquire = require('proxyquire');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-
-const Rule = require('../../models/rules');
+const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
 const sandbox = sinon.createSandbox();
 const queueMessageStub = sandbox.stub().resolves(true);
@@ -96,9 +95,6 @@ test.before(async () => {
   process.env.RulesTable = randomString();
   process.env.messageConsumer = 'my-messageConsumer';
   process.env.KinesisInboundEventLogger = 'my-ruleInput';
-  ruleModel = new Rule();
-  await ruleModel.createTable();
-
   templateBucket = randomString();
   const workflow = randomString();
   const stateMachineArn = randomString();
@@ -116,15 +112,6 @@ test.before(async () => {
     Key: messageTemplateKey,
     Body: JSON.stringify(messageTemplate),
   });
-
-  sandbox.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
-    template: messageTemplate,
-    provider: item.provider,
-    collection: item.collection,
-    meta: get(item, 'meta', {}),
-    payload: get(item, 'payload', {}),
-    definition: workflowDefinition,
-  }));
 });
 
 test.beforeEach(async (t) => {
@@ -139,7 +126,7 @@ test.beforeEach(async (t) => {
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
 
-  t.context.createdRule = await ruleModel.create(kinesisRule);
+  t.context.createdRule = fakeRuleFactoryV2(kinesisRule);
   fetchEnabledRulesStub.callsFake(() => Promise.resolve([t.context.createdRule]));
 });
 
@@ -151,7 +138,6 @@ test.afterEach.always(() => {
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(templateBucket);
   sandbox.restore();
-  await ruleModel.deleteTable();
 });
 
 // handler tests
