@@ -3,6 +3,7 @@
 const request = require('supertest');
 const test = require('ava');
 const sinon = require('sinon');
+const got = require('got');
 const awsServices = require('@cumulus/aws-client/services');
 const {
   putJsonS3Object,
@@ -72,8 +73,8 @@ const cumulusMetaOutput = () => ({
   },
 });
 
-const expiredExecutionArn = 'fakeExpiredExecutionArn';
-const expiredMissingExecutionArn = 'fakeMissingExpiredExecutionArn';
+const expiredExecutionArn = 'arn:aws:states:us-east-1:xxx:execution:HelloWorldWorkflow:fakeExpiredExecutionArn';
+const expiredMissingExecutionArn = 'arn:aws:states:us-east-1:xxx:execution:HelloWorldWorkflow:fakeMissingExpiredExecutionArn';
 
 const testDbName = randomId('execution-status_test');
 const replaceObject = (lambdaEvent = true) => ({
@@ -392,48 +393,51 @@ test('CUMULUS-912 GET with an invalid access token returns an unauthorized respo
 
 test.todo('CUMULUS-912 GET with an unauthorized user returns an unauthorized response');
 
-test('returns ARNs for execution and state machine', async (t) => {
+test.serial('returns ARNs for execution and state machine', async (t) => {
   const response = await request(app)
     .get('/executions/status/hasFullMessage')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
-  t.is(executionStatusCommon.stateMachineArn, executionStatus.execution.stateMachineArn);
-  t.is(executionStatusCommon.executionArn, executionStatus.execution.executionArn);
+  const { data: executionStatus, presignedS3Url } = response.body;
+  t.is(executionStatus.execution.stateMachineArn, executionStatusCommon.stateMachineArn);
+  t.is(executionStatus.execution.executionArn, executionStatusCommon.executionArn);
+  const executionStatusFromS3 = await got(presignedS3Url).json();
+  t.deepEqual(executionStatusFromS3, executionStatus);
 });
 
-test('returns granules for execution in Step Function API', async (t) => {
+test.serial('returns granules for execution in Step Function API', async (t) => {
   const response = await request(app)
     .get(`/executions/status/${executionArn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const { data: executionStatus, presignedS3Url } = response.body;
   t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
+  const executionStatusFromS3 = await got(presignedS3Url).json();
+  t.deepEqual(executionStatusFromS3, executionStatus);
 });
 
-test('returns full message when it is already included in the output', async (t) => {
+test.serial('returns full message when it is already included in the output', async (t) => {
   const response = await request(app)
     .get('/executions/status/hasFullMessage')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   t.deepEqual(fullMessageOutput(), JSON.parse(executionStatus.execution.output));
 });
 
-test('fetches messages from S3 when remote message (for both SF execution history and executions)', async (t) => {
+test.serial('fetches messages from S3 when remote message (for both SF execution history and executions)', async (t) => {
   const response = await request(app)
     .get('/executions/status/hasRemoteMessage')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   const expectedResponse = {
     execution: {
       ...executionStatusCommon,
@@ -449,14 +453,14 @@ test('fetches messages from S3 when remote message (for both SF execution histor
   t.deepEqual(expectedResponse, executionStatus);
 });
 
-test('when execution is still running, still returns status and fetches SF execution history events from S3', async (t) => {
+test.serial('when execution is still running, still returns status and fetches SF execution history events from S3', async (t) => {
   const response = await request(app)
     .get('/executions/status/stillRunning')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const executionStatus = response.body.data;
   const expectedResponse = {
     execution: executionStatusCommon,
     executionHistory: {
@@ -469,18 +473,19 @@ test('when execution is still running, still returns status and fetches SF execu
   t.deepEqual(expectedResponse, executionStatus);
 });
 
-test('when execution is no longer in step function API, returns status from database', async (t) => {
+test.serial('when execution is no longer in step function API, returns status from database', async (t) => {
   const response = await request(app)
     .get(`/executions/status/${expiredExecutionArn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const executionStatus = response.body;
+  const { warning, data: executionStatus, presignedS3Url } = response.body;
+  t.truthy(warning);
   t.falsy(executionStatus.executionHistory);
   t.falsy(executionStatus.stateMachine);
   t.is(executionStatus.execution.executionArn, t.context.fakeExecutionRecord.arn);
-  t.is(executionStatus.execution.name, t.context.fakeExecutionRecord.name);
+  t.is(executionStatus.execution.name, t.context.fakeExecutionRecord.arn.split(':').pop());
   t.is(
     executionStatus.execution.input,
     JSON.stringify(t.context.fakeExecutionRecord.original_payload)
@@ -499,16 +504,34 @@ test('when execution is no longer in step function API, returns status from data
       + t.context.fakeExecutionRecord.duration * 1000).toISOString()
   );
   t.deepEqual(executionStatus.execution.granules, fakeExecutionStatusGranules);
+  const executionStatusFromS3 = await got(presignedS3Url).json();
+  t.deepEqual(executionStatusFromS3, executionStatus);
 });
 
-test('when execution not found in step function API nor database, returns not found', async (t) => {
+test.serial('when execution not found in step function API nor database, returns not found', async (t) => {
   const response = await request(app)
     .get(`/executions/status/${expiredMissingExecutionArn}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(404);
 
-  const executionStatus = response.body;
-  t.is(executionStatus.error, 'Not Found');
-  t.is(executionStatus.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
+  const responseBody = response.body;
+  t.is(responseBody.error, 'Not Found');
+  t.is(responseBody.message, `Execution record with identifiers ${JSON.stringify({ arn: expiredMissingExecutionArn })} does not exist.`);
+  t.falsy(response.body.presignedS3Url);
+});
+
+test.serial('when execution status exceeds maximum allowed payload size', async (t) => {
+  process.env.maxResponsePayloadSizeBytes = 150;
+  const response = await request(app)
+    .get('/executions/status/hasFullMessage')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { data, presignedS3Url } = response.body;
+  t.true(data.includes('exceeded maximum allowed payload size'));
+  const executionStatusFromS3 = await got(presignedS3Url).json();
+  t.is(executionStatusFromS3.execution.stateMachineArn, executionStatusCommon.stateMachineArn);
+  t.is(executionStatusFromS3.execution.executionArn, executionStatusCommon.executionArn);
 });

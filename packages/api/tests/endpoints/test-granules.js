@@ -570,6 +570,32 @@ test.serial('GET returns the expected existing granule', async (t) => {
   t.deepEqual(response.body, expectedGranule);
 });
 
+test.serial('GET returns a granule that has no files with the correct empty array files field', async (t) => {
+  const {
+    knex,
+    fakePGGranules,
+  } = t.context;
+
+  const response = await request(app)
+    .get(`/granules/${t.context.fakePGGranules[1].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[1].granule_id,
+    collection_cumulus_id: fakePGGranules[1].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(response.body.files, []);
+  t.deepEqual(expectedGranule.files, []);
+});
+
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
   const response = await request(app)
     .get('/granules/unknownGranule')

@@ -77,7 +77,7 @@ xdescribe('When a workflow', () => {
           prefix: config.stackName,
           arn: workflowExecutionArn,
         });
-        executionStatus = JSON.parse(executionStatusResponse.body);
+        executionStatus = JSON.parse(executionStatusResponse.body).data;
       });
 
       it('the execution is returned', () => {
