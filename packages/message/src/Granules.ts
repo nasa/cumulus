@@ -246,7 +246,7 @@ export const generateGranuleApiRecord = async ({
   }
 
   // FUTURE: null files are currently not supported in update payloads
-  // RDS Phase 3 should revise logic to accept an explict null value
+  // RDS Phase 3 should revise logic to accept an explicit null value
   if (files === null) {
     throw new CumulusMessageError('granule.files must not be null');
   }
@@ -254,7 +254,7 @@ export const generateGranuleApiRecord = async ({
   const {
     granuleId,
     cmrLink,
-    published = false,
+    published,
     createdAt,
   } = granule;
 

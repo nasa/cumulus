@@ -631,7 +631,59 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
-test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => { // FAILURE
+test.serial('writeGranulesFromMessage() sets a default value of false for `published` if one is not set', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    granuleModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  // Only test fields that are stored in Postgres on the Granule record.
+  // The following fields are populated by separate queries during translation
+  // or elasticsearch.
+  const omitList = ['files', '_id'];
+
+  // Remove published key for test
+  delete cumulusMessage.payload.granules[0].published;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  // Validate objects all match
+  /// translate the PG granule to API granule to directly compare to Dynamo
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+  t.deepEqual(omit(translatedPgRecord, omitList), omit(dynamoRecord, omitList));
+
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+  t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
+
+  // Validate assertion is true in the primary datastore:
+
+  t.is(translatedPgRecord.published, false);
+});
+
+test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => {
   const {
     collectionCumulusId,
     esGranulesClient,
@@ -1706,46 +1758,6 @@ test.serial('writeGranulesFromMessage() stores an aggregate workflow error and f
   t.deepEqual(pgGranuleErrors[0].Cause, { Error: 'Workflow failed' });
 });
 
-test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
-  const {
-    collectionCumulusId,
-    esClient,
-    filePgModel,
-    granule,
-    granuleId,
-    granulePgModel,
-    knex,
-  } = t.context;
-
-  const snsEventType = 'Create';
-  const pgGranule = await translateApiGranuleToPostgresGranule({
-    dynamoRecord: granule,
-    knexOrTransaction: knex,
-  });
-  const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
-
-  const fakeFile = await filePgModel.create(knex, {
-    granule_cumulus_id: returnedGranule[0].cumulus_id,
-    bucket: 'fake_bucket',
-    key: 'fake_key',
-  }, '*');
-
-  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex, esClient, snsEventType);
-
-  const granuleRecord = await granulePgModel.get(
-    knex,
-    {
-      granule_id: granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    }
-  );
-
-  const granuleFiles = await filePgModel.search(knex, {
-    granule_cumulus_id: granuleRecord.cumulus_id,
-  });
-  t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
-});
-
 test.serial('writeGranulesFromMessage() honors granule.createdAt time if provided in cumulus_message', async (t) => {
   const {
     cumulusMessage,
@@ -1812,6 +1824,46 @@ test.serial('writeGranulesFromMessage() falls back to workflow_start_time if gra
     { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
   );
   t.is(pgGranule.created_at.getTime(), expectedCreatedAt);
+});
+
+test.serial('writeGranuleFromApi() removes preexisting granule file from postgres on granule update with disjoint files', async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    filePgModel,
+    granule,
+    granuleId,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  const snsEventType = 'Create';
+  const pgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: knex,
+  });
+  const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
+
+  const fakeFile = await filePgModel.create(knex, {
+    granule_cumulus_id: returnedGranule[0].cumulus_id,
+    bucket: 'fake_bucket',
+    key: 'fake_key',
+  }, '*');
+
+  await writeGranuleFromApi({ ...granule, status: 'completed' }, knex, esClient, snsEventType);
+
+  const granuleRecord = await granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  const granuleFiles = await filePgModel.search(knex, {
+    granule_cumulus_id: granuleRecord.cumulus_id,
+  });
+  t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with no granuleId provided', async (t) => {
@@ -2046,6 +2098,57 @@ test.serial('writeGranuleFromApi() given a partial granule overwrites only provi
     apiGranule,
     dynamoGranule
   );
+});
+
+test.serial('writeGranuleFromApi() when called on a granuleId that exists in the datastore does not modify the `published` field if it is not set', async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    esGranulesClient,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule, published: true }, knex, esClient, 'Create');
+
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(await granulePgModel.exists(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  ));
+  t.true(await esGranulesClient.exists(granuleId));
+
+  const originalPgGranule = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    cmrLink: 'updatedGranuled.com', // Only field we're changing
+    status: granule.status,
+  };
+
+  const {
+    pgGranule,
+    esGranule,
+    dynamoGranule,
+  } = await updateGranule(t, updateGranulePayload);
+
+  t.is(pgGranule.published, originalPgGranule.published);
+
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.is(apiGranule.published, esGranule.published);
+  t.is(apiGranule.published, dynamoGranule.published);
 });
 
 test.serial('writeGranuleFromApi() given an empty array as a files key will remove all existing files and keep Postgres/Dynamo/Elastic in-sync', async (t) => {
@@ -2906,4 +3009,92 @@ test.serial('updateGranuleStatusToFailed() throws error if record does not exist
       message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
     }
   );
+});
+
+test.serial('writeGranuleFromApi() saves granule record with publish set to null with publish value set to false to all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granuleModel,
+    granulePgModel,
+  } = t.context;
+
+  const result = await writeGranuleFromApi({ ...granule, published: true }, knex, esClient, 'Create');
+  t.is(result, `Wrote Granule ${granuleId}`);
+
+  const originalPostgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+
+  t.true(originalPostgresRecord.published);
+
+  const updateResult = await writeGranuleFromApi({ ...granule, published: null }, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.false(dynamoRecord.published);
+  t.false(postgresRecord.published);
+  t.false(esRecord.published);
+});
+
+test.serial('writeGranulesFromMessage() sets `published` to false if null value is set', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    granuleModel,
+    knex,
+    executionCumulusId,
+    providerCumulusId,
+    granuleId,
+  } = t.context;
+
+  // Only test fields that are stored in Postgres on the Granule record.
+  // The following fields are populated by separate queries during translation
+  // or elasticsearch.
+  const omitList = ['files', '_id'];
+
+  // Set published to null for test
+  cumulusMessage.payload.granules[0].published = null;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const granulePgRecord = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+
+  // Validate objects all match
+  /// translate the PG granule to API granule to directly compare to Dynamo
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+  t.deepEqual(omit(translatedPgRecord, omitList), omit(dynamoRecord, omitList));
+
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+  t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
+
+  // Validate assertion is true in the primary datastore:
+
+  t.is(translatedPgRecord.published, false);
 });

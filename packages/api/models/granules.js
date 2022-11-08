@@ -353,10 +353,13 @@ class Granule extends Manager {
    * @returns {Promise}
    */
   async _validateAndStoreGranuleRecord(granuleRecord) {
+    // granuleRecord needs to be cloned here as ajv/validation routines mutate the validated granule
+    // with schema defaults via ajv, and this is undesirable for PATCH behavior
+    const clonedGranuleRecord = cloneDeep(granuleRecord);
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(granuleRecord, this.schema, this.removeAdditional);
-    return this._storeGranuleRecord(granuleRecord);
+    await this.constructor.recordIsValid(clonedGranuleRecord, this.schema, this.removeAdditional);
+    return this._storeGranuleRecord(clonedGranuleRecord);
   }
 
   /**

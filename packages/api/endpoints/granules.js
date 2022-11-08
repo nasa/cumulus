@@ -130,6 +130,9 @@ const create = async (req, res) => {
   } catch (error) {
     return res.boom.badRequest(errorify(error));
   } try {
+    if (!granule.published) {
+      granule.published = false;
+    }
     await createGranuleFromApi(granule, knex, esClient);
   } catch (error) {
     log.error('Could not write granule', error);
@@ -189,6 +192,9 @@ const putGranule = async (req, res) => {
   }
 
   try {
+    if (isNewRecord === true && !apiGranule.published) {
+      apiGranule.published = false;
+    }
     await updateGranuleFromApi(apiGranule, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
