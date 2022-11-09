@@ -2683,6 +2683,7 @@ test.serial('writeGranuleFromApi() saves updated values for running granule reco
   const esRecord = await t.context.esGranulesClient.get(granuleId);
 
   t.truthy(dynamoRecord.timestamp);
+
   t.is(postgresRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(postgresRecord.updated_at.getTime(), dynamoRecord.updatedAt);
   t.is(postgresRecord.timestamp.getTime(), dynamoRecord.timestamp);
@@ -2703,6 +2704,10 @@ test.serial('writeGranuleFromApi() saves updated values for running granule reco
   t.is(postgresRecord.published, true);
   t.is(dynamoRecord.published, true);
   t.is(esRecord.published, true);
+
+  t.is(postgresRecord.status, 'running');
+  t.is(dynamoRecord.status, 'running');
+  t.is(esRecord.status, 'running');
 });
 
 test.serial('writeGranuleFromApi() saves updated values for queued granule record to Dynamo, Postgres and ElasticSearch on rewrite', async (t) => {
@@ -2775,6 +2780,10 @@ test.serial('writeGranuleFromApi() saves updated values for queued granule recor
   t.is(postgresRecord.published, true);
   t.is(dynamoRecord.published, true);
   t.is(esRecord.published, true);
+
+  t.is(postgresRecord.status, 'queued');
+  t.is(dynamoRecord.status, 'queued');
+  t.is(esRecord.status, 'queued');
 });
 
 test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same default time values for a new granule', async (t) => {
