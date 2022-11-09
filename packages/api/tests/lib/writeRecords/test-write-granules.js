@@ -768,7 +768,7 @@ test.serial('writeGranulesFromMessage() uses a default value for granule.created
   t.is(translatedPgRecord.createdAt, workflowStartTime);
 });
 
-test.serial('writeGranulesFromMessage() uses granule.createdAt value for written granule if defined', async (t) => {
+test.serial('writeGranulesFromMessage() allows overwrite of createdAt and uses granule.createdAt value for written granule if defined', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
