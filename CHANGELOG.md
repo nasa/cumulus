@@ -21,6 +21,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
   - The user (dashboard) must read the `s3SignedURL` and `data` from the return
 
+### Added
+
+- **CUMULUS-3098**
+  - Added task configuration setting named `failTaskWhenFileBackupFail` to the
+    `lzards-backup` task. This setting is `false` by default, but when set to
+    `true`, task will fail if one of the file backup request fails.
+
 ### Changed
 
 - **CUMULUS-2915**
