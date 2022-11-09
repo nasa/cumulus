@@ -841,7 +841,7 @@ test('_storeGranuleRecord() will allow a queued status to replace completed/fail
   const updatedGranule = {
     ...granule,
     status: 'queued',
-    execution: 'newExecution'
+    execution: 'newExecution',
   };
 
   await granuleModel._storeGranuleRecord(updatedGranule, false);
@@ -864,7 +864,7 @@ test('_storeGranuleRecord() will allow a queued status to replace completed/fail
   const updatedGranule = {
     ...granule,
     status: 'queued',
-    execution: 'newExecution'
+    execution: 'newExecution',
   };
 
   await granuleModel._storeGranuleRecord(updatedGranule, true);
