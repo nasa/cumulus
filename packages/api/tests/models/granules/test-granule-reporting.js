@@ -831,6 +831,52 @@ test('_storeGranuleRecord() will allow a queued status to replace completed/fail
   );
 });
 
+test('_storeGranuleRecord() will allow a queued status to replace completed/failed for new execution when writeConstraints is set to false', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'completed' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+    execution: 'newExecution'
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule, false);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    updatedGranule
+  );
+});
+
+test('_storeGranuleRecord() will allow a queued status to replace completed/failed new new execution when writeConstraints is set to true', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'completed' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
+    execution: 'newExecution'
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule, true);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(
+    fetchedItem,
+    updatedGranule
+  );
+});
+
 test('_storeGranuleRecord() will allow a completed status to replace queued for same execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
