@@ -293,7 +293,7 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
  * @param {string} params.index           - Elasticsearch index alias (default defined in search.js)
  * @param {string} params.type            - Elasticsearch type (default: granule)
  * @param {string} [params.refresh]       - whether to refresh the index on update or not
- * @param {bool}   writeConstraints       - boolean toggle restricting if conditionals should
+ * @param {boolean}   writeConstraints       - boolean toggle restricting if conditionals should
  *                                          be used to determine write eligibility
  * @returns {Promise} Elasticsearch response
  */
