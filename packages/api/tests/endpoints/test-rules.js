@@ -46,7 +46,7 @@ const {
 } = require('../../lib/testUtils');
 const { post, put, del } = require('../../endpoints/rules');
 
-const rulesHelpers = require ('../../lib/rulesHelpers');
+const rulesHelpers = require('../../lib/rulesHelpers');
 const AccessToken = require('../../models/access-tokens');
 const assertions = require('../../lib/assertions');
 
@@ -515,11 +515,11 @@ test('POST returns a 409 response if record already exists', async (t) => {
 
   // create rule
   await request(app)
-  .post('/rules')
-  .set('Accept', 'application/json')
-  .set('Authorization', `Bearer ${jwtAuthToken}`)
-  .send(newRule)
-  .expect(200);
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
 
   // attempt to create duplicate rule
   const response = await request(app)
@@ -1700,7 +1700,7 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
 });
 
 test.serial('Multiple rules using same SNS topic can be created and deleted', async (t) => {
-  const { 
+  const {
     collectionPgModel,
     providerPgModel,
     testKnex,
@@ -1730,7 +1730,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
       testKnex,
       testPgCollection2,
       '*'
-    )
+    ),
   ]);
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
   const { TopicArn } = await awsServices.sns().createTopic({
@@ -1770,14 +1770,14 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(ruleWithTrigger)
-    .expect(200); 
+    .expect(200);
 
   await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(ruleWithTrigger2)
-    .expect(200); 
+    .expect(200);
 
   // rules share the same subscription
   t.is(ruleWithTrigger.rule.arn, ruleWithTrigger2.rule.arn);
@@ -1785,17 +1785,17 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
   // Have to delete rules serially otherwise all rules still exist
   // when logic to check for shared source mapping is evaluated
   await request(app)
-  .delete(`/rules/${ruleWithTrigger.name}`)
-  .set('Accept', 'application/json')
-  .set('Authorization', `Bearer ${jwtAuthToken}`)
-  .expect(200);
+    .delete(`/rules/${ruleWithTrigger.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
 
   await t.notThrowsAsync(
     request(app)
-    .delete(`/rules/${ruleWithTrigger2.name}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200)
+      .delete(`/rules/${ruleWithTrigger2.name}`)
+      .set('Accept', 'application/json')
+      .set('Authorization', `Bearer ${jwtAuthToken}`)
+      .expect(200)
   );
   // Ensure that cleanup for SNS rule subscription was actually called
   t.true(unsubscribeSpy.called);

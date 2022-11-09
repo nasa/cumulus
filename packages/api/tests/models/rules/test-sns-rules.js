@@ -1,6 +1,5 @@
 const fs = require('fs-extra');
 const test = require('ava');
-const request = require('supertest');
 const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -11,13 +10,8 @@ const {
 } = require('@cumulus/aws-client/S3');
 const {
   destroyLocalTestDb,
-  CollectionPgModel,
-  ProviderPgModel,
   generateLocalTestDb,
-  fakeCollectionRecordFactory,
-  fakeProviderRecordFactory,
   migrationDir,
-  translateApiRuleToPostgresRuleRaw,
   RulePgModel,
 } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
@@ -110,7 +104,11 @@ test.serial('disabling an SNS rule removes the event source mapping', async (t) 
   t.is(ruleWithTrigger.state, 'ENABLED');
 
   const updates = { ...ruleWithTrigger, state: 'DISABLED' };
-  const ruleWithUpdatedTrigger = await rulesHelpers.updateRuleTrigger(ruleWithTrigger, updates, testKnex);
+  const ruleWithUpdatedTrigger = await rulesHelpers.updateRuleTrigger(
+    ruleWithTrigger,
+    updates,
+    testKnex
+  );
 
   t.is(ruleWithUpdatedTrigger.name, ruleWithTrigger.name);
   t.is(ruleWithUpdatedTrigger.state, 'DISABLED');
@@ -176,7 +174,11 @@ test.serial('updating an SNS rule updates the event source mapping', async (t) =
   t.is(ruleWithTrigger.rule.value, snsTopicArn);
 
   const updates = { name: ruleWithTrigger.name, rule: { value: newSnsTopicArn } };
-  const ruleWithUpdatedTrigger = await rulesHelpers.updateRuleTrigger(ruleWithTrigger, updates, testKnex);
+  const ruleWithUpdatedTrigger = await rulesHelpers.updateRuleTrigger(
+    ruleWithTrigger,
+    updates,
+    testKnex
+  );
 
   t.is(ruleWithUpdatedTrigger.name, ruleWithTrigger.name);
   t.is(ruleWithUpdatedTrigger.type, ruleWithTrigger.type);
@@ -188,7 +190,7 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
   const {
     snsTopicArn,
     testKnex,
- } = t.context;
+  } = t.context;
 
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
 
@@ -240,7 +242,7 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
     }
   );
 
-  t.teardown(async () => {
+  t.teardown(() => {
     lambdaStub.restore();
   });
 });

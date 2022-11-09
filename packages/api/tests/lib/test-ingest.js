@@ -25,7 +25,7 @@ const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
 } = require('../../lib/testUtils');
-const rulesHelpers = require ('../../lib/rulesHelpers');
+const rulesHelpers = require('../../lib/rulesHelpers');
 const {
   reingestGranule,
   applyWorkflow,
@@ -41,12 +41,13 @@ FakeEsClient.prototype.search = esSearchStub;
 
 let fakeExecution;
 let testCumulusMessage;
+[
+  'system_bucket',
+  'stackName',
+  // eslint-disable-next-line no-return-assign
+].forEach((varName) => process.env[varName] = randomString());
 
 test.before(async (t) => {
-  [
-    'system_bucket',
-    'stackName',
-  ].forEach((varName) => process.env[varName] = randomString());
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
@@ -148,7 +149,7 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   const {
     collectionId,
   } = t.context;
-    const granulePgModel = new GranulePgModel();
+  const granulePgModel = new GranulePgModel();
   const queueUrl = 'testqueueUrl';
 
   const apiGranule = fakeGranuleFactoryV2({

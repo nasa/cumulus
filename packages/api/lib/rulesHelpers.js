@@ -104,6 +104,44 @@ function lookupCollectionInEvent(eventObject) {
   });
 }
 
+/*
+ * Build payload from rule for lambda invocation
+ *
+ * @param {ApiRule} rule              - API rule
+ * @param {object} [cumulusMeta]      - Optional cumulus_meta object
+ * @param {string} [asyncOperationId] - Optional ID for asynchronous operation
+ *
+ * @returns {Object} lambda invocation payload
+ */
+async function buildPayload(rule, cumulusMeta, asyncOperationId) {
+  // makes sure the workflow exists
+  const bucket = process.env.system_bucket;
+  const stack = process.env.stackName;
+  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
+
+  const exists = await s3Utils.fileExists(bucket, workflowFileKey);
+  if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
+
+  const definition = await s3Utils.getJsonS3Object(
+    bucket,
+    workflowFileKey
+  );
+  const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
+
+  return {
+    template,
+    definition,
+    provider: rule.provider,
+    collection: rule.collection,
+    meta: get(rule, 'meta', {}),
+    cumulus_meta: cumulusMeta || get(rule, 'cumulus_meta', {}),
+    payload: get(rule, 'payload', {}),
+    queueUrl: rule.queueUrl,
+    executionNamePrefix: rule.executionNamePrefix,
+    asyncOperationId: asyncOperationId,
+  };
+}
+
 /**
  * Queue a workflow message for the kinesis/sqs rule with the message passed
  * to stream/queue as the payload
@@ -506,44 +544,6 @@ function recordIsValid(rule) {
     error.message += 'Rule type is undefined.';
     throw error;
   }
-}
-
-/*
- * Build payload from rule for lambda invocation
- *
- * @param {ApiRule} rule              - API rule
- * @param {object} [cumulusMeta]      - Optional cumulus_meta object
- * @param {string} [asyncOperationId] - Optional ID for asynchronous operation
- *
- * @returns {Object} lambda invocation payload
- */
-async function buildPayload(rule, cumulusMeta, asyncOperationId) {
-  // makes sure the workflow exists
-  const bucket = process.env.system_bucket;
-  const stack = process.env.stackName;
-  const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
-
-  const exists = await s3Utils.fileExists(bucket, workflowFileKey);
-  if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
-
-  const definition = await s3Utils.getJsonS3Object(
-    bucket,
-    workflowFileKey
-  );
-  const template = await s3Utils.getJsonS3Object(bucket, workflows.templateKey(stack));
-
-  return {
-    template,
-    definition,
-    provider: rule.provider,
-    collection: rule.collection,
-    meta: get(rule, 'meta', {}),
-    cumulus_meta: cumulusMeta || get(rule, 'cumulus_meta', {}),
-    payload: get(rule, 'payload', {}),
-    queueUrl: rule.queueUrl,
-    executionNamePrefix: rule.executionNamePrefix,
-    asyncOperationId: asyncOperationId,
-  };
 }
 
 /*

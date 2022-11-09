@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/db');
 
 const { deconstructCollectionId } = require('./utils');
-const rulesHelpers = require('../lib/rulesHelpers');
+const rulesHelpers = require('./rulesHelpers');
 const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules');
 
 /**

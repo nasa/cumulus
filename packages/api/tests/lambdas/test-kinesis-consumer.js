@@ -1,6 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
 const sinon = require('sinon');
 const test = require('ava');
 const proxyquire = require('proxyquire');
@@ -88,7 +87,6 @@ function testCallback(err, object) {
 }
 
 let publishStub;
-let ruleModel;
 let templateBucket;
 
 test.before(async () => {
@@ -96,15 +94,8 @@ test.before(async () => {
   process.env.messageConsumer = 'my-messageConsumer';
   process.env.KinesisInboundEventLogger = 'my-ruleInput';
   templateBucket = randomString();
-  const workflow = randomString();
-  const stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
-
   const messageTemplate = {};
-  const workflowDefinition = {
-    name: workflow,
-    arn: stateMachineArn,
-  };
 
   await s3().createBucket({ Bucket: templateBucket });
   await s3().putObject({
@@ -114,7 +105,7 @@ test.before(async () => {
   });
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.publishResponse = {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
