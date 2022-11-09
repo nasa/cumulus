@@ -955,7 +955,7 @@ test('_validateAndStoreGranuleRecord() will not allow a final status for an olde
   t.deepEqual(fetchedItem, originalGranule);
 });
 
-test('_validateAndStoreGranuleRecord() will allow a final status for an older execution to replace a running status for a newer execution when writeConstraints is set to false ', async (t) => {
+test('_validateAndStoreGranuleRecord() will allow a final status for an older execution to replace a running status for a newer execution when writeConstraints is set to false', async (t) => {
   const { granuleModel } = t.context;
 
   const timeVal = Date.now();
