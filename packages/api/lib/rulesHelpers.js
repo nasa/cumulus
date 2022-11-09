@@ -213,7 +213,7 @@ async function deleteKinesisEventSources(knex, rule) {
 async function deleteSnsTrigger(knex, rule) {
   // If event source mapping is shared by other rules, don't delete it
   if (await isEventSourceMappingShared(knex, rule, { arn: rule.rule.arn })) {
-    log.info(`Event source mapping ${rule} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
+    log.info(`Event source mapping for ${JSON.stringify(rule)} with type 'arn' is shared by multiple rules, so it will not be deleted.`);
     return Promise.resolve();
   }
   // delete permission statement

@@ -1,7 +1,7 @@
 const fs = require('fs-extra');
 const test = require('ava');
-const sinon = require('sinon');
 const request = require('supertest');
+const sinon = require('sinon');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -10,8 +10,14 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const {
+  destroyLocalTestDb,
+  CollectionPgModel,
+  ProviderPgModel,
   generateLocalTestDb,
+  fakeCollectionRecordFactory,
+  fakeProviderRecordFactory,
   migrationDir,
+  translateApiRuleToPostgresRuleRaw,
   RulePgModel,
 } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
@@ -22,7 +28,6 @@ const { ResourceNotFoundError, resourceNotFoundInfo } = require('../../../lib/er
 
 const workflow = randomString();
 const testDbName = randomString(12);
-let rulesModel;
 
 test.before(async (t) => {
   process.env.RulesTable = `RulesTable_${randomString()}`;
@@ -73,9 +78,14 @@ test.afterEach.always(async (t) => {
   await awsServices.sns().deleteTopic({ TopicArn: t.context.snsTopicArn }).promise();
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   // cleanup table
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('disabling an SNS rule removes the event source mapping', async (t) => {
@@ -204,58 +214,6 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
 
   t.teardown(() => {
     unsubscribeSpy.restore();
-  });
-});
-
-test.serial.skip('multiple rules using same SNS topic can be created and deleted', async (t) => {
-  const { testKnex } = t.context;
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-  const { TopicArn } = await awsServices.sns().createTopic({
-    Name: randomId('topic'),
-  }).promise();
-
-  const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
-    name: randomId('rule1'),
-    rule: {
-      type: 'sns',
-      value: TopicArn,
-    },
-    workflow,
-    state: 'ENABLED',
-  }));
-  const ruleWithTrigger2 = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
-    name: randomId('rule2'),
-    rule: {
-      type: 'sns',
-      value: TopicArn,
-    },
-    workflow,
-    state: 'ENABLED',
-  }));
-
-  // rules share the same subscription
-  t.is(ruleWithTrigger.rule.arn, ruleWithTrigger2.rule.arn);
-
-  // Have to delete rules serially otherwise all rules still exist
-  // when logic to check for shared source mapping is evaluated
-  console.log('RULE 1', ruleWithTrigger);
-  await rulesHelpers.deleteRuleResources(testKnex, ruleWithTrigger);
-  // permission statement has been deleted from first rule, so the second rule will
-  // have no message consumer permission
-  console.log('RULE 2', ruleWithTrigger2);
-  await t.notThrowsAsync(rulesHelpers.deleteRuleResources(testKnex, ruleWithTrigger2));
-
-  // Ensure that cleanup for SNS rule subscription was actually called
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({
-    SubscriptionArn: ruleWithTrigger.rule.arn,
-  }));
-
-  t.teardown(async () => {
-    unsubscribeSpy.restore();
-    await awsServices.sns().deleteTopic({
-      TopicArn,
-    });
   });
 });
 
