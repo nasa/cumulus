@@ -254,7 +254,7 @@ test('GranulePgModel.upsert() creates a new running granule if writeConstraints 
   );
 });
 
-test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if update is to status running, and writeConstraints is set to true and write conditions are met', async (t) => {
+test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if update is to set status to running, and writeConstraints is set to true and write conditions are met', async (t) => {
   const {
     knex,
     executionPgModel,
