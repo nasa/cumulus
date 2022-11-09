@@ -920,7 +920,6 @@ const writeGranulesFromMessage = async ({
         executionUrl,
         collectionId,
         provider: provider.id,
-        workflowStartTime,
         files,
         error,
         pdrName,
