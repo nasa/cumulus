@@ -561,7 +561,7 @@ test('_storeGranuleRecord() will allow a completed status to replace a queued st
   );
 });
 
-test('_storeGranuleRecord() will allow a running status to replace a queued status for a new execution', async (t) => {
+test('_storeGranuleRecord() will allow a running status to replace a queued status for a new execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const granule = fakeGranuleFactoryV2({ status: 'queued' });
