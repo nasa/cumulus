@@ -167,11 +167,14 @@ const getGranuleFromQueryResultOrLookup = async ({
  * Write a granule to PostgreSQL
  *
  * @param {Object} params
- * @param {Object} params.granuleRecord - An postgres granule records
+ * @param {Object} params.granuleRecord     - An postgres granule records
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
- * @param {Knex.transaction} params.trx - Transaction to interact with PostgreSQL database
- * @param {Object} params.granulePgModel - postgreSQL granule model
+ * @param {Knex.transaction} params.trx     - Transaction to interact with PostgreSQL database
+ * @param {Object} params.granulePgModel    - postgreSQL granule model
+ * @param {boolean} params.writeConstraints - Boolean flag to set if createdAt/execution write
+ *                                            constraints should restrict write behavior in the
+ *                                            database via upsertGranuleWithExecutionJoinRecord
  *
  * @returns {Promise<number>} - Cumulus ID from PostgreSQL
  * @throws
