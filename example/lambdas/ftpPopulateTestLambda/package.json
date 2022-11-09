@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ftp-populate-test-lambda",
-  "version": "11.1.7",
+  "version": "11.1.8",
   "description": "FTP Population Utility Lambda",
   "main": "index.js",
   "private": true,
@@ -19,12 +19,12 @@
     "access": "private"
   },
   "dependencies": {
-    "@cumulus/api": "11.1.7",
-    "@cumulus/api-client": "11.1.7",
-    "@cumulus/common": "11.1.7",
-    "@cumulus/integration-tests": "11.1.7",
-    "@cumulus/logger": "11.1.7",
-    "@cumulus/test-data": "11.1.7",
+    "@cumulus/api": "11.1.8",
+    "@cumulus/api-client": "11.1.8",
+    "@cumulus/common": "11.1.8",
+    "@cumulus/integration-tests": "11.1.8",
+    "@cumulus/logger": "11.1.8",
+    "@cumulus/test-data": "11.1.8",
     "aws-sdk": "^2.585.0",
     "fs-extra": "^9.0.0",
     "js-yaml": "^3.13.1",

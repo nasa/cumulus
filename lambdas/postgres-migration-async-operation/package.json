@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/postgres-migration-async-operation",
-  "version": "11.1.7",
+  "version": "11.1.8",
   "description": "A Lambda function used to start an ECS task to run data-migrations2 lambda",
   "license": "Apache-2.0",
   "engines": {
@@ -28,12 +28,12 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "11.1.7",
-    "@cumulus/async-operations": "11.1.7",
-    "@cumulus/logger": "11.1.7",
-    "@cumulus/types": "11.1.7"
+    "@cumulus/api": "11.1.8",
+    "@cumulus/async-operations": "11.1.8",
+    "@cumulus/logger": "11.1.8",
+    "@cumulus/types": "11.1.8"
   },
   "devDependencies": {
-    "@cumulus/test-data": "11.1.7"
+    "@cumulus/test-data": "11.1.8"
   }
 }
