@@ -927,7 +927,7 @@ test('_storeGranuleRecord() will allow a completed status to replace queued for 
   );
 });
 
-test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution when writeConstraints is set to true ', async (t) => {
+test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
   const timeVal = Date.now();
