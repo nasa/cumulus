@@ -869,7 +869,7 @@ const writeGranulesFromMessage = async ({
   try {
     workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
     if (!workflowStartTime) {
-      throw new Error(
+      throw new CumulusMessageError(
         'writeGranulesFromMessage called without a valid workflow start time in the Cumulus Message, all granules failed to write'
       );
     }
