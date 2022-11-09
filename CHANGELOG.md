@@ -6,15 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v13.4.0] 10/31/2022
-
-- **CUMULUS-3075**
-  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
-    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
-    undefined, now changed to an empty array. 
-  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
-  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
-
 ### Breaking changes
 
 - **CUMULUS-2915**
@@ -33,6 +24,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2915**
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
+- **CUMULUS-3075**
+  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
+    undefined, now changed to an empty array. 
+  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
+  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
 - **CUMULUS-3080**
   - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
 
