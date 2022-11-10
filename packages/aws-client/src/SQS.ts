@@ -160,7 +160,7 @@ export const receiveSQSMessages = async (
 export const parseSQSMessageBody = (
   message: SQSRecord | AWS.SQS.Message
 ): { [key: string]: any } =>
-  JSON.parse(get(message, 'Body', get(message, 'body', '{}')));
+  JSON.parse(get(message, 'Body', get(message, 'body')) ?? '{}');
 
 /**
  * Delete a given SQS message from a given queue.

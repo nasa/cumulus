@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v11.1.8] 2022-11-07 [BACKPORT]
+
+### Notable changes
+
+- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+
+### Changed
+
+- **CUMULUS-3104**
+  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+  - Sets default async_operation_image version to 43.
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
+
+- **CUMULUS-3080**
+  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
+
 ## [v11.1.7] 2022-10-05 [BACKPORT]
 
 ### Fixed
@@ -277,6 +294,15 @@ releases.
 - **CUMULUS-2905**
   - Updates migration script with new `migrateAndOverwrite` and
     `migrateOnlyFiles` options.
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
 
 ### Added
 
@@ -814,7 +840,7 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 ### Changed
 
 - **CUMULUS-NONE**
-  - Adds logging to ecs/async-operation Docker conatiner that launches async
+  - Adds logging to ecs/async-operation Docker container that launches async
     tasks on ECS. Sets default async_operation_image_version to 39.
 
 - **CUMULUS-2845**
@@ -6117,7 +6143,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.7...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v11.1.8...HEAD
+[v11.1.8]: https://github.com/nasa/cumulus/compare/v11.1.7...v11.1.8
 [v11.1.7]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.7
 [v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
