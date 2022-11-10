@@ -4,7 +4,7 @@
   "description": "A Lambda function used for deploying DB migrations",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "main": "./dist/lambda/index.js",
   "types": "./dist/lambda/index.d.ts",
