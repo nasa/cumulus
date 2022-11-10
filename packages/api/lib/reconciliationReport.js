@@ -263,7 +263,7 @@ function compareEsGranuleAndApiGranule(esGranule, apiGranule) {
   if (granulesAreEqual === false) return granulesAreEqual;
 
   const esGranulesHasFiles = esGranule.files !== undefined;
-  const apiGranuleHasFiles = apiGranule.files !== undefined;
+  const apiGranuleHasFiles = apiGranule.files.length !== 0;
 
   // If neither granule has files, then return the previous equality result
   if (!esGranulesHasFiles && !apiGranuleHasFiles) return granulesAreEqual;

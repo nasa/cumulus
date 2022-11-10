@@ -634,7 +634,7 @@ test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, Postg
   t.deepEqual(omit(translatedPgRecord, omitList), omit(esRecord, omitList));
 });
 
-test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => {
+test.serial('writeGranulesFromMessage() given a payload with undefined files, keeps existing files in all datastores', async (t) => { // FAILURE
   const {
     collectionCumulusId,
     esGranulesClient,
@@ -943,7 +943,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
   });
 
   // Files were removed from all datastores
-  t.is(apiGranule.files, undefined);
+  t.deepEqual(apiGranule.files, []);
   t.deepEqual(dynamoGranule.files, []);
   t.deepEqual(esGranule.files, []);
 });
@@ -2179,7 +2179,7 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
   });
 
   // Files were removed from all datastores
-  t.is(apiGranule.files, undefined);
+  t.deepEqual(apiGranule.files, []);
   t.deepEqual(dynamoGranule.files, []);
   t.deepEqual(esGranule.files, []);
 });
