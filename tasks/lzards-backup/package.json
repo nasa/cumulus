@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/lzards-backup",
-  "version": "13.3.3-alpha.0",
+  "version": "13.3.3-alpha.1",
   "description": "Run LZARDS backup",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -42,20 +42,20 @@
     }
   },
   "dependencies": {
-    "@cumulus/api-client": "13.3.3-alpha.0",
-    "@cumulus/aws-client": "13.3.3-alpha.0",
-    "@cumulus/common": "13.3.3-alpha.0",
+    "@cumulus/api-client": "13.3.3-alpha.1",
+    "@cumulus/aws-client": "13.3.3-alpha.1",
+    "@cumulus/common": "13.3.3-alpha.1",
     "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/db": "13.3.3-alpha.0",
-    "@cumulus/distribution-utils": "13.3.3-alpha.0",
-    "@cumulus/launchpad-auth": "13.3.3-alpha.0",
-    "@cumulus/logger": "13.3.3-alpha.0",
-    "@cumulus/message": "13.3.3-alpha.0",
+    "@cumulus/db": "13.3.3-alpha.1",
+    "@cumulus/distribution-utils": "13.3.3-alpha.1",
+    "@cumulus/launchpad-auth": "13.3.3-alpha.1",
+    "@cumulus/logger": "13.3.3-alpha.1",
     "@cumulus/lzards-api-client": "13.3.2-alpha.0",
+    "@cumulus/message": "13.3.3-alpha.1",
     "got": "11.8.3"
   },
   "devDependencies": {
-    "@cumulus/schemas": "13.3.3-alpha.0",
-    "@cumulus/types": "13.3.3-alpha.0"
+    "@cumulus/schemas": "13.3.3-alpha.1",
+    "@cumulus/types": "13.3.3-alpha.1"
   }
 }
