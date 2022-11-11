@@ -83,7 +83,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     such that existing createdAt values will be retained in case of overwrite
     across all API granule writes.
   - Updated granule write code to validate written createdAt is synced between
-    datastores in cases where granule.createdAt is not provided for a new granule.
+    datastores in cases where granule.createdAt is not provided for a new
+    granule.
+  - Updated @cumulus/db/translate/granules.translateApiGranuleToPostgresGranuleWithoutNilsRemoved to validate incoming values to ensure values that can't be set to null are not
+  - Updated @cumulus/db/translate/granules.translateApiGranuleToPostgresGranuleWithoutNilsRemoved to handle null values in incoming ApiGranule
+  - Updated @cumulus/db/types/granules.PostgresGranule typings to allow for null values
+  - Added ApiGranuleRecord to @cumulus/api/granule type to represent a written/retrieved from datastore API granule record.
+  - Update API/Message write logic to handle nulls as deletion in granule PUT/message write logic
 
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
 - **CUMULUS-3024**
@@ -115,6 +121,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Sets default async_operation_image version to 43.
   - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
   - Fixed TS compilation error caused by @aws-sdk/client-s3 3.190->3.193 upgrade
+
+### Fixed
+
+- **CUMULUS-3070**
+  - Fixed inaccurate typings for PostgresGranule in @cumulus/db/types/granule
+  - Fixed inaccurate typings for @cumulus/api/granules.ApiGranule and updated to
+    allow null
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
