@@ -1818,11 +1818,12 @@ test.serial('writeGranulesFromMessage() falls back to workflow_start_time if gra
   t.is(pgGranule.created_at.getTime(), expectedCreatedAt);
 });
 
-test.serial('writeGranulesFromMessage does not write a granule to Postgres or DynamoDB or ES if a granule with the same ID and with a different collection ID already exists', async (t) => {
+test.serial('writeGranulesFromMessage upserts a granule with the same ID and with a different collection ID', async (t) => {
   const {
     collectionPgModel,
     collectionCumulusId,
     cumulusMessage,
+    esGranulesClient,
     executionCumulusId,
     granuleId,
     granuleModel,
@@ -1831,45 +1832,78 @@ test.serial('writeGranulesFromMessage does not write a granule to Postgres or Dy
     providerCumulusId,
   } = t.context;
 
-  const differentCollection = fakeCollectionRecordFactory();
-  const [pgCollection] = await collectionPgModel.create(
+  const differentCollection = fakeCollectionRecordFactory({
+    name: randomId('differentCollection'),
+  });
+  const [newPgCollection] = await collectionPgModel.create(
     knex,
     differentCollection
   );
+  const newApiGranule = fakeGranuleFactoryV2({
+    granuleId,
+    collectionId: constructCollectionId(newPgCollection.name, newPgCollection.version),
+  });
 
-  const [pgGranule] = await granulePgModel.create(
+  const pgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newApiGranule,
+    knexOrTransaction: knex,
+  });
+
+  await granulePgModel.create(
     knex,
-    fakeGranuleRecordFactory({
-      granule_id: granuleId,
-      collection_cumulus_id: pgCollection.cumulus_id,
-    }),
+    pgGranule,
     '*'
   );
 
-  const [error] = await t.throwsAsync(writeGranulesFromMessage({
-    cumulusMessage,
+  const newCumulusMessage = {
+    ...cumulusMessage,
+    meta: {
+      ...cumulusMessage.meta,
+      collection: {
+        ...cumulusMessage.meta.collection,
+        name: newPgCollection.name,
+        version: newPgCollection.version
+      },
+    },
+    payload: {
+     granules: [newApiGranule],
+     pdr: {
+      ...cumulusMessage.payload.pdr
+     }
+    }
+  }
+
+  await writeGranulesFromMessage({
+    cumulusMessage: newCumulusMessage,
     executionCumulusId,
     providerCumulusId,
     knex,
     granuleModel,
     granulePgModel,
-  }));
+  });
 
-  t.true(error.message.includes(`A granule already exists for granuleId: ${pgGranule.granule_id}`));
-  t.false(await granuleModel.exists({ granuleId }));
+  // Check that granule exists in all data stores
+  t.true(await granuleModel.exists({ granuleId }));
+  t.true(
+    await granulePgModel.exists(knex, {
+      granule_id: granuleId,
+      collection_cumulus_id: newPgCollection.cumulus_id,
+    })
+  );
+  t.true(await esGranulesClient.exists(granuleId));
+
+  // Check that granule was overwritten
   t.false(
-    await t.context.granulePgModel.exists(knex, {
+    await granulePgModel.exists(knex, {
       granule_id: granuleId,
       collection_cumulus_id: collectionCumulusId,
     })
   );
-  t.false(await t.context.esGranulesClient.exists(granuleId));
-
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
   }).promise();
-  t.is(Messages, undefined);
+  t.truthy(Messages);
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with no granuleId provided', async (t) => {

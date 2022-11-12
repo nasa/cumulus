@@ -14,7 +14,6 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
-  getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
   upsertGranuleWithExecutionJoinRecord,
@@ -896,19 +895,6 @@ const writeGranulesFromMessage = async ({
         dynamoRecord: apiGranuleRecord,
         knexOrTransaction: knex,
       });
-
-      // Check if granuleId exists across another collection
-      const granulesByGranuleId = await getGranulesByGranuleId(knex, granule.granuleId);
-      const granuleExistsAcrossCollection = granulesByGranuleId.some(
-        (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
-      );
-      if (granuleExistsAcrossCollection) {
-        log.error('Could not write granule. It already exists across another collection');
-        const conflictError = new Error(
-          `A granule already exists for granuleId: ${apiGranuleRecord.granuleId} with collectionId: ${apiGranuleRecord.collectionId}`
-        );
-        throw conflictError;
-      }
 
       return _writeGranule({
         postgresGranuleRecord,

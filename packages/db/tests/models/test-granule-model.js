@@ -16,6 +16,7 @@ const {
   upsertGranuleWithExecutionJoinRecord,
   migrationDir,
   createRejectableTransaction,
+  getGranulesByGranuleId,
 } = require('../../dist');
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
@@ -32,6 +33,7 @@ test.before(async (t) => {
   t.context.granulesExecutionsPgModel = new GranulesExecutionsPgModel();
 
   const collectionPgModel = new CollectionPgModel();
+  t.context.collectionPgModel = collectionPgModel;
   t.context.collection = fakeCollectionRecordFactory();
 
   const [pgCollection] = await collectionPgModel.create(
@@ -654,6 +656,40 @@ test('GranulePgModel.upsert() succeeds without an execution for completed granul
 
   await granulePgModel.upsert(knex, granule);
   t.true(await granulePgModel.exists(knex, granule));
+});
+
+test('GranulePgModel.upsert() succeeds with updating a granule using granule_id', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    collectionPgModel,
+  } = t.context;
+  const newCollection = fakeCollectionRecordFactory();
+
+  const [newPgCollection] = await collectionPgModel.create(
+    knex,
+    newCollection
+  );
+  const granule = fakeGranuleRecordFactory({
+    granule_id: 'granule_123',
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const [pgGranule] = await granulePgModel.create(
+    knex,
+    granule,
+    '*'
+  )
+  const newGranule = fakeGranuleRecordFactory({
+    granule_id: 'granule_123',
+    status: 'completed',
+    collection_cumulus_id: newPgCollection.cumulus_id,
+  });;
+
+  await granulePgModel.upsert(knex, newGranule);
+  const [upsertedGranule] = await getGranulesByGranuleId(knex, pgGranule.granule_id);
+  t.deepEqual(upsertedGranule.collection_cumulus_id, newPgCollection.cumulus_id );
 });
 
 test('GranulePgModel.upsert() succeeds without an execution for running granule', async (t) => {

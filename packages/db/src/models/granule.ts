@@ -124,7 +124,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     if (granule.status === 'running' || granule.status === 'queued') {
       const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
-        .onConflict(['granule_id', 'collection_cumulus_id'])
+        .onConflict(['granule_id'])
         .merge({
           status: granule.status,
           timestamp: granule.timestamp,
@@ -159,7 +159,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     }
     return await knexOrTrx(this.tableName)
       .insert(granule)
-      .onConflict(['granule_id', 'collection_cumulus_id'])
+      .onConflict(['granule_id'])
       .merge()
       .where(
         knexOrTrx.raw(
