@@ -897,8 +897,9 @@ const writeGranulesFromMessage = async ({
         knexOrTransaction: knex,
       });
 
+      // TODO: CUMULUS-3017 - Remove this unique collectionId condition
       // Check if granuleId exists across another collection
-      const granulesByGranuleId = await getGranulesByGranuleId(knex, granule.granuleId);
+      const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranuleRecord.granuleId);
       const granuleExistsAcrossCollection = granulesByGranuleId.some(
         (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
       );
@@ -926,7 +927,7 @@ const writeGranulesFromMessage = async ({
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to Dynamo', aggregateError);
+    log.error('Failed writing some granules: ', aggregateError);
     throw aggregateError;
   }
   return results;

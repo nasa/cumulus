@@ -113,6 +113,9 @@ const create = async (req, res) => {
       dynamoRecord: granule,
       knexOrTransaction: knex,
     });
+
+    // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+    //  and only check for granule existence
     // Check if granule already exists across all collections
     const granulesByGranuleId = await getGranulesByGranuleId(knex, pgGranule.granule_id);
     if (granulesByGranuleId.length > 0) {
@@ -154,6 +157,7 @@ const putGranule = async (req, res) => {
     res.boom.badRequest('Granule update must include a valid CollectionId');
   }
 
+
   try {
     pgCollection = await collectionPgModel.get(
       knex, deconstructCollectionId(apiGranule.collectionId)
@@ -165,6 +169,19 @@ const putGranule = async (req, res) => {
     } else {
       throw error;
     }
+  }
+
+  // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+  // Check if granuleId exists across another collection
+  const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranule.granuleId);
+  const granuleExistsAcrossCollection = granulesByGranuleId.some(
+    (g) => g.collection_cumulus_id !== pgCollection.cumulus_id
+  );
+  if (granuleExistsAcrossCollection) {
+    log.error('Could not update or write granule, collectionId is not modifiable.');
+    return res.boom.conflict(
+      `Modifying collectionId for a granule is not allowed. Write for granuleId: ${apiGranule.granuleId} failed.`
+    );
   }
 
   let isNewRecord = false;

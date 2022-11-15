@@ -310,5 +310,45 @@ describe('The Granules API', () => {
         expect(apiError.message).toContain(granuleWithDiffCollection.granuleId);
       }
     });
+
+    it('errors updating a granule that already exists across a different collection', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+      const newCollection = await createCollection(prefix);
+      const newCollectionId = constructCollectionId(newCollection.name, newCollection.version);
+      const granuleToWrite = removeNilProperties(fakeGranuleFactoryV2({
+        collectionId: newCollectionId,
+        published: false,
+        dataType: undefined,
+        version: undefined,
+        execution: undefined,
+        files: [granuleFile],
+      }));
+      const response = await createGranule({
+        prefix,
+        body: granuleToWrite,
+      });
+      const diffCollection = await createCollection(prefix);
+      const diffCollectionId = constructCollectionId(diffCollection.name, diffCollection.version);
+      const granuleWithDiffCollection = {
+        ...granuleToWrite,
+        collectionId: diffCollectionId,
+      };
+
+      expect(response.statusCode).toBe(200);
+      try {
+        await updateGranule({
+          prefix,
+          body: granuleWithDiffCollection,
+        });
+      } catch (error) {
+        const apiError = JSON.parse(error.apiMessage);
+        expect(apiError.statusCode).toBe(409);
+        expect(apiError.error).toBe('Conflict');
+        expect(apiError.message).toContain('Modifying collectionId for a granule is not allowed');
+        expect(apiError.message).toContain(granuleWithDiffCollection.granuleId);
+      }
+    });
   });
 });
