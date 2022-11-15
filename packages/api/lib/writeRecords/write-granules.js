@@ -724,7 +724,7 @@ const writeGranuleFromApi = async (
     published,
     pdrName,
     provider,
-    error, // TODO test change?
+    error,
     updatedAt,
     duration,
     productVolume,
