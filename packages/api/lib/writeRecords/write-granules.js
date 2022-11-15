@@ -5,6 +5,8 @@ const isArray = require('lodash/isArray');
 const isEmpty = require('lodash/isEmpty');
 const isNil = require('lodash/isNil');
 const omit = require('lodash/omit');
+const isNull = require('lodash/isNull');
+
 const isUndefined = require('lodash/isUndefined');
 const omitBy = require('lodash/omitBy');
 const pMap = require('p-map');
@@ -64,8 +66,6 @@ const {
   CumulusMessageError,
   RecordDoesNotExist,
 } = require('@cumulus/errors');
-
-const isNull = require('lodash/isNull');
 
 const FileUtils = require('../FileUtils');
 const {
