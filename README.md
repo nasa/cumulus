@@ -154,4 +154,4 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
 
 ## 🛒 Release
 
-To release a new version of cumulus [read this](docs/development/release.md).
+To release a new version of Cumulus [read this](docs/development/release.md).
