@@ -388,7 +388,7 @@ async function upsertGranule({
           doc: upsertDoc,
         },
       },
-      upsert: upsertDoc, // Todo remove null
+      upsert: upsertDoc,
     },
     refresh: refresh !== undefined ? refresh : inTestMode(),
     retry_on_conflict: 3,
