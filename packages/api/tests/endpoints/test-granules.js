@@ -1938,7 +1938,6 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
     timestamp,
     queryFields: newQueryFields,
     updatedAt: actualGranule.updatedAt,
-    // TODO - why was this specified?   Was it a default?
   });
 
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
