@@ -119,9 +119,8 @@ export const translatePostgresGranuleToApiGranule = async ({
 };
 
 const returnNullOrUndefinedOrDate = (dateVal: string | number | null | undefined) => {
-  if (dateVal === undefined) return undefined;
   if (dateVal === null) return dateVal;
-  return new Date(dateVal);
+  return dateVal ? new Date(dateVal) : dateVal;
 };
 
 /**
