@@ -178,12 +178,12 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   let pdr_cumulus_id;
-  if (!isNil(dynamoRecord.pdrName)) {
+  if (isNil(dynamoRecord.pdrName)) {
+    pdr_cumulus_id = dynamoRecord.pdrName;
+  } else {
     pdr_cumulus_id = await pdrPgModel.getRecordCumulusId(knexOrTransaction, {
       name: dynamoRecord.pdrName,
     });
-  } else {
-    pdr_cumulus_id = dynamoRecord.pdrName;
   }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
