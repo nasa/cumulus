@@ -98,6 +98,37 @@ async function list(req, res) {
 }
 
 /**
+ * Set granule defaults for nullish values
+ *
+ * @param {Object} incomingApiGranule - granule record to set defaults for
+ * @param {boolean} isNewRecord - boolean to set
+ * @returns {Promise<Object>} Promise resolving to returned/updated granule
+ */
+const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
+  if (isNewRecord === false) return incomingApiGranule;
+
+  const apiGranule = cloneDeep(incomingApiGranule);
+
+  const updateDate = _createNewGranuleDateValue();
+  const newGranuleDefaults = {
+    published: false,
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    error: {},
+  };
+  // Set API defaults only if new record
+  Object.keys(newGranuleDefaults).forEach((key) => {
+    if (!apiGranule[key]) {
+      apiGranule[key] = newGranuleDefaults[key];
+    }
+  });
+  if (!apiGranule.status) {
+    throw new Error('granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request');
+  }
+  return apiGranule;
+};
+
+/**
  * Create new granule
  *
  * @param {Object} req - express request object
@@ -137,42 +168,12 @@ const create = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
   try {
-    if (!granule.published) {
-      granule.published = false;
-    }
-    if (!granule.createdAt) {
-      granule.createdAt = _createNewGranuleDateValue();
-    }
-    await createGranuleFromApiMethod(granule, knex, esClient);
+    await createGranuleFromApiMethod(_setNewGranuleDefaults(granule, true), knex, esClient);
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
   }
   return res.send({ message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` });
-};
-
-const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord) => {
-  const apiGranule = cloneDeep(incomingApiGranule);
-
-  const updateDate = _createNewGranuleDateValue();
-  const newGranuleDefaults = {
-    published: false,
-    createdAt: updateDate,
-    updatedAt: updateDate,
-    error: {},
-  };
-  // Set API defaults only if new record
-  if (isNewRecord === true) {
-    Object.keys(newGranuleDefaults).forEach((key) => {
-      if (!apiGranule[key]) {
-        apiGranule[key] = newGranuleDefaults[key];
-      }
-    });
-    if (!apiGranule.status) {
-      throw new Error('granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request');
-    }
-  }
-  return apiGranule;
 };
 
 /**
