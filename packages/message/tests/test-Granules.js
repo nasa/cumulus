@@ -197,6 +197,8 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     workflowStatus,
   } = t.context;
   const granule = t.context.granuleSuccess.payload.granules[0];
+  granule.createdAt = Date.now();
+
   const executionUrl = cryptoRandomString({ length: 10 });
 
   const processingStartDateTime = new Date(Date.UTC(2019, 6, 28)).toISOString();
@@ -205,11 +207,10 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   const timeToPreprocess = getGranuleTimeToPreprocess(granule);
   const productVolume = getGranuleProductVolume(granule.files);
   const status = getGranuleStatus(workflowStatus, granule);
-  const duration = getWorkflowDuration(workflowStartTime, Date.now());
-  granule.createdAt = Date.now();
+  const duration = getWorkflowDuration(granule.createdAt, Date.now());
 
   const record = await generateGranuleApiRecord({
-    granule: { ...granule, createdAt },
+    granule: { ...granule },
     executionUrl,
     processingTimeInfo: {
       processingStartDateTime,
@@ -234,8 +235,8 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     record.files,
     granule.files
   );
-  
-  t.is(record.createdAt, granule.createdAt); 
+
+  t.is(record.createdAt, granule.createdAt);
   t.is(typeof record.duration, 'number');
   t.is(record.status, workflowStatus);
   t.is(record.pdrName, pdrName);
