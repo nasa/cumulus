@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+- **CUMULUS-3116**
+  - Reverted the default ElasticSearch sorting behavior to the pre-13.3.0 configuration
+  - Results from ElasticSearch are sorted by default by the `timestamp` field. This means that the order
+  is not guaranteed if two or more records have identical timestamps as there is no secondary sort/tie-breaker.
+
 ### Changed
 - **CUMULUS-3077**
   - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
