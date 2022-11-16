@@ -960,7 +960,7 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   );
 });
 
-test.serial('translateApiGranuleToPostgresGranule converts API granule to Postgres, preserving null values', async (t) => {
+test.serial('translateApiGranuleToPostgresGranule converts API granule to Postgres, removing null values', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
   const pdrCumulusId = 4;
