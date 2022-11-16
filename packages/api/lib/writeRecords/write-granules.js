@@ -218,7 +218,7 @@ const _writePostgresGranuleViaTransaction = async ({
 * @param {Object} params.knex - Instance of a Knex client
 * @param {[Object]} params.writtenFiles - List of postgres file objects that should
 * not be removed by this method.
-* @returns {Promise<number>} The number of rows deleted
+* @returns {Promise<Object>} Knex .delete response
 */
 const _removeExcessFiles = async ({
   filePgModel = new FilePgModel(),
