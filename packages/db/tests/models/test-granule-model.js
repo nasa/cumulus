@@ -1844,7 +1844,7 @@ test('GranulePgModel.upsert() succeeds without an execution for completed granul
   t.true(await granulePgModel.exists(knex, granule));
 });
 
-test('GranulePgModel.upsert() throws an error for a granule with status of "completed" without createdAt set when write constraints are set to true and sets a default value', async (t) => {
+test('GranulePgModel.upsert() throws an error for a granule with status of "completed" without createdAt set when write constraints are set to true', async (t) => {
   const {
     knex,
     granulePgModel,
