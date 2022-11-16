@@ -983,7 +983,9 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   };
 
   const expectedPostgresGranule = {
-    ...apiGranule
+    status: granuleStatus,
+    collection_cumulus_id: collectionCumulusId,
+    granule_id: apiGranule.granuleId,
     beginning_date_time: undefined,
     cmr_link: undefined,
     created_at: undefined,
