@@ -36,7 +36,7 @@ resource "aws_secretsmanager_secret_version" "api_oauth_client_password" {
 
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = 30
+  retention_in_days = var.cloudwatch_log_retention_in_days
   tags              = var.tags
 }
 

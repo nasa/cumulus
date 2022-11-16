@@ -30,7 +30,7 @@ resource "aws_lambda_function" "update_cmr_access_constraints_task" {
 }
 
 resource "aws_cloudwatch_log_group" "update_cmr_access_constraints_task" {
-  name = "/aws/lambda/${aws_lambda_function.update_cmr_access_constraints_task.function_name}"
-  retention_in_days = 30
-  tags = var.tags
+  name              = "/aws/lambda/${aws_lambda_function.update_cmr_access_constraints_task.function_name}"
+  retention_in_days = var.cloudwatch_log_retention_in_days
+  tags              = var.tags
 }

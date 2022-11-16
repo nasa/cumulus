@@ -100,7 +100,7 @@ resource "aws_lambda_function" "publish_executions" {
 
 resource "aws_cloudwatch_log_group" "publish_executions_logs" {
   name              = "/aws/lambda/${var.prefix}-publishExecutions"
-  retention_in_days = 30
+  retention_in_days = var.cloudwatch_log_retention_in_days
   tags              = var.tags
 }
 
@@ -210,7 +210,7 @@ resource "aws_lambda_function" "publish_granules" {
 
 resource "aws_cloudwatch_log_group" "publish_granules_logs" {
   name              = "/aws/lambda/${aws_lambda_function.publish_granules.function_name}"
-  retention_in_days = 30
+  retention_in_days = var.cloudwatch_log_retention_in_days
   tags              = var.tags
 }
 
@@ -315,7 +315,7 @@ resource "aws_lambda_function" "publish_pdrs" {
 
 resource "aws_cloudwatch_log_group" "publish_pdrs_logs" {
   name              = "/aws/lambda/${aws_lambda_function.publish_pdrs.function_name}"
-  retention_in_days = 30
+  retention_in_days = var.cloudwatch_log_retention_in_days
   tags              = var.tags
 }
 

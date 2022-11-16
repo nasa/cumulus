@@ -1,6 +1,6 @@
 resource "aws_cloudwatch_log_group" "async_operation" {
   name = "${var.prefix}-AsyncOperationEcsLogs"
-  retention_in_days = 30
+  retention_in_days = var.cloudwatch_log_retention_in_days
   tags = var.tags
 }
 resource "aws_ecs_task_definition" "async_operation" {

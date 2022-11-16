@@ -86,7 +86,7 @@ resource "aws_lambda_function" "granule_files_cache_updater" {
 
 resource "aws_cloudwatch_log_group" "granule_files_cache_updater_logs" {
   name              = "/aws/lambda/${aws_lambda_function.granule_files_cache_updater.function_name}"
-  retention_in_days = 30
+  retention_in_days = var.cloudwatch_log_retention_in_days
   tags              = var.tags
 }
 

@@ -87,3 +87,9 @@ variable "log_destination_arn" {
   default     = null
   description = "A shared AWS:Log:Destination that receives logs in log_groups"
 }
+
+variable "cloudwatch_log_retention_in_days" {
+  type        = number
+  description = "Retention period to apply to CloudWatch logs"
+  default     = 30
+}
