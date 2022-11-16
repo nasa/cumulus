@@ -1884,6 +1884,48 @@ test.serial('create (POST) returns bad request if a granule is submitted with a 
   t.is(response.error.message, 'cannot POST /granules (400)');
 });
 
+test.serial('create (POST) returns bad request if a granule is submitted without a status set', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: t.context.executionUrl,
+  });
+
+  delete newGranule.status;
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(response.statusCode, 400);
+  t.is(response.error.status, 400);
+  t.is(response.error.message, 'cannot POST /granules (400)');
+  t.true(response.text.includes('Error: granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request'));
+});
+
+test.serial('PUT returns bad request if a new granule is submitted without a status set', async (t) => {
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: t.context.collectionId,
+    execution: t.context.executionUrl,
+  });
+
+  delete newGranule.status;
+
+  const response = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(400);
+
+  t.is(response.statusCode, 400);
+  t.is(response.error.status, 400);
+  t.is(response.error.message, `cannot PUT /granules/${newGranule.granuleId} (400)`);
+  t.true(response.text.includes('Error: granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request'));
+});
+
 // TODO -- is this test testing PUT behavior?
 test.serial('PUT replaces an existing granule in all data stores', async (t) => {
   const {
