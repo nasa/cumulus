@@ -960,6 +960,64 @@ test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API
   );
 });
 
+test.serial('translateApiGranuleToPostgresGranuleWithoutNilsRemoved converts API granule to Postgres, with undefined values set', async (t) => {
+  const collectionCumulusId = 1;
+  const providerCumulusId = 2;
+  const pdrCumulusId = 4;
+  const granuleStatus = 'complete';
+  const fakeCollectionPgModel = {
+    getRecordCumulusId: () => Promise.resolve(collectionCumulusId),
+  };
+  const fakeProviderPgModel = {
+    getRecordCumulusId: () => Promise.resolve(providerCumulusId),
+  };
+  const fakePdrPgModel = {
+    getRecordCumulusId: () => Promise.resolve(pdrCumulusId),
+  };
+
+  const apiGranule = {
+    granuleId: cryptoRandomString({ length: 5 }),
+    collectionId: constructCollectionId('name', 'version'),
+    status: granuleStatus,
+  };
+
+  const expectedPostgresGranule = {
+    ...apiGranule
+    beginning_date_time: undefined,
+    cmr_link: undefined,
+    created_at: undefined,
+    duration: undefined,
+    ending_date_time: undefined,
+    error: undefined,
+    last_update_date_time: undefined,
+    pdr_cumulus_id: undefined,
+    processing_end_date_time: undefined,
+    processing_start_date_time: undefined,
+    product_volume: undefined,
+    production_date_time: undefined,
+    provider_cumulus_id: undefined,
+    published: undefined,
+    query_fields: undefined,
+    time_to_archive: undefined,
+    time_to_process: undefined,
+    timestamp: undefined,
+    updated_at: undefined,
+  };
+
+  const result = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+    dynamoRecord: apiGranule,
+    knexOrTransaction: {},
+    collectionPgModel: fakeCollectionPgModel,
+    pdrPgModel: fakePdrPgModel,
+    providerPgModel: fakeProviderPgModel,
+  });
+
+  t.deepEqual(
+    result,
+    expectedPostgresGranule
+  );
+});
+
 test.serial('translateApiGranuleToPostgresGranule converts API granule to Postgres, removing null values', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
