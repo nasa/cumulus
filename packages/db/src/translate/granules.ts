@@ -118,10 +118,9 @@ export const translatePostgresGranuleToApiGranule = async ({
   return apiGranule;
 };
 
-const returnNullOrUndefinedOrDate = (dateVal: string | number | null | undefined) => {
-  if (dateVal === null) return dateVal;
-  return dateVal ? new Date(dateVal) : dateVal;
-};
+const returnNullOrUndefinedOrDate = (
+  dateVal: string | number | null | undefined
+) => (isNil(dateVal) ? dateVal : new Date(dateVal));
 
 /**
  * Validate translation request doesn't contain invalid null files based
