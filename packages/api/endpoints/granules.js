@@ -157,7 +157,6 @@ const putGranule = async (req, res) => {
     res.boom.badRequest('Granule update must include a valid CollectionId');
   }
 
-
   try {
     pgCollection = await collectionPgModel.get(
       knex, deconstructCollectionId(apiGranule.collectionId)

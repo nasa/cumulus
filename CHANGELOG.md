@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+-**CUMULUS-3100**
+  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
+  - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
+  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
+
 ## [v13.4.0] 10/31/2022
 
 - **CUMULUS-3075**
@@ -74,9 +81,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
 - **CUMULUS-2944**
   - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
--**CUMULUS-3100**
-  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
-  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
 
 ### Changed
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
