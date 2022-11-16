@@ -400,7 +400,6 @@ test.serial('internalRecReportForGranules handles generated granules with custom
       ...fakeGranule,
       granule: fakeGranule,
       executionUrl: fakeGranule.execution,
-      createdAt: Date.now(),
       processingTimeInfo,
       cmrTemporalInfo,
     });

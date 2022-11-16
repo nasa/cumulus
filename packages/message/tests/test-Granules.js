@@ -193,7 +193,6 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   const {
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     workflowStatus,
   } = t.context;
@@ -210,7 +209,7 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   granule.createdAt = Date.now();
 
   const record = await generateGranuleApiRecord({
-    granule,
+    granule: { ...granule, createdAt },
     executionUrl,
     processingTimeInfo: {
       processingStartDateTime,
@@ -235,8 +234,8 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     record.files,
     granule.files
   );
-
-  t.is(record.createdAt, granule.createdAt); // TODO -- validate this test set
+  
+  t.is(record.createdAt, granule.createdAt); 
   t.is(typeof record.duration, 'number');
   t.is(record.status, workflowStatus);
   t.is(record.pdrName, pdrName);

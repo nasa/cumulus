@@ -1288,7 +1288,7 @@ test.serial('writeGranulesFromMessage() uses a default value for granule.created
   t.is(translatedPgRecord.createdAt, workflowStartTime);
 });
 
-test.serial('writeGranulesFromMessage() uses granule.createdAt value for written granule if defined', async (t) => {
+test.serial('writeGranulesFromMessage() allows overwrite of createdAt and uses granule.createdAt value for written granule if defined', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -3145,6 +3145,69 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
   t.deepEqual(esGranule.files, undefined);
 });
 
+test.serial('writeGranuleFromApi() given a null files key will throw an error', async (t) => {
+  const {
+    collectionCumulusId,
+    esClient,
+    esGranulesClient,
+    granule,
+    granuleId,
+    granuleModel,
+    knex,
+  } = t.context;
+
+  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
+
+  // Files exist in all datastores
+  const originalPGGranule = await t.context.granulePgModel.get(
+    knex,
+    {
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }
+  );
+  const originalApiGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: originalPGGranule,
+    knexOrTransaction: knex,
+  });
+  const originalDynamoGranule = await granuleModel.get({ granuleId });
+  const originalEsGranule = await esGranulesClient.get(granuleId);
+  const originalPayloadFiles = t.context.files;
+
+  originalApiGranule.files.sort(
+    (f1, f2) => sortFilesByBuckets(f1, f2)
+  );
+  originalDynamoGranule.files.sort(
+    (f1, f2) => sortFilesByBuckets(f1, f2)
+  );
+  originalEsGranule.files.sort(
+    (f1, f2) => sortFilesByBuckets(f1, f2)
+  );
+  originalPayloadFiles.sort(
+    (f1, f2) => sortFilesByBuckets(f1, f2)
+  );
+
+  t.deepEqual(originalApiGranule.files, originalPayloadFiles);
+  t.deepEqual(originalDynamoGranule.files, originalPayloadFiles);
+  t.deepEqual(originalEsGranule.files, originalPayloadFiles);
+
+  // Update existing granule with a partial granule object
+  const updateGranulePayload = {
+    granuleId,
+    collectionId: granule.collectionId,
+    files: null,
+    // FUTURE: In order to update a granule, the payload must include status and
+    // the status must be 'completed' or 'failed'
+    // if it's running or queued, it will try to insert the granule, not upsert
+    status: granule.status,
+  };
+
+  await t.throwsAsync(
+    updateGranule(t, updateGranulePayload),
+    { message: 'granule.files must not be null' }
+  );
+});
+
 test.serial('writeGranuleFromApi() writes a full granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
   const {
     collectionCumulusId,
@@ -3283,6 +3346,7 @@ test.serial('writeGranuleFromApi() saves updated values for running granule reco
   const esRecord = await t.context.esGranulesClient.get(granuleId);
 
   t.truthy(dynamoRecord.timestamp);
+
   t.is(postgresRecord.created_at.getTime(), dynamoRecord.createdAt);
   t.is(postgresRecord.updated_at.getTime(), dynamoRecord.updatedAt);
   t.is(postgresRecord.timestamp.getTime(), dynamoRecord.timestamp);
@@ -3303,6 +3367,10 @@ test.serial('writeGranuleFromApi() saves updated values for running granule reco
   t.is(postgresRecord.published, true);
   t.is(dynamoRecord.published, true);
   t.is(esRecord.published, true);
+
+  t.is(postgresRecord.status, 'running');
+  t.is(dynamoRecord.status, 'running');
+  t.is(esRecord.status, 'running');
 });
 
 test.serial('writeGranuleFromApi() saves updated values for queued granule record to Dynamo, Postgres and ElasticSearch on rewrite', async (t) => {
@@ -3375,6 +3443,10 @@ test.serial('writeGranuleFromApi() saves updated values for queued granule recor
   t.is(postgresRecord.published, true);
   t.is(dynamoRecord.published, true);
   t.is(esRecord.published, true);
+
+  t.is(postgresRecord.status, 'queued');
+  t.is(dynamoRecord.status, 'queued');
+  t.is(esRecord.status, 'queued');
 });
 
 test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same default time values for a new granule', async (t) => {

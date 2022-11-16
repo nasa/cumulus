@@ -254,7 +254,7 @@ test('GranulePgModel.upsert() creates a new running granule if writeConstraints 
   );
 });
 
-test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if update is to status running, and writeConstraints is set to true and write conditions are met', async (t) => {
+test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if update is to set status to running, and writeConstraints is set to true and write conditions are met', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -320,7 +320,7 @@ test('GranulePgModel.upsert() will only overwrite allowed fields of a granule if
   );
 });
 
-test('GranulePgModel.upsert() overwrites all fields of a granule if update is to status running, and writeConstraints is set to false', async (t) => {
+test('GranulePgModel.upsert() overwrites all fields of a granule if update is to set status to running, and writeConstraints is set to false', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -1636,7 +1636,7 @@ test.serial('GranulePgModel.upsert() will not allow a running granule linked to 
   t.is(record.status, 'completed');
 });
 
-test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted without created_at and writeConstraints is set to true', async (t) => {
+test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for a running granule without created_at and writeConstraints is set to true', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -1665,6 +1665,55 @@ test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted wit
   const updatedGranule = {
     ...granule,
     status: 'running',
+  };
+
+  delete updatedGranule.created_at;
+
+  await t.throwsAsync(
+    granulePgModel.upsert({
+      knexOrTrx: knex,
+      granule: updatedGranule,
+      executionCumulusId: newExecutionCumulusId,
+      writeConstraints: true,
+    })
+  );
+
+  const record = await granulePgModel.get(knex, {
+    granule_id: granule.granule_id,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  t.like(record, granule);
+});
+
+test.serial('GranulePgModel.upsert() throws if a granule upsert is attempted for a queued granule without created_at and writeConstraints is set to true', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule,
+    executionCumulusId,
+  });
+
+  const [newExecution] = await executionPgModel.create(
+    t.context.knex,
+    fakeExecutionRecordFactory({ status: 'running' })
+  );
+  const newExecutionCumulusId = newExecution.cumulus_id;
+
+  const updatedGranule = {
+    ...granule,
+    status: 'queued',
   };
 
   delete updatedGranule.created_at;
@@ -1795,7 +1844,7 @@ test('GranulePgModel.upsert() succeeds without an execution for completed granul
   t.true(await granulePgModel.exists(knex, granule));
 });
 
-test('GranulePgModel.upsert() succeeds for a granule without createdAt set and sets a default value', async (t) => {
+test('GranulePgModel.upsert() throws an error for a granule with status of "completed" without createdAt set when write constraints are set to true and sets a default value', async (t) => {
   const {
     knex,
     granulePgModel,
@@ -1807,8 +1856,38 @@ test('GranulePgModel.upsert() succeeds for a granule without createdAt set and s
     status: 'completed',
     collection_cumulus_id: collectionCumulusId,
   });
+  delete granule.created_at;
 
-  const response = await granulePgModel.upsert({ knexOrTrx: knex, granule, executionCumulusId });
+  await t.throwsAsync(
+    granulePgModel.upsert({
+      knexOrTrx: knex,
+      granule,
+      executionCumulusId,
+      writeConstraints: true,
+    })
+  );
+});
+
+test('GranulePgModel.upsert() succeeds for a granule with status of "completed" without createdAt set when write constraints are set to false and sets a default value', async (t) => {
+  const {
+    knex,
+    granulePgModel,
+    collectionCumulusId,
+    executionCumulusId,
+  } = t.context;
+
+  const granule = fakeGranuleRecordFactory({
+    status: 'completed',
+    collection_cumulus_id: collectionCumulusId,
+  });
+  delete granule.created_at;
+
+  const response = await granulePgModel.upsert({
+    knexOrTrx: knex,
+    granule,
+    executionCumulusId,
+    writeConstraints: false,
+  });
   t.truthy(response[0].created_at);
   t.false(granule.created_at === response[0].created_at);
 });
