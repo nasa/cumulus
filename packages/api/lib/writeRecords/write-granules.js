@@ -749,6 +749,9 @@ const writeGranuleFromApi = async (
   try {
     // If published is set to null, set default value to false
     // instead of allowing nullish value
+
+    // New granules should have published set when calling this method.  Assume undefined
+    // is a PATCH request
     const publishedValue = isNull(published) ? false : published;
     const defaultSetError = isNull(error) ? {} : error;
     const defaultSetFiles = isNull(files) ? [] : files;
@@ -936,7 +939,8 @@ const writeGranulesFromMessage = async ({
       }) : undefined;
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
-      const productVolume = getGranuleProductVolume(files);
+      const productVolume = files ? getGranuleProductVolume(files) : undefined;
+
       const now = Date.now();
       const duration = getWorkflowDuration(workflowStartTime, now);
       const status = getGranuleStatus(workflowStatus, granule);
@@ -944,6 +948,8 @@ const writeGranulesFromMessage = async ({
       const timestamp = now;
 
       let published = granule.published;
+      // New granules should have published set when calling this method.
+      // Calling undefined will result in this value being set to false
       if (isNil(published)) {
         published = false;
       }
