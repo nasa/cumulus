@@ -7,8 +7,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
+
+-**CUMULUS-3100**
+  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
+  - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
+  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
 - **CUMULUS-3077**
   - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
+- **CUMULUS-3045**
+  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
 
 ## [v13.4.0] 10/31/2022
 
@@ -408,7 +415,7 @@ releases.
 
 ## [v12.0.3] 2022-10-03 [BACKPORT]
 
-**Please note** changes in 12.0.3 may not yet be released in future versions, as
+**Please note** changes in 11.1.7 may not yet be released in future versions, as
 this is a backport and patch release on the 12.0.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
