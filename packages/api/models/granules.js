@@ -11,13 +11,16 @@ const Logger = require('@cumulus/logger');
 const { removeNilProperties } = require('@cumulus/common/util');
 const {
   DeletePublishedGranule,
+  ValidationError,
 } = require('@cumulus/errors');
 const {
   generateMoveFileParams,
 } = require('@cumulus/ingest/granule');
 
-const Manager = require('./base');
+const omitBy = require('lodash/omitBy');
+const isNull = require('lodash/isNull');
 
+const Manager = require('./base');
 const { CumulusModelError } = require('./errors');
 const FileUtils = require('../lib/FileUtils');
 const {
@@ -69,6 +72,16 @@ class Granule extends Manager {
     this.fileUtils = fileUtils;
     this.stepFunctionUtils = stepFunctionUtils;
     this.cmrUtils = cmrUtils;
+    this.allowNulls = true;
+    this.parseEmptyFilesArrayAsNull = true;
+    this.invalidNullFields = [
+      'granuleId',
+      'collectionId',
+      'status',
+      'updatedAt',
+      'execution',
+      'createdAt',
+    ];
   }
 
   async get(...args) {
@@ -330,6 +343,13 @@ class Granule extends Manager {
    */
   async _storeGranuleRecord(granuleRecord, writeConstraints = true) {
     const mutableFieldNames = this._getMutableFieldNames(granuleRecord, writeConstraints);
+    // Validate values that shouldn't be set to null are not
+    Object.keys(granuleRecord).forEach((key) => {
+      if (granuleRecord[key] === null && this.invalidNullFields.includes(key)) {
+        throw new ValidationError(`Attempted DynamoDb write with invalid key ${key} set to null.  Please remove or change this field and retry`);
+      }
+    });
+
     const updateParams = this._buildDocClientUpdateParams({
       item: granuleRecord,
       itemKey: { granuleId: granuleRecord.granuleId },
@@ -409,7 +429,10 @@ class Granule extends Manager {
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
     await this.constructor.recordIsValid(
-      clonedGranuleRecord,
+      // Allow null values for PATCH deletion
+      // Functionally for new granules they're undefined and
+      // and should pass validation
+      omitBy(clonedGranuleRecord, isNull),
       this.schema,
       this.removeAdditional
     );

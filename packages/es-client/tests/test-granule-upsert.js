@@ -115,6 +115,178 @@ test('upsertGranule creates new "completed" record', async (t) => {
   t.like(esRecord, granule);
 });
 
+test('upsertGranule creates new "completed" record with null fields omitted', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    randomKey: null,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  delete granule.randomKey;
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+});
+
+test('upsertGranule throws ValidateError on overwrite with invalid nullable keys', async (t) => {
+  const { esIndex, esClient } = t.context;
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  await Promise.all(indexer.granuleInvalidNullFields.map(async (field) => {
+    const updateGranule = {
+      ...granule,
+    };
+    updateGranule[field] = null;
+    console.log(`Running ${field} test`);
+    await t.throwsAsync(indexer.upsertGranule({
+      esClient,
+      updates: updateGranule,
+      index: esIndex,
+    }), { name: 'ValidationError' });
+  }));
+});
+
+test('upsertGranule updates record with expected nullified values for same execution if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    execution: randomString(),
+  };
+
+  const additionalGranuleFields = {
+    cmrLink: 'fakeCmrLink',
+    files: [{ bucket: 'fake', key: 'fake' }],
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: { ...granule, ...additionalGranuleFields },
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    cmrLink: null,
+    files: null,
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+
+  t.like(updatedEsRecord, granule);
+});
+
+test('upsertGranule updates record with expected nullified values for same execution if writeConstraints is true and write conditions are met and createdAt is set', async (t) => {
+  const { esIndex, esClient } = t.context;
+  const granuleCreatedAt = Date.now();
+  const granule = {
+    createdAt: granuleCreatedAt,
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    execution: randomString(),
+  };
+
+  const additionalGranuleFields = {
+    cmrLink: 'fakeCmrLink',
+    files: [{ bucket: 'fake', key: 'fake' }],
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: { ...granule, ...additionalGranuleFields },
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    cmrLink: null,
+    files: null,
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+
+  t.like(updatedEsRecord, granule);
+});
+
+test('upsertGranule updates record with expected nullified values for same execution if writeConstraints is true and write conditions are met and createdAt is not set', async (t) => {
+  const { esIndex, esClient } = t.context;
+  const granule = {
+    createdAt: Date.now(),
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    execution: randomString(),
+  };
+
+  const additionalGranuleFields = {
+    cmrLink: 'fakeCmrLink',
+    files: [{ bucket: 'fake', key: 'fake' }],
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: { ...granule, ...additionalGranuleFields },
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    createdAt: undefined,
+    cmrLink: null,
+    files: null,
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+
+  t.like(updatedEsRecord, granule);
+});
+
 test('upsertGranule creates new "failed" record', async (t) => {
   const { esIndex, esClient } = t.context;
 

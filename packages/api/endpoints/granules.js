@@ -2,6 +2,7 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
 
 const Logger = require('@cumulus/logger');
@@ -61,7 +62,7 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
   );
 }
 
-function _createNewCreatedAtDate() {
+function _createNewGranuleDateValue() {
   return new Date().valueOf();
 }
 
@@ -95,6 +96,37 @@ async function list(req, res) {
   }
   return res.send(result);
 }
+
+/**
+ * Set granule defaults for nullish values
+ *
+ * @param {Object} incomingApiGranule - granule record to set defaults for
+ * @param {boolean} isNewRecord - boolean to set
+ * @returns {Promise<Object>} Promise resolving to returned/updated granule
+ */
+const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
+  if (isNewRecord === false) return incomingApiGranule;
+
+  const apiGranule = cloneDeep(incomingApiGranule);
+
+  const updateDate = _createNewGranuleDateValue();
+  const newGranuleDefaults = {
+    published: false,
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    error: {},
+  };
+  // Set API defaults only if new record
+  Object.keys(newGranuleDefaults).forEach((key) => {
+    if (!apiGranule[key]) {
+      apiGranule[key] = newGranuleDefaults[key];
+    }
+  });
+  if (!apiGranule.status) {
+    throw new Error('granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request');
+  }
+  return apiGranule;
+};
 
 /**
  * Create new granule
@@ -136,13 +168,7 @@ const create = async (req, res) => {
     return res.boom.badRequest(errorify(error));
   }
   try {
-    if (!granule.published) {
-      granule.published = false;
-    }
-    if (!granule.createdAt) {
-      granule.createdAt = _createNewCreatedAtDate();
-    }
-    await createGranuleFromApiMethod(granule, knex, esClient);
+    await createGranuleFromApiMethod(_setNewGranuleDefaults(granule, true), knex, esClient);
   } catch (error) {
     log.error('Could not write granule', error);
     return res.boom.badRequest(JSON.stringify(error, Object.getOwnPropertyNames(error)));
@@ -165,8 +191,7 @@ const putGranule = async (req, res) => {
     esClient = await Search.es(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
-  const apiGranule = req.body || {};
-
+  let apiGranule = req.body || {};
   let pgCollection;
 
   if (!apiGranule.collectionId) {
@@ -202,15 +227,7 @@ const putGranule = async (req, res) => {
   }
 
   try {
-    // Set API defaults only if new record
-    if (isNewRecord === true) {
-      if (!apiGranule.published) {
-        apiGranule.published = false;
-      }
-      if (!apiGranule.createdAt) {
-        apiGranule.createdAt = _createNewCreatedAtDate();
-      }
-    }
+    if (isNewRecord) apiGranule = _setNewGranuleDefaults(apiGranule, isNewRecord);
     await updateGranuleFromApiMethod(apiGranule, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);

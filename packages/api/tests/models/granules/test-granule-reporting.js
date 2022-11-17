@@ -5,8 +5,12 @@ const awsClients = require('@cumulus/aws-client/services');
 const cmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { randomId } = require('@cumulus/common/test-utils');
-
 const { getGranuleStatus, generateGranuleApiRecord } = require('@cumulus/message/Granules');
+
+const cloneDeep = require('lodash/cloneDeep');
+const omitBy = require('lodash/omitBy');
+const isNull = require('lodash/isNull');
+
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('../../../lib/testUtils');
 const Granule = require('../../../models/granules');
 
@@ -37,6 +41,228 @@ test.beforeEach((t) => {
   };
   t.context.workflowStartTime = Date.now();
   t.context.workflowStatus = 'completed';
+});
+
+const setNullableKeysToNull = (granule, granuleModel) => {
+  const updatedGranule = cloneDeep(granule);
+  Object.keys(updatedGranule).forEach((key) => {
+    if (!granuleModel.invalidNullFields.includes(key)) {
+      updatedGranule[key] = null;
+    }
+  });
+  return updatedGranule;
+};
+
+test('_storeGranuleRecord() throws ValidateError on overwrite with invalid nullable keys', async (t) => {
+  // Granule record update in running status with write constraints set to false
+  // allows changes to all fields
+
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  await Promise.all(granuleModel.invalidNullFields.map(async (field) => {
+    const updateGranule = {
+      ...granule,
+    };
+    updateGranule[field] = null;
+    console.log(`Running ${field} test`);
+    await t.throwsAsync(granuleModel._storeGranuleRecord(updateGranule, false), { name: 'ValidationError' });
+  }));
+});
+
+test('_storeGranuleRecord() adds a new record, with nulls omitted', async (t) => {
+  // Granule record update in running status only allows changes to
+  // ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution']
+
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+  const updatedGranule = {
+    ...setNullableKeysToNull(granule, granuleModel),
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(fetchedItem, omitBy(updatedGranule, isNull));
+});
+
+test('_storeGranuleRecord() removes only expected fields for running granule record on overwrite when write constraints are set to true and granule is expected to write', async (t) => {
+  // Granule record update in running status only allows changes to
+  // ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution']
+
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updateDate = Date.now();
+  const updateValues = {
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    timestamp: updateDate,
+    execution: 'totallyARealExecutionArn',
+    status: 'running',
+  };
+  const updatedGranule = {
+    ...setNullableKeysToNull(granule, granuleModel),
+    ...updateValues,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(fetchedItem, { ...granule, ...updateValues });
+});
+
+test('_storeGranuleRecord() removes only expected fields for running granule record on overwrite when write constraints are set to false and granule is expected to write', async (t) => {
+  // Granule record update in running status with write constraints set to false
+  // allows changes to all fields
+
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updateDate = Date.now();
+  const updateValues = {
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    timestamp: updateDate,
+    execution: 'totallyARealExecutionArn',
+    status: 'running',
+  };
+  const updatedGranule = {
+    ...setNullableKeysToNull(granule, granuleModel),
+    ...updateValues,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule, false);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(fetchedItem, omitBy(updatedGranule, isNull));
+});
+
+test('_storeGranuleRecord() removes only expected fields for queued granule record on overwrite when write constraints are set to true and granule is expected to write', async (t) => {
+  // Granule record update in queued status allows changes to all fields
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updateDate = Date.now();
+  const updateValues = {
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    timestamp: updateDate,
+    execution: 'totallyARealExecutionArn',
+    status: 'queued',
+  };
+  const updatedGranule = {
+    ...setNullableKeysToNull(granule, granuleModel),
+    ...updateValues,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(fetchedItem, omitBy(updatedGranule, isNull));
+});
+
+test('_storeGranuleRecord() removes only expected fields for queued granule record on overwrite when write constraints are set to false and granule is expected to write', async (t) => {
+  // Granule record update in queued status allows changes to all fields
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updateDate = Date.now();
+  const updateValues = {
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    timestamp: updateDate,
+    execution: 'totallyARealExecutionArn',
+    status: 'queued',
+  };
+  const updatedGranule = {
+    ...setNullableKeysToNull(granule, granuleModel),
+    ...updateValues,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule, false);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(fetchedItem, omitBy(updatedGranule, isNull));
+});
+
+test('_storeGranuleRecord() removes expected fields for final state granule record on overwrite when write constraints are set to true and granule is expected to write', async (t) => {
+  // Granule record update in final (running/failed) status allows changes to all fields
+
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updateDate = Date.now();
+  const updateValues = {
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    timestamp: updateDate,
+    execution: 'totallyARealExecutionArn',
+    status: 'complete',
+  };
+  const updatedGranule = {
+    ...setNullableKeysToNull(granule, granuleModel),
+    ...updateValues,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(fetchedItem, omitBy(updatedGranule, isNull));
+});
+
+test('_storeGranuleRecord() removes expected fields for final state granule record when write constraints are set to false and granule is expected to write', async (t) => {
+  // Granule record update in final (running/failed) status allows changes to all fields
+
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ status: 'complete' });
+
+  await granuleModel._storeGranuleRecord(granule);
+
+  const updateDate = Date.now();
+  const updateValues = {
+    createdAt: updateDate,
+    updatedAt: updateDate,
+    timestamp: updateDate,
+    execution: 'totallyARealExecutionArn',
+    status: 'complete',
+  };
+  const updatedGranule = {
+    ...setNullableKeysToNull(granule, granuleModel),
+    ...updateValues,
+  };
+
+  await granuleModel._storeGranuleRecord(updatedGranule, false);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.deepEqual(fetchedItem, omitBy(updatedGranule, isNull));
 });
 
 test('_storeGranuleRecord() can be used to create a new running granule when writeConstraints is set to true', async (t) => {

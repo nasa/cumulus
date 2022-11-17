@@ -1,9 +1,11 @@
 import { Knex } from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
-import { ApiGranule, GranuleStatus } from '@cumulus/types/api/granules';
+import { ApiGranule, ApiGranuleRecord, GranuleStatus } from '@cumulus/types/api/granules';
 import { removeNilProperties } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
+import isNil from 'lodash/isNil';
+import isNull from 'lodash/isNull';
 
 import { CollectionPgModel } from '../models/collection';
 import { PdrPgModel } from '../models/pdr';
@@ -50,7 +52,7 @@ export const translatePostgresGranuleToApiGranule = async ({
   pdrPgModel?: PdrPgModel,
   providerPgModel?: ProviderPgModel,
   filePgModel?: FilePgModel,
-}): Promise<ApiGranule> => {
+}): Promise<ApiGranuleRecord> => {
   const collection = collectionPgRecord || await collectionPgModel.get(
     knexOrTransaction, { cumulus_id: granulePgRecord.collection_cumulus_id }
   );
@@ -86,7 +88,7 @@ export const translatePostgresGranuleToApiGranule = async ({
     );
   }
 
-  const apiGranule: ApiGranule = removeNilProperties({
+  const apiGranule: ApiGranuleRecord = removeNilProperties({
     beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
     cmrLink: granulePgRecord.cmr_link,
     collectionId: constructCollectionId(collection.name, collection.version),
@@ -116,18 +118,43 @@ export const translatePostgresGranuleToApiGranule = async ({
   return apiGranule;
 };
 
+const returnNullOrUndefinedOrDate = (
+  dateVal: string | number | null | undefined
+) => (isNil(dateVal) ? dateVal : new Date(dateVal));
+
+/**
+ * Validate translation request doesn't contain invalid null files based
+ * on onPostgresGranule typings.  Throw if invalid nulls detected
+ *
+ * @param {Object} params
+ * @param {ApiGranule} apiGranule
+ *   Record from DynamoDB
+ * @returns {undefined}
+ */
+const validateApiToPostgresGranuleObject = (apiGranule : ApiGranule) => {
+  if (isNil(apiGranule.collectionId)) {
+    throw new ValidationError('collectionId cannot be undefined on a granule, granules must have a collection and a granule ID');
+  }
+  if (isNil(apiGranule.granuleId)) {
+    throw new ValidationError('granuleId cannot be undefined on a granule, granules must have a collection and a granule ID');
+  }
+  if (isNull(apiGranule.status)) {
+    throw new ValidationError('status cannot be null on a granule, granules must have a collection and a granule ID');
+  }
+};
+
 /**
  * Generate a Postgres granule record from a DynamoDB record.
  *
  * @param {Object} params
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ * @param {ApiGranule} params.dynamoRecord
  *   Record from DynamoDB
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {Object} params.collectionPgModel - Instance of the collection database model
- * @param {Object} params.pdrPgModel - Instance of the pdr database model
- * @param {Object} params.providerPgModel - Instance of the provider database model
- * @returns {Object} A granule PG record
+ * @param {CollectionPgModel} params.collectionPgModel - Instance of the collection database model
+ * @param {PdrPgModel} params.pdrPgModel - Instance of the pdr database model
+ * @param {ProviderPgModel} params.providerPgModel - Instance of the provider database model
+ * @returns {PostgresGranule} A granule PG record
  */
 export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   dynamoRecord,
@@ -136,13 +163,39 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel(),
 }: {
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  dynamoRecord: ApiGranule,
   knexOrTransaction: Knex | Knex.Transaction,
   collectionPgModel?: CollectionPgModel,
   pdrPgModel?: PdrPgModel,
   providerPgModel?: ProviderPgModel,
 }): Promise<PostgresGranule> => {
+  // Invalid Null values should be validated as the primary use in Core
+  // is the non-typescripted API package.
+  validateApiToPostgresGranuleObject(dynamoRecord);
+
   const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  let pdr_cumulus_id;
+  if (isNil(dynamoRecord.pdrName)) {
+    pdr_cumulus_id = dynamoRecord.pdrName;
+  } else {
+    pdr_cumulus_id = await pdrPgModel.getRecordCumulusId(knexOrTransaction, {
+      name: dynamoRecord.pdrName,
+    });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  let provider_cumulus_id : null | undefined | number;
+  if (isNil(dynamoRecord.provider)) {
+    provider_cumulus_id = dynamoRecord.provider;
+  } else {
+    provider_cumulus_id = await providerPgModel.getRecordCumulusId(
+      knexOrTransaction,
+      { name: dynamoRecord.provider }
+    );
+  }
+
   const granuleRecord: PostgresGranule = {
     granule_id: dynamoRecord.granuleId,
     status: dynamoRecord.status,
@@ -154,36 +207,23 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
     duration: dynamoRecord.duration,
     time_to_archive: dynamoRecord.timeToArchive,
     time_to_process: dynamoRecord.timeToPreprocess,
-    product_volume: dynamoRecord.productVolume,
+    product_volume: isNil(dynamoRecord.productVolume)
+      ? dynamoRecord.productVolume
+      : dynamoRecord.productVolume,
     error: dynamoRecord.error,
     cmr_link: dynamoRecord.cmrLink,
-    pdr_cumulus_id: dynamoRecord.pdrName
-      ? await pdrPgModel.getRecordCumulusId(
-        knexOrTransaction,
-        { name: dynamoRecord.pdrName }
-      )
-      : undefined,
-    provider_cumulus_id: dynamoRecord.provider ? await providerPgModel.getRecordCumulusId(
-      knexOrTransaction,
-      { name: dynamoRecord.provider }
-    ) : undefined,
+    pdr_cumulus_id,
+    provider_cumulus_id,
     query_fields: dynamoRecord.queryFields,
-    beginning_date_time: dynamoRecord.beginningDateTime
-      ? new Date(dynamoRecord.beginningDateTime) : undefined,
-    ending_date_time: dynamoRecord.endingDateTime
-      ? new Date(dynamoRecord.endingDateTime) : undefined,
-    last_update_date_time: dynamoRecord.lastUpdateDateTime
-      ? new Date(dynamoRecord.lastUpdateDateTime) : undefined,
-    processing_end_date_time: dynamoRecord.processingEndDateTime
-      ? new Date(dynamoRecord.processingEndDateTime) : undefined,
-    processing_start_date_time: dynamoRecord.processingStartDateTime
-      ? new Date(dynamoRecord.processingStartDateTime) : undefined,
-    production_date_time: dynamoRecord.productionDateTime
-      ? new Date(dynamoRecord.productionDateTime) : undefined,
-    timestamp: dynamoRecord.timestamp
-      ? new Date(dynamoRecord.timestamp) : undefined,
-    created_at: dynamoRecord.createdAt ? new Date(dynamoRecord.createdAt) : undefined,
-    updated_at: new Date(dynamoRecord.updatedAt),
+    beginning_date_time: returnNullOrUndefinedOrDate(dynamoRecord.beginningDateTime),
+    ending_date_time: returnNullOrUndefinedOrDate(dynamoRecord.endingDateTime),
+    last_update_date_time: returnNullOrUndefinedOrDate(dynamoRecord.lastUpdateDateTime),
+    processing_end_date_time: returnNullOrUndefinedOrDate(dynamoRecord.processingEndDateTime),
+    processing_start_date_time: returnNullOrUndefinedOrDate(dynamoRecord.processingStartDateTime),
+    production_date_time: returnNullOrUndefinedOrDate(dynamoRecord.productionDateTime),
+    timestamp: returnNullOrUndefinedOrDate(dynamoRecord.timestamp),
+    created_at: returnNullOrUndefinedOrDate(dynamoRecord.createdAt),
+    updated_at: returnNullOrUndefinedOrDate(dynamoRecord.updatedAt),
   };
 
   return granuleRecord;
@@ -194,14 +234,14 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
  *   any null/undefined properties.
  *
  * @param {Object} params
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} params.dynamoRecord
+ * @param {ApiGranule} params.dynamoRecord
  *   Record from DynamoDB
  * @param {Knex | Knex.Transaction} params.knexOrTransaction
  *   Knex client for reading from RDS database
- * @param {Object} params.collectionPgModel - Instance of the collection database model
- * @param {Object} params.pdrPgModel - Instance of the pdr database model
- * @param {Object} params.providerPgModel - Instance of the provider database model
- * @returns {Object} A granule PG record with null/undefined properties removed
+ * @param {CollectionPgModel} params.collectionPgModel - Instance of the collection database model
+ * @param {PdrPgModel} params.pdrPgModel - Instance of the pdr database model
+ * @param {ProviderPgModel} params.providerPgModel - Instance of the provider database model
+ * @returns {PostgresGranule} A granule PG record with null/undefined properties removed
  */
 export const translateApiGranuleToPostgresGranule = async ({
   dynamoRecord,
@@ -210,7 +250,7 @@ export const translateApiGranuleToPostgresGranule = async ({
   pdrPgModel = new PdrPgModel(),
   providerPgModel = new ProviderPgModel(),
 }: {
-  dynamoRecord: AWS.DynamoDB.DocumentClient.AttributeMap,
+  dynamoRecord: ApiGranule,
   knexOrTransaction: Knex | Knex.Transaction,
   collectionPgModel?: CollectionPgModel,
   pdrPgModel?: PdrPgModel,
