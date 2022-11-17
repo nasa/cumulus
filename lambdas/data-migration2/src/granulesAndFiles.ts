@@ -37,6 +37,9 @@ import {
   GranulesMigrationResult,
   MigrationResult,
 } from '@cumulus/types/migration';
+
+import { ApiGranuleRecord } from '@cumulus/types/api/granules';
+
 import { closeErrorWriteStreams, createErrorFileWriteStream, storeErrors } from './storeErrors';
 
 import { initialMigrationResult } from './common';
@@ -160,7 +163,7 @@ export const migrateGranuleRecord = async (
   }
 
   const granule = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
-    dynamoRecord: record,
+    dynamoRecord: record as ApiGranuleRecord,
     knexOrTransaction: trx,
   });
 
