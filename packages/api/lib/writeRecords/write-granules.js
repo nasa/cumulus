@@ -19,6 +19,7 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
+  getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   upsertGranuleWithExecutionJoinRecord,
   translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
@@ -594,6 +595,7 @@ const _writeGranule = async ({
   snsEventType,
   writeConstraints = true,
 }) => {
+  const { status } = apiGranuleRecord;
   const pgGranule = await _writeGranuleRecords({
     apiGranuleRecord,
     esClient,
@@ -604,8 +606,6 @@ const _writeGranule = async ({
     postgresGranuleRecord,
     writeConstraints,
   });
-
-  const { status } = apiGranuleRecord;
 
   // Files are only written to Postgres if the granule is in a "final" state
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
@@ -868,6 +868,7 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
  *   Optional override for the granule model writing to DynamoDB
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
+ * @param {Object}  params.esClient - Elasticsearch client
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
@@ -981,6 +982,20 @@ const writeGranulesFromMessage = async ({
         dynamoRecord: apiGranuleRecord,
         knexOrTransaction: knex,
       });
+
+      // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+      // Check if granuleId exists across another collection
+      const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranuleRecord.granuleId);
+      const granuleExistsAcrossCollection = granulesByGranuleId.some(
+        (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
+      );
+      if (granuleExistsAcrossCollection) {
+        log.error('Could not write granule. It already exists across another collection');
+        const conflictError = new Error(
+          `A granule already exists for granuleId: ${apiGranuleRecord.granuleId} with collectionId: ${apiGranuleRecord.collectionId}`
+        );
+        throw conflictError;
+      }
 
       return _writeGranule({
         apiGranuleRecord,

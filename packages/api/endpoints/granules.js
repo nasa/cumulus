@@ -16,6 +16,7 @@ const {
   ExecutionPgModel,
   getKnexClient,
   getUniqueGranuleByGranuleId,
+  getGranulesByGranuleId,
   GranulePgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresCollectionToApiCollection,
@@ -138,8 +139,6 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    collectionPgModel = new CollectionPgModel(),
-    granulePgModel = new GranulePgModel(),
     esClient = await Search.es(),
     createGranuleFromApiMethod = createGranuleFromApi,
   } = req.testContext || {};
@@ -151,17 +150,15 @@ const create = async (req, res) => {
       dynamoRecord: granule,
       knexOrTransaction: knex,
     });
-    if (
-      await granulePgModel.exists(knex, {
-        granule_id: pgGranule.granule_id,
-        collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
-          knex,
-          deconstructCollectionId(granule.collectionId)
-        ),
-      })
-    ) {
+
+    // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+    //  and only check for granule existence
+    // Check if granule already exists across all collections
+    const granulesByGranuleId = await getGranulesByGranuleId(knex, pgGranule.granule_id);
+    if (granulesByGranuleId.length > 0) {
+      log.error('Could not write granule. It already exists.');
       return res.boom.conflict(
-        `A granule already exists for granule_id: ${granule.granuleId}`
+        `A granule already exists for granuleId: ${pgGranule.granule_id}`
       );
     }
   } catch (error) {
@@ -209,6 +206,19 @@ const putGranule = async (req, res) => {
     } else {
       throw error;
     }
+  }
+
+  // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+  // Check if granuleId exists across another collection
+  const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranule.granuleId);
+  const granuleExistsAcrossCollection = granulesByGranuleId.some(
+    (g) => g.collection_cumulus_id !== pgCollection.cumulus_id
+  );
+  if (granuleExistsAcrossCollection) {
+    log.error('Could not update or write granule, collectionId is not modifiable.');
+    return res.boom.conflict(
+      `Modifying collectionId for a granule is not allowed. Write for granuleId: ${apiGranule.granuleId} failed.`
+    );
   }
 
   let isNewRecord = false;
