@@ -8,12 +8,15 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["filename", "status", "granuleId"],
+        "required": ["filename", "status", "granuleId", "collectionId", "provider", "createdAt"],
         "properties": {
           "body": { "type": "string" },
           "filename": { "type": "string" },
           "status": { "type": "string" },
           "granuleId": { "type": "string" },
+          "collectionId": { "type": "string" },
+          "provider": { "type": "string" },
+          "createdAt": { "type": "number" },
           "statusCode": { "type": "number" }
         }
       },
@@ -21,11 +24,12 @@
         "type": "array",
         "items": {
           "type": "object",
-          "required": ["files", "granuleId", "dataType", "version"],
+          "required": ["files", "granuleId"],
           "properties": {
             "granuleId": { "type": "string" },
             "dataType": { "type": "string" },
             "version": { "type": "string" },
+            "collectionId": { "type": "string" },
             "files": "{{files}}"
           }
         }

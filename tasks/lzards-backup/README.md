@@ -21,7 +21,7 @@ Conformant to the included `config.json` schema, these are:
 
 Example:
 
-The following shows the minimal set of keys required for an input payload:
+The following shows two examples of the minimal set of keys required for an input payload:
 
 ```json
 {
@@ -30,16 +30,18 @@ The following shows the minimal set of keys required for an input payload:
       "granuleId": "FakeGranule001",
       "dataType": "FakeGranuleType",
       "version": "006",
+      "provider": "FakeProvider",
+      "createdAt": 1647222436211,
       "files": [
         {
-          "filename": "s3://fakeBucket1//path/to/granule1/foo.jpg",
           "bucket": "fakeBucket",
+          "key": "fakeKey",
           "checksumType": "md5",
           "checksum": "someChecksum"
         },
         {
-          "filename": "s3://fakeBucket1//path/to/granule1/foo.dat",
           "bucket": "fakeBucket",
+          "key": "fakeKey",
           "checksumType": "md5",
           "checksum": "someChecksum"
         },
@@ -49,7 +51,34 @@ The following shows the minimal set of keys required for an input payload:
 }
 ```
 
-Each granule *must* have a `dataType` and `version` to associate it with a Cumulus collection.
+```json
+{
+  "granules": [
+    {
+      "granuleId": "FakeGranule001",
+      "collectionId": "FakeGranuleType___006",
+      "files": [
+        {
+          "bucket": "fakeBucket",
+          "key": "fakeKey",
+          "checksumType": "md5",
+          "checksum": "someChecksum"
+        },
+        {
+          "bucket": "fakeBucket",
+          "key": "fakeKey",
+          "checksumType": "md5",
+          "checksum": "someChecksum"
+        },
+      ]
+    }
+  ]
+}
+```
+
+See the full schema here: [LZARDS backup input schema](https://github.com/nasa/cumulus/blob/master/tasks/lzards-backup/schemas/input.json)
+
+Each granule *must* have a [`dataType` and `version`] OR `collectionId` to associate it with a Cumulus collection.
 
 In addition to the task schema requirements, any granule files that are to be backed up *must* have a `checksumType` (md5 | sha256) with a value for `checksum` as LZARDS requires a checksum value.
 
@@ -79,6 +108,8 @@ Upon completion the lambda will return the following structure:
 - `body`       : body returned from the LZARDS API query
 - `filename`   : original s3 URI to the archived file
 - `granuleId`  : granuleId associated with the archival request
+- `provider`   : provider associated with the archival request
+- `createdAt`  : granule createdAt associated with the archival request
 - `status`     : 'status' of the request.   Will either be COMPLETED or FAILED
 - `statusCode` : status code returned from LZARDS (if applicable)
 
@@ -88,9 +119,11 @@ Example:
 "body": "{
   "id": 173
 }"
-"filename":"s3://bucket/granulename.dat"
-"granuleId":"FakeGranule2"
-"status": "COMPLETED"
+"filename":"s3://bucket/granulename.dat",
+"granuleId":"FakeGranule2",
+"provider": "FakeProvider",
+"createdAt": 1647222436211,
+"status": "COMPLETED",
 "statusCode": 201
 ```
 

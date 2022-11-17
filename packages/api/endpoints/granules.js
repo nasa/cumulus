@@ -2,8 +2,8 @@
 
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
+const { v4: uuidv4 } = require('uuid');
 
-const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -21,9 +21,11 @@ const {
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
+const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { chooseTargetExecution } = require('../lib/executions');
+const startAsyncOperation = require('../lib/startAsyncOperation');
 const {
   createGranuleFromApi,
   updateGranuleFromApi,
@@ -32,7 +34,6 @@ const {
 } = require('../lib/writeRecords/write-granules');
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
-const AsyncOperation = require('../models/async-operation');
 const Granule = require('../models/granules');
 const { moveGranule } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
@@ -69,17 +70,25 @@ function _returnPutGranuleStatus(isNewRecord, granule, res) {
  */
 async function list(req, res) {
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
-  const es = new Search(
-    { queryStringParameters },
-    'granule',
-    process.env.ES_INDEX
-  );
 
-  let result = await es.query();
-  if (getRecoveryStatus === 'true') {
-    result = await addOrcaRecoveryStatus(result);
+  let es;
+  if (queryStringParameters.searchContext) {
+    es = new ESSearchAfter(
+      { queryStringParameters },
+      'granule',
+      process.env.ES_INDEX
+    );
+  } else {
+    es = new Search(
+      { queryStringParameters },
+      'granule',
+      process.env.ES_INDEX
+    );
   }
-
+  const result = await es.query();
+  if (getRecoveryStatus === 'true') {
+    return res.send(await addOrcaRecoveryStatus(result));
+  }
   return res.send(result);
 }
 
@@ -472,14 +481,14 @@ async function del(req, res) {
     }
   }
 
-  await deleteGranuleAndFiles({
+  const deletionDetails = await deleteGranuleAndFiles({
     knex,
     dynamoGranule,
     pgGranule,
     esClient,
   });
 
-  return res.send({ detail: 'Record deleted' });
+  return res.send({ detail: 'Record deleted', ...deletionDetails });
 }
 
 /**
@@ -524,9 +533,6 @@ async function bulkOperations(req, res) {
   if (!payload.workflowName) {
     return res.boom.badRequest('workflowName is required.');
   }
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
 
   let description;
   if (payload.query) {
@@ -537,9 +543,9 @@ async function bulkOperations(req, res) {
     description = `Bulk run on ${payload.workflowName}`;
   }
 
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description,
@@ -559,14 +565,11 @@ async function bulkOperations(req, res) {
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       },
     },
-    esHost: process.env.ES_HOST,
-    stackName,
-    systemBucket,
-    dynamoTableName: tableName,
-    knexConfig: process.env,
-  }, AsyncOperation);
+  };
 
-  return res.status(202).send(asyncOperation);
+  log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
+  return res.status(202).send({ id: asyncOperationId });
 }
 
 /**
@@ -583,13 +586,9 @@ async function bulkDelete(req, res) {
     return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
   }
 
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
-
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description: 'Bulk granule deletion',
@@ -617,28 +616,22 @@ async function bulkDelete(req, res) {
         ES_HOST: process.env.ES_HOST,
       },
     },
-    stackName,
-    systemBucket,
-    dynamoTableName: tableName,
-    knexConfig: process.env,
-  }, AsyncOperation);
+  };
 
-  return res.status(202).send(asyncOperation);
+  log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
+  return res.status(202).send({ id: asyncOperationId });
 }
 
 async function bulkReingest(req, res) {
   const payload = req.body;
-  const stackName = process.env.stackName;
-  const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
-
   const numOfGranules = (payload.query && payload.query.size)
     || (payload.ids && payload.ids.length);
   const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;
 
-  const asyncOperation = await asyncOperations.startAsyncOperation({
-    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
-    cluster: process.env.EcsCluster,
+  const asyncOperationId = uuidv4();
+  const asyncOperationEvent = {
+    asyncOperationId,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.BulkOperationLambda,
     description,
@@ -658,14 +651,11 @@ async function bulkReingest(req, res) {
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
       },
     },
-    esHost: process.env.ES_HOST,
-    stackName,
-    systemBucket,
-    dynamoTableName: tableName,
-    knexConfig: process.env,
-  }, AsyncOperation);
+  };
 
-  return res.status(202).send(asyncOperation);
+  log.debug(`About to invoke lambda to start async operation ${asyncOperationId}`);
+  await startAsyncOperation.invokeStartAsyncOperationLambda(asyncOperationEvent);
+  return res.status(202).send({ id: asyncOperationId });
 }
 
 router.get('/:granuleName', get);

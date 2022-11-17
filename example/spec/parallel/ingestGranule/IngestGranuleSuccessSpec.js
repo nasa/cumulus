@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs-extra');
+const got = require('got');
 const path = require('path');
 const pMap = require('p-map');
 const pRetry = require('p-retry');
@@ -458,7 +459,13 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('adds LZARDS backup output', () => {
+      const dataType = lambdaOutput.meta.input_granules[0].dataType;
+      const version = lambdaOutput.meta.input_granules[0].version;
+      const expectedCollectionId = constructCollectionId(dataType, version);
       expect(true, lambdaOutput.meta.backupStatus.every((file) => file.status === 'COMPLETED'));
+      expect(lambdaOutput.meta.backupStatus[0].provider).toBe(provider.id);
+      expect(lambdaOutput.meta.backupStatus[0].createdAt).toBe(lambdaOutput.meta.input_granules[0].createdAt);
+      expect(lambdaOutput.meta.backupStatus[0].collectionId).toBe(expectedCollectionId);
     });
   });
 
@@ -494,6 +501,7 @@ describe('The S3 Ingest Granules workflow', () => {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
         createdAt: lambdaOutput.meta.input_granules[0].createdAt,
+        provider: lambdaOutput.meta.input_granules[0].provider,
       };
 
       const updatedPayload = {
@@ -509,6 +517,7 @@ describe('The S3 Ingest Granules workflow', () => {
         ...expectedSyncGranulePayload.granules[0],
         sync_granule_duration: lambdaOutput.meta.input_granules[0].sync_granule_duration,
         createdAt: lambdaOutput.meta.input_granules[0].createdAt,
+        provider: lambdaOutput.meta.input_granules[0].provider,
       };
       expect(lambdaOutput.meta.input_granules).toEqual([updatedGranule]);
     });
@@ -961,7 +970,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
           const responseBody = JSON.parse(bulkReingestResponse.body);
           asyncOperationId = responseBody.id;
-          expect(responseBody.operationType).toBe('Bulk Granule Reingest');
+          expect(bulkReingestResponse.statusCode).toBe(202);
         });
 
         it('executes async operation successfully', async () => {
@@ -977,6 +986,7 @@ describe('The S3 Ingest Granules workflow', () => {
             },
           });
 
+          expect(asyncOperation.operationType).toBe('Bulk Granule Reingest');
           const reingestOutput = JSON.parse(asyncOperation.output);
           expect(reingestOutput.length).toBe(2);
           expect(reingestOutput.includes(reingestGranuleId)).toBe(true);
@@ -1330,7 +1340,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     describe('When accessing a workflow execution via the API', () => {
       let executionStatus;
-
+      let presignedS3Url;
       let subTestSetupError;
 
       beforeAll(async () => {
@@ -1340,7 +1350,7 @@ describe('The S3 Ingest Granules workflow', () => {
             arn: workflowExecutionArn,
           });
 
-          executionStatus = JSON.parse(executionStatusResponse.body);
+          ({ data: executionStatus, presignedS3Url } = JSON.parse(executionStatusResponse.body));
         } catch (error) {
           subTestSetupError = error;
         }
@@ -1349,6 +1359,15 @@ describe('The S3 Ingest Granules workflow', () => {
       beforeEach(() => {
         if (beforeAllError) fail(beforeAllError);
         if (subTestSetupError) fail(subTestSetupError);
+      });
+
+      it('returns the presignedS3Url for download execution status', async () => {
+        failOnSetupError([beforeAllError, subTestSetupError]);
+
+        expect(presignedS3Url).toBeTruthy();
+        expect(executionStatus).toBeTruthy();
+        const executionStatusFromS3 = await got(presignedS3Url).json();
+        expect(executionStatusFromS3).toEqual(executionStatus);
       });
 
       it('returns the inputs and outputs for the entire workflow', () => {

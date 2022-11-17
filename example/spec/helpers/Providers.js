@@ -141,23 +141,6 @@ const waitForProviderRecordInOrNotInList = async (
   }
 );
 
-const deleteProvidersByHost = async (prefix, host) => {
-  const resp = await providersApi.getProviders({
-    prefix,
-    queryStringParameters: {
-      fields: 'id',
-      host,
-    },
-  });
-  const ids = JSON.parse(resp.body).results.map((p) => p.id);
-  const deletes = ids.map((id) => providersApi.deleteProvider({
-    prefix,
-    providerId: id,
-  }));
-  await Promise.all(deletes).catch(console.error);
-  await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
-};
-
 const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
   console.log('Starting Provider/Dependency Deletion');
 
@@ -169,6 +152,10 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
     },
   });
   const ids = JSON.parse(resp.body).results.map((p) => p.id);
+  if (ids.length === 0) {
+    console.log('No Provider IDs to Delete, Exiting');
+    return;
+  }
 
   console.log('Starting Granule Deletion');
 
@@ -218,10 +205,12 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
       }))
   );
   const rulesForDeletion = ruleResponse.map((r) => JSON.parse(r.body).results).flat();
-  await Promise.all(rulesForDeletion.map((rule) => deleteRule({
-    prefix,
-    ruleName: rule.name,
-  })));
+  if (rulesForDeletion.length > 0) {
+    await Promise.all(rulesForDeletion.map((rule) => deleteRule({
+      prefix,
+      ruleName: rule.name,
+    })));
+  }
 
   console.log('Rule deletion complete');
 
@@ -230,6 +219,7 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
   const providerDeletes = ids.map((id) => providersApi.deleteProvider({
     prefix,
     providerId: id,
+    expectedStatusCodes: [404, 200],
   }));
   await Promise.all(providerDeletes);
   await Promise.all(ids.map((id) => waitForProviderRecordInOrNotInList(prefix, id, false)));
@@ -239,7 +229,6 @@ module.exports = {
   buildFtpProvider,
   buildHttpOrHttpsProvider,
   createProvider,
-  deleteProvidersByHost,
   fetchFakeProviderIp,
   fetchFakeS3ProviderBuckets,
   waitForProviderRecordInOrNotInList,

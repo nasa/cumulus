@@ -413,6 +413,37 @@ test.serial('default returns list of granules', async (t) => {
   });
 });
 
+test.serial('default paginates correctly with search_after', async (t) => {
+  const response = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.is(meta.page, 1);
+  t.truthy(meta.searchContext);
+
+  const newResponse = await request(app)
+    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+  t.truthy(newMeta.searchContext);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+  t.not(meta.searchContext === newMeta.searchContext);
+});
+
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/granules')
@@ -534,6 +565,32 @@ test.serial('GET returns the expected existing granule', async (t) => {
   });
 
   t.deepEqual(response.body, expectedGranule);
+});
+
+test.serial('GET returns a granule that has no files with the correct empty array files field', async (t) => {
+  const {
+    knex,
+    fakePGGranules,
+  } = t.context;
+
+  const response = await request(app)
+    .get(`/granules/${t.context.fakePGGranules[1].granule_id}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[1].granule_id,
+    collection_cumulus_id: fakePGGranules[1].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(response.body.files, []);
+  t.deepEqual(expectedGranule.files, []);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
@@ -835,8 +892,14 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newCollectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newGranule.files.length);
 
   t.false(await granulePgModel.exists(
     knex,
@@ -895,8 +958,14 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newCollectionId,
+    deletedGranuleId: newGranule.granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newGranule.files.length);
 
   t.false(await esGranulesClient.exists(newGranule.granuleId));
 });
@@ -959,6 +1028,8 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     esClient: t.context.esClient,
   });
 
+  const granuleId = newDynamoGranule.granuleId;
+
   const response = await request(app)
     .delete(`/granules/${newDynamoGranule.granuleId}`)
     .set('Accept', 'application/json')
@@ -966,10 +1037,14 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  const granuleId = newDynamoGranule.granuleId;
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newDynamoGranule.collectionId,
+    deletedGranuleId: granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newDynamoGranule.files.length);
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(
@@ -1051,6 +1126,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     esClient: t.context.esClient,
   });
   const timeOfResponse = Date.now();
+  const granuleId = newDynamoGranule.granuleId;
 
   const response = await request(app)
     .delete(`/granules/${newDynamoGranule.granuleId}`)
@@ -1059,10 +1135,14 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     .expect(200);
 
   t.is(response.status, 200);
-  const { detail } = response.body;
-  t.is(detail, 'Record deleted');
-
-  const granuleId = newDynamoGranule.granuleId;
+  const responseBody = response.body;
+  t.like(responseBody, {
+    detail: 'Record deleted',
+    collection: newDynamoGranule.collectionId,
+    deletedGranuleId: granuleId,
+  });
+  t.truthy(responseBody.deletionTime);
+  t.is(responseBody.deletedFiles.length, newDynamoGranule.files.length);
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(

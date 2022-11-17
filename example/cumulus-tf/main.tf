@@ -151,11 +151,12 @@ module "cumulus" {
   system_bucket = var.system_bucket
   buckets       = var.buckets
 
-  elasticsearch_alarms            = local.elasticsearch_alarms
-  elasticsearch_domain_arn        = local.elasticsearch_domain_arn
-  elasticsearch_hostname          = local.elasticsearch_hostname
-  elasticsearch_security_group_id = local.elasticsearch_security_group_id
-  es_index_shards                 = var.es_index_shards
+  elasticsearch_remove_index_alias_conflict = var.elasticsearch_remove_index_alias_conflict
+  elasticsearch_alarms                      = local.elasticsearch_alarms
+  elasticsearch_domain_arn                  = local.elasticsearch_domain_arn
+  elasticsearch_hostname                    = local.elasticsearch_hostname
+  elasticsearch_security_group_id           = local.elasticsearch_security_group_id
+  es_index_shards                           = var.es_index_shards
 
   dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
 
@@ -172,7 +173,7 @@ module "cumulus" {
     "menno.vandiermen",
     "mobrien84",
     "nnageswa",
-    "npauzenga"
+    "npauzenga",
   ]
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port

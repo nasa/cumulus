@@ -32,7 +32,7 @@ variable "cumulus_message_adapter_lambda_layer_version_arn" {
 
 variable "cmr_oauth_provider" {
   type    = string
-  default = "earthdata"
+  default = "launchpad"
 }
 
 variable "csdap_client_id" {
@@ -221,6 +221,12 @@ variable "elasticsearch_client_config" {
   default     = {}
 }
 
+variable "elasticsearch_remove_index_alias_conflict" {
+  type = bool
+  default = true
+  description = "NOTE -- THIS SHOULD NEVER BE SET TO TRUE BY DEFAULT IN PRODUCTION SITUATIONS, we've set it to true here for dev only -- Set to false to not allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias'."
+}
+
 variable "es_request_concurrency" {
   type = number
   default = 10
@@ -383,6 +389,12 @@ variable "orca_default_bucket" {
 }
 
 variable "lambda_timeouts" {
+  type = map(string)
+  default = {}
+}
+
+variable "lambda_memory_sizes" {
+  description = "Memory sizes for lambda functions"
   type = map(string)
   default = {}
 }
