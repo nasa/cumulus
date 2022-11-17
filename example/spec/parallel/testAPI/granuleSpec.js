@@ -303,7 +303,7 @@ describe('The Granules API', () => {
       if (beforeAllError) {
         fail(beforeAllError);
       }
-      collection2  = await createCollection(prefix);
+      collection2 = await createCollection(prefix);
       const newCollectionId = constructCollectionId(collection2.name, collection2.version);
       granule1 = removeNilProperties(fakeGranuleFactoryV2({
         collectionId: newCollectionId,
