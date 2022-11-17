@@ -18,6 +18,7 @@ const {
   fakeGranuleRecordFactory,
   fakeProviderRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
+  getGranulesByGranuleId,
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
   migrationDir,
@@ -1023,4 +1024,59 @@ test('getUniqueGranuleByGranuleId() throws an error if no granules are found', a
     getUniqueGranuleByGranuleId(knex, 99999, granulePgModel),
     { instanceOf: RecordDoesNotExist }
   );
+});
+
+test('getGranulesByGranuleId() returns a list of records that match the given granuleId', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const granuleId = 'granule-1234';
+  const [granule1] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  const collection2 = fakeCollectionRecordFactory();
+  const collectionResponse = await t.context.collectionPgModel.create(
+    knex,
+    collection2
+  );
+  const collectionCumulusId2 = collectionResponse[0].cumulus_id;
+  const [granule2] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId2,
+    }),
+    '*'
+  );
+  const records = await getGranulesByGranuleId(knex, granuleId);
+  t.deepEqual(records, [granule1, granule2]);
+  t.teardown(async () => await Promise.all([
+    granulePgModel.delete(knex, { cumulus_id: granule1.cumulus_id }),
+    granulePgModel.delete(knex, { cumulus_id: granule2.cumulus_id }),
+  ]));
+});
+
+test('getGranulesByGranuleId() returns empty list when called with a granuleId that does not exist', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const granuleId = 'fakeGranuleId';
+  await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  const records = await getGranulesByGranuleId(knex, granuleId);
+  t.deepEqual(records, []);
 });

@@ -250,8 +250,8 @@ test.before(async (t) => {
     name: collectionName,
     version: collectionVersion,
   });
-  const collectionPgModel = new CollectionPgModel();
-  const [pgCollection] = await collectionPgModel.create(
+  t.context.collectionPgModel = new CollectionPgModel();
+  const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     testPgCollection
   );
@@ -843,6 +843,7 @@ test.serial('DELETE returns 404 if granule does not exist', async (t) => {
 
 test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elasticsearch successfully', async (t) => {
   const {
+    collectionPgModel,
     esGranulesClient,
     knex,
   } = t.context;
@@ -855,7 +856,6 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
     testPgCollection.version
   );
 
-  const collectionPgModel = new CollectionPgModel();
   await collectionPgModel.create(
     knex,
     testPgCollection
@@ -912,6 +912,7 @@ test.serial('DELETE deletes a granule that exists in PostgreSQL but not Elastics
 
 test.serial('DELETE deletes a granule that exists in Elasticsearch but not PostgreSQL successfully', async (t) => {
   const {
+    collectionPgModel,
     esClient,
     esIndex,
     esGranulesClient,
@@ -926,7 +927,6 @@ test.serial('DELETE deletes a granule that exists in Elasticsearch but not Postg
     testPgCollection.version
   );
 
-  const collectionPgModel = new CollectionPgModel();
   const [pgCollection] = await collectionPgModel.create(
     knex,
     testPgCollection
@@ -1887,7 +1887,7 @@ test.serial('create (POST) rejects if a granule already exists in postgres', asy
   const errorText = JSON.parse(response.error.text);
   t.is(errorText.statusCode, 409);
   t.is(errorText.error, 'Conflict');
-  t.is(errorText.message, `A granule already exists for granule_id: ${newGranule.granuleId}`);
+  t.is(errorText.message, `A granule already exists for granuleId: ${newGranule.granuleId}`);
 });
 
 test.serial('create (POST) returns bad request if a granule is submitted with a bad collectionId', async (t) => {
@@ -1905,6 +1905,56 @@ test.serial('create (POST) returns bad request if a granule is submitted with a 
   t.is(response.statusCode, 400);
   t.is(response.error.status, 400);
   t.is(response.error.message, 'cannot POST /granules (400)');
+});
+
+test.serial('create (POST) throws conflict error if a granule with same granuleId but different collectionId already exists in postgres', async (t) => {
+  const {
+    collectionId,
+    collectionPgModel,
+    knex,
+  } = t.context;
+
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: collectionId,
+    execution: undefined,
+  });
+
+  // Create new collection for new granule with same granuleId
+  const testPgCollection = fakeCollectionRecordFactory();
+  const newCollectionId = constructCollectionId(
+    testPgCollection.name,
+    testPgCollection.version
+  );
+
+  await collectionPgModel.create(
+    knex,
+    testPgCollection
+  );
+
+  const newGranuleWithSameId = fakeGranuleFactoryV2({
+    granuleId: newGranule.granuleId,
+    collectionId: newCollectionId,
+    execution: undefined,
+  });
+
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const response = await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranuleWithSameId)
+    .expect(409);
+
+  const errorText = JSON.parse(response.error.text);
+  t.is(errorText.statusCode, 409);
+  t.is(errorText.error, 'Conflict');
+  t.is(errorText.message, `A granule already exists for granuleId: ${newGranule.granuleId}`);
 });
 
 test.serial('PUT replaces an existing granule in all data stores', async (t) => {
@@ -2591,6 +2641,51 @@ test.serial('PUT can create a new granule with status queued', async (t) => {
   t.deepEqual(JSON.parse(response.text), {
     message: `Successfully wrote granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
   });
+});
+
+test.serial('PUT returns throws conflict error when trying to update the collectionId of a granule', async (t) => {
+  const {
+    collectionId,
+    collectionPgModel,
+    knex,
+  } = t.context;
+  const newGranule = fakeGranuleFactoryV2({
+    collectionId: collectionId,
+    execution: undefined,
+  });
+
+  // Create granule
+  await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
+    .expect(200);
+
+  const newCollection = fakeCollectionRecordFactory();
+  await collectionPgModel.create(
+    knex,
+    newCollection
+  );
+  const newCollectionId = constructCollectionId(
+    newCollection.name,
+    newCollection.version
+  );
+
+  const updatedGranule = {
+    ...newGranule,
+    collectionId: newCollectionId,
+  };
+
+  const { body } = await request(app)
+    .put(`/granules/${newGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(409);
+
+  t.is(body.error, 'Conflict');
+  t.is(body.message, `Modifying collectionId for a granule is not allowed. Write for granuleId: ${newGranule.granuleId} failed.`);
 });
 
 test.serial('associateExecution (POST) returns bad request if fields are missing in payload', async (t) => {
