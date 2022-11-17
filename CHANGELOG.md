@@ -30,13 +30,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
   - The user (dashboard) must read the `s3SignedURL` and `data` from the return
 
+### Added
+
+- **CUMULUS-3098**
+  - Added task configuration setting named `failTaskWhenFileBackupFail` to the
+    `lzards-backup` task. This setting is `false` by default, but when set to
+    `true`, task will fail if one of the file backup request fails.
+
 ### Changed
 
 - **CUMULUS-2915**
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
+- **CUMULUS-3045**
+  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
+- **CUMULUS-3075**
+  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
+    undefined, now changed to an empty array. 
+  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
+  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
+- **CUMULUS-3077**
+  - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
 - **CUMULUS-3080**
   - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
+- **CUMULUS-3100**
+  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
+  - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
+  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
 
 ### Fixed
 
