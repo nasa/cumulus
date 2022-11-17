@@ -182,7 +182,7 @@ export const translateApiGranuleToPostgresGranuleWithoutNilsRemoved = async ({
       ? new Date(dynamoRecord.productionDateTime) : undefined,
     timestamp: dynamoRecord.timestamp
       ? new Date(dynamoRecord.timestamp) : undefined,
-    created_at: new Date(dynamoRecord.createdAt),
+    created_at: dynamoRecord.createdAt ? new Date(dynamoRecord.createdAt) : undefined,
     updated_at: new Date(dynamoRecord.updatedAt),
   };
 

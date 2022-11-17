@@ -35,26 +35,28 @@ class Granule extends Manager {
     stepFunctionUtils = StepFunctions,
     cmrUtils = cmrjsCmrUtils,
   } = {}) {
-    const globalSecondaryIndexes = [{
-      IndexName: 'collectionId-granuleId-index',
-      KeySchema: [
-        {
-          AttributeName: 'collectionId',
-          KeyType: 'HASH',
+    const globalSecondaryIndexes = [
+      {
+        IndexName: 'collectionId-granuleId-index',
+        KeySchema: [
+          {
+            AttributeName: 'collectionId',
+            KeyType: 'HASH',
+          },
+          {
+            AttributeName: 'granuleId',
+            KeyType: 'RANGE',
+          },
+        ],
+        Projection: {
+          ProjectionType: 'ALL',
         },
-        {
-          AttributeName: 'granuleId',
-          KeyType: 'RANGE',
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 10,
         },
-      ],
-      Projection: {
-        ProjectionType: 'ALL',
       },
-      ProvisionedThroughput: {
-        ReadCapacityUnits: 5,
-        WriteCapacityUnits: 10,
-      },
-    }];
+    ];
 
     super({
       tableName: process.env.GranulesTable,
@@ -70,10 +72,7 @@ class Granule extends Manager {
   }
 
   async get(...args) {
-    return translateGranule(
-      await super.get(...args),
-      this.fileUtils
-    );
+    return translateGranule(await super.get(...args), this.fileUtils);
   }
 
   getRecord({ granuleId }) {
@@ -84,7 +83,8 @@ class Granule extends Manager {
     const result = cloneDeep(await super.batchGet(...args));
 
     result.Responses[this.tableName] = await Promise.all(
-      result.Responses[this.tableName].map((response) => translateGranule(response))
+      result.Responses[this.tableName].map((response) =>
+        translateGranule(response))
     );
 
     return result;
@@ -96,9 +96,9 @@ class Granule extends Manager {
     if (scanResponse.Items) {
       return {
         ...scanResponse,
-        Items: await Promise.all(scanResponse.Items.map(
-          (response) => translateGranule(response)
-        )),
+        Items: await Promise.all(
+          scanResponse.Items.map((response) => translateGranule(response))
+        ),
       };
     }
 
@@ -117,7 +117,9 @@ class Granule extends Manager {
     logger.info(`granules.removeGranuleFromCmrByGranule ${granule.granuleId}`);
 
     if (!granule.published || !granule.cmrLink) {
-      throw new CumulusModelError(`Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`);
+      throw new CumulusModelError(
+        `Granule ${granule.granuleId} is not published to CMR, so cannot be removed from CMR`
+      );
     }
 
     const cmrSettings = await this.cmrUtils.getCmrSettings();
@@ -129,11 +131,13 @@ class Granule extends Manager {
   }
 
   /*
-  * DEPRECATED: This has moved to /lib/granule-rmove-from-cmr.js
-  */
+   * DEPRECATED: This has moved to /lib/granule-remove-from-cmr.js
+   */
   async removeGranuleFromCmrByGranule(granule) {
     await this._removeGranuleFromCmr(granule);
-    return this.update({ granuleId: granule.granuleId }, { published: false }, ['cmrLink']);
+    return this.update({ granuleId: granule.granuleId }, { published: false }, [
+      'cmrLink',
+    ]);
   }
 
   /**
@@ -155,7 +159,7 @@ class Granule extends Manager {
 
     const fileExistsPromises = moveFileParams.map(async (moveFileParam) => {
       const { target, file } = moveFileParam;
-      if (target && await s3Utils.s3ObjectExists(target)) {
+      if (target && (await s3Utils.s3ObjectExists(target))) {
         return Promise.resolve(file);
       }
 
@@ -200,14 +204,14 @@ class Granule extends Manager {
       } else {
         const operation = '=';
         attributeValues[`:${key}`] = value;
-        if (!isQuery && (field === 'granuleId')) {
+        if (!isQuery && field === 'granuleId') {
           expression = `contains(#${field}, :${key})`;
         } else {
           expression = `#${field} ${operation} :${key}`;
         }
       }
 
-      if (isQuery && (field === 'granuleId')) {
+      if (isQuery && field === 'granuleId') {
         keyConditionArray.push(expression);
       } else {
         filterArray.push(expression);
@@ -218,7 +222,8 @@ class Granule extends Manager {
       attributeNames,
       attributeValues,
       filterArray,
-      filterExpression: (filterArray.length > 0) ? filterArray.join(' AND ') : undefined,
+      filterExpression:
+        filterArray.length > 0 ? filterArray.join(' AND ') : undefined,
       keyConditionArray,
     };
   }
@@ -230,15 +235,21 @@ class Granule extends Manager {
    * @returns {Array<Object>} the granules' queue for a given collection
    */
   granuleAttributeScan(searchParams) {
-    const {
-      attributeNames,
-      attributeValues,
-      filterExpression,
-    } = this.getDynamoDbSearchParams(searchParams, false);
+    const { attributeNames, attributeValues, filterExpression } =
+      this.getDynamoDbSearchParams(searchParams, false);
 
     const projectionArray = [];
-    const fields = ['granuleId', 'collectionId', 'createdAt', 'beginningDateTime',
-      'endingDateTime', 'status', 'updatedAt', 'published', 'provider'];
+    const fields = [
+      'granuleId',
+      'collectionId',
+      'createdAt',
+      'beginningDateTime',
+      'endingDateTime',
+      'status',
+      'updatedAt',
+      'published',
+      'provider',
+    ];
     fields.forEach((field) => {
       attributeNames[`#${field}`] = field;
       projectionArray.push(`#${field}`);
@@ -274,7 +285,9 @@ class Granule extends Manager {
    */
   async delete(granule) {
     if (granule.published) {
-      throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
+      throw new DeletePublishedGranule(
+        'You cannot delete a granule that is published to CMR. Remove it from CMR first'
+      );
     }
 
     return await this._deleteRecord(granule);
@@ -285,18 +298,22 @@ class Granule extends Manager {
    */
   async deleteGranules() {
     const granules = await this.scan();
-    return await Promise.all(granules.Items.map((granule) =>
-      this.delete(granule)));
+    return await Promise.all(
+      granules.Items.map((granule) => this.delete(granule))
+    );
   }
 
   /**
    * Get the set of fields which are mutable based on the granule status.
    *
-   * @param {Object} record - A granule record
+   * @param {Object} record                  - A granule record
+   * @param {boolean} writeConstraints       - boolean toggle restricting if write conditionals
+   *                                           should be compared to existing record to determine
+   *                                           write eligibility
    * @returns {Array} - The array of mutable field names
    */
-  _getMutableFieldNames(record) {
-    if (record.status === 'running') {
+  _getMutableFieldNames(record, writeConstraints = true) {
+    if (record.status === 'running' && writeConstraints === true) {
       return ['createdAt', 'updatedAt', 'timestamp', 'status', 'execution'];
     }
     return Object.keys(record);
@@ -305,41 +322,71 @@ class Granule extends Manager {
   /**
    * Store a granule record in DynamoDB.
    *
-   * @param {Object} granuleRecord - A granule record.
+   * @param {Object} granuleRecord           - A granule record.
+   * @param {boolean} writeConstraints       - boolean toggle restricting if write conditionals
+   *                                           should be compared to existing record to determine
+   *                                           write eligibility
    * @returns {Promise<Object|undefined>}
    */
-  async _storeGranuleRecord(granuleRecord) {
-    const mutableFieldNames = this._getMutableFieldNames(granuleRecord);
+  async _storeGranuleRecord(granuleRecord, writeConstraints = true) {
+    const mutableFieldNames = this._getMutableFieldNames(granuleRecord, writeConstraints);
     const updateParams = this._buildDocClientUpdateParams({
       item: granuleRecord,
       itemKey: { granuleId: granuleRecord.granuleId },
       mutableFieldNames,
     });
 
-    // createdAt comes from cumulus_meta.workflow_start_time
-    // records should *not* be updating from createdAt times that are *older* start
-    // times than the existing record, whatever the status
-    updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+    if (writeConstraints === true) {
+      if (granuleRecord.createdAt) {
+        // createdAt comes from cumulus_meta.workflow_start_time
+        // records should *not* be updating from createdAt times that are *older* start
+        // times than the existing record, whatever the status
+        // Because both API write and message write chains use the granule model to store records,in
+        // cases where createdAt does not exist on the granule, we assume overwrite protections are
+        // undesired behavior via business logic on the message write logic
+        updateParams.ConditionExpression = '(attribute_not_exists(createdAt) or :createdAt >= #createdAt)';
+      }
 
-    // Only allow "running" granule to replace completed/failed
-    // granule if the execution has changed for granules with executions.
-    // Allow running granule to replace queued granule
-    if (granuleRecord.status === 'running' && granuleRecord.execution !== undefined) {
-      updateParams.ExpressionAttributeValues[':queued'] = 'queued';
-      updateParams.ConditionExpression += ' and (#status = :queued or #execution <> :execution)';
+      // Only allow "running" granule to replace completed/failed
+      // granule if the execution has changed for granules with executions.
+      // Allow running granule to replace queued granule
+      if (
+        granuleRecord.status === 'running' && granuleRecord.execution !== undefined
+      ) {
+        updateParams.ExpressionAttributeValues[':queued'] = 'queued';
+        if (updateParams.ConditionExpression) {
+          updateParams.ConditionExpression += ' and ';
+        } else {
+          updateParams.ConditionExpression = '';
+        }
+        updateParams.ConditionExpression += '(#status = :queued or #execution <> :execution)';
+      }
+
+      // Only allow "queued" granule to replace running/completed/failed
+      // granule if the execution has changed for granules with executions.
+      if (
+        granuleRecord.status === 'queued' && granuleRecord.execution !== undefined
+      ) {
+        if (updateParams.ConditionExpression) {
+          updateParams.ConditionExpression += ' and ';
+        } else {
+          updateParams.ConditionExpression = '';
+        }
+        updateParams.ConditionExpression += '#execution <> :execution';
+      }
     }
-
-    // Only allow "queued" granule to replace running/completed/failed
-    // granule if the execution has changed for granules with executions.
-    if (granuleRecord.status === 'queued' && granuleRecord.execution !== undefined) {
-      updateParams.ConditionExpression += ' and #execution <> :execution';
-    }
-
     try {
       return await this.dynamodbDocClient.update(updateParams);
     } catch (error) {
-      if (error.name && error.name.includes('ConditionalCheckFailedException')) {
-        logger.error(`Did not process delayed event for granule: ${JSON.stringify(granuleRecord)}, cause:`, error);
+      if (
+        error.name && error.name.includes('ConditionalCheckFailedException')
+      ) {
+        logger.error(
+          `Did not process delayed event for granule: ${JSON.stringify(
+            granuleRecord
+          )}, cause:`,
+          error
+        );
         return undefined;
       }
       throw error;
@@ -349,32 +396,54 @@ class Granule extends Manager {
   /**
    * Validate and store a granule record.
    *
-   * @param {Object} granuleRecord - A granule record.
+   * @param {Object} granuleRecord           - A granule record.
+   * @param {boolean} writeConstraints       - boolean toggle restricting if constraints
+   *                                           should be used to determine
+   *                                           write eligibility
    * @returns {Promise}
    */
-  async _validateAndStoreGranuleRecord(granuleRecord) {
+  async _validateAndStoreGranuleRecord(granuleRecord, writeConstraints) {
     // granuleRecord needs to be cloned here as ajv/validation routines mutate the validated granule
     // with schema defaults via ajv, and this is undesirable for PATCH behavior
     const clonedGranuleRecord = cloneDeep(granuleRecord);
     // TODO: Refactor this all to use model.update() to avoid having to manually call
     // schema validation and the actual client.update() method.
-    await this.constructor.recordIsValid(clonedGranuleRecord, this.schema, this.removeAdditional);
-    return this._storeGranuleRecord(clonedGranuleRecord);
+    await this.constructor.recordIsValid(
+      clonedGranuleRecord,
+      this.schema,
+      this.removeAdditional
+    );
+    return this._storeGranuleRecord(
+      clonedGranuleRecord,
+      writeConstraints
+    );
   }
 
   /**
    * Stores a granule in dynamoDB
    *
-   * @param {Object} granuleRecord - dynamoDB granule
+   * @param {Object} granuleRecord           - dynamoDB granule
+   * @param {boolean} writeConstraints       - boolean toggle restricting if constraints
+   *                                           should be used to determine
+   *                                           write eligibility
    * @returns {Object} dynamodbDocClient update responses
    */
-  async storeGranule(granuleRecord) {
-    logger.info(`About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
-    const response = await this._validateAndStoreGranuleRecord(granuleRecord);
+  async storeGranule(granuleRecord, writeConstraints = true) {
+    logger.info(
+      `About to write granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`
+    );
+    const response = await this._validateAndStoreGranuleRecord(
+      granuleRecord,
+      writeConstraints
+    );
     if (response) {
-      logger.info(`Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`);
+      logger.info(
+        `Successfully wrote granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} to DynamoDB`
+      );
     } else {
-      logger.info(`Did not update granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} due to granule write constraints`);
+      logger.info(
+        `Did not update granule with granuleId ${granuleRecord.granuleId}, collectionId ${granuleRecord.collectionId} due to granule write constraints`
+      );
     }
     return response;
   }

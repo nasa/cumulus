@@ -164,11 +164,11 @@ export const migrateGranuleRecord = async (
     knexOrTransaction: trx,
   });
 
-  const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
-    trx,
+  const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: trx,
     granule,
-    executionCumulusId
-  );
+    executionCumulusId,
+  });
 
   if (!pgGranuleRecord) {
     throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);

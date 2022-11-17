@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-3070/3074**
+  - Updated granule PUT/POST endpoints to no longer respect message write
+    constraints.  Functionally this means that:
+    - Granules with older createdAt values will replace newer ones, instead of
+        ignoring the write request
+    - Granules that attempt to set a non-complete state (e.g. 'queued' and
+        'running') will now ignore execution state/state change and always write
+    - Granules being set to non-complete state will update all values passed in,
+      instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
+      'status', 'execution']`
+      
+### Changed
+
+- **CUMULUS-3070**
+  - Updated API granule write logic to no longer require createdAt value in
+    dynamo/API granule validation.   Write-time createdAt defaults will be set in the case
+    of new API granule writes without the value set, and createdAt will be
+    overwritten if it already exists.
+  - Refactored granule write logic to allow PATCH behavior on API granule update
+    such that existing createdAt values will be retained in case of overwrite
+    across all API granule writes.
+  - Updated granule write code to validate written createdAt is synced between
+    datastores in cases where granule.createdAt is not provided for a new granule.
+      
+
+### Added
+
+- **CUMULUS-3070**
+  - Remove granules dynamoDb model logic that sets default publish value on record
+    validation
+  - Update API granule write logic to not set default publish value on record
+    updates to avoid overwrite (PATCH behavior)
+  - Update API granule write logic to publish to false on record
+    creation if not specified
+  - Update message granule write logic to set default publish value on record
+    creation update.
+  - Update granule write logic to set published to default value of `false` if
+    `null` is explicitly set with intention to delete the value.
+  - Removed dataType/version from api granule schema
+  - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
+    logic for PUT/PATCH endpoint
+
 ## [v13.4.0] 10/31/2022
 
 - **CUMULUS-3075**
@@ -36,25 +80,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v13.4.0] 2022-10-31
 
+
 ### Notable changes
 
 - **CUMULUS-3104**
   - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
-
-### Added
-
-- **CUMULUS-3070**
-  - Remove granules dynamoDb model logic that sets default publish value on record
-    validation
-  - Update API granule write logic to not set default publish value on record
-    updates to avoid overwrite (PATCH behavior)
-  - Update API granule write logic to  publish to false on record
-    creation if not specified
-  - Update message granule write logic to set default publish value on record
-    creation update.
-  - Update granule write logic to set published to default value of `false` if
-    `null` is explicitly set with intention to delete the value.
-  - Removed dataType/version from api granule schema
 
 - **CUMULUS-2998**
   - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
@@ -65,21 +95,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
     allowed properties include:
-      - add_missing_file_checksums_task_memory_size
-      - discover_granules_task_memory_size
-      - discover_pdrs_task_memory_size
-      - hyrax_metadata_updates_task_memory_size
-      - lzards_backup_task_memory_size
-      - move_granules_task_memory_size
-      - parse_pdr_task_memory_size
-      - pdr_status_check_task_memory_size
-      - post_to_cmr_task_memory_size
-      - queue_granules_task_memory_size
-      - queue_pdrs_task_memory_size
-      - queue_workflow_task_memory_size
-      - sync_granule_task_memory_size
-      - update_cmr_access_constraints_task_memory_size
-      - update_granules_cmr_task_memory_size
+    - add_missing_file_checksums_task_memory_size
+    - discover_granules_task_memory_size
+    - discover_pdrs_task_memory_size
+    - hyrax_metadata_updates_task_memory_size
+    - lzards_backup_task_memory_size
+    - move_granules_task_memory_size
+    - parse_pdr_task_memory_size
+    - pdr_status_check_task_memory_size
+    - post_to_cmr_task_memory_size
+    - queue_granules_task_memory_size
+    - queue_pdrs_task_memory_size
+    - queue_workflow_task_memory_size
+    - sync_granule_task_memory_size
+    - update_cmr_access_constraints_task_memory_size
+    - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
@@ -90,6 +120,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
+- **CUMULUS-3024**
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
+  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
+    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 - **CUMULUS-2913**

@@ -190,10 +190,10 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   const {
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     workflowStatus,
   } = t.context;
+  const createdAt = Date.now();
   const granule = granuleSuccess.payload.granules[0];
   const executionUrl = cryptoRandomString({ length: 10 });
 
@@ -203,10 +203,10 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
   const timeToPreprocess = getGranuleTimeToPreprocess(granule);
   const productVolume = getGranuleProductVolume(granule.files);
   const status = getGranuleStatus(workflowStatus, granule);
-  const duration = getWorkflowDuration(workflowStartTime, Date.now());
+  const duration = getWorkflowDuration(createdAt, Date.now());
 
   const record = await generateGranuleApiRecord({
-    granule,
+    granule: { ...granule, createdAt },
     executionUrl,
     processingTimeInfo: {
       processingStartDateTime,
@@ -214,7 +214,6 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     },
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     status,
     duration,
@@ -232,7 +231,7 @@ test('generateGranuleApiRecord() builds successful granule record', async (t) =>
     record.files,
     granule.files
   );
-  t.is(record.createdAt, workflowStartTime);
+  t.is(record.createdAt, createdAt);
   t.is(typeof record.duration, 'number');
   t.is(record.status, workflowStatus);
   t.is(record.pdrName, pdrName);
@@ -372,7 +371,6 @@ test('generateGranuleApiRecord() builds granule record with correct processing a
     cmrTemporalInfo,
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     status,
     duration,
@@ -402,7 +400,6 @@ test('generateGranuleApiRecord() honors granule.createdAt if it exists', async (
   const {
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
   } = t.context;
 
@@ -416,7 +413,6 @@ test('generateGranuleApiRecord() honors granule.createdAt if it exists', async (
     executionUrl,
     collectionId,
     provider,
-    workflowStartTime,
     pdrName,
     cmrUtils: t.context.fakeCmrUtils,
     files: granule.files,
@@ -429,7 +425,6 @@ test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
   const {
     collectionId,
     provider,
-    workflowStartTime,
   } = t.context;
   const granule = granuleFailure.payload.granules[0];
   const executionUrl = cryptoRandomString({ length: 10 });
@@ -443,7 +438,6 @@ test('generateGranuleApiRecord() builds a failed granule record', async (t) => {
     executionUrl,
     provider,
     collectionId,
-    workflowStartTime,
     status,
     error,
     cmrUtils: t.context.fakeCmrUtils,
