@@ -141,6 +141,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - update_cmr_access_constraints_task_memory_size
     - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
+  - Adds Terraform timeout variable for add_missing_file_checksums_task
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
 - **CUMULUS-2787**
