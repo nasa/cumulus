@@ -798,7 +798,6 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-
 test.serial('writeGranulesFromMessage() on re-write saves granule records to DynamoDB/PostgreSQL/Elasticsearch/SNS without updating product volume if files is undefined', async (t) => {
   const {
     collection,
