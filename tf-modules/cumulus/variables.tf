@@ -598,3 +598,9 @@ variable "deploy_cumulus_distribution" {
   type        = bool
   default     = false
 }
+
+variable "cloudwatch_log_retention_in_days" {
+  type        = number
+  description = "Retention period to apply to CloudWatch logs"
+  default     = 365
+}

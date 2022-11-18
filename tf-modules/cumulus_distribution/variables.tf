@@ -122,5 +122,5 @@ variable "vpc_id" {
 variable "cloudwatch_log_retention_in_days" {
   type        = number
   description = "Retention period to apply to CloudWatch logs"
-  default     = 30
+  default     = 365
 }
