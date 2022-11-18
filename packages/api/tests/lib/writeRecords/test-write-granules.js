@@ -1021,7 +1021,6 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     'updatedAt',
   ];
 
-  // TODO: t.context this
   const completeGranule = fakeGranuleFactoryV2({
     beginningDateTime: new Date().toString(),
     cmrLink: 'example.com',
