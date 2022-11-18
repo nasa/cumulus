@@ -2,6 +2,7 @@ import AWS from 'aws-sdk';
 import got from 'got';
 import Logger from '@cumulus/logger';
 import path from 'path';
+import isBoolean from 'lodash/isBoolean';
 import { Context } from 'aws-lambda';
 
 import { constructCollectionId } from '@cumulus/message/Collections';
@@ -377,14 +378,18 @@ export const backupGranulesToLzards = async (
     roleCreds,
   };
 
+  const failTaskWhenFileBackupFail = isBoolean(backupConfig.failTaskWhenFileBackupFail) ?
+    backupConfig.failTaskWhenFileBackupFail : false;
+
   const backupPromises = (event.input.granules.map(
     (granule) => backupGranule({ granule, backupConfig })
   ));
 
   const backupResults = await Promise.allSettled(backupPromises);
 
-  // If there are uncaught exceptions, we want to fail the task.
-  if (backupResults.some((result) => result.status === 'rejected')) {
+  // If there are uncaught exceptions or any backup request fails, we want to fail the task.
+  if (backupResults.some((result) => result.status === 'rejected'
+    || (failTaskWhenFileBackupFail && result.value.some((value) => value.status === 'FAILED')))) {
     log.error('Some LZARDS backup results failed due to internal failure');
     log.error('Manual reconciliation required - some backup requests may have processed');
     log.error(`Full output: ${JSON.stringify(backupResults)}`);
