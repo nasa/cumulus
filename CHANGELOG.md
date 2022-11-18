@@ -9,6 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 - **CUMULUS-3077**
   - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
+- **CUMULUS-3121**
+  - Updated Terraform modules in order to support configurable CloudWatch retention periods.
 
 ## [v13.4.0] 10/31/2022
 
