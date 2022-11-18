@@ -1648,9 +1648,9 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
   });
 
   // Files were removed from all datastores
-  t.is(apiGranule.files, undefined);
-  t.deepEqual(dynamoGranule.files, undefined);
-  t.deepEqual(esGranule.files, undefined); // TODO - team
+  t.deepEqual(apiGranule.files, []);
+  t.is(dynamoGranule.files, undefined);
+  t.is(esGranule.files, undefined);
 });
 
 test.serial('writeGranulesFromMessage() given a null files key will throw an error', async (t) => {
@@ -3031,15 +3031,18 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
   // minus model defaults
   t.deepEqual(
     omit(removeNilProperties(apiFormattedPostgresGranule), apiFormatOmitList),
-    omit(
-      removeNilProperties({ ...originalApiFormattedPostgresGranule }),
-      validNullableGranuleKeys.concat(apiFormatOmitList)
-    )
+    {
+      ...omit(
+        removeNilProperties({ ...originalApiFormattedPostgresGranule }),
+        validNullableGranuleKeys.concat(apiFormatOmitList)
+      ),
+      files: [],
+    }
   );
 
   // Postgres and Dynamo granules matches
   t.deepEqual(
-    apiFormattedPostgresGranule, // TODO - discuss with team
+    omit(apiFormattedPostgresGranule, ['files']),
     dynamoGranule
   );
   // Validate that none of the responses come back as 'null', we want them removed, not set
@@ -3057,7 +3060,7 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
 
   // Postgres and ElasticSearch granules matches
   t.deepEqual(
-    apiFormattedPostgresGranule,
+    omit(apiFormattedPostgresGranule, ['files']),
     omit(esGranule, ['_id'])
   );
   // Validate that none of the responses come back as 'null', we want them removed, not set
@@ -3196,73 +3199,9 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
   });
 
   // Files were removed from all datastores
-  t.is(apiGranule.files, undefined);
-  t.deepEqual(dynamoGranule.files, undefined);
-  // TODO talk to TEAM about this -- should we have [] or undefined for null/[] provided
-  t.deepEqual(esGranule.files, undefined);
-});
-
-test.serial('writeGranuleFromApi() given a null files key will throw an error', async (t) => {
-  const {
-    collectionCumulusId,
-    esClient,
-    esGranulesClient,
-    granule,
-    granuleId,
-    granuleModel,
-    knex,
-  } = t.context;
-
-  await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
-
-  // Files exist in all datastores
-  const originalPGGranule = await t.context.granulePgModel.get(
-    knex,
-    {
-      granule_id: granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    }
-  );
-  const originalApiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: originalPGGranule,
-    knexOrTransaction: knex,
-  });
-  const originalDynamoGranule = await granuleModel.get({ granuleId });
-  const originalEsGranule = await esGranulesClient.get(granuleId);
-  const originalPayloadFiles = t.context.files;
-
-  originalApiGranule.files.sort(
-    (f1, f2) => sortFilesByBuckets(f1, f2)
-  );
-  originalDynamoGranule.files.sort(
-    (f1, f2) => sortFilesByBuckets(f1, f2)
-  );
-  originalEsGranule.files.sort(
-    (f1, f2) => sortFilesByBuckets(f1, f2)
-  );
-  originalPayloadFiles.sort(
-    (f1, f2) => sortFilesByBuckets(f1, f2)
-  );
-
-  t.deepEqual(originalApiGranule.files, originalPayloadFiles);
-  t.deepEqual(originalDynamoGranule.files, originalPayloadFiles);
-  t.deepEqual(originalEsGranule.files, originalPayloadFiles);
-
-  // Update existing granule with a partial granule object
-  const updateGranulePayload = {
-    granuleId,
-    collectionId: granule.collectionId,
-    files: null,
-    // FUTURE: In order to update a granule, the payload must include status and
-    // the status must be 'completed' or 'failed'
-    // if it's running or queued, it will try to insert the granule, not upsert
-    status: granule.status,
-  };
-
-  await t.throwsAsync(
-    updateGranule(t, updateGranulePayload),
-    { message: 'granule.files must not be null' }
-  );
+  t.deepEqual(apiGranule.files, []);
+  t.is(dynamoGranule.files, undefined);
+  t.is(esGranule.files, undefined);
 });
 
 test.serial('writeGranuleFromApi() writes a full granule without an execution to PostgreSQL and DynamoDB.', async (t) => {
@@ -4437,7 +4376,7 @@ test.serial('writeGranuleFromApi() saves granule record with publish set to true
     granulePgModel,
   } = t.context;
 
-  const result = await writeGranuleFromApi({ ...granule, published: false }, knex, esClient, 'Create');
+  const result = await writeGranuleFromApi({ ...granule, published: true }, knex, esClient, 'Create');
   t.is(result, `Wrote Granule ${granuleId}`);
 
   const originalPostgresRecord = await granulePgModel.get(
@@ -4521,7 +4460,7 @@ test.serial('writeGranuleFromApi() saves granule record with error set with expe
   t.deepEqual(esRecord.error, updatedError);
 });
 
-test.serial('writeGranuleFromApi() saves granule record with files set to null with file value set to undefined to all datastores', async (t) => {
+test.serial('writeGranuleFromApi() saves granule record with files set to null with file value set to undefined/default in all datastores', async (t) => {
   const {
     esClient,
     knex,
@@ -4549,9 +4488,10 @@ test.serial('writeGranuleFromApi() saves granule record with files set to null w
     granulePgRecord,
     knexOrTransaction: knex,
   });
-  t.deepEqual(dynamoRecord.files, undefined);
-  t.deepEqual(translatedPgRecord.files, undefined);
-  t.deepEqual(esRecord.files, undefined);
+
+  t.deepEqual(translatedPgRecord.files, []);
+  t.is(dynamoRecord.files, undefined);
+  t.is(esRecord.files, undefined);
 });
 
 test.serial('writeGranuleFromApi() saves granule record on overwrite with files set to all datastores', async (t) => {

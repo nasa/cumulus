@@ -1983,6 +1983,10 @@ test.serial('create (POST) throws conflict error if a granule with same granuleI
   });
 
   await request(app)
+    .post('/granules')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .set('Accept', 'application/json')
+    .send(newGranule)
     .expect(200);
 
   const response = await request(app)
