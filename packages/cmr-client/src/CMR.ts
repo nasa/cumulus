@@ -46,13 +46,12 @@ async function updateToken(
   } };
   const credentials = username + ':' + password;
   const authorization = 'Basic' + Buffer.from(credentials, 'base64');
-  try { 
-    response = await got.post('https://' + process.env.CMR_ENVIRONMENT + 'urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials', { 
-      // post request to authenticate against Earthdata Login API 
+  try {
+    response = await got.post('https://' + process.env.CMR_ENVIRONMENT + 'urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials', {
       json: {
         access_token: {
-          'Authorization': authorization,
-        }
+          Authorization: authorization,
+        },
       },
       responseType: 'json',
     });
@@ -63,44 +62,46 @@ async function updateToken(
     throw error;
   }
 
-  let response2 : {body: {
+  let response2 : { body: {
     access_token?: {
       id: string,
     },
     expiration_date?: {
       id: BigInteger,
     }
-  }};
+  } };
   try {
     response2 = await got.get('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/api/users/tokens', {
-      json : {
+      json: {
         access_token: {
-          'Authorization': authorization,
-        }
+          Authorization: authorization,
+        },
       },
       responseType: 'json',
     });
   } catch (error) {
     if (get(error, 'response2.body.errors')) {
-      throw new Error(`Authentication error: Invalid User Credentials`);
+      throw new Error('Authentication error: Invalid User Credentials');
     }
     throw error;
   }
-  if(response2.body.access_token){
+  if (response2.body.access_token) {
     return response2.body.access_token.id;
-  }else{
+  } else {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let response3 : {body: {uid?: {id: string},}};
-    let tok = response.body.access_token ? response.body.access_token.id : "";
+    let response3 : { body: { 
+      uid?: { id: string },
+    } };
+    const tok = response.body.access_token ? response.body.access_token.id : '';
     if (!response2.body.access_token) {
       try {
-        response3 = await got.post('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/oauth/tokens/user?client_id=' + 
-                    Buffer.from(clientId, 'base64') + "&" + tok, 
+        response3 = await got.post('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/oauth/tokens/user?client_id=' +
+                    Buffer.from(clientId, 'base64') + "&" + tok,
         {
           json: {
             uid: {
-              'Authorization': authorization,
-            }
+              Authorization: authorization,
+            },
           },
           responseType: 'json',
         });
@@ -110,13 +111,13 @@ async function updateToken(
         }
         throw error;
       }
-      if(!response3.body.uid){
+      if (!response3.body.uid) {
         throw new Error(`Error: Invalid request`);
       }
     }
-    if(!response.body.access_token){
+    if (!response.body.access_token) {
       throw new Error(`Error: Invalid request`);
-    }else{
+    } else {
       return response.body.access_token.id;
     }
   }

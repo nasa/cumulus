@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
+- **CUMULUS-3097**
+  - Changed the CMR package's authentication token from echo-token to earthdata login token (edl-token)
+  - Changed unit tests to check for 'Edl-token' as opposed to 'Echo-token'
 - **CUMULUS-3077**
   - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
 
