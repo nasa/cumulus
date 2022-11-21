@@ -67,6 +67,7 @@ A configurable map of timeouts (in seconds) for cumulus ingest module task lambd
 
 Currently the following values are supported:
 
+- add_missing_file_checksums_task_timeout
 - discover_granules_task_timeout
 - discover_pdrs_task_timeout
 - fake_processing_task_timeout

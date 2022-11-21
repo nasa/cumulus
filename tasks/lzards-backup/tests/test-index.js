@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const cloneDeep = require('lodash/cloneDeep');
 const omit = require('lodash/omit');
 
 const sandbox = require('sinon').createSandbox();
@@ -1053,7 +1054,7 @@ test.serial('backupGranulesToLzards returns empty record if no files to archive'
   t.deepEqual(actual, expected);
 });
 
-test.serial('backupGranulesToLzards returns failed record if missing archive checksum', async (t) => {
+test.serial('backupGranulesToLzards returns failed record (by default) or throws error (failTaskWhenFileBackupFail set to true), if missing archive checksum', async (t) => {
   const { fakeBucket1 } = t.context;
   const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
   sandbox.stub(index, 'generateAccessCredentials').returns({
@@ -1119,6 +1120,15 @@ test.serial('backupGranulesToLzards returns failed record if missing archive che
 
   actual.backupResults = removeBackupResultsObjectErrorStack(actual.backupResults);
   t.deepEqual(actual, expected);
+
+  const newFakePayload = cloneDeep(fakePayload);
+  newFakePayload.config.failTaskWhenFileBackupFail = true;
+  await validateInput(t, newFakePayload.input);
+  await validateConfig(t, newFakePayload.config);
+  await t.throwsAsync(
+    index.backupGranulesToLzards(newFakePayload, undefined, getAuthTokenMethod),
+    { message: /"body":"{\\"name\\":\\"ChecksumError.*"status":"FAILED"/ }
+  );
 });
 
 test.serial('backupGranulesToLzards throws an error with a granule missing collection information', async (t) => {
@@ -1253,4 +1263,99 @@ test.serial('backupGranulesToLzards throws an error with a granule incomplete co
     index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod),
     { message: '[{"status":"rejected","reason":{"name":"CollectionIdentifiersNotProvidedError"}}]' }
   );
+});
+
+test.serial('backupGranulesToLzards returns failed record (by default) or throws error (failTaskWhenFileBackupFail set to true), if one of file backups fails', async (t) => {
+  const { fakeBucket1, fakeBucket2 } = t.context;
+  const getAuthTokenMethod = () => Promise.resolve('fakeAuthToken');
+  sandbox.stub(index, 'generateAccessCredentials').returns({
+    Credentials: {
+      SecretAccessKey: 'FAKEKey',
+      AccessKeyId: 'FAKEId',
+      SessionToken: 'FAKEToken',
+    },
+  });
+  const collectionId1 = constructCollectionId('fakename1', 'fakeversion1');
+  const collectionId2 = constructCollectionId('fakename2', 'fakeversion2');
+  const now = new Date().getTime();
+  const backupError = {
+    name: 'RequestError',
+    message: 'connect ETIMEDOUT 1.2.3.4',
+    stack: 'RequestError: connect ETIMEDOUT 1.2.3.4',
+  };
+  const stubbedBackupGranuleResults = [{
+    statusCode: 201,
+    granuleId: 'FakeGranule1',
+    collectionId: collectionId1,
+    filename: `s3://${fakeBucket1}/path/to/granule1/foo.jpg`,
+    provider: 'FakeProvider',
+    createdAt: now,
+    body: 'fake body',
+    status: 'COMPLETED',
+  },
+  {
+    granuleId: 'FakeGranule2',
+    collectionId: collectionId2,
+    filename: `s3://${fakeBucket2}/path/to/granule2/foo.jpg`,
+    provider: 'FakeProvider',
+    createdAt: now,
+    body: JSON.stringify(backupError),
+    status: 'FAILED',
+  }];
+  sandbox.stub(index, 'backupGranule').returns(stubbedBackupGranuleResults);
+
+  const fakePayload = {
+    input: {
+      granules: [
+        {
+          granuleId: 'FakeGranule1',
+          collectionId: collectionId1,
+          provider: 'FakeProvider',
+          createdAt: now,
+          files: [
+            {
+              bucket: fakeBucket1,
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: 'path/to/granule1/foo.jpg',
+            },
+            {
+              bucket: fakeBucket1,
+              checksumType: 'md5',
+              checksum: 'fakehash',
+              key: '/path/to/granule1/foo.dat',
+            },
+          ],
+        },
+      ],
+    },
+    config: {
+      urlType: 's3',
+    },
+  };
+
+  const expectedBackupResults = [
+    { ...stubbedBackupGranuleResults[0], statusCode: 201, status: 'COMPLETED' },
+    { ...stubbedBackupGranuleResults[1], status: 'FAILED' },
+  ];
+
+  await validateInput(t, fakePayload.input);
+  await validateConfig(t, fakePayload.config);
+  const actual = await index.backupGranulesToLzards(fakePayload, undefined, getAuthTokenMethod);
+  await validateOutput(t, actual);
+  const expected = {
+    backupResults: expectedBackupResults,
+    granules: fakePayload.input.granules,
+  };
+  t.deepEqual(actual, expected);
+
+  const newFakePayload = cloneDeep(fakePayload);
+  newFakePayload.config.failTaskWhenFileBackupFail = true;
+  await validateInput(t, newFakePayload.input);
+  await validateConfig(t, newFakePayload.config);
+  const error = await t.throwsAsync(
+    index.backupGranulesToLzards(newFakePayload, undefined, getAuthTokenMethod)
+  );
+  const errorResults = JSON.parse(error.message).map((result) => result.value).flat();
+  t.deepEqual(errorResults, expectedBackupResults);
 });

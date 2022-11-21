@@ -14,6 +14,7 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
+  getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
   upsertGranuleWithExecutionJoinRecord,
@@ -218,7 +219,7 @@ const _writePostgresGranuleViaTransaction = async ({
 * @param {Object} params.knex - Instance of a Knex client
 * @param {[Object]} params.writtenFiles - List of postgres file objects that should
 * not be removed by this method.
-* @returns {Promise<number>} The number of rows deleted
+* @returns {Promise<Object>} Knex .delete response
 */
 const _removeExcessFiles = async ({
   filePgModel = new FilePgModel(),
@@ -573,6 +574,7 @@ const _writeGranule = async ({
   knex,
   snsEventType,
 }) => {
+  const { status } = apiGranuleRecord;
   const pgGranule = await _writeGranuleRecords({
     postgresGranuleRecord,
     apiGranuleRecord,
@@ -582,8 +584,6 @@ const _writeGranule = async ({
     executionCumulusId,
     granulePgModel,
   });
-
-  const { status } = apiGranuleRecord;
 
   // Files are only written to Postgres if the granule is in a "final" state
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
@@ -807,6 +807,7 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
  *   Optional override for the granule model writing to DynamoDB
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
+ * @param {Object}  params.esClient - Elasticsearch client
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
@@ -896,6 +897,20 @@ const writeGranulesFromMessage = async ({
         knexOrTransaction: knex,
       });
 
+      // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+      // Check if granuleId exists across another collection
+      const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranuleRecord.granuleId);
+      const granuleExistsAcrossCollection = granulesByGranuleId.some(
+        (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
+      );
+      if (granuleExistsAcrossCollection) {
+        log.error('Could not write granule. It already exists across another collection');
+        const conflictError = new Error(
+          `A granule already exists for granuleId: ${apiGranuleRecord.granuleId} with collectionId: ${apiGranuleRecord.collectionId}`
+        );
+        throw conflictError;
+      }
+
       return _writeGranule({
         postgresGranuleRecord,
         apiGranuleRecord,
@@ -912,7 +927,7 @@ const writeGranulesFromMessage = async ({
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to Dynamo', aggregateError);
+    log.error('Failed writing some granules: ', aggregateError);
     throw aggregateError;
   }
   return results;
