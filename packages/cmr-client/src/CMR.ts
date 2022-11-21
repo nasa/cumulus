@@ -32,18 +32,20 @@ async function updateToken(
   username: string,
   password: string
 ): Promise<string> {
-  let response :
-  { body: {
-    access_token?: {
-      id: string,
-    },
-    token_type?: {
-      id: string,
-    },
-    expires_in?: {
-      id: BigInteger,
-    }
-  } };
+  let response:
+    {
+      body: {
+        access_token?: {
+          id: string,
+        },
+        token_type?: {
+          id: string,
+        },
+        expires_in?: {
+          id: BigInteger,
+        }
+      }
+    };
   const credentials = username + ':' + password;
   const authorization = 'Basic' + Buffer.from(credentials, 'base64');
   try {
@@ -62,14 +64,16 @@ async function updateToken(
     throw error;
   }
 
-  let response2 : { body: {
-    access_token?: {
-      id: string,
-    },
-    expiration_date?: {
-      id: BigInteger,
+  let response2: {
+    body: {
+      access_token?: {
+        id: string,
+      },
+      expiration_date?: {
+        id: BigInteger,
+      }
     }
-  } };
+  };
   try {
     response2 = await got.get('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/api/users/tokens', {
       json: {
@@ -87,16 +91,18 @@ async function updateToken(
   }
   if (response2.body.access_token) {
     return response2.body.access_token.id;
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let response3 : { body: { 
+  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  let response3: {
+    body: {
       uid?: { id: string },
-    } };
-    const tok = response.body.access_token ? response.body.access_token.id : '';
-    if (!response2.body.access_token) {
-      try {
-        response3 = await got.post('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/oauth/tokens/user?client_id=' +
-                    Buffer.from(clientId, 'base64') + "&" + tok,
+    }
+  };
+  const tok = response.body.access_token ? response.body.access_token.id : '';
+  if (!response2.body.access_token) {
+    try {
+      response3 = await got.post('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/oauth/tokens/user?client_id=' +
+        Buffer.from(clientId, 'base64') + '"&' + tok,
         {
           json: {
             uid: {
@@ -105,21 +111,20 @@ async function updateToken(
           },
           responseType: 'json',
         });
-      } catch (error) {
-        if (get(error, 'response3.body.errors')) {
-          throw new Error(`Error: Invalid request`);
-        }
-        throw error;
+    } catch (error) {
+      if (get(error, 'response3.body.errors')) {
+        throw new Error('Error: Invalid request');
       }
-      if (!response3.body.uid) {
-        throw new Error(`Error: Invalid request`);
-      }
+      throw error;
     }
-    if (!response.body.access_token) {
-      throw new Error(`Error: Invalid request`);
-    } else {
-      return response.body.access_token.id;
+    if (!response3.body.uid) {
+      throw new Error('Error: Invalid request');
     }
+  }
+  if (!response.body.access_token) {
+    throw new Error('Error: Invalid request');
+  } else {
+    return response.body.access_token.id;
   }
 }
 
