@@ -1,6 +1,5 @@
 import get from 'lodash/get';
 import got, { Headers } from 'got';
-import publicIp from 'public-ip';
 import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
@@ -10,7 +9,7 @@ import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
 import deleteConcept from './deleteConcept';
 import getConceptMetadata from './getConcept';
-import { getIngestUrl, getTokenUrl } from './getUrl';
+import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
 
 const log = new Logger({ sender: 'cmr-client' });
@@ -18,17 +17,9 @@ const log = new Logger({ sender: 'cmr-client' });
 const logDetails: { [key: string]: string } = {
   file: 'cmr-client/CMR.js',
 };
-
-const IP_TIMEOUT_MS = 1 * 1000;
-
-const userIpAddress = (): Promise<string> =>
-  publicIp.v4({ timeout: IP_TIMEOUT_MS })
-    .catch(() => '127.0.0.1');
-
 /**
  * Returns a valid a CMR token
  *
- * @param {string} cmrProvider - the CMR provider id
  * @param {string} clientId - the CMR clientId
  * @param {string} username - CMR username
  * @param {string} password - CMR password
@@ -37,45 +28,98 @@ const userIpAddress = (): Promise<string> =>
  * @private
  */
 async function updateToken(
-  cmrProvider: string,
   clientId: string,
   username: string,
   password: string
 ): Promise<string> {
-  const url = getTokenUrl();
-
-  // Update the saved ECHO token
-  // for info on how to add collections to CMR: https://cmr.earthdata.nasa.gov/ingest/site/ingest_api_docs.html#validate-collection
-  let response: {
-    body: {
-      token?: {
-        id: string
-      }
+  let response :
+  { body: {
+    access_token?: {
+      id: string,
+    },
+    token_type?: {
+      id: string,
+    },
+    expires_in?: {
+      id: BigInteger,
     }
-  };
-  try {
-    response = await got.post(url, {
+  } };
+  const credentials = username + ':' + password;
+  const authorization = 'Basic' + Buffer.from(credentials, 'base64');
+  try { 
+    response = await got.post('https://' + process.env.CMR_ENVIRONMENT + 'urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials', { 
+      // post request to authenticate against Earthdata Login API 
       json: {
-        token: {
-          username: username,
-          password: password,
-          client_id: clientId,
-          user_ip_address: await userIpAddress(),
-          provider: cmrProvider,
-        },
+        access_token: {
+          'Authorization': authorization,
+        }
       },
       responseType: 'json',
     });
   } catch (error) {
     if (get(error, 'response.body.errors')) {
-      throw new Error(`CMR Error: ${error.response.body.errors[0]}`);
+      throw new Error('Authentication error: Invalid Credentials, Authentication with Earthdata Login failed');
     }
     throw error;
   }
 
-  if (!response.body.token) throw new Error('Authentication with CMR failed');
-
-  return response.body.token.id;
+  let response2 : {body: {
+    access_token?: {
+      id: string,
+    },
+    expiration_date?: {
+      id: BigInteger,
+    }
+  }};
+  try {
+    response2 = await got.get('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/api/users/tokens', {
+      json : {
+        access_token: {
+          'Authorization': authorization,
+        }
+      },
+      responseType: 'json',
+    });
+  } catch (error) {
+    if (get(error, 'response2.body.errors')) {
+      throw new Error(`Authentication error: Invalid User Credentials`);
+    }
+    throw error;
+  }
+  if(response2.body.access_token){
+    return response2.body.access_token.id;
+  }else{
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    let response3 : {body: {uid?: {id: string},}};
+    let tok = response.body.access_token ? response.body.access_token.id : "";
+    if (!response2.body.access_token) {
+      try {
+        response3 = await got.post('https://' + process.env.CMR_ENVIRONMENT + '.urs.earthdata.nasa.gov/oauth/tokens/user?client_id=' + 
+                    Buffer.from(clientId, 'base64') + "&" + tok, 
+        {
+          json: {
+            uid: {
+              'Authorization': authorization,
+            }
+          },
+          responseType: 'json',
+        });
+      } catch (error) {
+        if (get(error, 'response3.body.errors')) {
+          throw new Error(`Error: Invalid request`);
+        }
+        throw error;
+      }
+      if(!response3.body.uid){
+        throw new Error(`Error: Invalid request`);
+      }
+    }
+    if(!response.body.access_token){
+      throw new Error(`Error: Invalid request`);
+    }else{
+      return response.body.access_token.id;
+    }
+  }
 }
 
 export interface CMRConstructorParams {
@@ -176,7 +220,7 @@ export class CMR {
   async getToken(): Promise<string> {
     return this.token
       ? this.token
-      : updateToken(this.provider, this.clientId, this.username, await this.getCmrPassword());
+      : updateToken(this.clientId, this.username, await this.getCmrPassword());
   }
 
   /**
@@ -192,7 +236,7 @@ export class CMR {
     params: {
       token?: string,
       ummgVersion?: string,
-      cmrRevisionId?:string,
+      cmrRevisionId?: string,
     } = {}
   ): Headers {
     const contentType = params.ummgVersion
@@ -206,7 +250,7 @@ export class CMR {
 
     if (params.token) {
       if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
-      else headers['Echo-Token'] = params.token;
+      else headers['Edl-Token'] = params.token;
     }
     if (params.ummgVersion) headers.Accept = 'application/json';
     if (params.cmrRevisionId) headers['Cmr-Revision-Id'] = params.cmrRevisionId;
@@ -228,7 +272,7 @@ export class CMR {
 
     if (params.token) {
       if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
-      else headers['Echo-Token'] = params.token;
+      else headers['Edl-Token'] = params.token;
     }
 
     return headers;

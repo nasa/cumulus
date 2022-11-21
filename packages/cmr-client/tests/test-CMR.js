@@ -120,7 +120,7 @@ test('getWriteHeaders returns token for earthdata', (t) => {
   });
 
   const headers = cmrInstance.getWriteHeaders({ token: '12345' });
-  t.is(headers['Echo-Token'], '12345');
+  t.is(headers['Edl-Token'], '12345');
 });
 
 test('getWriteHeaders returns token for launchpad', (t) => {
@@ -148,7 +148,7 @@ test('getReadHeaders returns clientId and token for earthdata', (t) => {
 
   const headers = cmrInstance.getReadHeaders({ token: '12345' });
   t.is(headers['Client-Id'], 'test-client-id');
-  t.is(headers['Echo-Token'], '12345');
+  t.is(headers['Edl-Token'], '12345');
 });
 
 test('getReadHeaders returns clientId and token for launchpad', (t) => {
