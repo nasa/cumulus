@@ -95,13 +95,12 @@ const deleteGranuleAndFiles = async (params: {
       index: process.env.ES_INDEX,
       ignore: [404],
     });
-    return {
-      collection: dynamoGranule.collectionId,
-      deletedGranuleId: dynamoGranule.granuleId,
-      deletionTime: Date.now(),
-      deletedFiles: dynamoGranule.files,
-    };
-  } if (pgGranule && pgGranule.published) {
+    logger.debug(`Successfully deleted granule ${apiGranule.granuleId} from ES datastore`);
+    await deleteS3Files(apiGranule.files);
+    logger.debug(`Successfully removed S3 files ${JSON.stringify(apiGranule.files)}`);
+    return;
+  }
+  if (pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
   // Delete PG Granule, PG Files, S3 Files
@@ -125,24 +124,21 @@ const deleteGranuleAndFiles = async (params: {
       await granulePgModel.delete(trx, {
         cumulus_id: pgGranule.cumulus_id,
       });
-      await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
-      logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
-      await deleteS3Files(files);
-      return {
-        collection: granuleToPublishToSns.collectionId,
-        deletedGranuleId: pgGranule.granule_id,
-        deletionTime: Date.now(),
-        deletedFiles: files,
-      };
-    } catch (error) {
-      logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (dynamoGranule) {
-        await granuleModelClient.create(dynamoGranule);
-      }
-      throw error;
-    }
+      await deleteGranule({
+        esClient,
+        granuleId: granuleToPublishToSns.granuleId,
+        collectionId: granuleToPublishToSns.collectionId,
+        index: process.env.ES_INDEX,
+        ignore: [404],
+      });
+    });
+    await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
+    logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from ES/PostGreSQL datastores`);
+    await deleteS3Files(files);
+    logger.debug(`Successfully removed S3 files ${JSON.stringify(files)}`);
+  } catch (error) {
+    logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${JSON.stringify(error)}`);
+    throw error;
   }
 };
 

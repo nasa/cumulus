@@ -564,14 +564,6 @@ async function delByGranuleId(req, res) {
     }
   }
 
-  try {
-    dynamoGranule = await granuleModelClient.getRecord({ granuleId });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
   const deletionDetails = await deleteGranuleAndFiles({
     knex,
     apiGranule: esResult,

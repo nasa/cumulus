@@ -142,10 +142,10 @@ async function createGranuleAndFiles({
   );
 
   // create a new Postgres granule
-  const newPgGranule = await translateApiGranuleToPostgresGranule({
-    dynamoRecord: dynamoGranule,
-    knexOrTransaction: dbClient,
-  });
+  const newPgGranule = await translateApiGranuleToPostgresGranule(
+    newGranule,
+    dbClient
+  );
   const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
 
   // create Postgres files

@@ -57,11 +57,6 @@ const {
 const { parseException } = require('@cumulus/message/utils');
 const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/translate/granules');
 
-const {
-  RecordDoesNotExist,
-  CumulusMessageError,
-} = require('@cumulus/errors');
-
 const FileUtils = require('../FileUtils');
 const {
   getExecutionProcessingTimeInfo,
@@ -224,7 +219,7 @@ const _writePostgresGranuleViaTransaction = async ({
 * @param {Object} params.knex - Instance of a Knex client
 * @param {[Object]} params.writtenFiles - List of postgres file objects that should
 * not be removed by this method.
-* @returns {Promise<number>} The number of rows deleted
+* @returns {Promise<Object>} Knex .delete response
 */
 const _removeExcessFiles = async ({
   filePgModel = new FilePgModel(),
@@ -498,6 +493,23 @@ const _writeGranuleRecords = async (params) => {
       });
     }
     throw thrownError;
+  }
+};
+
+const _writePostgresFilesFromApiGranuleFiles = async ({
+  apiGranuleRecord,
+  granuleCumulusId,
+  knex,
+  snsEventType,
+}) => {
+  const { files, status } = apiGranuleRecord;
+  if (isStatusFinalState(status) && files.length > 0) {
+    await _writeGranuleFiles({
+      granuleCumulusId: granuleCumulusId,
+      granule: apiGranuleRecord,
+      knex,
+      snsEventType,
+    });
   }
 };
 
