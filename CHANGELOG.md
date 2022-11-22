@@ -32,7 +32,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
 - **CUMULUS-3045**
-  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
+  - Update GitHub FAQs:
+    - Add new and refreshed content for previous sections
+    - Add new dedicated Workflows section
 - **CUMULUS-3075**
   - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
     the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
