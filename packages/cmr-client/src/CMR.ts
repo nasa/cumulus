@@ -49,15 +49,15 @@ async function updateToken(
   const credentials = username + ':' + password;
   const authorization = 'Authorization: Basic' + Buffer.from(credentials, 'base64');
   let cmrenv;
-  if ( process.env.CMR_ENVIRONMENT === 'PROD' || process.env.CMR_ENVIRONMENT === 'OPS' ){
+  if (process.env.CMR_ENVIRONMENT === 'PROD' || process.env.CMR_ENVIRONMENT === 'OPS') {
     cmrenv = '';
-  } else if ( process.env.CMR_ENVIRONMENT === 'UAT' || process.env.CMR_ENVIRONMENT === 'SIT' ){
+  } else if (process.env.CMR_ENVIRONMENT === 'UAT' || process.env.CMR_ENVIRONMENT === 'SIT') {
     cmrenv = process.env.CMR_ENVIRONMENT;
   } else {
     throw new TypeError(`Invalid CMR environment: ${process.env.CMR_ENVIRONMENT}`);
   }
   try {
-    response = await got.post('https://' + cmrenv + '.urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials', {
+    response = await got.post('https://urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials', {
       json: {
         access_token: {
           header: authorization,
