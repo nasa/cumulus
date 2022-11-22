@@ -3,14 +3,28 @@
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
-## 📖 Documentation
+# 🚀 Getting Started
 
-- Documentation for the latest [released version](https://nasa.github.io/cumulus).
-- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
+Below is documentation to help get you started with your Cumulus development. To get a quick start on Cumulus go to our [Getting Started](https://nasa.github.io/cumulus/docs/cumulus-docs-readme) section.
 
-## More Information
-
-For more information about this project of more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
+- [Development](#🔨-development)
+    - [Documentation](#📖-documentation)
+    - [Installation](#installation)
+        - [Prerequisites](#prerequisites)
+        - [Install Lerna](#install-lerna)
+        - [Install Local Dependencies](#install-local-dependencies)
+    - [Running the Cumulus APIs Locally](#running-the-cumulus-apis-locally)
+    - [Tests](#📝-tests)
+        - [Unit Tests](#unit-tests)
+            -[LocalStack](#localstack)
+        - [Integration Tests](#integration-tests)
+        - [Running Tests via VS Code Debugger](#running-tests-via-vs-code-debugger)
+    - [Code Coverage And Quality](#🔦-code-coverage-and-quality)
+    - [Adding New Packages](#📦-adding-new-packages)
+    - [Cleaning Up All The Repos](#cleaning-up-all-the-repos)
+    - [Contribution](#contribution)
+    - [Release](#🛒-release)
+- [More Information](#more-information)
 
 # 🔨 Development
 
@@ -30,6 +44,11 @@ top-level `node_modules` directory.
 TL;DR - If you need to add a `devDependency` to a package, add it to the
 top-level [package.json](./package.json) file, not the `package.json` associated
 with an individual package.
+
+## 📖 Documentation
+
+- Documentation for the latest [released version](https://nasa.github.io/cumulus).
+- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
 
 ## Installation
 
@@ -60,18 +79,20 @@ We use Lerna to manage multiple Cumulus packages in the same repo. You need to i
 
 ### Install Local Dependencies
 
-We use npm for local package management
+We use npm for local package management. Run the following to get your dependencies set up.
 
     $ npm install
     $ npm run bootstrap
 
-Building All packages:
+Build all packages:
 
     $ npm run build
 
 Build and watch packages:
 
     $ npm run watch
+
+To add new packages go to [Adding New Packages](#📦-adding-new-packages) for guidance.
 
 ## Running the Cumulus APIs locally
 
@@ -148,6 +169,9 @@ Make sure to name the package as `@cumulus/package-name`.
 
     $ npm run clean
 
+---
+
+
 ## Contribution
 
 Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for more information.
@@ -155,3 +179,9 @@ Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for
 ## 🛒 Release
 
 To release a new version of cumulus [read this](docs/development/release.md).
+
+---
+
+## More Information
+
+For more information about this project of more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
