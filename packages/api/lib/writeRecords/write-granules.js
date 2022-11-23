@@ -611,7 +611,7 @@ const _writeGranule = async ({
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
   // An empty array of files will remove existing file records but a missing
   // `files` key will not.
-  if (isStatusFinalState(status) && ('files' in apiGranuleRecord)) {
+  if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord) {
     await _writeGranuleFiles({
       granuleCumulusId: pgGranule.cumulus_id,
       granule: apiGranuleRecord,
