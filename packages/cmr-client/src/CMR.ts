@@ -47,29 +47,37 @@ async function updateToken(
     }
   };
   const credentials = username + ':' + password;
-  const authorization = 'Authorization: Basic' + Buffer.from(credentials, 'base64');
+  let buff = Buffer.from(credentials).toString('base64');
   let cmrenv;
   if (process.env.CMR_ENVIRONMENT === 'PROD' || process.env.CMR_ENVIRONMENT === 'OPS') {
     cmrenv = '';
   } else if (process.env.CMR_ENVIRONMENT === 'UAT' || process.env.CMR_ENVIRONMENT === 'SIT') {
-    cmrenv = process.env.CMR_ENVIRONMENT;
+    cmrenv = process.env.CMR_ENVIRONMENT + '.';
   } else {
     throw new TypeError(`Invalid CMR environment: ${process.env.CMR_ENVIRONMENT}`);
   }
   try {
-    response = await got.post('https://urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials', {
-      json: {
-        access_token: {
-          header: authorization,
-        },
-      },
-      responseType: 'json',
-    });
+    response = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials`,
+    {
+      responseType: "json",
+      headers: {
+        "Authorization": "Basic " + buff,
+      }
+    }).json();
   } catch (error) {
-    if (get(error, 'response.body.errors')) {
-      throw new Error('Authentication error: Invalid Credentials, Authentication with Earthdata Login failed');
+    logDetails.credentials = credentials;
+    log.error(error, logDetails);
+    const statusCode = get(error, 'response.statusCode', error.code);
+    const statusMessage = get(error, 'response.statusMessage', error.message);
+    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage} haha`;
+
+    const responseError = get(error, 'response.body.errors');
+    if (responseError) {
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
     }
-    throw error;
+
+    log.error(errorMessage);
+    throw new Error(errorMessage);
   }
 
   let response2: {
@@ -83,19 +91,27 @@ async function updateToken(
     }
   };
   try {
-    response2 = await got.get('https://' + cmrenv + '.urs.earthdata.nasa.gov/api/users/tokens', {
-      json: {
-        access_token: {
-          header: authorization,
-        },
-      },
-      responseType: 'json',
-    });
+    response2 = await got.get(`https://${cmrenv}urs.earthdata.nasa.gov/api/users/tokens`, 
+    {
+      responseType: "json",
+      headers: {
+        "Authorization": "Basic " + buff,
+      }
+    }).json();
   } catch (error) {
-    if (get(error, 'response2.body.errors')) {
-      throw new Error('Authentication error: Invalid User Credentials');
+    logDetails.credentials = credentials;
+    log.error(error, logDetails);
+    const statusCode = get(error, 'response.statusCode', error.code);
+    const statusMessage = get(error, 'response.statusMessage', error.message);
+    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage} hehe`;
+
+    const responseError = get(error, 'response.body.errors');
+    if (responseError) {
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
     }
-    throw error;
+
+    log.error(errorMessage);
+    throw new Error(errorMessage);
   }
   if (response2.body.access_token) {
     return response2.body.access_token.id;
@@ -107,21 +123,27 @@ async function updateToken(
   };
   const tok = response.body.access_token ? response.body.access_token.id : '';
   try {
-    response3 = await got.post('https://' + cmrenv + '.urs.earthdata.nasa.gov/oauth/tokens/user?client_id=' +
-      Buffer.from(clientId, 'base64') + '"&' + tok,
+    response3 = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/oauth/tokens/user?client_id=${Buffer.from(clientId).toString('base64')}&${tok}`,
     {
-      json: {
-        uid: {
-          header: authorization,
-        },
-      },
-      responseType: 'json',
-    });
+      responseType: "json",
+      headers: {
+        "Authorization": "Basic " + buff,
+      }
+    }).json();
   } catch (error) {
-    if (get(error, 'response3.body.errors')) {
-      throw new Error('Error: Invalid request');
+    logDetails.credentials = credentials;
+    log.error(error, logDetails);
+    const statusCode = get(error, 'response.statusCode', error.code);
+    const statusMessage = get(error, 'response.statusMessage', error.message);
+    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage} hoho`;
+
+    const responseError = get(error, 'response.body.errors');
+    if (responseError) {
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
     }
-    throw error;
+
+    log.error(errorMessage);
+    throw new Error(errorMessage);
   }
   if (!response.body.access_token || !response3.body.uid) {
     throw new Error('Error: Invalid request');
@@ -282,7 +304,6 @@ export class CMR {
       if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
       else headers['Edl-Token'] = params.token;
     }
-
     return headers;
   }
 
