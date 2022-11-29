@@ -48,7 +48,7 @@ async function updateToken(
     }
   };
   const credentials = username + ':' + password;
-  let buff = Buffer.from(credentials).toString('base64');
+  const buff = Buffer.from(credentials).toString('base64');
   let cmrenv;
   if (process.env.CMR_ENVIRONMENT === 'PROD' || process.env.CMR_ENVIRONMENT === 'OPS') {
     cmrenv = '';
@@ -59,12 +59,12 @@ async function updateToken(
   }
   try {
     response = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials`,
-    {
-      responseType: "json",
-      headers: {
-        "Authorization": "Basic " + buff,
-      }
-    }).json();
+      {
+        responseType: 'json',
+        headers: {
+          Authorization: 'Basic ' + buff,
+        },
+      }).json();
   } catch (error) {
     logDetails.credentials = credentials;
     log.error(error, logDetails);
@@ -93,13 +93,13 @@ async function updateToken(
     }
   };
   try {
-    response2 = await got.get(`https://${cmrenv}urs.earthdata.nasa.gov/api/users/tokens`, 
-    {
-      responseType: "json",
-      headers: {
-        "Authorization": "Basic " + buff,
-      }
-    }).json();
+    response2 = await got.get(`https://${cmrenv}urs.earthdata.nasa.gov/api/users/tokens`,
+      {
+        responseType: 'json',
+        headers: {
+          Authorization: 'Basic ' + buff,
+        },
+      }).json();
   } catch (error) {
     logDetails.credentials = credentials;
     log.error(error, logDetails);
@@ -125,15 +125,15 @@ async function updateToken(
   };
   const tok = response.body.access_token ? response.body.access_token.id : '';
 
-  //response3: validate the token returned from authentication and return since the user does not have a token already
+  //response3: validate the token from authentication and return since the user doesn't have a token
   try {
     response3 = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/oauth/tokens/user?client_id=${Buffer.from(clientId).toString('base64')}&${tok}`,
-    {
-      responseType: "json",
-      headers: {
-        "Authorization": "Basic " + buff,
-      }
-    }).json();
+      {
+        responseType: 'json',
+        headers: {
+          Authorization: 'Basic ' + buff,
+        },
+      }).json();
   } catch (error) {
     logDetails.credentials = credentials;
     log.error(error, logDetails);
