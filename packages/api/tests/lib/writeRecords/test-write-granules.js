@@ -76,17 +76,6 @@ const cumulusMessageOmitList = [
   'product_volume',
 ];
 
-// FUTURE:
-// 1. 'created_at' is updated during PUT/PATCH
-// 2. 'published' defaults to false if not provided in the payload
-const apiOmitList = [
-  'cumulus_id',
-  'updated_at',
-  'created_at',
-  'published',
-  'timestamp',
-];
-
 /**
  * Helper function for updating an existing granule with a static payload and validating
  *
@@ -185,7 +174,6 @@ test.before(async (t) => {
   };
 
   t.context.pdrPgModel = new PdrPgModel();
-  t.context.granuleModel = granuleModel;
   t.context.collectionPgModel = new CollectionPgModel();
   t.context.executionPgModel = new ExecutionPgModel();
   t.context.granulePgModel = new GranulePgModel();

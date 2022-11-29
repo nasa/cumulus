@@ -581,7 +581,21 @@ test.serial('GET returns the expected existing granule if a collectionId is prov
   const collectionId = constructCollectionId(testPgCollection.name, testPgCollection.version);
 
   const response = await request(app)
-    .get(`/granules/${collectionId}/${t.context.fakePGGranules[2].granule_id}`)
+    .get(`/granules/${collectionId}/${t.context.fakePGGranules[2].granule_id}`);
+
+  const pgGranule = await granulePgModel.get(knex, {
+    granule_id: fakePGGranules[1].granule_id,
+    collection_cumulus_id: fakePGGranules[1].collection_cumulus_id,
+  });
+
+  const expectedGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(response.body, expectedGranule);
+});
+
 test.serial('GET returns a granule that has no files with the correct empty array files field', async (t) => {
   const {
     knex,
@@ -604,7 +618,8 @@ test.serial('GET returns a granule that has no files with the correct empty arra
     knexOrTransaction: knex,
   });
 
-  t.deepEqual(response.body, expectedGranule);
+  t.deepEqual(response.body.files, []);
+  t.deepEqual(expectedGranule.files, []);
 });
 
 test.serial('GET returns a 400 response if the collectionId is in the wrong format', async (t) => {
@@ -629,8 +644,6 @@ test.serial('GET returns a 404 response if the granule\'s collection is not foun
   t.is(response.status, 404);
   const { message } = response.body;
   t.is(message, `No collection found for granuleId ${t.context.fakePGGranules[2].granule_id} with collectionId unknown___unknown`);
-  t.deepEqual(response.body.files, []);
-  t.deepEqual(expectedGranule.files, []);
 });
 
 test.serial('GET returns a 404 response if the granule is not found', async (t) => {
@@ -1221,8 +1234,6 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     esClient: t.context.esClient,
   });
 
-  const granuleId = newDynamoGranule.granuleId;
-
   const response = await request(app)
     .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
     .set('Accept', 'application/json')
@@ -1314,10 +1325,10 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   });
 
   const timeOfResponse = Date.now();
-  const granuleId = newDynamoGranule.granuleId;
+  const granuleId = apiGranule.granuleId;
 
   const response = await request(app)
-    .delete(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
+    .delete(`/granules/${apiGranule.collectionId}/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -1325,8 +1336,6 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   t.is(response.status, 200);
   const { detail } = response.body;
   t.is(detail, 'Record deleted');
-
-  const granuleId = apiGranule.granuleId;
 
   // granule have been deleted from Postgres and Dynamo
   t.false(await granulePgModel.exists(

@@ -496,23 +496,6 @@ const _writeGranuleRecords = async (params) => {
   }
 };
 
-const _writePostgresFilesFromApiGranuleFiles = async ({
-  apiGranuleRecord,
-  granuleCumulusId,
-  knex,
-  snsEventType,
-}) => {
-  const { files, status } = apiGranuleRecord;
-  if (isStatusFinalState(status) && files.length > 0) {
-    await _writeGranuleFiles({
-      granuleCumulusId: granuleCumulusId,
-      granule: apiGranuleRecord,
-      knex,
-      snsEventType,
-    });
-  }
-};
-
 /**
  * Write a granule record to PostgreSQL and publish SNS topic updates
  *
@@ -556,8 +539,6 @@ const _writeGranule = async ({
       granuleCumulusId: pgGranule.cumulus_id,
       granule: apiGranuleRecord,
       knex,
-      snsEventType,
-      granuleModel: new Granule(),
     });
   }
 
@@ -801,12 +782,6 @@ const writeGranulesFromMessage = async ({
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
     async (granule) => {
-      // FUTURE: null files are currently not supported in update payloads
-      // RDS Phase 3 should revise logic to accept an explicit null value
-      if (granule.files === null) {
-        throw new CumulusMessageError('granule.files must not be null');
-      }
-
       // This is necessary to set properties like
       // `key`, which is required for the PostgreSQL schema. And
       // `size` which is used to calculate the granule product

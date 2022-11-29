@@ -260,7 +260,7 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
     cumulus_id: pgGranule.cumulus_id,
   });
 
-  const details = await deleteGranuleAndFiles({
+  await deleteGranuleAndFiles({
     knex: t.context.knex,
     pgGranule: newPgGranule,
     esClient: t.context.esClient,

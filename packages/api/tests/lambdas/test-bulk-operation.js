@@ -120,12 +120,6 @@ const setUpExistingDatabaseRecords = async (t) => {
     granule_id: granule.granuleId,
     collection_cumulus_id: t.context.collectionCumulusId,
   }));
-  const translatedGranules = await Promise.all(t.context.granules.map(async (granule) =>
-    await translateApiGranuleToPostgresGranule({
-      dynamoRecord: granule,
-      knexOrTransaction: t.context.knex,
-    })));
-
   const pgGranules = await granulePgModel.create(
     t.context.knex,
     generatedPgGranules
@@ -715,15 +709,15 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
   t.true(esSearchStub.called);
   t.is(reingestStub.callCount, 2);
 
-  reingestStub.args.forEach((callArgs) => {
+  reingestStub.args.forEach(async (callArgs) => {
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
     t.deepEqual(matchingGranule, callArgs[0].apiGranule);
-    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const pgGranule = await getUniqueGranuleByGranuleId(t.context.knex, matchingGranule.granuleId);
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
-      knexOrTransaction: knex,
+      knexOrTransaction: t.context.knex,
     });
     t.deepEqual(translatedGranule, callArgs[0].granule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
