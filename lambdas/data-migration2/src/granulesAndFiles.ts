@@ -38,6 +38,9 @@ import {
   GranulesMigrationResult,
   MigrationResult,
 } from '@cumulus/types/migration';
+
+import { ApiGranuleRecord } from '@cumulus/types/api/granules';
+
 import { closeErrorWriteStreams, createErrorFileWriteStream, storeErrors } from './storeErrors';
 
 import { initialMigrationResult } from './common';
@@ -161,15 +164,15 @@ export const migrateGranuleRecord = async (
   }
 
   const granule = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
-    dynamoRecord: record,
+    dynamoRecord: record as ApiGranuleRecord,
     knexOrTransaction: trx,
   });
 
-  const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
-    trx,
+  const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: trx,
     granule,
-    executionCumulusId
-  );
+    executionCumulusId,
+  });
 
   if (!pgGranuleRecord) {
     throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);
