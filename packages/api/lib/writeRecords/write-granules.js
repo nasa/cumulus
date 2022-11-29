@@ -65,7 +65,6 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const {
   CumulusMessageError,
-  RecordDoesNotExist,
 } = require('@cumulus/errors');
 
 const FileUtils = require('../FileUtils');
@@ -552,7 +551,6 @@ const _writeGranule = async ({
     apiGranuleRecord,
     esClient,
     executionCumulusId,
-    granuleModel,
     granulePgModel,
     knex,
     postgresGranuleRecord,
@@ -569,7 +567,6 @@ const _writeGranule = async ({
       granule: apiGranuleRecord,
       knex,
       snsEventType,
-      granuleModel: new Granule(),
     });
   }
 
@@ -611,7 +608,6 @@ const writeGranuleRecordAndPublishSns = async ({
     apiGranuleRecord: omit(apiGranuleRecord, 'files'),
     esClient,
     executionCumulusId,
-    granuleModel,
     granulePgModel,
     knex,
     postgresGranuleRecord,

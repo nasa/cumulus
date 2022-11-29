@@ -714,10 +714,10 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
-    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const pgGranule = await getUniqueGranuleByGranuleId(t.context.knex, matchingGranule.granuleId);
     const translatedGranule = await translatePostgresGranuleToApiGranule({
       granulePgRecord: pgGranule,
-      knexOrTransaction: knex,
+      knexOrTransaction: t.context.knex,
     });
     t.deepEqual(translatedGranule, callArgs[0].apiGranule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);

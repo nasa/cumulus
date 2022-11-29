@@ -221,19 +221,12 @@ test.before(async (t) => {
   t.context.collectionName = 'fakeCollection';
   t.context.collectionVersion = 'v1';
 
-  t.context.testCollection = fakeCollectionFactory({
-    name: t.context.collectionName,
-    version: t.context.collectionVersion,
-    duplicateHandling: 'error',
-  });
+  const collectionName2 = 'fakeCollection2';
+  const collectionVersion2 = 'v2';
+
   t.context.collectionId = constructCollectionId(
     t.context.collectionName,
     t.context.collectionVersion
-  );
-
-  t.context.collectionId2 = constructCollectionId(
-    collectionName2,
-    collectionVersion2
   );
 
   t.context.testPgCollection = fakeCollectionRecordFactory({
@@ -249,7 +242,7 @@ test.before(async (t) => {
     t.context.knex,
     t.context.testPgCollection
   );
-  const [pgCollection2] = await collectionPgModel.create(
+  const [pgCollection2] = await t.context.collectionPgModel.create(
     t.context.knex,
     t.context.testPgCollection2
   );
@@ -338,7 +331,7 @@ test.beforeEach(async (t) => {
         granulePgModel: t.context.granulePgModel,
       }))
   );
-  t.context.insertedPgGranules = insertedPgGranules.flat();
+  t.context.insertedPgGranules = t.context.fakePGGranuleRecords.flat();
   const insertedApiGranuleTranslations = await Promise.all(
     t.context.insertedPgGranules.map((granule) =>
       translatePostgresGranuleToApiGranule({
@@ -1261,7 +1254,7 @@ test.serial('DELETE deleting an existing unpublished granule succeeds', async (t
     deletedGranuleId: granuleId,
   });
   t.truthy(responseBody.deletionTime);
-  t.is(responseBody.deletedFiles.length, newDynamoGranule.files.length);
+  t.is(responseBody.deletedFiles.length, apiGranule.files.length);
 
   // granule has been deleted from Postgres
   t.false(await granulePgModel.exists(
@@ -1354,7 +1347,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   t.like(responseBody, {
     detail: 'Record deleted',
     collection: apiGranule.collectionId,
-    deletedGranuleId: granuleId,
+    deletedGranuleId: apiGranule.granuleId,
   });
   t.truthy(responseBody.deletionTime);
   t.is(responseBody.deletedFiles.length, apiGranule.files.length);
@@ -1363,7 +1356,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
   t.false(await granulePgModel.exists(
     t.context.knex,
     {
-      granule_id: granuleId,
+      granule_id: apiGranule.granuleId,
       collection_cumulus_id: newPgGranule.collection_cumulus_id,
     }
   ));
@@ -3169,10 +3162,10 @@ test.serial('PUT will set completed status to queued', async (t) => {
     ${granuleId}, Collection Id: ${t.context.collectionId}`,
   });
   const fetchedRecord = await granulePgModel.get(
-    knex,
+    t.context.knex,
     {
       granule_id: granuleId,
-      collection_cumulus_id: collectionCumulusId,
+      collection_cumulus_id: t.context.collectionCumulusId,
     }
   );
 
@@ -3352,10 +3345,6 @@ test.serial('associateExecution (POST) associates an execution with a granule cr
     .send(requestPayload)
     .expect(200);
 
-  const fetchedDynamoRecord = await granuleModel.get({
-    granuleId: newGranule.granuleId,
-  });
-
   const fetchedPostgresRecord = await granulePgModel.get(
     t.context.knex,
     {
@@ -3363,6 +3352,11 @@ test.serial('associateExecution (POST) associates an execution with a granule cr
       collection_cumulus_id: t.context.collectionCumulusId,
     }
   );
+
+  const apiRecord = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: t.context.knex,
+    granulePgRecord: fetchedPostgresRecord,
+  });
 
   // get execution for this record.
   const granuleCumulusId = await granulePgModel.getRecordCumulusId(
@@ -3389,10 +3383,7 @@ test.serial('associateExecution (POST) associates an execution with a granule cr
     message: `Successfully associated execution ${requestPayload.executionArn} with granule granuleId ${requestPayload.granuleId} collectionId ${requestPayload.collectionId}`,
   });
 
-  t.is(fetchedDynamoRecord.execution, t.context.executionUrl);
-  t.is(fetchedDynamoRecord.createdAt, fetchedPostgresRecord.created_at.getTime());
-  t.is(fetchedDynamoRecord.updatedAt, fetchedPostgresRecord.updated_at.getTime());
-  t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());
+  t.is(apiRecord.execution, t.context.executionUrl);
   t.is(executionPgRecord[0].arn, requestPayload.executionArn);
 });
 

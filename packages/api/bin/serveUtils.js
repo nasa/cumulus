@@ -97,7 +97,7 @@ async function addGranules(granules) {
 
       await upsertGranuleWithExecutionJoinRecord({
         knexTransaction: knex,
-        granule,
+        dbRecord,
         executionCumulusId,
       });
     })
