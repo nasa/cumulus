@@ -137,7 +137,7 @@ function getSortedBucketList(bucketMap, bucketGroup) {
 
   // bucketMap[bucket_group] SHOULD be a dict, but list actually works too.
   if (Array.isArray(bucketMap[bucketGroup])) {
-    return bucketMap[bucketGroup].sort((a1, a2) => a2.split('/').length - a1.split('/').length);
+    return bucketMap[bucketGroup];
   }
   if (bucketMap[bucketGroup] instanceof Object) {
     return Object.keys(bucketMap[bucketGroup]).sort((a1, a2) => a2.split('/').length - a1.split('/').length);
