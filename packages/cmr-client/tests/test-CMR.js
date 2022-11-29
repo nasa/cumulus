@@ -3,14 +3,13 @@
 const test = require('ava');
 const nock = require('nock');
 const some = require('lodash/some');
+
 const awsServices = require('@cumulus/aws-client/services');
 const { CMRInternalError } = require('@cumulus/errors');
-
 const { CMR } = require('../CMR');
 
 test.before(() => {
-  nock.disableNetConnect();
-  nock.enableNetConnect(/(localhost|127.0.0.1)/);
+  nock.enableNetConnect();
 });
 
 test.afterEach.always(() => {
@@ -58,7 +57,7 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
 
   const cmrSearch = new CMR({
     provider: 'CUMULUS',
-    clientId: 'clientId',
+    clientId: 'clientID',
     username: 'username',
     password: 'password',
   });
@@ -225,7 +224,6 @@ test('getCmrPassword returns the set password if no secret exists', async (t) =>
   t.is(await cmr.getCmrPassword(), 'test-password');
 });
 
-/*
 test('getCmrPassword returns password from AWS secret when set', async (t) => {
   // Store the CMR password
   const secretName = 'secret-name';
@@ -244,4 +242,4 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
       ForceDeleteWithoutRecovery: true,
     }).promise();
   }
-});*/
+});

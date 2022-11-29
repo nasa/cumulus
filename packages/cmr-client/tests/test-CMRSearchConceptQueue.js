@@ -8,6 +8,7 @@ const {
 } = require('../CMRSearchConceptQueue');
 
 test.before(() => {
+  nock.enableNetConnect();
   nock.cleanAll();
 });
 

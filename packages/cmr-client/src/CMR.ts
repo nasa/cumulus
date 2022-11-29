@@ -32,6 +32,7 @@ async function updateToken(
   username: string,
   password: string
 ): Promise<string> {
+  // response: authenticate against EDL in order to use API to get token or validate token
   let response:
   {
     body: {
@@ -69,7 +70,7 @@ async function updateToken(
     log.error(error, logDetails);
     const statusCode = get(error, 'response.statusCode', error.code);
     const statusMessage = get(error, 'response.statusMessage', error.message);
-    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage} haha`;
+    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
 
     const responseError = get(error, 'response.body.errors');
     if (responseError) {
@@ -80,6 +81,7 @@ async function updateToken(
     throw new Error(errorMessage);
   }
 
+  // response2: get a token from the Earthdata login endpoint using credentials
   let response2: {
     body: {
       access_token?: {
@@ -103,7 +105,7 @@ async function updateToken(
     log.error(error, logDetails);
     const statusCode = get(error, 'response.statusCode', error.code);
     const statusMessage = get(error, 'response.statusMessage', error.message);
-    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage} hehe`;
+    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
 
     const responseError = get(error, 'response.body.errors');
     if (responseError) {
@@ -122,6 +124,8 @@ async function updateToken(
     }
   };
   const tok = response.body.access_token ? response.body.access_token.id : '';
+
+  //response3: validate the token returned from authentication and return since the user does not have a token already
   try {
     response3 = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/oauth/tokens/user?client_id=${Buffer.from(clientId).toString('base64')}&${tok}`,
     {
@@ -135,7 +139,7 @@ async function updateToken(
     log.error(error, logDetails);
     const statusCode = get(error, 'response.statusCode', error.code);
     const statusMessage = get(error, 'response.statusMessage', error.message);
-    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage} hoho`;
+    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
 
     const responseError = get(error, 'response.body.errors');
     if (responseError) {
