@@ -20,25 +20,51 @@ export interface MessageGranule {
   createdAt?: number
 }
 
-type OptionalGranuleTemporalInfo = GranuleTemporalInfo | {};
-type OptionalGranuleProcessingInfo = import('./executions').ExecutionProcessingTimes | {};
+export type NullablePartialType<T> = {
+  [P in keyof T]?: T[P] | null;
+};
+
+type PartialGranuleTemporalInfo = NullablePartialType<GranuleTemporalInfo>;
+type ParitalGranuleProcessingInfo = NullablePartialType<import('./executions').ExecutionProcessingTimes>;
+
+export type ApiGranuleRecord = {
+  granuleId: string
+  collectionId: string
+  status: GranuleStatus
+  updatedAt: number
+  createdAt: number
+  cmrLink?: string
+  duration?: number
+  error?: Object
+  execution?: string
+  files?: Omit<import('./files').ApiFile, 'granuleId'>[]
+  pdrName?: string
+  productVolume?: string
+  provider?: string
+  published?: boolean
+  queryFields?: unknown
+  timestamp?: number
+  timeToArchive?: number
+  timeToPreprocess?: number
+} & PartialGranuleTemporalInfo & ParitalGranuleProcessingInfo;
 
 export type ApiGranule = {
   granuleId: string
   collectionId: string
-  status: GranuleStatus
-  execution?: string
-  cmrLink?: string
-  published?: boolean
-  pdrName?: string
-  provider?: string
-  error?: Object
-  createdAt: number
-  timestamp?: number
-  updatedAt: number
-  duration?: number
-  productVolume?: string
-  timeToPreprocess?: number
-  timeToArchive?: number
-  files?: Omit<import('./files').ApiFile, 'granuleId'>[]
-} & OptionalGranuleTemporalInfo & OptionalGranuleProcessingInfo;
+  status?: GranuleStatus
+  updatedAt?: number | null
+  cmrLink?: string | null
+  createdAt?: number | null
+  duration?: number | null
+  error?: Object | null
+  execution?: string | null
+  files?: Omit<import('./files').ApiFile, 'granuleId'>[] | null
+  pdrName?: string | null
+  productVolume?: string | null
+  provider?: string | null
+  published?: boolean | null
+  queryFields?: unknown | null
+  timestamp?: number | null
+  timeToArchive?: number | null
+  timeToPreprocess?: number | null
+} & PartialGranuleTemporalInfo & ParitalGranuleProcessingInfo;

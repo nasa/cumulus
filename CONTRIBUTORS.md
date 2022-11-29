@@ -13,6 +13,7 @@
 * Dan Pilone
 * Danielle Peters
 * Drew Bollinger
+* Filip Graniczny
 * Gary Sieling
 * Jacob Campbell
 * James Norton
@@ -29,6 +30,7 @@
 * Mark Schwab
 * Matt Savoie
 * Menno Van Diermen
+* Nagavenkata Nageswaran
 * Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn

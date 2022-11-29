@@ -14,7 +14,7 @@ import {
   ProviderPgModel,
 } from '@cumulus/db';
 import { DeletePublishedGranule } from '@cumulus/errors';
-import { ApiGranule, ApiFile } from '@cumulus/types';
+import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import Logger from '@cumulus/logger';
 
 const { deleteGranule } = require('@cumulus/es-client/indexer');
@@ -55,10 +55,12 @@ const deleteS3Files = async (
  * @param {FilePgModel} params.filePgModel - File Postgres model
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
+ * @param {Object} params.esClient - Elasticsearch client
+ * @returns {Object} - Granule Deletion details
  */
 const deleteGranuleAndFiles = async (params: {
   knex: Knex,
-  apiGranule?: ApiGranule,
+  apiGranule?: ApiGranuleRecord,
   pgGranule: PostgresGranuleRecord,
   filePgModel: FilePgModel,
   granulePgModel: GranulePgModel,
@@ -97,7 +99,7 @@ const deleteGranuleAndFiles = async (params: {
     logger.debug(`Successfully removed S3 files ${JSON.stringify(apiGranule.files)}`);
     return;
   }
-  if (pgGranule.published) {
+  if (pgGranule && pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
   // Delete PG Granule, PG Files, S3 Files

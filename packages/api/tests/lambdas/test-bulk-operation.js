@@ -665,7 +665,7 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests list of granules wit
     t.true(t.context.executionArns.includes(callArgs[0].apiGranule.execution));
     delete matchingGranule.execution;
     delete callArgs[0].apiGranule.execution;
-
+    matchingGranule.files = [];
     const omitList = ['dataType', 'version'];
 
     t.deepEqual(omit(matchingGranule, omitList), callArgs[0].apiGranule);
@@ -710,11 +710,16 @@ test.serial('bulk operation BULK_GRANULE_REINGEST reingests granules returned by
   t.true(esSearchStub.called);
   t.is(reingestStub.callCount, 2);
 
-  reingestStub.args.forEach((callArgs) => {
+  reingestStub.args.forEach(async (callArgs) => {
     const matchingGranule = t.context.granules.find((granule) =>
       granule.granuleId === callArgs[0].apiGranule.granuleId);
 
-    t.deepEqual(matchingGranule, callArgs[0].apiGranule);
+    const pgGranule = await getUniqueGranuleByGranuleId(knex, matchingGranule.granuleId);
+    const translatedGranule = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: pgGranule,
+      knexOrTransaction: knex,
+    });
+    t.deepEqual(translatedGranule, callArgs[0].apiGranule);
     t.is(callArgs[0].asyncOperationId, process.env.asyncOperationId);
   });
 });

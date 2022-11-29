@@ -1,8 +1,14 @@
 'use strict';
 
 const AggregateError = require('aggregate-error');
+const isArray = require('lodash/isArray');
 const isEmpty = require('lodash/isEmpty');
+const isNil = require('lodash/isNil');
 const omit = require('lodash/omit');
+const isNull = require('lodash/isNull');
+
+const isUndefined = require('lodash/isUndefined');
+const omitBy = require('lodash/omitBy');
 const pMap = require('p-map');
 
 const { s3 } = require('@cumulus/aws-client/services');
@@ -13,9 +19,10 @@ const {
   createRejectableTransaction,
   FilePgModel,
   GranulePgModel,
+  getGranulesByGranuleId,
   translateApiFiletoPostgresFile,
-  translateApiGranuleToPostgresGranule,
   upsertGranuleWithExecutionJoinRecord,
+  translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
 } = require('@cumulus/db');
 const {
   upsertGranule,
@@ -55,6 +62,11 @@ const {
 } = require('@cumulus/message/workflows');
 const { parseException } = require('@cumulus/message/utils');
 const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/translate/granules');
+
+const {
+  CumulusMessageError,
+  RecordDoesNotExist,
+} = require('@cumulus/errors');
 
 const FileUtils = require('../FileUtils');
 const {
@@ -166,11 +178,14 @@ const getGranuleFromQueryResultOrLookup = async ({
  * Write a granule to PostgreSQL
  *
  * @param {Object} params
- * @param {Object} params.granuleRecord - An postgres granule records
+ * @param {Object} params.granuleRecord     - A postgres granule record
  * @param {string} params.executionCumulusId
  *   Cumulus ID for execution referenced in workflow message, if any
- * @param {Knex.transaction} params.trx - Transaction to interact with PostgreSQL database
- * @param {Object} params.granulePgModel - postgreSQL granule model
+ * @param {Knex.transaction} params.trx     - Transaction to interact with PostgreSQL database
+ * @param {Object} params.granulePgModel    - postgreSQL granule model
+ * @param {boolean} params.writeConstraints - Boolean flag to set if createdAt/execution write
+ *                                            constraints should restrict write behavior in the
+ *                                            database via upsertGranuleWithExecutionJoinRecord
  *
  * @returns {Promise<number>} - Cumulus ID from PostgreSQL
  * @throws
@@ -180,13 +195,15 @@ const _writePostgresGranuleViaTransaction = async ({
   executionCumulusId,
   trx,
   granulePgModel,
+  writeConstraints = true,
 }) => {
-  const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord(
-    trx,
-    granuleRecord,
+  const upsertQueryResult = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: trx,
+    granule: granuleRecord,
     executionCumulusId,
-    granulePgModel
-  );
+    granulePgModel,
+    writeConstraints,
+  });
   // Ensure that we get a granule for the files even if the
   // upsert query returned an empty result
   const pgGranule = await getGranuleFromQueryResultOrLookup({
@@ -218,7 +235,7 @@ const _writePostgresGranuleViaTransaction = async ({
 * @param {Object} params.knex - Instance of a Knex client
 * @param {[Object]} params.writtenFiles - List of postgres file objects that should
 * not be removed by this method.
-* @returns {Promise<Object>} Knex .delete response
+* @returns {Promise<number>} The number of rows deleted
 */
 const _removeExcessFiles = async ({
   filePgModel = new FilePgModel(),
@@ -226,9 +243,6 @@ const _removeExcessFiles = async ({
   knex,
   writtenFiles,
 }) => {
-  if (writtenFiles.length === 0) {
-    throw new Error('_removeExcessFiles called with no written files');
-  }
   const excludeCumulusIds = writtenFiles.map((file) => file.cumulus_id);
   return await filePgModel.deleteExcluding({
     knexOrTransaction: knex,
@@ -378,9 +392,9 @@ const updateGranuleStatusToFailed = async (params) => {
  * the database, and update granule status if file writes fail
  *
  * @param {Object} params
- * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {string} params.granule - Granule from the payload
+ * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @returns {undefined}
  */
 const _writeGranuleFiles = async ({
@@ -389,8 +403,10 @@ const _writeGranuleFiles = async ({
   knex,
 }) => {
   let fileRecords = [];
-  const { files, granuleId, status, error: workflowError } = granule;
-  if (isStatusFinalState(status)) {
+  const { files, granuleId, error: workflowError } = granule;
+  // Only try to generate file records if there are valid files.
+  // If `files` is an empty array, write the empty array
+  if (isArray(files) && files.length > 0) {
     fileRecords = _generateFilePgRecords({
       files,
       granuleCumulusId,
@@ -431,31 +447,6 @@ const _writeGranuleFiles = async ({
   }
 };
 
-/**
- * Transform granule files to latest file API structure
- *
- * @param {Object} params
- * @param {Object} params.granule - An API granule object
- * @param {Object} params.provider - An API provider object
- *
-* @returns {Promise<Array>} - A list of file objects once resolved
- */
-const _generateFilesFromGranule = async ({
-  granule,
-  provider,
-}) => {
-  const { files = [] } = granule;
-  // This is necessary to set properties like
-  // `key`, which is required for the PostgreSQL schema. And
-  // `size` which is used to calculate the granule product
-  // volume
-  return await FileUtils.buildDatabaseFiles({
-    s3: s3(),
-    providerURL: buildURL(provider),
-    files,
-  });
-};
-
 const _writeGranuleRecords = async (params) => {
   const {
     postgresGranuleRecord,
@@ -464,8 +455,10 @@ const _writeGranuleRecords = async (params) => {
     esClient = await Search.es(),
     executionCumulusId,
     granulePgModel,
+    writeConstraints = true,
   } = params;
   let pgGranule;
+
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   try {
     await createRejectableTransaction(knex, async (trx) => {
@@ -476,12 +469,21 @@ const _writeGranuleRecords = async (params) => {
         executionCumulusId,
         trx,
         granulePgModel,
+        writeConstraints,
       });
+
+      // Future: refactor to cover the entire object?
+      // Ensure PG default createdAt value is propagated to DynamoDB/ES
+      // in the case where _writeGranule is called without createdAt set
+      if (!apiGranuleRecord.createdAt) {
+        apiGranuleRecord.createdAt = pgGranule.created_at.getTime();
+      }
+
       await upsertGranule({
         esClient,
         updates: apiGranuleRecord,
         index: process.env.ES_INDEX,
-      });
+      }, writeConstraints);
     });
     log.info(
       `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.`,
@@ -521,23 +523,6 @@ const _writeGranuleRecords = async (params) => {
   }
 };
 
-const _writePostgresFilesFromApiGranuleFiles = async ({
-  apiGranuleRecord,
-  granuleCumulusId,
-  knex,
-  snsEventType,
-}) => {
-  const { files, status } = apiGranuleRecord;
-  if (isStatusFinalState(status) && files.length > 0) {
-    await _writeGranuleFiles({
-      granuleCumulusId: granuleCumulusId,
-      granule: apiGranuleRecord,
-      knex,
-      snsEventType,
-    });
-  }
-};
-
 /**
  * Write a granule record to PostgreSQL and publish SNS topic updates
  *
@@ -560,24 +545,33 @@ const _writeGranule = async ({
   granulePgModel,
   knex,
   snsEventType,
+  writeConstraints = true,
 }) => {
+  const { status } = apiGranuleRecord;
   const pgGranule = await _writeGranuleRecords({
-    postgresGranuleRecord,
     apiGranuleRecord,
-    knex,
     esClient,
     executionCumulusId,
+    granuleModel,
     granulePgModel,
+    knex,
+    postgresGranuleRecord,
+    writeConstraints,
   });
 
-  // Reminder - this will only update the postgres files object
-  // if the granule is in a complete state
-  await _writePostgresFilesFromApiGranuleFiles({
-    apiGranuleRecord,
-    granuleCumulusId: pgGranule.cumulus_id,
-    knex,
-    snsEventType,
-  });
+  // Files are only written to Postgres if the granule is in a "final" state
+  // (e.g. "status: completed") and there is a valid `files` key in the granule.
+  // An empty array of files will remove existing file records but a missing
+  // `files` key will not.
+  if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord) {
+    await _writeGranuleFiles({
+      granuleCumulusId: pgGranule.cumulus_id,
+      granule: apiGranuleRecord,
+      knex,
+      snsEventType,
+      granuleModel: new Granule(),
+    });
+  }
 
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
@@ -614,12 +608,13 @@ const writeGranuleRecordAndPublishSns = async ({
   snsEventType = 'Update',
 }) => {
   const pgGranule = await _writeGranuleRecords({
-    postgresGranuleRecord,
     apiGranuleRecord: omit(apiGranuleRecord, 'files'),
-    knex,
     esClient,
     executionCumulusId,
+    granuleModel,
     granulePgModel,
+    knex,
+    postgresGranuleRecord,
   });
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
@@ -633,9 +628,14 @@ const writeGranuleRecordAndPublishSns = async ({
  * directly.
  *
  * @param {Object} granule -- API Granule object
- * @param {string} granule.granuleId - granule's id
- * @param {string} granule.collectionId - granule's collection id
- * @param {GranuleStatus} granule.status - ['running','failed','completed', 'queued']
+ * @param {string} [granule.files] - **May not be null, set [] to remove** -- granule files object
+ * @param {GranuleStatus} granule.status - **required field, may not be null,
+ *                                         or undefined**
+ *                                         -- ['running','failed','completed', 'queued']
+ * @param {string} [granule.granuleId] - *required field,may not be null,or undefined*
+ *                                        granule's id
+ * @param {string} [granule.collectionId] - *required field,may not be null,or undefined*
+ *                                        granule's collection id
  * @param {string} [granule.execution] - Execution URL to associate with this granule
  *                               must already exist in database.
  * @param {string} [granule.cmrLink] - url to CMR information for this granule.
@@ -669,21 +669,21 @@ const writeGranuleFromApi = async (
   {
     granuleId,
     collectionId,
+    createdAt,
     status,
     execution,
     cmrLink,
     published,
     pdrName,
     provider,
-    error = {},
-    createdAt = new Date().valueOf(),
+    error,
     updatedAt,
     duration,
     productVolume,
     timeToPreprocess,
     timeToArchive,
     timestamp,
-    files = [],
+    files,
     beginningDateTime,
     endingDateTime,
     productionDateTime,
@@ -698,7 +698,41 @@ const writeGranuleFromApi = async (
   snsEventType
 ) => {
   try {
-    const granule = { granuleId, cmrLink, published, files };
+    // If published is set to null, set default value to false
+    // instead of allowing nullish value
+
+    // New granules should have published set when calling this method.  Assume undefined
+    // is a PATCH request
+    const publishedValue = isNull(published) ? false : published;
+    const defaultSetError = isNull(error) ? {} : error;
+    const defaultSetFiles = isNull(files) ? [] : files;
+    const defaultCreatedAt = isNull(createdAt) ? Date.now() : createdAt;
+    // Validate fields that cannot/shouldn't be null aren't
+    const invalidNullableFields = {
+      status,
+      createdAt,
+      updatedAt,
+      granuleId,
+      collectionId,
+      execution,
+    };
+    Object.entries(invalidNullableFields).forEach(([key, field]) => {
+      if (isNull(invalidNullableFields[field])) {
+        throw new Error(`granule.'${key}' cannot be removed as it is required and/or set to a default value on PUT.  Please set a value and try your request again`);
+      }
+    });
+    // Throw for invalid nullish value
+    if (isNull(execution)) {
+      throw new Error('Granule execution cannot be null, granules can only be assigned to an existing execution via the API object or POST /:granuleName/executions');
+    }
+
+    const granule = {
+      granuleId,
+      cmrLink,
+      published: publishedValue,
+      createdAt: defaultCreatedAt,
+      error: defaultSetError,
+    };
     const processingTimeInfo = {
       processingStartDateTime,
       processingEndDateTime,
@@ -717,43 +751,43 @@ const writeGranuleFromApi = async (
         throw new Error(`Could not find execution in PostgreSQL database with url ${execution}`);
       }
     }
-
     const apiGranuleRecord = await generateGranuleApiRecord({
-      granule,
-      executionUrl: execution,
-      collectionId,
-      provider,
-      timeToArchive,
-      timeToPreprocess,
-      timestamp,
-      productVolume,
-      duration,
-      status,
-      workflowStartTime: createdAt,
-      files,
-      error,
-      pdrName,
-      queryFields,
-      processingTimeInfo,
-      updatedAt,
       cmrTemporalInfo,
       cmrUtils,
+      collectionId,
+      createdAt: defaultCreatedAt,
+      duration,
+      executionUrl: execution,
+      error: defaultSetError,
+      files: defaultSetFiles,
+      granule,
+      pdrName,
+      processingTimeInfo,
+      productVolume,
+      provider,
+      queryFields,
+      status,
+      timestamp,
+      timeToArchive,
+      timeToPreprocess,
+      updatedAt,
     });
 
-    const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-      apiGranuleRecord,
-      knex
-    );
+    const postgresGranuleRecord = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+      dynamoRecord: apiGranuleRecord,
+      knexOrTransaction: knex,
+    });
 
     // TODO Fix remove api granule model
     await _writeGranule({
-      postgresGranuleRecord,
       apiGranuleRecord,
-      executionCumulusId,
-      knex,
-      granulePgModel,
       esClient,
+      executionCumulusId,
+      granulePgModel,
+      knex,
+      postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
       snsEventType,
+      writeConstraints: false,
     });
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {
@@ -780,6 +814,7 @@ const updateGranuleFromApi = async (granule, knex, esClient) => {
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
  * @param {Object} [params.granulePgModel]
  *   Optional override for the granule model writing to PostgreSQL database
+ * @param {Object}  params.esClient - Elasticsearch client
  * @returns {Promise<Object[]>}
  *  true if there are no granules on the message, otherwise
  *  results from Promise.allSettled for all granules
@@ -808,34 +843,73 @@ const writeGranulesFromMessage = async ({
   const executionDescription = await describeGranuleExecution(executionArn, stepFunctionUtils);
   const processingTimeInfo = getExecutionProcessingTimeInfo(executionDescription);
   const provider = getMessageProvider(cumulusMessage);
-  const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const error = parseException(cumulusMessage.exception);
   const workflowStatus = getMetaStatus(cumulusMessage);
   const collectionId = getCollectionIdFromMessage(cumulusMessage);
   const pdrName = getMessagePdrName(cumulusMessage);
   const queryFields = getGranuleQueryFields(cumulusMessage);
 
+  let workflowStartTime;
+  try {
+    workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
+    if (!workflowStartTime) {
+      throw new CumulusMessageError(
+        'writeGranulesFromMessage called without a valid workflow start time in the Cumulus Message, all granules failed to write'
+      );
+    }
+  } catch (wfError) {
+    log.error(
+      `Granule writes failed for ${JSON.stringify(
+        cumulusMessage
+      )} due to no workflow start time being set`
+    );
+    throw wfError;
+  }
+
   // Process each granule in a separate transaction via Promise.allSettled
   // so that they can succeed/fail independently
   const results = await Promise.allSettled(granules.map(
     async (granule) => {
-      // compute granule specific data.
-      const files = await _generateFilesFromGranule({ granule, provider });
+      // FUTURE: null files are currently not supported in update payloads
+      // RDS Phase 3 should revise logic to accept an explicit null value
+      if (granule.files === null) {
+        throw new CumulusMessageError('granule.files must not be null');
+      }
+
+      // This is necessary to set properties like
+      // `key`, which is required for the PostgreSQL schema. And
+      // `size` which is used to calculate the granule product
+      // volume
+      let files;
+      if (isNull(granule.files)) files = [];
+
+      files = granule.files ? await FileUtils.buildDatabaseFiles({
+        s3: s3(),
+        providerURL: buildURL(provider),
+        files: granule.files,
+      }) : undefined;
       const timeToArchive = getGranuleTimeToArchive(granule);
       const timeToPreprocess = getGranuleTimeToPreprocess(granule);
-      const productVolume = getGranuleProductVolume(files);
+      const productVolume = files ? getGranuleProductVolume(files) : undefined;
+
       const now = Date.now();
       const duration = getWorkflowDuration(workflowStartTime, now);
       const status = getGranuleStatus(workflowStatus, granule);
       const updatedAt = now;
       const timestamp = now;
 
+      let published = granule.published;
+      // New granules should have published set when calling this method.
+      // Calling undefined will result in this value being set to false
+      if (isNil(published)) {
+        published = false;
+      }
+
       const apiGranuleRecord = await generateGranuleApiRecord({
-        granule,
+        granule: { ...granule, published, createdAt: granule.createdAt || workflowStartTime },
         executionUrl,
         collectionId,
         provider: provider.id,
-        workflowStartTime,
         files,
         error,
         pdrName,
@@ -851,20 +925,34 @@ const writeGranulesFromMessage = async ({
         updatedAt,
         cmrUtils,
       });
+      const postgresGranuleRecord = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
+        dynamoRecord: apiGranuleRecord,
+        knexOrTransaction: knex,
+      });
 
-      const postgresGranuleRecord = await translateApiGranuleToPostgresGranule(
-        apiGranuleRecord,
-        knex
+      // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+      // Check if granuleId exists across another collection
+      const granulesByGranuleId = await getGranulesByGranuleId(knex, apiGranuleRecord.granuleId);
+      const granuleExistsAcrossCollection = granulesByGranuleId.some(
+        (g) => g.collection_cumulus_id !== postgresGranuleRecord.collection_cumulus_id
       );
+      if (granuleExistsAcrossCollection) {
+        log.error('Could not write granule. It already exists across another collection');
+        const conflictError = new Error(
+          `A granule already exists for granuleId: ${apiGranuleRecord.granuleId} with collectionId: ${apiGranuleRecord.collectionId}`
+        );
+        throw conflictError;
+      }
 
       return _writeGranule({
-        postgresGranuleRecord,
         apiGranuleRecord,
-        executionCumulusId,
-        knex,
-        granulePgModel,
         esClient,
+        executionCumulusId,
+        granulePgModel,
+        knex,
+        postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
         snsEventType: 'Update',
+        writeConstraints: true,
       });
     }
   ));
@@ -872,7 +960,7 @@ const writeGranulesFromMessage = async ({
   if (failures.length > 0) {
     const allFailures = failures.map((failure) => failure.reason);
     const aggregateError = new AggregateError(allFailures);
-    log.error('Failed writing some granules to datastore', aggregateError);
+    log.error('Failed writing some granules to Postgres/Elasticsearch', aggregateError);
     throw aggregateError;
   }
   return results;

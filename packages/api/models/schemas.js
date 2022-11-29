@@ -328,7 +328,6 @@ module.exports.granule = {
     },
     published: {
       type: 'boolean',
-      default: false,
       description: 'shows whether the granule is published to CMR',
       readonly: true,
     },
@@ -400,8 +399,6 @@ module.exports.granule = {
     timestamp: { type: 'integer' },
     createdAt: { type: 'integer' },
     updatedAt: { type: 'integer' },
-    dataType: { type: 'string' },
-    version: { type: 'string' },
     provider: { type: 'string' },
     queryFields: {
       description: 'fields for query and metrics purpose',
