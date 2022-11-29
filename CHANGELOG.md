@@ -6,6 +6,67 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-3070/3074**
+  - Updated granule PUT/POST endpoints to no longer respect message write
+    constraints.  Functionally this means that:
+    - Granules with older createdAt values will replace newer ones, instead of
+        ignoring the write request
+    - Granules that attempt to set a non-complete state (e.g. 'queued' and
+        'running') will now ignore execution state/state change and always write
+    - Granules being set to non-complete state will update all values passed in,
+      instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
+      'status', 'execution']`
+      
+
+### Added
+
+- **CUMULUS-3070**
+  - Remove granules dynamoDb model logic that sets default publish value on record
+    validation
+  - Update API granule write logic to not set default publish value on record
+    updates to avoid overwrite (PATCH behavior)
+  - Update API granule write logic to publish to false on record
+    creation if not specified
+  - Update message granule write logic to set default publish value on record
+    creation update.
+  - Update granule write logic to set published to default value of `false` if
+    `null` is explicitly set with intention to delete the value.
+  - Removed dataType/version from api granule schema
+  - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
+    logic for PUT/PATCH endpoint
+### Changed
+
+-**CUMULUS-3100**
+  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
+  - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
+  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
+- **CUMULUS-3077**
+  - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
+- **CUMULUS-3045**
+  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
+- **CUMULUS-3070**
+  - Updated API granule write logic to no longer require createdAt value in
+    dynamo/API granule validation.   Write-time createdAt defaults will be set in the case
+    of new API granule writes without the value set, and createdAt will be
+    overwritten if it already exists.
+  - Refactored granule write logic to allow PATCH behavior on API granule update
+    such that existing createdAt values will be retained in case of overwrite
+    across all API granule writes.
+  - Updated granule write code to validate written createdAt is synced between
+    datastores in cases where granule.createdAt is not provided for a new granule.
+      
+
+## [v13.4.0] 10/31/2022
+
+- **CUMULUS-3075**
+  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
+    undefined, now changed to an empty array. 
+  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
+  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
+
 ### Fixed
 
 - **CUMULUS-3116**
@@ -35,7 +96,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
 - **CUMULUS-3045**
-  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
+  - Update GitHub FAQs:
+    - Add new and refreshed content for previous sections
+    - Add new dedicated Workflows section
 - **CUMULUS-3075**
   - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
     the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
@@ -58,12 +121,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v13.4.0] 2022-10-31
 
+
 ### Notable changes
 
 - **CUMULUS-3104**
   - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
-
-### Added
 
 - **CUMULUS-2998**
   - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
@@ -74,21 +136,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
     allowed properties include:
-      - add_missing_file_checksums_task_memory_size
-      - discover_granules_task_memory_size
-      - discover_pdrs_task_memory_size
-      - hyrax_metadata_updates_task_memory_size
-      - lzards_backup_task_memory_size
-      - move_granules_task_memory_size
-      - parse_pdr_task_memory_size
-      - pdr_status_check_task_memory_size
-      - post_to_cmr_task_memory_size
-      - queue_granules_task_memory_size
-      - queue_pdrs_task_memory_size
-      - queue_workflow_task_memory_size
-      - sync_granule_task_memory_size
-      - update_cmr_access_constraints_task_memory_size
-      - update_granules_cmr_task_memory_size
+    - add_missing_file_checksums_task_memory_size
+    - discover_granules_task_memory_size
+    - discover_pdrs_task_memory_size
+    - hyrax_metadata_updates_task_memory_size
+    - lzards_backup_task_memory_size
+    - move_granules_task_memory_size
+    - parse_pdr_task_memory_size
+    - pdr_status_check_task_memory_size
+    - post_to_cmr_task_memory_size
+    - queue_granules_task_memory_size
+    - queue_pdrs_task_memory_size
+    - queue_workflow_task_memory_size
+    - sync_granule_task_memory_size
+    - update_cmr_access_constraints_task_memory_size
+    - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
   - Adds Terraform timeout variable for add_missing_file_checksums_task
 - **CUMULUS-2631**
@@ -99,7 +161,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
 
 ### Changed
+
+- **CUMULUS-3070**
+  - Updated API granule write logic to no longer require createdAt value in
+    dynamo/API granule validation.   Write-time createdAt defaults will be set in the case
+    of new API granule writes without the value set, and createdAt will be
+    overwritten if it already exists.
+  - Refactored granule write logic to allow PATCH behavior on API granule update
+    such that existing createdAt values will be retained in case of overwrite
+    across all API granule writes.
+  - Updated granule write code to validate written createdAt is synced between
+    datastores in cases where granule.createdAt is not provided for a new
+    granule.
+  - Updated @cumulus/db/translate/granules.translateApiGranuleToPostgresGranuleWithoutNilsRemoved to validate incoming values to ensure values that can't be set to null are not
+  - Updated @cumulus/db/translate/granules.translateApiGranuleToPostgresGranuleWithoutNilsRemoved to handle null values in incoming ApiGranule
+  - Updated @cumulus/db/types/granules.PostgresGranule typings to allow for null values
+  - Added ApiGranuleRecord to @cumulus/api/granule type to represent a written/retrieved from datastore API granule record.
+  - Update API/Message write logic to handle nulls as deletion in granule PUT/message write logic
+
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
+- **CUMULUS-3024**
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
+  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
+    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 - **CUMULUS-2913**
@@ -114,11 +206,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update generate-ts-build-cache script to always install root project dependencies
 
 ### Fixed
+
 - **CUMULUS-3104**
   - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
   - Sets default async_operation_image version to 43.
   - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
   - Fixed TS compilation error caused by @aws-sdk/client-s3 3.190->3.193 upgrade
+
+### Fixed
+
+- **CUMULUS-3070**
+  - Fixed inaccurate typings for PostgresGranule in @cumulus/db/types/granule
+  - Fixed inaccurate typings for @cumulus/api/granules.ApiGranule and updated to
+    allow null
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
@@ -497,6 +597,37 @@ releases.
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+
+## [v11.1.8] 2022-11-07 [BACKPORT]
+
+**Please note** changes in 11.1.7 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
+
+### Notable changes
+
+- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+
+### Changed
+
+- **CUMULUS-3104**
+  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+  - Sets default async_operation_image version to 43.
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
+
+- **CUMULUS-3080**
+  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
 
 ## [v11.1.7] 2022-10-05 [BACKPORT]
 
@@ -6637,7 +6768,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v12.0.3]: https://github.com/nasa/cumulus/compare/v12.0.2...v12.0.3
 [v12.0.2]: https://github.com/nasa/cumulus/compare/v12.0.1...v12.0.2
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
-[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.7...v12.0.0
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.8...v12.0.0
+[v11.1.8]: https://github.com/nasa/cumulus/compare/v11.1.7...v11.1.8
 [v11.1.7]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.7
 [v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4

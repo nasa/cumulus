@@ -344,12 +344,16 @@ test.before(async (t) => {
       await granulePgModel.create(knex, granule))
   );
 
-  await upsertGranuleWithExecutionJoinRecord(
-    knex, t.context.fakePGGranules[0], executionPgRecordId
-  );
-  await upsertGranuleWithExecutionJoinRecord(
-    knex, t.context.fakePGGranules[0], expiredExecutionPgRecordId
-  );
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: t.context.fakePGGranules[0],
+    executionCumulusId: executionPgRecordId,
+  });
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: t.context.fakePGGranules[0],
+    executionCumulusId: expiredExecutionPgRecordId,
+  });
 });
 
 test.after.always(async (t) => {
