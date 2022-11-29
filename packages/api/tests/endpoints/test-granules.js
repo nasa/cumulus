@@ -2224,6 +2224,118 @@ test.serial('PUT does not update non-current-timestamp undefined fields for exis
   );
 });
 
+test.serial('PUT nullifies expected fields for existing granules in all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    executionPgRecord,
+    esGranulesClient,
+  } = t.context;
+
+  const originalUpdateTimestamp = Date.now();
+
+  const {
+    newPgGranule,
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      beginningDateTime: '2022-01-18T14:40:00.000Z',
+      cmrLink: 'example.com',
+      collectionId: constructCollectionId(t.context.collectionName, t.context.collectionVersion),
+      duration: 1000,
+      execution: t.context.executionUrl,
+      endingDateTime: '2022-01-18T14:40:00.000Z',
+      error: { errorKey: 'errorValue' },
+      lastUpdateDateTime: '2022-01-18T14:40:00.000Z',
+      pdrName: t.context.pdr.name,
+      processingEndDateTime: '2022-01-18T14:40:00.000Z',
+      processingStartDateTime: '2022-01-18T14:40:00.000Z',
+      productionDateTime: '2022-01-18T14:40:00.000Z',
+      productVolume: '1000',
+      published: true,
+      queryFields: { queryFieldsKey: 'queryFieldsValue' },
+      status: 'completed',
+      timestamp: originalUpdateTimestamp,
+      timeToArchive: 1000,
+      timeToPreprocess: 1000,
+      updatedAt: originalUpdateTimestamp,
+    },
+  });
+
+  await granulesExecutionsPgModel.create(knex, {
+    granule_cumulus_id: newPgGranule.cumulus_id,
+    execution_cumulus_id: executionPgRecord.cumulus_id,
+  });
+
+  const updatedGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
+    status: newDynamoGranule.status,
+    createdAt: null,
+    beginningDateTime: null,
+    cmrLink: null,
+    duration: null,
+    endingDateTime: null,
+    error: null,
+    files: null,
+    lastUpdateDateTime: null,
+    pdrName: null,
+    processingEndDateTime: null,
+    processingStartDateTime: null,
+    productionDateTime: null,
+    productVolume: null,
+    published: null,
+    queryFields: null,
+    timestamp: null,
+    timeToArchive: null,
+    timeToPreprocess: null,
+    updatedAt: null,
+  };
+
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+
+  const actualPgGranule = await granulePgModel.get(knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+
+  const translatedPostgresGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: actualPgGranule,
+    knexOrTransaction: knex,
+  });
+
+  const updatedEsRecord = await esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+
+  const expectedGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
+    status: newDynamoGranule.status,
+    execution: newDynamoGranule.execution,
+    createdAt: actualGranule.createdAt,
+    updatedAt: actualGranule.updatedAt,
+    timestamp: actualGranule.timestamp,
+    error: {},
+    published: false,
+  };
+
+  //t.deepEqual(actualGranule, { ...expectedGranule, files: [] });
+  t.deepEqual(actualGranule, expectedGranule);
+  t.deepEqual(translatedPostgresGranule, { ...expectedGranule, files: [] });
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
 // FUTURE: this is explicitly a PATCH behavior test -
 // moving this is part of CUMULUS-3069/CUMULUS-3072
 test.serial(
