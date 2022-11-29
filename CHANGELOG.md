@@ -67,6 +67,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
   - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
 
+### Fixed
+
+- **CUMULUS-3116**
+  - Reverted the default ElasticSearch sorting behavior to the pre-13.3.0 configuration
+  - Results from ElasticSearch are sorted by default by the `timestamp` field. This means that the order
+  is not guaranteed if two or more records have identical timestamps as there is no secondary sort/tie-breaker.
 
 ### Breaking changes
 
@@ -87,7 +93,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
 - **CUMULUS-3045**
-  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
+  - Update GitHub FAQs:
+    - Add new and refreshed content for previous sections
+    - Add new dedicated Workflows section
 - **CUMULUS-3075**
   - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
     the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
@@ -195,6 +203,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update generate-ts-build-cache script to always install root project dependencies
 
 ### Fixed
+
 - **CUMULUS-3104**
   - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
   - Sets default async_operation_image version to 43.
@@ -514,7 +523,7 @@ releases.
 
 ## [v12.0.3] 2022-10-03 [BACKPORT]
 
-**Please note** changes in 11.1.7 may not yet be released in future versions, as
+**Please note** changes in 12.0.3 may not yet be released in future versions, as
 this is a backport and patch release on the 12.0.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
@@ -585,6 +594,37 @@ releases.
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+
+## [v11.1.8] 2022-11-07 [BACKPORT]
+
+**Please note** changes in 11.1.7 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
+
+### Notable changes
+
+- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+
+### Changed
+
+- **CUMULUS-3104**
+  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+  - Sets default async_operation_image version to 43.
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
+
+- **CUMULUS-3080**
+  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
 
 ## [v11.1.7] 2022-10-05 [BACKPORT]
 
@@ -6725,7 +6765,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v12.0.3]: https://github.com/nasa/cumulus/compare/v12.0.2...v12.0.3
 [v12.0.2]: https://github.com/nasa/cumulus/compare/v12.0.1...v12.0.2
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
-[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.7...v12.0.0
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.8...v12.0.0
+[v11.1.8]: https://github.com/nasa/cumulus/compare/v11.1.7...v11.1.8
 [v11.1.7]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.7
 [v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
