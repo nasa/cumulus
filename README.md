@@ -3,12 +3,16 @@
 [![npm version](https://badge.fury.io/js/%40cumulus%2Fapi.svg)](https://badge.fury.io/js/%40cumulus%2Fapi)
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
+## About Cumulus
+Cumulus is an open sourced cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus core as well has useful tips on configuration, workflow management, and operations. 
+To learn more about Cumulus and NASA's Earth Observing System Data and Information System (EOSDIS) cloud initiatives go to [More Information](#more-information).
+
 # 🚀 Getting Started
 
-Below is documentation to help get you started with your Cumulus development. To get a quick start on Cumulus go to our [Getting Started](https://nasa.github.io/cumulus/docs/cumulus-docs-readme) section.
+Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus go to our [Getting Started](https://nasa.github.io/cumulus/docs/cumulus-docs-readme) section.
 
+- [Documentation](#📖-documentation)
 - [Development](#🔨-development)
-    - [Documentation](#📖-documentation)
     - [Installation](#installation)
         - [Prerequisites](#prerequisites)
         - [Install Lerna](#install-lerna)
@@ -25,6 +29,13 @@ Below is documentation to help get you started with your Cumulus development. To
     - [Contribution](#contribution)
     - [Release](#🛒-release)
 - [More Information](#more-information)
+
+---
+
+## 📖 Documentation
+
+- Documentation for the latest [released version](https://nasa.github.io/cumulus).
+- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
 
 # 🔨 Development
 
@@ -44,11 +55,6 @@ top-level `node_modules` directory.
 TL;DR - If you need to add a `devDependency` to a package, add it to the
 top-level [package.json](./package.json) file, not the `package.json` associated
 with an individual package.
-
-## 📖 Documentation
-
-- Documentation for the latest [released version](https://nasa.github.io/cumulus).
-- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
 
 ## Installation
 
@@ -171,7 +177,6 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ---
 
-
 ## Contribution
 
 Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for more information.
@@ -184,4 +189,4 @@ To release a new version of cumulus [read this](docs/development/release.md).
 
 ## More Information
 
-For more information about this project of more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
+For more information about this project or more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
