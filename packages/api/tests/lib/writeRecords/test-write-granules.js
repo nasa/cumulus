@@ -3302,32 +3302,6 @@ test.serial('writeGranuleFromApi() saves file records to Postgres if Postgres wr
   );
 });
 
-test.serial('writeGranuleFromApi() does not persist file records to Postgres if workflow status is "running"', async (t) => {
-  const {
-    collectionCumulusId,
-    esClient,
-    filePgModel,
-    granule,
-    granuleId,
-    granulePgModel,
-    knex,
-  } = t.context;
-
-  await writeGranuleFromApi({ ...granule, status: 'running' }, knex, esClient, 'Create');
-
-  const granuleRecord = await granulePgModel.get(
-    knex,
-    {
-      granule_id: granuleId,
-      collection_cumulus_id: collectionCumulusId,
-    }
-  );
-
-  t.false(
-    await filePgModel.exists(knex, { granule_cumulus_id: granuleRecord.cumulus_id })
-  );
-});
-
 test.serial('writeGranuleFromApi() writes all valid files if any non-valid file fails', async (t) => {
   const {
     esClient,
