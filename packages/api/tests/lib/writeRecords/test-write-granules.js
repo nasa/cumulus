@@ -630,6 +630,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     pdr,
     provider,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   const validNullableGranuleKeys = [
@@ -709,6 +710,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const postgresRecord = await granulePgModel.get(knex, {
@@ -773,6 +775,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granulePgModel,
     knex,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   const completeGranule = fakeGranuleFactoryV2({
@@ -791,6 +794,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const initialPostgresRecord = await granulePgModel.get(knex, {
@@ -810,6 +814,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const postgresRecord = await granulePgModel.get(knex, {
@@ -841,6 +846,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
     pdr,
     provider,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   const completeGranule = fakeGranuleFactoryV2({
@@ -880,6 +886,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   t.true(
@@ -907,6 +914,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Pos
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const postgresRecord = await granulePgModel.get(knex, {
@@ -964,6 +972,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     pdr,
     provider,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   const validNullableGranuleKeys = [
@@ -1021,6 +1030,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const originalPostgresGranuleRecord = await granulePgModel.get(knex, {
@@ -1055,6 +1065,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     providerCumulusId,
     knex,
     executionCumulusId: pgExecution.cumulus_id,
+    testOverrides: { stepFunctionUtils },
   });
 
   const postgresRecord = await granulePgModel.get(knex, {
@@ -1201,6 +1212,7 @@ test.serial('writeGranulesFromMessage() uses a default value for granule.created
     knex,
     providerCumulusId,
     workflowStartTime,
+    stepFunctionUtils,
   } = t.context;
 
   // Only test fields that are stored in Postgres on the Granule record.
@@ -1216,6 +1228,7 @@ test.serial('writeGranulesFromMessage() uses a default value for granule.created
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const granulePgRecord = await t.context.granulePgModel.get(
@@ -1249,6 +1262,7 @@ test.serial('writeGranulesFromMessage() allows overwrite of createdAt and uses g
     granuleId,
     knex,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   // Only test fields that are stored in Postgres on the Granule record.
@@ -1261,6 +1275,7 @@ test.serial('writeGranulesFromMessage() allows overwrite of createdAt and uses g
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const granulePgRecord = await t.context.granulePgModel.get(
@@ -1297,6 +1312,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
     executionCumulusId,
     providerCumulusId,
     granuleId,
+    stepFunctionUtils,
   } = t.context;
 
   // Need a message in 'completed' state to allow files writes
@@ -1321,6 +1337,7 @@ test.serial('writeGranulesFromMessage() given a payload with undefined files, ke
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const originalEsGranule = await esGranulesClient.get(granuleId);
@@ -1390,6 +1407,7 @@ test.serial('writeGranulesFromMessage() given a partial granule overwrites only 
     executionCumulusId,
     providerCumulusId,
     granuleId,
+    stepFunctionUtils,
   } = t.context;
 
   // Need a message in 'completed' state to allow files writes
@@ -1415,6 +1433,7 @@ test.serial('writeGranulesFromMessage() given a partial granule overwrites only 
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   t.true(await granulePgModel.exists(
@@ -1481,6 +1500,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
     granulePgModel,
     providerCumulusId,
     knex,
+    stepFunctionUtils,
   } = t.context;
 
   // Need a message in 'completed' state to allow files writes
@@ -1505,6 +1525,7 @@ test.serial('writeGranulesFromMessage() given an empty array as a files key will
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const originalEsGranule = await esGranulesClient.get(granuleId);
@@ -1575,6 +1596,7 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
     executionCumulusId,
     providerCumulusId,
     granuleId,
+    stepFunctionUtils,
   } = t.context;
 
   // Need a message in 'completed' state to allow files writes
@@ -1599,6 +1621,7 @@ test.serial('writeGranulesFromMessage() given a null files key will throw an err
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   // Files exist in all datastores
@@ -1928,6 +1951,7 @@ test.serial('writeGranulesFromMessage() throws error if any granule writes fail'
     knex,
     executionCumulusId,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   cumulusMessage.payload.granules = [
@@ -1941,6 +1965,7 @@ test.serial('writeGranulesFromMessage() throws error if any granule writes fail'
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   }));
 });
 
@@ -2277,6 +2302,7 @@ test.serial('writeGranulesFromMessage() throws if workflow_start_time is not pro
     knex,
     executionCumulusId,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   delete cumulusMessage.cumulus_meta.workflow_start_time;
@@ -2286,6 +2312,7 @@ test.serial('writeGranulesFromMessage() throws if workflow_start_time is not pro
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   }), { instanceOf: CumulusMessageError });
 });
 
