@@ -2953,7 +2953,6 @@ test.serial('writeGranuleFromApi() when called on a granuleId that exists in the
   const {
     pgGranule,
     esGranule,
-    dynamoGranule,
   } = await updateGranule(t, updateGranulePayload);
 
   t.is(pgGranule.published, originalPgGranule.published);
@@ -2964,7 +2963,6 @@ test.serial('writeGranuleFromApi() when called on a granuleId that exists in the
   });
 
   t.is(apiGranule.published, esGranule.published);
-  t.is(apiGranule.published, dynamoGranule.published);
 });
 
 test.serial('writeGranuleFromApi() given an empty array as a files key will remove all existing files and keep Postgres/Dynamo/Elastic in-sync', async (t) => {
