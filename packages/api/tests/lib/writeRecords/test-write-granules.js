@@ -3019,7 +3019,6 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
     updatedPgGranuleFields,
     pgGranule,
     esGranule,
-    dynamoGranule,
   } = await updateGranule(t, updateGranulePayload);
 
   // Postgres granule matches expected updatedGranule
@@ -3035,7 +3034,6 @@ test.serial('writeGranuleFromApi() given an empty array as a files key will remo
 
   // Files were removed from all datastores
   t.deepEqual(apiGranule.files, []);
-  t.is(dynamoGranule.files, undefined);
   t.is(esGranule.files, undefined);
 });
 
