@@ -2560,17 +2560,17 @@ test.serial('writeGranuleFromApi() writes a granule to PostgreSQL and Elasticsea
   );
   const esRecord = await esGranulesClient.get(granuleId);
 
-  t.deepEqual({
-    ...granule,
-    _id: esRecord._id,
-    timestamp: postgresRecord.timestamp,
-    error: {},
-  }, esRecord);
-
   const postgresActual = await translatePostgresGranuleToApiGranule({
     knexOrTransaction: knex,
     granulePgRecord: postgresRecord,
   });
+
+  t.deepEqual({
+    ...granule,
+    _id: esRecord._id,
+    timestamp: postgresActual.timestamp,
+    error: {},
+  }, esRecord);
 
   t.deepEqual(
     {
