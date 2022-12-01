@@ -1144,7 +1144,6 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
-    // TODO -- Test this writes to PG and returns the right 'thing'
     product_volume: apiGranule.productVolume,
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,
