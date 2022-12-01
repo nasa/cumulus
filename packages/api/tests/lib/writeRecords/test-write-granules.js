@@ -140,12 +140,12 @@ const updateGranule = async (t, updateGranulePayload, granuleWriteVia = 'api') =
         pdr: { name: t.context.pdrName },
       },
     };
-
     await writeGranulesFromMessage({
       cumulusMessage: updatedCumulusMessage,
       executionCumulusId,
       providerCumulusId,
       knex,
+      testOverrides: { stepFunctionUtils: t.context.stepFunctionUtils },
     });
   } else {
     await writeGranuleFromApi({ ...updateGranulePayload }, knex, esClient, 'Update');
@@ -1163,6 +1163,7 @@ test.serial('writeGranulesFromMessage() sets a default value of false for `publi
     executionCumulusId,
     providerCumulusId,
     granuleId,
+    stepFunctionUtils,
   } = t.context;
 
   // Only test fields that are stored in Postgres on the Granule record.
@@ -1178,6 +1179,7 @@ test.serial('writeGranulesFromMessage() sets a default value of false for `publi
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const granulePgRecord = await t.context.granulePgModel.get(
@@ -2356,6 +2358,7 @@ test.serial('writeGranulesFromMessage() sets `published` to false if null value 
     executionCumulusId,
     providerCumulusId,
     granuleId,
+    stepFunctionUtils,
   } = t.context;
 
   // Only test fields that are stored in Postgres on the Granule record.
@@ -2371,6 +2374,7 @@ test.serial('writeGranulesFromMessage() sets `published` to false if null value 
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   const granulePgRecord = await t.context.granulePgModel.get(
@@ -2406,6 +2410,7 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
     granulePgModel,
     knex,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
 
   const differentCollection = fakeCollectionRecordFactory();
@@ -2429,6 +2434,7 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
     providerCumulusId,
     knex,
     granulePgModel,
+    testOverrides: { stepFunctionUtils },
   }));
 
   t.true(error.message.includes(`A granule already exists for granuleId: ${pgGranule.granule_id}`));
