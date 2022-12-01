@@ -691,6 +691,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
 
   t.true(
