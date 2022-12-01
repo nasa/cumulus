@@ -462,7 +462,7 @@ const _writeGranuleRecords = async (params) => {
   try {
     await createRejectableTransaction(knex, async (trx) => {
       // Validate API schema using lib method
-      recordIsValid(apiGranuleRecord, granuleSchema, false);
+      recordIsValid(omitBy(apiGranuleRecord, isNull), granuleSchema, false);
       pgGranule = await _writePostgresGranuleViaTransaction({
         granuleRecord: postgresGranuleRecord,
         executionCumulusId,
