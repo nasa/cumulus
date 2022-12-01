@@ -681,14 +681,14 @@ async function del(req, res) {
     }
   }
 
-  await deleteGranuleAndFiles({
+  const deletionDetails = await deleteGranuleAndFiles({
     knex,
     apiGranule: esResult,
     pgGranule: pgGranule,
     esClient,
   });
 
-  return res.send({ detail: 'Record deleted' });
+  return res.send({ detail: 'Record deleted', ...deletionDetails });
 }
 
 /**
