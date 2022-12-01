@@ -82,7 +82,7 @@ export const translatePostgresExecutionToApiExecution = async (
  *   Instance of the execution database model
  * @returns {PostgresExecutionRecord} - converted Execution
  */
-export const translateApiExecutionToPostgresExecution = async (
+export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async (
   dynamoRecord: ExecutionRecord,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
@@ -144,5 +144,21 @@ export const translateApiExecutionToPostgresExecution = async (
     }
   }
 
-  return <PostgresExecution>removeNilProperties(translatedRecord);
+  return <PostgresExecution>translatedRecord;
 };
+
+export const translateApiExecutionToPostgresExecution = async (
+  dynamoRecord: ExecutionRecord,
+  knex: Knex,
+  collectionPgModel = new CollectionPgModel(),
+  asyncOperationPgModel = new AsyncOperationPgModel(),
+  executionPgModel = new ExecutionPgModel()
+): Promise<PostgresExecution> => removeNilProperties(
+  await translateApiExecutionToPostgresExecutionWithoutNilsRemoved(
+    dynamoRecord,
+    knex,
+    collectionPgModel,
+    asyncOperationPgModel,
+    executionPgModel
+  )
+);

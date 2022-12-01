@@ -478,6 +478,51 @@ test.serial('writeExecutionRecordFromApi() saves execution to RDS/Elasticsearch 
   t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
 });
 
+test.serial('writeExecutionRecordFromMessage() on re-write saves execution PostgreSQL/Elasticsearch/SNS with expected values nullified', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const originalPayload = { original: 'payload' };
+  const finalPayload = { final: 'payload' };
+  const tasks = { tasks: 'taskabc' };
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.meta.workflow_tasks = tasks;
+  cumulusMessage.payload = originalPayload;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = finalPayload;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+  let pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+  t.deepEqual(pgRecord.tasks, tasks);
+
+  let esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(esRecord.originalPayload, originalPayload);
+  t.deepEqual(esRecord.finalPayload, finalPayload);
+  t.deepEqual(esRecord.tasks, tasks);
+
+  cumulusMessage.payload = null;
+  cumulusMessage.meta.workflow_tasks = null;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.is(pgRecord.final_payload, null);
+  t.is(pgRecord.tasks, null);
+
+  esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(esRecord.originalPayload, originalPayload);
+  t.is(esRecord.finalPayload, undefined);
+  t.is(esRecord.tasks, undefined);
+});
+
 test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message', async (t) => {
   const {
     cumulusMessage,

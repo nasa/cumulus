@@ -1,9 +1,11 @@
 const isNil = require('lodash/isNil');
+const isUndefined = require('lodash/isUndefined');
+const omitBy = require('lodash/omitBy');
 
 const {
   createRejectableTransaction,
   ExecutionPgModel,
-  translateApiExecutionToPostgresExecution,
+  translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const {
@@ -68,7 +70,7 @@ const buildExecutionRecord = ({
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
-  return removeNilProperties({
+  const record = {
     arn,
     status: getMetaStatus(cumulusMessage),
     url: getExecutionUrlFromArn(arn),
@@ -85,7 +87,8 @@ const buildExecutionRecord = ({
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: parentExecutionCumulusId,
-  });
+  };
+  return omitBy(record, isUndefined);
 };
 
 const writeExecutionToES = async (params) => {
@@ -195,7 +198,7 @@ const writeExecutionRecordFromMessage = async ({
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
     apiRecord: executionApiRecord,
-    postgresRecord,
+    postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
     executionModel,
     esClient,
@@ -207,10 +210,11 @@ const writeExecutionRecordFromApi = async ({
   record: apiRecord,
   knex,
 }) => {
-  const postgresRecord = await translateApiExecutionToPostgresExecution(apiRecord, knex);
+  const postgresRecord = await
+  translateApiExecutionToPostgresExecutionWithoutNilsRemoved(apiRecord, knex);
   return await _writeExecutionAndPublishSnsMessage({
     apiRecord,
-    postgresRecord,
+    postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
   });
 };

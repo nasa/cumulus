@@ -11,11 +11,13 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
 
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { IndexExistsError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { removeNilProperties } = require('@cumulus/common/util');
 
 const { Search, defaultIndexAlias } = require('./search');
 const mappings = require('./config/mappings.json');
@@ -132,6 +134,8 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * @param {string} params.index - Elasticsearch index alias (default defined in search.js)
  * @param {string} params.type - Elasticsearch type (default: execution)
  * @param {string} [params.refresh] - whether to refresh the index on update or not
+ * @param {boolean}   writeConstraints       - boolean toggle restricting if conditionals should
+ *                                          be used to determine write eligibility
  * @returns {Promise} elasticsearch update response
  */
 async function upsertExecution({
@@ -140,11 +144,38 @@ async function upsertExecution({
   index = defaultIndexAlias,
   type = 'execution',
   refresh,
-}) {
+}, writeConstraints = true) {
   const upsertDoc = {
-    ...updates,
+    ...removeNilProperties(updates),
     timestamp: Date.now(),
   };
+
+  let removeString = '';
+
+  // Set field removal for null values
+  Object.entries(updates).forEach(([fieldName, value]) => {
+    if (value === null) {
+      removeString += `ctx._source.remove('${fieldName}'); `;
+    }
+  });
+
+  let inlineDocWriteString = 'ctx._source.putAll(params.doc);';
+  if (removeString !== '') {
+    inlineDocWriteString += removeString;
+  }
+  let inline = inlineDocWriteString;
+  if (writeConstraints === true) {
+    inline = `
+          if (params.doc.status == "running") {
+            ctx._source.updatedAt = params.doc.updatedAt;
+            ctx._source.timestamp = params.doc.timestamp;
+            ctx._source.originalPayload = params.doc.originalPayload;
+            ${inlineDocWriteString}
+          } else {
+            ${inlineDocWriteString}
+          }
+        `;
+  }
   return await esClient.update({
     index,
     type,
@@ -152,15 +183,7 @@ async function upsertExecution({
     body: {
       script: {
         lang: 'painless',
-        inline: `
-          if (params.doc.status == "running") {
-            ctx._source.updatedAt = params.doc.updatedAt;
-            ctx._source.timestamp = params.doc.timestamp;
-            ctx._source.originalPayload = params.doc.originalPayload;
-          } else {
-            ctx._source.putAll(params.doc)
-          }
-        `,
+        inline,
         params: {
           doc: upsertDoc,
         },

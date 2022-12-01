@@ -32,6 +32,7 @@ import {
   getWorkflowDuration,
 } from './workflows';
 import { parseException } from './utils';
+import { isUndefined } from 'lodash';
 
 interface MessageWithPayload extends Message.CumulusMessage {
   payload: object
@@ -245,6 +246,6 @@ export const generateExecutionApiRecordFromMessage = (
     duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
   };
 
-  const updated = <ExecutionRecord>omitBy(record, isNil);
+  const updated = <ExecutionRecord>omitBy(record, isUndefined);
   return updated;
 };
