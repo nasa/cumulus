@@ -3144,7 +3144,7 @@ test.serial('update (PUT) can set running granule status to queued', async (t) =
 });
 
 test.serial('PUT will set completed status to queued', async (t) => {
-  const granuleId = t.context.fakeGranules[0].granuleId;
+  const granuleId = t.context.fakePGGranules[0].granule_id;
   const response = await request(app)
     .put(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
@@ -3158,8 +3158,7 @@ test.serial('PUT will set completed status to queued', async (t) => {
 
   t.is(response.status, 200);
   t.deepEqual(JSON.parse(response.text), {
-    message: `Successfully updated granule with Granule Id:
-    ${granuleId}, Collection Id: ${t.context.collectionId}`,
+    message: `Successfully updated granule with Granule Id: ${granuleId}, Collection Id: ${t.context.collectionId}`,
   });
   const fetchedRecord = await granulePgModel.get(
     t.context.knex,
@@ -3169,7 +3168,7 @@ test.serial('PUT will set completed status to queued', async (t) => {
     }
   );
 
-  t.is(fetchedRecord.status, 'completed');
+  t.is(fetchedRecord.status, 'queued');
 });
 
 test.serial('PUT will not set completed status to queued when queued created at is older', async (t) => {
