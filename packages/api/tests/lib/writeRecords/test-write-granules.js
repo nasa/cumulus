@@ -2893,18 +2893,22 @@ test.serial('writeGranuleFromApi() given a granule with all fields populated is 
   // Validate that none of the responses come back as 'null', we want them removed, not set
   t.is(
     validNullableGranuleKeys.filter(
-      (key) => apiFormattedPostgresGranule[key] === null
+      (key) => esGranule[key] === null
     ).length, 0
   );
+
   // Validate that all of the nullable keys are unset
-  const undefinedDynamoKeys = validNullableGranuleKeys.filter(
-    (i) => !apiFormatOmitList.includes(i)
+  t.deepEqual(apiFormattedPostgresGranule.files, []);
+  const undefinedApiKeys = validNullableGranuleKeys.filter(
+    (i) => !apiFormatOmitList.includes(i) && i !== 'files'
   );
+  // Validate files key is 'removed'
+
   t.deepEqual(
     validNullableGranuleKeys
       .filter((key) => apiFormattedPostgresGranule[key] === undefined)
       .sort(),
-    undefinedDynamoKeys.sort()
+    undefinedApiKeys.sort()
   );
 
   // Postgres and ElasticSearch granules matches
