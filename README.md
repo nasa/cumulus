@@ -4,13 +4,16 @@
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
 ## About Cumulus
-Cumulus is an open sourced cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus core as well has useful tips on configuration, workflow management, and operations. 
+Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations. 
 To learn more about Cumulus and NASA's Earth Observing System Data and Information System (EOSDIS) cloud initiatives go to [More Information](#more-information).
+
+---
 
 # 🚀 Getting Started
 
-Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus go to our [Getting Started](https://nasa.github.io/cumulus/docs/cumulus-docs-readme) section.
+Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus deployment go to our [Getting Started](https://nasa.github.io/cumulus/docs/cumulus-docs-readme) section.
 
+## Contents
 - [Documentation](#📖-documentation)
 - [Development](#🔨-development)
     - [Installation](#installation)
@@ -58,17 +61,19 @@ with an individual package.
 
 ## Installation
 
-This is for installation for Cumulus development.  See the [Cumulus deployment instructions](https://nasa.github.io/cumulus/docs/deployment/deployment-readme) for instructions on deploying the released Cumulus packages.
+This is for installation for Cumulus development. See the [Cumulus deployment section](https://nasa.github.io/cumulus/docs/deployment/deployment-readme) for instructions on deploying the released Cumulus packages.
 
 ### Prerequisites
 
 - [NVM](https://github.com/creationix/nvm) and node version 14.19.1
 - [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
-- BASH
-- Docker (only required for testing)
+- Bash
+- [Docker](https://www.docker.com/) (only required for testing)
 - docker-compose (only required for testing `pip install docker-compose`)
 - Python 3.6+
 - [pipenv](https://pypi.org/project/pipenv/)
+
+> You may use `brew` to install the prerequisites. Visit [Homebrew documentation](https://brew.sh/) for guidance.
 
 Install the correct node version:
 
@@ -79,7 +84,7 @@ nvm use
 
 ### Install Lerna
 
-We use Lerna to manage multiple Cumulus packages in the same repo. You need to install lerna as a global module first:
+We use Lerna to manage multiple Cumulus packages in the same repo. You need to install Lerna as a global module first:
 
     $ npm install -g lerna
 
