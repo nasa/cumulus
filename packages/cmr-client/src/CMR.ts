@@ -1,3 +1,4 @@
+// @ts-nocheck
 import get from 'lodash/get';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
@@ -11,6 +12,7 @@ import deleteConcept from './deleteConcept';
 import getConceptMetadata from './getConcept';
 import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
+import { size } from 'lodash';
 
 const log = new Logger({ sender: 'cmr-client' });
 
@@ -28,25 +30,9 @@ const logDetails: { [key: string]: string } = {
  * @private
  */
 async function updateToken(
-  clientId: string,
   username: string,
   password: string
 ): Promise<string> {
-  // response: authenticate against EDL in order to use API to get token or validate token
-  let response:
-  {
-    body: {
-      access_token?: {
-        id: string,
-      },
-      token_type?: {
-        id: string,
-      },
-      expires_in?: {
-        id: BigInteger,
-      }
-    }
-  };
   const credentials = username + ':' + password;
   const buff = Buffer.from(credentials).toString('base64');
   let cmrenv;
@@ -57,14 +43,24 @@ async function updateToken(
   } else {
     throw new TypeError(`Invalid CMR environment: ${process.env.CMR_ENVIRONMENT}`);
   }
-  try {
-    response = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/oauth/token?grant_type=client_credentials`,
-      {
-        responseType: 'json',
-        headers: {
-          Authorization: 'Basic ' + buff,
+  // response: get a token from the Earthdata login endpoint using credentials if exists
+  let response: {
+    body : {
+        access_token: {
+          id: string,
         },
-      }).json();
+        expiration_date: {
+          id: BigInteger,
+        }
+    }
+  };
+  try {
+    response = await got.get(`https://${cmrenv}urs.earthdata.nasa.gov/api/users/tokens`,
+        {
+        headers: {
+            Authorization: `Basic ${buff}`,
+        },
+    }).json();
   } catch (error) {
     logDetails.credentials = credentials;
     log.error(error, logDetails);
@@ -80,79 +76,47 @@ async function updateToken(
     log.error(errorMessage);
     throw new Error(errorMessage);
   }
-
-  // response2: get a token from the Earthdata login endpoint using credentials
-  let response2: {
-    body: {
-      access_token?: {
-        id: string,
-      },
-      expiration_date?: {
-        id: BigInteger,
+  if (size(Object.values(response)) !== 0) {
+    return response[0].access_token;
+  }else{
+    let response2:
+    {
+      body: {
+        access_token?: {
+          id: string,
+        },
+        token_type?: {
+          id: string,
+        },
+        expiration_date?: {
+          id: BigInteger,
+        }
       }
+    };
+    //response2: add a token to Earthdata if user credentials are valid
+    try {
+      response2 = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/api/users/token`,
+        {
+          headers: {
+            Authorization: `Basic ${buff}`,
+          },
+        }).json();
+    } catch (error) {
+      logDetails.credentials = credentials;
+      log.error(error, logDetails);
+      const statusCode = get(error, 'response.statusCode', error.code);
+      const statusMessage = get(error, 'response.statusMessage', error.message);
+      let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
+  
+      const responseError = get(error, 'response.body.errors');
+      if (responseError) {
+        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
+      }
+  
+      log.error(errorMessage);
+      throw new Error(errorMessage);
     }
-  };
-  try {
-    response2 = await got.get(`https://${cmrenv}urs.earthdata.nasa.gov/api/users/tokens`,
-      {
-        responseType: 'json',
-        headers: {
-          Authorization: 'Basic ' + buff,
-        },
-      }).json();
-  } catch (error) {
-    logDetails.credentials = credentials;
-    log.error(error, logDetails);
-    const statusCode = get(error, 'response.statusCode', error.code);
-    const statusMessage = get(error, 'response.statusMessage', error.message);
-    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-
-    const responseError = get(error, 'response.body.errors');
-    if (responseError) {
-      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
-    }
-
-    log.error(errorMessage);
-    throw new Error(errorMessage);
-  }
-  if (response2.body.access_token) {
-    return response2.body.access_token.id;
-  }
-  let response3: {
-    body: {
-      uid?: { id: string },
-    }
-  };
-  const tok = response.body.access_token ? response.body.access_token.id : '';
-
-  //response3: validate the token from authentication and return since the user doesn't have a token
-  try {
-    response3 = await got.post(`https://${cmrenv}urs.earthdata.nasa.gov/oauth/tokens/user?client_id=${Buffer.from(clientId).toString('base64')}&${tok}`,
-      {
-        responseType: 'json',
-        headers: {
-          Authorization: 'Basic ' + buff,
-        },
-      }).json();
-  } catch (error) {
-    logDetails.credentials = credentials;
-    log.error(error, logDetails);
-    const statusCode = get(error, 'response.statusCode', error.code);
-    const statusMessage = get(error, 'response.statusMessage', error.message);
-    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-
-    const responseError = get(error, 'response.body.errors');
-    if (responseError) {
-      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
-    }
-
-    log.error(errorMessage);
-    throw new Error(errorMessage);
-  }
-  if (!response.body.access_token || !response3.body.uid) {
-    throw new Error('Error: Invalid request');
-  } else {
-    return response.body.access_token.id;
+    return response2.access_token;
   }
 }
 
@@ -254,7 +218,7 @@ export class CMR {
   async getToken(): Promise<string> {
     return this.token
       ? this.token
-      : updateToken(this.clientId, this.username, await this.getCmrPassword());
+      : updateToken(this.username, await this.getCmrPassword());
   }
 
   /**
