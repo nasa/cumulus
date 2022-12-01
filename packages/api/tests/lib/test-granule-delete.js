@@ -279,7 +279,7 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
     collection: t.context.collectionId,
     deletedGranuleId: newPgGranule.granule_id,
   });
-  t.is(details.deletedFiles.length, 0);
+  t.is(details.deletedFiles.length, 1);
 
   t.false(await granulePgModel.exists(
     t.context.knex,

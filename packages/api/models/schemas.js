@@ -406,7 +406,7 @@ module.exports.granule = {
       additionalProperties: true,
     },
   },
-  required: ['granuleId', 'collectionId', 'status', 'createdAt', 'updatedAt'],
+  required: ['granuleId', 'collectionId', 'status', 'updatedAt'],
 };
 
 // NOTE -- This schema is being removed/deprecated in P3,

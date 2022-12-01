@@ -97,7 +97,12 @@ const deleteGranuleAndFiles = async (params: {
     logger.debug(`Successfully deleted granule ${apiGranule.granuleId} from ES datastore`);
     await deleteS3Files(apiGranule.files);
     logger.debug(`Successfully removed S3 files ${JSON.stringify(apiGranule.files)}`);
-    return;
+    return {
+      collection: apiGranule.collectionId,
+      deletedGranuleId: apiGranule.granuleId,
+      deletionTime: Date.now(),
+      deletedFiles: apiGranule.files,
+    };
   }
   if (pgGranule && pgGranule.published) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
@@ -135,6 +140,12 @@ const deleteGranuleAndFiles = async (params: {
     logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from ES/PostGreSQL datastores`);
     await deleteS3Files(files);
     logger.debug(`Successfully removed S3 files ${JSON.stringify(files)}`);
+    return {
+      collection: granuleToPublishToSns.collectionId,
+      deletedGranuleId: pgGranule.granule_id,
+      deletionTime: Date.now(),
+      deletedFiles: files,
+    };
   } catch (error) {
     logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${JSON.stringify(error)}`);
     throw error;
