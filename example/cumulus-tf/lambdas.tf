@@ -165,3 +165,47 @@ resource "aws_lambda_function" "ftpPopulateTestLambda" {
     }
   }
 }
+
+resource "aws_secretsmanager_secret" "lzards_api_client_test_launchpad_passphrase" {
+  name_prefix = "${var.prefix}-lzards-api-client-test-launchpad-passphrase"
+  description = "Launchpad passphrase for the Cumulus API's ${var.prefix} deployment"
+  tags        = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "lzards_api_client_test_launchpad_passphrase" {
+  count         = length(var.launchpad_passphrase) == 0 ? 0 : 1
+  secret_id     = aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.id
+  secret_string = var.launchpad_passphrase
+}
+
+resource "aws_lambda_function" "lzards_api_client_test" {
+  function_name    = "${var.prefix}-LzardsApiClientTest"
+  filename         = "${path.module}/../lambdas/lzardsClientTest/dist/webpack/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../lambdas/lzardsClientTest/dist/webpack/lambda.zip")
+  handler          = "index.handler"
+  role             = module.cumulus.lambda_processing_role_arn
+  runtime          = "nodejs14.x"
+  timeout          = 600
+  memory_size      = 512
+
+  environment {
+    variables = {
+      system_bucket                           = var.system_bucket
+      stackName                               = var.prefix
+      lzards_api                              = var.lzards_api
+      launchpad_api                           = var.launchpad_api
+      lzards_launchpad_certificate            = var.launchpad_certificate
+      lzards_launchpad_passphrase_secret_name = length(var.launchpad_passphrase) == 0 ? null : aws_secretsmanager_secret.lzards_api_client_test_launchpad_passphrase.name
+    }
+  }
+
+  tags = local.tags
+
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = [aws_security_group.no_ingress_all_egress.id]
+    }
+  }
+}

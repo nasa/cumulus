@@ -1895,15 +1895,15 @@ test.serial('A valid internal reconciliation report is generated when ES and DB 
   await Promise.all(
     matchingGrans.map(async (gran) => {
       await indexer.indexGranule(esClient, gran, esAlias);
-      const pgGranule = await translateApiGranuleToPostgresGranule(
-        gran,
-        knex
-      );
-      await upsertGranuleWithExecutionJoinRecord(
-        knex,
-        pgGranule,
-        executionCumulusId
-      );
+      const pgGranule = await translateApiGranuleToPostgresGranule({
+        dynamoRecord: gran,
+        knexOrTransaction: knex,
+      });
+      await upsertGranuleWithExecutionJoinRecord({
+        executionCumulusId,
+        granule: pgGranule,
+        knexTransaction: knex,
+      });
     })
   );
 

@@ -6,7 +6,7 @@ resource "aws_lambda_function" "hyrax_metadata_updates_task" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = lookup(var.lambda_timeouts, "hyrax_metadata_updates_task_timeout", 300)
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "hyrax_metadata_updates_task_memory_size", 512)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

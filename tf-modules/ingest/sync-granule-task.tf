@@ -6,7 +6,7 @@ resource "aws_lambda_function" "sync_granule_task" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = lookup(var.lambda_timeouts, "sync_granule_task_timeout", 300)
-  memory_size      = 1024
+  memory_size      = lookup(var.lambda_memory_sizes, "sync_granule_task_memory_size", 1024)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

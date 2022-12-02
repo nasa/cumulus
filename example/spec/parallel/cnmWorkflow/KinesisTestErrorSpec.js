@@ -37,7 +37,7 @@ const {
 
 const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
 
-const ruleDirectory = './spec/parallel/kinesisTests/data/rules';
+const ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis';
 
 describe('The messageConsumer receives a bad record.\n', () => {
   const providersDir = './data/providers/PODAAC_SWOT/';

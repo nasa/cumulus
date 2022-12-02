@@ -37,6 +37,7 @@ const {
   fileExists,
 } = require('../S3');
 const awsServices = require('../services');
+const { streamToString } = require('../test-utils');
 
 const mkdtemp = promisify(fs.mkdtemp);
 const rmdir = promisify(fs.rmdir);
@@ -44,17 +45,6 @@ const unlink = promisify(fs.unlink);
 const writeFile = promisify(fs.writeFile);
 
 const randomString = () => cryptoRandomString({ length: 10 });
-
-const streamToString = (stream) => {
-  let result = '';
-
-  // eslint-disable-next-line no-return-assign
-  stream.on('data', (chunk) => result += chunk.toString());
-
-  return new Promise((resolve) => {
-    stream.on('end', () => resolve(result));
-  });
-};
 
 const stageTestObjectToLocalStack = (bucket, body, key = randomString()) =>
   awsServices.s3().putObject({ Bucket: bucket, Key: key, Body: body })
@@ -101,7 +91,8 @@ test('createBucket() creates a bucket', async (t) => {
   }
 });
 
-test('deleteS3Objects() deletes s3 objects', async (t) => {
+// TODO enable the test after CUMULUS-3106 fix
+test.skip('deleteS3Objects() deletes s3 objects', async (t) => {
   const bucketName = randomString();
   await createBucket(bucketName);
 

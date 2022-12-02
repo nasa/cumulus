@@ -270,8 +270,14 @@ async function createDBRecords(stackName, user, knexOverride) {
     published: false, // Important - we need to be able to delete these.
   });
   await serveUtils.addGranules([granule]);
-  const postgresGranule = await translateApiGranuleToPostgresGranule(granule, knex);
-  await granulePgModel.upsert(knex, postgresGranule);
+  const postgresGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: knex,
+  });
+  await granulePgModel.upsert({
+    granule: postgresGranule,
+    knexOrTrx: knex,
+  });
 
   // add pdrs records
   const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });

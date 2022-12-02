@@ -92,12 +92,6 @@ async function cleanUp() {
   console.log(`\nDeleting rule ${ruleOverride.name}`);
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
-
-  await apiTestUtils.deletePdr({
-    prefix: config.stackName,
-    pdr: pdrFilename,
-  });
-
   const collection = collectionResult[0];
   // Delete successful execution and 2 failed executions
   const executions = JSON.parse((await getExecutions({
@@ -115,6 +109,11 @@ async function cleanUp() {
   await Promise.all(inputPayload.granules.map(
     (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
   ));
+
+  await apiTestUtils.deletePdr({
+    prefix: config.stackName,
+    pdr: pdrFilename,
+  });
 
   await Promise.all([
     deleteS3Object(config.bucket, key),
