@@ -22,7 +22,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### AWS
 
-  See: [Amazon Web Services documentation](https://aws.amazon.com/).
+  See: [Amazon Web Services documentation](https://aws.amazon.com/documentation-overview/).
 
 ### AWS Lambda/Lambda Function
 
