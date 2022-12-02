@@ -67,7 +67,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { create, put, patch, putGranule } = require('../../endpoints/granules');
+const { create, put, patch, patchGranule } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
@@ -2518,7 +2518,7 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
   t.truthy(createGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial("put() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
+test.serial("patch() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2554,7 +2554,7 @@ test.serial("put() sets a default createdAt value for new granule if it's not se
     },
   };
   const response = buildFakeExpressResponse();
-  await putGranule(expressRequest, response);
+  await patchGranule(expressRequest, response);
 
   t.truthy(updateGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
