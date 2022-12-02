@@ -106,11 +106,13 @@ async function createGranuleAndFiles({
       bucket: s3Buckets.protected.name, // TODO making some assumptions
       fileName: `${granuleId}.hdf`,
       key: `${randomString(5)}/${granuleId}.hdf`,
+      size: 50,
     },
     {
       bucket: s3Buckets.public.name,
       fileName: `${granuleId}.jpg`,
       key: `${randomString(5)}/${granuleId}.jpg`,
+      size: 50,
     },
   ];
 
@@ -125,6 +127,7 @@ async function createGranuleAndFiles({
     bucket: s3Buckets.protected.name,
     fileName: `${granuleId}.cmr.xml`,
     key: `${randomString(5)}/${granuleId}.cmr.xml`,
+    size: 7956,
   };
   await s3PutObject({
     Bucket: metadataFile.bucket,
@@ -158,10 +161,11 @@ async function createGranuleAndFiles({
   await Promise.all(
     files.map((f) => {
       const pgFile = {
-        granule_cumulus_id: pgGranule.cumulus_id,
         bucket: f.bucket,
         file_name: f.fileName,
+        granule_cumulus_id: pgGranule.cumulus_id,
         key: f.key,
+        file_size: f.size,
       };
 
       return filePgModel.create(dbClient, pgFile);
