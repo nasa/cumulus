@@ -1,5 +1,6 @@
 // @ts-nocheck
-import { get, size} from 'lodash';
+import get from 'lodash';
+import size from 'lodash';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
@@ -12,7 +13,6 @@ import deleteConcept from './deleteConcept';
 import getConceptMetadata from './getConcept';
 import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
-import { size } from 'lodash';
 
 const log = new Logger({ sender: 'cmr-client' });
 
@@ -76,7 +76,7 @@ async function updateToken(
     log.error(errorMessage);
     throw new Error(errorMessage);
   }
-  if (size(Object.values(response)) === 0) {
+  if (Object.keys(response).length === 0) {
     let response2:
     {
       body: {
