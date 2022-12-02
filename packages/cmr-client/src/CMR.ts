@@ -1,6 +1,5 @@
 // @ts-nocheck
-import get from 'lodash';
-import size from 'lodash';
+import get from 'lodash/get';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
@@ -112,10 +111,9 @@ async function updateToken(
       log.error(errorMessage);
       throw new Error(errorMessage);
     }
-    return `Bearer ${response2.access_token}`;
-  } else {
-    return `Bearer ${response[0].access_token}`;
-  }
+    return response2.access_token;
+  } 
+  return response[0].access_token;
 }
 
 export interface CMRConstructorParams {
