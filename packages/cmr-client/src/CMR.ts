@@ -112,9 +112,9 @@ async function updateToken(
       log.error(errorMessage);
       throw new Error(errorMessage);
     }
-    return response2.access_token;
+    return `Bearer ${response2.access_token}`;
   } else {
-    return response[0].access_token;
+    return `Bearer ${response[0].access_token}`;
   }
 }
 
