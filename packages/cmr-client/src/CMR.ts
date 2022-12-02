@@ -112,7 +112,7 @@ async function updateToken(
       throw new Error(errorMessage);
     }
     return response2.access_token;
-  } 
+  }
   return response[0].access_token;
 }
 
