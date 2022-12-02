@@ -247,7 +247,7 @@ const putGranule = async (req, res) => {
 };
 
 function put(req, res) {
-  res.boom.badRequest('Put method not implemented');
+  return res.boom.badRequest('put method not implemented');
 }
 
 /**

@@ -67,7 +67,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { create, patch, putGranule } = require('../../endpoints/granules');
+const { create, put, patch, putGranule } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
@@ -3397,4 +3397,47 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
 
   t.is(response.body.error, 'Not Found');
   t.true(response.body.message.includes(`No collection found to associate execution with for collectionId ${collectionId}`));
+});
+
+test.serial('PUT throws not implemented error', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: { status: 'running', execution: executionUrl },
+  });
+
+  const fakeEsClient = {
+    update: () => {
+      throw new Error('something bad');
+    },
+    delete: () => Promise.resolve(),
+  };
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+  };
+
+  const expressRequest = {
+    params: {
+      granuleName: updatedGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      esClient: fakeEsClient,
+    },
+  };
+  const response = buildFakeExpressResponse();
+
+  put(expressRequest, response);
+
+  t.true(response.boom.badRequest.calledWithMatch('put method not implemented'));
 });
