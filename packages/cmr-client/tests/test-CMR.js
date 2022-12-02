@@ -1,13 +1,17 @@
 'use strict';
+
 const test = require('ava');
 const nock = require('nock');
 const some = require('lodash/some');
+
 const awsServices = require('@cumulus/aws-client/services');
 const { CMRInternalError } = require('@cumulus/errors');
+
 const { CMR } = require('../CMR');
 
 test.before(() => {
-  nock.enableNetConnect();
+  nock.disableNetConnect();
+  nock.enableNetConnect(/(localhost|127.0.0.1)/);
 });
 
 test.afterEach.always(() => {
@@ -240,4 +244,16 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
       ForceDeleteWithoutRecovery: true,
     }).promise();
   }
+});
+
+test('getToken returns a token when the user\'s token is provided', async (t) => {
+  const cmrObj = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    username: 'username',
+    password: 'password',
+    token: 'abcde'
+  });
+
+  t.is(await cmrObj.getToken(), 'abcde');
 });
