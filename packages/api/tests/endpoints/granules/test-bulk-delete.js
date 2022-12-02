@@ -362,11 +362,9 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking St
   t.is(response.status, 500);
 });
 
-test.serial('POST /granules/bulkDelete starts an async-operation with a large list of IDs as input', async (t) => {
-  const expectedIds = generateListOfGranules();
-
+test.serial('POST /granules/bulkDelete starts an async-operation with a large list of granules as input', async (t) => {
   const body = {
-    ids: expectedIds,
+    granules: generateListOfGranules(),
     forceRemoveFromCmr: true,
   };
 
@@ -376,7 +374,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with a large li
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(202);
-
+  
   // expect a returned async operation ID
   t.truthy(response.body.id);
 });

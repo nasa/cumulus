@@ -193,13 +193,14 @@ async function createGranuleAndFiles({
 const generateListOfGranules = (count = 5000) => {
   const granuleRegString = () => randomStringFromRegex('^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$');
   const granuleLongString = () => randomStringFromRegex('^SWOT_L2_HR_Raster_\\_[\\w]{6}\\_[\\w]{1}\\_[\\d]{20}\\_[\\w]{6}\\_[\\d]{13}$');
-  const granuleIds = [];
+  const collectionId = () => `${randomString(3)}__${randomString(5)}`;
+  const granules = [];
   const halfOfCount = count / 2;
   for (let i = 0; i < halfOfCount; i += 1) {
-    granuleIds.push(granuleRegString());
-    granuleIds.push(granuleLongString());
+    granules.push({ granuleId: granuleRegString(), collectionId: collectionId() });
+    granules.push({ granuleId: granuleLongString(), collectionId: collectionId() });
   }
-  return granuleIds;
+  return granules;
 };
 
 module.exports = {
