@@ -1,5 +1,5 @@
 // @ts-nocheck
-import get from 'lodash/get';
+import { get, size} from 'lodash';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
@@ -46,21 +46,21 @@ async function updateToken(
   // response: get a token from the Earthdata login endpoint using credentials if exists
   let response: {
     body : {
-        access_token: {
-          id: string,
-        },
-        expiration_date: {
-          id: BigInteger,
-        }
+      access_token: {
+        id: string,
+      },
+      expiration_date: {
+        id: BigInteger,
+      }
     }
   };
   try {
     response = await got.get(`https://${cmrenv}urs.earthdata.nasa.gov/api/users/tokens`,
-        {
+      {
         headers: {
-            Authorization: `Basic ${buff}`,
+          Authorization: `Basic ${buff}`,
         },
-    }).json();
+      }).json();
   } catch (error) {
     logDetails.credentials = credentials;
     log.error(error, logDetails);
@@ -76,9 +76,7 @@ async function updateToken(
     log.error(errorMessage);
     throw new Error(errorMessage);
   }
-  if (size(Object.values(response)) !== 0) {
-    return response[0].access_token;
-  }else{
+  if (size(Object.values(response)) === 0) {
     let response2:
     {
       body: {
@@ -107,16 +105,16 @@ async function updateToken(
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
       let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-  
       const responseError = get(error, 'response.body.errors');
       if (responseError) {
         errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
       }
-  
       log.error(errorMessage);
       throw new Error(errorMessage);
     }
     return response2.access_token;
+  } else {
+    return response[0].access_token;
   }
 }
 

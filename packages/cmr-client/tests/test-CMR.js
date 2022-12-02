@@ -252,7 +252,7 @@ test('getToken returns a token when the user\'s token is provided', async (t) =>
     clientId: 'clientId',
     username: 'username',
     password: 'password',
-    token: 'abcde'
+    token: 'abcde',
   });
 
   t.is(await cmrObj.getToken(), 'abcde');
