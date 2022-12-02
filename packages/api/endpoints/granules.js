@@ -246,6 +246,10 @@ const putGranule = async (req, res) => {
   return _returnPutGranuleStatus(isNewRecord, apiGranule, res);
 };
 
+function put(req, res) {
+  res.boom.badRequest('Put method not implemented');
+}
+
 /**
  * Update a single granule.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
@@ -256,7 +260,7 @@ const putGranule = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res) {
+async function patch(req, res) {
   const {
     granuleModel = new Granule(),
     knex = await getKnexClient(),
@@ -711,7 +715,8 @@ router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', put);
+router.put('/:granuleName', patch);
+router.patch('/:granuleName', patch);
 
 router.post(
   '/bulk',
@@ -739,6 +744,7 @@ module.exports = {
   bulkReingest,
   create,
   put,
+  patch,
   putGranule,
   router,
 };
