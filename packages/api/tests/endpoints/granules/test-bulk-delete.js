@@ -374,7 +374,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with a large li
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(202);
-  
+
   // expect a returned async operation ID
   t.truthy(response.body.id);
 });
