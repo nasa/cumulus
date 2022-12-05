@@ -104,7 +104,7 @@ const deleteGranuleAndFiles = async (params: {
       deletedFiles: apiGranule.files,
     };
   }
-  if (pgGranule && pgGranule.published) {
+  if (pgGranule?.published === true) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
   // Delete PG Granule, PG Files, S3 Files
