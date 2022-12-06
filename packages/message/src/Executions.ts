@@ -13,9 +13,10 @@
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import omitBy from 'lodash/omitBy';
+import isUndefined from 'lodash/isUndefined';
 
 import { Message } from '@cumulus/types';
-import { ExecutionRecord } from '@cumulus/types/api/executions';
+import { Execution } from '@cumulus/types/api/executions';
 
 import {
   getMessageAsyncOperationId,
@@ -32,7 +33,6 @@ import {
   getWorkflowDuration,
 } from './workflows';
 import { parseException } from './utils';
-import { isUndefined } from 'lodash';
 
 interface MessageWithPayload extends Message.CumulusMessage {
   payload: object
@@ -207,26 +207,25 @@ export const getMessageExecutionFinalPayload = (
  *
  * @param {MessageWithPayload} message - A workflow message object
  * @param {string} [updatedAt] - Optional updated timestamp to apply to record
- * @returns {ExecutionRecord} An execution API record
+ * @returns {Execution} An execution API record
  *
  * @alias module:Executions
  */
 export const generateExecutionApiRecordFromMessage = (
   message: MessageWithPayload,
   updatedAt = Date.now()
-): ExecutionRecord => {
+): Execution => {
   const arn = getMessageExecutionArn(message);
   if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
 
   const status = getMetaStatus(message);
   if (!status) throw new Error('Unable to determine status from Cumulus message');
 
-  const now = Date.now();
   const workflowStartTime = getMessageWorkflowStartTime(message);
   const workflowStopTime = getMessageWorkflowStopTime(message);
   const collectionId = getCollectionIdFromMessage(message);
 
-  const record: ExecutionRecord = {
+  const record = {
     name: getMessageExecutionName(message),
     cumulusVersion: getMessageCumulusVersion(message),
     arn,
@@ -239,13 +238,13 @@ export const generateExecutionApiRecordFromMessage = (
     collectionId,
     status,
     createdAt: workflowStartTime,
-    timestamp: now,
+    timestamp: updatedAt,
     updatedAt,
     originalPayload: getMessageExecutionOriginalPayload(message),
     finalPayload: getMessageExecutionFinalPayload(message),
     duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
   };
 
-  const updated = <ExecutionRecord>omitBy(record, isUndefined);
+  const updated = <Execution>omitBy(record, isUndefined);
   return updated;
 };

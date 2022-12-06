@@ -24,3 +24,23 @@ export interface ExecutionRecord {
   updatedAt: number,
   cumulusVersion?: string,
 }
+
+export interface Execution {
+  arn: string,
+  createdAt: number,
+  name: string
+  status: ExecutionRecordStatus,
+  asyncOperationId?: string | null,
+  collectionId?: string | null,
+  duration?: number | null,
+  error?: object | null,
+  execution?: string | null,
+  finalPayload?: object | null,
+  originalPayload?: object | null,
+  parentArn?: string | null,
+  tasks?: object | null,
+  timestamp?: number | null,
+  type?: string | null,
+  updatedAt: number,
+  cumulusVersion?: string | null,
+}

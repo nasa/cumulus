@@ -27,7 +27,7 @@ export type ApiGranule = {
   granuleId: string
   collectionId: string
   status: GranuleStatus
-  execution?: string
+  execution?: string | null
   cmrLink?: string
   published?: boolean
   pdrName?: string

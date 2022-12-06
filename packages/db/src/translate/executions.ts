@@ -1,7 +1,9 @@
 import { Knex } from 'knex';
 
+import isNil from 'lodash/isNil';
+
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { ExecutionRecord } from '@cumulus/types/api/executions';
+import { Execution, ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
 import { removeNilProperties } from '@cumulus/common/util';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
@@ -45,7 +47,7 @@ export const translatePostgresExecutionToApiExecution = async (
     throw new Error(`Execution ARN record ${executionRecord.arn} has an invalid postfix and API cannot generate the required 'name' field`);
   }
 
-  const translatedRecord: ExecutionRecord = {
+  const translatedRecord = {
     name: postfix,
     status: executionRecord.status,
     arn: executionRecord.arn,
@@ -70,7 +72,7 @@ export const translatePostgresExecutionToApiExecution = async (
 /**
  * Translate execution record from Dynamo to RDS.
  *
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} dynamoRecord
+ * @param {Execution} dynamoRecord
  *   Source record from DynamoDB
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} knex
  *   Knex client
@@ -83,7 +85,7 @@ export const translatePostgresExecutionToApiExecution = async (
  * @returns {PostgresExecutionRecord} - converted Execution
  */
 export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async (
-  dynamoRecord: ExecutionRecord,
+  dynamoRecord: Execution,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),
@@ -114,7 +116,7 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
     updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
   };
 
-  if (dynamoRecord.collectionId !== undefined) {
+  if (!isNil(dynamoRecord.collectionId)) {
     const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
     translatedRecord.collection_cumulus_id = await collectionPgModel.getRecordCumulusId(
       knex,
@@ -123,7 +125,7 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
   }
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
-  if (dynamoRecord.parentArn !== undefined) {
+  if (!isNil(dynamoRecord.parentArn)) {
     let parentId;
 
     try {
@@ -148,7 +150,7 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
 };
 
 export const translateApiExecutionToPostgresExecution = async (
-  dynamoRecord: ExecutionRecord,
+  dynamoRecord: Execution,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),

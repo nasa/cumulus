@@ -11,7 +11,6 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const isEqual = require('lodash/isEqual');
 
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -147,7 +146,7 @@ async function upsertExecution({
 }, writeConstraints = true) {
   const upsertDoc = {
     ...removeNilProperties(updates),
-    timestamp: Date.now(),
+    timestamp: updates.timestamp || Date.now(),
   };
 
   let removeString = '';
@@ -158,6 +157,7 @@ async function upsertExecution({
       removeString += `ctx._source.remove('${fieldName}'); `;
     }
   });
+  console.log(removeString);
 
   let inlineDocWriteString = 'ctx._source.putAll(params.doc);';
   if (removeString !== '') {
@@ -170,7 +170,6 @@ async function upsertExecution({
             ctx._source.updatedAt = params.doc.updatedAt;
             ctx._source.timestamp = params.doc.timestamp;
             ctx._source.originalPayload = params.doc.originalPayload;
-            ${inlineDocWriteString}
           } else {
             ${inlineDocWriteString}
           }
