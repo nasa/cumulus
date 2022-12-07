@@ -4,7 +4,7 @@ import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
-import { createEDLToken, getEDLToken, revokeEDLToken } from './EarthdataToken';
+import { createEDLToken, getEDLToken } from './EarthdataToken';
 import { CMRResponseBody, CMRErrorResponseBody } from './types';
 import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
@@ -21,7 +21,6 @@ const logDetails: { [key: string]: string } = {
 /**
  * Returns a valid a CMR token
  *
- * @param {string} clientId - the CMR clientId
  * @param {string} username - CMR username
  * @param {string} password - CMR password
  * @returns {Promise.<string>} the token
@@ -32,12 +31,11 @@ async function updateToken(
   username: string,
   password: string
 ): Promise<string> {
-  let returned_response = await getEDLToken(username, password);
-  if ( returned_response === '' ){
+  const returned_response = await getEDLToken(username, password);
+  if (returned_response === '') {
     return await createEDLToken(username, password);
-  } else {
-    return returned_response;
-  }
+  } 
+  return returned_response;
 }
 
 export interface CMRConstructorParams {
