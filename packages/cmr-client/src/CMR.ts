@@ -31,11 +31,11 @@ async function updateToken(
   username: string,
   password: string
 ): Promise<string> {
-  const returned_response = await getEDLToken(username, password);
-  if (returned_response === '') {
+  const returnedresponse = await getEDLToken(username, password);
+  if (returnedresponse === '') {
     return await createEDLToken(username, password);
-  } 
-  return returned_response;
+  }
+  return returnedresponse;
 }
 
 export interface CMRConstructorParams {

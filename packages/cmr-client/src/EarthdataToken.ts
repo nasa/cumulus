@@ -12,17 +12,17 @@ const logDetails: { [key: string]: string } = {
 
 function formatData(
   username: string,
-  password: string,
+  password: string
 ) {
   const credentials = username + ':' + password;
   const buff = Buffer.from(credentials).toString('base64');
   let cmrenv = '';
   if (process.env.CMR_ENVIRONMENT === 'PROD' || process.env.CMR_ENVIRONMENT === 'OPS') {
-      cmrenv = '';
+    cmrenv = '';
   } else if (process.env.CMR_ENVIRONMENT === 'UAT' || process.env.CMR_ENVIRONMENT === 'SIT') {
-      cmrenv = process.env.CMR_ENVIRONMENT + '.';
+    cmrenv = process.env.CMR_ENVIRONMENT + '.';
   } else {
-      throw new TypeError(`Invalid CMR environment: ${process.env.CMR_ENVIRONMENT}`);
+    throw new TypeError(`Invalid CMR environment: ${process.env.CMR_ENVIRONMENT}`);
   }
   const returnarray: Array<string> = [buff, cmrenv];
   return returnarray;
@@ -48,7 +48,6 @@ export async function getEDLToken(
     const statusCode = get(error, 'response.statusCode', error.code);
     const statusMessage = get(error, 'response.statusMessage', error.message);
     let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-
     const responseError = get(error, 'response.body.errors');
     if (responseError) {
       errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
@@ -58,16 +57,16 @@ export async function getEDLToken(
     throw new Error(errorMessage);
   }
   if (Object.keys(response).length === 0) {
-      return '';
+    return '';
   }
   return response[0].access_token;
 }
 
 export async function createEDLToken(
-    username: string,
-    password: string
-): Promise<string>{
-  let data = formatData(username, password);
+  username: string,
+  password: string
+): Promise<string> {
+  const data = formatData(username, password);
   let response: EarthdataPostTokenResponse;
   try {
     response = await got.post(`https://${data[1]}urs.earthdata.nasa.gov/api/users/token`,
@@ -86,6 +85,7 @@ export async function createEDLToken(
     if (responseError) {
       errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
     }
+
     log.error(errorMessage);
     throw new Error(errorMessage);
   }
@@ -93,31 +93,30 @@ export async function createEDLToken(
 }
 
 export async function revokeEDLToken(
-    username: string,
-    password: string,
-    token: string
-): Promise<void>{
-  let data = formatData(username, password);
+  username: string,
+  password: string,
+  token: string
+): Promise<void> {
+  const data = formatData(username, password);
   try {
-    let response = await got.post(`https://${data[1]}urs.earthdata.nasa.gov/api/users/revoke_token?token=${token}`,
+    const response = await got.post(`https://${data[1]}urs.earthdata.nasa.gov/api/users/revoke_token?token=${token}`,
       {
         headers: {
           Authorization: `Basic ${data[0]}`,
         },
       }).json();
-    } catch (error) {
-      logDetails.credentials = username + ':' + password;
-      log.error(error, logDetails);
-      const statusCode = get(error, 'response.statusCode', error.code);
-      const statusMessage = get(error, 'response.statusMessage', error.message);
-      let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-    
-      const responseError = get(error, 'response.body.errors');
-      if (responseError) {
-        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
-      }
-    
-      log.error(errorMessage);
-      throw new Error(errorMessage);
+  } catch (error) {
+    logDetails.credentials = username + ':' + password;
+    log.error(error, logDetails);
+    const statusCode = get(error, 'response.statusCode', error.code);
+    const statusMessage = get(error, 'response.statusMessage', error.message);
+    let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
+    const responseError = get(error, 'response.body.errors');
+    if (responseError) {
+      errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
     }
+
+    log.error(errorMessage);
+    throw new Error(errorMessage);
+  }
 }
