@@ -99,12 +99,14 @@ export async function revokeEDLToken(
 ): Promise<void> {
   const data = formatData(username, password);
   try {
+    /* eslint-disable no-unused-vars */
     const response = await got.post(`https://${data[1]}urs.earthdata.nasa.gov/api/users/revoke_token?token=${token}`,
       {
         headers: {
           Authorization: `Basic ${data[0]}`,
         },
       }).json();
+      /* eslint-disable no-unused-vars */
   } catch (error) {
     logDetails.credentials = username + ':' + password;
     log.error(error, logDetails);
