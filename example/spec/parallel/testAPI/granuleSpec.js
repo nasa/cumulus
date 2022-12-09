@@ -369,6 +369,8 @@ describe('The Granules API', () => {
       try {
         await updateGranule({
           prefix,
+          granuleId: granuleWithDiffCollection.granuleId,
+          collectionId: granuleWithDiffCollection.collectionId,
           body: granuleWithDiffCollection,
         });
       } catch (error) {
