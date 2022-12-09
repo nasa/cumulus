@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-2915**
+  - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
+  - The user (dashboard) must read the `s3SignedURL` and `data` from the return
 - **CUMULUS-3070/3074**
   - Updated granule PUT/POST endpoints to no longer respect message write
     constraints.  Functionally this means that:
@@ -20,10 +23,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Granules being set to non-complete state will update all values passed in,
       instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
       'status', 'execution']`
-- **CUMULUS-2915**
-  - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
-  - The user (dashboard) must read the `s3SignedURL` and `data` from the return
-
 
 ### Added
 
@@ -49,26 +48,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2915**
-   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
-     presigned s3 URL in addition to execution status data
+  - Updated API endpoint GET `/executions/status/${executionArn}` to return the
+    presigned s3 URL in addition to execution status data
 - **CUMULUS-3045**
   - Update GitHub FAQs:
     - Add new and refreshed content for previous sections
     - Add new dedicated Workflows section
-- **CUMULUS-3075**
-  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
-    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was
-    undefined, now changed to an empty array.
-  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
-  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
-- **CUMULUS-3077**
-  - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
-- **CUMULUS-3080**
-  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
-- **CUMULUS-3100**
-  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
-  - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
-  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
 - **CUMULUS-3070**
   - Updated API granule write logic to no longer require createdAt value in
     dynamo/API granule validation.   Write-time createdAt defaults will be set in the case
@@ -85,37 +70,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated @cumulus/db/types/granules.PostgresGranule typings to allow for null values
   - Added ApiGranuleRecord to @cumulus/api/granule type to represent a written/retrieved from datastore API granule record.
   - Update API/Message write logic to handle nulls as deletion in granule PUT/message write logic
-- Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
-- **CUMULUS-3024**
-  - Update PUT /granules endpoint to operate consistently across datastores
-    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
-    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
-  - Given a partial Granule object, the /granules update endpoint now operates
-    with behavior more consistent with a PATCH operation where fields not provided
-    in the payload will not be updated in the datastores.
-  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
-    granule formats.
-  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
-    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
-  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
+- **CUMULUS-3075**
+  - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
+    undefined, now changed to an empty array. 
+  - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
+  - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
+- **CUMULUS-3077**
+  - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
+- **CUMULUS-3080**
+  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
+- **CUMULUS-3100**
+  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
+  - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
+  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
 
- ### Fixed
+### Fixed
 
+- **CUMULUS-3070**
+  - Fixed inaccurate typings for PostgresGranule in @cumulus/db/types/granule
+  - Fixed inaccurate typings for @cumulus/api/granules.ApiGranule and updated to
+    allow null
 - **CUMULUS-3104**
   - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
 - **CUMULUS-3116**
   - Reverted the default ElasticSearch sorting behavior to the pre-13.3.0 configuration
   - Results from ElasticSearch are sorted by default by the `timestamp` field. This means that the order
   is not guaranteed if two or more records have identical timestamps as there is no secondary sort/tie-breaker.
-- **CUMULUS-3070**
-  - Fixed inaccurate typings for PostgresGranule in @cumulus/db/types/granule
-  - Fixed inaccurate typings for @cumulus/api/granules.ApiGranule and updated to
-    allow null
 
 ## [v13.4.0] 2022-10-31
+
 ### Notable changes
 
-- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+- **CUMULUS-3104**
+  - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
 
 ### Added
 
@@ -144,6 +132,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       - update_cmr_access_constraints_task_memory_size
       - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
+  - Adds Terraform timeout variable for add_missing_file_checksums_task
 - **CUMULUS-2631**
   - Added 'Bearer token' support to s3credentials endpoint
 - **CUMULUS-2787**
@@ -153,7 +142,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
+- **CUMULUS-3024**
+  - Update PUT /granules endpoint to operate consistently across datastores
+    (PostgreSQL, ElasticSearch, DynamoDB). Previously it was possible, given a
+    partial Granule payload to have different data in Dynamo/ElasticSearch and PostgreSQL
+  - Given a partial Granule object, the /granules update endpoint now operates
+    with behavior more consistent with a PATCH operation where fields not provided
+    in the payload will not be updated in the datastores.
+  - Granule translation (db/src/granules.ts) now supports removing null/undefined fields when converting from API to Postgres
+    granule formats.
+  - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
+    an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
+  - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 - **CUMULUS-2913**
@@ -478,7 +480,7 @@ releases.
 
 ## [v12.0.3] 2022-10-03 [BACKPORT]
 
-**Please note** changes in 11.1.7 may not yet be released in future versions, as
+**Please note** changes in 12.0.3 may not yet be released in future versions, as
 this is a backport and patch release on the 12.0.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
@@ -549,6 +551,37 @@ releases.
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+
+## [v11.1.8] 2022-11-07 [BACKPORT]
+
+**Please note** changes in 11.1.7 may not yet be released in future versions, as
+this is a backport and patch release on the 11.1.x series of releases. Updates that
+are included in the future will have a corresponding CHANGELOG entry in future
+releases.
+
+### Breaking Changes
+
+- **CUMULUS-2903**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
+    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
+    property of any tasks defined using the `cumulus_ecs_service` Terraform
+    module.
+
+### Notable changes
+
+- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+
+### Changed
+
+- **CUMULUS-3104**
+  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
+  - Sets default async_operation_image version to 43.
+  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
+
+- **CUMULUS-3080**
+  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
 
 ## [v11.1.7] 2022-10-05 [BACKPORT]
 
@@ -2877,7 +2910,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
 - **CUMULUS-2321**
   - Updated API endpoint GET `/reconciliationReports/{name}` to return the
-    pre-signe s3 URL in addition to report data
+    presigned s3 URL in addition to report data
 
 ### Fixed
 
@@ -6690,7 +6723,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v12.0.3]: https://github.com/nasa/cumulus/compare/v12.0.2...v12.0.3
 [v12.0.2]: https://github.com/nasa/cumulus/compare/v12.0.1...v12.0.2
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
-[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.7...v12.0.0
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.8...v12.0.0
+[v11.1.8]: https://github.com/nasa/cumulus/compare/v11.1.7...v11.1.8
 [v11.1.7]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.7
 [v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
