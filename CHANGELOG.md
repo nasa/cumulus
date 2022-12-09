@@ -20,6 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Granules being set to non-complete state will update all values passed in,
       instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
       'status', 'execution']`
+- **CUMULUS-2915**
+  - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
+  - The user (dashboard) must read the `s3SignedURL` and `data` from the return
 
 
 ### Added
@@ -38,60 +41,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed dataType/version from api granule schema
   - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
     logic for PUT/PATCH endpoint
-
-## [v13.4.0] 2022-10-31
-
-### Notable changes
-
-  - Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
-
-### Breaking changes
-
-- **CUMULUS-2915**
-  - API endpoint GET `/executions/status/${executionArn}` returns `presignedS3Url` and `data`
-  - The user (dashboard) must read the `s3SignedURL` and `data` from the return
-
-### Added
-
 - **CUMULUS-3098**
   - Added task configuration setting named `failTaskWhenFileBackupFail` to the
     `lzards-backup` task. This setting is `false` by default, but when set to
     `true`, task will fail if one of the file backup request fails.
-- **CUMULUS-2998**
-  - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
-    - fake_processing_task_timeout and fake_processing_task_memory_size
-    - files_to_granules_task_timeout and files_to_granule_task_memory_size
-    - hello_world_task_timeout and hello_world_task_memory_size
-    - sf_sqs_report_task_timeout and sf_sqs_report_task_memory_size
-- **CUMULUS-2986**
-  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
-    allowed properties include:
-    - add_missing_file_checksums_task_memory_size
-    - discover_granules_task_memory_size
-    - discover_pdrs_task_memory_size
-    - hyrax_metadata_updates_task_memory_size
-    - lzards_backup_task_memory_size
-    - move_granules_task_memory_size
-    - parse_pdr_task_memory_size
-    - pdr_status_check_task_memory_size
-    - post_to_cmr_task_memory_size
-    - queue_granules_task_memory_size
-    - queue_pdrs_task_memory_size
-    - queue_workflow_task_memory_size
-    - sync_granule_task_memory_size
-    - update_cmr_access_constraints_task_memory_size
-    - update_granules_cmr_task_memory_size
-  - Initializes the lambda_memory_size(s) variable in the Terraform variable list
-  - Adds Terraform timeout variable for add_missing_file_checksums_task
-- **CUMULUS-2631**
-  - Added 'Bearer token' support to s3credentials endpoint
-- **CUMULUS-2787**
-  - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
-- **CUMULUS-2944**
-  - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
 
 ### Changed
 
+- **CUMULUS-2915**
+   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
+     presigned s3 URL in addition to execution status data
 - **CUMULUS-3045**
   - Update GitHub FAQs:
     - Add new and refreshed content for previous sections
@@ -139,6 +98,62 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update granule write logic: if a `null` files key is provided in an update payload (e.g. `files: null`),
     an error will be thrown. `null` files were not previously supported and would throw potentially unclear errors. This makes the error clearer and more explicit.
   - Update granule write logic: If an empty array is provided for the `files` key, all files will be removed in all datastores
+
+ ### Fixed
+
+- **CUMULUS-3104**
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
+- **CUMULUS-3116**
+  - Reverted the default ElasticSearch sorting behavior to the pre-13.3.0 configuration
+  - Results from ElasticSearch are sorted by default by the `timestamp` field. This means that the order
+  is not guaranteed if two or more records have identical timestamps as there is no secondary sort/tie-breaker.
+- **CUMULUS-3070**
+  - Fixed inaccurate typings for PostgresGranule in @cumulus/db/types/granule
+  - Fixed inaccurate typings for @cumulus/api/granules.ApiGranule and updated to
+    allow null
+
+## [v13.4.0] 2022-10-31
+### Notable changes
+
+- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
+
+### Added
+
+- **CUMULUS-2998**
+  - Added Memory Size and Timeout terraform variable configuration for the following Cumulus tasks:
+    - fake_processing_task_timeout and fake_processing_task_memory_size
+    - files_to_granules_task_timeout and files_to_granule_task_memory_size
+    - hello_world_task_timeout and hello_world_task_memory_size
+    - sf_sqs_report_task_timeout and sf_sqs_report_task_memory_size
+- **CUMULUS-2986**
+  - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
+    allowed properties include:
+      - add_missing_file_checksums_task_memory_size
+      - discover_granules_task_memory_size
+      - discover_pdrs_task_memory_size
+      - hyrax_metadata_updates_task_memory_size
+      - lzards_backup_task_memory_size
+      - move_granules_task_memory_size
+      - parse_pdr_task_memory_size
+      - pdr_status_check_task_memory_size
+      - post_to_cmr_task_memory_size
+      - queue_granules_task_memory_size
+      - queue_pdrs_task_memory_size
+      - queue_workflow_task_memory_size
+      - sync_granule_task_memory_size
+      - update_cmr_access_constraints_task_memory_size
+      - update_granules_cmr_task_memory_size
+  - Initializes the lambda_memory_size(s) variable in the Terraform variable list
+- **CUMULUS-2631**
+  - Added 'Bearer token' support to s3credentials endpoint
+- **CUMULUS-2787**
+  - Added `lzards-api-client` package to Cumulus with `submitQueryToLzards` method
+- **CUMULUS-2944**
+  - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
+
+### Changed
+
+- Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
 - **CUMULUS-2787**
   - Updated `lzards-backup-task` to send Cumulus provider and granule createdAt values as metadata in LZARDS backup request to support querying LZARDS for reconciliation reports
 - **CUMULUS-2913**
@@ -151,23 +166,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
     discussed in https://github.com/knex/knex/pull/5279
   - Update generate-ts-build-cache script to always install root project dependencies
-
-### Fixed
-
-- **CUMULUS-3070**
-  - Fixed inaccurate typings for PostgresGranule in @cumulus/db/types/granule
-  - Fixed inaccurate typings for @cumulus/api/granules.ApiGranule and updated to
-    allow null
 - **CUMULUS-3104**
   - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
   - Sets default async_operation_image version to 43.
   - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
   - Fixed TS compilation error caused by @aws-sdk/client-s3 3.190->3.193 upgrade
-  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
-- **CUMULUS-3116**
-  - Reverted the default ElasticSearch sorting behavior to the pre-13.3.0 configuration
-  - Results from ElasticSearch are sorted by default by the `timestamp` field. This means that the order
-  is not guaranteed if two or more records have identical timestamps as there is no secondary sort/tie-breaker.
 
 ## [v13.3.2] 2022-10-10 [BACKPORT]
 
@@ -475,7 +478,7 @@ releases.
 
 ## [v12.0.3] 2022-10-03 [BACKPORT]
 
-**Please note** changes in 12.0.3 may not yet be released in future versions, as
+**Please note** changes in 11.1.7 may not yet be released in future versions, as
 this is a backport and patch release on the 12.0.x series of releases. Updates that
 are included in the future will have a corresponding CHANGELOG entry in future
 releases.
@@ -546,37 +549,6 @@ releases.
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
-
-## [v11.1.8] 2022-11-07 [BACKPORT]
-
-**Please note** changes in 11.1.7 may not yet be released in future versions, as
-this is a backport and patch release on the 11.1.x series of releases. Updates that
-are included in the future will have a corresponding CHANGELOG entry in future
-releases.
-
-### Breaking Changes
-
-- **CUMULUS-2903**
-  - The minimum supported version for all published Cumulus Core npm packages is now Node 14.19.1
-  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to
-    `cumuluss/cumulus-ecs-task:1.8.0`. This can be done by updating the `image`
-    property of any tasks defined using the `cumulus_ecs_service` Terraform
-    module.
-
-### Notable changes
-
-- Published new tag [`43` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/43/images/sha256-5f989c7d45db3dde87c88c553182d1e4e250a1e09af691a84ff6aa683088b948?context=explore) which was built with node:14.19.3-buster.
-
-### Changed
-
-- **CUMULUS-3104**
-  - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
-  - Sets default async_operation_image version to 43.
-  - Upgraded saml2-js 4.0.0, rewire to 6.0.0 to address security vulnerabilities
-  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-s3 3.202.0 upgrade
-
-- **CUMULUS-3080**
-  - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
 
 ## [v11.1.7] 2022-10-05 [BACKPORT]
 
@@ -2905,7 +2877,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Updated Terraform deployment code syntax for compatibility with version 0.13.6
 - **CUMULUS-2321**
   - Updated API endpoint GET `/reconciliationReports/{name}` to return the
-    presigned s3 URL in addition to report data
+    pre-signe s3 URL in addition to report data
 
 ### Fixed
 
@@ -6718,8 +6690,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [v12.0.3]: https://github.com/nasa/cumulus/compare/v12.0.2...v12.0.3
 [v12.0.2]: https://github.com/nasa/cumulus/compare/v12.0.1...v12.0.2
 [v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
-[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.8...v12.0.0
-[v11.1.8]: https://github.com/nasa/cumulus/compare/v11.1.7...v11.1.8
+[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.7...v12.0.0
 [v11.1.7]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.7
 [v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
 [v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
