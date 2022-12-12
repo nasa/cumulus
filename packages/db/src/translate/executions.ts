@@ -1,11 +1,13 @@
 import { Knex } from 'knex';
 
 import isNil from 'lodash/isNil';
+import isNull from 'lodash/isNull';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { Execution, ExecutionRecord } from '@cumulus/types/api/executions';
+import { ApiExecution, ExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
 import { removeNilProperties } from '@cumulus/common/util';
+import { ValidationError } from '@cumulus/errors';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { ExecutionPgModel } from '../models/execution';
@@ -69,10 +71,34 @@ export const translatePostgresExecutionToApiExecution = async (
   return <ExecutionRecord>removeNilProperties(translatedRecord);
 };
 
+const returnNullOrUndefinedOrDate = (
+  dateVal: string | number | null | undefined
+) => (isNil(dateVal) ? dateVal : new Date(dateVal));
+
+/**
+ * Validate translation api record doesn't contain invalid null/undefined values based
+ * on PostgresExecution typings.  Throw if invalid nulls detected
+ *
+ * @param {ApiExecution} apiExecution
+ *   Record from api
+ * @returns {undefined}
+ */
+const validateApiToPostgresExecutionObject = (apiExecution : ApiExecution) => {
+  if (isNil(apiExecution.arn)) {
+    throw new ValidationError('arn cannot be undefined on a execution, executions must have a arn and a name');
+  }
+  if (isNil(apiExecution.name)) {
+    throw new ValidationError('name cannot be undefined on a execution, executions must have a arn and a name');
+  }
+  if (isNull(apiExecution.status)) {
+    throw new ValidationError('status cannot be null on a execution, executions must have a arn and a name');
+  }
+};
+
 /**
  * Translate execution record from Dynamo to RDS.
  *
- * @param {Execution} dynamoRecord
+ * @param {ApiExecution} dynamoRecord
  *   Source record from DynamoDB
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} knex
  *   Knex client
@@ -85,7 +111,7 @@ export const translatePostgresExecutionToApiExecution = async (
  * @returns {PostgresExecutionRecord} - converted Execution
  */
 export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async (
-  dynamoRecord: Execution,
+  dynamoRecord: ApiExecution,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),
@@ -93,13 +119,14 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
 ): Promise<PostgresExecution> => {
   const logger = new Logger({ sender: '@cumulus/db/translate/executions' });
 
+  validateApiToPostgresExecutionObject(dynamoRecord);
   // Map old record to new schema.
   const translatedRecord: PostgresExecution = {
     async_operation_cumulus_id: (
       dynamoRecord.asyncOperationId ? await asyncOperationPgModel.getRecordCumulusId(
         knex,
         { id: dynamoRecord.asyncOperationId }
-      ) : undefined
+      ) : (isNull(dynamoRecord.asyncOperationId) ? null : undefined)
     ),
     status: dynamoRecord.status,
     arn: dynamoRecord.arn,
@@ -111,9 +138,9 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
     workflow_name: dynamoRecord.type,
     url: dynamoRecord.execution,
     cumulus_version: dynamoRecord.cumulusVersion,
-    timestamp: dynamoRecord.timestamp ? new Date(dynamoRecord.timestamp) : undefined,
-    created_at: dynamoRecord.createdAt ? new Date(dynamoRecord.createdAt) : undefined,
-    updated_at: dynamoRecord.updatedAt ? new Date(dynamoRecord.updatedAt) : undefined,
+    timestamp: returnNullOrUndefinedOrDate(dynamoRecord.timestamp),
+    created_at: returnNullOrUndefinedOrDate(dynamoRecord.createdAt),
+    updated_at: returnNullOrUndefinedOrDate(dynamoRecord.updatedAt),
   };
 
   if (!isNil(dynamoRecord.collectionId)) {
@@ -150,7 +177,7 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
 };
 
 export const translateApiExecutionToPostgresExecution = async (
-  dynamoRecord: Execution,
+  dynamoRecord: ApiExecution,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),

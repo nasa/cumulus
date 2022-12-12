@@ -16,7 +16,7 @@ import omitBy from 'lodash/omitBy';
 import isUndefined from 'lodash/isUndefined';
 
 import { Message } from '@cumulus/types';
-import { Execution } from '@cumulus/types/api/executions';
+import { ApiExecution } from '@cumulus/types/api/executions';
 
 import {
   getMessageAsyncOperationId,
@@ -207,16 +207,18 @@ export const getMessageExecutionFinalPayload = (
  *
  * @param {MessageWithPayload} message - A workflow message object
  * @param {string} [updatedAt] - Optional updated timestamp to apply to record
- * @returns {Execution} An execution API record
+ * @returns {ApiExecution} An execution API record
  *
  * @alias module:Executions
  */
 export const generateExecutionApiRecordFromMessage = (
   message: MessageWithPayload,
   updatedAt = Date.now()
-): Execution => {
+): ApiExecution => {
   const arn = getMessageExecutionArn(message);
+  const name = getMessageExecutionName(message);
   if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
+  if (isNil(name)) throw new Error('Unable to determine execution name from Cumulus message');
 
   const status = getMetaStatus(message);
   if (!status) throw new Error('Unable to determine status from Cumulus message');
@@ -225,8 +227,8 @@ export const generateExecutionApiRecordFromMessage = (
   const workflowStopTime = getMessageWorkflowStopTime(message);
   const collectionId = getCollectionIdFromMessage(message);
 
-  const record = {
-    name: getMessageExecutionName(message),
+  const record : ApiExecution = {
+    name,
     cumulusVersion: getMessageCumulusVersion(message),
     arn,
     asyncOperationId: getMessageAsyncOperationId(message),
@@ -245,6 +247,5 @@ export const generateExecutionApiRecordFromMessage = (
     duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
   };
 
-  const updated = <Execution>omitBy(record, isUndefined);
-  return updated;
+  return <ApiExecution>omitBy(record, isUndefined);
 };
