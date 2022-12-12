@@ -1153,6 +1153,60 @@ test('_storeGranuleRecord() will allow a completed status to replace queued for 
   );
 });
 
+test('_storeGranuleRecord() writes a new granule record with undefined files if files is set to []', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2({ files: [] });
+
+  await granuleModel._storeGranuleRecord(granule);
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.files, undefined);
+});
+
+test('_storeGranuleRecord() writes a new granule record with undefined files if files is set to undefined', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+
+  delete granule.files;
+
+  await granuleModel._storeGranuleRecord(granule);
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+
+  t.is(fetchedItem.files, undefined);
+});
+
+test('_storeGranuleRecord() overwrites a new granule record and deletes files if files is set to [] and write constraints are set to true', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+
+  delete granule.files;
+
+  await granuleModel._storeGranuleRecord(granule, false);
+  granule.files = [];
+  await granuleModel._storeGranuleRecord(granule, true);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+  t.is(fetchedItem.files, undefined);
+});
+
+test('_storeGranuleRecord() overwrites a new granule record and deletes files if files is set to [] and write constraints are set to false', async (t) => {
+  const { granuleModel } = t.context;
+
+  const granule = fakeGranuleFactoryV2();
+
+  delete granule.files;
+
+  await granuleModel._storeGranuleRecord(granule, false);
+  granule.files = [];
+  await granuleModel._storeGranuleRecord(granule, false);
+
+  const fetchedItem = await granuleModel.get({ granuleId: granule.granuleId });
+  t.is(fetchedItem.files, undefined);
+});
+
 test('_validateAndStoreGranuleRecord() will not allow a final status for an older execution to replace a running status for a newer execution when writeConstraints is set to true', async (t) => {
   const { granuleModel } = t.context;
 
@@ -1469,6 +1523,95 @@ test('storeGranule() correctly stores granule record', async (t) => {
     updatedAt: Date.now(),
   });
   await granuleModel.storeGranule(granuleRecord);
+  const result = await granuleModel.get({ granuleId: granuleRecord.granuleId });
 
-  t.true(await granuleModel.exists({ granuleId: granule1.granuleId }));
+  t.deepEqual(result, granuleRecord);
+});
+
+test('storeGranule() correctly stores files on empty array update', async (t) => {
+  const {
+    granuleModel,
+    collectionId,
+    provider,
+    workflowStatus,
+  } = t.context;
+
+  const bucket = randomId('bucket');
+  await S3.createBucket(bucket);
+  t.teardown(() => S3.recursivelyDeleteS3Bucket(bucket));
+
+  const granule1 = fakeGranuleFactoryV2({
+    files: [fakeFileFactory({ bucket })],
+  });
+
+  await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
+
+  const files = await granuleModel.fileUtils.buildDatabaseFiles({
+    s3: awsClients.s3(),
+    providerURL: buildURL(provider),
+    files: granule1.files,
+  });
+
+  const granuleRecord = await generateGranuleApiRecord({
+    granule: granule1,
+    files,
+    executionUrl: 'http://execution-url.com',
+    collectionId,
+    provider: provider.id,
+    workflowStatus,
+    status: getGranuleStatus(workflowStatus, granule1),
+    cmrUtils,
+    updatedAt: Date.now(),
+  });
+  await granuleModel.storeGranule(granuleRecord);
+  granuleRecord.files = files;
+  await granuleModel.storeGranule({ ...granuleRecord, files: [] });
+  const result = await granuleModel.get({ granuleId: granuleRecord.granuleId });
+
+  delete granuleRecord.files;
+  t.deepEqual(result, granuleRecord);
+});
+
+test('storeGranule() does not update files when files are not mutable and write constraints are set to true', async (t) => {
+  const {
+    granuleModel,
+    collectionId,
+    provider,
+    workflowStatus,
+  } = t.context;
+
+  const bucket = randomId('bucket');
+  await S3.createBucket(bucket);
+  t.teardown(() => S3.recursivelyDeleteS3Bucket(bucket));
+
+  const granule1 = fakeGranuleFactoryV2({
+    files: [fakeFileFactory({ bucket })],
+  });
+
+  await S3.s3PutObject({ Bucket: bucket, Key: granule1.files[0].key, Body: 'asdf' });
+
+  const files = await granuleModel.fileUtils.buildDatabaseFiles({
+    s3: awsClients.s3(),
+    providerURL: buildURL(provider),
+    files: granule1.files,
+  });
+
+  const granuleRecord = await generateGranuleApiRecord({
+    granule: granule1,
+    files,
+    executionUrl: 'http://execution-url.com',
+    collectionId,
+    provider: provider.id,
+    workflowStatus,
+    status: getGranuleStatus(workflowStatus, granule1),
+    cmrUtils,
+    updatedAt: Date.now(),
+  });
+  await granuleModel.storeGranule(granuleRecord, true);
+  granuleRecord.files = files;
+  await granuleModel.storeGranule({ ...granuleRecord, files: [], status: 'running' });
+  const result = await granuleModel.get({ granuleId: granuleRecord.granuleId });
+
+  t.deepEqual(result, granuleRecord);
+  t.deepEqual(result.files, files);
 });

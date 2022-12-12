@@ -30,7 +30,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test('upsertGranule removes deletedgranule record', async (t) => {
+test('upsertGranule removes deleted granule record', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const granule = {
@@ -133,7 +133,36 @@ test('upsertGranule creates new "completed" record with null fields omitted', as
 
   delete granule.randomKey;
   const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
-  t.like(esRecord, granule);
+  t.deepEqual(esRecord, { ...granule, _id: esRecord._id });
+});
+
+test('upsertGranule creates new "completed" record with empty file array omitted', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    files: [{ fake: 'fileobject' }],
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const originalEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.deepEqual(originalEsRecord, { ...granule, _id: originalEsRecord._id });
+
+  granule.files = [];
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.is(updatedEsRecord.files, undefined);
 });
 
 test('upsertGranule throws ValidateError on overwrite with invalid nullable keys', async (t) => {
