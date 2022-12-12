@@ -80,19 +80,26 @@ async function addGranules(granules) {
   const executionPgModel = new ExecutionPgModel();
   const es = await getESClientAndIndex();
   return await Promise.all(
-    granules.map(async (granule) => {
+    granules.map(async (apiGranule) => {
       const newGranule = fakeGranuleFactoryV2(
         {
-          ...granule,
+          ...apiGranule,
         }
       );
       await indexer.indexGranule(es.client, newGranule, es.index);
-      const dbRecord = await translateApiGranuleToPostgresGranule(newGranule, knex);
+      const dbRecord = await translateApiGranuleToPostgresGranule({
+        newGranule,
+        knexOrTransaction: knex,
+      });
       const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
-        url: granule.execution,
+        url: newGranule.execution,
       });
 
-      await upsertGranuleWithExecutionJoinRecord(knex, dbRecord, executionCumulusId);
+      await upsertGranuleWithExecutionJoinRecord({
+        knexTransaction: knex,
+        dbRecord,
+        executionCumulusId,
+      });
     })
   );
 }

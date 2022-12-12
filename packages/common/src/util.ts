@@ -45,9 +45,9 @@ export const deprecate = (() => {
  *
  * @alias module:util
  */
-export const removeNilProperties = <T extends object>(obj: T) =>
-  omitBy(obj, isNil) as T;
 
+export const removeNilProperties = <T extends object>(obj: T) =>
+  omitBy(obj, isNil) as { [P in keyof T]: Exclude<T[P], null> };
 /**
  * Test if a value is included in a list of items
  *

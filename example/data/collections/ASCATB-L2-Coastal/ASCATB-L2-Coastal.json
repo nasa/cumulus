@@ -1,0 +1,32 @@
+{
+  "duplicateHandling": "replace",
+  "files": [
+    {
+      "bucket": "protected",
+      "regex": "^ascat_[0-9]{8}_[0-9]{6}_metopb_[0-9]{5}_eps_o_coa_[0-9]{4}_ovw\\.l2\\.nc$",
+      "sampleFileName": "ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc",
+      "type": "data"
+    },
+    {
+      "bucket": "private",
+      "regex": "^ascat_[0-9]{8}_[0-9]{6}_metopb_[0-9]{5}_eps_o_coa_[0-9]{4}_ovw\\.l2.*\\.cmr\\.json$",
+      "sampleFileName": "ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.cmr.json",
+      "type": "metadata"
+    },
+    {
+      "bucket": "protected",
+      "regex": "^ascat_[0-9]{8}_[0-9]{6}_metopb_[0-9]{5}_eps_o_coa_[0-9]{4}_ovw\\.l2\\.nc\\.dmrpp$",
+      "sampleFileName": "ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc.dmrpp",
+      "type": "metadata"
+    }
+  ],
+  "granuleId": "^ascat_[0-9]{8}_[0-9]{6}_metopb_[0-9]{5}_eps_o_coa_[0-9]{4}_ovw\\.l2$",
+  "granuleIdExtraction": "^(.*)(\\.nc|\\.cmr)",
+  "meta": {
+    "granuleMetadataFileExtension": ".cmr.json"
+  },
+  "name": "ASCATB-L2-Coastal",
+  "sampleFileName": "ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc",
+  "url_path": "{cmrMetadata.CollectionReference.ShortName}",
+  "version": "Operational/Near-Real-Time"
+}
