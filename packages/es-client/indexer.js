@@ -340,6 +340,7 @@ async function upsertGranule({
     // File removal is a special case as null gets set to []
     if (fieldName === 'files' && isEqual(value, [])) {
       removeString += `ctx._source.remove('${fieldName}'); `;
+      delete upsertDoc.files; // Remove files in case this is not a scripted upsert
     }
     if (value === null) {
       removeString += `ctx._source.remove('${fieldName}'); `;
