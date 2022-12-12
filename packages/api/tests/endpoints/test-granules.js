@@ -490,7 +490,7 @@ test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('CUMULUS-911 .patch with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 PATCH with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .patch('/granules/asdf')
     .set('Accept', 'application/json')
