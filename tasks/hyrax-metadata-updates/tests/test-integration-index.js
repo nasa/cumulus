@@ -97,9 +97,9 @@ const setupNock = (params) => {
     .replyWithFile(200, 'tests/data/cmr-results.json', headers);
 
   nock('https://urs.earthdata.nasa.gov')
-    .post('/api/users/token')
+    .get('/api/users/tokens')
     .reply(200, {token: 'ABCDE'});
-
+  
   process.env.CMR_ENVIRONMENT = 'OPS';
 };
 
