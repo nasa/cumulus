@@ -2804,7 +2804,7 @@ test.serial("patch() sets a default createdAt value for new granule if it's not 
   t.truthy(updateGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial('PATCH() does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
+test.serial('PATCH does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
   const {
     esClient,
     executionUrl,
