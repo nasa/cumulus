@@ -2879,7 +2879,7 @@ test.serial('PATCH does not write to PostgreSQL/Elasticsearch/SNS if writing to 
   t.is(Messages, undefined);
 });
 
-test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
+test.serial('PATCH does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
   const {
     esClient,
     executionUrl,
