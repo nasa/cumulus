@@ -37,6 +37,7 @@ const {
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const Granule = require('../models/granules');
+const schemas = require('../models/schemas.js');
 const { moveGranule } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
@@ -103,7 +104,7 @@ async function list(req, res) {
  *
  * @param {Object} incomingApiGranule - granule record to set defaults for
  * @param {boolean} isNewRecord - boolean to set
- * @returns {Promise<Object>} Promise resolving to returned/updated granule
+ * @returns {Object} updated granule
  */
 const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
   if (isNewRecord === false) return incomingApiGranule;
@@ -246,8 +247,36 @@ const patchGranule = async (req, res) => {
   return _returnPatchGranuleStatus(isNewRecord, apiGranule, res);
 };
 
-function put(req, res) {
-  return res.boom.badRequest('put method not implemented');
+/**
+ * Replace a single granule
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function put(req, res) {
+  let body = req.body;
+  if (req.body.granuleId === req.params.granuleName) {
+    // Nullify passed in fields - we want to remove anything not specified by the user
+    const nullifiedGranuleTemplate = Object.keys(schemas.granule.properties).reduce((acc, cur) => {
+      acc[cur] = null;
+      return acc;
+    }, {});
+    delete nullifiedGranuleTemplate.execution; // Execution cannot be deleted
+    body = ({
+      ...nullifiedGranuleTemplate,
+      ...body,
+    });
+
+    if (body.execution === null) {
+      throw new Error('Execution cannot be deleted via the granule interface, only added');
+    }
+    req.body = body;
+    //Then patch new granule with nulls applied
+    return await patchGranule(req, res);
+  }
+  return res.boom.badRequest(
+    `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+  );
 }
 
 /**
@@ -715,7 +744,7 @@ router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', patch);
+router.put('/:granuleName', put);
 router.patch('/:granuleName', patch);
 
 router.post(

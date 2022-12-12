@@ -67,7 +67,7 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { create, put, patch, patchGranule } = require('../../endpoints/granules');
+const { create, patch, patchGranule } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
@@ -281,14 +281,15 @@ test.before(async (t) => {
     newExecution,
     knex
   );
-  await executionPgModel.create(knex, executionPgRecord);
+  [t.context.executionPgRecord] = await executionPgModel.create(knex, executionPgRecord);
   t.context.executionUrl = executionPgRecord.url;
   t.context.executionArn = executionPgRecord.arn;
 });
 
 test.beforeEach(async (t) => {
-  const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
-  const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  t.context.createGranuleId = () => `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId1 = t.context.createGranuleId();
+  const granuleId2 = t.context.createGranuleId();
 
   // create fake Dynamo granule records
   t.context.fakeGranules = [
@@ -2007,6 +2008,7 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
   const timestamp = Date.now();
   const {
@@ -2016,6 +2018,7 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2096,15 +2099,16 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
 test.serial(
   'PATCH does not overwrite existing duration of an existing granule if not specified in the payload',
   async (t) => {
-    const { esClient, executionUrl, knex } = t.context;
+    const { esClient, executionUrl, knex, testExecutionCumulusId } = t.context;
 
     const unmodifiedDuration = 100;
     const { newPgGranule, newDynamoGranule, esRecord } =
       await createGranuleAndFiles({
         dbClient: knex,
         esClient,
-        execution: executionUrl,
+        executionCumulusId: testExecutionCumulusId,
         granuleParams: {
+          execution: executionUrl,
           duration: unmodifiedDuration,
           status: 'completed',
         },
@@ -2150,7 +2154,7 @@ test.serial(
 
 test.serial('PATCH does not overwrite existing createdAt of an existing granule if not specified in the payload',
   async (t) => {
-    const { esClient, executionUrl, knex } = t.context;
+    const { esClient, executionUrl, knex, testExecutionCumulusId } = t.context;
 
     const timestamp = Date.now();
     const createdAt = timestamp - 1000000;
@@ -2159,9 +2163,10 @@ test.serial('PATCH does not overwrite existing createdAt of an existing granule 
       await createGranuleAndFiles({
         dbClient: knex,
         esClient,
-        execution: executionUrl,
+        executionCumulusId: testExecutionCumulusId,
         granuleParams: {
           createdAt,
+          execution: executionUrl,
           status: 'completed',
         },
       });
@@ -2312,6 +2317,7 @@ test.serial('PATCH replaces an existing granule in all data stores with correct 
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
   const {
     newPgGranule,
@@ -2319,6 +2325,7 @@ test.serial('PATCH replaces an existing granule in all data stores with correct 
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -2365,6 +2372,7 @@ test.serial('PATCH replaces an existing granule in all datastores with a granule
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
   const {
     newPgGranule,
@@ -2372,6 +2380,7 @@ test.serial('PATCH replaces an existing granule in all datastores with a granule
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'completed',
       createdAt: Date.now(),
@@ -2429,6 +2438,7 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
   const {
     newPgGranule,
@@ -2436,6 +2446,7 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -2482,6 +2493,7 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
 
   const {
@@ -2489,6 +2501,7 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2523,6 +2536,7 @@ test.serial("patch() sets a default createdAt value for new granule if it's not 
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
 
   const {
@@ -2530,6 +2544,7 @@ test.serial("patch() sets a default createdAt value for new granule if it's not 
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2564,6 +2579,7 @@ test.serial('PATCH() does not write to PostgreSQL/Elasticsearch/SNS if writing t
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
   const {
     newPgGranule,
@@ -2576,6 +2592,7 @@ test.serial('PATCH() does not write to PostgreSQL/Elasticsearch/SNS if writing t
       status: 'running',
       execution: executionUrl,
     },
+    executionCumulusId: testExecutionCumulusId,
   });
 
   const fakeGranuleModel = {
@@ -2639,6 +2656,7 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
   const {
     newPgGranule,
@@ -2651,6 +2669,7 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
       status: 'running',
       execution: executionUrl,
     },
+    executionCumulusId: testExecutionCumulusId,
   });
 
   const fakeGranulePgModel = {
@@ -2715,6 +2734,7 @@ test.serial('PATCH() rolls back DynamoDB/PostgreSQL records and does not write t
     esClient,
     executionUrl,
     knex,
+    testExecutionCumulusId,
   } = t.context;
   const {
     newPgGranule,
@@ -2723,6 +2743,7 @@ test.serial('PATCH() rolls back DynamoDB/PostgreSQL records and does not write t
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: { status: 'running', execution: executionUrl },
   });
 
@@ -3399,45 +3420,143 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
   t.true(response.body.message.includes(`No collection found to associate execution with for collectionId ${collectionId}`));
 });
 
-test.serial('PUT throws not implemented error', async (t) => {
+test.serial('PUT replaces an existing granule in all data stores, removing existing fields if not specified', async (t) => {
   const {
     esClient,
+    executionPgRecord,
     executionUrl,
     knex,
   } = t.context;
   const {
+    newPgGranule,
     newDynamoGranule,
+    esRecord,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: { status: 'running', execution: executionUrl },
+    executionCumulusId: executionPgRecord.cumulus_id,
+    granuleParams: {
+      beginningDateTime: new Date().toString(),
+      cmrLink: 'example.com',
+      createdAt: Date.now(),
+      duration: 1000,
+      endingDateTime: new Date().toString(),
+      error: { errorKey: 'errorValue' },
+      execution: executionUrl,
+      lastUpdateDateTime: new Date().toString(),
+      processingEndDateTime: new Date().toString(),
+      processingStartDateTime: new Date().toString(),
+      productionDateTime: new Date().toString(),
+      productVolume: '1000',
+      published: true,
+      queryFields: { queryFieldsKey: 'queryFieldsValue' },
+      status: 'completed',
+      timestamp: 1,
+      timeToArchive: 1000,
+      timeToPreprocess: 1000,
+      updatedAt: Date.now(),
+    },
   });
 
-  const fakeEsClient = {
-    update: () => {
-      throw new Error('something bad');
-    },
-    delete: () => Promise.resolve(),
-  };
-
-  const updatedGranule = {
-    ...newDynamoGranule,
+  console.log(esRecord);
+  // TODO validate granules exist
+  const newGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
     status: 'completed',
   };
 
-  const expressRequest = {
-    params: {
-      granuleName: updatedGranule.granuleId,
-    },
-    body: updatedGranule,
-    testContext: {
-      knex,
-      esClient: fakeEsClient,
-    },
+  await request(app)
+    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(200); // 200 should be expected for *update*
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+
+  const expectedGranule = {
+    ...newGranule,
+    error: {}, // This is a default value for no execution
+    published: false, // This is a default value
+    execution: newDynamoGranule.execution, // This should not have changed
+    status: 'completed',
+    timestamp: actualGranule.timestamp,
+    updatedAt: actualGranule.updatedAt,
+    createdAt: actualGranule.createdAt,
   };
-  const response = buildFakeExpressResponse();
 
-  put(expressRequest, response);
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const translatedActualPgGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: actualPgGranule,
+  });
 
-  t.true(response.boom.badRequest.calledWithMatch('put method not implemented'));
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+
+  t.deepEqual(actualGranule, expectedGranule);
+  // Files is always returned as '[]' by translator if none exist
+  t.deepEqual(
+    { ...translatedActualPgGranule },
+    { ...expectedGranule, files: [] }
+  );
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+test.serial('PUT creates a new granule in all data stores', async (t) => {
+  const {
+    collectionId,
+    collectionCumulusId,
+    createGranuleId,
+    knex,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    granuleId,
+    collectionId,
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(201); // 201 should be expected for *create*
+
+  const actualGranule = await t.context.granuleModel.get({ granuleId });
+
+  const expectedGranule = {
+    ...newGranule,
+    error: {}, // This is a default value for no execution
+    published: false, // This is a default value
+    timestamp: actualGranule.timestamp,
+    updatedAt: actualGranule.updatedAt,
+    createdAt: actualGranule.createdAt,
+  };
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    collection_cumulus_id: collectionCumulusId,
+    granule_id: granuleId,
+  });
+  const translatedActualPgGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: actualPgGranule,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(granuleId);
+
+  t.deepEqual(actualGranule, expectedGranule);
+  // Files is always returned as '[]' via translator
+  t.deepEqual(
+    { ...translatedActualPgGranule },
+    { ...expectedGranule, files: [] }
+  );
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
 });
