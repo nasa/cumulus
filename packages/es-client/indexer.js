@@ -11,10 +11,11 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
 
 const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
-const { IndexExistsError } = require('@cumulus/errors');
+const { IndexExistsError, ValidationError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeNilProperties } = require('@cumulus/common/util');
 
@@ -306,15 +307,26 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
   );
 }
 
+const granuleInvalidNullFields = [
+  'granuleId',
+  'collectionId',
+  'status',
+  'updatedAt',
+  'execution',
+  'createdAt',
+];
+
 /**
  * Upserts a granule in Elasticsearch
  *
  * @param {Object} params
- * @param {Object} params.esClient - Elasticsearch Connection object
- * @param {Object} params.updates  - Updates to make
- * @param {string} params.index    - Elasticsearch index alias (default defined in search.js)
- * @param {string} params.type     - Elasticsearch type (default: granule)
- * @param {string} [params.refresh] - whether to refresh the index on update or not
+ * @param {Object} params.esClient        - Elasticsearch Connection object
+ * @param {Object} params.updates         - Updates to make
+ * @param {string} params.index           - Elasticsearch index alias (default defined in search.js)
+ * @param {string} params.type            - Elasticsearch type (default: granule)
+ * @param {string} [params.refresh]       - whether to refresh the index on update or not
+ * @param {boolean}   writeConstraints       - boolean toggle restricting if conditionals should
+ *                                          be used to determine write eligibility
  * @returns {Promise} Elasticsearch response
  */
 async function upsertGranule({
@@ -323,7 +335,12 @@ async function upsertGranule({
   index = defaultIndexAlias,
   type = 'granule',
   refresh,
-}) {
+}, writeConstraints = true) {
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] === null && granuleInvalidNullFields.includes(key)) {
+      throw new ValidationError(`Attempted DynamoDb write with invalid key ${key} set to null.  Please remove or change this field and retry`);
+    }
+  });
   // If the granule exists in 'deletedgranule', delete it first before inserting the granule
   // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
   const delGranParams = {
@@ -335,7 +352,49 @@ async function upsertGranule({
   };
   await esClient.delete(delGranParams, { ignore: [404] });
 
-  const upsertDoc = updates;
+  // Remove nils in case there isn't a collision
+  const upsertDoc = removeNilProperties(updates);
+  let removeString = '';
+
+  // Set field removal for null values
+  Object.entries(updates).forEach(([fieldName, value]) => {
+    // File removal is a special case as null gets set to []
+    if (fieldName === 'files' && isEqual(value, [])) {
+      removeString += `ctx._source.remove('${fieldName}'); `;
+    }
+    if (value === null) {
+      removeString += `ctx._source.remove('${fieldName}'); `;
+    }
+  });
+
+  let inlineDocWriteString = 'ctx._source.putAll(params.doc);';
+  if (removeString !== '') {
+    inlineDocWriteString += removeString;
+  }
+  let inline = inlineDocWriteString;
+
+  if (writeConstraints === true) {
+    // Because both API write and message write chains use the granule model to store records, in
+    // cases where createdAt does not exist on the granule, we assume overwrite protections are
+    // undesired behavior via business logic on the message write logic
+    inline = `
+    if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
+      && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
+      ${inlineDocWriteString}
+    } else {
+      ctx.op = 'none';
+    }
+    `;
+    if (!updates.createdAt) {
+      inline = `
+        if (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution)) {
+          ${inlineDocWriteString}
+        } else {
+        ctx.op = 'none';
+      }
+      `;
+    }
+  }
 
   return await esClient.update({
     index,
@@ -345,14 +404,7 @@ async function upsertGranule({
     body: {
       script: {
         lang: 'painless',
-        inline: `
-          if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
-            && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
-            ctx._source.putAll(params.doc);
-          } else {
-            ctx.op = 'none';
-          }
-        `,
+        inline,
         params: {
           doc: upsertDoc,
         },
@@ -731,4 +783,5 @@ module.exports = {
   deleteGranule,
   deleteExecution,
   deleteReconciliationReport,
+  granuleInvalidNullFields,
 };

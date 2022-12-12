@@ -124,6 +124,9 @@ test.serial('S3ProviderClient.sync syncs a file to a target S3 location', async 
 });
 
 test.serial('S3ProviderClient.sync syncs a 0 byte file', async (t) => {
+  // This test doesn't really prove anything since Localstack does not behave exactly like S3.
+  // However, if Localstack fixes multipart upload handling to match real S3 behavior, this will
+  // be a useful test.
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
   const targetKey = '0byte.dat';
 

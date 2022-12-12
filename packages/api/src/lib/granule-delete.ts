@@ -14,7 +14,7 @@ import {
   ProviderPgModel,
 } from '@cumulus/db';
 import { DeletePublishedGranule } from '@cumulus/errors';
-import { ApiGranule, ApiFile } from '@cumulus/types';
+import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import Logger from '@cumulus/logger';
 
 const { deleteGranule } = require('@cumulus/es-client/indexer');
@@ -55,10 +55,12 @@ const deleteS3Files = async (
  * @param {FilePgModel} params.filePgModel - File Postgres model
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
+ * @param {Object} params.esClient - Elasticsearch client
+ * @returns {Object} - Granule Deletion details
  */
 const deleteGranuleAndFiles = async (params: {
   knex: Knex,
-  apiGranule?: ApiGranule,
+  apiGranule?: ApiGranuleRecord,
   pgGranule: PostgresGranuleRecord,
   filePgModel: FilePgModel,
   granulePgModel: GranulePgModel,
@@ -95,9 +97,14 @@ const deleteGranuleAndFiles = async (params: {
     logger.debug(`Successfully deleted granule ${apiGranule.granuleId} from ES datastore`);
     await deleteS3Files(apiGranule.files);
     logger.debug(`Successfully removed S3 files ${JSON.stringify(apiGranule.files)}`);
-    return;
+    return {
+      collection: apiGranule.collectionId,
+      deletedGranuleId: apiGranule.granuleId,
+      deletionTime: Date.now(),
+      deletedFiles: apiGranule.files,
+    };
   }
-  if (pgGranule.published) {
+  if (pgGranule?.published === true) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
   }
   // Delete PG Granule, PG Files, S3 Files
@@ -133,6 +140,12 @@ const deleteGranuleAndFiles = async (params: {
     logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from ES/PostGreSQL datastores`);
     await deleteS3Files(files);
     logger.debug(`Successfully removed S3 files ${JSON.stringify(files)}`);
+    return {
+      collection: granuleToPublishToSns.collectionId,
+      deletedGranuleId: pgGranule.granule_id,
+      deletionTime: Date.now(),
+      deletedFiles: files,
+    };
   } catch (error) {
     logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${JSON.stringify(error)}`);
     throw error;

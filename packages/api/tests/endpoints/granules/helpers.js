@@ -35,9 +35,11 @@ const generateMoveGranuleTestFilesAndEntries = async (params) => {
     collection_cumulus_id: t.context.collectionCumulusId,
   });
 
-  const [upsertedPgGranule] = await upsertGranuleWithExecutionJoinRecord(
-    t.context.knex, fakePgGranule, t.context.testExecutionCumulusId
-  );
+  const [upsertedPgGranule] = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: t.context.knex,
+    granule: fakePgGranule,
+    executionCumulusId: t.context.testExecutionCumulusId,
+  });
   const postgresGranuleCumulusId = upsertedPgGranule.cumulus_id;
 
   const pgGranule = await granulePgModel.get(

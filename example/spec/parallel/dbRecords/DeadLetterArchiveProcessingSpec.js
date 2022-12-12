@@ -27,8 +27,8 @@ const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
-const { putJsonS3Object } = require('@cumulus/aws-client/S3');
-const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
+const { putJsonS3Object, s3ObjectExists, deleteS3Object } = require('@cumulus/aws-client/S3');
+const { generateNewArchiveKeyForFailedMessage } = require('@cumulus/api/lambdas/process-s3-dead-letter-archive');
 
 const {
   waitForApiStatus,
@@ -39,16 +39,22 @@ const {
 } = require('../../helpers/testUtils');
 
 describe('A dead letter record archive processing operation', () => {
+  let archivePath;
   let beforeAllFailed;
+  let cumulusMessage;
   let executionArn;
+  let failingMessage;
+  let failingMessageKey;
+  let failingExecutionArn;
+  let failingTestRule;
+  let messageKey;
+  let newArchiveKey;
   let stackName;
   let systemBucket;
   let testCollection;
+  let testGranule;
   let testProvider;
   let testRule;
-  let testGranule;
-  let archivePath;
-  let messageKey;
   let deadLetterRecoveryAsyncOpId;
   let deadLetterRecoveryAsyncOperation;
 
@@ -61,6 +67,7 @@ describe('A dead letter record archive processing operation', () => {
       systemBucket = config.bucket;
 
       const testId = createTimestampedTestId(stackName, 'DeadLetterArchiveProcessing');
+      const failingTestId = createTimestampedTestId(stackName, 'DeadLetterArchiveProcessingFailed');
 
       testCollection = await loadCollection({
         filename: './data/collections/s3_MOD09GQ_006/s3_MOD09GQ_006.json',
@@ -101,6 +108,15 @@ describe('A dead letter record archive processing operation', () => {
           payload: { testId },
         }
       );
+      failingTestRule = await createOneTimeRule(
+        stackName,
+        {
+          workflow: 'HelloWorldWorkflow',
+          collection: pick(testCollection, ['name', 'version']),
+          provider: testProvider.id,
+          payload: { testId: failingTestId },
+        }
+      );
 
       console.log('originalPayload.testId', testId);
       executionArn = await findExecutionArn(
@@ -113,8 +129,17 @@ describe('A dead letter record archive processing operation', () => {
         },
         { timeout: 60 }
       );
-
-      const cumulusMessage = fakeCumulusMessageFactory({
+      failingExecutionArn = await findExecutionArn(
+        stackName,
+        (execution) =>
+          get(execution, 'originalPayload.testId') === failingTestId,
+        {
+          timestamp__from: ingestTime,
+          'originalPayload.testId': failingTestId,
+        },
+        { timeout: 60 }
+      );
+      cumulusMessage = fakeCumulusMessageFactory({
         cumulus_meta: {
           state_machine: getStateMachineArnFromExecutionArn(executionArn),
           execution_name: executionArn.split(':').pop(),
@@ -131,9 +156,29 @@ describe('A dead letter record archive processing operation', () => {
         },
       });
 
+      const failingExecutionName = failingExecutionArn.split(':').pop();
+      failingMessage = fakeCumulusMessageFactory({
+        cumulus_meta: {
+          state_machine: getStateMachineArnFromExecutionArn(executionArn),
+          execution_name: failingExecutionName,
+        },
+        meta: {
+          status: 'failed',
+          collection: 'bad-collection',
+          provider: 'fake-provider',
+        },
+        payload: {
+          granules: [testGranule],
+        },
+      });
       archivePath = `${stackName}/dead-letter-archive-${testId}/sqs`;
       messageKey = `${archivePath}/${cumulusMessage.cumulus_meta.execution_name}`;
-      await putJsonS3Object(systemBucket, messageKey, cumulusMessage);
+      failingMessageKey = `${archivePath}/${failingMessage.cumulus_meta.execution_name}`;
+
+      await Promise.all([
+        putJsonS3Object(systemBucket, messageKey, cumulusMessage),
+        putJsonS3Object(systemBucket, failingMessageKey, failingMessage),
+      ]);
 
       const postRecoverResponse = await postRecoverCumulusMessages(
         {
@@ -155,6 +200,7 @@ describe('A dead letter record archive processing operation', () => {
 
   afterAll(async () => {
     const ruleName = get(testRule, 'name');
+    const failedRuleName = get(failingTestRule, 'name');
     if (testGranule) {
       await deleteGranule(
         { prefix: stackName, granuleId: testGranule.granuleId }
@@ -162,6 +208,7 @@ describe('A dead letter record archive processing operation', () => {
     }
     if (ruleName) {
       await deleteRule({ prefix: stackName, ruleName });
+      await deleteRule({ prefix: stackName, ruleName: failedRuleName });
     }
 
     await deleteAsyncOperation({
@@ -170,6 +217,7 @@ describe('A dead letter record archive processing operation', () => {
     });
 
     await deleteExecution({ prefix: stackName, executionArn });
+    await deleteExecution({ prefix: stackName, executionArn: failingExecutionArn });
 
     if (testCollection) {
       await deleteCollection(
@@ -185,6 +233,8 @@ describe('A dead letter record archive processing operation', () => {
         { prefix: stackName, providerId: testProvider.id }
       );
     }
+
+    await deleteS3Object(systemBucket, newArchiveKey);
   });
 
   it('starts a successful async operation', async () => {
@@ -204,7 +254,7 @@ describe('A dead letter record archive processing operation', () => {
   it('returns the correct output for the async operation', () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     expect(deadLetterRecoveryAsyncOperation.output).toEqual(JSON.stringify({
-      processingFailedKeys: [],
+      processingFailedKeys: [failingMessageKey],
       processingSucceededKeys: [messageKey],
     }));
   });
@@ -226,13 +276,18 @@ describe('A dead letter record archive processing operation', () => {
   it('deletes the s3 objects corresponding to successfully processed dead letters', async () => {
     if (beforeAllFailed) fail(beforeAllFailed);
     else {
-      await expectAsync(waitForListObjectsV2ResultCount({
-        bucket: systemBucket,
-        prefix: archivePath,
-        desiredCount: 0,
-        interval: 5 * 1000,
-        timeout: 30 * 1000,
-      })).toBeResolved();
+      expect(await s3ObjectExists({ Bucket: systemBucket, Key: messageKey })).toBeFalse();
+    }
+  });
+
+  it('transfers the s3 objects corresponding to unsuccessfully processed dead letters to a new location in s3', async () => {
+    if (beforeAllFailed) fail(beforeAllFailed);
+    else {
+      // Unsuccessfully processed dead letters should be deleted from old location
+      expect(await s3ObjectExists({ Bucket: systemBucket, Key: failingMessageKey })).toBeFalse();
+
+      newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey);
+      expect(await s3ObjectExists({ Bucket: systemBucket, Key: newArchiveKey })).toBeTrue();
     }
   });
 });

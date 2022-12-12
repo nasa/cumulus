@@ -180,6 +180,7 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
   const { collectionId, collectionCumulusId, esClient, esGranulesClient, knex } = t.context;
 
   const {
+    apiGranule,
     newPgGranule,
     files,
     s3Buckets,
@@ -208,11 +209,18 @@ test.serial('deleteGranuleAndFiles() removes granules from PostgreSQL/Elasticsea
     })
   );
 
-  await deleteGranuleAndFiles({
+  const details = await deleteGranuleAndFiles({
     knex: knex,
     pgGranule: newPgGranule,
     esClient,
   });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: apiGranule.granuleId,
+  });
+  t.is(details.deletedFiles.length, apiGranule.files.length);
 
   t.false(await granulePgModel.exists(
     knex,
@@ -260,11 +268,18 @@ test.serial('deleteGranuleAndFiles() succeeds if a file is not present in S3', a
     cumulus_id: pgGranule.cumulus_id,
   });
 
-  await deleteGranuleAndFiles({
+  const details = await deleteGranuleAndFiles({
     knex: t.context.knex,
     pgGranule: newPgGranule,
     esClient: t.context.esClient,
   });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newPgGranule.granule_id,
+  });
+  t.is(details.deletedFiles.length, 1);
 
   t.false(await granulePgModel.exists(
     t.context.knex,
@@ -453,7 +468,6 @@ test.serial(
     );
 
     // Add granule to elasticsearch
-
     const esGranulesClient = new Search(
       {},
       'granule',

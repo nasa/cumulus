@@ -158,6 +158,7 @@ class GranuleFetcher {
         granuleId: granule.granuleId,
         dataType: collectionName,
         version: collectionVersion,
+        provider: this.provider.id,
         files,
       },
       granuleDuplicateFiles,
