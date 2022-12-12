@@ -9,11 +9,14 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { lambda } = require('@cumulus/aws-client/services');
 const { putFile } = require('@cumulus/aws-client/S3');
+const { randomString } = require('@cumulus/common/test-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Lzards Backup Task with distribution URL', () => {
   let beforeAllFailed = false;
+  let granuleId;
   let collection;
   let FunctionName;
   let functionConfig;
@@ -22,6 +25,8 @@ describe('The Lzards Backup Task with distribution URL', () => {
   let ingestBucket;
   let ingestPath;
   let lzardsBackupOutput;
+
+  const now = new Date().getTime();
 
   beforeAll(async () => {
     try {
@@ -35,6 +40,8 @@ describe('The Lzards Backup Task with distribution URL', () => {
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
       }).promise();
+      granuleId = `FakeGranule_${randomString()}`;
+      provider = `FakeProvider_${randomString()}`;
 
       // Create the collection
       collection = await createCollection(
@@ -91,9 +98,11 @@ describe('The Lzards Backup Task with distribution URL', () => {
             payload: {
               granules: [
                 {
-                  granuleId: 'FakeGranule2',
+                  granuleId,
                   dataType: collection.name,
                   version: collection.version,
+                  provider: provider,
+                  createdAt: now,
                   files: [
                     {
                       fileName: 'testGranule.jpg',
@@ -128,6 +137,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
   });
 
   it('succeeds', () => {
+    console.log(`lzardsBackupOutput: ${JSON.stringify(lzardsBackupOutput)}`);
     if (beforeAllFailed) fail('beforeAll() failed');
     else {
       expect(lzardsBackupOutput.FunctionError).toBe(undefined);
@@ -138,6 +148,10 @@ describe('The Lzards Backup Task with distribution URL', () => {
     const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
+    expect(backupStatus[0].granuleId).toBe(granuleId);
+    expect(backupStatus[0].provider).toBe(provider);
+    expect(backupStatus[0].createdAt).toBe(now);
+    expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
   });
 
   afterAll(async () => {

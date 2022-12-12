@@ -1,6 +1,6 @@
 import pRetry from 'p-retry';
 
-import { ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { ApiGranuleRecord, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
 import { CollectionId } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
@@ -80,7 +80,7 @@ export const getGranule = async (params: {
   collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
-}): Promise<ApiGranule> => {
+}): Promise<ApiGranuleRecord> => {
   const response = await getGranuleResponse(params);
   return JSON.parse(response.body);
 };
@@ -464,7 +464,7 @@ export const listGranules = async (params: {
  */
 export const createGranule = async (params: {
   prefix: string,
-  body: ApiGranule,
+  body: ApiGranuleRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -494,7 +494,7 @@ export const createGranule = async (params: {
  */
 export const updateGranule = async (params: {
   prefix: string,
-  body: ApiGranule,
+  body: ApiGranuleRecord,
   granuleId: GranuleId,
   collectionId?: CollectionId,
   callback?: InvokeApiFunction

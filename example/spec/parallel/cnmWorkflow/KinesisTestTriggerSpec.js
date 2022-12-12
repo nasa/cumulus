@@ -57,7 +57,7 @@ const {
   waitForTestSfForRecord,
 } = require('../../helpers/kinesisHelpers');
 
-const testWorkflow = 'KinesisTriggerTest';
+const testWorkflow = 'CNMExampleWorkflow';
 
 // When kinesis-type rules exist, the Cumulus lambda messageConsumer is
 // configured to trigger workflows when new records arrive on a Kinesis
@@ -201,7 +201,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     scheduleQueueUrl = await getQueueUrlByName(`${testConfig.stackName}-backgroundProcessing`);
 
-    ruleDirectory = './spec/parallel/kinesisTests/data/rules';
+    ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis';
     ruleOverride = {
       name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
       collection: {
@@ -347,6 +347,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
               ...expectedSyncGranulesPayload.granules[0],
               sync_granule_duration: lambdaOutput.payload.granules[0].sync_granule_duration,
               createdAt: lambdaOutput.payload.granules[0].createdAt,
+              provider: record.provider,
             },
           ],
         };

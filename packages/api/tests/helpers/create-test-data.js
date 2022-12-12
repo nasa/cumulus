@@ -3,7 +3,11 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-const { randomString, randomId } = require('@cumulus/common/test-utils');
+const {
+  randomId,
+  randomString,
+  randomStringFromRegex,
+} = require('@cumulus/common/test-utils');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
   FilePgModel,
@@ -138,10 +142,10 @@ async function createGranuleAndFiles({
   );
 
   // create a new Postgres granule
-  const newPgGranule = await translateApiGranuleToPostgresGranule(
-    newGranule,
-    dbClient
-  );
+  const newPgGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: newGranule,
+    knexOrTransaction: dbClient,
+  });
   const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
 
   // create Postgres files
@@ -180,6 +184,26 @@ async function createGranuleAndFiles({
   };
 }
 
+/**
+ * Helper for creating array of granule IDs of variable length
+ *
+ * @param {number} count - defaults to 5000
+ * @returns {Array<string>} returns array of granule IDs
+ */
+const generateListOfGranules = (count = 5000) => {
+  const granuleRegString = () => randomStringFromRegex('^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$');
+  const granuleLongString = () => randomStringFromRegex('^SWOT_L2_HR_Raster_\\_[\\w]{6}\\_[\\w]{1}\\_[\\d]{20}\\_[\\w]{6}\\_[\\d]{13}$');
+  const collectionId = () => `${randomString(3)}__${randomString(5)}`;
+  const granules = [];
+  const halfOfCount = count / 2;
+  for (let i = 0; i < halfOfCount; i += 1) {
+    granules.push({ granuleId: granuleRegString(), collectionId: collectionId() });
+    granules.push({ granuleId: granuleLongString(), collectionId: collectionId() });
+  }
+  return granules;
+};
+
 module.exports = {
   createGranuleAndFiles,
+  generateListOfGranules,
 };

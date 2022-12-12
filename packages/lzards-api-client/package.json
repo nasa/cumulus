@@ -1,0 +1,44 @@
+{
+  "name": "@cumulus/lzards-api-client",
+  "version": "13.4.0",
+  "description": "A Node.js client to NASA's Level Zero and Repositories Data Store (LZARDS) API.",
+  "engines": {
+    "node": ">=14.19.1"
+  },
+  "scripts": {
+    "clean": "git clean -d -x -e node_modules -f",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
+  },
+  "ava": {
+    "fail-fast": true,
+    "timeout": "15m"
+  },
+  "keywords": [
+    "CUMULUS"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://github.com/nasa/cumulus/tree/master/packages/lzards-api-client#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "packages/lzards-api-client"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/aws-client": "13.4.0",
+    "@cumulus/common": "13.4.0",
+    "@cumulus/errors": "13.4.0",
+    "@cumulus/launchpad-auth": "13.4.0",
+    "@cumulus/logger": "13.4.0",
+    "got": "11.8.5",
+    "lodash": "^4.17.21"
+  }
+}

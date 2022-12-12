@@ -27,8 +27,9 @@ if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   git checkout "$GIT_SHA"
 else
   CURRENT_WORKING_DIR=$(pwd)
-  npm install
 fi
+
+npm install
 
 # Bootstrap to install/link packages
 npm run ci:bootstrap-no-scripts

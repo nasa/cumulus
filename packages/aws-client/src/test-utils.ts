@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import { ThrottlingException } from '@cumulus/errors';
 
 import { AWSClientTypes } from './types';
@@ -141,4 +142,15 @@ export const throttleOnce = (fn: (...args: unknown[]) => unknown) => {
 
     return fn(...args);
   };
+};
+
+export const streamToString = (stream: Readable) => {
+  let result = '';
+
+  // eslint-disable-next-line no-return-assign
+  stream.on('data', (chunk) => result += chunk.toString());
+
+  return new Promise((resolve) => {
+    stream.on('end', () => resolve(result));
+  });
 };
