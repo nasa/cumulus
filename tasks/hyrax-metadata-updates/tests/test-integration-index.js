@@ -98,7 +98,11 @@ const setupNock = (params) => {
 
   nock('https://urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
-    .reply(200, {token: 'ABCDE'});
+    .reply(200, {
+      access_token: 'ABCDE',
+      token_type: 'Bearer',
+      expiration_date: '1/1/2999',
+    });
   
   process.env.CMR_ENVIRONMENT = 'OPS';
 };
