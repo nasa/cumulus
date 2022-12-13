@@ -2,6 +2,8 @@
 
 const test = require('ava');
 const omit = require('lodash/omit');
+const omitBy = require('lodash/omitBy');
+const isNull = require('lodash/isNull');
 const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
@@ -1422,6 +1424,83 @@ test.serial('PUT /executions updates the record as expected in PostgreSQL/Elasti
   t.is(updatedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
   t.is(updatedPgRecord.status, updatedExecution.status);
   t.deepEqual(updatedPgRecord.final_payload, updatedExecution.finalPayload);
+});
+
+test.serial('PUT /executions overwrites a completed record and deletes fields', async (t) => {
+  const execution = fakeExecutionFactoryV2({
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+    status: 'completed',
+    tasks: { fakeTask: 'fake' },
+  });
+
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...omit(execution, ['collectionId']),
+    asyncOperationId: t.context.testAsyncOperation.id,
+    finalPayload: { outputPayload: randomId('outputPayload') },
+    parentArn: t.context.fakeApiExecutions[2].arn,
+    status: 'running',
+    error: null,
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const pgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const updatedPgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
+  const expectedEsRecord = {
+    ...omitBy(updatedExecution, isNull),
+    collectionId: execution.collectionId,
+    createdAt: updatedPgRecord.created_at.getTime(),
+    updatedAt: updatedPgRecord.updated_at.getTime(),
+  };
+  t.like(
+    updatedEsRecord,
+    {
+      ...expectedEsRecord,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+
+  t.is(updatedPgRecord.arn, execution.arn);
+  t.is(updatedPgRecord.cumulus_id, pgRecord.cumulus_id);
+
+  t.is(updatedPgRecord.created_at.getTime(), pgRecord.created_at.getTime());
+  t.true(updatedPgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
+
+  // collectionId was omitted from body of PUT request, so values are
+  // not overridden in the database
+  t.is(updatedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
+  // updated record has added field
+  t.is(updatedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
+  // updated record has updated field
+  t.is(updatedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
+  t.is(updatedPgRecord.status, updatedExecution.status);
+  t.deepEqual(updatedPgRecord.final_payload, updatedExecution.finalPayload);
+  t.falsy(updatedPgRecord.error);
 });
 
 test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {
