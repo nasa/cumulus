@@ -96,9 +96,9 @@ const validateApiToPostgresExecutionObject = (apiExecution : ApiExecution) => {
 };
 
 /**
- * Translate execution record from Dynamo to RDS.
+ * Translate execution record from API to RDS.
  *
- * @param {ApiExecution} dynamoRecord
+ * @param {ApiExecution} apiRecord
  *   Source record from DynamoDB
  * @param {AWS.DynamoDB.DocumentClient.AttributeMap} knex
  *   Knex client
@@ -111,7 +111,7 @@ const validateApiToPostgresExecutionObject = (apiExecution : ApiExecution) => {
  * @returns {PostgresExecutionRecord} - converted Execution
  */
 export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async (
-  dynamoRecord: ApiExecution,
+  apiRecord: ApiExecution,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),
@@ -119,32 +119,32 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
 ): Promise<PostgresExecution> => {
   const logger = new Logger({ sender: '@cumulus/db/translate/executions' });
 
-  validateApiToPostgresExecutionObject(dynamoRecord);
+  validateApiToPostgresExecutionObject(apiRecord);
   // Map old record to new schema.
   const translatedRecord: PostgresExecution = {
     async_operation_cumulus_id: (
-      dynamoRecord.asyncOperationId ? await asyncOperationPgModel.getRecordCumulusId(
+      apiRecord.asyncOperationId ? await asyncOperationPgModel.getRecordCumulusId(
         knex,
-        { id: dynamoRecord.asyncOperationId }
-      ) : (isNull(dynamoRecord.asyncOperationId) ? null : undefined)
+        { id: apiRecord.asyncOperationId }
+      ) : (isNull(apiRecord.asyncOperationId) ? null : undefined)
     ),
-    status: dynamoRecord.status,
-    arn: dynamoRecord.arn,
-    duration: dynamoRecord.duration,
-    error: dynamoRecord.error,
-    tasks: dynamoRecord.tasks,
-    original_payload: dynamoRecord.originalPayload,
-    final_payload: dynamoRecord.finalPayload,
-    workflow_name: dynamoRecord.type,
-    url: dynamoRecord.execution,
-    cumulus_version: dynamoRecord.cumulusVersion,
-    timestamp: returnNullOrUndefinedOrDate(dynamoRecord.timestamp),
-    created_at: returnNullOrUndefinedOrDate(dynamoRecord.createdAt),
-    updated_at: returnNullOrUndefinedOrDate(dynamoRecord.updatedAt),
+    status: apiRecord.status,
+    arn: apiRecord.arn,
+    duration: apiRecord.duration,
+    error: apiRecord.error,
+    tasks: apiRecord.tasks,
+    original_payload: apiRecord.originalPayload,
+    final_payload: apiRecord.finalPayload,
+    workflow_name: apiRecord.type,
+    url: apiRecord.execution,
+    cumulus_version: apiRecord.cumulusVersion,
+    timestamp: returnNullOrUndefinedOrDate(apiRecord.timestamp),
+    created_at: returnNullOrUndefinedOrDate(apiRecord.createdAt),
+    updated_at: returnNullOrUndefinedOrDate(apiRecord.updatedAt),
   };
 
-  if (!isNil(dynamoRecord.collectionId)) {
-    const { name, version } = deconstructCollectionId(dynamoRecord.collectionId);
+  if (!isNil(apiRecord.collectionId)) {
+    const { name, version } = deconstructCollectionId(apiRecord.collectionId);
     translatedRecord.collection_cumulus_id = await collectionPgModel.getRecordCumulusId(
       knex,
       { name, version }
@@ -152,13 +152,13 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
   }
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
-  if (!isNil(dynamoRecord.parentArn)) {
+  if (!isNil(apiRecord.parentArn)) {
     let parentId;
 
     try {
       parentId = await executionPgModel.getRecordCumulusId(
         knex,
-        { arn: dynamoRecord.parentArn }
+        { arn: apiRecord.parentArn }
       );
 
       if (parentId !== undefined) {
