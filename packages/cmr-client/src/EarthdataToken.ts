@@ -116,7 +116,7 @@ export class EarthdataToken {
       }
       if (Object.keys(response).length === 2) {
         const date1 = new Date(response[0].expiration_date);
-        const data2 = new Date(response[1].expiration_date);
+        const date2 = new Date(response[1].expiration_date);
         return date1 >= date2 ? 'Bearer' + response[1].access_token : 'Bearer' + response[0].access_token;
       }
       return 'Bearer: ' + response[0].access_token;
@@ -157,7 +157,7 @@ export class EarthdataToken {
     const url = this.getEDLurl();
     const newtoken = token.toString().replace('Bearer: ', '');
     try {
-      // eslint-disable-next-line no-unused-vars 
+      /*eslint-disable no-unused-vars*/ 
       const response = await got.post(`${url}/api/users/revoke_token?token=${newtoken}`,
         {
           headers: {
@@ -169,7 +169,7 @@ export class EarthdataToken {
       const statusMessage = get(error, 'response.statusMessage', error.message);
       let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
       const responseError = get(error, 'response.body.errors');
-      if (responseError) {
+      if (responseError || response === []) {
         errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
       }
 
