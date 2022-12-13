@@ -13,6 +13,6 @@ test('returns expected response', async (t) => {
 
   t.is(response.status, 200);
 
-  t.is(response.body.response_version, 'v1');
+  t.is(response.body.response_version, 'v2');
   t.is(response.body.api_version, pckg.version);
 });
