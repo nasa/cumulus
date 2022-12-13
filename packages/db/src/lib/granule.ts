@@ -267,7 +267,7 @@ export const getGranulesByApiPropertiesQuery = (
 export const getGranulesByGranuleId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleId: string
-): Promise<Array<PostgresGranuleRecord>> => {
+): Promise<PostgresGranuleRecord[]> => {
   const {
     granules: granulesTable,
   } = TableNames;

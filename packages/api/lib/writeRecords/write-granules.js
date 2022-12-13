@@ -209,13 +209,17 @@ const _writePostgresGranuleViaTransaction = async ({
     log.info(`
     Did not update ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
     due to granule overwrite constraints, retaining original granule for cumulus_id ${pgGranule.cumulus_id}`);
+
+    return { status: 'failed', pgGranule: pgGranule }
   } else {
     log.info(`
     Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
     to granule record with cumulus_id ${pgGranule.cumulus_id} in PostgreSQL
     `);
+
+    return { status: 'success', pgGranule: pgGranule, writeConstraints: writeConstraints }
   }
-  return pgGranule;
+  // return pgGranule;
 };
 /**
 * Removes excess files from the postgres database for a given granule
@@ -468,7 +472,8 @@ const _writeGranuleRecords = async (params) => {
 
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      pgGranule = await _writePostgresGranuleViaTransaction({
+      // pgGranule = await _writePostgresGranuleViaTransaction({
+      pgGranuleResult = await _writePostgresGranuleViaTransaction({
         granuleRecord: postgresGranuleRecord,
         executionCumulusId,
         trx,
@@ -498,13 +503,17 @@ const _writeGranuleRecords = async (params) => {
       'Completed write operation to DynamoDb for granule %j',
       apiGranuleRecord
     );
-    return pgGranule;
+    // return pgGranule;
+    return pgGranuleResult;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
-
+    
     // If a postgres record was provided
     // attempt to ensure alignment between postgress/dynamo/es
-    if (pgGranule) {
+    // what to do if it failed? previously, what was returned if no write happened?
+    // TODO: figure out ^^, maybe from tests?
+    // if (pgGranule) {
+      if (pgGranule.status === 'success') {
       // Align dynamo granule record with postgres record
       // Retrieve the granule from postgres
       let pgGranuleExists;
@@ -596,7 +605,8 @@ const _writeGranule = async ({
   writeConstraints = true,
 }) => {
   const { status } = apiGranuleRecord;
-  const pgGranule = await _writeGranuleRecords({
+  // const pgGranule = await _writeGranuleRecords({
+  const pgGranuleResult = await _writeGranuleRecords({
     apiGranuleRecord,
     esClient,
     executionCumulusId,
@@ -611,7 +621,7 @@ const _writeGranule = async ({
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
   // An empty array of files will remove existing file records but a missing
   // `files` key will not.
-  if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord) {
+  if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord && pgGranuleResult.status === 'success') {
     await _writeGranuleFiles({
       granuleCumulusId: pgGranule.cumulus_id,
       granule: apiGranuleRecord,
