@@ -90,6 +90,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated granule write code to validate written createdAt is synced between
     datastores in cases where granule.createdAt is not provided for a new granule.
 
+## Fixed
+
+- **CUMULUS-3072**
+  - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
+    a value for `files` as `[]` to elasticsearch instead of undefined in cases
+    where `[]` is specified in the new granule.
+  - Fixed issue introduced in CUMULUS-3070 where DynamoDB granules with a value
+   `files` as `[]` when the granule does *not* have the files value set as
+   mutable (e.g. in a `running` state) from a framework message write *and*
+   files was not previously defined will write `[]` instead of leaving the value
+   undefined.
 
 ## [v13.4.0] 10/31/2022
 
