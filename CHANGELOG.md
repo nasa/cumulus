@@ -8,6 +8,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-3072**
+  - Removed original PUT granule endpoint logic (in favor of utilizing new PATCH
+    endpoint introduced in CUMULUS-3071)
+  - Updated PUT granule endpoint to expected RESTful behavior:
+    - PUT will now overwrite all non-provided fields as either non-defined or
+      defaults, removing existing related database records (e.g. files,
+      granule-execution linkages ) as appropriate.
+    - PUT will continue to overwrite fields that are provided in the payload,
+      excepting collectionId and granuleId which cannot be modified.
+    - PUT will create a new granule record if one does not already exist
+    - Like PATCH, the execution field is additive only - executions, once
+      associated with a granule record cannot be unassociated via the granule endpoint.
+
 - **CUMULUS-3070/3074**
   - Updated granule PUT/POST endpoints to no longer respect message write
     constraints.  Functionally this means that:
