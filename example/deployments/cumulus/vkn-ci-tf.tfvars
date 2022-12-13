@@ -2,8 +2,6 @@ prefix = "vkn-ci-tf"
 key_name      = "vanhk-cumulus-sandbox"
 archive_api_port = 4343
 
-cmr_oauth_provider = "launchpad"
-
 system_bucket     = "vkn-ci-tf-internal"
 buckets = {
   glacier = {

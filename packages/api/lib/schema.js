@@ -1,8 +1,12 @@
 'use strict';
 
 const Ajv = require('ajv');
+const cloneDeep = require('lodash/cloneDeep');
 
-const recordIsValid = (item, schema, removeAdditional = false) => {
+const recordIsValid = (incomingRecord, schema, removeAdditional = false) => {
+  // Protect against AVJ mutating item, regardless of config options
+  const record = cloneDeep(incomingRecord);
+
   if (!schema) {
     throw new Error('schema is not defined');
   }
@@ -29,7 +33,7 @@ const recordIsValid = (item, schema, removeAdditional = false) => {
     v5: true,
   });
   const validate = ajv.compile(schemaWithAdditionalPropertiesProhibited);
-  const valid = validate(item);
+  const valid = validate(record);
   if (!valid) {
     const err = new Error(`The record has validation errors: ${JSON.stringify(validate.errors)}`);
     err.name = 'SchemaValidationError';

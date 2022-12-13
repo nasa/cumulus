@@ -36,10 +36,10 @@ const createGranuleInPG = async (t, params) => {
     collectionId,
     ...params,
   });
-  const translatedGranule = await translateApiGranuleToPostgresGranule(
-    granule,
-    t.context.knex
-  );
+  const translatedGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: t.context.knex,
+  });
   const [pgGranule] = await t.context.granulePgModel.create(
     t.context.knex,
     translatedGranule

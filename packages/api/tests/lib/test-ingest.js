@@ -160,7 +160,10 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
 
   await granulePgModel.create(
     t.context.knex,
-    await translateApiGranuleToPostgresGranule(apiGranule, t.context.knex)
+    await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranule,
+      knexOrTransaction: t.context.knex,
+    })
   );
 
   t.teardown(() => buildPayloadSpy.restore());
@@ -231,7 +234,10 @@ test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
 
   await granulePgModel.create(
     t.context.knex,
-    await translateApiGranuleToPostgresGranule(apiGranule, t.context.knex)
+    await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranule,
+      knexOrTransaction: t.context.knex,
+    })
   );
 
   const buildPayloadStub = sinon.stub(rulesHelpers, 'buildPayload').resolves();

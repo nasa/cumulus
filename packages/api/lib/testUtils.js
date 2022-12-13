@@ -88,8 +88,6 @@ function fakeFileFactory(params = {}) {
 function fakeGranuleFactory(status = 'completed') {
   return {
     granuleId: randomId('granule'),
-    dataType: randomId('datatype'),
-    version: randomId('vers'),
     collectionId: constructCollectionId('fakeCollection', 'v1'),
     status,
     execution: getExecutionUrlFromArn(randomId('execution')),
