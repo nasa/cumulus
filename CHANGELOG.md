@@ -32,8 +32,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
       instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
       'status', 'execution']`
 
-
 ### Added
+
+- **CUMULUS-3072**
+  - Added `replaceGranule` to `@cumulus/api-client/granules` to add usage of the
+    updated RESTful PUT logic
 
 - **CUMULUS-3070**
   - Remove granules dynamoDb model logic that sets default publish value on record

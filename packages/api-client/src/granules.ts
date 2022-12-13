@@ -418,6 +418,39 @@ export const createGranule = async (params: {
 };
 
 /**
+ * Update/create granule in cumulus via PUT request.  Existing values will
+ * be removed if not specified and in some cases replaced with defaults.
+ * Granule execution association history will be retained.
+ * PATCH /granules/{granuleId}
+ * @param {Object} params             - params
+ * @param {Object} [params.body]      - granule to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const replaceGranule = async (params: {
+  prefix: string,
+  body: ApiGranuleRecord,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${body.granuleId}`,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: [200, 201],
+  });
+};
+
+/**
  * Update granule in cumulus via PATCH request.  Existing values will
  * not be overwritten if not specified, null values will be removed and in
  * some cases replaced with defaults.
