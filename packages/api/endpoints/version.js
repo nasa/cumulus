@@ -12,7 +12,7 @@ const pckg = require('../package.json');
  */
 function get(req, res) {
   return res.send({
-    response_version: 'v1',
+    response_version: 'v2',
     api_version: pckg.version,
   });
 }
