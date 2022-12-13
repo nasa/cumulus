@@ -90,12 +90,12 @@ const setupNock = (params) => {
     provider_short_name: 'GES_DISC',
   };
 
-  const expected_response = [
+  const expectedresponse = [
     {
       access_token: 'ABCDE',
       token_type: 'Bearer',
       expiration_date: '1/1/2999',
-    }
+    },
   ];
 
   // Mock out retrieval of collection entry from CMR
@@ -106,8 +106,8 @@ const setupNock = (params) => {
 
   nock('https://urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
-    .reply(200, expected_response);
-  
+    .reply(200, expectedresponse);
+
   process.env.CMR_ENVIRONMENT = 'OPS';
 };
 
