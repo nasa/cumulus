@@ -46,9 +46,9 @@ export class EarthdataToken {
   edlEnv: string;
   token?: string;
 
-  /** 
+  /**
   * The constructor for the EarthdataToken class
-  * 
+  *
   * @param {string} params.username - Earthdata username
   * @param {string} params.password - Earthdata password
   * @param {string} params.edlEnv - the CMR environment of the user
@@ -61,34 +61,34 @@ export class EarthdataToken {
   *  "password": "password",
   *  "edlEnv": "UAT",
   *  "token" : "1782hg134bsd71"
-  * 
+  *
   * }
   */
 
-   constructor(params: EarthdataTokenParams) {
+  constructor(params: EarthdataTokenParams) {
     this.username = params.username;
     this.password = params.password;
     this.edlEnv = params.edlEnv;
     this.token = params.token;
-   }
+  }
 
-   getEDLurl( 
-   ) {
-     switch (this.edlEnv) {
-       case 'PROD':
-       case 'OPS':
-         return 'https://urs.earthdata.nasa.gov';
-       case 'UAT':
-         return 'https://uat.urs.earthdata.nasa.gov';
-       case 'SIT':
-         return 'https://sit.urs.earthdata.nasa.gov';
-       default:
-         return 'https://sit.urs.earthdata.nasa.gov';
-     }
-   }
+  getEDLurl(
+  ) {
+    switch (this.edlEnv) {
+      case 'PROD':
+      case 'OPS':
+        return 'https://urs.earthdata.nasa.gov';
+      case 'UAT':
+        return 'https://uat.urs.earthdata.nasa.gov';
+      case 'SIT':
+        return 'https://sit.urs.earthdata.nasa.gov';
+      default:
+        return 'https://sit.urs.earthdata.nasa.gov';
+    }
+  }
 
   async getEDLToken(): Promise<string> {
-    if ( !this.token ) {
+    if (!this.token) {
       const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
       const url = this.getEDLurl();
       // response: get a token from the Earthdata login endpoint using credentials if exists
@@ -114,10 +114,10 @@ export class EarthdataToken {
       if (Object.keys(response).length === 0) {
         return this.createEDLToken();
       }
-      if(Object.keys(response).length === 0) {
-        let date1 = new Date(response[0].expiration_date);
-        let data2 = new Date(response[1].expiration_date);
-        return date1 >= date2 ? response[1].access_token : response[0].access_token;
+      if (Object.keys(response).length === 2) {
+        const date1 = new Date(response[0].expiration_date);
+        const data2 = new Date(response[1].expiration_date);
+        return date1 >= date2 ? 'Bearer' + response[1].access_token : 'Bearer' + response[0].access_token;
       }
       return 'Bearer: ' + response[0].access_token;
     }
@@ -151,20 +151,19 @@ export class EarthdataToken {
   }
 
   async revokeEDLToken(
-    token: string,
+    token: string
   ): Promise<void> {
     const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
     const url = this.getEDLurl();
-    var newtoken = token.toString().replace("Bearer: ", "");
+    const newtoken = token.toString().replace('Bearer: ', '');
     try {
-      /* eslint-disable no-unused-vars */
+      // eslint-disable-next-line no-unused-vars 
       const response = await got.post(`${url}/api/users/revoke_token?token=${newtoken}`,
         {
           headers: {
             Authorization: `Basic ${buff}`,
           },
         }).json();
-      /* eslint-enable no-unused-vars */
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
@@ -176,7 +175,7 @@ export class EarthdataToken {
 
       throw new Error(errorMessage);
     }
-    if(this.token === newtoken){
+    if (this.token === newtoken) {
       this.token = undefined;
     }
   }

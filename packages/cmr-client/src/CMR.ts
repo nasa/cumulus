@@ -27,11 +27,11 @@ const logDetails: { [key: string]: string } = {
  *
  * @private
  */
- async function updateToken(
+async function updateToken(
   username: string,
   password: string
 ): Promise<string> {
-  let earthdataTokenObject = new EarthdataToken({
+  const earthdataTokenObject = new EarthdataToken({
     username: username,
     password: password,
     edlEnv: process.env.CMR_ENVIRONMENT,
