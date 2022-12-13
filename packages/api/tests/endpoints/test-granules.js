@@ -2166,8 +2166,8 @@ test.serial('PATCH does not overwrite existing createdAt of an existing granule 
         executionCumulusId: testExecutionCumulusId,
         granuleParams: {
           createdAt,
-          execution: executionUrl,
           status: 'completed',
+          execution: executionUrl,
         },
       });
 

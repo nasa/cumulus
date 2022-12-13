@@ -109,6 +109,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2915**
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
+- **CUMULUS-3043**
+  - Organize & link Getting Started public docs for better user guidance
+  - Update Getting Started sections with current content
 - **CUMULUS-3045**
   - Update GitHub FAQs:
     - Add new and refreshed content for previous sections
