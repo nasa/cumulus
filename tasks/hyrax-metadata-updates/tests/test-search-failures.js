@@ -45,7 +45,7 @@ test.before(async () => {
 
 test.beforeEach(() => {
   process.env.CMR_ENVIRONMENT = 'OPS';
-  
+
   nock('https://urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
     .reply(200, expectedresponse);

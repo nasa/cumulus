@@ -157,12 +157,14 @@ export class EarthdataToken {
     const url = this.getEDLurl();
     const newtoken = token.toString().replace('Bearer: ', '');
     try {
+      /* eslint-disable @typescript-eslint/no-unused-vars */
       const response = await got.post(`${url}/api/users/revoke_token?token=${newtoken}`,
         {
           headers: {
             Authorization: `Basic ${buff}`,
           },
         }).json();
+      /* eslint-enable @typescript-eslint/no-unused-vars */
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
@@ -174,7 +176,7 @@ export class EarthdataToken {
 
       throw new Error(errorMessage);
     }
-    if (this.token === newtoken && response != undefined) {
+    if (this.token === newtoken) {
       this.token = undefined;
     }
   }
