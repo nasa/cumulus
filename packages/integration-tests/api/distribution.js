@@ -106,29 +106,21 @@ async function invokeTEADistributionLambda(
 }
 
 /**
- * Invoke s3-credentials-endpoint lambda directly to get s3 credentials. This
- * is used in integration testing so that we use the lambda's IAM
- * role/permissions when accessing resources.
+ * Invoke s3-credentials-endpoint lambda directly to get s3 credentials.
  *
- * @param {string} path
- *   path to file requested.  This is just "/bucket/keytofile"
- * @param {string} accessToken
- *   Access token from OAuth provider or nothing.
- * @returns {string}
- *   signed s3 URL for the requested file.
+ * @param {string} path request path
+ * @param {Object} headers request header
+ * @returns {string} temporary credentials for s3 access
  */
-async function invokeS3CredentialsLambda(path, accessToken = '') {
+async function invokeS3CredentialsLambda(path, headers) {
   const lambda = new Lambda();
   const FunctionName = `${process.env.stackName}-s3-credentials-endpoint`;
 
   const event = {
-    method: 'GET',
+    httpMethod: 'GET',
     path,
+    headers,
   };
-
-  if (accessToken) {
-    event.headers = { cookie: [`accessToken=${accessToken}`] };
-  }
 
   const data = await lambda.invoke({
     FunctionName,

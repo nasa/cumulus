@@ -1,10 +1,10 @@
 {
   "name": "@cumulus/s3-replicator",
-  "version": "11.1.1",
+  "version": "13.4.0",
   "description": "Replicate S3 Events to alternate bucket. Solves same-region replication.",
   "main": "index.js",
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "scripts": {
     "clean": "rm -rf dist",

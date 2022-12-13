@@ -77,7 +77,11 @@ test.beforeEach(async (t) => {
   esAlias = randomId('esalias');
   esIndex = randomId('esindex');
   process.env.ES_INDEX = esAlias;
-  await bootstrapElasticSearch('fakehost', esIndex, esAlias);
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: esIndex,
+    alias: esAlias,
+  });
   esClient = await Search.es();
 
   t.context.testDbName = `test_internal_recon_${cryptoRandomString({ length: 10 })}`;
@@ -238,7 +242,10 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
 
   await Promise.all(
     dbGranules.map(async (granule) => {
-      const pgGranule = await translateApiGranuleToPostgresGranule(granule, knex);
+      const pgGranule = await translateApiGranuleToPostgresGranule({
+        dynamoRecord: granule,
+        knexOrTransaction: knex,
+      });
       let pgExecution = {};
       if (granule.execution) {
         const pgExecutionData = fakeExecutionRecordFactory({
@@ -246,7 +253,11 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
         });
         ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
       }
-      return upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
+      return upsertGranuleWithExecutionJoinRecord({
+        executionCumulusId: pgExecution.cumulus_id,
+        granule: pgGranule,
+        knexTransaction: knex,
+      });
     })
   );
 
@@ -389,11 +400,13 @@ test.serial('internalRecReportForGranules handles generated granules with custom
       ...fakeGranule,
       granule: fakeGranule,
       executionUrl: fakeGranule.execution,
-      workflowStartTime: Date.now(),
       processingTimeInfo,
       cmrTemporalInfo,
     });
-    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+    const pgGranule = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranule,
+      knexOrTransaction: knex,
+    });
 
     let pgExecution = {};
     if (apiGranule.execution) {
@@ -402,7 +415,11 @@ test.serial('internalRecReportForGranules handles generated granules with custom
       });
       ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
     }
-    await upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
+    await upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: pgExecution.cumulus_id,
+      granule: pgGranule,
+      knexTransaction: knex,
+    });
     await indexer.indexGranule(esClient, apiGranule, esAlias);
   }));
 
@@ -443,21 +460,23 @@ test.serial('internalRecReportForGranules handles granules with files', async (t
       ...fakeGranule,
       granule: fakeGranule,
       executionUrl: fakeGranule.execution,
-      workflowStartTime: Date.now(),
       cmrUtils: fakeCmrUtils,
     });
-    const pgGranule = await translateApiGranuleToPostgresGranule(apiGranule, knex);
+    const pgGranule = await translateApiGranuleToPostgresGranule({
+      dynamoRecord: apiGranule,
+      knexOrTransaction: knex,
+    });
 
     const pgExecutionData = fakeExecutionRecordFactory({
       url: apiGranule.execution,
     });
     const [pgExecution] = await executionPgModel.create(knex, pgExecutionData);
 
-    const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
-      knex,
-      pgGranule,
-      pgExecution.cumulus_id
-    );
+    const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: pgExecution.cumulus_id,
+      granule: pgGranule,
+      knexTransaction: knex,
+    });
     await Promise.all(apiGranule.files.map(async (file) => {
       const pgFile = translateApiFiletoPostgresFile(file);
       await filePgModel.create(knex, {

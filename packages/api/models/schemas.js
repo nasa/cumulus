@@ -209,12 +209,16 @@ module.exports.collection = {
       type: 'integer',
     },
     meta: {
-      title: 'Optional MetaData for the Collection',
+      title: 'Optional Metadata for the Collection',
       type: 'object',
       additionalProperties: true,
       s3MultipartChunksizeMb: {
         description: 'chunk size of the S3 multipart uploads for the collection',
         type: 'number',
+      },
+      granuleMetadataFileExtension: {
+        title: 'Optional file extension for tasks that utilize metadata file to look for the granule metadata information, e.g. .cmr.json, .iso.xml',
+        type: 'string',
       },
     },
     tags: {
@@ -291,7 +295,6 @@ module.exports.granule = {
     },
     published: {
       type: 'boolean',
-      default: false,
       description: 'shows whether the granule is published to CMR',
       readonly: true,
     },
@@ -363,8 +366,6 @@ module.exports.granule = {
     timestamp: { type: 'integer' },
     createdAt: { type: 'integer' },
     updatedAt: { type: 'integer' },
-    dataType: { type: 'string' },
-    version: { type: 'string' },
     provider: { type: 'string' },
     queryFields: {
       description: 'fields for query and metrics purpose',
@@ -376,7 +377,6 @@ module.exports.granule = {
     'granuleId',
     'collectionId',
     'status',
-    'createdAt',
     'updatedAt',
   ],
 };

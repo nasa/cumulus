@@ -1,5 +1,5 @@
 locals {
-  cnm_response_version  = "2.0.2"
+  cnm_response_version  = "2.0.3"
   cnm_response_filename = "cnmResponse-${local.cnm_response_version}.zip"
 }
 

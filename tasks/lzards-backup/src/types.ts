@@ -6,6 +6,7 @@ export interface HandlerInput {
 export interface HandlerConfig {
   urlType: 's3' | 'cloudfront',
   cloudfrontEndpoint?: string,
+  failTaskWhenFileBackupFail?: boolean,
 }
 
 export interface HandlerEvent {
@@ -16,7 +17,10 @@ export interface HandlerEvent {
 export type MakeBackupFileRequestResult = {
   statusCode?: number
   granuleId: string,
+  collectionId: string,
   filename: string,
+  provider: string,
+  createdAt: number,
   body?: string,
   status: 'COMPLETED' | 'FAILED',
 };
@@ -28,13 +32,26 @@ export type MessageGranuleFilesObject = {
   key: string,
 };
 
-export interface MessageGranule {
+export interface BaseMessageGranule {
   granuleId: string,
-  dataType: string,
-  version: string,
   files: MessageGranuleFilesObject[],
 }
 
+export interface MessageGranuleFromStepOutput extends BaseMessageGranule {
+  dataType: string,
+  version: string,
+  files: MessageGranuleFilesObject[],
+  provider: string,
+  createdAt: number,
+}
+
+export interface ApiGranule extends BaseMessageGranule {
+  collectionId: string,
+  provider: string,
+  createdAt: number,
+}
+
+export type MessageGranule = MessageGranuleFromStepOutput | ApiGranule;
 export interface GetCollectionFunctionParams {
   prefix: string
   query: {

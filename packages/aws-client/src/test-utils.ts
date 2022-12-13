@@ -1,3 +1,4 @@
+import { Readable } from 'stream';
 import { ThrottlingException } from '@cumulus/errors';
 
 import { AWSClientTypes } from './types';
@@ -8,7 +9,7 @@ export const inTestMode = () => process.env.NODE_ENV === 'test';
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
   stepfunctions: 4566,
-  apigateway: 4566,
+  APIGatewayClient: 4566,
   cloudformation: 4566,
   cloudwatch: 4566,
   cloudwatchevents: 4566,
@@ -141,4 +142,15 @@ export const throttleOnce = (fn: (...args: unknown[]) => unknown) => {
 
     return fn(...args);
   };
+};
+
+export const streamToString = (stream: Readable) => {
+  let result = '';
+
+  // eslint-disable-next-line no-return-assign
+  stream.on('data', (chunk) => result += chunk.toString());
+
+  return new Promise((resolve) => {
+    stream.on('end', () => resolve(result));
+  });
 };

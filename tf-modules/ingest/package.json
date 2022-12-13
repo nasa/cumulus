@@ -1,9 +1,9 @@
 {
   "name": "@cumulus/ingest-module",
-  "version": "11.1.1",
+  "version": "13.4.0",
   "description": "Terraform module for data ingest related functionality",
   "engines": {
-    "node": ">=12.18.0"
+    "node": ">=14.19.1"
   },
   "scripts": {
     "prepublish": "node scripts/write-cumulus-version.js"

@@ -135,7 +135,10 @@ async function checkOrCreateTables(stackName) {
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   console.log(process.env.ES_HOST);
-  await bootstrapElasticSearch(process.env.ES_HOST, process.env.ES_INDEX);
+  await bootstrapElasticSearch({
+    host: process.env.ES_HOST,
+    index: process.env.ES_INDEX,
+  });
   await s3().createBucket({ Bucket: bucket });
 
   const { TopicArn } = await sns().createTopic({ Name: randomId('topicName') }).promise();
@@ -189,7 +192,10 @@ async function eraseElasticsearchIndices(esClient, esIndex) {
 async function initializeLocalElasticsearch(stackName) {
   const es = await getESClientAndIndex(stackName);
   await eraseElasticsearchIndices(es.client, es.index);
-  return bootstrapElasticSearch(process.env.ES_HOST, es.index);
+  return bootstrapElasticSearch({
+    host: process.env.ES_HOST,
+    index: es.index,
+  });
 }
 
 /**
@@ -264,8 +270,14 @@ async function createDBRecords(stackName, user, knexOverride) {
     published: false, // Important - we need to be able to delete these.
   });
   await serveUtils.addGranules([granule]);
-  const postgresGranule = await translateApiGranuleToPostgresGranule(granule, knex);
-  await granulePgModel.upsert(knex, postgresGranule);
+  const postgresGranule = await translateApiGranuleToPostgresGranule({
+    dynamoRecord: granule,
+    knexOrTransaction: knex,
+  });
+  await granulePgModel.upsert({
+    granule: postgresGranule,
+    knexOrTrx: knex,
+  });
 
   // add pdrs records
   const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });

@@ -164,7 +164,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
         status: 'failed',
       });
 
-      const errorCause = JSON.parse(get(execution, 'error.Cause', {}));
+      const errorCause = JSON.parse(get(execution, 'error.Cause', '{}'));
       expect(errorCause.errorMessage)
         .toBe(`Duplicate granule found for ${existingGranuleId} with duplicate configuration set to error`);
     }

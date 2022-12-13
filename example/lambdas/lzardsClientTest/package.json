@@ -1,0 +1,26 @@
+{
+  "name": "@cumulus/test-lzards-api-lambda",
+  "version": "13.4.0",
+  "description": "LZARDS API Client Test Lambda",
+  "private": true,
+  "engines": {
+    "node": ">=14.19.1"
+  },
+  "scripts": {
+    "test": "true",
+    "python-lint": "true",
+    "clean": "rm -rf dist",
+    "build-lambda-zip": "cd dist/webpack && node ../../../../../bin/zip.js lambda.zip index.js",
+    "package": "npm run clean && npm run webpack && npm run build-lambda-zip",
+    "webpack": "../../../node_modules/.bin/webpack"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@cumulus/logger": "13.4.0",
+    "@cumulus/lzards-api-client": "13.4.0"
+  }
+}

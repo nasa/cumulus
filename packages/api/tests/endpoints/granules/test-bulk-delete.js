@@ -4,19 +4,19 @@ const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
 
-const asyncOperations = require('@cumulus/async-operations');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { EcsStartTaskError } = require('@cumulus/errors');
 
+const startAsyncOperation = require('../../../lib/startAsyncOperation');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const AccessToken = require('../../../models/access-tokens');
+const { generateListOfGranules } = require('../../helpers/create-test-data');
 
 let accessTokenModel;
 let jwtAuthToken;
@@ -64,10 +64,7 @@ test.before(async () => {
 });
 
 test.beforeEach((t) => {
-  const asyncOperationId = randomString();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').resolves(
-    { id: asyncOperationId }
-  );
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda');
 });
 
 test.afterEach.always((t) => {
@@ -100,13 +97,11 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
 
   const {
     lambdaName,
-    cluster,
     description,
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Bulk granule deletion');
   t.deepEqual(payload, {
     payload: body,
@@ -184,13 +179,11 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
 
   const {
     lambdaName,
-    cluster,
     description,
     payload,
   } = asyncOperationStartStub.args[0][0];
   t.true(asyncOperationStartStub.calledOnce);
   t.is(lambdaName, process.env.BulkOperationLambda);
-  t.is(cluster, process.env.EcsCluster);
   t.is(description, 'Bulk granule deletion');
   t.deepEqual(payload, {
     payload: body,
@@ -333,9 +326,9 @@ test.serial('POST /granules/bulkDelete returns a 401 status code if valid author
   t.is(response.status, 401);
 });
 
-test.serial('request to /granules/bulkDelete endpoint returns 500 if starting ECS task throws unexpected error', async (t) => {
+test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
   t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
+  t.context.asyncOperationStartStub = sinon.stub(startAsyncOperation, 'invokeStartAsyncOperationLambda').throws(
     new Error('failed to start')
   );
 
@@ -351,20 +344,21 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if starting EC
   t.is(response.status, 500);
 });
 
-test.serial('request to /granules/bulkDelete endpoint returns 503 if starting ECS task throws unexpected error', async (t) => {
-  t.context.asyncOperationStartStub.restore();
-  t.context.asyncOperationStartStub = sinon.stub(asyncOperations, 'startAsyncOperation').throws(
-    new EcsStartTaskError('failed to start')
-  );
+test.serial('POST /granules/bulkDelete starts an async-operation with a large list of IDs as input', async (t) => {
+  const expectedIds = generateListOfGranules();
 
   const body = {
-    ids: [randomString()],
+    ids: expectedIds,
+    forceRemoveFromCmr: true,
   };
 
   const response = await request(app)
     .post('/granules/bulkDelete')
-    .send(body)
     .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`);
-  t.is(response.status, 503);
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
 });

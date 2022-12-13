@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:42"
+  default = "cumuluss/async-operation:43"
 }
 
 variable "cmr_client_id" {
@@ -82,6 +82,12 @@ variable "ecs_cluster_min_size" {
   type        = number
 }
 
+variable "elasticsearch_remove_index_alias_conflict" {
+  type = bool
+  default = false
+  description = "Set to true to allow cumulus deployment bootstrap lambda to remove existing ES index named 'cumulus-alias' if it exists.  Setting to false will cause deployment to fail on existing index"
+}
+
 variable "elasticsearch_domain_arn" {
   description = "The ARN of an Elasticsearch domain to use for storing data"
   type        = string
@@ -98,6 +104,12 @@ variable "elasticsearch_security_group_id" {
   description = "The ID of the security group for the Elasticsearch domain specified by `elasticsearch_domain_arn`"
   type        = string
   default     = ""
+}
+
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for ingest task lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  type = map(string)
+  default = {}
 }
 
 variable "lambda_timeouts" {

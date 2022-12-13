@@ -1,0 +1,147 @@
+'use strict';
+
+const delay = require('delay');
+const fs = require('fs');
+const replace = require('lodash/replace');
+const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
+const { randomString } = require('@cumulus/common/test-utils');
+
+const {
+  addRules,
+  deleteRules,
+  addProviders,
+  cleanupProviders,
+  addCollections,
+  cleanupCollections,
+  readJsonFilesFromDir,
+  setProcessEnvironment,
+} = require('@cumulus/integration-tests');
+
+const {
+  createOrUseTestStream,
+  deleteTestStream,
+  getStreamStatus,
+  kinesisEventFromSqsMessage,
+  putRecordOnStream,
+  tryCatchExit,
+  waitForActiveStream,
+  waitForQueuedRecord,
+} = require('../../helpers/kinesisHelpers');
+
+const {
+  loadConfig,
+  createTimestampedTestId,
+  createTestSuffix,
+  createTestDataPath,
+} = require('../../helpers/testUtils');
+
+const record = JSON.parse(fs.readFileSync(`${__dirname}/data/records/L2_HR_PIXC_product_0001-of-4154.json`));
+
+const ruleDirectory = './spec/parallel/cnmWorkflow/data/rules/kinesis';
+
+describe('The messageConsumer receives a bad record.\n', () => {
+  const providersDir = './data/providers/PODAAC_SWOT/';
+  const collectionsDir = './data/collections/L2_HR_PIXC-000/';
+
+  let failureSqsUrl;
+  let ruleOverride;
+  let ruleSuffix;
+  let streamName;
+  let testConfig;
+  let testSuffix;
+
+  const testRecordIdentifier = randomString();
+  record.identifier = testRecordIdentifier;
+  const badRecord = { ...record };
+  delete badRecord.collection;
+
+  async function cleanUp() {
+    if (this.ReceiptHandle) {
+      console.log('Delete the Record from the queue.');
+      await deleteSQSMessage(failureSqsUrl, this.ReceiptHandle);
+    }
+
+    setProcessEnvironment(testConfig.stackName, testConfig.bucket);
+    console.log(`\nDeleting ${ruleOverride.name}`);
+    const rules = await readJsonFilesFromDir(ruleDirectory);
+
+    console.log(`\nDeleting testStream '${streamName}'`);
+    await deleteRules(testConfig.stackName, testConfig.bucket, rules, ruleSuffix);
+
+    await Promise.all([
+      cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      cleanupProviders(testConfig.stackName, testConfig.bucket, providersDir, testSuffix),
+      deleteTestStream(streamName),
+    ]);
+
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = this.defaultTimeout;
+  }
+
+  beforeAll(async () => {
+    testConfig = await loadConfig();
+
+    const testId = createTimestampedTestId(testConfig.stackName, 'KinesisTestError');
+    testSuffix = createTestSuffix(testId);
+    const testDataFolder = createTestDataPath(testId);
+    ruleSuffix = replace(testSuffix, /-/g, '_');
+
+    streamName = `${testId}-KinesisTestErrorStream`;
+    testConfig.streamName = streamName;
+    failureSqsUrl = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT_ID}/${testConfig.stackName}-kinesisFailure`;
+
+    record.product.files[0].uri = replace(
+      record.product.files[0].uri,
+      /cumulus-test-data\/pdrs/g,
+      testDataFolder
+    );
+    record.provider += testSuffix;
+    record.collection += testSuffix;
+
+    ruleOverride = {
+      name: `L2_HR_PIXC_kinesisRule${ruleSuffix}`,
+      collection: {
+        name: record.collection,
+        version: '000',
+      },
+      provider: record.provider,
+    };
+
+    // populate collections, providers and test data
+    await Promise.all([
+      addCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
+      addProviders(testConfig.stackName, testConfig.bucket, providersDir, testConfig.bucket, testSuffix),
+    ]);
+    this.defaultTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10 * 60 * 1000;
+    await tryCatchExit(cleanUp.bind(this), async () => {
+      await createOrUseTestStream(streamName);
+      console.log(`\nWaiting for active streams: '${streamName}'.`);
+      await waitForActiveStream(streamName);
+      await addRules(testConfig, ruleDirectory, ruleOverride);
+      console.log(`\nDropping record onto  ${streamName}, testRecordIdentifier: ${testRecordIdentifier}.`);
+      await putRecordOnStream(streamName, badRecord);
+    });
+  });
+
+  afterAll(async () => {
+    try {
+      await cleanUp.bind(this)();
+    } catch (error) {
+      console.log(`Cleanup Failed ${error}`);
+    }
+  });
+
+  it('Prepares a kinesis stream for integration tests.', async () => {
+    expect(await getStreamStatus(streamName)).toBe('ACTIVE');
+  });
+
+  it('Eventually puts the bad record on the failure queue.', async () => {
+    console.log('\nWait for minimum duration of failure process ~3.5 min');
+    await delay(3.5 * 60 * 1000);
+    console.log('\nWait for record on:', failureSqsUrl);
+    const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl);
+    this.ReceiptHandle = queuedRecord.ReceiptHandle;
+    const queuedKinesisEvent = kinesisEventFromSqsMessage(queuedRecord);
+    expect(queuedKinesisEvent).toEqual(badRecord);
+  });
+});

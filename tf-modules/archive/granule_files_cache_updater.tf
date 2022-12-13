@@ -61,7 +61,7 @@ resource "aws_lambda_function" "granule_files_cache_updater" {
   function_name    = "${var.prefix}-granuleFilesCacheUpdater"
   role             = aws_iam_role.granule_files_cache_updater_lambda_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs12.x"
+  runtime          = "nodejs14.x"
   timeout          = 30
   memory_size      = 256
 
@@ -86,7 +86,7 @@ resource "aws_lambda_function" "granule_files_cache_updater" {
 
 resource "aws_cloudwatch_log_group" "granule_files_cache_updater_logs" {
   name              = "/aws/lambda/${aws_lambda_function.granule_files_cache_updater.function_name}"
-  retention_in_days = 14
+  retention_in_days = 30
   tags              = var.tags
 }
 

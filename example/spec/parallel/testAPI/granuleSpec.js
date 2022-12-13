@@ -33,13 +33,19 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('The Granules API', () => {
   let beforeAllError;
   let config;
-  let collection;
+  let collection1;
+  let collection2;
+  let collection3;
+  let collection4;
+  let collection5;
   let collectionId;
   let discoveredGranule;
   let executionRecord;
+  let granule1;
   let granuleFile;
   let granuleId;
   let modifiedGranule;
+  let invalidModifiedGranule;
   let prefix;
   let randomGranuleRecord;
   let updatedGranuleFromApi;
@@ -49,8 +55,8 @@ describe('The Granules API', () => {
       config = await loadConfig();
       prefix = config.stackName;
 
-      collection = await createCollection(prefix);
-      collectionId = constructCollectionId(collection.name, collection.version);
+      collection1 = await createCollection(prefix);
+      collectionId = constructCollectionId(collection1.name, collection1.version);
 
       executionRecord = omit(fakeExecutionFactoryV2({
         collectionId,
@@ -95,10 +101,32 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteExecution({ prefix, executionArn: executionRecord.arn });
+    await deleteGranule({ prefix, granuleId: granule1.granuleId });
+    await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId });
     await deleteCollection({
       prefix,
-      collectionName: collection.name,
-      collectionVersion: collection.version,
+      collectionName: collection1.name,
+      collectionVersion: collection1.version,
+    });
+    await deleteCollection({
+      prefix,
+      collectionName: collection2.name,
+      collectionVersion: collection2.version,
+    });
+    await deleteCollection({
+      prefix,
+      collectionName: collection3.name,
+      collectionVersion: collection3.version,
+    });
+    await deleteCollection({
+      prefix,
+      collectionName: collection4.name,
+      collectionVersion: collection4.version,
+    });
+    await deleteCollection({
+      prefix,
+      collectionName: collection5.name,
+      collectionVersion: collection5.version,
     });
   });
 
@@ -268,6 +296,82 @@ describe('The Granules API', () => {
         expect(message.event).toEqual('Delete');
         expect(message.record).toEqual(updatedGranuleFromApi);
         expect(message.deletedAt).toBeGreaterThan(timestamp);
+      }
+    });
+
+    it('errors creating a granule that already exists across a different collection', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+      collection2 = await createCollection(prefix);
+      const newCollectionId = constructCollectionId(collection2.name, collection2.version);
+      granule1 = removeNilProperties(fakeGranuleFactoryV2({
+        collectionId: newCollectionId,
+        published: false,
+        execution: undefined,
+        files: [granuleFile],
+      }));
+      const response = await createGranule({
+        prefix,
+        body: granule1,
+      });
+      collection3 = await createCollection(prefix);
+      const diffCollectionId = constructCollectionId(collection3.name, collection3.version);
+      const granuleWithDiffCollection = {
+        ...granule1,
+        collectionId: diffCollectionId,
+      };
+
+      expect(response.statusCode).toBe(200);
+      try {
+        await createGranule({
+          prefix,
+          body: granuleWithDiffCollection,
+        });
+      } catch (error) {
+        const apiError = JSON.parse(error.apiMessage);
+        expect(apiError.statusCode).toBe(409);
+        expect(apiError.error).toBe('Conflict');
+        expect(apiError.message).toContain('A granule already exists for granuleId');
+        expect(apiError.message).toContain(granuleWithDiffCollection.granuleId);
+      }
+    });
+
+    it('errors updating a granule that already exists across a different collection', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+      collection4 = await createCollection(prefix);
+      const newCollectionId = constructCollectionId(collection4.name, collection4.version);
+      invalidModifiedGranule = removeNilProperties(fakeGranuleFactoryV2({
+        collectionId: newCollectionId,
+        published: false,
+        execution: undefined,
+        files: [granuleFile],
+      }));
+      const response = await createGranule({
+        prefix,
+        body: invalidModifiedGranule,
+      });
+      collection5 = await createCollection(prefix);
+      const diffCollectionId = constructCollectionId(collection5.name, collection5.version);
+      const granuleWithDiffCollection = {
+        ...invalidModifiedGranule,
+        collectionId: diffCollectionId,
+      };
+
+      expect(response.statusCode).toBe(200);
+      try {
+        await updateGranule({
+          prefix,
+          body: granuleWithDiffCollection,
+        });
+      } catch (error) {
+        const apiError = JSON.parse(error.apiMessage);
+        expect(apiError.statusCode).toBe(409);
+        expect(apiError.error).toBe('Conflict');
+        expect(apiError.message).toContain('Modifying collectionId for a granule is not allowed');
+        expect(apiError.message).toContain(granuleWithDiffCollection.granuleId);
       }
     });
   });

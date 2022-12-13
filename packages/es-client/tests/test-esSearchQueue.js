@@ -14,13 +14,13 @@ test.beforeEach(async (t) => {
   t.context.esAlias = randomId('esalias');
   t.context.esIndex = randomId('esindex');
   process.env.ES_INDEX = t.context.esAlias;
-  await bootstrapElasticSearch(
-    'fakehost',
-    t.context.esIndex,
-    t.context.esAlias
-  );
+  await bootstrapElasticSearch({
+    host: 'fakehost',
+    index: t.context.esIndex,
+    alias: t.context.esAlias,
+  });
   t.context.esClient = await Search.es();
-  t.context.esClientSpy = sinon.spy(t.context.esClient, 'scroll');
+  t.context.esClientSpy = sandbox.spy(t.context.esClient, 'scroll');
 });
 
 test.afterEach.always(async (t) => {
@@ -77,7 +77,7 @@ test.serial('esSearchQueue handles paging.', async (t) => {
   await loadGranules(granules, t);
 
   const sq = new ESSearchQueue({}, 'granule');
-  const spiedSq = sinon.spy(sq, '_fetchItems');
+  const spiedSq = sandbox.spy(sq, '_fetchItems');
 
   const fetched = [];
 
