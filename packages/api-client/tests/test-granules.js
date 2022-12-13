@@ -143,7 +143,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
       headers: {
@@ -172,7 +172,7 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
       headers: {
@@ -199,7 +199,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
@@ -250,7 +250,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
@@ -324,7 +324,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
 
   const callback = ({ payload }) => {
     if (
-      payload.httpMethod === 'PUT'
+      payload.httpMethod === 'PATCH'
       && payload.path === `/granules/${t.context.granuleId}`
       && payload.body.includes('removeFromCmr')
     ) {
@@ -382,7 +382,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
       headers: { 'Content-Type': 'application/json' },

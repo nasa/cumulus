@@ -71,8 +71,8 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
+const { create, put, patch, patchGranule } = require('../../endpoints/granules');
 const { sortFilesByKey } = require('../helpers/sort');
-const { create, put, putGranule } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
@@ -490,9 +490,9 @@ test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('CUMULUS-911 PUT with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 PATCH with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
-    .put('/granules/asdf')
+    .patch('/granules/asdf')
     .set('Accept', 'application/json')
     .expect(401);
 
@@ -546,7 +546,7 @@ test.todo('CUMULUS-912 GET with pathParameters.granuleName set and with an unaut
 
 test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
-    .put('/granules/asdf')
+    .patch('/granules/asdf')
     .set('Accept', 'application/json')
     .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
     .expect(401);
@@ -633,9 +633,9 @@ test.serial('GET returns a 404 response if the granule is not found', async (t) 
   t.is(message, 'Granule not found');
 });
 
-test.serial('PUT fails if action is not supported', async (t) => {
+test.serial('PATCH fails if action is not supported', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'someUnsupportedAction' })
@@ -646,9 +646,9 @@ test.serial('PUT fails if action is not supported', async (t) => {
   t.true(message.includes('Action is not supported'));
 });
 
-test.serial('PUT without a body, fails to update granule.', async (t) => {
+test.serial('PATCH without a body, fails to update granule.', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(400);
@@ -679,7 +679,7 @@ test.serial('reingest a granule', async (t) => {
   });
   t.teardown(() => stub.restore());
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -735,7 +735,7 @@ test.serial('apply an in-place workflow to an existing granule', async (t) => {
   t.teardown(() => stub.restore());
 
   const response = await request(app)
-    .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+    .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -785,7 +785,7 @@ test.serial('remove a granule from CMR', async (t) => {
 
   try {
     const response = await request(app)
-      .put(`/granules/${granuleId}`)
+      .patch(`/granules/${granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -834,7 +834,7 @@ test.serial('remove a granule from CMR with launchpad authentication', async (t)
 
   try {
     const response = await request(app)
-      .put(`/granules/${t.context.fakePGGranules[0].granule_id}`)
+      .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ action: 'removeFromCmr' })
@@ -1254,7 +1254,7 @@ test.serial('move a granule with no .cmr.xml file', async (t) => {
       ];
 
       const response = await request(app)
-        .put(`/granules/${newGranule.granuleId}`)
+        .patch(`/granules/${newGranule.granuleId}`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${jwtAuthToken}`)
         .send({
@@ -1376,7 +1376,7 @@ test.serial('When a move granule request fails to move a file correctly, it reco
       ];
 
       const response = await request(app)
-        .put(`/granules/${newGranule.granuleId}`)
+        .patch(`/granules/${newGranule.granuleId}`)
         .set('Accept', 'application/json')
         .set('Authorization', `Bearer ${jwtAuthToken}`)
         .send({
@@ -1577,7 +1577,7 @@ test.serial('move a file and update ECHO10 xml metadata', async (t) => {
   ).returns({ result: { 'concept-id': 'id204842' } });
 
   const response = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -1686,7 +1686,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   ).returns({ result: { 'concept-id': 'id204842' } });
 
   const response = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -1734,7 +1734,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
   await recursivelyDeleteS3Bucket(publicBucket);
 });
 
-test.serial('PUT with action move returns failure if one granule file exists', async (t) => {
+test.serial('PATCH with action move returns failure if one granule file exists', async (t) => {
   const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([{ fileName: 'file1' }]);
 
   const granule = t.context.fakeGranules[0];
@@ -1751,7 +1751,7 @@ test.serial('PUT with action move returns failure if one granule file exists', a
   };
 
   const response = await request(app)
-    .put(`/granules/${granule.granuleId}`)
+    .patch(`/granules/${granule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -1765,7 +1765,7 @@ test.serial('PUT with action move returns failure if one granule file exists', a
   filesExistingStub.restore();
 });
 
-test.serial('PUT with action move returns failure if more than one granule file exists', async (t) => {
+test.serial('PATCH with action move returns failure if more than one granule file exists', async (t) => {
   const filesExistingStub = sinon.stub(models.Granule.prototype, 'getFilesExistingAtLocation').returns([
     { fileName: 'file1' },
     { fileName: 'file2' },
@@ -1785,7 +1785,7 @@ test.serial('PUT with action move returns failure if more than one granule file 
   };
 
   const response = await request(app)
-    .put(`/granules/${granule.granuleId}`)
+    .patch(`/granules/${granule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
@@ -1956,7 +1956,7 @@ test.serial('create (POST) returns bad request if a granule is submitted without
   t.true(response.text.includes('Error: granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request'));
 });
 
-test.serial('PUT returns bad request if a new granule is submitted without a status set', async (t) => {
+test.serial('PATCH returns bad request if a new granule is submitted without a status set', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: t.context.executionUrl,
@@ -1965,7 +1965,7 @@ test.serial('PUT returns bad request if a new granule is submitted without a sta
   delete newGranule.status;
 
   const response = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -1973,7 +1973,7 @@ test.serial('PUT returns bad request if a new granule is submitted without a sta
 
   t.is(response.statusCode, 400);
   t.is(response.error.status, 400);
-  t.is(response.error.message, `cannot PUT /granules/${newGranule.granuleId} (400)`);
+  t.is(response.error.message, `cannot PATCH /granules/${newGranule.granuleId} (400)`);
   t.true(response.text.includes('Error: granule `status` field must be set for a new granule write.  Please add a status field and value to your granule object and retry your request'));
 });
 
@@ -2027,7 +2027,7 @@ test.serial('create (POST) throws conflict error if a granule with same granuleI
   t.is(errorText.message, `A granule already exists for granuleId: ${newGranule.granuleId}`);
 });
 
-test.serial('PUT replaces an existing granule in all data stores', async (t) => {
+test.serial('PATCH replaces an existing granule in all data stores', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2065,7 +2065,7 @@ test.serial('PUT replaces an existing granule in all data stores', async (t) => 
   };
 
   await request(app)
-    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2339,7 +2339,7 @@ test.serial('PUT nullifies expected fields for existing granules in all datastor
 // FUTURE: this is explicitly a PATCH behavior test -
 // moving this is part of CUMULUS-3069/CUMULUS-3072
 test.serial(
-  'PUT does not overwrite existing duration of an existing granule if not specified in the payload',
+  'PATCH does not overwrite existing duration of an existing granule if not specified in the payload',
   async (t) => {
     const { esClient, executionUrl, knex } = t.context;
 
@@ -2371,7 +2371,7 @@ test.serial(
     };
 
     await request(app)
-      .put(`/granules/${newDynamoGranule.granuleId}`)
+      .patch(`/granules/${newDynamoGranule.granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(updatedGranule)
@@ -2393,7 +2393,7 @@ test.serial(
   }
 );
 
-test.serial('PUT does not overwrite existing createdAt of an existing granule if not specified in the payload',
+test.serial('PATCH does not overwrite existing createdAt of an existing granule if not specified in the payload',
   async (t) => {
     const { esClient, executionUrl, knex } = t.context;
 
@@ -2426,7 +2426,7 @@ test.serial('PUT does not overwrite existing createdAt of an existing granule if
     };
 
     await request(app)
-      .put(`/granules/${newDynamoGranule.granuleId}`)
+      .patch(`/granules/${newDynamoGranule.granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(updatedGranule)
@@ -2447,7 +2447,7 @@ test.serial('PUT does not overwrite existing createdAt of an existing granule if
     t.is(actualEsGranule.createdAt, createdAt);
   });
 
-test.serial('PUT creates a granule if one does not already exist in all data stores', async (t) => {
+test.serial('PATCH creates a granule if one does not already exist in all data stores', async (t) => {
   const {
     knex,
   } = t.context;
@@ -2463,7 +2463,7 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
   });
 
   await request(app)
-    .put(`/granules/${fakeGranule.granuleId}`)
+    .patch(`/granules/${fakeGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(fakeGranule)
@@ -2512,7 +2512,7 @@ test.serial('PUT creates a granule if one does not already exist in all data sto
   );
 });
 
-test.serial('PUT sets a default value of false for `published` if one is not set', async (t) => {
+test.serial('PATCH sets a default value of false for `published` if one is not set', async (t) => {
   const {
     knex,
   } = t.context;
@@ -2528,7 +2528,7 @@ test.serial('PUT sets a default value of false for `published` if one is not set
   delete fakeGranule.published;
 
   await request(app)
-    .put(`/granules/${fakeGranule.granuleId}`)
+    .patch(`/granules/${fakeGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(fakeGranule)
@@ -2552,7 +2552,7 @@ test.serial('PUT sets a default value of false for `published` if one is not set
   t.is(fakeEsRecord.published, false);
 });
 
-test.serial('PUT replaces an existing granule in all data stores with correct timestamps', async (t) => {
+test.serial('PATCH replaces an existing granule in all data stores with correct timestamps', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2579,7 +2579,7 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
   };
 
   await request(app)
-    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2605,7 +2605,7 @@ test.serial('PUT replaces an existing granule in all data stores with correct ti
   t.is(actualPgGranule.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
-test.serial('PUT replaces an existing granule in all datastores with a granule that violates message-path write constraints, ignoring message write constraints and field selection', async (t) => {
+test.serial('PATCH replaces an existing granule in all datastores with a granule that violates message-path write constraints, ignoring message write constraints and field selection', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2635,7 +2635,7 @@ test.serial('PUT replaces an existing granule in all datastores with a granule t
   };
 
   await request(app)
-    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2668,7 +2668,7 @@ test.serial('PUT replaces an existing granule in all datastores with a granule t
   t.is(updatedEsRecord.duration, updatedGranule.duration);
 });
 
-test.serial('PUT publishes an SNS message after a successful granule update', async (t) => {
+test.serial('PATCH publishes an SNS message after a successful granule update', async (t) => {
   const {
     collectionCumulusId,
     esClient,
@@ -2697,7 +2697,7 @@ test.serial('PUT publishes an SNS message after a successful granule update', as
   };
 
   await request(app)
-    .put(`/granules/${newDynamoGranule.granuleId}`)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2763,7 +2763,7 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
   t.truthy(createGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial("PUT sets a default createdAt value for new granule if it's not set by the user", async (t) => {
+test.serial("patch() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2799,12 +2799,12 @@ test.serial("PUT sets a default createdAt value for new granule if it's not set 
     },
   };
   const response = buildFakeExpressResponse();
-  await putGranule(expressRequest, response);
+  await patchGranule(expressRequest, response);
 
   t.truthy(updateGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial('PUT does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
+test.serial('PATCH does not write to PostgreSQL/Elasticsearch/SNS if writing to DynamoDB fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2850,7 +2850,7 @@ test.serial('PUT does not write to PostgreSQL/Elasticsearch/SNS if writing to Dy
   };
 
   const response = buildFakeExpressResponse();
-  await put(expressRequest, response);
+  await patch(expressRequest, response);
   t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
   t.deepEqual(
@@ -2879,7 +2879,7 @@ test.serial('PUT does not write to PostgreSQL/Elasticsearch/SNS if writing to Dy
   t.is(Messages, undefined);
 });
 
-test.serial('PUT does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
+test.serial('PATCH does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2926,7 +2926,7 @@ test.serial('PUT does not write to DynamoDB/Elasticsearch/SNS if writing to Post
   };
 
   const response = buildFakeExpressResponse();
-  await put(expressRequest, response);
+  await patch(expressRequest, response);
   t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
   t.deepEqual(
@@ -2955,7 +2955,7 @@ test.serial('PUT does not write to DynamoDB/Elasticsearch/SNS if writing to Post
   t.is(Messages, undefined);
 });
 
-test.serial('PUT rolls back DynamoDB/PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
+test.serial('PATCH rolls back DynamoDB/PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2996,7 +2996,7 @@ test.serial('PUT rolls back DynamoDB/PostgreSQL records and does not write to SN
 
   const response = buildFakeExpressResponse();
 
-  await put(expressRequest, response);
+  await patch(expressRequest, response);
   t.true(response.boom.badRequest.calledWithMatch('something bad'));
 
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
@@ -3033,14 +3033,14 @@ test.serial('PUT rolls back DynamoDB/PostgreSQL records and does not write to SN
   t.is(Messages, undefined);
 });
 
-test.serial('PUT adds granule if it does not exist and returns a 201 status', async (t) => {
+test.serial('PATCH adds granule if it does not exist and returns a 201 status', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
   });
 
   const response = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -3051,7 +3051,7 @@ test.serial('PUT adds granule if it does not exist and returns a 201 status', as
   });
 });
 
-test.serial('PUT sets defaults and adds new granule', async (t) => {
+test.serial('PATCH sets defaults and adds new granule', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
     execution: undefined,
@@ -3063,7 +3063,7 @@ test.serial('PUT sets defaults and adds new granule', async (t) => {
   const granuleId = newGranule.granuleId;
 
   const response = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -3102,7 +3102,7 @@ test.serial('PUT sets defaults and adds new granule', async (t) => {
   }), expectedApiGranule);
 });
 
-test.serial('PUT returns an updated granule with an undefined execution', async (t) => {
+test.serial('PATCH returns an updated granule with an undefined execution', async (t) => {
   const now = Date.now();
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
@@ -3127,7 +3127,7 @@ test.serial('PUT returns an updated granule with an undefined execution', async 
   };
 
   const modifiedResponse = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(modifiedGranule)
@@ -3160,7 +3160,7 @@ test.serial('PUT returns an updated granule with an undefined execution', async 
   t.deepEqual(fetchedPostgresRecord.error, { some: 'error' });
 });
 
-test.serial('PUT returns an updated granule with associated execution', async (t) => {
+test.serial('PATCH returns an updated granule with associated execution', async (t) => {
   const timestamp = Date.now();
   const createdAt = timestamp - 1000000;
   const newGranule = fakeGranuleFactoryV2({
@@ -3187,7 +3187,7 @@ test.serial('PUT returns an updated granule with associated execution', async (t
   };
 
   const modifiedResponse = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(modifiedGranule)
@@ -3245,12 +3245,12 @@ test.serial('PUT returns an updated granule with associated execution', async (t
   t.is(fetchedDynamoRecord.timestamp, fetchedPostgresRecord.timestamp.getTime());
 });
 
-test.serial('PUT returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
+test.serial('PATCH returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({});
   const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
 
   const { body } = await request(app)
-    .put(`/granules/${granuleName}`)
+    .patch(`/granules/${granuleName}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -3278,7 +3278,7 @@ test.serial('PUT can set running granule status to queued', async (t) => {
   });
 
   const response = await request(app)
-    .put(`/granules/${granuleId}`)
+    .patch(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -3293,10 +3293,10 @@ test.serial('PUT can set running granule status to queued', async (t) => {
   });
 });
 
-test.serial('PUT will set completed status to queued', async (t) => {
+test.serial('PATCH will set completed status to queued', async (t) => {
   const granuleId = t.context.fakeGranules[0].granuleId;
   const response = await request(app)
-    .put(`/granules/${granuleId}`)
+    .patch(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -3317,10 +3317,10 @@ test.serial('PUT will set completed status to queued', async (t) => {
   t.is(fetchedDynamoRecord.status, 'queued');
 });
 
-test.serial('PUT can create a new granule with status queued', async (t) => {
+test.serial('PATCH can create a new granule with status queued', async (t) => {
   const granuleId = randomId('new-granule');
   const response = await request(app)
-    .put(`/granules/${granuleId}`)
+    .patch(`/granules/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -3335,7 +3335,7 @@ test.serial('PUT can create a new granule with status queued', async (t) => {
   });
 });
 
-test.serial('PUT returns throws conflict error when trying to update the collectionId of a granule', async (t) => {
+test.serial('PATCH throws conflict error when trying to update the collectionId of a granule', async (t) => {
   const {
     collectionId,
     collectionPgModel,
@@ -3370,7 +3370,7 @@ test.serial('PUT returns throws conflict error when trying to update the collect
   };
 
   const { body } = await request(app)
-    .put(`/granules/${newGranule.granuleId}`)
+    .patch(`/granules/${newGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -3638,4 +3638,47 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
 
   t.is(response.body.error, 'Not Found');
   t.true(response.body.message.includes(`No collection found to associate execution with for collectionId ${collectionId}`));
+});
+
+test.serial('PUT throws not implemented error', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const {
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: { status: 'running', execution: executionUrl },
+  });
+
+  const fakeEsClient = {
+    update: () => {
+      throw new Error('something bad');
+    },
+    delete: () => Promise.resolve(),
+  };
+
+  const updatedGranule = {
+    ...newDynamoGranule,
+    status: 'completed',
+  };
+
+  const expressRequest = {
+    params: {
+      granuleName: updatedGranule.granuleId,
+    },
+    body: updatedGranule,
+    testContext: {
+      knex,
+      esClient: fakeEsClient,
+    },
+  };
+  const response = buildFakeExpressResponse();
+
+  put(expressRequest, response);
+
+  t.true(response.boom.badRequest.calledWithMatch('put method not implemented'));
 });
