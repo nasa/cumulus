@@ -99,8 +99,8 @@ const validateApiToPostgresExecutionObject = (apiExecution : ApiExecution) => {
  * Translate execution record from API to RDS.
  *
  * @param {ApiExecution} apiRecord
- *   Source record from DynamoDB
- * @param {AWS.DynamoDB.DocumentClient.AttributeMap} knex
+ *   Source record from API
+ * @param {Knex} knex
  *   Knex client
  * @param {Object} collectionPgModel
  *   Instance of the collection database model
@@ -177,14 +177,14 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
 };
 
 export const translateApiExecutionToPostgresExecution = async (
-  dynamoRecord: ApiExecution,
+  apiRecord: ApiExecution,
   knex: Knex,
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),
   executionPgModel = new ExecutionPgModel()
 ): Promise<PostgresExecution> => removeNilProperties(
   await translateApiExecutionToPostgresExecutionWithoutNilsRemoved(
-    dynamoRecord,
+    apiRecord,
     knex,
     collectionPgModel,
     asyncOperationPgModel,
