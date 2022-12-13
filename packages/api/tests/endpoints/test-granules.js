@@ -2788,9 +2788,6 @@ test.serial('PATCH() rolls back DynamoDB/PostgreSQL records and does not write t
     granuleId: newDynamoGranule.granuleId,
   });
 
-  // Remove size from each file object in the files array the file sizes are not being updated
-  // on the postgres side
-  actualDynamoGranule.files = actualDynamoGranule.files.map((file) => omit(file, ['size']));
   t.deepEqual(
     actualDynamoGranule,
     expectedDynamoGranule
