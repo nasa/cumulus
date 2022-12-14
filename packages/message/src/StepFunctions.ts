@@ -208,7 +208,7 @@ export const getFailedExecutionMessage = async (
         },
       };
     }
-    const taskExitedEventOutput = JSON.parse(getTaskExitedEventOutput(failedStepExitedEvent) || '{}');
+    const taskExitedEventOutput = JSON.parse(getTaskExitedEventOutput(failedStepExitedEvent) ?? '{}');
     taskExitedEventOutput.exception = {
       ...taskExitedEventOutput.exception,
       failedExecutionStepName,
@@ -227,7 +227,7 @@ export const getCumulusMessageFromExecutionEvent = async (executionEvent: EventB
   } else if (executionEvent.detail.status === 'SUCCEEDED') {
     cumulusMessage = JSON.parse(executionEvent.detail.output);
   } else {
-    const inputMessage = JSON.parse(get(executionEvent, 'detail.input', '{}'));
+    const inputMessage = JSON.parse(get(executionEvent, 'detail.input') ?? '{}');
     cumulusMessage = await getFailedExecutionMessage(inputMessage);
   }
 

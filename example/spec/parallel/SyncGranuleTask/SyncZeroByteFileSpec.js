@@ -1,5 +1,11 @@
 'use strict';
 
+/*
+* Localstack does not behave the same as S3 when trying to move/sync 0 byte files with
+* multipartCopyObject. Since we are unable to accurately test syncing a 0 byte file with Localstack,
+* we are testing it here.
+*/
+
 const get = require('lodash/get');
 const pAll = require('p-all');
 const pTimeout = require('p-timeout');

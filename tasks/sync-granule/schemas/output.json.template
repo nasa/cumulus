@@ -30,12 +30,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["granuleId", "dataType", "version", "files"],
+        "required": ["granuleId", "dataType", "version", "files", "createdAt", "provider"],
         "properties": {
           "granuleId": {"type": "string"},
           "dataType": {"type": "string"},
           "version": {"type": "string"},
-          "files": "{{files}}"
+          "files": "{{files}}",
+          "createdAt": {"type": "number"},
+          "provider": {"type": "string"}
         }
       }
     },

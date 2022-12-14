@@ -228,8 +228,8 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs14.x"
-  timeout          = 300
-  memory_size      = 1024
+  timeout          = lookup(var.lambda_memory_sizes, "sf_sqs_report_task_timeout", 512)
+  memory_size      = lookup(var.lambda_memory_sizes, "sf_sqs_report_task_memory_size", 512)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

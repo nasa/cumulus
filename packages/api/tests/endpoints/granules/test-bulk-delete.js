@@ -16,6 +16,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
 const AccessToken = require('../../../models/access-tokens');
+const { generateListOfGranules } = require('../../helpers/create-test-data');
 
 let accessTokenModel;
 let jwtAuthToken;
@@ -359,4 +360,21 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking St
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
   t.is(response.status, 500);
+});
+
+test.serial('POST /granules/bulkDelete starts an async-operation with a large list of granules as input', async (t) => {
+  const body = {
+    granules: generateListOfGranules(),
+    forceRemoveFromCmr: true,
+  };
+
+  const response = await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(202);
+
+  // expect a returned async operation ID
+  t.truthy(response.body.id);
 });
