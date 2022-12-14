@@ -119,9 +119,9 @@ export class EarthdataToken {
         const date2 = new Date(response[1].expiration_date);
         return date1 >= date2 ? 'Bearer' + response[1].access_token : 'Bearer' + response[0].access_token;
       }
-      return 'Bearer: ' + response[0].access_token;
+      return 'Authorization: Bearer ' + response[0].access_token;
     }
-    return 'Bearer: ' + this.token;
+    return 'Authorization: Bearer ' + this.token;
   }
 
   async createEDLToken(): Promise<string> {
@@ -147,7 +147,7 @@ export class EarthdataToken {
       throw new Error(errorMessage);
     }
     this.token = response.access_token;
-    return 'Bearer: ' + response.access_token;
+    return 'Authorization: Bearer ' + response.access_token;
   }
 
   async revokeEDLToken(

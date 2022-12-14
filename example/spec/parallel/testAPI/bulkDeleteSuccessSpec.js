@@ -43,6 +43,8 @@ describe('POST /granules/bulkDelete', () => {
   beforeAll(async () => {
     config = await loadConfig();
     prefix = config.stackName;
+    console.log('HELLO FRIENDS');
+    console.log(`THIS IS THE STACK NAME: ${prefix}`);
     process.env.stackName = config.stackName;
     process.env.system_bucket = config.bucket;
 
