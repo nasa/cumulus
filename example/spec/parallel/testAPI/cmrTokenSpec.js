@@ -62,7 +62,7 @@ describe('When using Earthdata Login Token from CMR', () => {
         const response = await EarthdataTokenObject.getEDLToken();
         expect(response).toBeDefined();
         expect(response).toBeInstanceOf(String);
-        expect(response.startsWith('Bearer: ')).toBeTrue();
+        expect(response.startsWith('Bearer ')).toBeTrue();
       }
     });
   });
@@ -86,7 +86,7 @@ describe('When using Earthdata Login Token from CMR', () => {
         const response = await CMRObject.getToken();
         expect(response).toBeDefined();
         expect(response).toBeInstanceOf(String);
-        expect(response.startsWith('Bearer: ')).toBeTrue();
+        expect(response.startsWith('Bearer ')).toBeTrue();
       }
     });
   });
