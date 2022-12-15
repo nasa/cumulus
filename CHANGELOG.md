@@ -81,6 +81,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2792**
     - Remove API Granule model and all related test code
     - Remove granule-csv endpoint
+  - **CUMULUS-2821**
+    - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
 
 ### Added
 
