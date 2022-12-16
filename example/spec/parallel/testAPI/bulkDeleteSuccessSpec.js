@@ -43,8 +43,6 @@ describe('POST /granules/bulkDelete', () => {
   beforeAll(async () => {
     config = await loadConfig();
     prefix = config.stackName;
-    console.log('HELLO FRIENDS');
-    console.log(`THIS IS THE STACK NAME: ${prefix}`);
     process.env.stackName = config.stackName;
     process.env.system_bucket = config.bucket;
 
@@ -159,7 +157,9 @@ describe('POST /granules/bulkDelete', () => {
 
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
-
+        console.log("Prefix" + prefix);
+        console.log("IngestedGranukle" + ingestedGranule);
+        console.log("GranuleID" + granuleId);
         timestampBeforeCall = Date.now();
         postBulkDeleteResponse = await granules.bulkDeleteGranules(
           {
