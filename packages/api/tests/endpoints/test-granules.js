@@ -17,6 +17,8 @@ const {
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
   FilePgModel,
+  fakeProviderRecordFactory,
+  fakePdrRecordFactory,
   generateLocalTestDb,
   getUniqueGranuleByGranuleId,
   GranulePgModel,
@@ -70,6 +72,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { create, patch, patchGranule } = require('../../endpoints/granules');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
+const { sortFilesByKey } = require('../helpers/sort');
 const models = require('../../models');
 
 // Dynamo mock data factories
@@ -257,6 +260,26 @@ test.before(async (t) => {
   const [pgCollection] = await t.context.collectionPgModel.create(
     t.context.knex,
     testPgCollection
+  );
+
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.provider = fakeProviderRecordFactory();
+  t.context.providerPgModel = new ProviderPgModel();
+
+  [t.context.providerCumulusId] = await t.context.providerPgModel.create(
+    t.context.knex,
+    t.context.provider
+  );
+
+  t.context.pdrPgModel = new PdrPgModel();
+  t.context.pdr = fakePdrRecordFactory({
+    collection_cumulus_id: pgCollection.cumulus_id,
+    provider_cumulus_id: t.context.providerCumulusId,
+  });
+
+  [t.context.providerPdrId] = await t.context.pdrPgModel.create(
+    t.context.knex,
+    t.context.pdr
   );
 
   // Create execution in Dynamo/Postgres
@@ -2003,7 +2026,7 @@ test.serial('create (POST) throws conflict error if a granule with same granuleI
   t.is(errorText.message, `A granule already exists for granuleId: ${newGranule.granuleId}`);
 });
 
-test.serial('PATCH replaces an existing granule in all data stores', async (t) => {
+test.serial('PATCH updates an existing granule in all data stores', async (t) => {
   const {
     esClient,
     executionUrl,
@@ -2094,7 +2117,227 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
   );
 });
 
-// FUTURE: this is explicitly a .patch behavior test -
+test.serial('PATCH does not update non-current-timestamp undefined fields for existing granules in all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    executionPgRecord,
+    esGranulesClient,
+  } = t.context;
+
+  const originalUpdateTimestamp = Date.now();
+
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      beginningDateTime: '2022-01-18T14:40:00.000Z',
+      cmrLink: 'example.com',
+      collectionId: constructCollectionId(t.context.collectionName, t.context.collectionVersion),
+      duration: 1000,
+      execution: t.context.executionUrl,
+      endingDateTime: '2022-01-18T14:40:00.000Z',
+      error: { errorKey: 'errorValue' },
+      lastUpdateDateTime: '2022-01-18T14:40:00.000Z',
+      pdrName: t.context.pdr.name,
+      processingEndDateTime: '2022-01-18T14:40:00.000Z',
+      processingStartDateTime: '2022-01-18T14:40:00.000Z',
+      productionDateTime: '2022-01-18T14:40:00.000Z',
+      productVolume: '1000',
+      published: true,
+      queryFields: { queryFieldsKey: 'queryFieldsValue' },
+      status: 'completed',
+      timestamp: originalUpdateTimestamp,
+      timeToArchive: 1000,
+      timeToPreprocess: 1000,
+      updatedAt: originalUpdateTimestamp,
+    },
+  });
+
+  await granulesExecutionsPgModel.create(knex, {
+    granule_cumulus_id: newPgGranule.cumulus_id,
+    execution_cumulus_id: executionPgRecord.cumulus_id,
+  });
+
+  const updatedGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
+    status: newDynamoGranule.status,
+  };
+
+  await request(app)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+
+  const actualPgGranule = await granulePgModel.get(knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+
+  const translatedPostgresGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: actualPgGranule,
+    knexOrTransaction: knex,
+  });
+
+  const updatedEsRecord = await esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+
+  [
+    updatedEsRecord,
+    esRecord,
+    newDynamoGranule,
+    translatedPostgresGranule,
+    actualGranule,
+  ].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByKey(f1, f2));
+  });
+
+  t.deepEqual(actualGranule, {
+    ...newDynamoGranule,
+    updatedAt: actualGranule.updatedAt,
+    timestamp: actualGranule.timestamp,
+  });
+
+  t.deepEqual(translatedPostgresGranule, {
+    ...newDynamoGranule,
+    updatedAt: actualGranule.updatedAt,
+    timestamp: actualGranule.timestamp,
+  });
+
+  t.like(
+    updatedEsRecord,
+    {
+      ...esRecord,
+      updatedAt: actualGranule.updatedAt,
+      timestamp: actualGranule.timestamp,
+    }
+  );
+});
+
+test.serial('PATCH nullifies expected fields for existing granules in all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    executionPgRecord,
+    esGranulesClient,
+  } = t.context;
+
+  const originalUpdateTimestamp = Date.now();
+
+  const {
+    newPgGranule,
+    newDynamoGranule,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      beginningDateTime: '2022-01-18T14:40:00.000Z',
+      cmrLink: 'example.com',
+      collectionId: constructCollectionId(t.context.collectionName, t.context.collectionVersion),
+      duration: 1000,
+      execution: t.context.executionUrl,
+      endingDateTime: '2022-01-18T14:40:00.000Z',
+      error: { errorKey: 'errorValue' },
+      lastUpdateDateTime: '2022-01-18T14:40:00.000Z',
+      pdrName: t.context.pdr.name,
+      processingEndDateTime: '2022-01-18T14:40:00.000Z',
+      processingStartDateTime: '2022-01-18T14:40:00.000Z',
+      productionDateTime: '2022-01-18T14:40:00.000Z',
+      productVolume: '1000',
+      published: true,
+      queryFields: { queryFieldsKey: 'queryFieldsValue' },
+      status: 'completed',
+      timestamp: originalUpdateTimestamp,
+      timeToArchive: 1000,
+      timeToPreprocess: 1000,
+      updatedAt: originalUpdateTimestamp,
+    },
+  });
+
+  await granulesExecutionsPgModel.create(knex, {
+    granule_cumulus_id: newPgGranule.cumulus_id,
+    execution_cumulus_id: executionPgRecord.cumulus_id,
+  });
+
+  const updatedGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
+    status: newDynamoGranule.status,
+    createdAt: null,
+    beginningDateTime: null,
+    cmrLink: null,
+    duration: null,
+    endingDateTime: null,
+    error: null,
+    files: null,
+    lastUpdateDateTime: null,
+    pdrName: null,
+    processingEndDateTime: null,
+    processingStartDateTime: null,
+    productionDateTime: null,
+    productVolume: null,
+    published: null,
+    queryFields: null,
+    timestamp: null,
+    timeToArchive: null,
+    timeToPreprocess: null,
+    updatedAt: null,
+  };
+
+  await request(app)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+
+  const actualPgGranule = await granulePgModel.get(knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+
+  const translatedPostgresGranule = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: actualPgGranule,
+    knexOrTransaction: knex,
+  });
+
+  const updatedEsRecord = await esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+
+  const expectedGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
+    status: newDynamoGranule.status,
+    execution: newDynamoGranule.execution,
+    createdAt: actualGranule.createdAt,
+    updatedAt: actualGranule.updatedAt,
+    timestamp: actualGranule.timestamp,
+    error: {},
+    published: false,
+  };
+
+  //t.deepEqual(actualGranule, { ...expectedGranule, files: [] });
+  t.deepEqual(actualGranule, expectedGranule);
+  t.deepEqual(translatedPostgresGranule, { ...expectedGranule, files: [] });
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+// FUTURE: this is explicitly a PATCH behavior test -
 // moving this is part of CUMULUS-3069/CUMULUS-3072
 test.serial(
   'PATCH does not overwrite existing duration of an existing granule if not specified in the payload',
