@@ -1426,7 +1426,7 @@ test.serial('PUT /executions updates the record as expected in PostgreSQL/Elasti
   t.deepEqual(updatedPgRecord.final_payload, updatedExecution.finalPayload);
 });
 
-test.serial('PUT /executions overwrites a completed record and deletes fields', async (t) => {
+test.serial('PUT /executions overwrites a completed record with a running record', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
@@ -1450,7 +1450,7 @@ test.serial('PUT /executions overwrites a completed record and deletes fields', 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const pgRecord = await t.context.executionPgModel.get(
+  await t.context.executionPgModel.get(
     t.context.knex,
     {
       arn: execution.arn,
@@ -1485,22 +1485,85 @@ test.serial('PUT /executions overwrites a completed record and deletes fields', 
     }
   );
 
-  t.is(updatedPgRecord.arn, execution.arn);
-  t.is(updatedPgRecord.cumulus_id, pgRecord.cumulus_id);
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    updatedPgRecord,
+    t.context.knex
+  );
 
-  t.is(updatedPgRecord.created_at.getTime(), pgRecord.created_at.getTime());
-  t.true(updatedPgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
+  t.deepEqual(translatedExecution, expectedEsRecord);
+});
 
-  // collectionId was omitted from body of PUT request, so values are
-  // not overridden in the database
-  t.is(updatedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
-  // updated record has added field
-  t.is(updatedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
-  // updated record has updated field
-  t.is(updatedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
-  t.is(updatedPgRecord.status, updatedExecution.status);
-  t.deepEqual(updatedPgRecord.final_payload, updatedExecution.finalPayload);
-  t.falsy(updatedPgRecord.error);
+test.serial('PUT /executions removes execution fields when nullified fields are passed in', async (t) => {
+  const execution = fakeExecutionFactoryV2({
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+    status: 'completed',
+    tasks: { fakeTask: 'fake' },
+  });
+
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...execution,
+    status: 'running',
+    asyncOperationId: null,
+    collectionId: null,
+    cumulusVersion: null,
+    duration: 180.5,
+    error: null,
+    execution: null,
+    finalPayload: null,
+    originalPayload: null,
+    parentArn: null,
+    tasks: null,
+    type: null,
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const updatedPgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
+  const expectedEsRecord = {
+    ...omitBy(updatedExecution, isNull),
+    createdAt: updatedPgRecord.created_at.getTime(),
+    updatedAt: updatedPgRecord.updated_at.getTime(),
+  };
+  t.like(
+    updatedEsRecord,
+    {
+      ...expectedEsRecord,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    updatedPgRecord,
+    t.context.knex
+  );
+  t.deepEqual(translatedExecution, expectedEsRecord);
 });
 
 test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {

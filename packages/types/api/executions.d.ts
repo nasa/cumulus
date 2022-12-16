@@ -5,14 +5,15 @@ export type ExecutionProcessingTimes = {
   processingEndDateTime: string
 };
 
-export interface ExecutionRecord {
+export interface ApiExecutionRecord {
   arn: string,
+  createdAt: number,
   name: string,
   status: ExecutionRecordStatus,
-  createdAt: number,
   updatedAt: number,
   asyncOperationId?: string,
   collectionId?: string,
+  cumulusVersion?: string,
   duration?: number,
   error?: object,
   execution?: string,
@@ -22,17 +23,15 @@ export interface ExecutionRecord {
   tasks?: object,
   timestamp?: number,
   type?: string,
-  cumulusVersion?: string,
 }
 
 export interface ApiExecution {
   arn: string,
   name: string,
-  status?: ExecutionRecordStatus,
-  createdAt?: number,
-  updatedAt?: number,
   asyncOperationId?: string | null,
   collectionId?: string | null,
+  createdAt?: number | null,
+  cumulusVersion?: string | null,
   duration?: number | null,
   error?: object | null,
   execution?: string | null,
@@ -42,5 +41,6 @@ export interface ApiExecution {
   tasks?: object | null,
   timestamp?: number | null,
   type?: string | null,
-  cumulusVersion?: string | null,
+  status?: ExecutionRecordStatus,
+  updatedAt?: number | null,
 }

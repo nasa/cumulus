@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2688**
   - Updated bulk operation logic to use collectionId in addition to granuleId to fetch granules.
   - Tasks using the `bulk-operation` Lambda should provide collectionId and granuleId e.g. { granuleId: xxx, collectionId: xxx }
+- **CUMULUS-2856**
+  - Update execution PUT endpoint to no longer respect message write constraints and update all values passed in
 
 ### Changed
 
@@ -83,7 +85,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Remove granule-csv endpoint
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
-    - Update execution PUT endpoint to no longer respect message write constraints and update all values passed in
 
 ### Added
 

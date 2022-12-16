@@ -93,7 +93,7 @@ const writeExecutionToES = async (params) => {
   const {
     apiRecord,
     esClient = await Search.es(),
-    writeConstraints,
+    writeConstraints = true,
   } = params;
   return await upsertExecution({
     esClient,

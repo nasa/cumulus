@@ -4,7 +4,7 @@ import isNil from 'lodash/isNil';
 import isNull from 'lodash/isNull';
 
 import { RecordDoesNotExist } from '@cumulus/errors';
-import { ApiExecution, ExecutionRecord } from '@cumulus/types/api/executions';
+import { ApiExecution, ApiExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
 import { removeNilProperties } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
@@ -20,7 +20,7 @@ export const translatePostgresExecutionToApiExecution = async (
   collectionPgModel = new CollectionPgModel(),
   asyncOperationPgModel = new AsyncOperationPgModel(),
   executionPgModel = new ExecutionPgModel()
-): Promise<ExecutionRecord> => {
+): Promise<ApiExecutionRecord> => {
   let parentArn: string | undefined;
   let collectionId: string | undefined;
   let asyncOperationId: string | undefined;
@@ -68,7 +68,7 @@ export const translatePostgresExecutionToApiExecution = async (
     updatedAt: executionRecord.updated_at.getTime(),
     timestamp: executionRecord.timestamp?.getTime(),
   };
-  return <ExecutionRecord>removeNilProperties(translatedRecord);
+  return <ApiExecutionRecord>removeNilProperties(translatedRecord);
 };
 
 const returnNullOrUndefinedOrDate = (
@@ -149,6 +149,8 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
       knex,
       { name, version }
     );
+  } else if (isNull(apiRecord.collectionId)) {
+    translatedRecord.collection_cumulus_id = null;
   }
 
   // If we have a parentArn, try a lookup in Postgres. If there's a match, set the parent_cumulus_id
@@ -171,6 +173,8 @@ export const translateApiExecutionToPostgresExecutionWithoutNilsRemoved = async 
         throw error;
       }
     }
+  } else if (isNull(apiRecord.parentArn)) {
+    translatedRecord.parent_cumulus_id = null;
   }
 
   return <PostgresExecution>translatedRecord;
