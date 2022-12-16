@@ -256,7 +256,7 @@ const patchGranule = async (req, res) => {
 async function put(req, res) {
   let body = req.body;
   if (req.body.granuleId === req.params.granuleName) {
-    // Nullify passed in fields - we want to remove anything not specified by the user
+    // Nullify fields not passed in - we want to remove anything not specified by the user
     const nullifiedGranuleTemplate = Object.keys(schemas.granule.properties).reduce((acc, cur) => {
       acc[cur] = null;
       return acc;
