@@ -16,15 +16,17 @@ const {
   fakeCollectionRecordFactory,
   fakeExecutionRecordFactory,
   fakeGranuleRecordFactory,
-  FilePgModel,
-  fakeProviderRecordFactory,
   fakePdrRecordFactory,
+  fakeProviderRecordFactory,
+  FilePgModel,
   generateLocalTestDb,
   getUniqueGranuleByGranuleId,
   GranulePgModel,
   GranulesExecutionsPgModel,
   localStackConnectionEnv,
   migrationDir,
+  PdrPgModel,
+  ProviderPgModel,
   translateApiExecutionToPostgresExecution,
   translateApiFiletoPostgresFile,
   translateApiGranuleToPostgresGranule,
@@ -438,37 +440,6 @@ test.serial('default returns list of granules', async (t) => {
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
-});
-
-test.serial('default paginates correctly with search_after', async (t) => {
-  const response = await request(app)
-    .get('/granules?limit=1')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
-
-  const { meta, results } = response.body;
-  t.is(results.length, 1);
-  t.is(meta.page, 1);
-  t.truthy(meta.searchContext);
-
-  const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { meta: newMeta, results: newResults } = newResponse.body;
-  t.is(newResults.length, 1);
-  t.is(newMeta.page, 2);
-  t.truthy(newMeta.searchContext);
-
-  t.true(granuleIds.includes(results[0].granuleId));
-  t.true(granuleIds.includes(newResults[0].granuleId));
-  t.not(results[0].granuleId, newResults[0].granuleId);
-  t.not(meta.searchContext === newMeta.searchContext);
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -2123,17 +2094,19 @@ test.serial('PATCH does not update non-current-timestamp undefined fields for ex
     knex,
     executionPgRecord,
     esGranulesClient,
+    testExecutionCumulusId,
   } = t.context;
 
   const originalUpdateTimestamp = Date.now();
 
   const {
-    newPgGranule,
-    newDynamoGranule,
     esRecord,
+    newDynamoGranule,
+    newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       beginningDateTime: '2022-01-18T14:40:00.000Z',
       cmrLink: 'example.com',
@@ -2231,6 +2204,7 @@ test.serial('PATCH nullifies expected fields for existing granules in all datast
     knex,
     executionPgRecord,
     esGranulesClient,
+    testExecutionCumulusId,
   } = t.context;
 
   const originalUpdateTimestamp = Date.now();
@@ -2241,6 +2215,7 @@ test.serial('PATCH nullifies expected fields for existing granules in all datast
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       beginningDateTime: '2022-01-18T14:40:00.000Z',
       cmrLink: 'example.com',
@@ -3667,6 +3642,7 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
     executionUrl,
     knex,
   } = t.context;
+  console.log('foobar');
   const {
     newPgGranule,
     newDynamoGranule,
@@ -3676,17 +3652,17 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
     esClient,
     executionCumulusId: executionPgRecord.cumulus_id,
     granuleParams: {
-      beginningDateTime: new Date().toString(),
+      beginningDateTime: new Date().toISOString(),
       cmrLink: 'example.com',
       createdAt: Date.now(),
       duration: 1000,
-      endingDateTime: new Date().toString(),
+      endingDateTime: new Date().toISOString(),
       error: { errorKey: 'errorValue' },
       execution: executionUrl,
-      lastUpdateDateTime: new Date().toString(),
-      processingEndDateTime: new Date().toString(),
-      processingStartDateTime: new Date().toString(),
-      productionDateTime: new Date().toString(),
+      lastUpdateDateTime: new Date().toISOString(),
+      processingEndDateTime: new Date().toISOString(),
+      processingStartDateTime: new Date().toISOString(),
+      productionDateTime: new Date().toISOString(),
       productVolume: '1000',
       published: true,
       queryFields: { queryFieldsKey: 'queryFieldsValue' },
@@ -3699,7 +3675,6 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
   });
 
   console.log(esRecord);
-  // TODO validate granules exist
   const newGranule = {
     granuleId: newDynamoGranule.granuleId,
     collectionId: newDynamoGranule.collectionId,
@@ -3799,4 +3774,35 @@ test.serial('PUT creates a new granule in all data stores', async (t) => {
     { ...expectedGranule, files: [] }
   );
   t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+test.serial('default paginates correctly with search_after', async (t) => {
+  const response = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.is(meta.page, 1);
+  t.truthy(meta.searchContext);
+
+  const newResponse = await request(app)
+    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+  t.truthy(newMeta.searchContext);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+  t.not(meta.searchContext === newMeta.searchContext);
 });
