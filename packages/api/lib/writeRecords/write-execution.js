@@ -33,7 +33,6 @@ const { parseException } = require('@cumulus/message/utils');
 const Logger = require('@cumulus/logger');
 
 const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
-const Execution = require('../../models/executions');
 
 const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
 
@@ -187,7 +186,6 @@ const writeExecutionRecordFromMessage = async ({
   collectionCumulusId,
   asyncOperationCumulusId,
   parentExecutionCumulusId,
-  executionModel = new Execution(),
   updatedAt = Date.now(),
   esClient,
 }) => {
@@ -203,7 +201,7 @@ const writeExecutionRecordFromMessage = async ({
     apiRecord: executionApiRecord,
     postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
-    executionModel,
+    updatedAt,
     esClient,
   });
   return writeExecutionResponse.cumulus_id;

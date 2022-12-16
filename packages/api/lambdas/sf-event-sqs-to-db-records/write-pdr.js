@@ -153,5 +153,5 @@ module.exports = {
   generatePdrRecord,
   writePdrViaTransaction,
   writePdr,
-  writePdrToDynamoAndEs: writePdrToEs,
+  writePdrToEs,
 };
