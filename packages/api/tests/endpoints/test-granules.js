@@ -3038,7 +3038,7 @@ test.serial('PATCH returns bad request when the path param granuleName does not 
   t.is(body.message, `input :granuleName (${granuleName}) must match body's granuleId (${newGranule.granuleId})`);
 });
 
-test.serial('update (PUT) can set running granule status to queued', async (t) => {
+test.serial('PATCH can set running granule status to queued', async (t) => {
   const granuleId = cryptoRandomString({ length: 6 });
   const runningGranule = fakeGranuleRecordFactory({
     granule_id: granuleId,
