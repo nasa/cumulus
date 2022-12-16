@@ -405,3 +405,44 @@ test.serial('upsertExecution updated "completed" record to "running" record if w
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.like(updatedRecord, updates);
 });
+
+test.serial('upsertExecution updates record with expected nullified values if writeConstraints is false', async (t) => {
+  const { esIndex, esClient, esExecutionsClient } = t.context;
+
+  const updatedAt = Date.now();
+
+  const testRecord = {
+    arn: randomString(),
+    updatedAt,
+    status: 'completed',
+    finalPayload: { final: 'payload' },
+    originalPayload: { original: 'payload' },
+    tasks: { task: 'fake_task' },
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates: testRecord,
+    index: esIndex,
+  }, false);
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.like(record, testRecord);
+
+  const updates = {
+    ...testRecord,
+    status: 'running',
+    originalPayload: null,
+    finalPayload: null,
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+
+  delete updates.finalPayload;
+  delete updates.originalPayload;
+  delete updates.tasks;
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, updates);
+});

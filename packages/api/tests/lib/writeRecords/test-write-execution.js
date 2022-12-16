@@ -536,7 +536,6 @@ test.serial('writeExecutionRecordFromMessage() on re-write saves execution with 
   } = t.context;
 
   const originalPayload = { original: 'payload' };
-  const updatedOriginalPayload = { updatedOriginal: 'updatedPayload' };
   const finalPayload = { final: 'payload' };
   const tasks = { tasks: 'taskabc' };
 
@@ -558,13 +557,14 @@ test.serial('writeExecutionRecordFromMessage() on re-write saves execution with 
   t.deepEqual(esRecord.finalPayload, finalPayload);
   t.deepEqual(esRecord.tasks, tasks);
 
-  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.meta.status = 'failed';
   cumulusMessage.payload = null;
   cumulusMessage.meta.workflow_tasks = null;
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
   pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  t.deepEqual(pgRecord.original_payload, updatedOriginalPayload);
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.is(pgRecord.status, 'failed');
   t.is(pgRecord.final_payload, null);
   t.is(pgRecord.tasks, null);
 
@@ -634,7 +634,6 @@ test.serial('writeExecutionRecordFromApi() on re-write saves execution with expe
   } = t.context;
 
   const originalPayload = { original: 'payload' };
-  const updatedOriginalPayload = { updatedOriginal: 'updatedPayload' };
   const finalPayload = { final: 'payload' };
   const tasks = { tasks: 'taskabc' };
 
@@ -658,14 +657,15 @@ test.serial('writeExecutionRecordFromApi() on re-write saves execution with expe
   t.deepEqual(esRecord.finalPayload, finalPayload);
   t.deepEqual(esRecord.tasks, tasks);
 
-  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.meta.status = 'failed';
   cumulusMessage.payload = null;
   cumulusMessage.meta.workflow_tasks = null;
   apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
   await writeExecutionRecordFromApi({ record: apiRecord, knex });
 
   pgRecord = await executionPgModel.get(knex, { arn: executionArn });
-  t.deepEqual(pgRecord.original_payload, updatedOriginalPayload);
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.is(pgRecord.status, 'failed');
   t.is(pgRecord.final_payload, null);
   t.is(pgRecord.tasks, null);
 
