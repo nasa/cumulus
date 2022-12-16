@@ -72,7 +72,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     such that existing createdAt values will be retained in case of overwrite
     across all API granule writes.
   - Updated granule write code to validate written createdAt is synced between
-    datastores in cases where granule.createdAt is not provided for a new granule.
+    datastores in cases where granule.createdAt is not provided for a new
+    granule.
+
+### Fixed
+
+- **CUMULUS-3117**
+  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
+    constraints for queued granules.    Queued writes will now be properly
+    dropped from elasticsearch writes along with
 
 
 ## [v13.4.0] 10/31/2022
