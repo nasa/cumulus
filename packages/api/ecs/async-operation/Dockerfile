@@ -1,4 +1,4 @@
-FROM node:14.19.3-buster
+FROM node:14.21.1-buster
 
 USER root
 RUN sed -i -e '/jessie-updates/d' /etc/apt/sources.list
