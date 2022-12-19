@@ -167,7 +167,7 @@ export class CMR {
 
     if (params.token) {
       if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
-      else headers['Edl-Token'] = params.token;
+      else headers.Authorization = params.token;
     }
     if (params.ummgVersion) headers.Accept = 'application/json';
     if (params.cmrRevisionId) headers['Cmr-Revision-Id'] = params.cmrRevisionId;
@@ -189,7 +189,7 @@ export class CMR {
 
     if (params.token) {
       if (this.oauthProvider === 'launchpad') headers.Authorization = params.token;
-      else headers['Edl-Token'] = params.token;
+      else headers.Authorization = params.token;
     }
     return headers;
   }
