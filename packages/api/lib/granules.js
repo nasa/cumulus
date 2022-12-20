@@ -207,14 +207,18 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
 }
 
 const SCROLL_SIZE = 500; // default size in Kibana
+const TIMEOUT = '60s';
 
 async function granuleEsQuery({
   index,
   query,
   source,
+  timeout,
 }) {
   const granules = [];
   const responseQueue = [];
+  const searchTimeout = timeout ? timeout : TIMEOUT;
+  log.info(`Timeout for search is ${searchTimeout}`);
 
   const client = await Search.es(undefined, true);
   const searchResponse = await client.search({
@@ -223,6 +227,7 @@ async function granuleEsQuery({
     size: SCROLL_SIZE,
     _source: source,
     body: query,
+    timeout: searchTimeout,
   });
 
   responseQueue.push(searchResponse);
@@ -261,7 +266,7 @@ async function granuleEsQuery({
  * @returns {Promise<Array<string>>}
  */
 async function getGranuleIdsForPayload(payload) {
-  const { ids, index, query } = payload;
+  const { ids, index, query, timeout } = payload;
   const granuleIds = ids || [];
 
   // query ElasticSearch if needed
@@ -272,6 +277,7 @@ async function getGranuleIdsForPayload(payload) {
       index,
       query,
       source: ['granuleId'],
+      timeout
     });
 
     granules.map((granule) => granuleIds.push(granule.granuleId));
@@ -300,7 +306,7 @@ async function getGranulesForPayload(payload) {
 
   // query ElasticSearch if needed
   if (!granules && query) {
-    log.info('No granules detected. Searching for granules in Elasticsearch.');
+    log.info('No granules detected. Searching for granules in ElasticSearch.');
 
     const esGranules = await granuleEsQuery({
       index,
@@ -325,5 +331,6 @@ module.exports = {
   getExecutionProcessingTimeInfo,
   getGranulesForPayload,
   getGranuleIdsForPayload,
+  granuleEsQuery,
   moveGranuleFilesAndUpdateDatastore,
 };
