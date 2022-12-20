@@ -157,9 +157,6 @@ describe('POST /granules/bulkDelete', () => {
 
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
-        console.log('Prefix' + prefix);
-        console.log('IngestedGranukle' + ingestedGranule);
-        console.log('GranuleID' + granuleId);
         timestampBeforeCall = Date.now();
         postBulkDeleteResponse = await granules.bulkDeleteGranules(
           {

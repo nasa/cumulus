@@ -167,8 +167,6 @@ export class CMR {
 
     if (params.token) {
       headers.Authorization = params.token;
-    } else {
-      headers.Authorization = this.getToken();
     }
     if (params.ummgVersion) headers.Accept = 'application/json';
     if (params.cmrRevisionId) headers['Cmr-Revision-Id'] = params.cmrRevisionId;
@@ -190,10 +188,7 @@ export class CMR {
 
     if (params.token) {
       headers.Authorization = params.token;
-    } else {
-      headers.Authorization = this.getToken();
     }
-
     return headers;
   }
 
