@@ -52,7 +52,7 @@ const log = new Logger({ sender: '@cumulus/api/granules' });
 * @param {Object} res        - express response object
 * @returns {Promise<Object>} Promise resolving to an express response object
 */
-function _returnPutGranuleStatus(isNewRecord, granule, res) {
+function _returnPatchGranuleStatus(isNewRecord, granule, res) {
   if (isNewRecord) {
     return res.status(201).send(
       { message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}` }
@@ -180,7 +180,7 @@ const create = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} promise of an express response object.
  */
-const putGranule = async (req, res) => {
+const patchGranule = async (req, res) => {
   const {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
@@ -243,8 +243,12 @@ const putGranule = async (req, res) => {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
   }
-  return _returnPutGranuleStatus(isNewRecord, apiGranule, res);
+  return _returnPatchGranuleStatus(isNewRecord, apiGranule, res);
 };
+
+function put(req, res) {
+  return res.boom.badRequest('put method not implemented');
+}
 
 /**
  * Update a single granule.
@@ -256,7 +260,7 @@ const putGranule = async (req, res) => {
  * @param {Object} res - express response object
  * @returns {Promise<Object>} the promise of express response object
  */
-async function put(req, res) {
+async function patch(req, res) {
   const {
     granuleModel = new Granule(),
     knex = await getKnexClient(),
@@ -271,7 +275,7 @@ async function put(req, res) {
 
   if (!action) {
     if (req.body.granuleId === req.params.granuleName) {
-      return putGranule(req, res);
+      return patchGranule(req, res);
     }
     return res.boom.badRequest(
       `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
@@ -711,7 +715,8 @@ router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', put);
+router.put('/:granuleName', patch);
+router.patch('/:granuleName', patch);
 
 router.post(
   '/bulk',
@@ -739,6 +744,7 @@ module.exports = {
   bulkReingest,
   create,
   put,
-  putGranule,
+  patch,
+  patchGranule,
   router,
 };
