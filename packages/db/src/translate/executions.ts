@@ -6,7 +6,7 @@ import isNull from 'lodash/isNull';
 import { RecordDoesNotExist } from '@cumulus/errors';
 import { ApiExecution, ApiExecutionRecord } from '@cumulus/types/api/executions';
 import Logger from '@cumulus/logger';
-import { removeNilProperties } from '@cumulus/common/util';
+import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
 import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
@@ -70,10 +70,6 @@ export const translatePostgresExecutionToApiExecution = async (
   };
   return <ApiExecutionRecord>removeNilProperties(translatedRecord);
 };
-
-const returnNullOrUndefinedOrDate = (
-  dateVal: string | number | null | undefined
-) => (isNil(dateVal) ? dateVal : new Date(dateVal));
 
 /**
  * Validate translation api record doesn't contain invalid null/undefined values based

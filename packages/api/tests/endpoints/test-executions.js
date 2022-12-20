@@ -1507,7 +1507,7 @@ test.serial('PUT /executions removes execution fields when nullified fields are 
     asyncOperationId: null,
     collectionId: null,
     cumulusVersion: null,
-    duration: 180.5,
+    duration: null,
     error: null,
     execution: null,
     finalPayload: null,
