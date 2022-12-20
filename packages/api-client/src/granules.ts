@@ -1,6 +1,6 @@
 import pRetry from 'p-retry';
 
-import { ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { ApiGranuleRecord, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
@@ -69,7 +69,7 @@ export const getGranule = async (params: {
   granuleId: GranuleId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
-}): Promise<ApiGranule> => {
+}): Promise<ApiGranuleRecord> => {
   const response = await getGranuleResponse(params);
   return JSON.parse(response.body);
 };
@@ -136,7 +136,7 @@ export const waitForGranule = async (params: {
 
 /**
  * Reingest a granule from the Cumulus API
- * PUT /granules/{}
+ * PATCH /granules/{}
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack
@@ -161,7 +161,7 @@ export const reingestGranule = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
       headers: {
@@ -178,7 +178,7 @@ export const reingestGranule = async (params: {
 
 /**
  * Removes a granule from CMR via the Cumulus API
- * PUT /granules/{granuleId}
+ * PATCH /granules/{granuleId}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -199,7 +199,7 @@ export const removeFromCMR = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
       headers: {
@@ -212,7 +212,7 @@ export const removeFromCMR = async (params: {
 
 /**
  * Run a workflow with the given granule as the payload
- * PUT /granules/{granuleId}
+ * PATCH /granules/{granuleId}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -242,7 +242,7 @@ export const applyWorkflow = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
@@ -292,7 +292,7 @@ export const deleteGranule = async (params: {
 
 /**
  * Move a granule via the API
- * PUT /granules/{granuleId}
+ * PATCH /granules/{granuleId}
  *
  * @param {Object} params                       - params
  * @param {string} params.prefix                - the prefix configured for the stack
@@ -320,7 +320,7 @@ export const moveGranule = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
@@ -400,7 +400,7 @@ export const listGranules = async (params: {
  */
 export const createGranule = async (params: {
   prefix: string,
-  body: ApiGranule,
+  body: ApiGranuleRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -418,8 +418,10 @@ export const createGranule = async (params: {
 };
 
 /**
- * Update granule in cumulus.
- * PUT /granules/{granuleId}
+ * Update granule in cumulus via PATCH request.  Existing values will
+ * not be overwritten if not specified, null values will be removed and in
+ * some cases replaced with defaults.
+ * PATCH /granules/{granuleId}
  * @param {Object} params             - params
  * @param {Object} [params.body]      - granule to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
@@ -430,7 +432,7 @@ export const createGranule = async (params: {
  */
 export const updateGranule = async (params: {
   prefix: string,
-  body: ApiGranule,
+  body: ApiGranuleRecord,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -438,7 +440,7 @@ export const updateGranule = async (params: {
   return await callback({
     prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${body.granuleId}`,
       headers: { 'Content-Type': 'application/json' },

@@ -20,6 +20,7 @@ import {
   upsertGranuleWithExecutionJoinRecord,
   FilePgModel,
   PostgresFile,
+  PostgresFileRecord,
   translateApiGranuleToPostgresGranuleWithoutNilsRemoved,
   createRejectableTransaction,
 } from '@cumulus/db';
@@ -37,6 +38,9 @@ import {
   GranulesMigrationResult,
   MigrationResult,
 } from '@cumulus/types/migration';
+
+import { ApiGranuleRecord } from '@cumulus/types/api/granules';
+
 import { closeErrorWriteStreams, createErrorFileWriteStream, storeErrors } from './storeErrors';
 
 import { initialMigrationResult } from './common';
@@ -160,15 +164,15 @@ export const migrateGranuleRecord = async (
   }
 
   const granule = await translateApiGranuleToPostgresGranuleWithoutNilsRemoved({
-    dynamoRecord: record,
+    dynamoRecord: record as ApiGranuleRecord,
     knexOrTransaction: trx,
   });
 
-  const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
-    trx,
+  const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: trx,
     granule,
-    executionCumulusId
-  );
+    executionCumulusId,
+  });
 
   if (!pgGranuleRecord) {
     throw new PostgresUpdateFailed(`Upsert for granule ${record.granuleId} returned no rows. Record was not updated in the Postgres table.`);
@@ -183,14 +187,14 @@ export const migrateGranuleRecord = async (
  * @param {ApiFile} file            - Granule file
  * @param {number} granuleCumulusId - ID of granule
  * @param {Knex.Transaction} trx    - Knex transaction
- * @returns {Promise<void>}
+ * @returns {Promise<PostgresFileRecord>}
  * @throws {RecordAlreadyMigrated} if record was already migrated
  */
 export const migrateFileRecord = async (
   file: ApiFile,
   granuleCumulusId: number,
   trx: Knex.Transaction
-): Promise<void> => {
+): Promise<PostgresFileRecord> => {
   const filePgModel = new FilePgModel();
 
   const bucket = getBucket(file);
@@ -209,7 +213,39 @@ export const migrateFileRecord = async (
     path: file.path,
     type: file.type,
   };
-  await filePgModel.upsert(trx, updatedRecord);
+  const [writtenFile] = await filePgModel.upsert(trx, updatedRecord);
+  return writtenFile;
+};
+
+/**
+* Removes excess files from the postgres database for a given granule
+*
+* @summary Given a list of postgres file objects, remove all other file objects
+* from the postgres database for the provided granuleCumulusId
+* @param {Object} params - Paramter object
+* @param {[PostgresFileRecord]} params.writtenFiles - List of postgres file objects that should
+* not be removed by this method.
+* @param {number} params.granuleCumulusId - postgres granule_cumulus_id
+* @param {Object} params.knexOrTransaction - Instance of a Knex client or transaction
+* @returns {Promise<number>} The number of rows deleted
+*/
+const removeExcessFiles = async (params: {
+  writtenFiles: PostgresFileRecord[],
+  granuleCumulusId: number,
+  knexOrTransaction: Knex | Knex.Transaction
+}): Promise<number> => {
+  const {
+    writtenFiles,
+    granuleCumulusId,
+    knexOrTransaction,
+  } = params;
+  const filePgModel = new FilePgModel();
+  const excludeCumulusIds = writtenFiles.map((file) => file.cumulus_id);
+  return await filePgModel.deleteExcluding({
+    knexOrTransaction: knexOrTransaction,
+    queryParams: { granule_cumulus_id: granuleCumulusId },
+    excludeCumulusIds,
+  });
 };
 
 /**
@@ -253,17 +289,27 @@ export const migrateGranuleAndFilesViaTransaction = async (params: {
   }
 
   try {
+    let writtenFiles: PostgresFileRecord[] = [];
     await createRejectableTransaction(knex, async (trx: Knex.Transaction) => {
       const granuleCumulusId = await migrateGranuleRecord(dynamoRecord, trx, {
         migrateAndOverwrite,
         migrateOnlyFiles,
       });
-      return await Promise.all(files.map(
+
+      writtenFiles = await Promise.all(files.map(
         (file : ApiFile) => migrateFileRecord(file, granuleCumulusId, trx)
       ));
+
+      await removeExcessFiles({
+        writtenFiles,
+        granuleCumulusId,
+        knexOrTransaction: trx,
+      });
     });
+
     granulesResult.migrated += 1;
-    filesResult.migrated += files.length;
+    filesResult.migrated += writtenFiles.length;
+    // not counting/reporting removedFiles
   } catch (error) {
     if (error instanceof RecordAlreadyMigrated) {
       granulesResult.skipped += 1;
