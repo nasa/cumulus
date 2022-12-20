@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 
 import { deconstructCollectionId, constructCollectionId } from '@cumulus/message/Collections';
 import { ApiGranule, ApiGranuleRecord, GranuleStatus } from '@cumulus/types/api/granules';
-import { removeNilProperties } from '@cumulus/common/util';
+import { removeNilProperties, returnNullOrUndefinedOrDate } from '@cumulus/common/util';
 import { ValidationError } from '@cumulus/errors';
 import isNil from 'lodash/isNil';
 import isNull from 'lodash/isNull';
@@ -117,10 +117,6 @@ export const translatePostgresGranuleToApiGranule = async ({
 
   return apiGranule;
 };
-
-const returnNullOrUndefinedOrDate = (
-  dateVal: string | number | null | undefined
-) => (isNil(dateVal) ? dateVal : new Date(dateVal));
 
 /**
  * Validate translation request doesn't contain invalid null files based
