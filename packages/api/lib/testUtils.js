@@ -643,13 +643,11 @@ const createAsyncOperationTestRecords = async (context) => {
 const cleanupExecutionTestRecords = async (context, { arn }) => {
   const {
     knex,
-    executionModel,
     executionPgModel,
     esClient,
     esIndex,
   } = context;
 
-  await executionModel.delete({ arn });
   await executionPgModel.delete(knex, { arn });
   await deleteExecution({
     esClient,
