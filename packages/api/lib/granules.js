@@ -217,7 +217,7 @@ async function granuleEsQuery({
 }) {
   const granules = [];
   const responseQueue = [];
-  const searchTimeout = timeout ? timeout : TIMEOUT;
+  const searchTimeout = timeout || TIMEOUT;
   log.info(`Timeout for search is ${searchTimeout}`);
 
   const client = await Search.es(undefined, true);
@@ -277,7 +277,7 @@ async function getGranuleIdsForPayload(payload) {
       index,
       query,
       source: ['granuleId'],
-      timeout
+      timeout,
     });
 
     granules.map((granule) => granuleIds.push(granule.granuleId));
