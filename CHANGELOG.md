@@ -77,7 +77,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - **CUMULUS-3142**
-  - Fix issue from CUMULUS-3070 where undefined values for created_at result in
+  - Fix issue from CUMULUS-3070 where undefined values for status result in
     unexpected insertion failure on PATCH.
 
 ## [v13.4.0] 10/31/2022
