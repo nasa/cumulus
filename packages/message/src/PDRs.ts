@@ -188,7 +188,7 @@ export const getPdrPercentCompletion = (
  *
  * @param {MessageWithOptionalPayloadPdr} message - A workflow message object
  * @param {string} [updatedAt] - Optional updated timestamp to apply to record
- * @returns {ExecutionRecord} An PDR API record
+ * @returns {ApiPdr} An PDR API record
  *
  * @alias module:Executions
  */

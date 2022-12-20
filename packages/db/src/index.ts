@@ -90,6 +90,7 @@ export {
 } from './translate/rules';
 export {
   translateApiExecutionToPostgresExecution,
+  translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
 export {

@@ -13,9 +13,10 @@
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import omitBy from 'lodash/omitBy';
+import isUndefined from 'lodash/isUndefined';
 
 import { Message } from '@cumulus/types';
-import { ExecutionRecord } from '@cumulus/types/api/executions';
+import { ApiExecution } from '@cumulus/types/api/executions';
 
 import {
   getMessageAsyncOperationId,
@@ -206,27 +207,28 @@ export const getMessageExecutionFinalPayload = (
  *
  * @param {MessageWithPayload} message - A workflow message object
  * @param {string} [updatedAt] - Optional updated timestamp to apply to record
- * @returns {ExecutionRecord} An execution API record
+ * @returns {ApiExecution} An execution API record
  *
  * @alias module:Executions
  */
 export const generateExecutionApiRecordFromMessage = (
   message: MessageWithPayload,
   updatedAt = Date.now()
-): ExecutionRecord => {
+): ApiExecution => {
   const arn = getMessageExecutionArn(message);
+  const name = getMessageExecutionName(message);
   if (isNil(arn)) throw new Error('Unable to determine execution ARN from Cumulus message');
+  if (isNil(name)) throw new Error('Unable to determine execution name from Cumulus message');
 
   const status = getMetaStatus(message);
   if (!status) throw new Error('Unable to determine status from Cumulus message');
 
-  const now = Date.now();
   const workflowStartTime = getMessageWorkflowStartTime(message);
   const workflowStopTime = getMessageWorkflowStopTime(message);
   const collectionId = getCollectionIdFromMessage(message);
 
-  const record: ExecutionRecord = {
-    name: getMessageExecutionName(message),
+  const record : ApiExecution = {
+    name,
     cumulusVersion: getMessageCumulusVersion(message),
     arn,
     asyncOperationId: getMessageAsyncOperationId(message),
@@ -238,13 +240,12 @@ export const generateExecutionApiRecordFromMessage = (
     collectionId,
     status,
     createdAt: workflowStartTime,
-    timestamp: now,
+    timestamp: updatedAt,
     updatedAt,
     originalPayload: getMessageExecutionOriginalPayload(message),
     finalPayload: getMessageExecutionFinalPayload(message),
     duration: getWorkflowDuration(workflowStartTime, workflowStopTime),
   };
 
-  const updated = <ExecutionRecord>omitBy(record, isNil);
-  return updated;
+  return <ApiExecution>omitBy(record, isUndefined);
 };
