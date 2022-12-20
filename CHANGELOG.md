@@ -36,6 +36,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed dataType/version from api granule schema
   - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
     logic for PUT/PATCH endpoint.
+- **CUMULUS-3033**
+  - Added default timeout for `granuleEsQuery` search operation to be 60 seconds.
+  - Added functionality to allow search operation timeout to be configurable.
 
 ### Changed
 
