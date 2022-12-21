@@ -46,9 +46,9 @@ export class EarthdataLogin {
   /**
   * The constructor for the EarthdataLogin class
   *
-  * @param {string} params.username - Earthdata Login username, needed in order to retrieve token
-  * @param {string} params.password - Earthdata Login password, needed in order to retrieve token
-  * @param {string} params.edlEnv - the CMR environment of the user
+  * @param {string} params.username - Earthdata Login username, required parameter
+  * @param {string} params.password - Earthdata Login password, required parameter
+  * @param {string} params.edlEnv - the CMR environment (ex. ['PROD', 'OPS', 'SIT', 'UAT'])
   *
   * @example
   *
@@ -65,6 +65,11 @@ export class EarthdataLogin {
     this.edlEnv = params.edlEnv;
   }
 
+  /**
+   * The method for getting the Earthdata Login endpoint URL based on the CMR environment
+   *
+   * @returns {Promise.<string>} the endpoint URL
+   */
   getEDLurl(
   ) {
     switch (this.edlEnv) {
@@ -79,7 +84,31 @@ export class EarthdataLogin {
     }
   }
 
+  /**
+   * The method that determines if a user has a token, to call the retrieveEDLToken function
+   * which makes an API call to the Earthdata Login endpoint, or to create the token with the
+   * createEDLToken function. Returns the token as a string.
+   *
+   * @returns {Promise.<string>} the token
+   */
   async getEDLToken(): Promise<string> {
+    let token = await this.retrieveEDLToken();
+    if (token === undefined) {
+      token = await this.createEDLToken();
+    }
+    return token;
+  }
+
+  /**
+   * The method for getting the token from the Earthdata Login endpoint. Sends a GET request
+   * with the users' base64 encoded username and password as a header for authorization. If the
+   * users' credentials are accepted a token is retrieved, if one exists, and returned on their
+   * behalf, if not, an error is thrown. If the user does not have a token in Earthdata Login
+   * then undefined is returned to indicate to token needs to be created.
+   *
+   * @returns {Promise.<string>} the token
+   */
+  async retrieveEDLToken(): Promise<string> {
     const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
     const url = this.getEDLurl();
     // response: get a token from the Earthdata login endpoint using credentials if exists
@@ -102,27 +131,26 @@ export class EarthdataLogin {
 
       throw new Error(errorMessage);
     }
-    if (Object.keys(response).length === 0) {
-      return this.createEDLToken();
+    const currDate = new Date();
+
+    for (let i = 0; i < Object.keys(response).length; i += 1) {
+      const responseDate = new Date(response[i].expiration_date);
+      if (currDate < responseDate) {
+        return response[i].access_token;
+      }
     }
-    if (Object.keys(response).length === 2) {
-      const date1 = new Date(response[0].expiration_date);
-      const date2 = new Date(response[1].expiration_date);
-      const date3 = new Date();
-      if (date1 > date3) {
-        this.revokeEDLToken(response[0].access_token);
-      }
-      if (date2 > date3) {
-        this.revokeEDLToken(response[1].access_token);
-      }
-      if (date1 > date3 && date2 > date3) {
-        this.createEDLToken();
-      }
-      return date1 >= date2 ? response[1].access_token : response[0].access_token;
-    }
-    return response[0].access_token;
+    return undefined;
   }
 
+  /**
+   * The method for creating Earthdata Login token. This method sends a POST request
+   * to the Earthdata Login endpoint URL in order to create a token for the user. The users'
+   * username and password are sent as base64 encoded credentials as a header for
+   * authorization. If the users' credentials are accepted a token is created on their
+   * behalf and returned, if not, an error is thrown.
+   *
+   * @returns {Promise.<string>} the token
+   */
   async createEDLToken(): Promise<string> {
     const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
     const url = this.getEDLurl();
@@ -148,6 +176,12 @@ export class EarthdataLogin {
     return response.access_token;
   }
 
+  /**
+   * This method is used for the cmrTokenSpec integration test in order to revoke the
+   * token that is created for testing.
+   *
+   * @returns {Promise.<string>} the token
+   */
   async revokeEDLToken(
     token: string
   ): Promise<void> {
