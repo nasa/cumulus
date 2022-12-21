@@ -218,7 +218,7 @@ async function granuleEsQuery({
   const granules = [];
   const responseQueue = [];
   const searchTimeout = timeout || TIMEOUT;
-  log.info(`Timeout for search is ${searchTimeout}`);
+  log.info(`Timeout for search operation is ${searchTimeout}`);
 
   const client = await Search.es(undefined, true);
   const searchResponse = await client.search({
@@ -232,7 +232,7 @@ async function granuleEsQuery({
 
   responseQueue.push(searchResponse);
 
-  while (responseQueue.length) {
+  for (let i = 0; i < responseQueue.length; i++) {
     const { body } = responseQueue.shift();
 
     body.hits.hits.forEach((hit) => {
