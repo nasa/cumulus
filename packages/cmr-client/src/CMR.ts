@@ -4,7 +4,7 @@ import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
-import { EarthdataToken } from './EarthdataToken';
+import { EarthdataLogin } from './EarthdataLogin';
 import { CMRResponseBody, CMRErrorResponseBody } from './types';
 import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
@@ -31,12 +31,12 @@ async function updateToken(
   username: string,
   password: string
 ): Promise<string> {
-  const earthdataTokenObject = new EarthdataToken({
+  const earthdataLoginObject = new EarthdataLogin({
     username: username,
     password: password,
     edlEnv: process.env.CMR_ENVIRONMENT,
   });
-  return await earthdataTokenObject.getEDLToken();
+  return await earthdataLoginObject.getEDLToken();
 }
 
 export interface CMRConstructorParams {
