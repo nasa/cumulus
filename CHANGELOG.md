@@ -40,6 +40,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added default timeout for `granuleEsQuery` search operation to be 60 seconds.
   - Added functionality to allow search operation timeout to be configurable.
 
+### Fixed
+
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+
 ### Changed
 
 - **CUMULUS-3071**
