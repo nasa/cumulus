@@ -80,7 +80,7 @@ test.serial('retrieveToken throws exception where invalid user credential', asyn
     () => edlObj.getEDLToken(),
     {
       name: 'Error',
-      message: 'Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: 401, statusMessage: Unauthorized',
+      message: 'EarthdataLogin error: "Invalid user credentials",  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
     }
   );
 });
@@ -129,7 +129,7 @@ test.serial('createToken throws an error where invalid user credential', async (
     () => edlObj.createEDLToken(),
     {
       name: 'Error',
-      message: 'Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: 401, statusMessage: Unauthorized',
+      message: 'EarthdataLogin error: "Invalid user credentials",  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
     }
   );
 });
@@ -199,7 +199,7 @@ test.serial('revokeToken throws an error with invalid user credentials', async (
     () => edlObj.revokeEDLToken(revokeToken),
     {
       name: 'Error',
-      message: 'Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: 401, statusMessage: Unauthorized',
+      message: 'EarthdataLogin error: "Invalid user credentials",  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
     }
   );
 });

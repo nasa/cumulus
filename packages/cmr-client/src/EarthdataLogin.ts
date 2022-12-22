@@ -123,11 +123,8 @@ export class EarthdataLogin {
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
-      let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-      const responseError = get(error, 'response.body.errors');
-      if (responseError) {
-        errorMessage = `${errorMessage}, EDL error message: ${JSON.stringify(responseError)}`;
-      }
+      const responseErrorBody = ((get(error, 'response.body').split(',')[1]).replace(/}|]|"error_description":|/g, ''));
+      const errorMessage = `EarthdataLogin error: ${responseErrorBody},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
 
       throw new Error(errorMessage);
     }
@@ -165,11 +162,8 @@ export class EarthdataLogin {
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
-      let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-      const responseError = get(error, 'response.body.errors');
-      if (responseError) {
-        errorMessage = `${errorMessage}, EDL error message: ${JSON.stringify(responseError)}`;
-      }
+      const responseErrorBody = ((get(error, 'response.body').split(',')[1]).replace(/}|]|"error_description":|/g, ''));
+      const errorMessage = `EarthdataLogin error: ${responseErrorBody},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
 
       throw new Error(errorMessage);
     }
@@ -199,11 +193,8 @@ export class EarthdataLogin {
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
-      let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-      const responseError = get(error, 'response.body.errors');
-      if (responseError) {
-        errorMessage = `${errorMessage}, EDL error message: ${JSON.stringify(responseError)}`;
-      }
+      const responseErrorBody = ((get(error, 'response.body').split(',')[1]).replace(/}|]|"error_description":|/g, ''));
+      const errorMessage = `EarthdataLogin error: ${responseErrorBody},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
 
       throw new Error(errorMessage);
     }
