@@ -207,7 +207,6 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
 }
 
 const SCROLL_SIZE = 500; // default size in Kibana
-const TIMEOUT = '60s';
 
 function getTotalHits(bodyHits) {
   if (bodyHits.total.value === 0) {
