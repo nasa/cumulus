@@ -223,8 +223,6 @@ function getTotalHits(bodyHits) {
  * @param {string} [payload.index] - ES index to query
  * @param {string} [payload.query] - ES query
  * @param {Object} [payload.source] - List of IDs to operate on
- * @param {Object} [payload.timeout] - Optional timeout variable for ES search operation.
- *   Defaults to 60 seconds.
  * @param {Object} [payload.testBodyHits] - Optional body.hits for testing
  * @returns {Promise<Array<Object>>}
  */
@@ -232,12 +230,10 @@ async function granuleEsQuery({
   index,
   query,
   source,
-  timeout,
   testBodyHits,
 }) {
   const granules = [];
   const responseQueue = [];
-  const searchTimeout = timeout || TIMEOUT;
 
   const client = await Search.es(undefined, true);
   const searchResponse = await client.search({
@@ -246,7 +242,6 @@ async function granuleEsQuery({
     size: SCROLL_SIZE,
     _source: source,
     body: query,
-    timeout: searchTimeout,
   });
 
   responseQueue.push(searchResponse);
@@ -260,7 +255,6 @@ async function granuleEsQuery({
     });
 
     const totalHits = getTotalHits(bodyHits);
-    console.log(totalHits);
 
     if (totalHits !== granules.length) {
       responseQueue.push(
@@ -287,7 +281,7 @@ async function granuleEsQuery({
  * @returns {Promise<Array<string>>}
  */
 async function getGranuleIdsForPayload(payload) {
-  const { ids, index, query, timeout } = payload;
+  const { ids, index, query } = payload;
   const granuleIds = ids || [];
 
   // query ElasticSearch if needed
@@ -298,7 +292,6 @@ async function getGranuleIdsForPayload(payload) {
       index,
       query,
       source: ['granuleId'],
-      timeout,
     });
 
     granules.map((granule) => granuleIds.push(granule.granuleId));

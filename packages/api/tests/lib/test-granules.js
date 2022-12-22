@@ -404,7 +404,6 @@ test.serial('granuleEsQuery returns if the query has a bad timestamp and respons
     index: esIndex,
     query,
     source: ['granuleId'],
-    timeout: '50s',
     testBodyHits,
   }));
 });
