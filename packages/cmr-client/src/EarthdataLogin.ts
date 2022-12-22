@@ -35,7 +35,7 @@ export interface EarthdataLoginParams {
  * const earthdataLogin = new EarthdataLogin({
  *  "username": "my-username",
  *  "password": "my-password",
- *  "edlEnv": "my-cmr-environment"
+ *  "edlEnv": "my-edl-environment"
  * });
  */
 export class EarthdataLogin {
@@ -48,7 +48,7 @@ export class EarthdataLogin {
   *
   * @param {string} params.username - Earthdata Login username, required parameter
   * @param {string} params.password - Earthdata Login password, required parameter
-  * @param {string} params.edlEnv - the CMR environment (ex. ['PROD', 'OPS', 'SIT', 'UAT'])
+  * @param {string} params.edlEnv - the Earthdata Login environment (['PROD', 'OPS', 'SIT', 'UAT'])
   *
   * @example
   *
@@ -66,7 +66,7 @@ export class EarthdataLogin {
   }
 
   /**
-   * The method for getting the Earthdata Login endpoint URL based on the CMR environment
+   * The method for getting the Earthdata Login endpoint URL based on the EDL environment
    *
    * @returns {Promise.<string>} the endpoint URL
    */
@@ -126,7 +126,7 @@ export class EarthdataLogin {
       let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
       const responseError = get(error, 'response.body.errors');
       if (responseError) {
-        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
+        errorMessage = `${errorMessage}, EDL error message: ${JSON.stringify(responseError)}`;
       }
 
       throw new Error(errorMessage);
@@ -168,12 +168,12 @@ export class EarthdataLogin {
       let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
       const responseError = get(error, 'response.body.errors');
       if (responseError) {
-        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
+        errorMessage = `${errorMessage}, EDL error message: ${JSON.stringify(responseError)}`;
       }
 
       throw new Error(errorMessage);
     }
-    return response.access_token;
+    return response[0].access_token;
   }
 
   /**
@@ -202,7 +202,7 @@ export class EarthdataLogin {
       let errorMessage = `Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
       const responseError = get(error, 'response.body.errors');
       if (responseError) {
-        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
+        errorMessage = `${errorMessage}, EDL error message: ${JSON.stringify(responseError)}`;
       }
 
       throw new Error(errorMessage);
