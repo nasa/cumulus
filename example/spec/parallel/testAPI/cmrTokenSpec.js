@@ -35,7 +35,6 @@ describe('When using Earthdata Login Token from CMR', () => {
         password: password,
         edlEnv: process.env.CMR_ENVIRONMENT,
       });
-
     } catch (error) {
       beforeAllFailed = true;
       console.log(error);
@@ -69,5 +68,4 @@ describe('When using Earthdata Login Token from CMR', () => {
       }
     });
   });
-
 });
