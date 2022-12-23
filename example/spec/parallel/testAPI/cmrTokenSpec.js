@@ -11,6 +11,7 @@ describe('When using Earthdata Login Token from CMR', () => {
   let config;
   let earthdataLoginObject;
   let cmrObject;
+  let failedEarthdataLogin;
   let beforeAllFailed = false;
 
   beforeAll(async () => {
@@ -34,6 +35,12 @@ describe('When using Earthdata Login Token from CMR', () => {
         username: username,
         password: password,
         edlEnv: process.env.CMR_ENVIRONMENT,
+      });
+
+      failedEarthdataLogin = new EarthdataLogin({
+        username: '',
+        password: '',
+        edlEnv: '',
       });
     } catch (error) {
       beforeAllFailed = true;
@@ -65,6 +72,17 @@ describe('When using Earthdata Login Token from CMR', () => {
         const response = await cmrObject.getToken();
         expect(response).toBeDefined();
         expect(response).toBeInstanceOf(String);
+      }
+    });
+  });
+
+  describe('Failed Request for creating an Earthdata Login Token for a user with invalid credentials', () => {
+    it('response will return an error because of invalid credentials', async () => {
+      if (beforeAllFailed) {
+        fail('beforeAll() failed');
+      } else {
+        const errormsg = 'Authentication error: Invalid Credentials, Authentication with Earthdata Login failed, statusCode: 401, statusMessage: Unauthorized';
+        await expect(await failedEarthdataLogin.getEDLToken()).rejects.toEqual(errormsg);
       }
     });
   });

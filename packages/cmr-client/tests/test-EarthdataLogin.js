@@ -65,12 +65,7 @@ test.serial('retrieveToken throws exception where invalid user credential', asyn
     edlEnv: 'PROD',
   });
 
-  const expectedresponse = [
-    {
-      error: 'invalid_credentials',
-      error_description: 'Invalid user credentials',
-    },
-  ];
+  const expectedresponse = ' {"error": "invalid_credentials","error_description": "Invalid user credentials"} ';
 
   nock('https://urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
@@ -80,7 +75,7 @@ test.serial('retrieveToken throws exception where invalid user credential', asyn
     () => edlObj.getEDLToken(),
     {
       name: 'Error',
-      message: 'EarthdataLogin error: "Invalid user credentials",  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
+      message: 'EarthdataLogin error: Invalid user credentials,  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
     }
   );
 });
@@ -114,12 +109,7 @@ test.serial('createToken throws an error where invalid user credential', async (
     edlEnv: 'PROD',
   });
 
-  const expectedresponse = [
-    {
-      error: 'invalid_credentials',
-      error_description: 'Invalid user credentials',
-    },
-  ];
+  const expectedresponse = ' {"error": "invalid_credentials","error_description": "Invalid user credentials"} ';
 
   nock('https://urs.earthdata.nasa.gov')
     .post('/api/users/token')
@@ -129,7 +119,7 @@ test.serial('createToken throws an error where invalid user credential', async (
     () => edlObj.createEDLToken(),
     {
       name: 'Error',
-      message: 'EarthdataLogin error: "Invalid user credentials",  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
+      message: 'EarthdataLogin error: Invalid user credentials,  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
     }
   );
 });
@@ -184,12 +174,7 @@ test.serial('revokeToken throws an error with invalid user credentials', async (
 
   const revokeToken = 'ABCDE';
 
-  const expectedresponse = [
-    {
-      error: 'invalid_credentials',
-      error_description: 'Invalid user credentials',
-    },
-  ];
+  const expectedresponse = ' {"error": "invalid_credentials","error_description": "Invalid user credentials"} ';
 
   nock('https://urs.earthdata.nasa.gov')
     .post(`/api/users/revoke_token?token=${revokeToken}`)
@@ -199,7 +184,7 @@ test.serial('revokeToken throws an error with invalid user credentials', async (
     () => edlObj.revokeEDLToken(revokeToken),
     {
       name: 'Error',
-      message: 'EarthdataLogin error: "Invalid user credentials",  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
+      message: 'EarthdataLogin error: Invalid user credentials,  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
     }
   );
 });

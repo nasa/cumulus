@@ -123,8 +123,8 @@ export class EarthdataLogin {
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
-      const responseErrorBody = ((get(error, 'response.body').split(',')[1]).replace(/}|]|"error_description":|/g, ''));
-      const errorMessage = `EarthdataLogin error: ${responseErrorBody},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
+      const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
+      const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
 
       throw new Error(errorMessage);
     }
@@ -162,8 +162,8 @@ export class EarthdataLogin {
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
-      const responseErrorBody = ((get(error, 'response.body').split(',')[1]).replace(/}|]|"error_description":|/g, ''));
-      const errorMessage = `EarthdataLogin error: ${responseErrorBody},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
+      const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
+      const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
 
       throw new Error(errorMessage);
     }
@@ -193,8 +193,8 @@ export class EarthdataLogin {
     } catch (error) {
       const statusCode = get(error, 'response.statusCode', error.code);
       const statusMessage = get(error, 'response.statusMessage', error.message);
-      const responseErrorBody = ((get(error, 'response.body').split(',')[1]).replace(/}|]|"error_description":|/g, ''));
-      const errorMessage = `EarthdataLogin error: ${responseErrorBody},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
+      const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
+      const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
 
       throw new Error(errorMessage);
     }
