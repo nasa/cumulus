@@ -32,6 +32,6 @@ resource "aws_lambda_function" "discover_pdrs_task" {
 
 resource "aws_cloudwatch_log_group" "discover_pdrs_task" {
   name              = "/aws/lambda/${aws_lambda_function.discover_pdrs_task.function_name}"
-  retention_in_days = 30
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ingest_discover_pdrs_tasks_log_retention", 30)
   tags              = var.tags
 }
