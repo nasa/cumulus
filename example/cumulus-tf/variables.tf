@@ -1,5 +1,11 @@
 # Required
 
+variable "cloudwatch_log_retention_periods"{
+  type = map(string)
+  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of module_<cloudwatch_log_group_name>_log_retention"
+  default = {}
+}
+
 variable "cmr_client_id" {
   type = string
 }

@@ -19,6 +19,12 @@ variable "bucketname_prefix" {
   description = "all data buckets should have names prefixed with this. Must be compatible with S3 naming conventions (lower case only, etc). An empty string can be used to indicate no prefix"
 }
 
+variable "cloudwatch_log_retention_periods"{
+  type = map(string)
+  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of module_<cloudwatch_log_group_name>_log_retention"
+  default = {}
+}
+
 variable "oauth_client_id" {
   type        = string
   description = "oauth_client_id"
