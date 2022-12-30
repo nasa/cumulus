@@ -52,7 +52,7 @@
     "@cumulus/logger": "13.4.0",
     "@cumulus/lzards-api-client": "13.4.0",
     "@cumulus/message": "13.4.0",
-    "got": "11.8.3"
+    "got": "11.8.6"
   },
   "devDependencies": {
     "@cumulus/schemas": "13.4.0",
