@@ -192,6 +192,7 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const name = (req.params.name || '').replace(/%20/g, ' ');
+  const onlyResources = req.query.onlyResources === true;
   const esRulesClient = new Search(
     {},
     'rule',
@@ -214,6 +215,11 @@ async function del(req, res) {
     } else {
       throw error;
     }
+  }
+
+  if (onlyResources) {
+    await deleteRuleResources(knex, apiRule)
+    return res.send({ message: 'Record resources (e.g. CloudWatch Events, Kinesis Event Sources) deleted' });
   }
 
   await createRejectableTransaction(knex, async (trx) => {

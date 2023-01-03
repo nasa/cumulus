@@ -146,10 +146,11 @@ export const getRule = async (params: {
  */
 export const deleteRule = async (params: {
   prefix: string,
+  query: { [key: string]: string },
   ruleName: string,
   callback: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, ruleName, callback = invokeApi } = params;
+  const { prefix, ruleName, query = {}, callback = invokeApi } = params;
 
   return await callback({
     prefix,
@@ -157,6 +158,7 @@ export const deleteRule = async (params: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
       path: `/rules/${ruleName}`,
+      queryStringParameters: query,
     },
   });
 };

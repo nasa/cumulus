@@ -5,7 +5,6 @@ const replace = require('lodash/replace');
 const get = require('lodash/get');
 
 const { randomString } = require('@cumulus/common/test-utils');
-const { Rule } = require('@cumulus/api/models');
 
 const { postKinesisReplays } = require('@cumulus/api-client/replays');
 const { deleteExecution } = require('@cumulus/api-client/executions');
@@ -17,6 +16,7 @@ const {
   cleanupCollections,
   cleanupProviders,
   deleteRules,
+  deleteRuleResources,
   readJsonFilesFromDir,
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
@@ -132,8 +132,7 @@ describe('The Kinesis Replay API', () => {
 
     beforeAll(async () => {
       // delete EventSourceMapping so that our rule, though enabled, does not trigger duplicate executions
-      const rule = new Rule();
-      await rule.deleteKinesisEventSources(rules[0]);
+      await deleteRuleResources({ stackName: testConfig.stackName, bucketName: testConfig.bucket, rules: rules[0] });
 
       await Promise.all(tooOldToFetchRecords.map((r) => putRecordOnStream(streamName, r)));
       await delay(10 * 1000);

@@ -564,6 +564,26 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
   return rules.length;
 }
 
+async function deleteRuleResources(stackName, bucketName, rules, postfix) {
+  // setProcessEnvironment is not needed by this function, but other code
+  // depends on this undocumented side effect
+  setProcessEnvironment(stackName, bucketName);
+
+  process.env.RulesTable = `${stackName}-RulesTable`;
+
+  await pMap(
+    rules,
+    (rule) => rulesApi.deleteRule({
+      prefix: stackName,
+      ruleName: postfix ? `${rule.name}${postfix}` : rule.name,
+      query: { onlyResources: true },
+    }),
+    { concurrency: process.env.CONCURRENCY || 3 }
+  );
+
+  return rules.length;
+}
+
 /**
  * returns the most recently executed workflows for the specified state machine.
  *
@@ -747,6 +767,7 @@ module.exports = {
   deleteCollections,
   deleteProviders,
   deleteRules,
+  deleteRuleResources,
   distributionApi,
   EarthdataLogin,
   executionsApi,
