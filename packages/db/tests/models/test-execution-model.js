@@ -1,5 +1,6 @@
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
+const { randomId } = require('@cumulus/common/test-utils');
 
 const {
   CollectionPgModel,
@@ -42,7 +43,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('ExecutionPgModel.upsert() creates new running execution', async (t) => {
+test('ExecutionPgModel.upsert() creates new running execution if writeConstraints is set to true', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -51,7 +52,7 @@ test('ExecutionPgModel.upsert() creates new running execution', async (t) => {
 
   executionRecord.status = 'running';
 
-  await executionPgModel.upsert(knex, executionRecord);
+  await executionPgModel.upsert(knex, executionRecord, true);
 
   t.like(
     await executionPgModel.get(knex, { arn: executionRecord.arn }),
@@ -59,7 +60,7 @@ test('ExecutionPgModel.upsert() creates new running execution', async (t) => {
   );
 });
 
-test('ExecutionPgModel.upsert() updates only allowed fields for a running execution', async (t) => {
+test('ExecutionPgModel.upsert() creates new running execution if writeConstraints is set to false', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -67,20 +68,42 @@ test('ExecutionPgModel.upsert() updates only allowed fields for a running execut
   } = t.context;
 
   executionRecord.status = 'running';
+
+  await executionPgModel.upsert(knex, executionRecord, false);
+
+  t.like(
+    await executionPgModel.get(knex, { arn: executionRecord.arn }),
+    executionRecord
+  );
+});
+
+test('ExecutionPgModel.upsert() updates only allowed fields for a running execution if writeConstraints is set to true and write conditions are met', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+
+  executionRecord.status = 'completed';
   executionRecord.workflow_name = 'workflow-1';
-  executionRecord.url = 'url-1';
+  executionRecord.url = randomId('url-1');
+  executionRecord.final_payload = {
+    key1: 'value',
+  };
   await executionPgModel.create(knex, executionRecord);
 
   const updatedRecord = {
     ...executionRecord,
+    status: 'running',
     created_at: new Date(),
     updated_at: new Date(),
     timestamp: new Date(),
     original_payload: {
       foo: 'bar',
     },
+    final_payload: null,
     workflow_name: 'workflow-2',
-    url: 'url-2',
+    url: randomId('url-2'),
   };
 
   await executionPgModel.upsert(knex, updatedRecord);
@@ -89,9 +112,48 @@ test('ExecutionPgModel.upsert() updates only allowed fields for a running execut
     await executionPgModel.get(knex, { arn: executionRecord.arn }),
     {
       ...updatedRecord,
-      workflow_name: 'workflow-1',
-      url: 'url-1',
+      status: executionRecord.status,
+      workflow_name: executionRecord.workflow_name,
+      url: executionRecord.url,
+      final_payload: executionRecord.final_payload,
     }
+  );
+});
+
+test('ExecutionPgModel.upsert() updates all fields for a running execution if writeConstraints is set to false', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+
+  executionRecord.status = 'completed';
+  executionRecord.workflow_name = 'workflow-1';
+  executionRecord.url = randomId('url-1');
+  executionRecord.final_payload = {
+    key1: 'value',
+  };
+  await executionPgModel.create(knex, executionRecord);
+
+  const updatedRecord = {
+    ...executionRecord,
+    status: 'running',
+    created_at: new Date(),
+    updated_at: new Date(),
+    timestamp: new Date(),
+    original_payload: {
+      foo: 'bar',
+    },
+    final_payload: null,
+    workflow_name: 'workflow-2',
+    url: randomId('url-2'),
+  };
+
+  await executionPgModel.upsert(knex, updatedRecord, false);
+
+  t.like(
+    await executionPgModel.get(knex, { arn: executionRecord.arn }),
+    updatedRecord
   );
 });
 
@@ -120,6 +182,9 @@ test('ExecutionPgModel.upsert() updates a completed execution', async (t) => {
   } = t.context;
 
   executionRecord.status = 'completed';
+  executionRecord.original_payload = {
+    key1: 'original',
+  };
   executionRecord.final_payload = {
     key1: 'value',
   };
@@ -130,6 +195,7 @@ test('ExecutionPgModel.upsert() updates a completed execution', async (t) => {
     final_payload: {
       key2: 'value',
     },
+    original_payload: null,
   };
   await executionPgModel.upsert(knex, updatedRecord);
 
@@ -139,7 +205,7 @@ test('ExecutionPgModel.upsert() updates a completed execution', async (t) => {
   );
 });
 
-test('ExecutionPgModel.upsert() will not allow a running execution to replace a completed execution', async (t) => {
+test('ExecutionPgModel.upsert() will not allow a running execution to replace a completed execution if writeConstraints is set to true ', async (t) => {
   const {
     knex,
     executionPgModel,
@@ -158,6 +224,28 @@ test('ExecutionPgModel.upsert() will not allow a running execution to replace a 
   t.like(
     await executionPgModel.get(knex, { arn: executionRecord.arn }),
     executionRecord
+  );
+});
+
+test('ExecutionPgModel.upsert() will allow a running execution to replace a completed execution if writeConstraints is set to false ', async (t) => {
+  const {
+    knex,
+    executionPgModel,
+    executionRecord,
+  } = t.context;
+
+  executionRecord.status = 'completed';
+  await executionPgModel.create(knex, executionRecord);
+
+  const updatedRecord = {
+    ...executionRecord,
+    status: 'running',
+  };
+  await executionPgModel.upsert(knex, updatedRecord, false);
+
+  t.like(
+    await executionPgModel.get(knex, { arn: executionRecord.arn }),
+    updatedRecord
   );
 });
 

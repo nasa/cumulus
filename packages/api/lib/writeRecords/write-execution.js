@@ -1,9 +1,11 @@
 const isNil = require('lodash/isNil');
+const isUndefined = require('lodash/isUndefined');
+const omitBy = require('lodash/omitBy');
 
 const {
   createRejectableTransaction,
   ExecutionPgModel,
-  translateApiExecutionToPostgresExecution,
+  translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } = require('@cumulus/db');
 const {
@@ -28,11 +30,9 @@ const {
 } = require('@cumulus/message/workflows');
 const { parseException } = require('@cumulus/message/utils');
 
-const { removeNilProperties } = require('@cumulus/common/util');
 const Logger = require('@cumulus/logger');
 
 const { publishExecutionSnsMessage } = require('../publishSnsMessageUtils');
-const Execution = require('../../models/executions');
 
 const logger = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-execution' });
 
@@ -61,14 +61,13 @@ const buildExecutionRecord = ({
   asyncOperationCumulusId,
   collectionCumulusId,
   parentExecutionCumulusId,
-  now = new Date(),
   updatedAt = Date.now(),
 }) => {
   const arn = getMessageExecutionArn(cumulusMessage);
   const workflowStartTime = getMessageWorkflowStartTime(cumulusMessage);
   const workflowStopTime = getMessageWorkflowStopTime(cumulusMessage);
 
-  return removeNilProperties({
+  const record = {
     arn,
     status: getMetaStatus(cumulusMessage),
     url: getExecutionUrlFromArn(arn),
@@ -76,7 +75,7 @@ const buildExecutionRecord = ({
     tasks: getMessageWorkflowTasks(cumulusMessage),
     workflow_name: getMessageWorkflowName(cumulusMessage),
     created_at: workflowStartTime ? new Date(workflowStartTime) : undefined,
-    timestamp: now,
+    timestamp: new Date(updatedAt),
     updated_at: new Date(updatedAt),
     error: parseException(cumulusMessage.exception),
     original_payload: getMessageExecutionOriginalPayload(cumulusMessage),
@@ -85,19 +84,21 @@ const buildExecutionRecord = ({
     async_operation_cumulus_id: asyncOperationCumulusId,
     collection_cumulus_id: collectionCumulusId,
     parent_cumulus_id: parentExecutionCumulusId,
-  });
+  };
+  return omitBy(record, isUndefined);
 };
 
 const writeExecutionToES = async (params) => {
   const {
     apiRecord,
     esClient = await Search.es(),
+    writeConstraints = true,
   } = params;
   return await upsertExecution({
     esClient,
     updates: apiRecord,
     index: process.env.ES_INDEX,
-  });
+  }, writeConstraints);
 };
 
 /**
@@ -119,15 +120,17 @@ const _writeExecutionRecord = ({
   executionPgModel = new ExecutionPgModel(),
   updatedAt = Date.now(),
   esClient,
+  writeConstraints = true,
 }) => createRejectableTransaction(knex, async (trx) => {
   logger.info(`About to write execution ${postgresRecord.arn} to PostgreSQL`);
-  const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord);
+  const [executionPgRecord] = await executionPgModel.upsert(trx, postgresRecord, writeConstraints);
   logger.info(`Successfully wrote execution ${postgresRecord.arn} to PostgreSQL with cumulus_id ${executionPgRecord.cumulus_id}`);
   try {
     await writeExecutionToES({
       apiRecord,
       updatedAt,
       esClient,
+      writeConstraints,
     });
     logger.info(`Successfully wrote Elasticsearch record for execution ${apiRecord.arn}`);
   } catch (error) {
@@ -156,6 +159,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
   executionPgModel,
   updatedAt,
   esClient,
+  writeConstraints = true,
 }) => {
   const writeExecutionResponse = await _writeExecutionRecord(
     {
@@ -165,6 +169,7 @@ const _writeExecutionAndPublishSnsMessage = async ({
       esClient,
       executionPgModel,
       updatedAt,
+      writeConstraints,
     }
   );
   const translatedExecution = await translatePostgresExecutionToApiExecution(
@@ -181,7 +186,6 @@ const writeExecutionRecordFromMessage = async ({
   collectionCumulusId,
   asyncOperationCumulusId,
   parentExecutionCumulusId,
-  executionModel = new Execution(),
   updatedAt = Date.now(),
   esClient,
 }) => {
@@ -195,9 +199,9 @@ const writeExecutionRecordFromMessage = async ({
   const executionApiRecord = generateExecutionApiRecordFromMessage(cumulusMessage, updatedAt);
   const writeExecutionResponse = await _writeExecutionAndPublishSnsMessage({
     apiRecord: executionApiRecord,
-    postgresRecord,
+    postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
-    executionModel,
+    updatedAt,
     esClient,
   });
   return writeExecutionResponse.cumulus_id;
@@ -207,11 +211,13 @@ const writeExecutionRecordFromApi = async ({
   record: apiRecord,
   knex,
 }) => {
-  const postgresRecord = await translateApiExecutionToPostgresExecution(apiRecord, knex);
+  const postgresRecord = await
+  translateApiExecutionToPostgresExecutionWithoutNilsRemoved(apiRecord, knex);
   return await _writeExecutionAndPublishSnsMessage({
     apiRecord,
-    postgresRecord,
+    postgresRecord: omitBy(postgresRecord, isUndefined),
     knex,
+    writeConstraints: false,
   });
 };
 

@@ -45,24 +45,17 @@ const {
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
 /**
- * Write records to data stores. Use conditional logic to write either to
- * DynamoDB only or to DynamoDB and RDS.
+ * Write records to data stores.
  *
  * @param {Object} params
  * @param {Object} params.cumulusMessage - Cumulus workflow message
  * @param {Knex} params.knex - Knex client
- * @param {Object} [params.executionModel]
- *   Optional instance of execution model used for writing to DynamoDB
- * @param {Object} [params.pdrModel]
- *   Optional instance of PDR model used for writing to DynamoDB
  * @param {Object} [params.testOverrides]
  *   Optional override/mock object used for testing
  */
 const writeRecords = async ({
   cumulusMessage,
   knex,
-  executionModel,
-  pdrModel,
   testOverrides = {},
 }) => {
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
@@ -104,7 +97,6 @@ const writeRecords = async ({
     asyncOperationCumulusId,
     parentExecutionCumulusId,
     knex,
-    executionModel,
   });
 
   const providerCumulusId = await getMessageProviderCumulusId(cumulusMessage, knex);
@@ -115,7 +107,6 @@ const writeRecords = async ({
     providerCumulusId,
     knex,
     executionCumulusId,
-    pdrModel,
   });
 
   return writeGranulesFromMessage({

@@ -4,6 +4,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
+const omit = require('lodash/omit');
 
 const {
   ExecutionPgModel,
@@ -476,6 +477,201 @@ test.serial('writeExecutionRecordFromApi() saves execution to RDS/Elasticsearch 
   const esRecord = await t.context.esExecutionsClient.get(executionArn);
   t.is(pgRecord.created_at.getTime(), esRecord.createdAt);
   t.is(pgRecord.updated_at.getTime(), esRecord.updatedAt);
+});
+
+test.serial('writeExecutionRecordFromMessage() does not allow a running execution to replace a completed execution due to write constraints', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const originalPayload = { original: 'payload' };
+  const updatedOriginalPayload = { updatedOriginal: 'updatedPayload' };
+  const finalPayload = { final: 'payload' };
+  const tasks = { tasks: 'taskabc' };
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.meta.workflow_tasks = tasks;
+  cumulusMessage.payload = originalPayload;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = finalPayload;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+  let pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+  t.deepEqual(pgRecord.tasks, tasks);
+
+  let esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(esRecord.originalPayload, originalPayload);
+  t.deepEqual(esRecord.finalPayload, finalPayload);
+  t.deepEqual(esRecord.tasks, tasks);
+
+  // writeConstraints apply, status is not updated in data stores
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.payload = updatedOriginalPayload;
+  cumulusMessage.meta.workflow_tasks = null;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, updatedOriginalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+  t.deepEqual(pgRecord.tasks, tasks);
+  t.is(pgRecord.status, 'completed');
+
+  const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
+  esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
+});
+
+test.serial('writeExecutionRecordFromMessage() on re-write saves execution with expected values nullified', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const originalPayload = { original: 'payload' };
+  const finalPayload = { final: 'payload' };
+  const tasks = { tasks: 'taskabc' };
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.meta.workflow_tasks = tasks;
+  cumulusMessage.payload = originalPayload;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = finalPayload;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+  let pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+  t.deepEqual(pgRecord.tasks, tasks);
+
+  let esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(esRecord.originalPayload, originalPayload);
+  t.deepEqual(esRecord.finalPayload, finalPayload);
+  t.deepEqual(esRecord.tasks, tasks);
+
+  cumulusMessage.meta.status = 'failed';
+  cumulusMessage.payload = null;
+  cumulusMessage.meta.workflow_tasks = null;
+  await writeExecutionRecordFromMessage({ cumulusMessage, knex });
+
+  pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.is(pgRecord.status, 'failed');
+  t.is(pgRecord.final_payload, null);
+  t.is(pgRecord.tasks, null);
+
+  const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
+  esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
+});
+
+test.serial('writeExecutionRecordFromApi() allows a running execution to replace a completed execution', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const originalPayload = { original: 'payload' };
+  const updatedOriginalPayload = { updatedOriginal: 'updatedPayload' };
+  const finalPayload = { final: 'payload' };
+  const tasks = { tasks: 'taskabc' };
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.meta.workflow_tasks = tasks;
+  cumulusMessage.payload = originalPayload;
+  let apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  await writeExecutionRecordFromApi({ record: apiRecord, knex });
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = finalPayload;
+  apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  await writeExecutionRecordFromApi({ record: apiRecord, knex });
+  let pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+  t.deepEqual(pgRecord.tasks, tasks);
+
+  let esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(esRecord.originalPayload, originalPayload);
+  t.deepEqual(esRecord.finalPayload, finalPayload);
+  t.deepEqual(esRecord.tasks, tasks);
+
+  // writeConstraints do not apply, status is updated in data stores,
+  // null fields are removed
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.payload = updatedOriginalPayload;
+  cumulusMessage.meta.workflow_tasks = null;
+
+  apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  await writeExecutionRecordFromApi({ record: apiRecord, knex });
+  pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, updatedOriginalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+  t.deepEqual(pgRecord.tasks, null);
+  t.is(pgRecord.status, cumulusMessage.meta.status);
+
+  const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
+  esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
+});
+
+test.serial('writeExecutionRecordFromApi() on re-write saves execution with expected values nullified', async (t) => {
+  const {
+    cumulusMessage,
+    knex,
+    executionArn,
+    executionPgModel,
+  } = t.context;
+
+  const originalPayload = { original: 'payload' };
+  const finalPayload = { final: 'payload' };
+  const tasks = { tasks: 'taskabc' };
+
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.meta.workflow_tasks = tasks;
+  cumulusMessage.payload = originalPayload;
+  let apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  await writeExecutionRecordFromApi({ record: apiRecord, knex });
+
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload = finalPayload;
+  apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  await writeExecutionRecordFromApi({ record: apiRecord, knex });
+  let pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.deepEqual(pgRecord.final_payload, finalPayload);
+  t.deepEqual(pgRecord.tasks, tasks);
+
+  let esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(esRecord.originalPayload, originalPayload);
+  t.deepEqual(esRecord.finalPayload, finalPayload);
+  t.deepEqual(esRecord.tasks, tasks);
+
+  cumulusMessage.meta.status = 'failed';
+  cumulusMessage.payload = null;
+  cumulusMessage.meta.workflow_tasks = null;
+  apiRecord = generateExecutionApiRecordFromMessage(cumulusMessage);
+  await writeExecutionRecordFromApi({ record: apiRecord, knex });
+
+  pgRecord = await executionPgModel.get(knex, { arn: executionArn });
+  t.deepEqual(pgRecord.original_payload, originalPayload);
+  t.is(pgRecord.status, 'failed');
+  t.is(pgRecord.final_payload, null);
+  t.is(pgRecord.tasks, null);
+
+  const translatedExecution = await translatePostgresExecutionToApiExecution(pgRecord, knex);
+  esRecord = await t.context.esExecutionsClient.get(executionArn);
+  t.deepEqual(omit(esRecord, ['_id']), translatedExecution);
 });
 
 test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS message', async (t) => {
