@@ -6,7 +6,7 @@ variable "buckets" {
 
 variable "cloudwatch_log_retention_periods"{
   type = map(string)
-  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of module_<cloudwatch_log_group_name>_log_retention"
+  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
   default = {}
 }
 
@@ -62,6 +62,12 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type    = list(object({ id = string, url = string }))
   default = []
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 30
+  description = "default value that user chooses for their log retention periods"
 }
 
 variable "default_s3_multipart_chunksize_mb" {
