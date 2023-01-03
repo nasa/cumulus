@@ -99,6 +99,15 @@ export class EarthdataLogin {
     return token;
   }
 
+  async handleError(error: Error): Promise<void> {
+    const statusCode = get(error, 'response.statusCode', error.code);
+    const statusMessage = get(error, 'response.statusMessage', error.message);
+    const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
+    const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
+
+    throw new Error(errorMessage);
+  }
+
   /**
    * The method for getting the token from the Earthdata Login endpoint. Sends a GET request
    * with the users' base64 encoded username and password as a header for authorization. If the
@@ -121,12 +130,7 @@ export class EarthdataLogin {
           },
         }).json();
     } catch (error) {
-      const statusCode = get(error, 'response.statusCode', error.code);
-      const statusMessage = get(error, 'response.statusMessage', error.message);
-      const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
-      const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
-
-      throw new Error(errorMessage);
+      await this.handleError(error);
     }
     const currDate = new Date();
 
@@ -160,12 +164,7 @@ export class EarthdataLogin {
           },
         }).json();
     } catch (error) {
-      const statusCode = get(error, 'response.statusCode', error.code);
-      const statusMessage = get(error, 'response.statusMessage', error.message);
-      const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
-      const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
-
-      throw new Error(errorMessage);
+      await this.handleError(error);
     }
     return response[0].access_token;
   }
@@ -191,12 +190,7 @@ export class EarthdataLogin {
         }).json();
       /* eslint-enable @typescript-eslint/no-unused-vars */
     } catch (error) {
-      const statusCode = get(error, 'response.statusCode', error.code);
-      const statusMessage = get(error, 'response.statusMessage', error.message);
-      const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
-      const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
-
-      throw new Error(errorMessage);
+      await this.handleError(error);
     }
   }
 }
