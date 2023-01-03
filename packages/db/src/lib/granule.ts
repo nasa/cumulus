@@ -40,18 +40,27 @@ export const getGranuleCollectionId = async (
  *   Granules/executions PG model class instance
  * @returns {Promise<PostgresGranuleRecord[]>}
  */
-export const upsertGranuleWithExecutionJoinRecord = async (
-  knexTransaction: Knex.Transaction,
-  granule: PostgresGranule,
-  executionCumulusId?: number,
+export const upsertGranuleWithExecutionJoinRecord = async ({
+  knexTransaction,
+  granule,
+  executionCumulusId,
   granulePgModel = new GranulePgModel(),
-  granulesExecutionsPgModel = new GranulesExecutionsPgModel()
-): Promise<PostgresGranuleRecord[]> => {
-  const [pgGranule] = await granulePgModel.upsert(
-    knexTransaction,
-    granule,
-    executionCumulusId
-  );
+  granulesExecutionsPgModel = new GranulesExecutionsPgModel(),
+  writeConstraints = true,
+}: {
+  knexTransaction: Knex.Transaction;
+  granule: PostgresGranule;
+  executionCumulusId?: number;
+  granulePgModel?: GranulePgModel;
+  granulesExecutionsPgModel?: GranulesExecutionsPgModel;
+  writeConstraints?: boolean;
+}): Promise<PostgresGranuleRecord[]> => {
+  const [pgGranule] = await granulePgModel.upsert({
+    knexOrTrx: knexTransaction,
+    granule: granule,
+    executionCumulusId,
+    writeConstraints,
+  });
   // granuleCumulusId could be undefined if the upsert affected no rows due to its
   // conditional logic. In that case, we assume that the execution history for the
   // granule was already written and return early. Execution history cannot be written
@@ -60,13 +69,10 @@ export const upsertGranuleWithExecutionJoinRecord = async (
     return [];
   }
   if (executionCumulusId) {
-    await granulesExecutionsPgModel.upsert(
-      knexTransaction,
-      {
-        granule_cumulus_id: pgGranule.cumulus_id,
-        execution_cumulus_id: executionCumulusId,
-      }
-    );
+    await granulesExecutionsPgModel.upsert(knexTransaction, {
+      granule_cumulus_id: pgGranule.cumulus_id,
+      execution_cumulus_id: executionCumulusId,
+    });
   }
   return [pgGranule];
 };
@@ -175,7 +181,7 @@ export const getApiGranuleExecutionCumulusIds = async (
  * @param {Object} searchParams
  * @param {string | Array<string>} [searchParams.collectionIds] - Collection ID
  * @param {string | Array<string>} [searchParams.granuleIds] - array of granule IDs
- * @param {string} [searchParams.providerName] - Provider name
+ * @param {string} [searchParams.providerNames] - Provider names
  * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
  * @param {string} [searchParams.status] - Granule status to search by
  * @param {string | Array<string>} [sortByFields] - Field(s) to sort by
@@ -249,4 +255,23 @@ export const getGranulesByApiPropertiesQuery = (
     .groupBy(`${granulesTable}.cumulus_id`)
     .groupBy(`${collectionsTable}.cumulus_id`)
     .groupBy(`${providersTable}.cumulus_id`);
+};
+
+/**
+ * Get granules from table where granule_id matches provided granuleId
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+ * @param {string} granuleId - Granule ID
+ * @returns {Promise<Array<PostgresGranuleRecord>} The returned list of records
+ */
+export const getGranulesByGranuleId = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleId: string
+): Promise<Array<PostgresGranuleRecord>> => {
+  const {
+    granules: granulesTable,
+  } = TableNames;
+  const records: PostgresGranuleRecord[] = await knexOrTransaction(granulesTable)
+    .where({ granule_id: granuleId });
+  return records;
 };

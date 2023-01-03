@@ -12,6 +12,11 @@
     "cloudfrontEndpoint": {
       "description": "cloudfront endpoint URL/host. Required if urlType is cloudfront",
       "type": "string"
+    },
+    "failTaskWhenFileBackupFail": {
+      "description": "Indicates if the task will fail when file backup request fails",
+      "type": "boolean",
+      "default": false
     }
   }
 }
