@@ -222,7 +222,8 @@ function getTotalHits(bodyHits) {
  * @param {string} [payload.index] - ES index to query
  * @param {string} [payload.query] - ES query
  * @param {Object} [payload.source] - List of IDs to operate on
- * @param {Object} [payload.testBodyHits] - Optional body.hits for testing
+ * @param {Object} [payload.testBodyHits] - Optional body.hits for testing.
+ *  Some ES such as Cloud Metrics returns `hits.total.value` rather than `hits.total`
  * @returns {Promise<Array<Object>>}
  */
 async function granuleEsQuery({
