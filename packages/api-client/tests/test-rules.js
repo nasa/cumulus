@@ -112,6 +112,7 @@ test('deleteRule calls the callback with the expected object', async (t) => {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
       path: `/rules/${t.context.testName}`,
+      queryStringParameters: {},
     },
   };
 
