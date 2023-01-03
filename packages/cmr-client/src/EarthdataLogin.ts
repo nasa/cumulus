@@ -104,8 +104,9 @@ export class EarthdataLogin {
    * tokens for error-handling. If API call made to the EarthdataLogin endpoint results in an error.
    * The statuscode, statusmessage, error description, and error message are thrown and outputted.
    *
+   * @throws {Error} - EarthdataLogin error
    */
-  async handleHttpError(error: Error): Promise<void> {
+  handleHttpError(error: Error) {
     const statusCode = get(error, 'response.statusCode', error.code);
     const statusMessage = get(error, 'response.statusMessage', error.message);
     const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
@@ -136,7 +137,7 @@ export class EarthdataLogin {
           },
         }).json();
     } catch (error) {
-      await this.handleHttpError(error);
+      this.handleHttpError(error);
     }
     const currDate = new Date();
 
@@ -170,7 +171,7 @@ export class EarthdataLogin {
           },
         }).json();
     } catch (error) {
-      await this.handleHttpError(error);
+      this.handleHttpError(error);
     }
     return response[0].access_token;
   }
@@ -195,7 +196,7 @@ export class EarthdataLogin {
         }).json();
       /* eslint-enable @typescript-eslint/no-unused-vars */
     } catch (error) {
-      await this.handleHttpError(error);
+      this.handleHttpError(error);
     }
   }
 }
