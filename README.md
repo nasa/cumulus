@@ -4,7 +4,8 @@
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
 ## About Cumulus
-Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations. 
+
+Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations.
 To learn more about Cumulus and NASA's Earth Observing System Data and Information System (EOSDIS) cloud initiatives go to [More Information](#more-information).
 
 ---
@@ -14,23 +15,24 @@ To learn more about Cumulus and NASA's Earth Observing System Data and Informati
 Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus deployment go to our [Getting Started](https://nasa.github.io/cumulus/docs/cumulus-docs-readme) section.
 
 ## Contents
+
 - [Documentation](#📖-documentation)
 - [Development](#🔨-development)
-    - [Installation](#installation)
-        - [Prerequisites](#prerequisites)
-        - [Install Lerna](#install-lerna)
-        - [Install Local Dependencies](#install-local-dependencies)
-    - [Running the Cumulus APIs Locally](#running-the-cumulus-apis-locally)
-    - [Tests](#📝-tests)
-        - [Unit Tests](#unit-tests)
+  - [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Install Lerna](#install-lerna)
+    - [Install Local Dependencies](#install-local-dependencies)
+  - [Running the Cumulus APIs Locally](#running-the-cumulus-apis-locally)
+  - [Tests](#📝-tests)
+    - [Unit Tests](#unit-tests)
             -[LocalStack](#localstack)
-        - [Integration Tests](#integration-tests)
-        - [Running Tests via VS Code Debugger](#running-tests-via-vs-code-debugger)
-    - [Code Coverage And Quality](#🔦-code-coverage-and-quality)
-    - [Adding New Packages](#📦-adding-new-packages)
-    - [Cleaning Up All The Repos](#cleaning-up-all-the-repos)
-    - [Contribution](#contribution)
-    - [Release](#🛒-release)
+    - [Integration Tests](#integration-tests)
+    - [Running Tests via VS Code Debugger](#running-tests-via-vs-code-debugger)
+  - [Code Coverage And Quality](#🔦-code-coverage-and-quality)
+  - [Adding New Packages](#📦-adding-new-packages)
+  - [Cleaning Up All The Repos](#cleaning-up-all-the-repos)
+  - [Contribution](#contribution)
+  - [Release](#🛒-release)
 - [More Information](#more-information)
 
 ---
@@ -86,22 +88,30 @@ nvm use
 
 We use Lerna to manage multiple Cumulus packages in the same repo. You need to install Lerna as a global module first:
 
-    $ npm install -g lerna
+```sh
+npm install -g lerna
+```
 
 ### Install Local Dependencies
 
 We use npm for local package management. Run the following to get your dependencies set up.
 
-    $ npm install
-    $ npm run bootstrap
+```sh
+npm install
+npm run bootstrap
+```
 
 Build all packages:
 
-    $ npm run build
+```sh
+npm run build
+```
 
 Build and watch packages:
 
-    $ npm run watch
+```sh
+npm run watch
+```
 
 To add new packages go to [Adding New Packages](#📦-adding-new-packages) for guidance.
 
@@ -109,11 +119,15 @@ To add new packages go to [Adding New Packages](#📦-adding-new-packages) for g
 
 Start the API:
 
-    $ npm run serve
+```sh
+npm run serve
+```
 
 Or start the distribution API:
 
-    $ npm run serve-dist
+```sh
+npm run serve-dist
+```
 
 See the [API package documentation](packages/api/README.md#running-the-api-locally) for more options.
 
@@ -133,25 +147,30 @@ Localstack is included in the docker-compose file. You only need to run the dock
 
 Turn on the docker containers first:
 
-    $ npm run start-unit-test-stack
+```sh
+npm run start-unit-test-stack
+```
 
 Stop localstack/unit test services:
 
-    $ npm run stop-unit-test-stack
+```sh
+npm run stop-unit-test-stack
+```
 
 #### Run database migrations
 
-```
-$ npm run db:local:migrate
+```sh
+npm run db:local:migrate
 ```
 
 #### Run tests
 
 Run the test commands next
-```
-    $ export LOCAL_ES_HOST=127.0.0.1
-    $ export LOCALSTACK_HOST=127.0.0.1
-    $ npm test
+
+```sh
+export LOCAL_ES_HOST=127.0.0.1
+export LOCALSTACK_HOST=127.0.0.1
+npm test
 ```
 
 ### Integration Tests
@@ -174,17 +193,21 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ## Running command in all package folders
 
-    $ lerna exec -- rm -rf ./package-lock.json
+```sh
+lerna exec -- rm -rf ./package-lock.json
+```
 
 ## Cleaning Up all the repos
 
-    $ npm run clean
+```sh
+npm run clean
+```
 
 ---
 
 ## Contribution
 
-Please refer to: https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md for more information.
+Please refer to: <https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md> for more information.
 
 ## 🛒 Release
 
@@ -194,4 +217,4 @@ To release a new version of cumulus [read this](docs/development/release.md).
 
 ## More Information
 
-For more information about this project or more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at https://earthdata.nasa.gov.
+For more information about this project or more about NASA's Earth Observing System Data and Information System (EOSDIS) and its cloud work, please contact [Katie Baynes](mailto:katie.baynes@nasa.gov) or visit us at <https://earthdata.nasa.gov>.
