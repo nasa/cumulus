@@ -21,7 +21,7 @@ const {
 
 const { setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
 const models = require('../../../models');
-const { put } = require('../../../endpoints/granules');
+const { patch } = require('../../../endpoints/granules');
 const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
@@ -84,7 +84,7 @@ test.after.always(async (t) => {
   });
 });
 
-test('put request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
+test('PATCH request with reingest action queues granule and calls the reingestGranule function with expected parameters', async (t) => {
   const {
     granuleId,
   } = t.context;
@@ -95,7 +95,7 @@ test('put request with reingest action queues granule and calls the reingestGran
     action: 'reingest',
   };
 
-  await put({
+  await patch({
     body,
     params: {
       granuleName: granuleId,
