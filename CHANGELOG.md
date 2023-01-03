@@ -75,7 +75,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     across all API granule writes.
   - Updated granule write code to validate written createdAt is synced between
     datastores in cases where granule.createdAt is not provided for a new granule.
-
+- **No Ticket**
+  - Updated version of LocalStack used in testing.
 
 ## [v13.4.0] 10/31/2022
 
