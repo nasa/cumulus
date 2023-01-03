@@ -99,7 +99,13 @@ export class EarthdataLogin {
     return token;
   }
 
-  async handleError(error: Error): Promise<void> {
+  /**
+   * This helper method is called in the functions that retrieve, create, and revoke EarthdataLogin 
+   * tokens for error-handling. If API call made to the EarthdataLogin endpoint results in an error.
+   * The statuscode, statusmessage, error description, and error message are thrown and outputted.
+   * 
+   */
+  async handleHttpError(error: Error): Promise<void> {
     const statusCode = get(error, 'response.statusCode', error.code);
     const statusMessage = get(error, 'response.statusMessage', error.message);
     const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
@@ -111,8 +117,8 @@ export class EarthdataLogin {
   /**
    * The method for getting the token from the Earthdata Login endpoint. Sends a GET request
    * with the users' base64 encoded username and password as a header for authorization. If the
-   * users' credentials are accepted a token is retrieved, if one exists, and returned on their
-   * behalf, if not, an error is thrown. If the user does not have a token in Earthdata Login
+   * users' credentials are accepted the first unexpired token is retrieved, if one exists, and returned 
+   * on their behalf, if not, an error is thrown. If the user does not have a token in Earthdata Login
    * then undefined is returned to indicate to token needs to be created.
    *
    * @returns {Promise.<string>} the token
@@ -130,7 +136,7 @@ export class EarthdataLogin {
           },
         }).json();
     } catch (error) {
-      await this.handleError(error);
+      await this.handleHttpError(error);
     }
     const currDate = new Date();
 
@@ -164,7 +170,7 @@ export class EarthdataLogin {
           },
         }).json();
     } catch (error) {
-      await this.handleError(error);
+      await this.handleHttpError(error);
     }
     return response[0].access_token;
   }
@@ -173,7 +179,6 @@ export class EarthdataLogin {
    * This method is used for the cmrTokenSpec integration test in order to revoke the
    * token that is created for testing.
    *
-   * @returns {Promise.<string>} the token
    */
   async revokeEDLToken(
     token: string
@@ -190,7 +195,7 @@ export class EarthdataLogin {
         }).json();
       /* eslint-enable @typescript-eslint/no-unused-vars */
     } catch (error) {
-      await this.handleError(error);
+      await this.handleHttpError(error);
     }
   }
 }
