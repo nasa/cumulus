@@ -192,7 +192,7 @@ async function del(req, res) {
   } = req.testContext || {};
 
   const name = (req.params.name || '').replace(/%20/g, ' ');
-  const onlyResources = req.query.onlyResources === 'true';
+  const onlyResources = req.query && req.query.onlyResources === 'true';
   const esRulesClient = new Search(
     {},
     'rule',
