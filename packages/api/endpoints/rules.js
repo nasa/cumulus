@@ -218,7 +218,7 @@ async function del(req, res) {
   }
 
   if (onlyResources) {
-    await deleteRuleResources(knex, apiRule)
+    await deleteRuleResources(knex, apiRule);
     return res.send({ message: 'Record resources (e.g. CloudWatch Events, Kinesis Event Sources) deleted' });
   }
 
