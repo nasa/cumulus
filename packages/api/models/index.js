@@ -5,7 +5,6 @@ const AsyncOperation = require('./async-operation');
 const Manager = require('./base');
 const ReconciliationReport = require('./reconciliation-reports');
 const Rule = require('./rules');
-const Execution = require('./executions');
 
 module.exports = {
   AccessToken,
@@ -13,5 +12,4 @@ module.exports = {
   ReconciliationReport,
   Rule,
   Manager,
-  Execution,
 };

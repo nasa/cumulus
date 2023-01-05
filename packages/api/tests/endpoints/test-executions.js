@@ -40,7 +40,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, AsyncOperation, Execution } = require('../../models');
+const { AccessToken, AsyncOperation } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -71,7 +71,6 @@ const fakeExecutions = [];
 let jwtAuthToken;
 let accessTokenModel;
 let asyncOperationModel;
-let executionModel;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('asyncOperation');
 process.env.ExecutionsTable = randomId('executions');
@@ -99,11 +98,6 @@ test.before(async (t) => {
     stackName: process.env.stackName,
   });
   await asyncOperationModel.createTable();
-
-  // create fake execution table
-  executionModel = new Execution();
-  await executionModel.createTable();
-  t.context.executionModel = executionModel;
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -173,12 +167,11 @@ test.before(async (t) => {
       t.context.knex,
       executionPgRecord
     );
-    const dynamoRecord = await executionModel.create(execution);
-    await indexer.indexExecution(esClient, dynamoRecord, process.env.ES_INDEX);
+    await indexer.indexExecution(esClient, execution, process.env.ES_INDEX);
     return pgExecution;
   }));
 
-  // Create AsyncOperation in Dynamo and Postgres
+  // Create AsyncOperation in Postgres
   const testAsyncOperation = fakeAsyncOperationFactory({
     id: uuidv4(),
     output: JSON.stringify({ test: randomId('output') }),
@@ -307,7 +300,6 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   await asyncOperationModel.deleteTable();
-  await executionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
