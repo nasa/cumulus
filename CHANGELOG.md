@@ -37,6 +37,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
     logic for PUT/PATCH endpoint.
 
+### Fixed
+
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+
 ### Changed
 
 - **Snyk Security**-
