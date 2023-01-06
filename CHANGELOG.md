@@ -40,6 +40,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
     logic for PUT/PATCH endpoint.
 
+### Fixed
+
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+
 ### Changed
 
 - **Snyk Security**-
@@ -111,6 +116,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3097**
+  - Changed `@cumulus/cmr-client` package's token from Echo-Token to Earthdata Login (EDL) token in updateToken method
+  - Updated CMR header and token tests to reflect the Earthdata Login changes
 - **CUMULUS-2915**
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
