@@ -29,7 +29,7 @@
     "@cumulus/logger": "13.4.0",
     "@cumulus/message": "13.4.0",
     "@cumulus/types": "13.4.0",
-    "knex": "0.95.15",
+    "knex": "2.4.0",
     "p-map": "^4.0.0",
     "pg": "^8.3.0"
   }
