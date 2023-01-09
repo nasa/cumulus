@@ -52,6 +52,8 @@ const {
   CumulusMessageError,
 } = require('@cumulus/errors');
 
+const { sortFilesByBuckets } = require('../../helpers/sort');
+
 const {
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
@@ -167,17 +169,6 @@ const updateGranule = async (t, updateGranulePayload, granuleWriteVia = 'api') =
     esGranule,
   };
 };
-
-/**
- * Helper function for sorting a list of file objects by bucket
- *
- * @param {Object} f1 -- File object
- * @param {Object} f2 -- File object to compare to the first
- * @returns {Array} -- Sorted list of file objects
- **/
-const sortFilesByBuckets = (f1, f2) => (
-  (f1.bucket > f2.bucket) ? 1 : ((f2.bucket > f1.bucket) ? -1 : 0)
-);
 
 const createGranuleExecution = async (t, status, stateMachineName) => {
   const executionName = cryptoRandomString({ length: 5 });

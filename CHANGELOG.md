@@ -119,7 +119,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Granules being set to non-complete state will update all values passed in,
       instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
       'status', 'execution']`
-      
+
 
 ### Added
 
@@ -136,8 +136,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `null` is explicitly set with intention to delete the value.
   - Removed dataType/version from api granule schema
   - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
-    logic for PUT/PATCH endpoint
+    logic for PUT/PATCH endpoint.
+
+### Fixed
+
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+
 ### Changed
+
+- **Snyk Security**-
+  - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
+- **CUMULUS-3071**
+  - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
+    endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
+    behavior (complete overwrite) in a future release.   **The existing PUT
+    implementation is deprecated** and users should move all existing usage of
+    `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
+  - Updated `@cumulus/api-client` packages to use `PATCH` protocol for existing
+    granule `PUT` calls, this change should not require user updates for
+    `api-client` users.
+    - `@cumulus/api-client/granules.updateGranule`
+    - `@cumulus/api-client/granules.moveGranule`
+    - `@cumulus/api-client/granules.updateGranule`
+    - `@cumulus/api-client/granules.reingestGranule`
+    - `@cumulus/api-client/granules.removeFromCMR`
+    - `@cumulus/api-client/granules.applyWorkflow`
 
 -**CUMULUS-3100**
   - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
@@ -157,14 +181,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     across all API granule writes.
   - Updated granule write code to validate written createdAt is synced between
     datastores in cases where granule.createdAt is not provided for a new granule.
-      
+
 
 ## [v13.4.0] 10/31/2022
 
 - **CUMULUS-3075**
   - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
-    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
-    undefined, now changed to an empty array. 
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was
+    undefined, now changed to an empty array.
   - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
   - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
 
@@ -190,17 +214,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3097**
+  - Changed `@cumulus/cmr-client` package's token from Echo-Token to Earthdata Login (EDL) token in updateToken method
+  - Updated CMR header and token tests to reflect the Earthdata Login changes
 - **CUMULUS-2915**
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
+- **CUMULUS-3043**
+  - Organize & link Getting Started public docs for better user guidance
+  - Update Getting Started sections with current content
 - **CUMULUS-3045**
   - Update GitHub FAQs:
     - Add new and refreshed content for previous sections
     - Add new dedicated Workflows section
 - **CUMULUS-3075**
   - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
-    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
-    undefined, now changed to an empty array. 
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was
+    undefined, now changed to an empty array.
   - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
   - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
 - **CUMULUS-3077**
