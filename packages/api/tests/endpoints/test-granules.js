@@ -331,8 +331,7 @@ test.beforeEach(async (t) => {
         granule,
         executionCumulusId: t.context.testExecutionCumulusId,
         granulePgModel: t.context.granulePgModel,
-      })
-    )
+      }))
   );
   t.context.insertedPgGranules = t.context.fakePGGranuleRecords.flat();
   const insertedApiGranuleTranslations = await Promise.all(
@@ -340,14 +339,12 @@ test.beforeEach(async (t) => {
       translatePostgresGranuleToApiGranule({
         knexOrTransaction: t.context.knex,
         granulePgRecord: granule,
-      })
-    )
+      }))
   );
   // index PG Granules into ES
   await Promise.all(
     insertedApiGranuleTranslations.map((granule) =>
-      indexer.indexGranule(t.context.esClient, granule, t.context.esIndex)
-    )
+      indexer.indexGranule(t.context.esClient, granule, t.context.esIndex))
   );
 
   const topicName = randomString();
@@ -2205,11 +2202,17 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
 test.serial(
   'PUT does not update non-current-timestamp undefined fields for existing granules in all datastores',
   async (t) => {
-    const { esClient, knex, executionPgRecord, esGranulesClient } = t.context;
+    const {
+      esClient,
+      knex,
+      executionPgRecord,
+      esGranulesClient,
+      collectionPgModel,
+    } = t.context;
 
     const originalUpdateTimestamp = Date.now();
 
-    const { newPgGranule, newDynamoGranule, esRecord } = await createGranuleAndFiles({
+    const { newPgGranule, esRecord } = await createGranuleAndFiles({
       dbClient: knex,
       esClient,
       granuleParams: {
@@ -2241,22 +2244,23 @@ test.serial(
       execution_cumulus_id: executionPgRecord.cumulus_id,
     });
 
+    const collectionId = await collectionPgModel.get(
+      knex,
+      { cumulus_id: newPgGranule.collection_cumulus_id }
+    );
+
     const updatedGranule = {
-      granuleId: newDynamoGranule.granuleId,
-      collectionId: newDynamoGranule.collectionId,
-      status: newDynamoGranule.status,
+      granuleId: newPgGranule.granule_id,
+      collectionId: collectionId,
+      status: newPgGranule.status,
     };
 
     await request(app)
-      .put(`/granules/${newDynamoGranule.granuleId}`)
+      .put(`/granules/${newPgGranule.granule_id}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(updatedGranule)
       .expect(200);
-
-    const actualGranule = await granuleModel.get({
-      granuleId: newDynamoGranule.granuleId,
-    });
 
     const actualPgGranule = await granulePgModel.get(knex, {
       cumulus_id: newPgGranule.cumulus_id,
@@ -2267,30 +2271,24 @@ test.serial(
       knexOrTransaction: knex,
     });
 
-    const updatedEsRecord = await esGranulesClient.get(newDynamoGranule.granuleId);
+    const updatedEsRecord = await esGranulesClient.get(newPgGranule.granule_id);
 
-    [updatedEsRecord, esRecord, newDynamoGranule, translatedPostgresGranule, actualGranule].forEach(
+    [updatedEsRecord, esRecord, translatedPostgresGranule].forEach(
       (record) => {
         record.files.sort((f1, f2) => sortFilesByKey(f1, f2));
       }
     );
 
-    t.deepEqual(actualGranule, {
-      ...newDynamoGranule,
-      updatedAt: actualGranule.updatedAt,
-      timestamp: actualGranule.timestamp,
-    });
-
-    t.deepEqual(translatedPostgresGranule, {
-      ...newDynamoGranule,
-      updatedAt: actualGranule.updatedAt,
-      timestamp: actualGranule.timestamp,
+    t.like(newPgGranule, {
+      ...translatedPostgresGranule,
+      updatedAt: actualPgGranule.updated_at,
+      timestamp: actualPgGranule.timestamp,
     });
 
     t.like(updatedEsRecord, {
       ...esRecord,
-      updatedAt: actualGranule.updatedAt,
-      timestamp: actualGranule.timestamp,
+      updatedAt: actualPgGranule.updated_at,
+      timestamp: actualPgGranule.timestamp,
     });
   }
 );
@@ -2364,10 +2362,6 @@ test.serial('PUT nullifies expected fields for existing granules in all datastor
     .send(updatedGranule)
     .expect(200);
 
-  const actualGranule = await granuleModel.get({
-    granuleId: newDynamoGranule.granuleId,
-  });
-
   const actualPgGranule = await granulePgModel.get(knex, {
     cumulus_id: newPgGranule.cumulus_id,
   });
@@ -2384,15 +2378,15 @@ test.serial('PUT nullifies expected fields for existing granules in all datastor
     collectionId: newDynamoGranule.collectionId,
     status: newDynamoGranule.status,
     execution: newDynamoGranule.execution,
-    createdAt: actualGranule.createdAt,
-    updatedAt: actualGranule.updatedAt,
-    timestamp: actualGranule.timestamp,
+    createdAt: actualPgGranule.created_at,
+    updatedAt: actualPgGranule.updated_at,
+    timestamp: actualPgGranule.timestamp,
     error: {},
     published: false,
   };
 
   //t.deepEqual(actualGranule, { ...expectedGranule, files: [] });
-  t.deepEqual(actualGranule, expectedGranule);
+  t.deepEqual(translatedPostgresGranule, expectedGranule);
   t.deepEqual(translatedPostgresGranule, { ...expectedGranule, files: [] });
   t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
 });
@@ -2415,13 +2409,6 @@ test.serial(
       },
     });
 
-    await request(app)
-      .patch(`/granules/${esRecord.granuleId}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send(updatedGranule)
-      .expect(200);
-
     // Verify returned objects have correct status
     t.is(newPgGranule.status, 'completed');
     t.is(esRecord.status, 'completed');
@@ -2430,14 +2417,14 @@ test.serial(
       foo: randomString(),
     };
     const updatedGranule = {
-      granuleId: granuleId,
+      granuleId: esRecord.granuleId,
       collectionId: esRecord.collectionId,
       status: 'completed',
       queryFields: newQueryFields,
     };
 
     await request(app)
-      .put(`/granules/${granuleId}`)
+      .patch(`/granules/${esRecord.granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(updatedGranule)
@@ -2446,7 +2433,7 @@ test.serial(
     const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
       cumulus_id: newPgGranule.cumulus_id,
     });
-    const actualEsGranule = await t.context.esGranulesClient.get(granuleId);
+    const actualEsGranule = await t.context.esGranulesClient.get(esRecord.granuleId);
 
     t.is(actualPgGranule.duration, unmodifiedDuration);
     t.is(actualEsGranule.duration, unmodifiedDuration);

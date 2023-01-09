@@ -8,7 +8,11 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
-const { getExecutionProcessingTimeInfo, moveGranuleFilesAndUpdateDatastore, granuleEsQuery } = require('../../lib/granules');
+const {
+  getExecutionProcessingTimeInfo,
+  moveGranuleFilesAndUpdateDatastore,
+  granuleEsQuery,
+} = require('../../lib/granules');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 
 const { fakeFileFactory } = require('../../lib/testUtils');
@@ -27,11 +31,14 @@ class FakeSearch {
   }
 }
 
-const { getGranulesForPayload, getGranuleIdsForPayload, translateGranule } = proxyquire('../../lib/granules', {
-  '@cumulus/es-client/search': {
-    Search: FakeSearch,
-  },
-});
+const { getGranulesForPayload, getGranuleIdsForPayload, translateGranule } = proxyquire(
+  '../../lib/granules',
+  {
+    '@cumulus/es-client/search': {
+      Search: FakeSearch,
+    },
+  }
+);
 
 test.afterEach.always(() => {
   sandbox.resetHistory();
@@ -52,8 +59,7 @@ test('files existing at location returns empty array if no files exist', async (
       name,
       bucket: sourceBucket,
       key: `origin/${name}`,
-    })
-  );
+    }));
 
   const destinationFilepath = 'destination';
 
@@ -82,7 +88,8 @@ test('files existing at location returns both files if both exist', async (t) =>
 
   await awsServices.s3().createBucket({ Bucket: destBucket });
 
-  const sourceFiles = filenames.map((fileName) => fakeFileFactory({ fileName, bucket: sourceBucket }));
+  const sourceFiles = filenames.map((fileName) =>
+    fakeFileFactory({ fileName, bucket: sourceBucket }));
 
   const destinations = [
     {
@@ -121,7 +128,8 @@ test('files existing at location returns only file that exists', async (t) => {
 
   await awsServices.s3().createBucket({ Bucket: destBucket });
 
-  const sourceFiles = filenames.map((fileName) => fakeFileFactory({ fileName, bucket: sourceBucket }));
+  const sourceFiles = filenames.map((fileName) =>
+    fakeFileFactory({ fileName, bucket: sourceBucket }));
 
   const destinations = [
     {
@@ -156,9 +164,13 @@ test('files existing at location returns only file that exists with multiple des
   const destBucket1 = randomString();
   const destBucket2 = randomString();
 
-  await Promise.all([awsServices.s3().createBucket({ Bucket: destBucket1 }), awsServices.s3().createBucket({ Bucket: destBucket2 })]);
+  await Promise.all([
+    awsServices.s3().createBucket({ Bucket: destBucket1 }),
+    awsServices.s3().createBucket({ Bucket: destBucket2 }),
+  ]);
 
-  const sourceFiles = filenames.map((fileName) => fakeFileFactory({ fileName, bucket: sourceBucket }));
+  const sourceFiles = filenames.map((fileName) =>
+    fakeFileFactory({ fileName, bucket: sourceBucket }));
 
   const destinations = [
     {
@@ -195,7 +207,10 @@ test('files existing at location returns only file that exists with multiple des
 
   t.deepEqual(filesExisting, sourceFiles);
 
-  await Promise.all([s3Utils.recursivelyDeleteS3Bucket(destBucket1), s3Utils.recursivelyDeleteS3Bucket(destBucket2)]);
+  await Promise.all([
+    s3Utils.recursivelyDeleteS3Bucket(destBucket1),
+    s3Utils.recursivelyDeleteS3Bucket(destBucket2),
+  ]);
 });
 
 test('getExecutionProcessingTimeInfo() returns empty object if startDate is not provided', (t) => {
@@ -522,59 +537,62 @@ test('translateGranule() will translate an old-style granule file and numeric pr
   t.is(translatedGranule.productVolume, oldProductVolume.toString());
 });
 
-test.serial('granuleEsQuery returns if the query has a bad timestamp and responseQueue.body.hits.total.value is 0', async (t) => {
-  const esAlias = randomId('esAlias');
-  const esIndex = randomId('esindex');
-  process.env.ES_INDEX = esAlias;
-  const esClient = await Search.es();
+test.serial(
+  'granuleEsQuery returns if the query has a bad timestamp and responseQueue.body.hits.total.value is 0',
+  async (t) => {
+    const esAlias = randomId('esAlias');
+    const esIndex = randomId('esindex');
+    process.env.ES_INDEX = esAlias;
+    const esClient = await Search.es();
 
-  await bootstrapElasticSearch({
-    host: 'fakeHost',
-    index: esIndex,
-    alias: esAlias,
-  });
-  const granuleId = randomId();
+    await bootstrapElasticSearch({
+      host: 'fakeHost',
+      index: esIndex,
+      alias: esAlias,
+    });
+    const granuleId = randomId();
 
-  const fakeGranule = fakeGranuleFactoryV2({ granuleId });
-  await indexer.indexGranule(esClient, fakeGranule, esIndex);
-  const esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
+    const fakeGranule = fakeGranuleFactoryV2({ granuleId });
+    await indexer.indexGranule(esClient, fakeGranule, esIndex);
+    const esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX);
 
-  const query = {
-    query: {
-      bool: {
-        must: [],
-        filter: [
-          {
-            range: {
-              '@timestamp': {
-                gte: '2022-11-07T23:59:00.220Z',
-                lte: '2022-11-08T19:51:36.220Z',
-                format: 'strict_date_optional_time',
+    const query = {
+      query: {
+        bool: {
+          must: [],
+          filter: [
+            {
+              range: {
+                '@timestamp': {
+                  gte: '2022-11-07T23:59:00.220Z',
+                  lte: '2022-11-08T19:51:36.220Z',
+                  format: 'strict_date_optional_time',
+                },
               },
             },
-          },
-        ],
-        should: [],
-        must_not: [],
+          ],
+          should: [],
+          must_not: [],
+        },
       },
-    },
-  };
-  t.like(await esGranulesClient.get(granuleId), fakeGranule);
-  const testBodyHits = {
-    total: {
-      value: 0,
-      relation: 'eq',
-    },
-    max_score: null,
-    hits: [],
-  };
+    };
+    t.like(await esGranulesClient.get(granuleId), fakeGranule);
+    const testBodyHits = {
+      total: {
+        value: 0,
+        relation: 'eq',
+      },
+      max_score: null,
+      hits: [],
+    };
 
-  t.truthy(
-    await granuleEsQuery({
-      index: esIndex,
-      query,
-      source: ['granuleId'],
-      testBodyHits,
-    })
-  );
-});
+    t.truthy(
+      await granuleEsQuery({
+        index: esIndex,
+        query,
+        source: ['granuleId'],
+        testBodyHits,
+      })
+    );
+  }
+);
