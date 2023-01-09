@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+
 ### Breaking Changes
 
 - **CUMULUS-3070/3074**
@@ -36,6 +39,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed dataType/version from api granule schema
   - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
     logic for PUT/PATCH endpoint.
+
+### Fixed
+
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
 
 ### Changed
 
