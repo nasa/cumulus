@@ -93,7 +93,7 @@
     "js-yaml": "^3.13.1",
     "json2csv": "^4.5.1",
     "jsonpath-plus": "^1.1.0",
-    "jsonwebtoken": "^8.4.0",
+    "jsonwebtoken": "^9.0.0",
     "knex": "0.95.15",
     "lodash": "^4.17.21",
     "moment": "2.29.4",

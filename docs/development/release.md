@@ -271,7 +271,16 @@ The CI release scripts will automatically create a GitHub release based on the r
 - A distribution API module
 - An ECS service module
 
-Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.
+Make sure to verify the appropriate .zip files are present on Github after the release process is complete.
+
+- **Important** Copy the release notes for the new version from the changelog to the description of the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
+
+- **Optional** The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_
+  the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
+  - Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
+  - Click the "Edit release" button (pencil icon)
+  - Check the "This is a pre-release" checkbox
+  - Click "Update release"
 
 ### 13. Merge base branch back to master
 
@@ -281,7 +290,12 @@ If this is the latest version, you can simply create a PR to merge the minor ver
 
 Do not merge `master` back into the release branch since we want the release branch to _just_ have the code from the release.  Instead, create a new branch off of the release branch and merge that to master. You can freely merge master into this branch and delete it when it is merged to master.
 
-If this is a backport, you will need to create a PR that ports the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example, fixes in backport version `1.14.5` may not be available in `1.15.0` because the fix was introduced in `1.15.3`.
+**Please Note** If this is a backport, you will need to create a PR that merges **ONLY** the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example:
+
+>**Please note** changes in 13.3.2 may not yet be released in future versions, as
+>this is a backport and patch release on the 13.3.x series of releases. Updates that
+>are included in the future will have a corresponding CHANGELOG entry in future
+>releases..
 
 ## Troubleshooting
 
