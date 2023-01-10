@@ -127,19 +127,7 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       ],
       forceRemoveFromCmr: true,
     },
-    async ({ _, pgGranuleRecord }) => {
-      const dynamoGranule = await granuleModel.get(
-        { granuleId: pgGranuleRecord.granule_id }
-      );
-
-      return {
-        dynamoGranule: { ...dynamoGranule, published: false },
-        pgGranule: {
-          ...pgGranuleRecord,
-          published: false,
-        },
-      };
-    }
+    () => true
   );
 
   t.deepEqual(

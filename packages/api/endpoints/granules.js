@@ -549,14 +549,15 @@ async function bulkOperations(req, res) {
       type: 'BULK_GRANULE',
       envVars: {
         ES_HOST: process.env.ES_HOST,
-        GranulesTable: process.env.GranulesTable,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-        system_bucket: process.env.system_bucket,
-        stackName: process.env.stackName,
+        GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
+        KNEX_DEBUG: payload.knexDebug || false,
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-        METRICS_ES_USER: process.env.METRICS_ES_USER,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket,
       },
     },
     esHost: process.env.ES_HOST,
@@ -578,10 +579,14 @@ async function bulkOperations(req, res) {
  */
 async function bulkDelete(req, res) {
   const payload = req.body;
-
   if (payload.forceRemoveFromCmr && !isBoolean(payload.forceRemoveFromCmr)) {
     return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
   }
+
+  payload.concurrency = payload.concurrency ? Number(payload.concurrency) : 10;
+  payload.maxDbConnections = payload.MaxDbConnections
+    ? Number(payload.MaxDbConnections)
+    : payload.concurrency;
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
@@ -604,17 +609,18 @@ async function bulkDelete(req, res) {
         cmr_password_secret_name: process.env.cmr_password_secret_name,
         cmr_provider: process.env.cmr_provider,
         cmr_username: process.env.cmr_username,
-        GranulesTable: process.env.GranulesTable,
+        ES_HOST: process.env.ES_HOST,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+        GranulesTable: process.env.GranulesTable,
+        KNEX_DEBUG: payload.knexDebug || false,
         launchpad_api: process.env.launchpad_api,
         launchpad_certificate: process.env.launchpad_certificate,
         launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-        METRICS_ES_USER: process.env.METRICS_ES_USER,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
         stackName: process.env.stackName,
         system_bucket: process.env.system_bucket,
-        ES_HOST: process.env.ES_HOST,
       },
     },
     stackName,
@@ -648,14 +654,15 @@ async function bulkReingest(req, res) {
       type: 'BULK_GRANULE_REINGEST',
       envVars: {
         ES_HOST: process.env.ES_HOST,
-        GranulesTable: process.env.GranulesTable,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-        system_bucket: process.env.system_bucket,
-        stackName: process.env.stackName,
+        GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
+        KNEX_DEBUG: payload.knexDebug || false,
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-        METRICS_ES_USER: process.env.METRICS_ES_USER,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket,
       },
     },
     esHost: process.env.ES_HOST,
