@@ -78,8 +78,11 @@ async function applyWorkflowToGranules({
  */
 async function bulkGranuleDelete(
   payload,
-  unpublishGranuleFunc = unpublishGranule
+  removeGranuleFromCmrFunction
 ) {
+  const concurrency = payload.concurrency || 10;
+  process.env.dbMaxPool = payload.maxDbConnections || concurrency;
+
   const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granuleIds = await getGranuleIdsForPayload(payload);
@@ -105,9 +108,10 @@ async function bulkGranuleDelete(
       }
 
       if (pgGranule.published && forceRemoveFromCmr) {
-        ({ pgGranule, dynamoGranule } = await unpublishGranuleFunc({
+        ({ pgGranule, dynamoGranule } = await unpublishGranule({
           knex,
           pgGranuleRecord: pgGranule,
+          removeGranuleFromCmrFunction,
         }));
       } else {
         dynamoGranule = await dynamoGranuleModel.getRecord({ granuleId });
@@ -122,7 +126,7 @@ async function bulkGranuleDelete(
       deletedGranules.push(granuleId);
     },
     {
-      concurrency: 10, // is this necessary?
+      concurrency,
       stopOnError: false,
     }
   );

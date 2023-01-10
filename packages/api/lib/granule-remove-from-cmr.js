@@ -51,12 +51,20 @@ const unpublishGranule = async ({
   pgCollection,
   granulePgModel = new GranulePgModel(),
   granuleDynamoModel = new models.Granule(),
+  removeGranuleFromCmrFunction = _removeGranuleFromCmr,
 }) => {
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
   const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
   let dynamoGranuleDeleted = false;
   try {
+    let collectionId;
+    if (pgCollection) {
+      collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
+    } else {
+      collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
+    }
+
     return await createRejectableTransaction(knex, async (trx) => {
       const [pgGranule] = await granulePgModel.update(
         trx,
@@ -79,15 +87,7 @@ const unpublishGranule = async ({
       );
       dynamoGranuleDeleted = true;
 
-      let collectionId;
-
-      if (pgCollection) {
-        collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
-      } else {
-        collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
-      }
-
-      await _removeGranuleFromCmr(pgGranuleRecord, collectionId);
+      await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId);
       return { dynamoGranule, pgGranule };
     });
   } catch (error) {
