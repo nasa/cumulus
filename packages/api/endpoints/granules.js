@@ -1098,6 +1098,7 @@ router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
 router.put('/:granuleName', patchByGranuleId); // Until PUT is implemented, use PATCH handler
+router.put('/:collectionId/:granuleName', patch); // Until PUT is implemented, use PATCH handler
 router.patch('/:granuleName', patchByGranuleId);
 router.patch('/:collectionId/:granuleName', patch);
 
