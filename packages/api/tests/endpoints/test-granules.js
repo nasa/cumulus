@@ -1830,9 +1830,7 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 });
 
 test.serial('PATCH with action move returns failure if one granule file exists', async (t) => {
-  const filesExistingStub = sinon
-    .stub(models.Granule.prototype, 'getFilesExistingAtLocation')
-    .returns([{ fileName: 'file1' }]);
+  const filesExistingStub = () => [{ fileName: 'file1' }];
 
   const granule = t.context.fakeGranules[0];
 
