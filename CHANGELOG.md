@@ -84,9 +84,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     across all API granule writes.
   - Updated granule write code to validate written createdAt is synced between
     datastores in cases where granule.createdAt is not provided for a new granule.
-
-
-## [v13.4.0] 10/31/2022
+- **CUMULUS-3144**
+  - Increased the memory of API lambda to 1280MB
 
 - **CUMULUS-3075**
   - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for

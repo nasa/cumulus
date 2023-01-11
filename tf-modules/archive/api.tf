@@ -168,7 +168,7 @@ resource "aws_lambda_function" "private_api" {
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
   }
-  memory_size = 960
+  memory_size = 1280
   tags        = var.tags
 
   dynamic "vpc_config" {
@@ -193,7 +193,7 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})
   }
-  memory_size = 960
+  memory_size = 1280
   tags        = var.tags
 
   reserved_concurrent_executions = var.api_reserved_concurrency
