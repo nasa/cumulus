@@ -3,7 +3,7 @@
   "version": "13.4.0",
   "description": "Ingest utilities",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && npm run prepare",

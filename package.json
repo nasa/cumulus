@@ -55,7 +55,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=18.0.0"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -76,6 +76,8 @@
     "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
     "@octokit/graphql": "2.1.1",
+    "@tsconfig/node18": "^1.0.1",
+    "@tsconfig/node18-strictest": "^1.0.0",
     "@types/aws-lambda": "^8.10.58",
     "@types/lodash": "^4.14.150",
     "@types/lodash.iserror": "^3.1.6",

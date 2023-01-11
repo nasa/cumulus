@@ -1,0 +1,6 @@
+{
+    "id": "s3_provider",
+    "protocol": "s3",
+    "host": "pgc-cum-test-data-shared",
+    "globalConnectionLimit": 10
+}
