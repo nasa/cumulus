@@ -2,5 +2,5 @@
     "high": true,
     "pass-enoaudit": true,
     "retry-count": 20,
-    "allowlist": ["knex", "json5"]
+    "allowlist": ["knex", "jsonwebtoken"]
 }
