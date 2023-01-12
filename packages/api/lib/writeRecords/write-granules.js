@@ -210,14 +210,14 @@ const _writePostgresGranuleViaTransaction = async ({
     Did not update ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
     due to granule overwrite constraints, retaining original granule for cumulus_id ${pgGranule.cumulus_id}`);
 
-    return { status: 'failed', pgGranule: pgGranule }
+    return { status: 'failed', pgGranule: pgGranule };
   } else {
     log.info(`
     Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
     to granule record with cumulus_id ${pgGranule.cumulus_id} in PostgreSQL
     `);
 
-    return { status: 'success', pgGranule: pgGranule, writeConstraints: writeConstraints }
+    return { status: 'success', pgGranule: pgGranule, writeConstraints: writeConstraints };
   }
   // return pgGranule;
 };
@@ -466,6 +466,7 @@ const _writeGranuleRecords = async (params) => {
     writeConstraints = true,
   } = params;
   let pgGranule;
+  let pgGranuleResult;
 
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
@@ -480,6 +481,7 @@ const _writeGranuleRecords = async (params) => {
         granulePgModel,
         writeConstraints,
       });
+      pgGranule = pgGranuleResult.pgGranule;
 
       // Future: refactor to cover the entire object?
       // Ensure PG default createdAt value is propagated to DynamoDB/ES
@@ -507,13 +509,13 @@ const _writeGranuleRecords = async (params) => {
     return pgGranuleResult;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
-    
+
     // If a postgres record was provided
     // attempt to ensure alignment between postgress/dynamo/es
     // what to do if it failed? previously, what was returned if no write happened?
     // TODO: figure out ^^, maybe from tests?
     // if (pgGranule) {
-      if (pgGranule.status === 'success') {
+    if (pgGranuleResult?.status === 'success') {
       // Align dynamo granule record with postgres record
       // Retrieve the granule from postgres
       let pgGranuleExists;
@@ -616,6 +618,7 @@ const _writeGranule = async ({
     postgresGranuleRecord,
     writeConstraints,
   });
+  const pgGranule = pgGranuleResult.pgGranule;
 
   // Files are only written to Postgres if the granule is in a "final" state
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
