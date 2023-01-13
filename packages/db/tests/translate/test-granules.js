@@ -60,17 +60,19 @@ test.before(async (t) => {
 
   // Create provider
   t.context.providerPgModel = new ProviderPgModel();
-  const provider = fakeProviderRecordFactory({ name: 'providerName' });
-  [t.context.providerCumulusId] = await t.context.providerPgModel.create(knex, provider);
+  const fakeProvider = fakeProviderRecordFactory({ name: 'providerName' });
+  const [provider] = await t.context.providerPgModel.create(knex, fakeProvider);
+  t.context.providerCumulusId = provider.cumulus_id;
 
   // Create PDR
   t.context.pdrPgModel = new PdrPgModel();
-  const pdr = fakePdrRecordFactory({
+  const fakePdr = fakePdrRecordFactory({
     name: 'pdrName',
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: t.context.providerCumulusId,
   });
-  [t.context.pdrCumulusId] = await t.context.pdrPgModel.create(knex, pdr);
+  const [pdr] = await t.context.pdrPgModel.create(knex, fakePdr);
+  t.context.pdrCumulusId = pdr.cumulus_id;
 
   // Create Granule
   t.context.granulePgModel = new GranulePgModel();
