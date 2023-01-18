@@ -3,7 +3,7 @@
   "version": "13.4.0",
   "description": "A Node.js client to NASA's Level Zero and Repositories Data Store (LZARDS) API.",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=16.17.0"
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",

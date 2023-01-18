@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 - **CUMULUS-3147**
-  - Updated Node Version to 18.0.0
+  - Updated Node Version to 16.17.0
 - **CUMULUS-3070/3074**
   - Updated granule PUT/POST endpoints to no longer respect message write
     constraints.  Functionally this means that:

@@ -1,7 +1,10 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Node 16",
+  "extends": "@tsconfig/node16/tsconfig.json",
   "compilerOptions": {
-    "target": "ES2019",
+    "lib" : ["es2021"],
+    "target": "es2021",
     "module": "commonjs",
     "esModuleInterop": true,
     "declaration": true,
@@ -9,6 +12,9 @@
     "sourceMap": true,
     "removeComments": false,
     "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
     "alwaysStrict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
