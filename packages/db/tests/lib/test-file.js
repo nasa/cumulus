@@ -37,7 +37,7 @@ test.before(async (t) => {
     t.context.knex,
     testProvider
   );
-  t.context.provider = pgProvider;
+  t.context.provider_cumulus_id = pgProvider.cumulus_id;
   t.context.providerName = testProvider.name;
 
   const testCollection = fakeCollectionRecordFactory();
@@ -267,7 +267,7 @@ test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
 
   const testGranule2 = fakeGranuleRecordFactory({
     collection_cumulus_id: collections[1].cumulus_id,
-    provider_cumulus_id: t.context.provider.cumulus_id,
+    provider_cumulus_id: t.context.provider_cumulus_id,
   });
   const [pgGranule2] = await t.context.granulePgModel.create(
     t.context.knex,

@@ -152,17 +152,18 @@ test.beforeEach(async (t) => {
     t.context.knex,
     t.context.testProvider
   );
-  t.context.providerCumulusId = providerResponse[0];
+  t.context.providerCumulusId = providerResponse[0].cumulus_id;
 
   const pdrPgModel = new PdrPgModel();
   const testPdr = fakePdrRecordFactory({
     collection_cumulus_id: t.context.collectionCumulusId,
     provider_cumulus_id: t.context.providerCumulusId,
   });
-  [t.context.pdrCumulusId] = await pdrPgModel.create(
+  const [pgPdr] = await pdrPgModel.create(
     t.context.knex,
     testPdr
   );
+  t.context.pdrCumulusId = pgPdr.cumulus_id;
   t.context.testPdr = testPdr;
   t.context.pdrPgModel = pdrPgModel;
 

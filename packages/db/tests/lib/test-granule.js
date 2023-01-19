@@ -699,13 +699,13 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
   } = t.context;
 
   const fakeProvider = fakeProviderRecordFactory();
-  const [provider] = await providerPgModel.create(knex, fakeProvider);
+  const [pgProvider] = await providerPgModel.create(knex, fakeProvider);
 
   const [granule] = await granulePgModel.create(
     knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
-      provider_cumulus_id: provider.cumulus_id,
+      provider_cumulus_id: pgProvider.cumulus_id,
     }),
     '*'
   );
