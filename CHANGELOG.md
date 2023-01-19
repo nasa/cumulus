@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+
+### Changed
+
+- **Snyk Security**-
+  - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
+- **CUMULUS-3043**
+  - Organize & link Getting Started public docs for better user guidance
+  - Update Getting Started sections with current content
+- **CUMULUS-3071**
+  - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
+    endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
+    behavior (complete overwrite) in a future release.   **The existing PUT
+    implementation is deprecated** and users should move all existing usage of
+    `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
+  - Updated `@cumulus/api-client` packages to use `PATCH` protocol for existing
+    granule `PUT` calls, this change should not require user updates for
+    `api-client` users.
+    - `@cumulus/api-client/granules.updateGranule`
+    - `@cumulus/api-client/granules.moveGranule`
+    - `@cumulus/api-client/granules.updateGranule`
+    - `@cumulus/api-client/granules.reingestGranule`
+    - `@cumulus/api-client/granules.removeFromCMR`
+    - `@cumulus/api-client/granules.applyWorkflow`
+- **CUMULUS-3097**
+  - Changed `@cumulus/cmr-client` package's token from Echo-Token to Earthdata Login (EDL) token in updateToken method
+  - Updated CMR header and token tests to reflect the Earthdata Login changes
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+- **CUMULUS-3144**
+  - Increased the memory of API lambda to 1280MB
+
 ## [v14.0.0] 2022-12-08
 
 ### Breaking Changes
@@ -39,7 +74,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `null` is explicitly set with intention to delete the value.
   - Removed dataType/version from api granule schema
   - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
-    logic for PUT/PATCH endpoint
+    logic for PUT/PATCH endpoint.
 - **CUMULUS-3098**
   - Added task configuration setting named `failTaskWhenFileBackupFail` to the
     `lzards-backup` task. This setting is `false` by default, but when set to
@@ -72,8 +107,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update API/Message write logic to handle nulls as deletion in granule PUT/message write logic
 - **CUMULUS-3075**
   - Changed the API endpoint return value for a granule with no files. When a granule has no files, the return value beforehand for
-    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was 
-    undefined, now changed to an empty array. 
+    the translatePostgresGranuletoApiGranule, the function which does the translation of a Postgres granule to an API granule, was
+    undefined, now changed to an empty array.
   - Existing behavior which relied on the pre-disposed undefined value was changed to instead accept the empty array.
   - Standardized tests in order to expect an empty array for a granule with no files files' object instead of undefined.
 - **CUMULUS-3077**
