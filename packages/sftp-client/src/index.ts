@@ -187,7 +187,7 @@ export class SftpClient {
     log.info(`Copying ${s3uri} to ${remoteUrl}`);
 
     const readStream = await S3.getObjectReadStream({
-      s3: s3(),
+      s3: Object.assign(s3()),
       bucket: s3object.Bucket,
       key: s3object.Key,
     });
