@@ -518,6 +518,7 @@ const _writeGranuleRecords = async (params) => {
     if (pgGranuleResult?.status === 'success') {
       // Align dynamo granule record with postgres record
       // Retrieve the granule from postgres
+      // pgGranule = pgGranuleResult.pgGranule;
       let pgGranuleExists;
       let latestPgGranule;
       try {
@@ -670,7 +671,7 @@ const writeGranuleRecordAndPublishSns = async ({
   knex,
   snsEventType = 'Update',
 }) => {
-  const pgGranule = await _writeGranuleRecords({
+  const pgGranuleResult = await _writeGranuleRecords({
     apiGranuleRecord,
     esClient,
     executionCumulusId,
@@ -679,6 +680,8 @@ const writeGranuleRecordAndPublishSns = async ({
     knex,
     postgresGranuleRecord,
   });
+  const pgGranule = pgGranuleResult.pgGranule;
+
   await _publishPostgresGranuleUpdateToSns({
     snsEventType,
     pgGranule,
