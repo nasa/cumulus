@@ -82,6 +82,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Updated CI deploy process to utilize the distribution module in the published zip file which
+    will be run against for the integration tests
 - **CUMULUS-2915**
   - Updated API endpoint GET `/executions/status/${executionArn}` to return the
     presigned s3 URL in addition to execution status data
