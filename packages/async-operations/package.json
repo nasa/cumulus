@@ -34,7 +34,7 @@
     "@cumulus/es-client": "14.0.0",
     "@cumulus/logger": "14.0.0",
     "@cumulus/types": "14.0.0",
-    "knex": "0.95.15",
+    "knex": "2.4.1",
     "uuid": "8.3.2"
   },
   "devDependencies": {

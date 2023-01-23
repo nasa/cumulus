@@ -149,7 +149,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   t.context.collectionCumulusId = pgCollection.cumulus_id;
 
   const asyncOperationPgModel = new AsyncOperationPgModel();
-  const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
+  const [pgAsyncOperation] = await asyncOperationPgModel.create(
     t.context.knex,
     fakeAsyncOperation
   );
@@ -182,7 +182,7 @@ test.serial('migrateExecutionRecord correctly migrates execution record', async 
   );
 
   assertPgExecutionMatches(t, newExecution, createdRecord, {
-    async_operation_cumulus_id: asyncOperationCumulusId,
+    async_operation_cumulus_id: pgAsyncOperation.cumulus_id,
     collection_cumulus_id: t.context.collectionCumulusId,
     parent_cumulus_id: existingPostgresExecution.cumulus_id,
   });

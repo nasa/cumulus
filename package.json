@@ -151,7 +151,7 @@
     "supertest": "^4.0.2",
     "tough-cookie": "~4.0.0",
     "tsc-watch": "^4.2.8",
-    "typescript": "~4.7.3",
+    "typescript": "~4.8.3",
     "uuid": "^8.2.0",
     "webpack": "^5.58.1",
     "webpack-cli": "^4.9.0",
