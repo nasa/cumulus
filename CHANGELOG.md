@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+
+- **CUMULUS-3148**
+  - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
+    PG 11 upgrade exposed dependency on DB results in the API return
+
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
 ### Breaking Changes
