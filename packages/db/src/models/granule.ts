@@ -154,10 +154,9 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // exist at all
         upsertQuery.whereNotExists(exclusionClause);
       }
-      upsertQuery.returning('*');
-      return await upsertQuery;
+      return await upsertQuery.returning('*');
     }
-    return await knexOrTrx(this.tableName)
+    const upsertQuery = knexOrTrx(this.tableName)
       .insert(granule)
       .onConflict(['granule_id', 'collection_cumulus_id'])
       .merge()
@@ -167,8 +166,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
             granule.created_at
           )})`
         )
-      )
-      .returning('*');
+      );
+    return await upsertQuery.returning('*');
   }
 
   /**
