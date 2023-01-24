@@ -1830,8 +1830,9 @@ test.serial('move a file and update its UMM-G JSON metadata', async (t) => {
 });
 
 test.serial('PATCH with action move returns failure if one granule file exists', async (t) => {
+  const { collectionName, collectionVersion } = t.context;
   const filesExistingStub = () => [{ fileName: 'file1' }];
-
+  const collectionId = constructCollectionId(collectionName, collectionVersion);
   const granule = t.context.fakePGGranules[0];
 
   const body = {
@@ -1847,6 +1848,7 @@ test.serial('PATCH with action move returns failure if one granule file exists',
 
   const expressRequest = {
     params: {
+      collectionId,
       granuleName: granule.granule_id,
     },
     body,
