@@ -198,4 +198,4 @@ export class SftpClient {
   }
 }
 
-export = SftpClient;
+export default SftpClient;

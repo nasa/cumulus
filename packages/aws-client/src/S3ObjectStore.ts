@@ -150,4 +150,4 @@ class S3ObjectStore {
   }
 }
 
-export default S3ObjectStore;
+export = S3ObjectStore;
