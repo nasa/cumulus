@@ -2207,7 +2207,7 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
   });
 });
 
-test.only(
+test.serial(
   'PUT does not update non-current-timestamp undefined fields for existing granules in all datastores',
   async (t) => {
     const {
