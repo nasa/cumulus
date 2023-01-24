@@ -20,6 +20,7 @@ module.exports = {
     {'formidable': 'url'},
     // See https://github.com/knex/knex/issues/1128 re: webpack configuration
     {
+      'better-sqlite3': 'better-sqlite3',
       sqlite3: 'sqlite3',
       mysql2: 'mysql2',
       mariasql: 'mariasql',

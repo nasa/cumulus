@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **Snyk Security**-
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
+  - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
     endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
