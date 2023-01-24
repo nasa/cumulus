@@ -27,7 +27,6 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
   const body1 = '{"feed":{"updated":"sometime","id":"someurl","title":"fake Cmr Results","entry":[{"cmrEntry1":"data1"}, {"cmrEntry2":"data2"}]}}';
   const body2 = '{"feed":{"updated":"anothertime","id":"another url","title":"more Results","entry":[{"cmrEntry3":"data3"}, {"cmrEntry4":"data4"}]}}';
   const body3 = '{"feed":{"updated":"more time","id":"yet another","title":"morer Results","entry":[{"cmrEntry5":"data5"}, {"cmrEntry6":"data6"}]}}';
-
   nock('https://cmr.uat.earthdata.nasa.gov')
     .get('/search/collections.json')
     .query((q) => q.page_num === '1')
@@ -59,9 +58,10 @@ test.serial('CMR.searchCollection handles paging correctly.', async (t) => {
 
   const cmrSearch = new CMR({
     provider: 'CUMULUS',
-    clientId: 'clientID',
+    clientId: 'clientId',
     username: 'username',
     password: 'password',
+    token: 'abcde',
   });
   const results = await cmrSearch.searchCollections();
 
@@ -120,7 +120,7 @@ test('getWriteHeaders returns token for earthdata', (t) => {
   });
 
   const headers = cmrInstance.getWriteHeaders({ token: '12345' });
-  t.is(headers['Echo-Token'], '12345');
+  t.is(headers.Authorization, '12345');
 });
 
 test('getWriteHeaders returns token for launchpad', (t) => {
@@ -148,7 +148,7 @@ test('getReadHeaders returns clientId and token for earthdata', (t) => {
 
   const headers = cmrInstance.getReadHeaders({ token: '12345' });
   t.is(headers['Client-Id'], 'test-client-id');
-  t.is(headers['Echo-Token'], '12345');
+  t.is(headers.Authorization, '12345');
 });
 
 test('getReadHeaders returns clientId and token for launchpad', (t) => {
@@ -244,4 +244,16 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
       ForceDeleteWithoutRecovery: true,
     }).promise();
   }
+});
+
+test('getToken returns a token when the user\'s token is provided', async (t) => {
+  const cmrObj = new CMR({
+    provider: 'CUMULUS',
+    clientId: 'clientId',
+    username: 'username',
+    password: 'password',
+    token: 'abcde',
+  });
+
+  t.is(await cmrObj.getToken(), 'abcde');
 });

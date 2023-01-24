@@ -44,11 +44,11 @@ test.before(async (t) => {
   t.context.executionCumulusId = executionCumulusId;
 
   const providerPgModel = new ProviderPgModel();
-  const [providerCumulusId] = await providerPgModel.create(
+  const [pgProvider] = await providerPgModel.create(
     t.context.knex,
     fakeProviderRecordFactory()
   );
-  t.context.providerCumulusId = providerCumulusId;
+  t.context.providerCumulusId = pgProvider.cumulus_id;
 });
 
 test.beforeEach((t) => {

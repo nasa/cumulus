@@ -35,7 +35,8 @@ export default class GranulesExecutionsPgModel {
     return await knexTransaction(this.tableName)
       .insert(item)
       .onConflict(['granule_cumulus_id', 'execution_cumulus_id'])
-      .merge();
+      .merge()
+      .returning('*');
   }
 
   /**

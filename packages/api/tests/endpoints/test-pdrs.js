@@ -130,10 +130,11 @@ test.before(async (t) => {
   // Create a PG Provider
   t.context.testPgProvider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();
-  [t.context.providerCumulusId] = await providerPgModel.create(
+  const [pgProvider] = await providerPgModel.create(
     t.context.knex,
     t.context.testPgProvider
   );
+  t.context.providerCumulusId = pgProvider.cumulus_id;
 
   // Create an execution
   t.context.testPgExecution = fakeExecutionRecordFactory({
@@ -320,9 +321,9 @@ test('Deleting a PDR that exists in PostgreSQL and not Elasticsearch succeeds', 
 
   const insertPgRecord = await translateApiPdrToPostgresPdr(testPdr, knex);
   const originalDynamoPdr = await pdrModel.create(testPdr);
-  const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const [pgPdr] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
-    knex, { cumulus_id: pdrCumulusId }
+    knex, { cumulus_id: pgPdr.cumulus_id }
   );
 
   t.false(
