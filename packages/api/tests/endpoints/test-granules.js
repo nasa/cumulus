@@ -1859,14 +1859,11 @@ test.serial('PATCH with action move returns failure if one granule file exists',
   const expressResponse = buildFakeExpressResponse();
   await patch(expressRequest, expressResponse);
 
-  const responseBody = expressResponse.body;
-  t.is(expressResponse.status, 409);
-  t.is(
-    responseBody.message,
-    'Cannot move granule because the following files would be overwritten at the destination location: file1. Delete the existing files or reingest the source files.'
+  t.true(
+    expressResponse.boom.conflict.calledWithMatch(
+      'Cannot move granule because the following files would be overwritten at the destination location: file1. Delete the existing files or reingest the source files.'
+    )
   );
-
-  filesExistingStub.restore();
 });
 
 test.serial(

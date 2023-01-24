@@ -405,8 +405,6 @@ async function patchByGranuleId(req, res) {
   }
 
   if (action === 'move') {
-    // FUTURE - this should be removed from the granule model
-    // TODO -- Phase 3 -- This needs to be pulled out of the granule model
     const filesAtDestination = await getFilesExistingAtLocationMethod(
       apiGranule,
       body.destinations
