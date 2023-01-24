@@ -373,7 +373,7 @@ export const downloadS3File = async (
   const objectStream = await getObjectReadStream({
     bucket: s3Obj.Bucket,
     key: s3Obj.Key,
-    s3: Object.assign(s3()),
+    s3: s3(),
   });
 
   return new Promise(
@@ -472,7 +472,7 @@ export const s3PutObjectTagging = (Bucket: string, Key: string, ObjectTagging: T
 export const getObject = (
   s3Client: S3,
   params: GetObjectCommandInput
-): Promise<GetObjectOutput> => Object.assign(s3Client.getObject(params));
+): Promise<GetObjectOutput> => s3Client.getObject(params);
 
 /**
  * Get an object from S3, waiting for it to exist and, if specified, have the
@@ -576,7 +576,7 @@ export const getObjectStreamContents = async (
  * @returns {Promise<string>} the contents of the S3 object
  */
 export const getTextObject = (bucket: string, key: string): Promise<string> =>
-  getObjectReadStream({ s3: Object.assign(s3()), bucket, key })
+  getObjectReadStream({ s3: s3(), bucket, key })
     .then((objectReadStream) => getObjectStreamContents(objectReadStream));
 
 /**
@@ -868,7 +868,7 @@ export const validateS3ObjectChecksum = async (params: {
   options: TransformOptions
 }) => {
   const { algorithm, bucket, key, expectedSum, options } = params;
-  const fileStream = await getObjectReadStream({ s3: Object.assign(s3()), bucket, key });
+  const fileStream = await getObjectReadStream({ s3: s3(), bucket, key });
   if (await validateChecksumFromStream(algorithm, fileStream, expectedSum, options)) {
     return true;
   }

@@ -69,7 +69,7 @@ class S3ObjectStore {
       }
     );
     const signedUrl = await getSignedUrl(
-      this.s3, Object.assign(command),
+      this.s3, command,
       { expiresIn: S3_LINK_EXPIRY_SECONDS_DEFAULT, ...presignOptions }
     );
     this.s3.middlewareStack.remove(this.middlewareName);
@@ -150,4 +150,4 @@ class S3ObjectStore {
   }
 }
 
-export = S3ObjectStore;
+export default S3ObjectStore;

@@ -145,14 +145,14 @@ export async function moveGranuleFileWithVersioning(
   const { checksumType, checksum } = sourceChecksumObject;
   // compare the checksum of the existing file and new file, and handle them accordingly
   const targetFileSum = await S3.calculateObjectHash({
-    s3: Object.assign(s3()),
+    s3: s3(),
     algorithm: checksumType ?? 'CKSUM',
     bucket: target.Bucket,
     key: target.Key,
   });
 
   const sourceFileSum = checksum ?? await S3.calculateObjectHash({
-    s3: Object.assign(s3()),
+    s3: s3(),
     algorithm: 'CKSUM',
     bucket: source.Bucket,
     key: source.Key,
