@@ -496,7 +496,7 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
   const collectionCumulusId = pgCollection.cumulus_id;
 
   // Create random files
-  const granuleCumulusIds = await granulePgModel.insert(
+  const pgGranules = await granulePgModel.insert(
     knex,
     range(10).map(() => fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
@@ -505,7 +505,7 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
   const files = range(10).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
     key: randomId('key'),
-    granule_cumulus_id: granuleCumulusIds[i],
+    granule_cumulus_id: pgGranules[i].cumulus_id,
   }));
 
   // Store the files to S3 and DynamoDB
@@ -591,7 +591,7 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
   const collectionCumulusId = pgCollection.cumulus_id;
 
   // Create random files
-  const granuleCumulusIds = await granulePgModel.insert(
+  const pgGranules = await granulePgModel.insert(
     knex,
     range(10).map(() => fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
@@ -600,7 +600,7 @@ test.serial('Generates a valid Inventory reconciliation report when everything i
   const files = range(10).map((i) => ({
     bucket: dataBuckets[i % dataBuckets.length],
     key: randomId('key'),
-    granule_cumulus_id: granuleCumulusIds[i],
+    granule_cumulus_id: pgGranules[i].cumulus_id,
   }));
 
   // Store the files to S3 and DynamoDB
@@ -674,7 +674,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
   );
 
   // Create files that are in sync
-  const granuleCumulusIds = await granulePgModel.insert(
+  const pgGranules = await granulePgModel.insert(
     knex,
     range(10).map(() => fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
@@ -683,7 +683,7 @@ test.serial('Generates valid reconciliation report when there are extra internal
   const matchingFiles = range(10).map((i) => ({
     bucket: sample(dataBuckets),
     key: randomId('key'),
-    granule_cumulus_id: granuleCumulusIds[i],
+    granule_cumulus_id: pgGranules[i].cumulus_id,
   }));
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomId('key') };
@@ -751,26 +751,26 @@ test.serial('Generates valid reconciliation report when there are extra internal
   const granules = range(12).map(() => fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   }));
-  const granuleCumulusIds = await granulePgModel.insert(
+  const pgGranules = await granulePgModel.insert(
     knex,
     granules
   );
   const matchingFiles = range(10).map((i) => ({
     bucket: sample(dataBuckets),
     key: randomId('key'),
-    granule_cumulus_id: granuleCumulusIds[i],
+    granule_cumulus_id: pgGranules[i].cumulus_id,
   }));
 
   const extraDbFile1 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granule_cumulus_id: granuleCumulusIds[10],
+    granule_cumulus_id: pgGranules[10].cumulus_id,
     granule_id: granules[10].granule_id,
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granule_cumulus_id: granuleCumulusIds[11],
+    granule_cumulus_id: pgGranules[11].cumulus_id,
     granule_id: granules[11].granule_id,
   };
 
@@ -841,14 +841,14 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   const granules = range(12).map(() => fakeGranuleRecordFactory({
     collection_cumulus_id: collectionCumulusId,
   }));
-  const granuleCumulusIds = await granulePgModel.insert(
+  const pgGranules = await granulePgModel.insert(
     knex,
     granules
   );
   const matchingFiles = range(10).map((i) => ({
     bucket: sample(dataBuckets),
     key: randomId('key'),
-    granule_cumulus_id: granuleCumulusIds[i],
+    granule_cumulus_id: pgGranules[i].cumulus_id,
   }));
 
   const extraS3File1 = { bucket: sample(dataBuckets), key: randomString() };
@@ -857,13 +857,13 @@ test.serial('Generates valid reconciliation report when internally, there are bo
   const extraDbFile1 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granule_cumulus_id: granuleCumulusIds[10],
+    granule_cumulus_id: pgGranules[10].cumulus_id,
     granule_id: granules[10].granule_id,
   };
   const extraDbFile2 = {
     bucket: sample(dataBuckets),
     key: randomString(),
-    granule_cumulus_id: granuleCumulusIds[11],
+    granule_cumulus_id: pgGranules[11].cumulus_id,
     granule_id: granules[11].granule_id,
   };
 
@@ -1025,14 +1025,14 @@ test.serial(
     const granules = range(10).map(() => fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
     }));
-    const granuleCumulusIds = await granulePgModel.insert(
+    const pgGranules = await granulePgModel.insert(
       knex,
       granules
     );
     const files = range(10).map((i) => ({
       bucket: sample(dataBuckets),
       key: randomId('key'),
-      granule_cumulus_id: granuleCumulusIds[i],
+      granule_cumulus_id: pgGranules[i].cumulus_id,
     }));
 
     // Store the files to S3 and DynamoDB
