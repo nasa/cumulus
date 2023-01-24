@@ -98,7 +98,7 @@ test.beforeEach(async (t) => {
     t.context.knex,
     t.context.testProvider
   );
-  t.context.providerCumulusId = providerResponse[0];
+  t.context.providerCumulusId = providerResponse[0].cumulus_id;
 });
 
 test.afterEach.always(async (t) => {
