@@ -2,7 +2,6 @@
 
 const replace = require('lodash/replace');
 
-const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { updateRule } = require('@cumulus/api-client/rules');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -18,6 +17,7 @@ const {
   setProcessEnvironment,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 9 * 60 * 1000;
 
@@ -70,7 +70,7 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test stream '${streamName}'`);
     await deleteRules(testConfig.stackName, testConfig.bucket, rulesToDelete, ruleSuffix);
-    await deleteExecution({ prefix: testConfig.stackName, executionArn: executionArn });
+    await waitForExecutionAndDelete(testConfig.stackName, executionArn, 'completed');
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
       cleanupCollections(testConfig.stackName, testConfig.bucket, collectionsDir, testSuffix),
