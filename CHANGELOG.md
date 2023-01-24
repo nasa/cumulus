@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+
+- **CUMULUS-3148**
+  - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
+    PG 11 upgrade exposed dependency on DB results in the API return
+  - Update unit test container to utilize postgres 11.13 container
+
 - **CUMULUS-3121**
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 
