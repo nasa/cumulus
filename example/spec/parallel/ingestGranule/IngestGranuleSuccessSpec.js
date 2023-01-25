@@ -1181,7 +1181,7 @@ describe('The S3 Ingest Granules workflow', () => {
           try {
             failOnSetupError([beforeAllError]);
 
-            file = granule.files[0];
+            file = granule.files.sort((a, b) => (a.key > b.key ? 1 : -1))[0];
 
             destinationKey = `${testDataFolder}/${file.key}`;
 

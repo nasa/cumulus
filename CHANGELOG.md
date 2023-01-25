@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3148**
+  - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
+    PostgreSQL 11 upgrade exposed dependency on database results in the API return
+  - Update unit test container to utilize PostgreSQL 11.13 container
+
 - **CUMULUS-3033**
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
 
@@ -16,6 +21,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **Snyk Security**-
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
+  - Upgraded got from 11.8.3 to ^11.8.5
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
   - Update Getting Started sections with current content
