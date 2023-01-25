@@ -211,14 +211,14 @@ const _writePostgresGranuleViaTransaction = async ({
     due to granule overwrite constraints, retaining original granule for cumulus_id ${pgGranule.cumulus_id}`);
 
     return { status: 'failed', pgGranule: pgGranule };
-  } else {
-    log.info(`
-    Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
-    to granule record with cumulus_id ${pgGranule.cumulus_id} in PostgreSQL
-    `);
-
-    return { status: 'success', pgGranule: pgGranule, writeConstraints: writeConstraints };
   }
+
+  log.info(`
+  Successfully wrote granule with granuleId ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
+  to granule record with cumulus_id ${pgGranule.cumulus_id} in PostgreSQL
+  `);
+
+  return { status: 'success', pgGranule: pgGranule, writeConstraints: writeConstraints };
   // return pgGranule;
 };
 /**
