@@ -18,10 +18,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **Snyk Security**-
+- **Snyk Security**
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
   - Upgraded got from 11.8.3 to ^11.8.5
+- **Dependabot Security**
+  - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
   - Update Getting Started sections with current content
