@@ -2283,16 +2283,8 @@ test.serial(
     console.log('esRecord::::', esRecord);
     t.like(updatedEsRecord, {
       ...esRecord,
-      updatedAt: actualPgGranule.updated_at,
-      timestamp: actualPgGranule.timestamp,
-    });
-
-    console.log('translatedPostgresGranule::::', translatedPostgresGranule);
-    console.log('updatedEsRecord::::', updatedEsRecord);
-    t.like(translatedPostgresGranule, {
-      ...updatedEsRecord,
-      updatedAt: actualPgGranule.updated_at,
-      timestamp: actualPgGranule.timestamp,
+      updatedAt: actualPgGranule.updated_at.getTime(),
+      timestamp: actualPgGranule.timestamp.getTime(),
     });
 
     console.log('newPgGranule::::', newPgGranule);
