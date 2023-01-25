@@ -2256,7 +2256,7 @@ test.serial(
     };
 
     await request(app)
-      .put(`/granules/${newPgGranule.granule_id}`)
+      .put(`/granules/${updatedGranule.granuleId}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send(updatedGranule)
@@ -2279,14 +2279,20 @@ test.serial(
       }
     );
 
-    t.like(newPgGranule, {
-      ...translatedPostgresGranule,
+    t.like(updatedEsRecord, {
+      ...esRecord,
       updatedAt: actualPgGranule.updated_at,
       timestamp: actualPgGranule.timestamp,
     });
 
-    t.like(updatedEsRecord, {
-      ...esRecord,
+    t.like(translatedPostgresGranule, {
+      ...updatedEsRecord,
+      updatedAt: actualPgGranule.updated_at,
+      timestamp: actualPgGranule.timestamp,
+    });
+
+    t.like(newPgGranule, {
+      ...actualPgGranule,
       updatedAt: actualPgGranule.updated_at,
       timestamp: actualPgGranule.timestamp,
     });
