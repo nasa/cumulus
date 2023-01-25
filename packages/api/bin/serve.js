@@ -274,7 +274,10 @@ async function createDBRecords(stackName, user, knexOverride) {
     dynamoRecord: granule,
     knexOrTransaction: knex,
   });
-  await granulePgModel.upsert(knex, postgresGranule);
+  await granulePgModel.upsert({
+    granule: postgresGranule,
+    knexOrTrx: knex,
+  });
 
   // add pdrs records
   const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });

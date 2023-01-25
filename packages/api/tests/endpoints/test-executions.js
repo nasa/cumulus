@@ -201,10 +201,11 @@ test.before(async (t) => {
     t.context.testAsyncOperation
   );
 
-  [t.context.asyncOperationCumulusId] = await t.context.asyncOperationsPgModel.create(
+  const [pgAsyncOperationRecord] = await t.context.asyncOperationsPgModel.create(
     knex,
     testPgAsyncOperation
   );
+  t.context.asyncOperationCumulusId = pgAsyncOperationRecord.cumulus_id;
 
   // Create collections in Dynamo and Postgres
   // we need this because a granule has a foreign key referring to collections
@@ -298,23 +299,29 @@ test.beforeEach(async (t) => {
       await granulePgModel.create(knex, granule))
   );
 
-  await upsertGranuleWithExecutionJoinRecord(
-    knex, t.context.fakePGGranules[0], await executionPgModel.getRecordCumulusId(knex, {
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: t.context.fakePGGranules[0],
+    executionCumulusId: await executionPgModel.getRecordCumulusId(knex, {
       workflow_name: 'fakeWorkflow',
       arn: 'arn2',
-    })
-  );
-  await upsertGranuleWithExecutionJoinRecord(
-    knex, t.context.fakePGGranules[0], await executionPgModel.getRecordCumulusId(knex, {
+    }),
+  });
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: t.context.fakePGGranules[0],
+    executionCumulusId: await executionPgModel.getRecordCumulusId(knex, {
       workflow_name: 'workflow2',
-    })
-  );
-  await upsertGranuleWithExecutionJoinRecord(
-    knex, t.context.fakePGGranules[1], await executionPgModel.getRecordCumulusId(knex, {
+    }),
+  });
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: t.context.fakePGGranules[1],
+    executionCumulusId: await executionPgModel.getRecordCumulusId(knex, {
       workflow_name: 'fakeWorkflow',
       status: 'running',
-    })
-  );
+    }),
+  });
 });
 
 test.after.always(async (t) => {
@@ -427,10 +434,11 @@ test('GET returns an existing execution', async (t) => {
   );
   const collectionCumulusId = pgCollection.cumulus_id;
 
-  const [asyncOperationCumulusId] = await asyncOperationsPgModel.create(
+  const [pgAsyncOperationRecord] = await asyncOperationsPgModel.create(
     t.context.knex,
     asyncRecord
   );
+  const asyncOperationCumulusId = pgAsyncOperationRecord.cumulus_id;
 
   const [parentPgExecution] = await t.context.executionPgModel.create(
     t.context.knex,
@@ -1154,9 +1162,11 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
     = await executionPgModel.create(knex, fakeExecutionRecordFactory({ workflow_name: 'newWorkflow' }));
   const mostRecentExecutionCumulusId = mostRecentExecution.cumulus_id;
 
-  await upsertGranuleWithExecutionJoinRecord(
-    knex, fakePGGranules[0], mostRecentExecutionCumulusId
-  );
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: fakePGGranules[0],
+    executionCumulusId: mostRecentExecutionCumulusId,
+  });
 
   const response = await request(app)
     .post('/executions/workflows-by-granules')

@@ -253,7 +253,11 @@ test.serial('internalRecReportForGranules reports discrepancy of granule holding
         });
         ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
       }
-      return upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
+      return upsertGranuleWithExecutionJoinRecord({
+        executionCumulusId: pgExecution.cumulus_id,
+        granule: pgGranule,
+        knexTransaction: knex,
+      });
     })
   );
 
@@ -396,7 +400,6 @@ test.serial('internalRecReportForGranules handles generated granules with custom
       ...fakeGranule,
       granule: fakeGranule,
       executionUrl: fakeGranule.execution,
-      workflowStartTime: Date.now(),
       processingTimeInfo,
       cmrTemporalInfo,
     });
@@ -412,7 +415,11 @@ test.serial('internalRecReportForGranules handles generated granules with custom
       });
       ([pgExecution] = await executionPgModel.create(knex, pgExecutionData));
     }
-    await upsertGranuleWithExecutionJoinRecord(knex, pgGranule, pgExecution.cumulus_id);
+    await upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: pgExecution.cumulus_id,
+      granule: pgGranule,
+      knexTransaction: knex,
+    });
     await indexer.indexGranule(esClient, apiGranule, esAlias);
   }));
 
@@ -453,7 +460,6 @@ test.serial('internalRecReportForGranules handles granules with files', async (t
       ...fakeGranule,
       granule: fakeGranule,
       executionUrl: fakeGranule.execution,
-      workflowStartTime: Date.now(),
       cmrUtils: fakeCmrUtils,
     });
     const pgGranule = await translateApiGranuleToPostgresGranule({
@@ -466,11 +472,11 @@ test.serial('internalRecReportForGranules handles granules with files', async (t
     });
     const [pgExecution] = await executionPgModel.create(knex, pgExecutionData);
 
-    const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord(
-      knex,
-      pgGranule,
-      pgExecution.cumulus_id
-    );
+    const [pgGranuleRecord] = await upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: pgExecution.cumulus_id,
+      granule: pgGranule,
+      knexTransaction: knex,
+    });
     await Promise.all(apiGranule.files.map(async (file) => {
       const pgFile = translateApiFiletoPostgresFile(file);
       await filePgModel.create(knex, {

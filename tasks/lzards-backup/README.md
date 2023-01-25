@@ -16,6 +16,7 @@ Conformant to the included `config.json` schema, these are:
 | --------------------- | ------- | ---------- | -----------
 | urlType               | string  | 's3'       | urlType to generate and pass to LZARDS. Accepted values are 's3' and 'cloudfront'.
 | cloudfrontEndpoint    | string  | N/A        | cloudfront endpoint URL, required if urlType is 'cloudfront'
+| failTaskWhenFileBackupFail  | boolean  | false  | Indicates if the task will fail when file backup request fails
 
 ### Input
 

@@ -18,6 +18,7 @@ const {
   fakeGranuleRecordFactory,
   fakeProviderRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
+  getGranulesByGranuleId,
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
   migrationDir,
@@ -91,11 +92,11 @@ test('upsertGranuleWithExecutionJoinRecord() creates granule record with granule
 
   const [pgGranule] = await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId,
       granule,
-      executionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
   const granuleCumulusId = pgGranule.cumulus_id;
 
@@ -140,11 +141,11 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
 
   const [pgGranule] = await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId,
       granule,
-      executionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
   const granuleCumulusId = pgGranule.cumulus_id;
 
@@ -156,11 +157,11 @@ test('upsertGranuleWithExecutionJoinRecord() handles multiple executions for a g
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: secondExecutionCumulusId,
       granule,
-      secondExecutionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
 
   const granuleRecord = await granulePgModel.get(
@@ -209,13 +210,12 @@ test('upsertGranuleWithExecutionJoinRecord() does not write anything if upsertin
     createRejectableTransaction(
       knex,
       (trx) =>
-        upsertGranuleWithExecutionJoinRecord(
-          trx,
-          granule,
+        upsertGranuleWithExecutionJoinRecord({
           executionCumulusId,
-          undefined,
-          fakeGranulesExecutionsPgModel
-        )
+          granule,
+          granulesExecutionsPgModel: fakeGranulesExecutionsPgModel,
+          knexTransaction: trx,
+        })
     )
   );
 
@@ -253,11 +253,11 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     status: 'completed',
   });
 
-  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
-    knex,
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord({
+    executionCumulusId,
     granule,
-    executionCumulusId
-  );
+    knexTransaction: knex,
+  });
   const granuleCumulusId = pgGranule.cumulus_id;
 
   const [secondExecution] = await executionPgModel.create(
@@ -271,11 +271,11 @@ test('upsertGranuleWithExecutionJoinRecord() will allow a running status to repl
     status: 'running',
   };
 
-  await upsertGranuleWithExecutionJoinRecord(
-    knex,
-    updatedGranule,
-    secondExecutionCumulusId
-  );
+  await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
+    granule: updatedGranule,
+    executionCumulusId: secondExecutionCumulusId,
+  });
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -315,11 +315,11 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
     status: 'completed',
   });
 
-  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord(
-    knex,
+  const [pgGranule] = await upsertGranuleWithExecutionJoinRecord({
+    knexTransaction: knex,
     granule,
-    completedExecutionCumulusId
-  );
+    executionCumulusId: completedExecutionCumulusId,
+  });
   const granuleCumulusId = pgGranule.cumulus_id;
 
   const updatedGranule = {
@@ -327,11 +327,11 @@ test('upsertGranuleWithExecutionJoinRecord() succeeds if granulePgModel.upsert()
     status: 'running',
   };
 
-  await upsertGranuleWithExecutionJoinRecord(
-    knex,
-    updatedGranule,
-    completedExecutionCumulusId
-  );
+  await upsertGranuleWithExecutionJoinRecord({
+    executionCumulusId: completedExecutionCumulusId,
+    granule: updatedGranule,
+    knexTransaction: knex,
+  });
 
   const granuleRecord = await granulePgModel.get(
     knex,
@@ -378,11 +378,11 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId,
       granule,
-      executionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
 
   const [secondExecution] = await executionPgModel.create(
@@ -393,11 +393,11 @@ test('getApiGranuleExecutionCumulusIds() returns correct values', async (t) => {
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      executionCumulusId: secondExecutionCumulusId,
       granule,
-      secondExecutionCumulusId
-    )
+      knexTransaction: trx,
+    })
   );
 
   const granules = [
@@ -448,14 +448,12 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
     status: 'running',
   });
 
-  await createRejectableTransaction(
-    knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule1,
-      executionCumulusId
-    )
-  );
+  await createRejectableTransaction(knex, (trx) =>
+    upsertGranuleWithExecutionJoinRecord({
+      granule: granule1,
+      knexTransaction: trx,
+      executionCumulusId,
+    }));
 
   const [secondExecution] = await executionPgModel.create(
     knex,
@@ -465,20 +463,20 @@ test('getApiGranuleExecutionCumulusIds() only queries DB when collection is not 
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule1,
-      secondExecutionCumulusId
-    )
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      knexTransaction: trx,
+      granule: granule1,
+      executionCumulusId: secondExecutionCumulusId,
+    })
   );
 
   await createRejectableTransaction(
     knex,
-    (trx) => upsertGranuleWithExecutionJoinRecord(
-      trx,
-      granule2,
-      secondExecutionCumulusId
-    )
+    (trx) => upsertGranuleWithExecutionJoinRecord({
+      knexTransaction: trx,
+      granule: granule2,
+      executionCumulusId: secondExecutionCumulusId,
+    })
   );
 
   const granules = [
@@ -700,14 +698,14 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
     collection,
   } = t.context;
 
-  const provider = fakeProviderRecordFactory();
-  const [providerCumulusId] = await providerPgModel.create(knex, provider);
+  const fakeProvider = fakeProviderRecordFactory();
+  const [pgProvider] = await providerPgModel.create(knex, fakeProvider);
 
   const [granule] = await granulePgModel.create(
     knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
-      provider_cumulus_id: providerCumulusId,
+      provider_cumulus_id: pgProvider.cumulus_id,
     }),
     '*'
   );
@@ -715,13 +713,13 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
   const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
-      providerNames: [provider.name],
+      providerNames: [fakeProvider.name],
     }
   );
   t.deepEqual(
     [{
       ...granule,
-      providerName: provider.name,
+      providerName: fakeProvider.name,
       collectionName: collection.name,
       collectionVersion: collection.version,
     }],
@@ -738,20 +736,20 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by status'
     collection,
   } = t.context;
 
-  const provider = fakeProviderRecordFactory();
-  const [providerCumulusId] = await providerPgModel.create(knex, provider);
+  const fakeProvider = fakeProviderRecordFactory();
+  const [provider] = await providerPgModel.create(knex, fakeProvider);
 
   const granules = await granulePgModel.insert(
     knex,
     [
       fakeGranuleRecordFactory({
         collection_cumulus_id: collectionCumulusId,
-        provider_cumulus_id: providerCumulusId,
+        provider_cumulus_id: provider.cumulus_id,
         status: 'running',
       }),
       fakeGranuleRecordFactory({
         collection_cumulus_id: collectionCumulusId,
-        provider_cumulus_id: providerCumulusId,
+        provider_cumulus_id: provider.cumulus_id,
         status: 'completed',
       }),
     ],
@@ -771,7 +769,7 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by status'
   t.deepEqual(
     [{
       ...granules.find((granule) => granule.status === 'completed'),
-      providerName: provider.name,
+      providerName: fakeProvider.name,
       collectionName: collection.name,
       collectionVersion: collection.version,
     }],
@@ -1023,4 +1021,59 @@ test('getUniqueGranuleByGranuleId() throws an error if no granules are found', a
     getUniqueGranuleByGranuleId(knex, 99999, granulePgModel),
     { instanceOf: RecordDoesNotExist }
   );
+});
+
+test('getGranulesByGranuleId() returns a list of records that match the given granuleId', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const granuleId = 'granule-1234';
+  const [granule1] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  const collection2 = fakeCollectionRecordFactory();
+  const collectionResponse = await t.context.collectionPgModel.create(
+    knex,
+    collection2
+  );
+  const collectionCumulusId2 = collectionResponse[0].cumulus_id;
+  const [granule2] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      granule_id: granuleId,
+      collection_cumulus_id: collectionCumulusId2,
+    }),
+    '*'
+  );
+  const records = await getGranulesByGranuleId(knex, granuleId);
+  t.deepEqual(records, [granule1, granule2]);
+  t.teardown(async () => await Promise.all([
+    granulePgModel.delete(knex, { cumulus_id: granule1.cumulus_id }),
+    granulePgModel.delete(knex, { cumulus_id: granule2.cumulus_id }),
+  ]));
+});
+
+test('getGranulesByGranuleId() returns empty list when called with a granuleId that does not exist', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const granuleId = 'fakeGranuleId';
+  await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  const records = await getGranulesByGranuleId(knex, granuleId);
+  t.deepEqual(records, []);
 });
