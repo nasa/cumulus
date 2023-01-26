@@ -34,7 +34,7 @@
     "@cumulus/es-client": "11.1.8",
     "@cumulus/types": "11.1.8",
     "@cumulus/logger": "13.3.2",
-    "knex": "0.95.15",
+    "knex": "2.4.1",
     "uuid": "8.3.2"
   },
   "devDependencies": {

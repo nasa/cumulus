@@ -12,7 +12,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
     PostgreSQL v11 upgrade exposed dependency on database results in the API return
   - Update unit test container to utilize postgres 11.13 container
+### Changed
 
+- **Snyk Security**-
+  - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
+  - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
+  
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
 ### Breaking Changes
