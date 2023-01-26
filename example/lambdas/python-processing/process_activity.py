@@ -12,7 +12,6 @@ from hashlib import md5
 from cumulus_process import Process
 from cumulus_process.s3 import upload
 
-# pylint: disable=R0201
 class PythonProcess(Process):
     """
         A subclass of Process for creating .md5 hash files for test Modis granules

@@ -488,13 +488,10 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalProvider = fakeProviderFactory(providerParams);
 
   const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
-
-  if (providerModel) {
-    await providerModel.create(originalProvider);
-  }
-  const [providerCumulusId] = await providerPgModel.create(testKnex, insertPgRecord);
+  await providerModel.create(originalProvider);
+  const [pgProvider] = await providerPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await providerPgModel.get(
-    testKnex, { cumulus_id: providerCumulusId }
+    testKnex, { cumulus_id: pgProvider.cumulus_id }
   );
   await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
   const originalEsRecord = await esProviderClient.get(
@@ -532,11 +529,16 @@ const createRuleTestRecords = async (context, ruleParams) => {
 
   const [ruleCumulusId] = await rulePgModel.create(testKnex, pgRuleWithTrigger);
 
+<<<<<<< HEAD
   const originalPgRecord = await rulePgModel.get(
     testKnex, { cumulus_id: ruleCumulusId.cumulus_id }
   );
   const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
   await indexRule(esClient, originalApiRule, process.env.ES_INDEX);
+=======
+  const [originalPgRecord] = await rulePgModel.create(testKnex, insertPgRecord, '*');
+  await indexRule(esClient, originalDynamoRule, process.env.ES_INDEX);
+>>>>>>> master
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );
@@ -570,9 +572,15 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
     Body: randomString(),
   });
 
+<<<<<<< HEAD
   const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+=======
+  const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
+  const originalDynamoPdr = await pdrModel.create(originalPdr);
+  const [pgPdr] = await pdrPgModel.create(knex, insertPgRecord);
+>>>>>>> master
   const originalPgRecord = await pdrPgModel.get(
-    knex, { cumulus_id: pdrCumulusId }
+    knex, { cumulus_id: pgPdr.cumulus_id }
   );
   const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
@@ -623,12 +631,17 @@ const createAsyncOperationTestRecords = async (context) => {
     originalAsyncOperation,
     knex
   );
+<<<<<<< HEAD
   const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
+=======
+  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
+  const [pgAsyncOperation] = await asyncOperationPgModel.create(
+>>>>>>> master
     knex,
     insertPgRecord
   );
   const originalPgRecord = await asyncOperationPgModel.get(
-    knex, { cumulus_id: asyncOperationCumulusId }
+    knex, { cumulus_id: pgAsyncOperation.cumulus_id }
   );
   await indexAsyncOperation(esClient, originalAsyncOperation, process.env.ES_INDEX);
   const originalEsRecord = await esAsyncOperationClient.get(

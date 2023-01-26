@@ -102,11 +102,12 @@ test.beforeEach(async (t) => {
   const testPgProvider = fakeProviderRecordFactory();
   t.context.testPgProvider = testPgProvider;
   const testProvider = translatePostgresProviderToApiProvider(testPgProvider);
-  [t.context.providerCumulusId] = await t.context.providerPgModel
+  const [pgProvider] = await t.context.providerPgModel
     .create(
       t.context.testKnex,
       testPgProvider
     );
+  t.context.providerCumulusId = pgProvider.cumulus_id;
   await indexer.indexProvider(t.context.esClient, testProvider, t.context.esIndex);
 });
 
