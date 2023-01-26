@@ -1,9 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "target": "es2019",
+    "target": "es2021",
     "lib": [
-      "es2019",
+      "es2021",
       "dom"
     ],
     "outDir": "dist"
