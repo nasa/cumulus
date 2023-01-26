@@ -361,8 +361,7 @@ async function getGranulesForPayload(payload) {
       queryGranules.push({
         granuleId: granule.granuleId,
         collectionId: granule.collectionId,
-      })
-    );
+      }));
   }
   // Remove duplicate Granule IDs
   // TODO: could we get unique IDs from the query directly?
