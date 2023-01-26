@@ -480,7 +480,6 @@ const createCollectionTestRecords = async (context, collectionParams) => {
 const createProviderTestRecords = async (context, providerParams) => {
   const {
     testKnex,
-    providerModel,
     providerPgModel,
     esClient,
     esProviderClient,
@@ -488,7 +487,6 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalProvider = fakeProviderFactory(providerParams);
 
   const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
-  await providerModel.create(originalProvider);
   const [pgProvider] = await providerPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await providerPgModel.get(
     testKnex, { cumulus_id: pgProvider.cumulus_id }

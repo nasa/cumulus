@@ -373,9 +373,9 @@ test.serial('DELETE handles the case where the PDR exists in PostgreSQL but not 
     provider_cumulus_id: providerCumulusId,
   });
 
-  const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const [pdr] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
-    knex, { cumulus_id: pdrCumulusId }
+    knex, { cumulus_id: pdr.cumulus_id }
   );
   const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
   await indexer.indexPdr(esClient, originalPdr, process.env.ES_INDEX);
