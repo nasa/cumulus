@@ -246,7 +246,7 @@ test.serial('messages are retried the correct number of times based on the rule 
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < queueMaxReceiveCount; i += 1) {
-    await delay(visibilityTimeout * 1000);
+    await delay((visibilityTimeout + 1) * 1000);
     await handler(event);
   }
   /* eslint-enable no-await-in-loop */
@@ -296,7 +296,7 @@ test.serial('messages are not retried if retries is set to zero in the rule conf
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < queueMaxReceiveCount; i += 1) {
-    await delay(visibilityTimeout * 1000);
+    await delay((visibilityTimeout + 1) * 1000);
     await handler(event);
   }
   /* eslint-enable no-await-in-loop */
