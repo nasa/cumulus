@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
 
 ### Changed
-
+- **CUMULUS-3147**
+  - Upgrading node from 14.19.0 to 16.19.0
 - **Snyk Security**
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
