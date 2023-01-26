@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### MIGRATION notes
+
+From this release forward Core will be tested against postgres 11   Existing
+release compatibility testing was done for release 11.1.8/14.0.0+.   Users
+should migrate their datastores to Aurora postgres11.13+ compatible data stores
+as soon as possible.
+
+Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
+database clusters forcibly upgraded at the next maintenance window after 31 Jan
+2023.   Our guidance to mitigate this issue is to do a manual (outside of
+terraform) upgrade.   This will result in the cluster being upgraded with a
+manually set parameter group not managed by terraform.
+
+If you manually upgraded and the cluster is now on version 11.13, to continue using the `cumulus-rds-tf` module *once
+upgraded* update following module configuration values:
+
+```
+parameter_group_family = "aurora-postgresql11"
+engine_version = 11.13
+```
+
+When you apply this update, the original postgresql v10 parameter group will be
+removed, and recreated using PG11 defaults/configured terraform values and
+update the database cluster to use the new configuration.
+
 - **CUMULUS-3121**
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 
@@ -42,6 +67,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3148**:
+  - Updates cumulus-rds-tf to use defaults for postgres 11.13
 - **CUMULUS-3033**
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
 
