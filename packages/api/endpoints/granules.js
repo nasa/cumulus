@@ -496,7 +496,6 @@ async function patch(req, res) {
 
   const granuleId = apiGranule.granuleId;
 
-  // TODO refactor to shared function
   log.info(`PUT request "action": ${action}`);
 
   if (action === 'reingest') {
@@ -574,8 +573,6 @@ async function patch(req, res) {
   }
 
   if (action === 'move') {
-    // FUTURE - this should be removed from the granule model
-    // TODO -- Phase 3 -- This needs to be pulled out of the granule model
     const filesAtDestination = await getFilesExistingAtLocationMethod(
       apiGranule,
       body.destinations
