@@ -552,7 +552,7 @@ async function bulkOperations(req, res) {
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
-        KNEX_DEBUG: payload.knexDebug || false,
+        KNEX_DEBUG: payload.knexDebug.toLowerCase() === 'true' || false,
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
         METRICS_ES_USER: process.env.METRICS_ES_USER,
