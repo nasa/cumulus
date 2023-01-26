@@ -2279,19 +2279,15 @@ test.serial(
       }
     );
 
-    console.log('updatedEsRecord::::', updatedEsRecord);
-    console.log('esRecord::::', esRecord);
     t.like(updatedEsRecord, {
       ...esRecord,
       updatedAt: actualPgGranule.updated_at.getTime(),
       timestamp: actualPgGranule.timestamp.getTime(),
     });
 
-    console.log('newPgGranule::::', newPgGranule);
-    console.log('actualPgGranule::::', actualPgGranule);
     t.like(newPgGranule, {
       ...actualPgGranule,
-      updatedAt: actualPgGranule.updated_at,
+      updated_at: actualPgGranule.updated_at,
       timestamp: actualPgGranule.timestamp,
     });
   }
