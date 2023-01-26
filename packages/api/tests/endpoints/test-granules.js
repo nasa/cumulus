@@ -2287,8 +2287,8 @@ test.serial(
 
     t.like(newPgGranule, {
       ...actualPgGranule,
-      updated_at: actualPgGranule.updated_at,
-      timestamp: actualPgGranule.timestamp,
+      updated_at: newPgGranule.updated_at,
+      timestamp: newPgGranule.timestamp,
     });
   }
 );
