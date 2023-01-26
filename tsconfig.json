@@ -1,26 +1,10 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Node 16 + Strictest",
-  "extends": "@tsconfig/node16-strictest/tsconfig.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "lib" : ["es2021"],
-    "target": "es2021",
-    "module": "commonjs",
-    "esModuleInterop": true,
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
-    "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "alwaysStrict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
     "incremental": true,
-    "useUnknownInCatchVariables": false
   }
 }
