@@ -20,7 +20,8 @@ terraform) upgrade.   This will result in the cluster being upgraded with a
 manually set parameter group not managed by terraform.
 
 If you manually upgraded and the cluster is now on version 11.13, to continue using the `cumulus-rds-tf` module *once
-upgraded* update following module configuration values:
+upgraded* update following module configuration values if set, or allow their
+defaults to be utilized:
 
 ```
 parameter_group_family = "aurora-postgresql11"
