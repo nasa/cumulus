@@ -43,7 +43,6 @@
   },
   "devDependencies": {
     "@cumulus/aws-client": "14.0.0",
-    "@cumulus/test-data": "14.0.0",
-    "p-each-series": "^2.1.0"
+    "@cumulus/test-data": "14.0.0"
   }
 }
