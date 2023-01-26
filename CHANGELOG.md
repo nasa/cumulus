@@ -11,7 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3149**
 
   - Updates the api `/graunles/bulkDelete` endpoit to take the
-    follow configuration keys for the bulkDelete:
+    following configuration keys for the bulkDelete:
     - maxDbConnections - Defaults to concurrency , and generally should not be
         changed unltess troubleshooting performance concerns.
     - concurrency - Number of concurrent bulk deletions to process at a time.
