@@ -6,18 +6,45 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### MIGRATION notes
+
+From this release forward Core will be tested against postgres 11   Existing
+release compatibility testing was done for release 11.1.8/14.0.0+.   Users
+should migrate their datastores to Aurora postgres11.13+ compatible data stores
+as soon as possible.
+
+Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
+database clusters forcibly upgraded at the next maintenance window after 31 Jan
+2023.   Our guidance to mitigate this issue is to do a manual (outside of
+terraform) upgrade.   This will result in the cluster being upgraded with a
+manually set parameter group not managed by terraform.
+
+If you manually upgraded and the cluster is now on version 11.13, to continue using the `cumulus-rds-tf` module *once
+upgraded* update following module configuration values:
+
+```terraform
+parameter_group_family = "aurora-postgresql11"
+engine_version = 11.13
+```
+
+When you apply this update, the original postgresql v10 parameter group will be
+removed, and recreated using PG11 defaults/configured terraform values and
+update the database cluster to use the new configuration.
+
+
 ### Fixed
 
 - **CUMULUS-3148**
   - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
     PostgreSQL v11 upgrade exposed dependency on database results in the API return
   - Update unit test container to utilize PostgreSQL 11.13 container
+
 ### Changed
 
 - **Snyk Security**-
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
-  
+
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
 ### Breaking Changes
