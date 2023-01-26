@@ -425,7 +425,8 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('default returns list of granules', async (t) => {
+test.serial('default lists and paginates correctly with search_after', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
     .get('/granules')
     .set('Accept', 'application/json')
@@ -437,28 +438,25 @@ test.serial('default returns list of granules', async (t) => {
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
   t.is(meta.count, 2);
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
-});
 
-test.serial('default paginates correctly with search_after', async (t) => {
-  const response = await request(app)
+  // default paginates correctly with search_after
+  const firstResponse = await request(app)
     .get('/granules?limit=1')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
-
-  const { meta, results } = response.body;
-  t.is(results.length, 1);
-  t.is(meta.page, 1);
-  t.truthy(meta.searchContext);
+  const { meta: firstMeta, results: firstResults } = firstResponse.body;
+  t.is(firstResults.length, 1);
+  t.is(firstMeta.page, 1);
+  t.truthy(firstMeta.searchContext);
 
   const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
+    .get(`/granules?limit=1&page=2&searchContext=${firstMeta.searchContext}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
