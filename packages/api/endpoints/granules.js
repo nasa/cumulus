@@ -439,7 +439,25 @@ async function patchByGranuleId(req, res) {
   );
 }
 
-/* eslint-disable complexity */ //TODO
+/**
+ * Helper to check granule and collection IDs in queryparams
+ * against the payload body.
+ *
+ * @param {Object} body - update body payload
+ * @param {Object} req - express request object
+ * @returns {boolean} true if the body matches the query params
+ */
+function _granulePayloadMatchesQueryParams(body, req) {
+  if (
+    body.granuleId === req.params.granuleName
+    && body.collectionId === req.params.collectionId
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Update a single granule by granuleId and collectionId.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
@@ -464,10 +482,7 @@ async function patch(req, res) {
   const action = body.action;
 
   if (!action) {
-    if (
-      req.body.granuleId === req.params.granuleName &&
-      req.body.collectionId === req.params.collectionId
-    ) {
+    if (_granulePayloadMatchesQueryParams(body, req)) {
       return patchGranule(req, res);
     }
     return res.boom.badRequest(
