@@ -220,8 +220,8 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    * @param {ItemType} item - A record to insert into the DB
    * @param {string | Array<string>} returningFields - A string or array of strings
    *   of columns to return. Defaults to 'cumulus_id'.
-   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects or an
-   *   array of values from the specified column(s) from returningFields.
+   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects
+   *   from the specified column(s) from returningFields.
    */
   async create(
     knexOrTransaction: Knex | Knex.Transaction,
@@ -240,8 +240,8 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
    * @param {ItemType[]} items - Records to insert into the DB
    * @param {string | Array<string>} returningFields - A string or array of strings
    *   of columns to return. Defaults to 'cumulus_id'.
-   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects or an
-   *   array of values from the specified column(s) from returningFields.
+   * @returns {Promise<unknown[] | Object[]>} Returns an array of objects
+   *   from the specified column(s) from returningFields.
    */
   async insert(
     knexOrTransaction: Knex | Knex.Transaction,

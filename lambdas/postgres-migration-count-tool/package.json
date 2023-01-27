@@ -29,7 +29,7 @@
     "@cumulus/types": "11.1.8",
     "@cumulus/aws-client": "13.3.2",
     "@cumulus/logger": "13.3.2",
-    "knex": "0.95.15",
+    "knex": "2.4.1",
     "p-map": "^4.0.0",
     "pg": "^8.3.0"
   }
