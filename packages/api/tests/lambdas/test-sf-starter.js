@@ -16,6 +16,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const Semaphore = require('../../lib/Semaphore');
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
+const { sleep } = require('../../lib/sleep');
 
 const {
   incrementAndDispatch,
@@ -299,10 +300,13 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
   const result = await handleThrottledEvent({
     queueUrl,
     messageLimit,
-  }, 0);
+    timeLimit: 0,
+  }, 1);
   // Only 3 executions should have been started, even though 4 messages are in the queue
   //   5 (semaphore max )- 2 (initial value) = 3 available executions
   t.is(result, maxExecutions - initialSemValue);
+
+  await sleep(2000);
 
   // There should be 1 message left in the queue.
   //   4 initial messages - 3 messages read/deleted = 1 message
