@@ -231,6 +231,7 @@ async function getTEARequestJwtToken(
     exp: expirationTime,
   }, jwtPrivateKey, {
     algorithm: JwtAlgo,
+    allowInsecureKeySizes: true,
   });
 }
 
