@@ -166,18 +166,6 @@ test(
     )
 );
 
-test('handleEvent throws error when timeLimit is <= 0', async (t) => {
-  await t.throwsAsync(
-    () => handleEvent(createRuleInput('test', 0)),
-    { message: 'timeLimit must be greater than 0' }
-  );
-
-  await t.throwsAsync(
-    () => handleEvent(createRuleInput('test', -1)),
-    { message: 'timeLimit must be greater than 0' }
-  );
-});
-
 test.serial('handleEvent returns the number of messages consumed', async (t) => {
   const revert = sfStarter.__set__('Consumer', stubConsumer);
   const ruleInput = createRuleInput('queue');

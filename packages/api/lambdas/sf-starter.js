@@ -111,10 +111,6 @@ async function handleEvent(event, dispatchFn, visibilityTimeout) {
     throw new Error('queueUrl is missing');
   }
 
-  if (timeLimit <= 0) {
-    throw new Error('timeLimit must be greater than 0');
-  }
-
   const consumer = new Consumer({
     queueUrl: event.queueUrl,
     messageLimit,
