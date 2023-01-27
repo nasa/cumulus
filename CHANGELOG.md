@@ -50,26 +50,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
 
--**CUMULUS-3100**
-  - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
-  - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
-  - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
-- **CUMULUS-3077**
-  - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
-- **CUMULUS-3045**
-  - Update GitHub FAQs: add new and refreshed content for previous sections and added a dedicated Workflows section
-- **CUMULUS-3070**
-  - Updated API granule write logic to no longer require createdAt value in
-    dynamo/API granule validation.   Write-time createdAt defaults will be set in the case
-    of new API granule writes without the value set, and createdAt will be
-    overwritten if it already exists.
-  - Refactored granule write logic to allow PATCH behavior on API granule update
-    such that existing createdAt values will be retained in case of overwrite
-    across all API granule writes.
-  - Updated granule write code to validate written createdAt is synced between
-    datastores in cases where granule.createdAt is not provided for a new
-    granule.
-
 ### Fixed
 
 - **CUMULUS-3117**
