@@ -2118,6 +2118,69 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
   );
 });
 
+test.serial('PATCH executes successfully with no non-required-field-updates (testing "inert" update/undefined fields)', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const timestamp = Date.now();
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+      timestamp,
+    },
+  });
+
+  const updatedGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
+  };
+
+  await request(app)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+  t.deepEqual(actualGranule, {
+    ...newDynamoGranule,
+    timestamp: actualGranule.timestamp,
+    updatedAt: actualGranule.updatedAt,
+  });
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+
+  t.deepEqual(actualPgGranule, {
+    ...newPgGranule,
+    timestamp: actualPgGranule.timestamp,
+    updated_at: actualPgGranule.updated_at,
+  });
+
+  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+  t.like(updatedEsRecord, {
+    ...esRecord,
+    timestamp: actualGranule.timestamp,
+    updatedAt: actualGranule.updatedAt,
+  });
+});
+
 test.serial('PUT does not update non-current-timestamp undefined fields for existing granules in all datastores', async (t) => {
   const {
     esClient,
