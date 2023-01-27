@@ -222,11 +222,13 @@ const patchGranule = async (req, res) => {
   }
 
   let isNewRecord = false;
+  let originalStatus;
   try {
-    await granulePgModel.get(knex, {
+    const originalGranule = await granulePgModel.get(knex, {
       granule_id: apiGranule.granuleId,
       collection_cumulus_id: pgCollection.cumulus_id,
     });
+    originalStatus = originalGranule.status;
   } catch (error) {
     // Set status to `201 - Created` if record did not originally exist
     if (error instanceof RecordDoesNotExist) {
@@ -238,7 +240,7 @@ const patchGranule = async (req, res) => {
 
   try {
     if (isNewRecord) apiGranule = _setNewGranuleDefaults(apiGranule, isNewRecord);
-    await updateGranuleFromApiMethod(apiGranule, knex, esClient);
+    await updateGranuleFromApiMethod({ status: originalStatus, ...apiGranule }, knex, esClient);
   } catch (error) {
     log.error('failed to update granule', error);
     return res.boom.badRequest(errorify(error));
