@@ -268,10 +268,11 @@ test.before(async (t) => {
   t.context.provider = fakeProviderRecordFactory();
   t.context.providerPgModel = new ProviderPgModel();
 
-  [t.context.providerCumulusId] = await t.context.providerPgModel.create(
+  const [pgProvider] = await t.context.providerPgModel.create(
     t.context.knex,
     t.context.provider
   );
+  t.context.providerCumulusId = pgProvider.cumulus_id;
 
   t.context.pdrPgModel = new PdrPgModel();
   t.context.pdr = fakePdrRecordFactory({
@@ -279,10 +280,11 @@ test.before(async (t) => {
     provider_cumulus_id: t.context.providerCumulusId,
   });
 
-  [t.context.providerPdrId] = await t.context.pdrPgModel.create(
+  const [pgPdr] = await t.context.pdrPgModel.create(
     t.context.knex,
     t.context.pdr
   );
+  t.context.providerPdrId = pgPdr;
 
   // Create execution in Dynamo/Postgres
   // we need this as granules *should have* a related execution
