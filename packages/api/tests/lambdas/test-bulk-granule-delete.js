@@ -119,6 +119,8 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
   const pgGranuleId1 = pgGranule1.granule_id;
   const pgGranuleId2 = pgGranule2.granule_id;
 
+  const removeGranuleFromCmrFunctionMock = () => true;
+
   const { deletedGranules } = await bulkGranuleDelete(
     {
       ids: [
@@ -127,7 +129,7 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       ],
       forceRemoveFromCmr: true,
     },
-    () => true
+    removeGranuleFromCmrFunctionMock
   );
 
   t.deepEqual(
