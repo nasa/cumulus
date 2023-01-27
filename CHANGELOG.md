@@ -55,7 +55,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3117**
   - Update `@cumulus/es-client/indexer.js` to properly handle framework write
     constraints for queued granules.    Queued writes will now be properly
-    dropped from elasticsearch writes along with
+    dropped from elasticsearch writes along with the primary datastore(s) when
+    write constraints apply
 
 ## [v14.0.0] 2022-12-08
 
