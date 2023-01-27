@@ -38,10 +38,13 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
  * @param {Object} params
  * @param {Knex} params.knex - DB client
  * @param {Object} params.pgGranuleRecord - A Postgres granule record
- * @param {string} params.pgCollection - A Postgres Collection record
- * @param {Object} params.granulePgModel - Instance of granules model for PostgreSQL
- * @param {Object} params.granuleDynamoModel - Instance of granules model for DynamoDB
- * @param {Function} [removeGranuleFromCmrFunction] - passed in function used for test mocking
+ * @param {string} [params.pgCollection] - A Postgres Collection record
+ * @param {Object} [params.granulePgModel=new GranulePgModel()]
+ * - Instance of granules model for PostgreSQL
+ * @param {Object} [params.granuleDynamoModel=new models.Granule()]
+ * - Instance of granules model for DynamoDB
+ * @param {Function} [removeGranuleFromCmrFunction=_removeGranuleFromCmr()]
+ * - passed in function used for test mocking
  * @returns {Object} - Updated granules
  * @returns {Object.dynamoGranule} - Updated Dynamo Granule
  * @returns {Object.pgGranule} - Updated Postgres Granule
