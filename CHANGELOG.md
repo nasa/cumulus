@@ -97,6 +97,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
 
+### Fixed
+
+- **CUMULUS-3117**
+  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
+    constraints for queued granules.    Queued writes will now be properly
+    dropped from elasticsearch writes along with the primary datastore(s) when
+    write constraints apply
+
 ## [v14.0.0] 2022-12-08
 
 ### Breaking Changes
@@ -173,7 +181,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
 - **CUMULUS-3080**
   - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
-- **CUMULUS-3100**
+- **CUMULUS-
+
+**
   - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
   - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
   - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
