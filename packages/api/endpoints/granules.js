@@ -583,10 +583,22 @@ async function bulkDelete(req, res) {
     return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
   }
 
-  payload.concurrency = payload.concurrency ? Number(payload.concurrency) : 10;
-  payload.maxDbConnections = payload.MaxDbConnections
+  const concurrency = payload.concurrency ? Number(payload.concurrency) : 10;
+  const maxDbConnections = payload.MaxDbConnections
     ? Number(payload.MaxDbConnections)
-    : payload.concurrency;
+    : concurrency;
+
+  try {
+    ['concurrency', 'maxDbConnection'].forEach((key) => {
+      if (payload[key] && !Number.isInteger(payload[key])) {
+        throw new TypeError(
+          `payload ${key} must be a valid integer`
+        );
+      }
+    });
+  } catch (error) {
+    return res.boom.badRequest(error);
+  }
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
@@ -601,7 +613,7 @@ async function bulkDelete(req, res) {
     operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change
     payload: {
       type: 'BULK_GRANULE_DELETE',
-      payload,
+      payload: { ...payload, concurrency, maxDbConnections },
       envVars: {
         cmr_client_id: process.env.cmr_client_id,
         CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
