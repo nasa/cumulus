@@ -28,7 +28,7 @@ const {
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, Execution } = require('../../models');
+const { AccessToken } = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
@@ -183,7 +183,6 @@ const executionExistsMock = (arn) => {
 
 let jwtAuthToken;
 let accessTokenModel;
-let executionModel;
 let mockedSF;
 let mockedSFExecution;
 let collectionPgModel;
@@ -245,11 +244,6 @@ test.before(async (t) => {
     t.context.fakeExecutionRecord
   );
   const expiredExecutionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
-
-  // create fake Executions table
-  executionModel = new Execution();
-  await executionModel.createTable();
-  await executionModel.create(fakeExecution);
 
   process.env = {
     ...process.env,
@@ -339,7 +333,6 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   mockedSF.restore();
   mockedSFExecution.restore();
-  await executionModel.deleteTable();
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,
