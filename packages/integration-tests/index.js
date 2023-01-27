@@ -677,8 +677,11 @@ async function waitForAllTestSf(
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
     await delay(waitPeriodMs);
     timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
-    const executions = await getExecutions(workflowArn, 100);
-    // Search all recent executions for target payload
+    const sfExecutions = await getExecutions(workflowArn, 100);
+    const executions = sfExecutions.filter(
+      (sfExecution) => sfExecution.startDate.getTime() > Date.now() - 12 * 3600 * 1000
+    );
+    // Search all recent 12 hours executions for target payload
     for (let ctr = 0; ctr < executions.length; ctr += 1) {
       const execution = executions[ctr];
       if (!workflowExecutions.find((e) => e.executionArn === execution.executionArn)) {

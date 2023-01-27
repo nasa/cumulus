@@ -298,10 +298,11 @@ test.beforeEach(async (t) => {
   t.context.executionCumulusId = pgExecution.cumulus_id;
   t.context.executionUrl = pgExecution.url;
 
-  [t.context.providerCumulusId] = await t.context.providerPgModel.create(
+  const [pgProvider] = await t.context.providerPgModel.create(
     t.context.knex,
     t.context.provider
   );
+  t.context.providerCumulusId = pgProvider.cumulus_id;
 
   // Generate and create a PDR for reference in postgres
   t.context.pdr = fakePdrRecordFactory({
@@ -309,10 +310,11 @@ test.beforeEach(async (t) => {
     provider_cumulus_id: t.context.providerCumulusId,
   });
 
-  [t.context.providerPdrId] = await t.context.pdrPgModel.create(
+  const [pgPdr] = await t.context.pdrPgModel.create(
     t.context.knex,
     t.context.pdr
   );
+  t.context.providerPdrId = pgPdr.cumulus_id;
 
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
