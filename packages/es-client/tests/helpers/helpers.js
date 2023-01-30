@@ -1,7 +1,7 @@
 'use strict';
 
 const range = require('lodash/range');
-const pMap = require('p-map');
+const pEachSeries = require('p-each-series');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const indexer = require('../../indexer');
@@ -21,12 +21,11 @@ const granuleFactory = (number = 1, opts, granuleParams = {}) =>
     };
   });
 
-const loadGranules = (granules, t) =>
-  pMap(
-    granules,
-    (granule) => indexer.indexGranule(t.context.esClient, granule, t.context.esAlias),
-    { concurrency: 10 }
-  );
+const loadGranules = async (granules, t) => {
+  const loadGranule = async (granule) =>
+    await indexer.indexGranule(t.context.esClient, granule, t.context.esAlias);
+  await pEachSeries(granules, loadGranule);
+};
 
 module.exports = {
   granuleFactory,
