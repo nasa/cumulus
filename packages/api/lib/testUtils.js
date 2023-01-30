@@ -483,9 +483,9 @@ const createProviderTestRecords = async (context, providerParams) => {
 
   const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
   await providerModel.create(originalProvider);
-  const [providerCumulusId] = await providerPgModel.create(testKnex, insertPgRecord);
+  const [pgProvider] = await providerPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await providerPgModel.get(
-    testKnex, { cumulus_id: providerCumulusId }
+    testKnex, { cumulus_id: pgProvider.cumulus_id }
   );
   await indexProvider(esClient, originalProvider, process.env.ES_INDEX);
   const originalEsRecord = await esProviderClient.get(
@@ -512,10 +512,7 @@ const createRuleTestRecords = async (context, ruleParams) => {
   const originalDynamoRule = await ruleModel.create(dynamoRuleWithTrigger);
   const insertPgRecord = await translateApiRuleToPostgresRule(originalDynamoRule, testKnex);
 
-  const [ruleCumulusId] = await rulePgModel.create(testKnex, insertPgRecord);
-  const originalPgRecord = await rulePgModel.get(
-    testKnex, { cumulus_id: ruleCumulusId }
-  );
+  const [originalPgRecord] = await rulePgModel.create(testKnex, insertPgRecord, '*');
   await indexRule(esClient, originalDynamoRule, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
@@ -553,9 +550,9 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
 
   const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
   const originalDynamoPdr = await pdrModel.create(originalPdr);
-  const [pdrCumulusId] = await pdrPgModel.create(knex, insertPgRecord);
+  const [pgPdr] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
-    knex, { cumulus_id: pdrCumulusId }
+    knex, { cumulus_id: pgPdr.cumulus_id }
   );
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
   const originalEsRecord = await esPdrsClient.get(
@@ -611,12 +608,12 @@ const createAsyncOperationTestRecords = async (context) => {
     knex
   );
   const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
-  const [asyncOperationCumulusId] = await asyncOperationPgModel.create(
+  const [pgAsyncOperation] = await asyncOperationPgModel.create(
     knex,
     insertPgRecord
   );
   const originalPgRecord = await asyncOperationPgModel.get(
-    knex, { cumulus_id: asyncOperationCumulusId }
+    knex, { cumulus_id: pgAsyncOperation.cumulus_id }
   );
   await indexAsyncOperation(esClient, originalAsyncOperation, process.env.ES_INDEX);
   const originalEsRecord = await esAsyncOperationClient.get(
