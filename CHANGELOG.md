@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3142**
   - Fix issue from CUMULUS-3070 where undefined values for status results in
     unexpected insertion failure on PATCH.
+- **CUMULUS-3181**
+  - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
     
 ### Changed
 

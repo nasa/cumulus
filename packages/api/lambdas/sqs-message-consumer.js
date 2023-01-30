@@ -22,8 +22,10 @@ const log = new Logger({ sender: '@cumulus/sqs-message-consumer' });
  */
 async function processQueues(event, dispatchFn) {
   const rules = await rulesHelpers.fetchRules({
-    type: 'sqs',
-    state: 'ENABLED',
+    queryParams: {
+      type: 'sqs',
+      state: 'ENABLED',
+    },
   });
 
   const messageLimit = event.messageLimit || 1;
