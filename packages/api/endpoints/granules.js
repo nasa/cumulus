@@ -1,5 +1,8 @@
+// @ts-check
+
 'use strict';
 
+const { z } = require('zod');
 const router = require('express-promise-router')();
 const isBoolean = require('lodash/isBoolean');
 
@@ -570,6 +573,13 @@ async function bulkOperations(req, res) {
   return res.status(202).send(asyncOperation);
 }
 
+const BulkDeletePayloadSchema = z.object({
+  forceRemoveFromCmr: z.boolean().optional(),
+  concurrency: z.number().int().positive().optional(),
+  MaxDbConnections: z.number().int().positive().optional(),
+  knexDebug: z.boolean().optional(),
+}).catchall(z.unknown());
+
 /**
  * Start an AsyncOperation that will perform a bulk granules delete
  *
@@ -578,27 +588,32 @@ async function bulkOperations(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function bulkDelete(req, res) {
-  const payload = req.body;
-  if (payload.forceRemoveFromCmr && !isBoolean(payload.forceRemoveFromCmr)) {
-    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
-  }
+  const payload = BulkDeletePayloadSchema.parse(req.body);
 
-  const concurrency = payload.concurrency ? Number(payload.concurrency) : 10;
-  const maxDbConnections = payload.MaxDbConnections
-    ? Number(payload.MaxDbConnections)
-    : concurrency;
+  // const payload = req.body;
+  // if (payload.forceRemoveFromCmr && !isBoolean(payload.forceRemoveFromCmr)) {
+  //   return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
+  // }
 
-  try {
-    ['concurrency', 'maxDbConnection'].forEach((key) => {
-      if (payload[key] && !Number.isInteger(payload[key])) {
-        throw new TypeError(
-          `payload ${key} must be a valid integer`
-        );
-      }
-    });
-  } catch (error) {
-    return res.boom.badRequest(error);
-  }
+  const concurrency = payload.concurrency || 10;
+
+  // const concurrency = payload.concurrency ? Number(payload.concurrency) : 10;
+  const maxDbConnections = payload.MaxDbConnections || concurrency;
+  // const maxDbConnections = payload.MaxDbConnections
+  //   ? Number(payload.MaxDbConnections)
+  //   : concurrency;
+
+  // try {
+  //   ['concurrency', 'maxDbConnection'].forEach((key) => {
+  //     if (payload[key] && !Number.isInteger(payload[key])) {
+  //       throw new TypeError(
+  //         `payload ${key} must be a valid integer`
+  //       );
+  //     }
+  //   });
+  // } catch (error) {
+  //   return res.boom.badRequest(error);
+  // }
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
@@ -624,7 +639,7 @@ async function bulkDelete(req, res) {
         ES_HOST: process.env.ES_HOST,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         GranulesTable: process.env.GranulesTable,
-        KNEX_DEBUG: payload.knexDebug || false,
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         launchpad_api: process.env.launchpad_api,
         launchpad_certificate: process.env.launchpad_certificate,
         launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
