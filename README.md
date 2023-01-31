@@ -155,7 +155,7 @@ The tests can be run against an Elasticsearch server running in AWS. This is use
 - The [Session Manager plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) for the AWS CLI is installed
 - [jq](https://stedolan.github.io/jq/) is installed
 - Your Cumulus deployment specified a `key_name` in `cumulus-tf/terraform.tfvars` that will grant you access to the EC2 instances that are part of that deployment
-- You are on the VPN
+- You are able to SSH into one of your EC2 instances (you are connected to a NASA VPN if required)
 
 ##### Configure ssh
 
