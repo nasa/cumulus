@@ -1,6 +1,5 @@
 'use strict';
 
-const delay = require('delay');
 const test = require('ava');
 const get = require('lodash/get');
 
@@ -15,6 +14,12 @@ const {
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 
 const { updateSqsQueue } = require('..');
+
+/**
+ * @param {number} duration - sleep duration in milliseconds
+ * @returns {Promise<void>}
+ */
+const sleep = (duration) => new Promise((resolve) => setTimeout(resolve, duration));
 
 // TODO: Copied from @cumulus/api/lib/testUtils to avoid the dependency, but
 // these helpers should probably have a better home?
@@ -235,7 +240,7 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 1);
 
-  await delay(6 * 1000);
+  await sleep(5 * 1000);
   numberOfMessages = await getSqsQueueMessageCounts(sqsQueues.queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 1);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
