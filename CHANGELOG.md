@@ -12,11 +12,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   - Updates the api `/graunles/bulkDelete` endpoit to take the
     following configuration keys for the bulkDelete:
-    - maxDbConnections - Defaults to concurrency , and generally should not be
-        changed unltess troubleshooting performance concerns.
     - concurrency - Number of concurrent bulk deletions to process at a time.
-        Defaults to 10, increasing this value may improve throughput at the cost
-        of additional database/CMR/etc load.
+            Defaults to 10, increasing this value may improve throughput at the cost
+            of additional database/CMR/etc load.
+    - maxDbConnections - Defaults to `concurrency`, and generally should not be
+        changed unltess troubleshooting performance concerns.
   - Updates all bulk api endpoints to add knexDebug boolean query parameter to
     allow for debugging of database connection issues in the future.
   - Fixed logic defect in bulk deletion logic where an information query was
