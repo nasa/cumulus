@@ -147,7 +147,7 @@ $ npm run db:local:migrate
 
 #### Using an AWS-hosted Elasticsearch server
 
-The tests can be run against an Elasticsearch server running in AWS. This is useful if you are using an M1 Mac and are unable to run the old version of Elasticsearch in Docker. These instructions assume that you have a deployment of Cumulus available, and the deployment name is "EXAMPLE".
+The tests can be run against an Elasticsearch server running in AWS. This is useful if you are using an ARM-equipped Mac and are unable to run the old Intel version of Elasticsearch in Docker. These instructions assume that you have a deployment of Cumulus available, and the deployment name is "EXAMPLE".
 
 ##### Pre-Reqs
 
