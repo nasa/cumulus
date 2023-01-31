@@ -298,7 +298,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial('default returns list of rules', async (t) => {
+test.serial.only('default returns list of rules', async (t) => {
   const response = await request(app)
     .get('/rules')
     .set('Accept', 'application/json')
@@ -307,6 +307,26 @@ test.serial('default returns list of rules', async (t) => {
 
   const { results } = response.body;
   t.is(results.length, 1);
+});
+
+test.serial('search returns correct list of rules', async (t) => {
+  const response = await request(app)
+    .get('/rules?page=1&rule.type=onetime&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  t.is(results.length, 1);
+
+  const newResponse = await request(app)
+    .get('/rules?page=1&rule.type=sqs&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results: newResults } = newResponse.body;
+  t.is(newResults.length, 0);
 });
 
 test('GET gets a rule', async (t) => {
