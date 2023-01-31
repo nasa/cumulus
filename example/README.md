@@ -29,7 +29,7 @@ brew install tfenv
 In order to prevent state corruption and other issues, you **should only install and use the version of Terraform specified in the `example/.tfversion` file**:
 
 ```shell
-tfenv install $(cat example/.tfversion)
+env TFENV_ARCH=amd64 tfenv install $(cat example/.tfversion)
 ```
 
 Verify that the correct version of Terraform is installed (version number should match `example/.tfversion`):
