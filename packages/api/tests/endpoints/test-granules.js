@@ -2315,8 +2315,6 @@ test.serial('PUT nullifies expected fields for existing granules in all datastor
   );
 });
 
-// FUTURE: this is explicitly a PATCH behavior test -
-// moving this is part of CUMULUS-3069/CUMULUS-3072
 test.serial('PATCH does not overwrite existing duration of an existing granule if not specified in the payload', async (t) => {
   const { esClient, executionUrl, knex } = t.context;
 
@@ -2668,7 +2666,7 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
   t.truthy(createGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial("patch() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
+test.serial("patchGranule() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
   const { esClient, executionUrl, knex } = t.context;
 
   const { apiGranule } = await createGranuleAndFiles({
