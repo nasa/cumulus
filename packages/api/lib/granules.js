@@ -125,11 +125,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
       });
     } catch (error) {
       updatedFiles.push({ ...file, fileName: getNameOfFile(file) });
-      log.error(
-        `Failed to move file ${JSON.stringify(
-          moveFileParam
-        )} -- ${JSON.stringify(error.message)}`
-      );
+      log.error(`Failed to move file ${JSON.stringify(moveFileParam)} -- ${JSON.stringify(error.message)}`);
       error.message = `${JSON.stringify(moveFileParam)}: ${error.message}`;
       throw error;
     }
@@ -214,8 +210,11 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
   );
   const distributionBucketMap = await fetchDistributionBucketMap();
 
-  const { updatedFiles, moveGranuleErrors } =
-    await moveGranuleFilesAndUpdateDatastore({ apiGranule, destinations });
+  const {
+    updatedFiles,
+    moveGranuleErrors,
+  } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, destinations });
+
   await CmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
     updatedFiles,

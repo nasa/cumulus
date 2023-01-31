@@ -960,12 +960,9 @@ async function bulkDelete(req, res) {
 
 async function bulkReingest(req, res) {
   const payload = req.body;
-  const numOfGranules =
-    (payload.query && payload.query.size) ||
-    (payload.granules && payload.granules.length);
-  const description = `Bulk granule reingest run on ${
-    numOfGranules || ''
-  } granules`;
+  const numOfGranules = (payload.query && payload.query.size)
+    || (payload.granules && payload.granules.length);
+  const description = `Bulk granule reingest run on ${numOfGranules || ''} granules`;
 
   const asyncOperationId = uuidv4();
   const asyncOperationEvent = {
