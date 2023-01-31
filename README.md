@@ -145,6 +145,82 @@ Stop localstack/unit test services:
 $ npm run db:local:migrate
 ```
 
+#### Using an AWS-hosted Elasticsearch server
+
+The tests can be run against an Elasticsearch server running in AWS. This is useful if you are using an M1 Mac and are unable to run the old version of Elasticsearch in Docker. These instructions assume that you have a deployment of Cumulus available, and the deployment name is "EXAMPLE".
+
+##### Pre-Reqs
+
+- The [AWS CLI](https://aws.amazon.com/cli/) is installed
+- The [Session Manager plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) for the AWS CLI is installed
+- [jq](https://stedolan.github.io/jq/) is installed
+- Your Cumulus deployment specified a `key_name` in `cumulus-tf/terraform.tfvars` that will grant you access to the EC2 instances that are part of that deployment
+- You are on the VPN
+
+##### Configure ssh
+
+Add the following to your `~/.ssh/config` file
+
+```text
+Host i-*
+  User ec2-user
+  ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+```
+
+##### Find an EC2 instance to tunnel through
+
+```sh
+$ aws ec2 describe-instances --filters "Name=tag:Deployment,Values=EXAMPLE" "Name=instance-state-name,Values=running" | jq -r '.Reservations[0].Instances[0].InstanceId'
+i-abc123
+```
+
+##### Find the hostname of the Elasticsearch domain
+
+In the [AWS OpenSearch console](https://us-east-1.console.aws.amazon.com/aos/home?region=us-east-1#opensearch/domains), find the domain associated with your Cumulus deployment. Click the domain, and find the "Domain endpoint (VPC)" URL. This URL will contain the hostname of your Elasticsearch domain. For example, if the URL is `https://vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com/`, then the hostname is `vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com`. This hostname will be used when setting up the tunnel to Elasticsearch.
+
+##### Start the ssh tunnel to Elasticsearch
+
+Open an SSH tunnel to Elasticsearch with the following command. You will need to substitute in the values that you found above.
+
+```sh
+ssh -L 8443:vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com:443 i-abc123
+[ec2-user@ip-10.0.0.5 ~]$
+```
+
+At this point you can send requests to <https://localhost:8443> and get responses from your Elasticsearch domain running in AWS. Note that, because you're tunneling TLS-encrypted traffic, the certificates are not going to match. The test code handles this already but, if you're using `curl`, make sure to use the `-k` option to disable strict certificate checks.
+
+```sh
+$ curl -k https://localhost:8443
+{
+  "name" : "ABC123",
+  "cluster_name" : "123:abc-es-vpc",
+  "cluster_uuid" : "abc-Ti6N3IA2ULvpBQ",
+  "version" : {
+    "number" : "5.3.2",
+    "build_hash" : "6bc5aba",
+    "build_date" : "2022-09-02T09:03:07.611Z",
+    "build_snapshot" : false,
+    "lucene_version" : "6.4.2"
+  },
+  "tagline" : "You Know, for Search"
+}
+```
+
+##### Run the tests
+
+With the tunnel configured, you can now run the tests with the following command:
+
+```sh
+env \
+  LOCAL_ES_HOST_PORT=8443 \
+  LOCAL_ES_HOST_PROTOCOL=https \
+  LOCAL_ES_HOST=localhost \
+  LOCALSTACK_HOST=127.0.0.1 \
+npm test
+```
+
 #### Run tests
 
 Run the test commands next
