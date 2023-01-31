@@ -1694,11 +1694,11 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from Po
     dynamoRecord: existingGranule,
     knexOrTransaction: knex,
   });
-  const [existingPgGranuleRecordId] = await granulePgModel.create(knex, existingPgGranule, '*');
+  const [existingPgGranuleRecord] = await granulePgModel.create(knex, existingPgGranule, '*');
 
   await Promise.all(files.map(async (file) => {
     const pgFile = await translateApiFiletoPostgresFile(file);
-    pgFile.granule_cumulus_id = existingPgGranuleRecordId.cumulus_id;
+    pgFile.granule_cumulus_id = existingPgGranuleRecord.cumulus_id;
     return filePgModel.create(knex, pgFile);
   }));
   const existingPgFiles = await filePgModel.search(knex, {});
@@ -2465,7 +2465,7 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
   });
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
 
-  const fakeFile = await filePgModel.create(knex, {
+  const [fakeFile] = await filePgModel.create(knex, {
     granule_cumulus_id: returnedGranule[0].cumulus_id,
     bucket: 'fake_bucket',
     key: 'fake_key',
