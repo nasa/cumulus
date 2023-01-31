@@ -298,7 +298,7 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
 
 test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
 
-test.serial.only('default returns list of rules', async (t) => {
+test.serial('default returns list of rules', async (t) => {
   const response = await request(app)
     .get('/rules')
     .set('Accept', 'application/json')
