@@ -478,6 +478,42 @@ test('upsertGranule does not update "completed" granule record to "running" stat
   t.like(updatedEsRecord, granule);
 });
 
+test('upsertGranule does not update "completed" granule record to "queued" status for the same execution if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  // updates should NOT have been applied
+  t.like(updatedEsRecord, granule);
+});
+
 test('upsertGranule does update "completed" granule record to "running" status for the same execution if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -503,6 +539,41 @@ test('upsertGranule does update "completed" granule record to "running" status f
   const updates = {
     ...granule,
     status: 'running',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "completed" granule record to "queued" status for the same execution if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
   };
   await indexer.upsertGranule({
     esClient,
@@ -549,6 +620,42 @@ test('upsertGranule does not update "failed" granule record to "running" status 
   t.like(updatedEsRecord, granule);
 });
 
+test('upsertGranule does not update "failed" granule record to "queued" status for the same execution if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'failed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  // updates should NOT have been applied
+  t.like(updatedEsRecord, granule);
+});
+
 test('upsertGranule does update "failed" granule record to "running" status for the same execution if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -574,6 +681,41 @@ test('upsertGranule does update "failed" granule record to "running" status for 
   const updates = {
     ...granule,
     status: 'running',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "failed" granule record to "queued" status for the same execution if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'failed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
   };
   await indexer.upsertGranule({
     esClient,
@@ -621,6 +763,43 @@ test('upsertGranule does not update "running" granule to "failed" for same execu
   t.like(updatedEsRecord, granule);
 });
 
+test('upsertGranule does not update "queued" granule to "failed" for same execution and older createdAt value if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'failed',
+    createdAt: createdAt - 1,
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  // updates should NOT have been applied
+  t.like(updatedEsRecord, granule);
+});
+
 test('upsertGranule does update "running" granule to "failed" for same execution and older createdAt value if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -630,6 +809,42 @@ test('upsertGranule does update "running" granule to "failed" for same execution
     granuleId: randomString(),
     collectionId: randomString(),
     status: 'running',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'failed',
+    createdAt: createdAt - 1,
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "queued" granule to "failed" for same execution and older createdAt value if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
     execution,
     createdAt,
   };
@@ -695,6 +910,44 @@ test('upsertGranule does not update "running" granule to "failed" for different 
   t.like(updatedEsRecord, granule);
 });
 
+test('upsertGranule does not update "queued" granule to "failed" for different execution and older createdAt value if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'failed',
+    createdAt: createdAt - 1,
+    execution: randomString(),
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  // updates should NOT have been applied
+  t.like(updatedEsRecord, granule);
+});
+
 test('upsertGranule does update "running" granule to "failed" for different execution and older createdAt value if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -704,6 +957,43 @@ test('upsertGranule does update "running" granule to "failed" for different exec
     granuleId: randomString(),
     collectionId: randomString(),
     status: 'running',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'failed',
+    createdAt: createdAt - 1,
+    execution: randomString(),
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "queued" granule to "failed" for different execution and older createdAt value if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
     execution,
     createdAt,
   };
@@ -842,6 +1132,41 @@ test('upsertGranule does update "running" granule record to "completed" status f
   t.like(updatedEsRecord, updates);
 });
 
+test('upsertGranule does update "queued" granule record to "completed" status for the same execution if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'completed',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
 test('upsertGranule does update "running" granule record to "completed" status for the same execution if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -851,6 +1176,41 @@ test('upsertGranule does update "running" granule record to "completed" status f
     granuleId: randomString(),
     collectionId: randomString(),
     status: 'running',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'completed',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "queued" granule record to "completed" status for the same execution if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
     execution,
     createdAt,
   };
@@ -912,6 +1272,41 @@ test('upsertGranule does update "running" granule record to "failed" status for 
   t.like(updatedEsRecord, updates);
 });
 
+test('upsertGranule does update "queued" granule record to "failed" status for the same execution if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'failed',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
 test('upsertGranule does update "running" granule record to "failed" status for the same execution if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -921,6 +1316,41 @@ test('upsertGranule does update "running" granule record to "failed" status for 
     granuleId: randomString(),
     collectionId: randomString(),
     status: 'running',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'failed',
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "queued" granule record to "failed" status for the same execution if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'queued',
     execution,
     createdAt,
   };
@@ -983,6 +1413,42 @@ test('upsertGranule does update "completed" granule record to "running" status f
   t.like(updatedEsRecord, updates);
 });
 
+test('upsertGranule does update "completed" granule record to "queued" status for a different execution if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
+    execution: randomString(),
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, true);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
 test('upsertGranule does update "completed" granule record to "running" status for a different execution if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -1008,6 +1474,42 @@ test('upsertGranule does update "completed" granule record to "running" status f
   const updates = {
     ...granule,
     status: 'running',
+    execution: randomString(),
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "completed" granule record to "queued" status for a different execution if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'completed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  });
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
     execution: randomString(),
   };
   await indexer.upsertGranule({
@@ -1055,6 +1557,42 @@ test('upsertGranule does update "failed" granule record to "running" status for 
   t.like(updatedEsRecord, updates);
 });
 
+test('upsertGranule does update "failed" granule record to "queued" status for a different execution if writeConstraints is true', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'failed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  }, true);
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
+    execution: randomString(),
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
 test('upsertGranule does update "failed" granule record to "running" status for a different execution if writeConstraints is false', async (t) => {
   const { esIndex, esClient } = t.context;
 
@@ -1080,6 +1618,42 @@ test('upsertGranule does update "failed" granule record to "running" status for 
   const updates = {
     ...granule,
     status: 'running',
+    execution: randomString(),
+  };
+  await indexer.upsertGranule({
+    esClient,
+    updates,
+    index: esIndex,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(updatedEsRecord, updates);
+});
+
+test('upsertGranule does update "failed" granule record to "queued" status for a different execution if writeConstraints is false', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = randomString();
+  const createdAt = Date.now();
+  const granule = {
+    granuleId: randomString(),
+    collectionId: randomString(),
+    status: 'failed',
+    execution,
+    createdAt,
+  };
+
+  await indexer.upsertGranule({
+    esClient,
+    updates: granule,
+    index: esIndex,
+  }, false);
+
+  const esRecord = await t.context.esGranulesClient.get(granule.granuleId);
+  t.like(esRecord, granule);
+
+  const updates = {
+    ...granule,
+    status: 'queued',
     execution: randomString(),
   };
   await indexer.upsertGranule({
