@@ -190,6 +190,7 @@ module.exports = {
       ],
       extends: ['airbnb-typescript/lib/shared'],
       rules: {
+        '@typescript-eslint/dot-notation': 'off',
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
         '@typescript-eslint/comma-dangle': [
@@ -209,6 +210,7 @@ module.exports = {
         'lodash/prefer-lodash-typecheck': 'off',
         'node/no-unsupported-features/es-syntax': 'off',
         'node/shebang': 'off',
+        'valid-jsdoc': 'off',
       },
       parserOptions: {
         project: './tsconfig.eslint.json',
