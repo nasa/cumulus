@@ -184,10 +184,11 @@ test.before(async (t) => {
     t.context.testAsyncOperation
   );
 
-  [t.context.asyncOperationCumulusId] = await t.context.asyncOperationsPgModel.create(
+  const [pgAsyncOperationRecord] = await t.context.asyncOperationsPgModel.create(
     knex,
     testPgAsyncOperation
   );
+  t.context.asyncOperationCumulusId = pgAsyncOperationRecord.cumulus_id;
 
   // Create collections in Postgres
   // we need this because a granule has a foreign key referring to collections
@@ -404,10 +405,11 @@ test('GET returns an existing execution', async (t) => {
   );
   const collectionCumulusId = pgCollection.cumulus_id;
 
-  const [asyncOperationCumulusId] = await asyncOperationsPgModel.create(
+  const [pgAsyncOperationRecord] = await asyncOperationsPgModel.create(
     t.context.knex,
     asyncRecord
   );
+  const asyncOperationCumulusId = pgAsyncOperationRecord.cumulus_id;
 
   const [parentPgExecution] = await t.context.executionPgModel.create(
     t.context.knex,

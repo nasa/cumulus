@@ -1,5 +1,11 @@
 # Required
 
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
+  default = {}
+}
+
 variable "cmr_client_id" {
   type = string
 }
@@ -48,6 +54,12 @@ variable "csdap_client_password" {
 variable "csdap_host_url" {
   type        = string
   description = "The csdap host url"
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 30
+  description = "default value that user chooses for their log retention periods"
 }
 
 variable "launchpad_api" {

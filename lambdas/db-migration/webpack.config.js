@@ -3,6 +3,7 @@ const { IgnorePlugin } = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 
 const ignoredPackages = [
+  'better-sqlite3',
   'mssql',
   'mssql/lib/base',
   'mssql/package.json',

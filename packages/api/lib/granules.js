@@ -37,10 +37,7 @@ const FileUtils = require('./FileUtils');
  * @param {Function} fileUtils - utility to convert files to new schema
  * @returns {Object} - translated granule object
  */
-const translateGranule = async (
-  granule,
-  fileUtils = FileUtils
-) => {
+const translateGranule = async (granule, fileUtils = FileUtils) => {
   let { files, productVolume } = granule;
   if (!isNil(files)) {
     files = await fileUtils.buildDatabaseFiles({
@@ -75,21 +72,21 @@ const getExecutionProcessingTimeInfo = ({
 };
 
 /**
-* Move granule 'file' S3 Objects and update Postgres/CMR metadata with new locations
-*
-* @param {Object} params                                - params object
-* @param {Object} params.apiGranule                     - API 'granule' object to move
-* @param {Object} params.granulesModel                  - DynamoDB granules model instance
-* @param {Object} params.destinations                   - 'Destinations' API object ()
-* @param {Object} params.granulePgModel                 - parameter override, used for unit testing
-* @param {Object} params.collectionPgModel              - parameter override, used for unit testing
-* @param {Object} params.filesPgModel                   - parameter override, used for unit testing
-* @param {Object} params.esClient                       - parameter override, used for unit testing
-* @param {Object} params.dbClient                       - parameter override, used for unit testing
-* @returns {Promise<Object>} - Object containing an 'updated'
-*  files object with current file key values and an error object containing a set of
-*  Promise.allSettled errors
-*/
+ * Move granule 'file' S3 Objects and update Postgres/CMR metadata with new locations
+ *
+ * @param {Object} params                                - params object
+ * @param {Object} params.apiGranule                     - API 'granule' object to move
+ * @param {Object} params.granulesModel                  - DynamoDB granules model instance
+ * @param {Object} params.destinations                   - 'Destinations' API object ()
+ * @param {Object} params.granulePgModel                 - parameter override, used for unit testing
+ * @param {Object} params.collectionPgModel              - parameter override, used for unit testing
+ * @param {Object} params.filesPgModel                   - parameter override, used for unit testing
+ * @param {Object} params.esClient                       - parameter override, used for unit testing
+ * @param {Object} params.dbClient                       - parameter override, used for unit testing
+ * @returns {Promise<Object>} - Object containing an 'updated'
+ *  files object with current file key values and an error object containing a set of
+ *  Promise.allSettled errors
+ */
 async function moveGranuleFilesAndUpdateDatastore(params) {
   const {
     apiGranule,
@@ -102,13 +99,16 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
   } = params;
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
-  const postgresCumulusGranuleId = await granulePgModel.getRecordCumulusId(dbClient, {
-    granule_id: apiGranule.granuleId,
-    collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
-      dbClient,
-      { name, version }
-    ),
-  });
+  const postgresCumulusGranuleId = await granulePgModel.getRecordCumulusId(
+    dbClient,
+    {
+      granule_id: apiGranule.granuleId,
+      collection_cumulus_id: await collectionPgModel.getRecordCumulusId(
+        dbClient,
+        { name, version }
+      ),
+    }
+  );
   const updatedFiles = [];
   const moveFileParams = generateMoveFileParams(apiGranule.files, destinations);
   const moveFilePromises = moveFileParams.map(async (moveFileParam) => {
@@ -149,19 +149,19 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
 }
 
 /**
-   * With the params for moving a granule, return the files that already exist at
-   * the move location
-   *
-   * @param {Object} granule - the granule object
-   * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
-   * - list of destinations specified
-   *    regex - regex for matching filepath of file to new destination
-   *    bucket - aws bucket of the destination
-   *    filepath - file path/directory on the bucket for the destination
-   * @returns {Promise<Array<Object>>} - promise that resolves to a list of files
-   * that already exist at the destination that they would be written to if they
-   * were to be moved via the move granules call
-   */
+ * With the params for moving a granule, return the files that already exist at
+ * the move location
+ *
+ * @param {Object} granule - the granule object
+ * @param {Array<{regex: string, bucket: string, filepath: string}>} destinations
+ * - list of destinations specified
+ *    regex - regex for matching filepath of file to new destination
+ *    bucket - aws bucket of the destination
+ *    filepath - file path/directory on the bucket for the destination
+ * @returns {Promise<Array<Object>>} - promise that resolves to a list of files
+ * that already exist at the destination that they would be written to if they
+ * were to be moved via the move granules call
+ */
 async function getFilesExistingAtLocation(granule, destinations) {
   const moveFileParams = generateMoveFileParams(granule.files, destinations);
 
@@ -204,16 +204,17 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
     getBucketsConfigKey(process.env.stackName)
   );
 
-  const bucketTypes = Object.values(bucketsConfig)
-    .reduce(
-      (acc, { name, type }) => ({ ...acc, [name]: type }),
-      {}
-    ); const distributionBucketMap = await fetchDistributionBucketMap();
+  const bucketTypes = Object.values(bucketsConfig).reduce(
+    (acc, { name, type }) => ({ ...acc, [name]: type }),
+    {}
+  );
+  const distributionBucketMap = await fetchDistributionBucketMap();
 
   const {
     updatedFiles,
     moveGranuleErrors,
   } = await moveGranuleFilesAndUpdateDatastore({ apiGranule, destinations });
+
   await CmrUtils.reconcileCMRMetadata({
     granuleId: apiGranule.granuleId,
     updatedFiles,
@@ -225,22 +226,38 @@ async function moveGranule(apiGranule, destinations, distEndpoint) {
   if (moveGranuleErrors.length > 0) {
     log.error(`Granule ${JSON.stringify(apiGranule)} failed to move.`);
     log.error(JSON.stringify(moveGranuleErrors));
-    throw new Error(JSON.stringify({
-      reason: 'Failed to move granule',
-      granule: apiGranule,
-      errors: moveGranuleErrors,
-      granuleFilesRecords: updatedFiles,
-    }));
+    throw new Error(
+      JSON.stringify({
+        reason: 'Failed to move granule',
+        granule: apiGranule,
+        errors: moveGranuleErrors,
+        granuleFilesRecords: updatedFiles,
+      })
+    );
   }
 }
 
 const SCROLL_SIZE = 500; // default size in Kibana
 
-async function granuleEsQuery({
-  index,
-  query,
-  source,
-}) {
+function getTotalHits(bodyHits) {
+  if (bodyHits.total.value === 0) {
+    return 0;
+  }
+  return bodyHits.total.value || bodyHits.total;
+}
+
+/**
+ * Returns an array of granules from ElasticSearch query
+ *
+ * @param {Object} payload
+ * @param {string} [payload.index] - ES index to query
+ * @param {string} [payload.query] - ES query
+ * @param {Object} [payload.source] - List of IDs to operate on
+ * @param {Object} [payload.testBodyHits] - Optional body.hits for testing.
+ *  Some ES such as Cloud Metrics returns `hits.total.value` rather than `hits.total`
+ * @returns {Promise<Array<Object>>}
+ */
+async function granuleEsQuery({ index, query, source, testBodyHits }) {
   const granules = [];
   const responseQueue = [];
 
@@ -257,12 +274,13 @@ async function granuleEsQuery({
 
   while (responseQueue.length) {
     const { body } = responseQueue.shift();
+    const bodyHits = testBodyHits || body.hits;
 
-    body.hits.hits.forEach((hit) => {
+    bodyHits.hits.forEach((hit) => {
       granules.push(hit._source);
     });
 
-    const totalHits = body.hits.total.value || body.hits.total;
+    const totalHits = getTotalHits(bodyHits);
 
     if (totalHits !== granules.length) {
       responseQueue.push(
@@ -294,7 +312,9 @@ async function getGranuleIdsForPayload(payload) {
 
   // query ElasticSearch if needed
   if (granuleIds.length === 0 && payload.query) {
-    log.info('No granule ids detected. Searching for granules in Elasticsearch.');
+    log.info(
+      'No granule ids detected. Searching for granules in Elasticsearch.'
+    );
 
     const granules = await granuleEsQuery({
       index,
@@ -328,7 +348,7 @@ async function getGranulesForPayload(payload) {
 
   // query ElasticSearch if needed
   if (!granules && query) {
-    log.info('No granules detected. Searching for granules in Elasticsearch.');
+    log.info('No granules detected. Searching for granules in ElasticSearch.');
 
     const esGranules = await granuleEsQuery({
       index,
@@ -336,10 +356,11 @@ async function getGranulesForPayload(payload) {
       source: ['granuleId', 'collectionId'],
     });
 
-    esGranules.map((granule) => queryGranules.push({
-      granuleId: granule.granuleId,
-      collectionId: granule.collectionId,
-    }));
+    esGranules.map((granule) =>
+      queryGranules.push({
+        granuleId: granule.granuleId,
+        collectionId: granule.collectionId,
+      }));
   }
   // Remove duplicate Granule IDs
   // TODO: could we get unique IDs from the query directly?
@@ -353,6 +374,7 @@ module.exports = {
   getGranuleIdsForPayload,
   getGranulesForPayload,
   moveGranule,
+  granuleEsQuery,
   moveGranuleFilesAndUpdateDatastore,
   translateGranule,
 };

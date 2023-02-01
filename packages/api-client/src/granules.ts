@@ -148,7 +148,7 @@ export const waitForGranule = async (params: {
 
 /**
  * Reingest a granule from the Cumulus API
- * PUT /granules/{}
+ * PATCH /granules/{}
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack
@@ -188,7 +188,7 @@ export const reingestGranule = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path,
       headers: {
@@ -205,7 +205,7 @@ export const reingestGranule = async (params: {
 
 /**
  * Removes a granule from CMR via the Cumulus API
- * PUT /granules/{granuleId}
+ * PATCH /granules/{granuleId}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -234,7 +234,7 @@ export const removeFromCMR = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path,
       headers: {
@@ -247,7 +247,7 @@ export const removeFromCMR = async (params: {
 
 /**
  * Run a workflow with the given granule as the payload
- * PUT /granules/{granuleId}
+ * PATCH /granules/{granuleId}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -286,7 +286,7 @@ export const applyWorkflow = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
@@ -346,7 +346,7 @@ export const deleteGranule = async (params: {
 
 /**
  * Move a granule via the API
- * PUT /granules/{granuleId}
+ * PATCH /granules/{granuleId}
  *
  * @param {Object} params                       - params
  * @param {string} params.prefix                - the prefix configured for the stack
@@ -383,7 +383,7 @@ export const moveGranule = async (params: {
   return await callback({
     prefix: prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
@@ -482,8 +482,10 @@ export const createGranule = async (params: {
 };
 
 /**
- * Update granule in cumulus.
- * PUT /granules/{granuleId}
+ * Update granule in cumulus via PATCH request.  Existing values will
+ * not be overwritten if not specified, null values will be removed and in
+ * some cases replaced with defaults.
+ * PATCH /granules/{granuleId}
  * @param {Object} params             - params
  * @param {Object} [params.body]      - granule to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
@@ -511,7 +513,7 @@ export const updateGranule = async (params: {
   return await callback({
     prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path,
       headers: { 'Content-Type': 'application/json' },

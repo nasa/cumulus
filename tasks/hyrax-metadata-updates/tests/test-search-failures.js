@@ -28,6 +28,14 @@ const event = {
   input: {},
 };
 
+const expectedresponse = [
+  {
+    access_token: 'ABCDE',
+    token_type: 'Bearer',
+    expiration_date: '1/1/2999',
+  },
+];
+
 test.before(async () => {
   await secretsManager().createSecret({
     Name: cmrPasswordSecret,
@@ -38,9 +46,9 @@ test.before(async () => {
 test.beforeEach(() => {
   process.env.CMR_ENVIRONMENT = 'OPS';
 
-  nock('https://cmr.earthdata.nasa.gov')
-    .post('/legacy-services/rest/tokens')
-    .reply(200, { token: 'ABCDE' });
+  nock('https://urs.earthdata.nasa.gov')
+    .get('/api/users/tokens')
+    .reply(200, expectedresponse);
 });
 
 test.afterEach.always(() => {
