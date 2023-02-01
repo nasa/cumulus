@@ -6,7 +6,7 @@ hide_title: false
 
 ## Overview
 
-Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided as the primary data store for Cumulus with Elasticsearch for non-authoritative querying/state data for the API and other applications that require more complex queries. Note that Cumulus is tested with an Aurora Postgres database.
+Cumulus deployments require an Aurora [PostgreSQL 11](https://www.postgresql.org/) compatible database to be provided as the primary data store for Cumulus with Elasticsearch for non-authoritative querying/state data for the API and other applications that require more complex queries. Note that Cumulus is tested with an Aurora Postgres database.
 
 Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
 
