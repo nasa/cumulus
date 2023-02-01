@@ -12,15 +12,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
     PostgreSQL 11 upgrade exposed dependency on database results in the API return
   - Update unit test container to utilize PostgreSQL 11.13 container
-
 - **CUMULUS-3033**
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
-
+- **CUMULUS-3142**
+  - Fix issue from CUMULUS-3070 where undefined values for status results in
+    unexpected insertion failure on PATCH.
+    
 ### Changed
 
-- **Snyk Security**-
+- **Snyk Security**
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
+  - Upgraded got from 11.8.3 to ^11.8.5
+- **Dependabot Security**
+  - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
   - Update Getting Started sections with current content
@@ -46,6 +51,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
+
+### Fixed
+
+- **CUMULUS-3117**
+  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
+    constraints for queued granules.    Queued writes will now be properly
+    dropped from elasticsearch writes along with the primary datastore(s) when
+    write constraints apply
 
 ## [v14.0.0] 2022-12-08
 
@@ -123,7 +136,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `lambdas/data-migration2` granule and files migration to have a `removeExcessFiles` function like in write-granules that will remove file records no longer associated with a granule being migrated
 - **CUMULUS-3080**
   - Changed the retention period in days from 14 to 30 for cloudwatch logs for NIST-5 compliance
-- **CUMULUS-3100**
+- **CUMULUS-
+
+**
   - Updated `POST` granules endpoint to check if granuleId exists across all collections rather than a single collection.
   - Updated `PUT` granules endpoint to check if granuleId exists across a different collection and throw conflict error if so.
   - Updated logic for writing granules from a message to check if granuleId exists across a different collection and throw conflict error if so.
