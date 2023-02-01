@@ -3,8 +3,9 @@
 'use strict';
 
 const { z } = require('zod');
+const { isError } = require('@cumulus/common');
+const { zodParser } = require('@cumulus/zod-utils');
 const router = require('express-promise-router')();
-const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -42,6 +43,11 @@ const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = require('../lib/request');
+
+/**
+ * @typedef {import('express').Request} Request
+ * @typedef {import('express').Response} Response
+ */
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
 
@@ -580,40 +586,22 @@ const BulkDeletePayloadSchema = z.object({
   knexDebug: z.boolean().optional(),
 }).catchall(z.unknown());
 
+const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
+
 /**
  * Start an AsyncOperation that will perform a bulk granules delete
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
  */
 async function bulkDelete(req, res) {
-  const payload = BulkDeletePayloadSchema.parse(req.body);
-
-  // const payload = req.body;
-  // if (payload.forceRemoveFromCmr && !isBoolean(payload.forceRemoveFromCmr)) {
-  //   return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
-  // }
+  const payload = parseBulkDeletePayload(req.body);
+  if (isError(payload)) return res.status(400).send({ errors: payload.errors });
 
   const concurrency = payload.concurrency || 10;
 
-  // const concurrency = payload.concurrency ? Number(payload.concurrency) : 10;
   const maxDbConnections = payload.MaxDbConnections || concurrency;
-  // const maxDbConnections = payload.MaxDbConnections
-  //   ? Number(payload.MaxDbConnections)
-  //   : concurrency;
-
-  // try {
-  //   ['concurrency', 'maxDbConnection'].forEach((key) => {
-  //     if (payload[key] && !Number.isInteger(payload[key])) {
-  //       throw new TypeError(
-  //         `payload ${key} must be a valid integer`
-  //       );
-  //     }
-  //   });
-  // } catch (error) {
-  //   return res.boom.badRequest(error);
-  // }
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;

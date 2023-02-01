@@ -72,6 +72,7 @@
     "@cumulus/pvl": "11.1.8",
     "@cumulus/sftp-client": "11.1.8",
     "@cumulus/types": "11.1.8",
+    "@cumulus/zod-utils": "0.0.1",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
