@@ -205,6 +205,8 @@ const _writePostgresGranuleViaTransaction = async ({
     granuleRecord,
   });
 
+  // TODO: even if pass in same record, upsertQueryResult will write and return the record.
+  // Should we have a test like upsertQueryResult[0] === pgGranule
   if (!upsertQueryResult[0]) {
     log.info(`
     Did not update ${granuleRecord.granule_id}, collection_cumulus_id ${granuleRecord.collection_cumulus_id}
