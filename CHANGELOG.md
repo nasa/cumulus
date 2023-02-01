@@ -69,7 +69,7 @@ update the database cluster to use the new configuration.
 ### Fixed
 
 - **CUMULUS-3148**:
-  - Updates cumulus-rds-tf to use defaults for postgres 11.13
+  - Updates cumulus-rds-tf to use defaults for PostgreSQL 11.13
 - **CUMULUS-3033**
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
 
