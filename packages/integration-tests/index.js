@@ -576,7 +576,7 @@ async function deleteRuleResources(stackName, bucketName, rules, postfix) {
     (rule) => rulesApi.deleteRule({
       prefix: stackName,
       ruleName: postfix ? `${rule.name}${postfix}` : rule.name,
-      query: { onlyResources: true },
+      query: { onlyResources: 'true' },
     }),
     { concurrency: process.env.CONCURRENCY || 3 }
   );
