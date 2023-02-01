@@ -1,4 +1,3 @@
-// @ts-nocheck
 import get from 'lodash/get';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
@@ -29,12 +28,15 @@ const logDetails: { [key: string]: string } = {
  */
 async function updateToken(
   username: string,
-  password: string
+  password: string,
 ): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/dot-notation
+  const edlEnv = process.env['CMR_ENVIRONMENT'];
+  if (!edlEnv) throw new Error('CMR_ENVIRONMENT not set');
   const earthdataLoginObject = new EarthdataLogin({
     username: username,
     password: password,
-    edlEnv: process.env.CMR_ENVIRONMENT,
+    edlEnv: edlEnv,
   });
   return await earthdataLoginObject.getEDLToken();
 }

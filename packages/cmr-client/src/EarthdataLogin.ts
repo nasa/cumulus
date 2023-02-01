@@ -1,7 +1,9 @@
-// @ts-nocheck
+import { z } from 'zod';
 import get from 'lodash/get';
-import got from 'got';
-import Response from 'got';
+import got, { Got, HTTPError } from 'got';
+// import Response from 'got';
+// import got from 'got';
+import { sortBy } from 'lodash';
 
 type EarthdataGetTokenResponse = Response<{
   body: {
@@ -147,7 +149,7 @@ export class EarthdataLogin {
         return response[i].access_token;
       }
     }
-    return undefined;
+    return undefined!;
   }
 
   /**
