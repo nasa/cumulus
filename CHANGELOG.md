@@ -23,7 +23,7 @@ If you manually upgraded and the cluster is now on version 11.13, to continue us
 upgraded* update following module configuration values if set, or allow their
 defaults to be utilized:
 
-```
+```terraform
 parameter_group_family = "aurora-postgresql11"
 engine_version = 11.13
 ```
