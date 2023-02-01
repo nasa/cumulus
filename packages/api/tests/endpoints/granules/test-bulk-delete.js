@@ -215,7 +215,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_username: process.env.cmr_username,
       GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-      KNEX_DEBUG: false,
+      KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
       launchpad_certificate: process.env.launchpad_certificate,
       launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
