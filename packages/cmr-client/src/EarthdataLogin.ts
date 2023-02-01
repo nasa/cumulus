@@ -1,24 +1,51 @@
 import { z } from 'zod';
-import get from 'lodash/get';
 import got, { Got, HTTPError } from 'got';
-// import Response from 'got';
-// import got from 'got';
 import { sortBy } from 'lodash';
 
-type EarthdataGetTokenResponse = Response<{
-  body: {
-    access_token?: string,
-    token_type?: string,
-    expiration_date?: string
-  }
-}>;
+const TokenSchema = z.object({
+  access_token: z.string(),
+  expiration_date: z.string(),
+});
 
-type EarthdataPostTokenResponse = Response<{
-  body: {
-    access_token?: string,
-    expiration_date?: string
+type Token = z.infer<typeof TokenSchema>;
+
+const GetTokenSchema = z.object({
+  access_token: z.string(),
+  token_type: z.string(),
+  expiration_date: z.string(),
+});
+
+type GetToken = z.infer<typeof GetTokenSchema>;
+
+const GetTokenResponseBody = z.array(GetTokenSchema);
+const PostTokenResponseBody = z.array(TokenSchema);
+
+const parseCaughtError = (e: unknown): Error => (e instanceof Error ? e : new Error(`${e}`));
+
+/**
+* The method for getting the Earthdata Login endpoint URL based on the EDL environment
+*
+* @returns {<string>} the endpoint URL
+*/
+const getEDLurl = (env:string) =>  {
+  switch (env) {
+    case 'PROD':
+    case 'OPS':
+      return 'https://urs.earthdata.nasa.gov';
+    case 'UAT':
+      return 'https://uat.urs.earthdata.nasa.gov';
+    case 'SIT':
+    default:
+      return 'https://sit.urs.earthdata.nasa.gov';
   }
-}>;
+}
+
+const parseHttpError = (error: HTTPError): Error => {
+  const statusCode = error.response.statusCode;
+  const statusMessage = error.response.statusMessage || 'Unknown';
+  const message = `EarthdataLogin error: ${error.response.body},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
+  return new Error(message);
+};
 
 export interface EarthdataLoginParams {
   username: string,
@@ -45,6 +72,8 @@ export class EarthdataLogin {
   password: string;
   edlEnv: string;
 
+  private edlClient: Got;
+
   /**
   * The constructor for the EarthdataLogin class
   *
@@ -65,25 +94,9 @@ export class EarthdataLogin {
     this.username = params.username;
     this.password = params.password;
     this.edlEnv = params.edlEnv;
-  }
 
-  /**
-   * The method for getting the Earthdata Login endpoint URL based on the EDL environment
-   *
-   * @returns {Promise.<string>} the endpoint URL
-   */
-  getEDLurl(
-  ) {
-    switch (this.edlEnv) {
-      case 'PROD':
-      case 'OPS':
-        return 'https://urs.earthdata.nasa.gov';
-      case 'UAT':
-        return 'https://uat.urs.earthdata.nasa.gov';
-      case 'SIT':
-      default:
-        return 'https://sit.urs.earthdata.nasa.gov';
-    }
+    const edlUrl = getEDLurl(this.edlEnv);
+    this.edlClient = got.extend({ prefixUrl: edlUrl });
   }
 
   /**
@@ -108,14 +121,6 @@ export class EarthdataLogin {
    *
    * @throws {Error} - EarthdataLogin error
    */
-  handleHttpError(error: Error) {
-    const statusCode = get(error, 'response.statusCode', error.code);
-    const statusMessage = get(error, 'response.statusMessage', error.message);
-    const responseErrorDescription = JSON.parse(get(error, 'response.body')).error_description;
-    const errorMessage = `EarthdataLogin error: ${responseErrorDescription},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
-
-    throw new Error(errorMessage);
-  }
 
   /**
    * The method for getting the token from the Earthdata Login endpoint. Sends a GET request
@@ -127,30 +132,25 @@ export class EarthdataLogin {
    * @returns {Promise.<string>} the token
    */
   async retrieveEDLToken(): Promise<string> {
-    const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
-    const url = this.getEDLurl();
     // response: get a token from the Earthdata login endpoint using credentials if exists
-    let response: EarthdataGetTokenResponse;
+    let rawResponse: unknown;
     try {
-      response = await got.get(`${url}/api/users/tokens`,
+      rawResponse = await this.edlClient.get<unknown>('/api/users/tokens',
         {
-          headers: {
-            Authorization: `Basic ${buff}`,
-          },
-        }).json();
+          username: this.username,
+          password: this.password
+        });
     } catch (error) {
-      this.handleHttpError(error);
-    }
-    const currDate = new Date();
-
-    for (let i = 0; i < Object.keys(response).length; i += 1) {
-      const responseDate = new Date(response[i].expiration_date);
-      if (currDate < responseDate) {
-        return response[i].access_token;
-      }
-    }
-    return undefined!;
+      if (error instanceof got.HTTPError) throw parseHttpError(error);
+      throw parseCaughtError(error);
   }
+  const tokens = GetTokenResponseBody.parse(rawResponse);
+  const currDate = new Date();
+  const isTokenExpired = (token: Token) => new Date(token.expiration_date) > new Date();
+  const unExpiredTokens = tokens.filter((token) => !isTokenExpired(token));
+  const latestToken = sortBy(unExpiredTokens, ['expiration_date'])[0];
+  return latestToken.access_token;
+  } 
 
   /**
    * The method for creating Earthdata Login token. This method sends a POST request
@@ -161,20 +161,19 @@ export class EarthdataLogin {
    *
    * @returns {Promise.<string>} the token
    */
-  async createEDLToken(): Promise<string> {
-    const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
-    const url = this.getEDLurl();
-    let response: EarthdataPostTokenResponse;
+   async createEDLToken(): Promise<string> {
+    let rawResponse: unknown;
     try {
-      response = await got.post(`${url}/api/users/token`,
+      rawResponse = await this.edlClient.post<unknown>('/api/users/token',
         {
-          headers: {
-            Authorization: `Basic ${buff}`,
-          },
-        }).json();
+          username: this.username,
+          password: this.password
+        });
     } catch (error) {
-      this.handleHttpError(error);
+      if (error instanceof got.HTTPError) throw parseHttpError(error);
+      throw parseCaughtError(error);
     }
+    const response = PostTokenResponseBody.parse(rawResponse);
     return response[0].access_token;
   }
 
@@ -183,22 +182,19 @@ export class EarthdataLogin {
    * token that is created for testing.
    *
    */
-  async revokeEDLToken(
-    token: string
-  ): Promise<void> {
-    const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
-    const url = this.getEDLurl();
+   async revokeEDLToken(token: string): Promise<void> {
     try {
-      /* eslint-disable @typescript-eslint/no-unused-vars */
-      const response = await got.post(`${url}/api/users/revoke_token?token=${token}`,
+      await this.edlClient.post('api/users/revoke_token',
         {
-          headers: {
-            Authorization: `Basic ${buff}`,
+          searchParams: {
+            token,
           },
-        }).json();
-      /* eslint-enable @typescript-eslint/no-unused-vars */
+          username: this.username,
+          password: this.password,
+        });
     } catch (error) {
-      this.handleHttpError(error);
+      if (error instanceof got.HTTPError) throw parseHttpError(error);
+      throw parseCaughtError(error);
     }
   }
 }
