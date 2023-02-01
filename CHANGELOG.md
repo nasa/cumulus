@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 From this release forward Core will be tested against PostgreSQL 11   Existing
 release compatibility testing was done for release 11.1.8/14.0.0+.   Users
-should migrate their datastores to Aurora postgres11.13+ compatible data stores
+should migrate their datastores to Aurora PostgreSQL 11.13+ compatible data stores
 as soon as possible.
 
 Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
