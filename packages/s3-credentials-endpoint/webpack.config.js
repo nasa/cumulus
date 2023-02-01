@@ -6,6 +6,7 @@ const { IgnorePlugin } = require('webpack');
 const root = path.resolve(__dirname);
 
 const ignoredPackages = [
+  'better-sqlite3',
   'mssql',
   'mssql/lib/base',
   'mssql/package.json',

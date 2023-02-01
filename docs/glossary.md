@@ -12,7 +12,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### API Gateway
 
-  Refers to [AWS's API Gateway](https://aws.amazon.com/api-gateway/).   Used by the Cumulus API.
+  Refers to [AWS's API Gateway](https://aws.amazon.com/api-gateway/). Used by the Cumulus API.
 
 ### ARN
 
@@ -22,7 +22,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### AWS
 
-  See: [aws.amazon.com](aws.amazon.com)
+  See: [Amazon Web Services documentation](https://aws.amazon.com/documentation-overview/).
 
 ### AWS Lambda/Lambda Function
 
@@ -72,7 +72,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   Cumulus Collections are logical sets of data objects of the same data type and version.
 
-  For more information, see [cookbook reference page](configuration/data-management-types#collections).
+  For more information, see [Collections - Data Management Types](configuration/data-management-types#collections).
 
 ### Cumulus Message Adapter (CMA)
 
@@ -82,7 +82,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Distributed Active Archive Center (DAAC)
 
-  Refers to a specific organization that's part of NASA's distributed system of archive centers.   For more information see [EOSDIS's DAAC page](https://earthdata.nasa.gov/about/daacs)
+  Refers to a specific organization that's part of NASA's distributed system of archive centers. For more information see [EOSDIS's DAAC page](https://earthdata.nasa.gov/about/daacs).
 
 ### Dead Letter Queue (DLQ)
 
@@ -96,7 +96,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### ECS
 
-  Amazon's Elastic Container Service.   Used in Cumulus by workflow steps that require more flexibility than Lambda can provide.
+  Amazon's Elastic Container Service. Used in Cumulus by workflow steps that require more flexibility than Lambda can provide.
 
   For more information, see [AWS's developer guide](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html).
 
@@ -134,7 +134,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Lambda
 
-  AWS's cloud  service that lets you run code without provisioning or managing servers.
+  AWS's cloud service that lets you run code without provisioning or managing servers.
 
   For more information, see [AWS's lambda page](https://aws.amazon.com/lambda/).
 
@@ -146,11 +146,11 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   See [node.js](https://nodejs.org/en/about).
 
-### Npm
+### Node Package Manager (npm)
 
-  Node package manager.
+  Node package manager. Often referred to as npm.
 
-  For more information, see [npmjs.com](https://www.npmjs.com/).
+  For more information, see [npm](https://www.npmjs.com/).
 
 ### Operator
 
@@ -162,9 +162,9 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   For more information, see [nasa.gov](https://earthdata.nasa.gov/user-resources/standards-and-references/polling-with-delivery-record-pdr-mechanism).
 
-### Packages (NPM)
+### Packages (npm)
 
-  [NPM](https://www.npm.js.com) hosted node.js packages.   Cumulus packages can be found on NPM's site [here](https://www.npmjs.com/org/cumulus)
+  [Npm](https://www.npm.js.com) hosted node.js packages. Cumulus packages can be found on npm's site [here](https://www.npmjs.com/org/cumulus)
 
 ### Provider
 
@@ -180,19 +180,19 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### S3
 
-  Amazon's Simple Storage Service provides data object storage in the cloud.   Used in Cumulus to store configuration, data and more.
+  Amazon's Simple Storage Service provides data object storage in the cloud. Used in Cumulus to store configuration, data, and more.
 
-  For more information, see [AWS's s3 page](https://imgs.xkcd.com/comics/marsiforming_2x.png).
+  For more information, see [AWS's S3 page](https://aws.amazon.com/s3/).
 
 ### SIPS
 
-  Science Investigator-led Processing Systems.   In the context of DAAC ingest, this refers to data producers/providers.
+  Science Investigator-led Processing Systems. In the context of DAAC ingest, this refers to data producers/providers.
 
   For more information, see [nasa.gov](https://earthdata.nasa.gov/about/sips).
 
 ### SNS
 
-  Amazon's Simple Notification Service provides a messaging service that allows publication of and subscription to events.   Used in Cumulus to trigger workflow events, track event failures, and others.
+  Amazon's Simple Notification Service provides a messaging service that allows publication of and subscription to events. Used in Cumulus to trigger workflow events, track event failures, and others.
 
   For more information, see [AWS's SNS page](https://aws.amazon.com/sns/).
 
@@ -206,17 +206,17 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   A collection of AWS resources you can manage as a single unit.
 
-  In the context of Cumulus, this refers to a deployment of the `cumulus` and `data-persistence` modules that is managed by [Terraform](https://www.terraform.io/)
+  In the context of Cumulus, this refers to a deployment of the `cumulus` and `data-persistence` modules that is managed by [Terraform](https://www.terraform.io/).
 
 ### Step Function
 
-  AWS's web service that allows you to compose complex workflows as a state machine comprised of tasks (Lambdas, activities hosted on EC2/ECS, some AWS service APIs, etc).   See [AWS's Step Function Documentation](https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html) for more information.    In the context of Cumulus these are the underlying AWS service used to create Workflows.
+  AWS's web service that allows you to compose complex workflows as a state machine comprised of tasks (Lambdas, activities hosted on EC2/ECS, some AWS service APIs, etc). See [AWS's Step Function Documentation](https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html) for more information. In the context of Cumulus these are the underlying AWS service used to create Workflows.
 
 ### Terraform
 
   Terraform is the tool that you will use for deployment and configuration of your Cumulus environment.
 
-* For more information on Terraform and how it works, see [Introduction to Terraform](https://www.terraform.io/intro/index.html).
+* For more information on Terraform and how it works, visit [Introduction to Terraform](https://www.terraform.io/intro/index.html).
 * For steps on how to use Terraform for Cumulus, see [How to Deploy Cumulus](deployment/deployment-readme).
 
 ### Workflows

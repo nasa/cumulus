@@ -1152,6 +1152,7 @@ describe('The S3 Ingest Granules workflow', () => {
             failOnSetupError([beforeAllError]);
 
             file = granule.files.filter((x) => x.fileName.match(/\.hdf$/))[0];
+
             destinationKey = `${testDataFolder}/${file.key}`;
 
             destinations = [{

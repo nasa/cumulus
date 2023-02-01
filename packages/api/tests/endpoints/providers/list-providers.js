@@ -110,8 +110,8 @@ test.todo('CUMULUS-912 GET without pathParameters and with an unauthorized user 
 test('default returns list of providers', async (t) => {
   const testProvider = fakeProviderRecordFactory();
   const providerPgModel = new ProviderPgModel();
-  const [providerCumulusId] = await providerPgModel.create(t.context.knex, testProvider);
-  const pgProvider = await providerPgModel.get(t.context.knex, { cumulus_id: providerCumulusId });
+  const [provider] = await providerPgModel.create(t.context.knex, testProvider);
+  const pgProvider = await providerPgModel.get(t.context.knex, { cumulus_id: provider.cumulus_id });
   await indexer.indexProvider(esClient, pgProvider, esIndex);
 
   const response = await request(app)

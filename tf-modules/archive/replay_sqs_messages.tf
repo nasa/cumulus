@@ -83,6 +83,6 @@ resource "aws_lambda_function" "replay_sqs_messages" {
 
 resource "aws_cloudwatch_log_group" "replay_sqs_messages" {
   name = "/aws/lambda/${aws_lambda_function.replay_sqs_messages.function_name}"
-  retention_in_days = 30
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_replay_sqs_messages_log_retention", var.default_log_retention_days)
   tags = var.tags
 }

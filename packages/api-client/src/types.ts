@@ -1,6 +1,6 @@
 import pRetry from 'p-retry';
 
-export type HttpMethod = 'DELETE' | 'GET' | 'POST' | 'PUT';
+export type HttpMethod = 'DELETE' | 'GET' | 'POST' | 'PUT' | 'PATCH';
 
 // https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html
 export interface ApiGatewayLambdaProxyPayload {

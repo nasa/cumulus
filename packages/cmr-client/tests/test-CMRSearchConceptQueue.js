@@ -56,6 +56,7 @@ test('CMRSearchConceptQueue handles paging correctly.', async (t) => {
       clientId: 'fakeClient',
       username: 'fakeUser',
       password: 'fakePassword',
+      token: 'abcde',
     },
     type: 'granules',
     searchParams: new URLSearchParams(),

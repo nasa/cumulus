@@ -51,7 +51,7 @@ test('BasePgModel.create() creates record and returns cumulus_id by default', as
     record,
     {
       ...defaultDates,
-      cumulus_id: queryResult[0],
+      cumulus_id: queryResult[0].cumulus_id,
       info,
     }
   );
@@ -69,7 +69,7 @@ test('BasePgModel.create() works with knex transaction', async (t) => {
     record,
     {
       ...defaultDates,
-      cumulus_id: queryResult[0],
+      cumulus_id: queryResult[0].cumulus_id,
       info,
     }
   );
@@ -90,12 +90,12 @@ test('BasePgModel.insert() creates records and returns cumulus_id by default', a
     sortBy(records, ['cumulus_id']),
     sortBy([{
       ...defaultDates,
-      cumulus_id: queryResult[0],
+      cumulus_id: queryResult[0].cumulus_id,
       info,
     },
     {
       ...defaultDates,
-      cumulus_id: queryResult[1],
+      cumulus_id: queryResult[1].cumulus_id,
       info: info2,
     }], ['cumulus_id'])
   );
@@ -140,12 +140,12 @@ test('BasePgModel.insert() works with transaction', async (t) => {
     sortBy(records, ['cumulus_id']),
     sortBy([{
       ...defaultDates,
-      cumulus_id: queryResult[0],
+      cumulus_id: queryResult[0].cumulus_id,
       info,
     },
     {
       ...defaultDates,
-      cumulus_id: queryResult[1],
+      cumulus_id: queryResult[1].cumulus_id,
       info: info2,
     }], ['cumulus_id'])
   );
@@ -186,19 +186,19 @@ test('BasePgModel.get() throws an error when a record is not found', async (t) =
 test('BasePgModel.getRecordCumulusId() returns correct value', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
-  const [recordCumulusId] = await knex(tableName)
+  const [record] = await knex(tableName)
     .insert({ info })
     .returning('cumulus_id');
   t.is(
     await basePgModel.getRecordCumulusId(knex, { info }),
-    recordCumulusId
+    record.cumulus_id
   );
 });
 
 test('BasePgModel.getRecordCumulusId() works with knex transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
-  const [recordCumulusId] = await knex(tableName)
+  const [record] = await knex(tableName)
     .insert({ info })
     .returning('cumulus_id');
   t.is(
@@ -206,7 +206,7 @@ test('BasePgModel.getRecordCumulusId() works with knex transaction', async (t) =
       knex,
       (trx) => basePgModel.getRecordCumulusId(trx, { info })
     ),
-    recordCumulusId
+    record.cumulus_id
   );
 });
 
@@ -223,13 +223,13 @@ test('BasePgModel.getRecordsCumulusIds() returns correct values', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info1 = cryptoRandomString({ length: 5 });
   const info2 = cryptoRandomString({ length: 5 });
-  const recordsCumulusIds = await knex(tableName)
+  const records = await knex(tableName)
     .insert([{ info: info1 }, { info: info2 }])
     .returning('cumulus_id');
-  t.is(recordsCumulusIds.length, 2);
+  t.is(records.length, 2);
   t.deepEqual(
     await basePgModel.getRecordsCumulusIds(knex, ['info'], [info1, info2]),
-    recordsCumulusIds
+    records.map((record) => record.cumulus_id)
   );
 });
 
@@ -237,9 +237,10 @@ test('BasePgModel.getRecordsCumulusIds() works with knex transaction', async (t)
   const { knex, basePgModel, tableName } = t.context;
   const info1 = cryptoRandomString({ length: 5 });
   const info2 = cryptoRandomString({ length: 5 });
-  const recordsCumulusIds = await knex(tableName)
+  const records = await knex(tableName)
     .insert([{ info: info1 }, { info: info2 }])
     .returning('cumulus_id');
+  const recordsCumulusIds = records.map((record) => record.cumulus_id);
   t.is(recordsCumulusIds.length, 2);
   t.deepEqual(
     await createRejectableTransaction(
@@ -278,7 +279,7 @@ test('BasePgModel.delete() correctly deletes records', async (t) => {
   const info = cryptoRandomString({ length: 5 });
 
   // Insert the records and validate that they exists in the table
-  const [[recordCumulusId1], [recordCumulusId2]] = await Promise.all([
+  const [[record1], [record2]] = await Promise.all([
     knex(tableName)
       .insert({ info })
       .returning('cumulus_id'),
@@ -287,8 +288,8 @@ test('BasePgModel.delete() correctly deletes records', async (t) => {
       .returning('cumulus_id'),
   ]);
 
-  t.true(await basePgModel.exists(knex, { cumulus_id: recordCumulusId1 }));
-  t.true(await basePgModel.exists(knex, { cumulus_id: recordCumulusId2 }));
+  t.true(await basePgModel.exists(knex, { cumulus_id: record1.cumulus_id }));
+  t.true(await basePgModel.exists(knex, { cumulus_id: record2.cumulus_id }));
 
   // Delete the records and validate that they're gone
   t.is(
@@ -296,8 +297,8 @@ test('BasePgModel.delete() correctly deletes records', async (t) => {
     2
   );
 
-  t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId1 }));
-  t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId2 }));
+  t.false(await basePgModel.exists(knex, { cumulus_id: record1.cumulus_id }));
+  t.false(await basePgModel.exists(knex, { cumulus_id: record2.cumulus_id }));
 });
 
 test('BasePgModel.count() returns valid counts', async (t) => {
@@ -330,17 +331,17 @@ test('BasePgModel.delete() works with knex transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
 
-  const [recordCumulusId] = await knex(tableName)
+  const [record] = await knex(tableName)
     .insert({ info })
     .returning('cumulus_id');
 
   t.is(await createRejectableTransaction(
     knex,
-    (trx) => basePgModel.delete(trx, { cumulus_id: recordCumulusId })
+    (trx) => basePgModel.delete(trx, { cumulus_id: record.cumulus_id })
   ), 1);
 
   // validate that the record is not in the table
-  t.false(await basePgModel.exists(knex, { cumulus_id: recordCumulusId }));
+  t.false(await basePgModel.exists(knex, { cumulus_id: record.cumulus_id }));
 });
 
 test('BasePgModel.queryBuilderSearch returns an awaitable knex Builder object', async (t) => {
@@ -423,18 +424,22 @@ test('BasePgModel.update() updates provided fields on a record', async (t) => {
 
   // Create initial record
   const info = cryptoRandomString({ length: 5 });
-  const [cumulusId] = await basePgModel.create(knex, { info });
+  const [initialRecord] = await basePgModel.create(knex, { info });
 
   // Update record
   const newInfo = cryptoRandomString({ length: 5 });
-  await basePgModel.update(knex, { cumulus_id: cumulusId }, { ...defaultDates, info: newInfo });
+  await basePgModel.update(
+    knex,
+    { cumulus_id: initialRecord.cumulus_id },
+    { ...defaultDates, info: newInfo }
+  );
 
-  const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
+  const record = await knex(tableName).where({ cumulus_id: initialRecord.cumulus_id }).first();
   t.deepEqual(
     record,
     {
       ...defaultDates,
-      cumulus_id: cumulusId,
+      cumulus_id: initialRecord.cumulus_id,
       info: newInfo,
     }
   );
@@ -448,13 +453,13 @@ test('BasePgModel.update() returns only specified fields if provided', async (t)
 
   // Create initial record
   const info = cryptoRandomString({ length: 5 });
-  const [cumulusId] = await basePgModel.create(knex, { info });
+  const [initialRecord] = await basePgModel.create(knex, { info });
 
   // Update record
   const newInfo = cryptoRandomString({ length: 5 });
   const updatedFields = await basePgModel.update(
     knex,
-    { cumulus_id: cumulusId }, { info: newInfo }, ['info']
+    { cumulus_id: initialRecord.cumulus_id }, { info: newInfo }, ['info']
   );
 
   t.deepEqual(
@@ -472,21 +477,25 @@ test('BasePgModel.update() works with a knex transaction', async (t) => {
 
   // Create initial record
   const info = cryptoRandomString({ length: 5 });
-  const [cumulusId] = await basePgModel.create(knex, { info });
+  const [initialRecord] = await basePgModel.create(knex, { info });
 
   // Update record
   const newInfo = cryptoRandomString({ length: 5 });
 
   // Use existing transation rather than knex client
   await createRejectableTransaction(knex, async (trx) =>
-    await basePgModel.update(trx, { cumulus_id: cumulusId }, { ...defaultDates, info: newInfo }));
+    await basePgModel.update(
+      trx,
+      { cumulus_id: initialRecord.cumulus_id },
+      { ...defaultDates, info: newInfo }
+    ));
 
-  const record = await knex(tableName).where({ cumulus_id: cumulusId }).first();
+  const record = await knex(tableName).where({ cumulus_id: initialRecord.cumulus_id }).first();
   t.deepEqual(
     record,
     {
       ...defaultDates,
-      cumulus_id: cumulusId,
+      cumulus_id: initialRecord.cumulus_id,
       info: newInfo,
     }
   );
@@ -633,9 +642,10 @@ test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (
   const { knex, basePgModel, tableName } = t.context;
   const info1 = cryptoRandomString({ length: 5 });
   const info2 = cryptoRandomString({ length: 5 });
-  const recordIds = await knex(tableName)
+  const records = await knex(tableName)
     .insert([{ info: info1 }, { info: info2 }])
     .returning('cumulus_id');
+  const recordIds = records.map((record) => record.cumulus_id);
 
   const firstPageRecords = await basePgModel.paginateByCumulusId(
     knex, recordIds[0], 1

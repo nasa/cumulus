@@ -60,17 +60,19 @@ test.before(async (t) => {
 
   // Create provider
   t.context.providerPgModel = new ProviderPgModel();
-  const provider = fakeProviderRecordFactory({ name: 'providerName' });
-  [t.context.providerCumulusId] = await t.context.providerPgModel.create(knex, provider);
+  const fakeProvider = fakeProviderRecordFactory({ name: 'providerName' });
+  const [pgProvider] = await t.context.providerPgModel.create(knex, fakeProvider);
+  t.context.providerCumulusId = pgProvider.cumulus_id;
 
   // Create PDR
   t.context.pdrPgModel = new PdrPgModel();
-  const pdr = fakePdrRecordFactory({
+  const fakePdr = fakePdrRecordFactory({
     name: 'pdrName',
     collection_cumulus_id: collectionCumulusId,
     provider_cumulus_id: t.context.providerCumulusId,
   });
-  [t.context.pdrCumulusId] = await t.context.pdrPgModel.create(knex, pdr);
+  const [pgPdr] = await t.context.pdrPgModel.create(knex, fakePdr);
+  t.context.pdrCumulusId = pgPdr.cumulus_id;
 
   // Create Granule
   t.context.granulePgModel = new GranulePgModel();
@@ -1148,7 +1150,6 @@ test('translateApiGranuleToPostgresGranule converts API granule to Postgres', as
     pdr_cumulus_id: pdrCumulusId,
     processing_end_date_time: new Date(apiGranule.processingEndDateTime),
     processing_start_date_time: new Date(apiGranule.processingStartDateTime),
-    // TODO -- Test this writes to PG and returns the right 'thing'
     product_volume: apiGranule.productVolume,
     production_date_time: new Date(apiGranule.productionDateTime),
     provider_cumulus_id: providerCumulusId,

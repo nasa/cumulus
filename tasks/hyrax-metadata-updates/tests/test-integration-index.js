@@ -90,15 +90,23 @@ const setupNock = (params) => {
     provider_short_name: 'GES_DISC',
   };
 
+  const expectedresponse = [
+    {
+      access_token: 'ABCDE',
+      token_type: 'Bearer',
+      expiration_date: '1/1/2999',
+    },
+  ];
+
   // Mock out retrieval of collection entry from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
   nock('https://cmr.earthdata.nasa.gov').get('/search/collections.json')
     .query(cmrParams)
     .replyWithFile(200, 'tests/data/cmr-results.json', headers);
 
-  nock('https://cmr.earthdata.nasa.gov')
-    .post('/legacy-services/rest/tokens')
-    .reply(200, { token: 'ABCDE' });
+  nock('https://urs.earthdata.nasa.gov')
+    .get('/api/users/tokens')
+    .reply(200, expectedresponse);
 
   process.env.CMR_ENVIRONMENT = 'OPS';
 };
@@ -846,7 +854,7 @@ test('Test generate path from ECHO-10 throws exception with broken config', asyn
         oauthProvider: 'earthdata',
         clientId: 'xxxxxx',
         username: 'xxxxxx',
-        passwordSecretName: 'xxxxx',
+        passwordSecretName: cmrPasswordSecret,
       },
       etags: {},
     },

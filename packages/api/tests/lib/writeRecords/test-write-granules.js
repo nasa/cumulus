@@ -52,6 +52,8 @@ const {
   CumulusMessageError,
 } = require('@cumulus/errors');
 
+const { sortFilesByBuckets } = require('../../helpers/sort');
+
 const {
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
@@ -167,17 +169,6 @@ const updateGranule = async (t, updateGranulePayload, granuleWriteVia = 'api') =
     esGranule,
   };
 };
-
-/**
- * Helper function for sorting a list of file objects by bucket
- *
- * @param {Object} f1 -- File object
- * @param {Object} f2 -- File object to compare to the first
- * @returns {Array} -- Sorted list of file objects
- **/
-const sortFilesByBuckets = (f1, f2) => (
-  (f1.bucket > f2.bucket) ? 1 : ((f2.bucket > f1.bucket) ? -1 : 0)
-);
 
 const createGranuleExecution = async (t, status, stateMachineName) => {
   const executionName = cryptoRandomString({ length: 5 });
@@ -299,10 +290,11 @@ test.beforeEach(async (t) => {
   t.context.executionCumulusId = pgExecution.cumulus_id;
   t.context.executionUrl = pgExecution.url;
 
-  [t.context.providerCumulusId] = await t.context.providerPgModel.create(
+  const [pgProvider] = await t.context.providerPgModel.create(
     t.context.knex,
     t.context.provider
   );
+  t.context.providerCumulusId = pgProvider.cumulus_id;
 
   // Generate and create a PDR for reference in postgres
   t.context.pdr = fakePdrRecordFactory({
@@ -310,10 +302,11 @@ test.beforeEach(async (t) => {
     provider_cumulus_id: t.context.providerCumulusId,
   });
 
-  [t.context.providerPdrId] = await t.context.pdrPgModel.create(
+  const [pgPdr] = await t.context.pdrPgModel.create(
     t.context.knex,
     t.context.pdr
   );
+  t.context.providerPdrId = pgPdr.cumulus_id;
 
   t.context.granule = fakeGranuleFactoryV2({
     files: t.context.files,
@@ -1701,11 +1694,11 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from Po
     dynamoRecord: existingGranule,
     knexOrTransaction: knex,
   });
-  const [existingPgGranuleRecordId] = await granulePgModel.create(knex, existingPgGranule, '*');
+  const [existingPgGranuleRecord] = await granulePgModel.create(knex, existingPgGranule, '*');
 
   await Promise.all(files.map(async (file) => {
     const pgFile = await translateApiFiletoPostgresFile(file);
-    pgFile.granule_cumulus_id = existingPgGranuleRecordId.cumulus_id;
+    pgFile.granule_cumulus_id = existingPgGranuleRecord.cumulus_id;
     return filePgModel.create(knex, pgFile);
   }));
   const existingPgFiles = await filePgModel.search(knex, {});
@@ -2472,7 +2465,7 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
   });
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
 
-  const fakeFile = await filePgModel.create(knex, {
+  const [fakeFile] = await filePgModel.create(knex, {
     granule_cumulus_id: returnedGranule[0].cumulus_id,
     bucket: 'fake_bucket',
     key: 'fake_key',
