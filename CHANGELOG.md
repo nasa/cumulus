@@ -28,7 +28,7 @@ parameter_group_family = "aurora-postgresql11"
 engine_version = 11.13
 ```
 
-When you apply this update, the original postgresql v10 parameter group will be
+When you apply this update, the original PostgreSQL v10 parameter group will be
 removed, and recreated using PG11 defaults/configured terraform values and
 update the database cluster to use the new configuration.
 
