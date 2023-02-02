@@ -132,7 +132,11 @@ describe('The Kinesis Replay API', () => {
 
     beforeAll(async () => {
       // delete EventSourceMapping so that our rule, though enabled, does not trigger duplicate executions
-      await deleteRuleResources({ stackName: testConfig.stackName, bucketName: testConfig.bucket, rules: rules[0] });
+      await deleteRuleResources(
+        testConfig.stackName,
+        testConfig.bucket,
+        rules
+      );
 
       await Promise.all(tooOldToFetchRecords.map((r) => putRecordOnStream(streamName, r)));
       await delay(10 * 1000);

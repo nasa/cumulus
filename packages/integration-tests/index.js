@@ -566,8 +566,7 @@ async function deleteRuleResources(stackName, bucketName, rules, postfix) {
   // setProcessEnvironment is not needed by this function, but other code
   // depends on this undocumented side effect
   setProcessEnvironment(stackName, bucketName);
-  console.log('rules to delete:::', rules);
-  const result = await pMap(
+  await pMap(
     rules,
     (rule) => rulesApi.deleteRule({
       prefix: stackName,
@@ -576,7 +575,6 @@ async function deleteRuleResources(stackName, bucketName, rules, postfix) {
     }),
     { concurrency: process.env.CONCURRENCY || 3 }
   );
-  console.log('deleteRuleResources Result::', result);
   return rules.length;
 }
 
