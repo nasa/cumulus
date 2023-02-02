@@ -5,6 +5,7 @@ const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { getQueueNameFromUrl, receiveSQSMessages } = require('@cumulus/aws-client/SQS');
+const { sleep } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createBucket,
@@ -14,12 +15,6 @@ const {
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 
 const { updateSqsQueue } = require('..');
-
-/**
- * @param {number} duration - sleep duration in milliseconds
- * @returns {Promise<void>}
- */
-const sleep = (duration) => new Promise((resolve) => setTimeout(resolve, duration));
 
 // TODO: Copied from @cumulus/api/lib/testUtils to avoid the dependency, but
 // these helpers should probably have a better home?

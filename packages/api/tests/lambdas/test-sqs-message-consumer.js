@@ -1,6 +1,5 @@
 'use strict';
 
-const delay = require('delay');
 const sinon = require('sinon');
 const test = require('ava');
 const range = require('lodash/range');
@@ -13,6 +12,7 @@ const {
   s3ObjectExists,
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
+const { sleep } = require('@cumulus/common');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { getS3KeyForArchivedMessage } = require('@cumulus/ingest/sqs');
 const { getQueueNameFromUrl } = require('@cumulus/aws-client/SQS');
@@ -246,7 +246,7 @@ test.serial('messages are retried the correct number of times based on the rule 
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < queueMaxReceiveCount; i += 1) {
-    await delay((visibilityTimeout + 1) * 1000);
+    await sleep((visibilityTimeout + 1) * 1000);
     await handler(event);
   }
   /* eslint-enable no-await-in-loop */
@@ -296,7 +296,7 @@ test.serial('messages are not retried if retries is set to zero in the rule conf
 
   /* eslint-disable no-await-in-loop */
   for (let i = 0; i < queueMaxReceiveCount; i += 1) {
-    await delay((visibilityTimeout + 1) * 1000);
+    await sleep((visibilityTimeout + 1) * 1000);
     await handler(event);
   }
   /* eslint-enable no-await-in-loop */

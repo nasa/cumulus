@@ -1,6 +1,6 @@
 'use strict';
 
-const delay = require('delay');
+const { sleep } = require('@cumulus/common');
 const {
   lambda,
   sfn,
@@ -302,7 +302,7 @@ describe('the sf-starter lambda function', () => {
 
       // Wait 60 seconds before starting new executions to allow the Cloudwatch rule to settle.
       // This prevents failure to decrement the semaphore.
-      await delay(60000);
+      await sleep(60000);
 
       await sendStartSfMessages({
         numOfMessages: totalNumMessages,
@@ -365,7 +365,7 @@ describe('the sf-starter lambda function', () => {
         });
 
         // Wait 10 seconds to allow running executions to finish.
-        await delay(10000);
+        await sleep(10000);
       });
 
       it('is decremented to 0', async () => {

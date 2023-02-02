@@ -11,12 +11,12 @@ const {
   sendSQSMessage,
 } = require('@cumulus/aws-client/SQS');
 const { ResourcesLockedError } = require('@cumulus/errors');
+const { sleep } = require('@cumulus/common');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const Semaphore = require('../../lib/Semaphore');
 const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
-const { sleep } = require('../../lib/sleep');
 
 const {
   incrementAndDispatch,
