@@ -126,7 +126,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_username: process.env.cmr_username,
       GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-      KNEX_DEBUG: false,
+      KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
       launchpad_certificate: process.env.launchpad_certificate,
       launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -331,16 +331,16 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /forceRemoveFromCmr must be a boolean value/);
+    .expect(400, /Expected boolean, received string at forceRemoveFromCmr/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnection is not an integer', async (t) => {
+test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is not an integer', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const body = {
     ids: ['granule-1'],
-    maxDbConnection: 'one hundred',
+    maxDbConnections: 'one hundred',
   };
 
   await request(app)
@@ -348,7 +348,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnection is not
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /payload maxDbConnection must be a valid integer/);
+    .expect(400, /Expected number, received string at maxDbConnections/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -365,7 +365,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when concurrency is not an 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /payload concurrency must be a valid integer/);
+    .expect(400, /Expected number, received string at concurrency/);
 
   t.true(asyncOperationStartStub.notCalled);
 });

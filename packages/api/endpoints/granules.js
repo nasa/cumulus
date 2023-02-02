@@ -562,7 +562,7 @@ async function bulkOperations(req, res) {
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
-        KNEX_DEBUG: payload.knexDebug.toLowerCase() === 'true' || false,
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
         METRICS_ES_USER: process.env.METRICS_ES_USER,
@@ -583,7 +583,7 @@ async function bulkOperations(req, res) {
 const BulkDeletePayloadSchema = z.object({
   forceRemoveFromCmr: z.boolean().optional(),
   concurrency: z.number().int().positive().optional(),
-  MaxDbConnections: z.number().int().positive().optional(),
+  maxDbConnections: z.number().int().positive().optional(),
   knexDebug: z.boolean().optional(),
 }).catchall(z.unknown());
 
@@ -604,7 +604,7 @@ async function bulkDelete(req, res) {
 
   const concurrency = payload.concurrency || 10;
 
-  const maxDbConnections = payload.MaxDbConnections || concurrency;
+  const maxDbConnections = payload.maxDbConnections || concurrency;
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
@@ -675,7 +675,7 @@ async function bulkReingest(req, res) {
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
         GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
-        KNEX_DEBUG: payload.knexDebug || false,
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
         METRICS_ES_USER: process.env.METRICS_ES_USER,
