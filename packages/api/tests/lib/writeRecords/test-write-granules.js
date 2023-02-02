@@ -1279,8 +1279,6 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
   );
   t.true(await esGranulesClient.exists(completeGranule.granuleId));
 
-  // need to modify files for granule
-
   // Create new files for granule. These records will exist in database
   // during subsequent granule write from message
   const updatedFiles = [
@@ -1290,10 +1288,13 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
     fakeFileFactory({ size: 20 }),
   ];
 
-  const updatedGranule = { ...completeGranule, files: updatedFiles };
-  // cumulusMessage.payload.granules[0] = { ...initialDynamoGranuleRecord, files: undefined };
+  const updatedGranule = {
+    ...completeGranule,
+    files: updatedFiles,
+    status: 'completed',
+  };
+  cumulusMessage.meta.status = 'completed';
   cumulusMessage.payload.granules[0] = updatedGranule;
-  // cumulusMessage.cumulus_meta.workflow_start_time = Date.now(); // needed???
   await writeGranulesFromMessage({
     cumulusMessage,
     executionCumulusId,
@@ -2894,6 +2895,342 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
     granule_cumulus_id: granuleRecord.cumulus_id,
   });
   t.deepEqual(granuleFiles.filter((file) => file.bucket === fakeFile.bucket), []);
+});
+
+test.serial('writeGranulesFromMessage() on update with "running" status and stale granule createdAt, does not persist the updates to Postgres or DynamoDB or ES or to the files', async (t) => {
+  const {
+    collection,
+    collectionCumulusId,
+    cumulusMessage,
+    esGranulesClient,
+    executionCumulusId,
+    files,
+    granuleModel,
+    granulePgModel,
+    knex,
+    providerCumulusId,
+  } = t.context;
+
+  const completeGranule = fakeGranuleFactoryV2({
+    collectionId: constructCollectionId(collection.name, collection.version),
+    files: files,
+    status: 'completed',
+  });
+
+  const granuleId = completeGranule.granuleId;
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.granules[0] = completeGranule;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId: completeGranule.granuleId }));
+  t.true(
+    await granulePgModel.exists(knex, {
+      granule_id: completeGranule.granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    })
+  );
+  t.true(await esGranulesClient.exists(completeGranule.granuleId));
+
+  const initialDynamoGranuleRecord = await granuleModel.get({ granuleId });
+
+  // Create new files for stale granule. These records will exist in database
+  // during subsequent granule write from message
+  const staleUpdateFiles = [
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 10 }),
+    fakeFileFactory({ size: 15 }),
+    fakeFileFactory({ size: 20 }),
+  ];
+  // set up stale createdAt date
+  const staleCreatedAt = Date.now() - 24 * 60 * 60 * 1000;
+  // setup stale granule for update with 'running' status, which should run into writeConstraints
+  const staleUpdateGranule = {
+    ...completeGranule,
+    files: staleUpdateFiles,
+    status: 'running',
+    cmrLink: 'updatedGranuled.com',
+    createdAt: staleCreatedAt,
+  };
+  cumulusMessage.meta.status = 'running';
+  cumulusMessage.payload.granules[0] = staleUpdateGranule;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const apiFormattedPostgresGranule
+    = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: postgresRecord,
+      knexOrTransaction: knex,
+    });
+  const esRecord = await esGranulesClient.get(granuleId);
+
+  const expectedGranule = {
+    ...initialDynamoGranuleRecord,
+    // should already be part of initialDynamoGranuleRecord
+    // but setting more explicitly for test transparency
+    files: files,
+    status: 'completed',
+    cmrLink: 'example.com',
+    productVolume: '15',
+    createdAt: initialDynamoGranuleRecord.createdAt,
+    timestamp: initialDynamoGranuleRecord.timestamp,
+    updatedAt: initialDynamoGranuleRecord.updatedAt,
+  };
+
+  // Files array order is not promised to match between datastores
+  [esRecord, dynamoRecord, expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
+  // Translated postgres granule matches expected updatedGranule
+  // minus model defaults
+  t.deepEqual(
+    apiFormattedPostgresGranule,
+    removeNilProperties(expectedGranule)
+  );
+  t.deepEqual(dynamoRecord, removeNilProperties(expectedGranule));
+  t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
+});
+
+test.serial('writeGranulesFromMessage() on update with "queued" status and stale granule createdAt, does not persist the updates to Postgres or DynamoDB or ES or to the files', async (t) => {
+  const {
+    collection,
+    collectionCumulusId,
+    cumulusMessage,
+    esGranulesClient,
+    executionCumulusId,
+    files,
+    granuleModel,
+    granulePgModel,
+    knex,
+    providerCumulusId,
+  } = t.context;
+
+  const completeGranule = fakeGranuleFactoryV2({
+    collectionId: constructCollectionId(collection.name, collection.version),
+    files: files,
+    status: 'completed',
+  });
+
+  const granuleId = completeGranule.granuleId;
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.granules[0] = completeGranule;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId: completeGranule.granuleId }));
+  t.true(
+    await granulePgModel.exists(knex, {
+      granule_id: completeGranule.granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    })
+  );
+  t.true(await esGranulesClient.exists(completeGranule.granuleId));
+
+  const initialDynamoGranuleRecord = await granuleModel.get({ granuleId });
+
+  // Create new files for stale granule. These records will exist in database
+  // during subsequent granule write from message
+  const staleUpdateFiles = [
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 10 }),
+    fakeFileFactory({ size: 15 }),
+    fakeFileFactory({ size: 20 }),
+  ];
+  // set up stale createdAt date
+  const staleCreatedAt = Date.now() - 24 * 60 * 60 * 1000;
+  // setup stale granule for update with 'queued' status, which should run into writeConstraints
+  const staleUpdateGranule = {
+    ...completeGranule,
+    files: staleUpdateFiles,
+    status: 'queued',
+    cmrLink: 'updatedGranuled.com',
+    createdAt: staleCreatedAt,
+  };
+  cumulusMessage.meta.status = 'queued';
+  cumulusMessage.payload.granules[0] = staleUpdateGranule;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const apiFormattedPostgresGranule
+    = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: postgresRecord,
+      knexOrTransaction: knex,
+    });
+  const esRecord = await esGranulesClient.get(granuleId);
+
+  const expectedGranule = {
+    ...initialDynamoGranuleRecord,
+    // should already be part of initialDynamoGranuleRecord
+    // but setting more explicitly for test transparency
+    files: files,
+    status: 'completed',
+    cmrLink: 'example.com',
+    productVolume: '15',
+    createdAt: initialDynamoGranuleRecord.createdAt,
+    timestamp: initialDynamoGranuleRecord.timestamp,
+    updatedAt: initialDynamoGranuleRecord.updatedAt,
+  };
+
+  // Files array order is not promised to match between datastores
+  [esRecord, dynamoRecord, expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
+  // Translated postgres granule matches expected updatedGranule
+  // minus model defaults
+  t.deepEqual(
+    apiFormattedPostgresGranule,
+    removeNilProperties(expectedGranule)
+  );
+  t.deepEqual(dynamoRecord, removeNilProperties(expectedGranule));
+  t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
+});
+
+test.serial('writeGranulesFromMessage() on update with "completed" status and stale granule createdAt, does not persist the updates to Postgres or DynamoDB or ES or to the files', async (t) => {
+  const {
+    collection,
+    collectionCumulusId,
+    cumulusMessage,
+    esGranulesClient,
+    executionCumulusId,
+    files,
+    granuleModel,
+    granulePgModel,
+    knex,
+    providerCumulusId,
+  } = t.context;
+
+  const completeGranule = fakeGranuleFactoryV2({
+    collectionId: constructCollectionId(collection.name, collection.version),
+    files: files,
+    status: 'completed',
+  });
+
+  const granuleId = completeGranule.granuleId;
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.granules[0] = completeGranule;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  t.true(await granuleModel.exists({ granuleId: completeGranule.granuleId }));
+  t.true(
+    await granulePgModel.exists(knex, {
+      granule_id: completeGranule.granuleId,
+      collection_cumulus_id: collectionCumulusId,
+    })
+  );
+  t.true(await esGranulesClient.exists(completeGranule.granuleId));
+
+  const initialDynamoGranuleRecord = await granuleModel.get({ granuleId });
+
+  // Create new files for stale granule. These records will exist in database
+  // during subsequent granule write from message
+  const staleUpdateFiles = [
+    fakeFileFactory({ size: 5 }),
+    fakeFileFactory({ size: 10 }),
+    fakeFileFactory({ size: 15 }),
+    fakeFileFactory({ size: 20 }),
+  ];
+  // set up stale createdAt date
+  const staleCreatedAt = Date.now() - 24 * 60 * 60 * 1000;
+  // setup stale granule for update with 'completed' status, should avoid writeConstraints
+  const staleUpdateGranule = {
+    ...completeGranule,
+    files: staleUpdateFiles,
+    createdAt: staleCreatedAt,
+    status: 'completed',
+    cmrLink: 'updatedGranuled.com',
+  };
+  cumulusMessage.meta.status = 'completed';
+  cumulusMessage.payload.granules[0] = staleUpdateGranule;
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    granuleModel,
+  });
+
+  const dynamoRecord = await granuleModel.get({ granuleId });
+  const postgresRecord = await granulePgModel.get(knex, {
+    granule_id: granuleId,
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const apiFormattedPostgresGranule
+    = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: postgresRecord,
+      knexOrTransaction: knex,
+    });
+  const esRecord = await esGranulesClient.get(granuleId);
+
+  const expectedGranule = {
+    ...initialDynamoGranuleRecord,
+    // should already be part of initialDynamoGranuleRecord
+    // but setting more explicitly for test transparency
+    files: files,
+    status: 'completed',
+    cmrLink: 'example.com',
+    productVolume: '15',
+    createdAt: initialDynamoGranuleRecord.createdAt,
+    timestamp: initialDynamoGranuleRecord.timestamp,
+    updatedAt: initialDynamoGranuleRecord.updatedAt,
+  };
+
+  // Files array order is not promised to match between datastores
+  [esRecord, dynamoRecord, expectedGranule, apiFormattedPostgresGranule].forEach((record) => {
+    record.files.sort((f1, f2) => sortFilesByBuckets(f1, f2));
+  });
+
+  // Translated postgres granule matches expected updatedGranule
+  // minus model defaults
+  t.deepEqual(
+    apiFormattedPostgresGranule,
+    removeNilProperties(expectedGranule)
+  );
+  t.deepEqual(dynamoRecord, removeNilProperties(expectedGranule));
+  t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
 test.serial('writeGranuleFromApi() throws for a granule with no granuleId provided', async (t) => {

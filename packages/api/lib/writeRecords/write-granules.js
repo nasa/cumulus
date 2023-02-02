@@ -475,7 +475,6 @@ const _writeGranuleRecords = async (params) => {
 
   try {
     await createRejectableTransaction(knex, async (trx) => {
-      // pgGranule = await _writePostgresGranuleViaTransaction({
       pgGranuleResult = await _writePostgresGranuleViaTransaction({
         granuleRecord: postgresGranuleRecord,
         executionCumulusId,
@@ -483,6 +482,9 @@ const _writeGranuleRecords = async (params) => {
         granulePgModel,
         writeConstraints,
       });
+      if (pgGranuleResult.status === 'failed') {
+        return;
+      }
       pgGranule = pgGranuleResult.pgGranule;
 
       // Future: refactor to cover the entire object?
@@ -499,6 +501,9 @@ const _writeGranuleRecords = async (params) => {
         index: process.env.ES_INDEX,
       }, writeConstraints);
     });
+    if (pgGranuleResult.status === 'failed') {
+      return pgGranuleResult;
+    }
     log.info(
       `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.`,
       postgresGranuleRecord
@@ -507,20 +512,15 @@ const _writeGranuleRecords = async (params) => {
       'Completed write operation to DynamoDb for granule %j',
       apiGranuleRecord
     );
-    // return pgGranule;
     return pgGranuleResult;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
 
     // If a postgres record was provided
     // attempt to ensure alignment between postgress/dynamo/es
-    // what to do if it failed? previously, what was returned if no write happened?
-    // TODO: figure out ^^, maybe from tests?
-    // if (pgGranule) {
     if (pgGranuleResult?.status === 'success') {
       // Align dynamo granule record with postgres record
       // Retrieve the granule from postgres
-      // pgGranule = pgGranuleResult.pgGranule;
       let pgGranuleExists;
       let latestPgGranule;
       try {
@@ -610,7 +610,6 @@ const _writeGranule = async ({
   writeConstraints = true,
 }) => {
   const { status } = apiGranuleRecord;
-  // const pgGranule = await _writeGranuleRecords({
   const pgGranuleResult = await _writeGranuleRecords({
     apiGranuleRecord,
     esClient,
