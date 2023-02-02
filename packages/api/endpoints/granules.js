@@ -3,7 +3,8 @@
 'use strict';
 
 const { z } = require('zod');
-const { isError } = require('@cumulus/common');
+const isError = require('lodash/isError');
+
 const { zodParser } = require('@cumulus/zod-utils');
 const router = require('express-promise-router')();
 
@@ -597,7 +598,9 @@ const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloa
  */
 async function bulkDelete(req, res) {
   const payload = parseBulkDeletePayload(req.body);
-  if (isError(payload)) return res.status(400).send({ errors: payload.errors });
+  if (isError(payload)) {
+    return res.status(400).send({ errors: payload.errors });
+  }
 
   const concurrency = payload.concurrency || 10;
 
