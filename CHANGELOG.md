@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
+- The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
+
 ### Removed
 
 - Removed a few tests that were disabled 3-4 years ago
