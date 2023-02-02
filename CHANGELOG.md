@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Removed
+
+- Removed a few tests that were disabled 3-4 years ago
+
 ### Fixed
 
 - **CUMULUS-3148**
