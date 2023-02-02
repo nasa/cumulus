@@ -1627,7 +1627,6 @@ test('DELETE deletes only a Rule\'s resources if onlyResources queryparam is tru
   const { message } = response.body;
 
   t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
-  // TODO check that resources were deleted
   t.is(message, 'Record resources (e.g. CloudWatch Events, Kinesis Event Sources) deleted');
 });
 
