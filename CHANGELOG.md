@@ -33,7 +33,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **Snyk Security**-
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
-  
+- **CUMULUS-3149**
+  - Added zod (https://www.npmjs.com/package/zod) to handle bulkDelete input
+    validation (and future input validators), and brought in
+    `@cumulus/zod-utils` to support that
+
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
 ### Breaking Changes
