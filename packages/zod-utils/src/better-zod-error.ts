@@ -12,6 +12,7 @@ const joinPath = (pathSegments: Array<string | number>) => {
       ? appendNumber(result, pathSegment)
       : appendString(result, pathSegment);
   });
+  return result;
 };
 
 interface BetterZodErrorParams {
