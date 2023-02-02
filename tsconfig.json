@@ -13,7 +13,6 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "incremental": false,
     "useUnknownInCatchVariables": false
   }
 }
