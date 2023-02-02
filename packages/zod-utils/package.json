@@ -13,7 +13,13 @@
     "dist/**/*.map"
   ],
   "scripts": {
-    "tsc": "tsc"
+    "clean": "rm -rf dist",
+    "prepare": "npm run tsc",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test": "../../node_modules/.bin/ava",
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "tsc": "../../node_modules/.bin/tsc",
+    "watch": "../../node_modules/.bin/tsc -w"
   },
   "dependencies": {
     "zod": "^3.20.2"
