@@ -105,7 +105,7 @@ export const retrieveEDLToken = async (username: string, password: string, edlEn
 const array: { access_token: string; token_type: string; expiration_date: string; }[] = rawResponse.body;
 const tokens = GetTokenResponseBody.parse(array);
 const isTokenExpired = (token: Token) => new Date(token.expiration_date) < new Date();
-const unExpiredTokens = tokens.filter((token) => !isTokenExpired(token));
+const unExpiredTokens = tokens.filter((token: any) => !isTokenExpired(token));
 return unExpiredTokens.length > 0 ? sortBy(unExpiredTokens, ['expiration_date'])[0].access_token : undefined;
 };
 
