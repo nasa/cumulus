@@ -1607,29 +1607,6 @@ test('DELETE deletes a rule', async (t) => {
   );
 });
 
-test('DELETE deletes only a Rule\'s resources if onlyResources queryparam is true', async (t) => {
-  const {
-    originalPgRecord,
-  } = await createRuleTestRecords(
-    t.context,
-    {
-      workflow,
-    }
-  );
-  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
-
-  const response = await request(app)
-    .delete(`/rules/${originalPgRecord.name}?onlyResources=true`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
-
-  const { message } = response.body;
-
-  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
-  t.is(message, 'Record resources (e.g. CloudWatch Events, Kinesis Event Sources) deleted');
-});
-
 test('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
     originalPgRecord,
