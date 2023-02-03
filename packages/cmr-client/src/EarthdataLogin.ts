@@ -1,7 +1,7 @@
 import * as z from 'zod';
-import got, { Got, HTTPError } from 'got';
+import got, { /*Got,*/ HTTPError } from 'got';
 import { sortBy } from 'lodash';
-import { getRequiredEnvVar } from '../../common/env';
+// import { getRequiredEnvVar } from '../../common/env';
 
 const TokenSchema = z.object({
   access_token: z.string(),
@@ -18,7 +18,7 @@ type Token = z.infer<typeof TokenSchema>;
 
 const GetTokenResponseBody = z.array(TokenSchema);
 
-var edlClient: Got;
+//var edlClient: Got;
 // type GetToken = z.infer<typeof GetTokenSchema>;
 /*const PostTokenResponseBody = z.object({
   access_token: z.string(),
@@ -68,10 +68,10 @@ const parseHttpError = (error: HTTPError): Error => {
    *
    * @returns {string} the token
    */
-export const getEDLToken = (username: string, password: string, edlEnv: string): string => {
-  let token = retrieveEDLToken(username, password, edlEnv);
+export const getEDLToken = async (username: string, password: string, edlEnv: string): Promise<string> => {
+  let token = await retrieveEDLToken(username, password, edlEnv);
   if (token === undefined) {
-    token = createEDLToken(username, password, edlEnv);
+    token = await createEDLToken(username, password, edlEnv);
   }
   return token;
 };
@@ -85,11 +85,11 @@ export const getEDLToken = (username: string, password: string, edlEnv: string):
    *
    * @returns {string} the token
    */
-export const retrieveEDLToken = (username: string, password: string, edlEnv: string): string | undefined => {
+export const retrieveEDLToken = async (username: string, password: string, edlEnv: string): Promise<string | undefined> => {
   // response: get a token from the Earthdata login endpoint using credentials if exists
   let rawResponse: any;
   try {
-    rawResponse = edlClient.get(`${getEdlUrl(edlEnv)}api/users/tokens`,
+    rawResponse = await got.get(`${getEdlUrl(edlEnv)}/api/users/tokens`,
       {
         responseType: 'json',
         /*headers: {
@@ -118,10 +118,10 @@ return unExpiredTokens.length > 0 ? sortBy(unExpiredTokens, ['expiration_date'])
    *
    * @returns {string} the token
    */
-export const createEDLToken = (username: string, password: string, edlEnv: string): string => {
+export const createEDLToken = async (username: string, password: string, edlEnv: string): Promise<string> => {
   let rawResponse: any;
   try {
-    rawResponse = edlClient.post(`${getEdlUrl(edlEnv)}api/users/token`,
+    rawResponse = await got.post(`${getEdlUrl(edlEnv)}/api/users/token`,
       {
         username: username,
         password: password
@@ -140,9 +140,9 @@ export const createEDLToken = (username: string, password: string, edlEnv: strin
    * token that is created for testing.
    *
    */
-export const revokeEDLToken = (username: string, password: string, edlEnv: string, token: string): void => {
+export const revokeEDLToken = async (username: string, password: string, edlEnv: string, token: string): Promise<void> => {
   try {
-    edlClient.post(`${getEdlUrl(edlEnv)}api/users/revoke_token`,
+    await got.post(`${getEdlUrl(edlEnv)}/api/users/revoke_token`,
       {
         searchParams: {
           token,
