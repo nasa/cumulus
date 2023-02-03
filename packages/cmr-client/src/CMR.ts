@@ -3,7 +3,7 @@ import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
-import { EarthdataLogin } from './EarthdataLogin';
+import { getEDLToken } from './EarthdataLogin';
 import { CMRResponseBody, CMRErrorResponseBody } from './types';
 import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
@@ -33,12 +33,12 @@ async function updateToken(
   // eslint-disable-next-line @typescript-eslint/dot-notation
   const edlEnv = process.env['CMR_ENVIRONMENT'];
   if (!edlEnv) throw new Error('CMR_ENVIRONMENT not set');
-  const earthdataLoginObject = new EarthdataLogin({
+  /*const earthdataLoginObject = new EarthdataLogin({
     username: username,
     password: password,
     edlEnv: edlEnv,
-  });
-  return await earthdataLoginObject.getEDLToken();
+  });*/
+  return await getEDLToken(username, password, edlEnv);
 }
 
 export interface CMRConstructorParams {

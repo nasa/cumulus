@@ -67,7 +67,7 @@ const parseHttpError = (error: HTTPError): Error => {
    *
    * @returns {string} the token
    */
-const async getEDLToken = (username: string, password: string, edlEnv: string): string => {
+export const async getEDLToken = (username: string, password: string, edlEnv: string): string => {
   let token = await retrieveEDLToken(username, password, edlEnv);
   if (token === undefined) {
     token = await createEDLToken(username, password, edlEnv);
