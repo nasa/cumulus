@@ -66,7 +66,8 @@ for key in "${param_list[@]}"; do
 done
 
 ## Get the current git SHA
-git config --global --add safe.directory $(bamboo.working.directory)/source/cumulus
+SAFE_DIRECTORY = bamboo.working.directory
+$(git config --global --add safe.directory $SAFE_DIRECTORY/source/cumulus)
 GIT_SHA=$(git rev-parse HEAD)
 export GIT_SHA
 
