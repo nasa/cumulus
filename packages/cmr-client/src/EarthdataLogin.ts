@@ -60,6 +60,13 @@ const parseHttpError = (error: HTTPError): Error => {
   return new Error(message);
 };
 
+  /**
+   * The method that determines if a user has a token, to call the retrieveEDLToken function
+   * which makes an API call to the Earthdata Login endpoint, or to create the token with the
+   * createEDLToken function. Returns the token as a string.
+   *
+   * @returns {string} the token
+   */
 const async getEDLToken = (username: string, password: string, edlEnv: string): string => {
   let token = await retrieveEDLToken(username, password, edlEnv);
   if (token === undefined) {
@@ -68,6 +75,15 @@ const async getEDLToken = (username: string, password: string, edlEnv: string): 
   return token;
 };
 
+  /**
+   * The method for getting the token from the Earthdata Login endpoint. Sends a GET request
+   * with the users' base64 encoded username and password as a header for authorization. If the
+   * users' credentials are accepted the first unexpired token is retrieved, if one exists, and
+   * returned on their behalf, if not, an error is thrown. If the user does not have a token
+   * in Earthdata Login then undefined is returned to indicate to token needs to be created.
+   *
+   * @returns {string} the token
+   */
 const retrieveEDLToken = (username: string, password: string, edlEnv: string): string | undefined => {
   // response: get a token from the Earthdata login endpoint using credentials if exists
   let rawResponse: any;
@@ -92,6 +108,15 @@ const unExpiredTokens = tokens.filter((token) => !isTokenExpired(token));
 return unExpiredTokens.length > 0 ? sortBy(unExpiredTokens, ['expiration_date'])[0].access_token : undefined;
 };
 
+  /**
+   * The method for creating Earthdata Login token. This method sends a POST request
+   * to the Earthdata Login endpoint URL in order to create a token for the user. The users'
+   * username and password are sent as base64 encoded credentials as a header for
+   * authorization. If the users' credentials are accepted a token is created on their
+   * behalf and returned, if not, an error is thrown.
+   *
+   * @returns {string} the token
+   */
 const createEDLToken = (username: string, password: string, edlEnv: string): string => {
   let rawResponse: any;
   try {
@@ -109,6 +134,11 @@ const createEDLToken = (username: string, password: string, edlEnv: string): str
   return response[0].access_token;
 }
 
+  /**
+   * This method is used for the cmrTokenSpec integration test in order to revoke the
+   * token that is created for testing.
+   *
+   */
 const revokeEDLToken = (username: string, password: string, token: string): void => {
   try {
     await edlClient.post('api/users/revoke_token',
@@ -125,6 +155,7 @@ const revokeEDLToken = (username: string, password: string, token: string): void
   }
 }
 
+/*-------------------------------------------------------------------------------------*/
 /*export interface EarthdataLoginParams {
   username: string,
   password: string,
