@@ -3,7 +3,13 @@
 const test = require('ava');
 const nock = require('nock');
 
-const { EarthdataLogin } = require('../EarthdataLogin');
+const { getEDLToken, retrieveEDLToken, createEDLToken, revokeEDLToken } = require('../EarthdataLogin');
+
+const edlObj = ({
+  username: 'username',
+  password: 'password',
+  edlEnv: 'PROD',
+});
 
 test.before(() => {
   nock.disableNetConnect();
@@ -19,11 +25,6 @@ test.after.always(() => {
 });
 
 test.serial('retrieveToken returns a valid token', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'username',
-    password: 'password',
-    edlEnv: 'PROD',
-  });
 
   const expectedresponse = [
     {
@@ -37,16 +38,11 @@ test.serial('retrieveToken returns a valid token', async (t) => {
     .get('/api/users/tokens')
     .reply(200, expectedresponse);
 
-  const token = await edlObj.getEDLToken();
+  const token = await getEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv);
   t.is(token, 'ABCDE');
 });
 
 test.serial('retrieveToken returns undefined when there is no valid token', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'username',
-    password: 'password',
-    edlEnv: 'PROD',
-  });
 
   const expectedresponse = [];
 
@@ -54,16 +50,11 @@ test.serial('retrieveToken returns undefined when there is no valid token', asyn
     .get('/api/users/tokens')
     .reply(200, expectedresponse);
 
-  const token = await edlObj.retrieveEDLToken();
+  const token = await retrieveEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv);
   t.is(token, undefined);
 });
 
 test.serial('retrieveToken throws exception where invalid user credential', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'invalid_username',
-    password: 'invalid_password',
-    edlEnv: 'PROD',
-  });
 
   const expectedresponse = ' {"error": "invalid_credentials","error_description": "Invalid user credentials"} ';
 
@@ -72,7 +63,7 @@ test.serial('retrieveToken throws exception where invalid user credential', asyn
     .reply(401, expectedresponse);
 
   await t.throwsAsync(
-    () => edlObj.getEDLToken(),
+    () => getEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv),
     {
       name: 'Error',
       message: 'EarthdataLogin error: Invalid user credentials,  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
@@ -81,11 +72,6 @@ test.serial('retrieveToken throws exception where invalid user credential', asyn
 });
 
 test.serial('createToken creates a token for the user', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'username',
-    password: 'password',
-    edlEnv: 'PROD',
-  });
 
   const expectedresponse = [
     {
@@ -98,16 +84,11 @@ test.serial('createToken creates a token for the user', async (t) => {
     .post('/api/users/token')
     .reply(200, expectedresponse);
 
-  const token = await edlObj.createEDLToken();
+  const token = await createEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv);
   t.is(token, 'ABCDE');
 });
 
 test.serial('createToken throws an error where invalid user credential', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'invalid_username',
-    password: 'invalid_password',
-    edlEnv: 'PROD',
-  });
 
   const expectedresponse = ' {"error": "invalid_credentials","error_description": "Invalid user credentials"} ';
 
@@ -116,7 +97,7 @@ test.serial('createToken throws an error where invalid user credential', async (
     .reply(401, expectedresponse);
 
   await t.throwsAsync(
-    () => edlObj.createEDLToken(),
+    () => createEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv),
     {
       name: 'Error',
       message: 'EarthdataLogin error: Invalid user credentials,  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
@@ -125,11 +106,6 @@ test.serial('createToken throws an error where invalid user credential', async (
 });
 
 test.serial('getToken returns a valid token', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'username',
-    password: 'password',
-    edlEnv: 'PROD',
-  });
 
   const expectedresponse = [
     {
@@ -143,16 +119,11 @@ test.serial('getToken returns a valid token', async (t) => {
     .get('/api/users/tokens')
     .reply(200, expectedresponse);
 
-  const token = await edlObj.getEDLToken();
+  const token = await getEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv);
   t.is(token, 'ABCDE');
 });
 
 test.serial('revokeToken revokes the user token', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'username',
-    password: 'password',
-    edlEnv: 'PROD',
-  });
 
   const revokeToken = 'ABCDE';
 
@@ -161,16 +132,11 @@ test.serial('revokeToken revokes the user token', async (t) => {
     .reply(200);
 
   await t.notThrowsAsync(
-    () => edlObj.revokeEDLToken(revokeToken)
+    () => revokeEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv, revokeToken)
   );
 });
 
 test.serial('revokeToken throws an error with invalid user credentials', async (t) => {
-  const edlObj = new EarthdataLogin({
-    username: 'invalid_username',
-    password: 'invalid_password',
-    edlEnv: 'PROD',
-  });
 
   const revokeToken = 'ABCDE';
 
@@ -181,7 +147,7 @@ test.serial('revokeToken throws an error with invalid user credentials', async (
     .reply(401, expectedresponse);
 
   await t.throwsAsync(
-    () => edlObj.revokeEDLToken(revokeToken),
+    () => revokeEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv, revokeToken),
     {
       name: 'Error',
       message: 'EarthdataLogin error: Invalid user credentials,  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
