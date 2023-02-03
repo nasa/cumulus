@@ -562,20 +562,40 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
   return rules.length;
 }
 
-async function deleteRuleResources(stackName, bucketName, rules, postfix) {
-  // setProcessEnvironment is not needed by this function, but other code
-  // depends on this undocumented side effect
-  setProcessEnvironment(stackName, bucketName);
-  await pMap(
-    rules,
-    (rule) => rulesApi.deleteRule({
-      prefix: stackName,
-      ruleName: postfix ? `${rule.name}${postfix}` : rule.name,
-      query: { onlyResources: 'true' },
-    }),
-    { concurrency: process.env.CONCURRENCY || 3 }
+/**
+ * Delete a rule's Kinesis Event Source Mappings
+ *
+ * @param {Object} rule - a Rule record as returned by the Rules API
+ * @returns {Promise<number>} - Number of rules deleted
+ */
+async function deleteRuleResources(rule) {
+  const kinesisSourceEvents = [
+    {
+      name: process.env.messageConsumer,
+      eventType: 'arn',
+      type: {
+        arn: rule.rule.arn,
+      },
+    },
+    {
+      name: process.env.KinesisInboundEventLogger,
+      eventType: 'log_event_arn',
+      type: {
+        log_event_arn: rule.rule.logEventArn,
+      },
+    },
+  ];
+  const deleteEventPromises = kinesisSourceEvents.map(
+    (kinesisEvent) => lambda.deleteEventSourceMapping(
+      kinesisEvent.type[kinesisEvent.eventType]
+    ).catch(
+      (error) => {
+        console.log(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
+        if (error.code !== 'ResourceNotFoundException') throw error;
+      }
+    )
   );
-  return rules.length;
+  return await Promise.all(deleteEventPromises);
 }
 
 /**

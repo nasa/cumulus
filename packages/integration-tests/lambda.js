@@ -2,8 +2,24 @@
 
 const { lambda } = require('@cumulus/aws-client/services');
 
+/**
+ * Retrieve a rule's Kinesis Event Source Mappings
+ *
+ * @param {Object} uuid - unique identifier for a rule
+ * @returns {Promise<Object>} - details about an Event Source Mapping
+ */
 async function getEventSourceMapping(uuid) {
   return await lambda().getEventSourceMapping({ UUID: uuid }).promise();
+}
+
+/**
+ * Delete a rule's Kinesis Event Source Mappings
+ *
+ * @param {Object} uuid - unique identifier for a rule
+ * @returns {Promise<void>}
+ */
+async function deleteEventSourceMapping(uuid) {
+  return await lambda().deleteEventSourceMapping({ UUID: uuid }).promise();
 }
 
 /**
@@ -60,4 +76,9 @@ async function getLambdaVersions(lambdaFunctionName) {
     lambda().listVersionsByFunction.bind(lambda()));
 }
 
-module.exports = { getLambdaAliases, getLambdaVersions, getEventSourceMapping };
+module.exports = {
+  deleteEventSourceMapping,
+  getLambdaAliases,
+  getLambdaVersions,
+  getEventSourceMapping,
+};
