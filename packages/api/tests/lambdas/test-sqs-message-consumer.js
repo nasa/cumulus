@@ -167,7 +167,7 @@ test.serial('processQueues processes messages from the ENABLED sqs rule', async 
   const { queueMessageStub } = t.context;
   const { rules, queues } = await createRulesAndQueues();
   t.context.fetchRulesStub.callsFake((params) => {
-    t.deepEqual(params, { type: 'sqs', state: 'ENABLED' });
+    t.deepEqual(params, { queryParams: { 'rule.type': 'sqs', state: 'ENABLED' } });
     return rules.filter((rule) => rule.state === 'ENABLED');
   });
   const queueMessageFromEnabledRuleStub = queueMessageStub
@@ -406,7 +406,7 @@ test.serial('processQueues archives messages from the ENABLED sqs rule only', as
   const { stackName } = process.env;
   const { rules, queues } = await createRulesAndQueues();
   t.context.fetchRulesStub.callsFake((params) => {
-    t.deepEqual(params, { type: 'sqs', state: 'ENABLED' });
+    t.deepEqual(params, { queryParams: { 'rule.type': 'sqs', state: 'ENABLED' } });
     return rules.filter((rule) => rule.state === 'ENABLED');
   });
   const message = { testdata: randomString() };

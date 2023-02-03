@@ -6,8 +6,47 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### MIGRATION notes
+
+From this release forward Core will be tested against PostgreSQL 11   Existing
+release compatibility testing was done for release 11.1.8/14.0.0+.   Users
+should migrate their datastores to Aurora PostgreSQL 11.13+ compatible data stores
+as soon as possible.
+
+Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
+database clusters forcibly upgraded at the next maintenance window after 31 Jan
+2023.   Our guidance to mitigate this issue is to do a manual (outside of
+terraform) upgrade.   This will result in the cluster being upgraded with a
+manually set parameter group not managed by terraform.
+
+If you manually upgraded and the cluster is now on version 11.13, to continue using the `cumulus-rds-tf` module *once
+upgraded* update following module configuration values if set, or allow their
+defaults to be utilized:
+
+```terraform
+parameter_group_family = "aurora-postgresql11"
+engine_version = 11.13
+```
+
+When you apply this update, the original PostgreSQL v10 parameter group will be
+removed, and recreated using PG11 defaults/configured terraform values and
+update the database cluster to use the new configuration.
+
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+
 ### Breaking Changes
 
+- **CUMULUS-3070/3074**
+  - Updated granule PUT/POST endpoints to no longer respect message write
+    constraints.  Functionally this means that:
+    - Granules with older createdAt values will replace newer ones, instead of
+        ignoring the write request
+    - Granules that attempt to set a non-complete state (e.g. 'queued' and
+        'running') will now ignore execution state/state change and always write
+    - Granules being set to non-complete state will update all values passed in,
+      instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
+      'status', 'execution']`
 - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
 - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
 
@@ -15,8 +54,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Removed a few tests that were disabled 3-4 years ago
 
+### Added
+
+- **CUMULUS-3070**
+  - Remove granules dynamoDb model logic that sets default publish value on record
+    validation
+  - Update API granule write logic to not set default publish value on record
+    updates to avoid overwrite (PATCH behavior)
+  - Update API granule write logic to publish to false on record
+    creation if not specified
+  - Update message granule write logic to set default publish value on record
+    creation update.
+  - Update granule write logic to set published to default value of `false` if
+    `null` is explicitly set with intention to delete the value.
+  - Removed dataType/version from api granule schema
+  - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
+    logic for PUT/PATCH endpoint.
+
 ### Fixed
 
+- **CUMULUS-3148**:
+  - Updates cumulus-rds-tf to use defaults for PostgreSQL 11.13
 - **CUMULUS-3148**
   - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
     PostgreSQL 11 upgrade exposed dependency on database results in the API return
@@ -26,6 +84,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3142**
   - Fix issue from CUMULUS-3070 where undefined values for status results in
     unexpected insertion failure on PATCH.
+- **CUMULUS-3181**
+  - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
     
 ### Changed
 
