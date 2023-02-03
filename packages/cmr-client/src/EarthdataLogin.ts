@@ -7,18 +7,24 @@ const TokenSchema = z.object({
   expiration_date: z.string(),
 });
 
+const PostTokenSchema = z.object({
+  access_token: z.string(),
+  token_type: z.string(),
+  expiration_date: z.string(),
+})
+
 type Token = z.infer<typeof TokenSchema>;
 
 const GetTokenResponseBody = z.array(TokenSchema);
 
+const edlClient: Got;
 // type GetToken = z.infer<typeof GetTokenSchema>;
-const PostTokenResponseBody = z.object({
+/*const PostTokenResponseBody = z.object({
   access_token: z.string(),
   expiration_date: z.string(),
-});
+});*/
 
-//const GetTokenResponseBody = z.array(GetTokenSchema);
-//const PostTokenResponseBody = z.array(TokenSchema);
+const PostTokenResponseBody = z.array(PostTokenSchema);
 
 const parseCaughtError = (e: unknown): Error => (e instanceof Error ? e : new Error(`${e}`));
 
@@ -54,7 +60,72 @@ const parseHttpError = (error: HTTPError): Error => {
   return new Error(message);
 };
 
-export interface EarthdataLoginParams {
+const async getEDLToken = (username: string, password: string, edlEnv: string): string => {
+  let token = await retrieveEDLToken(username, password, edlEnv);
+  if (token === undefined) {
+    token = await createEDLToken(username, password, edlEnv);
+  }
+  return token;
+};
+
+const retrieveEDLToken = (username: string, password: string, edlEnv: string): string | undefined => {
+  // response: get a token from the Earthdata login endpoint using credentials if exists
+  let rawResponse: any;
+  try {
+    rawResponse = await edlClient.get('api/users/tokens',
+      {
+        responseType: 'json',
+        /*headers: {
+          Authorization: `Basic ${buff}`,
+        },*/
+        username: username,
+        password: password,
+      });
+  } catch (error) {
+    if (error instanceof got.HTTPError) throw parseHttpError(error);
+    throw parseCaughtError(error);
+  }
+const array: { access_token: string; token_type: string; expiration_date: string; }[] = rawResponse.body;
+const tokens = GetTokenResponseBody.parse(array);
+const isTokenExpired = (token: Token) => new Date(token.expiration_date) < new Date();
+const unExpiredTokens = tokens.filter((token) => !isTokenExpired(token));
+return unExpiredTokens.length > 0 ? sortBy(unExpiredTokens, ['expiration_date'])[0].access_token : undefined;
+};
+
+const createEDLToken = (username: string, password: string, edlEnv: string): string => {
+  let rawResponse: any;
+  try {
+    rawResponse = await edlClient.post('api/users/token',
+      {
+        username: username,
+        password: password
+      });
+  } catch (error) {
+    if (error instanceof got.HTTPError) throw parseHttpError(error);
+    throw parseCaughtError(error);
+  }
+  const array: { access_token: string; token_type: string; expiration_date: string; }[] = rawResponse.body;
+  const response = PostTokenResponseBody.parse(array);
+  return response[0].access_token;
+}
+
+const revokeEDLToken = (username: string, password: string, token: string): void => {
+  try {
+    await edlClient.post('api/users/revoke_token',
+      {
+        searchParams: {
+          token,
+        },
+        username: username,
+        password: password,
+      });
+  } catch (error) {
+    if (error instanceof got.HTTPError) throw parseHttpError(error);
+    throw parseCaughtError(error);
+  }
+}
+
+/*export interface EarthdataLoginParams {
   username: string,
   password: string,
   edlEnv: string,
@@ -74,7 +145,7 @@ export interface EarthdataLoginParams {
  *  "edlEnv": "my-edl-environment"
  * });
  */
-export class EarthdataLogin {
+/*export class EarthdataLogin {
   username: string;
   password: string;
   edlEnv: string;
@@ -97,7 +168,7 @@ export class EarthdataLogin {
   * }
   */
 
-  constructor(params: EarthdataLoginParams) {
+  /*constructor(params: EarthdataLoginParams) {
     this.username = params.username;
     this.password = params.password;
     this.edlEnv = params.edlEnv;
@@ -113,7 +184,7 @@ export class EarthdataLogin {
    *
    * @returns {Promise.<string>} the token
    */
-  async getEDLToken(): Promise<string> {
+  /*async getEDLToken(): Promise<string> {
     let token = await this.retrieveEDLToken();
     if (token === undefined) {
       token = await this.createEDLToken();
@@ -130,7 +201,7 @@ export class EarthdataLogin {
    *
    * @returns {Promise.<string>} the token
    */
-  async retrieveEDLToken(): Promise<string> {
+  /*async retrieveEDLToken(): Promise<string | undefined>{
     // response: get a token from the Earthdata login endpoint using credentials if exists
     let rawResponse: any;
     // const buff = Buffer.from(`${this.username + ':' + this.password}`).toString('base64');
@@ -140,36 +211,20 @@ export class EarthdataLogin {
           responseType: 'json',
           /*headers: {
             Authorization: `Basic ${buff}`,
-          },*/
+          },
           username: this.username,
           password: this.password,
         });
     } catch (error) {
-      throw error;
+      if (error instanceof got.HTTPError) throw parseHttpError(error);
+      throw parseCaughtError(error);
     }
-  /*let arr = rawResponse.body;
-  //const test = Object(rawResponse);
-  /*const arrayRespBody = Array(rawResponse.body);
-  console.log("TYPE OF ARRAY RAW RESP BODY" + typeof arrayRespBody + "FIRST ELEMENT" + arrayRespBody[1] + "\n");
-  console.log("RAW RESPONSE BODY as AN ARRAY" + Array(rawResponse.body) + "\n");
-  console.log("TYPE OF RAW RESP BODY " + typeof rawResponse.body + " THE RAWRESPONSE BODY:" + rawResponse.body + "\n");
-  */
-  // console.log(" \n"); 
-  // console.log("RAWRESPONSE", rawResponse.body, "TYPEOF RAW RESPONSEBODY", typeof rawResponse.body);
-  // console.log(" \n");
-  //const array: { access_token: string; token_type: string; expiration_date: string; }[] = rawResponse.body;
-
-  //console.log("ARRAY OBJECT", array, "TYPE", typeof array);
-  //console.log("JSON STRING BODY" + JSON.parse(String(rawResponse.body)));
   const array: { access_token: string; token_type: string; expiration_date: string; }[] = rawResponse.body;
-  console.log("ARRAY", array, "TYPEOF", typeof array, "\n");
   const tokens = GetTokenResponseBody.parse(array);
-  const isTokenExpired = (token: Token) => new Date(token.expiration_date) > new Date();
+  const isTokenExpired = (token: Token) => new Date(token.expiration_date) < new Date();
   const unExpiredTokens = tokens.filter((token) => !isTokenExpired(token));
-  const latestToken = sortBy(unExpiredTokens, ['expiration_date'])[0];
-  return latestToken.access_token;
-  return '';
-  } 
+  return unExpiredTokens.length > 0 ? sortBy(unExpiredTokens, ['expiration_date'])[0].access_token : undefined;
+  }*/
 
   /**
    * The method for creating Earthdata Login token. This method sends a POST request
@@ -180,7 +235,7 @@ export class EarthdataLogin {
    *
    * @returns {Promise.<string>} the token
    */
-   async createEDLToken(): Promise<string> {
+   /*async createEDLToken(): Promise<string> {
     let rawResponse: unknown;
     try {
       rawResponse = await this.edlClient.post('api/users/token',
@@ -201,6 +256,7 @@ export class EarthdataLogin {
    * token that is created for testing.
    *
    */
+  /*
    async revokeEDLToken(token: string): Promise<void> {
     try {
       await this.edlClient.post('api/users/revoke_token',
@@ -215,5 +271,4 @@ export class EarthdataLogin {
       if (error instanceof got.HTTPError) throw parseHttpError(error);
       throw parseCaughtError(error);
     }
-  }
-}
+  }*/
