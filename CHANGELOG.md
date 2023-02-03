@@ -36,7 +36,7 @@ update the database cluster to use the new configuration.
 
 - **CUMULUS-3149**
 
-  - Updates the api `/graunles/bulkDelete` endpoit to take the
+  - Updates the api `/graunles/bulkDelete` endpoint to take the
     following configuration keys for the bulkDelete:
     - concurrency - Number of concurrent bulk deletions to process at a time.
             Defaults to 10, increasing this value may improve throughput at the cost
