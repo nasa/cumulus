@@ -86,7 +86,8 @@ async function bulkGranuleDelete(
   removeGranuleFromCmrFunction
 ) {
   const concurrency = payload.concurrency || 10;
-  process.env['dbMaxPool'] = payload.maxDbConnections || concurrency;
+
+  process.env.dbMaxPool = payload.maxDbConnections || concurrency;
 
   const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
