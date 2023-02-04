@@ -74,7 +74,8 @@ async function applyWorkflowToGranules({
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
- * @param {Function} [removeGranuleFromCmrFunction] - passed in function used for test mocking
+ * @param {(granule: any, collectionId: string) => Promise<void>}
+ *  [removeGranuleFromCmrFunction] - passed in function used for test mocking
  * @returns {Promise}
  */
 async function bulkGranuleDelete(
