@@ -5,7 +5,6 @@
 const { z } = require('zod');
 const isError = require('lodash/isError');
 
-const { zodParser } = require('@cumulus/zod-utils');
 const router = require('express-promise-router')();
 
 const asyncOperations = require('@cumulus/async-operations');
@@ -28,6 +27,8 @@ const {
 const { Search } = require('@cumulus/es-client/search');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
+const { zodParser } = require('../src/zod-utils');
+
 const { chooseTargetExecution } = require('../lib/executions');
 const {
   createGranuleFromApi,
@@ -622,7 +623,7 @@ async function bulkDelete(req, res) {
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  const tableName = process.env.AsyncOperationsTable;
+  const tableName = przocess.env.AsyncOperationsTable;
 
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
