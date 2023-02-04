@@ -55,7 +55,7 @@ const unpublishGranule = async ({
   pgCollection,
   granulePgModel = new GranulePgModel(),
   granuleDynamoModel = new models.Granule(),
-  removeGranuleFromCmrFunction = _removeGranuleFromCmr(),
+  removeGranuleFromCmrFunction = _removeGranuleFromCmr,
 }) => {
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
