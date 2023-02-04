@@ -36,18 +36,18 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
  * Remove granule record from CMR and update Postgres + Dynamo granules
  *
  * @param {Object} params
- * @param {Knex} params.knex - DB client
- * @param {Object} params.pgGranuleRecord - A Postgres granule record
- * @param {string} [params.pgCollection] - A Postgres Collection record
- * @param {Object} [params.granulePgModel=new GranulePgModel()]
+ * @param {import('knex').Knex}   params.knex - DB client
+ * @param {import('@cumulus/db').PostgresGranuleRecord}
+ *   params.pgGranuleRecord - A Postgres granule record
+ * @param {import('@cumulus/db').PostgresCollectionRecord}
+ *  [params.pgCollection] - A Postgres Collection record
+ * @param {import('@cumulus/db').GranulePgModel} [params.granulePgModel=new GranulePgModel()]
  * - Instance of granules model for PostgreSQL
- * @param {Object} [params.granuleDynamoModel=new models.Granule()]
+ * @param {models.Granule} [params.granuleDynamoModel=new models.Granule()]
  * - Instance of granules model for DynamoDB
- * @param {Function} [removeGranuleFromCmrFunction=_removeGranuleFromCmr()]
+ * @param {_removeGranuleFromCmr} [params.removeGranuleFromCmrFunction]
  * - passed in function used for test mocking
- * @returns {Object} - Updated granules
- * @returns {Object.dynamoGranule} - Updated Dynamo Granule
- * @returns {Object.pgGranule} - Updated Postgres Granule
+ * @returns {Promise<{dynamoGranule, pgGranule}>} - Updated dynamo and postgres granule
  */
 const unpublishGranule = async ({
   knex,
