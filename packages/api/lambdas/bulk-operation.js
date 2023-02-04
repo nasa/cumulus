@@ -70,6 +70,9 @@ async function applyWorkflowToGranules({
  *   Whether published granule should be deleted from CMR before removal
  * @param {boolean} [payload.maxDbConnections]
  *   Maximum number of postgreSQL DB connections to make available for knex queries
+ *   Defaults to `concurrency`
+ * @param {integer} [payload.concurrency]
+ *   granule concurrency for the bulk deletion operation.  Defaults to 10
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
