@@ -62,6 +62,7 @@ const unpublishGranule = async ({
   const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
   let dynamoGranuleDeleted = false;
   try {
+    /** @type {string} */
     let collectionId;
     if (pgCollection) {
       collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
