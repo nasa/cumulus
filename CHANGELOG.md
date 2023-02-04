@@ -19,8 +19,9 @@ database clusters forcibly upgraded at the next maintenance window after 31 Jan
 terraform) upgrade.   This will result in the cluster being upgraded with a
 manually set parameter group not managed by terraform.
 
-If you manually upgraded and the cluster is now on version 11.13, to continue using the `cumulus-rds-tf` module *once
-upgraded* update following module configuration values:
+If you manually upgraded and the cluster is now on version 11.13, to continue
+using the `cumulus-rds-tf` module *once upgraded* update following module
+configuration values:
 
 ```terraform
 parameter_group_family = "aurora-postgresql11"
@@ -44,7 +45,8 @@ update the database cluster to use the new configuration.
     - maxDbConnections - Defaults to `concurrency`, and generally should not be
         changed unless troubleshooting performance concerns.
   - Updates all bulk api endpoints to add knexDebug boolean query parameter to
-    allow for debugging of database connection issues in the future.
+    allow for debugging of database connection issues in the future.  Defaults
+    to false.
   - Fixed logic defect in bulk deletion logic where an information query was
     nested in a transaction call, resulting in transactions holding knex
     connection pool connections in a blocking way that would not resolve,
