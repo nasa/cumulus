@@ -623,7 +623,7 @@ async function bulkDelete(req, res) {
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
-  const tableName = przocess.env.AsyncOperationsTable;
+  const tableName = process.env.AsyncOperationsTable;
 
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
