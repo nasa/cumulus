@@ -20,7 +20,7 @@ const { TableNames } = require('../tables');
 
 export const getGranuleCollectionId = async (
   knexOrTransaction: Knex | Knex.Transaction,
-  granule: PostgresGranule
+  granule: PostgresGranule | PostgresGranuleRecord
 ) => {
   const collectionPgModel = new CollectionPgModel();
   const collection = await collectionPgModel.get(
