@@ -48,6 +48,7 @@ const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = requi
 /**
  * @typedef {import('express').Request} Request
  * @typedef {import('express').Response} Response
+ * @typedef {import('@cumulus/zod-utils').BetterZodError} BetterZodError
  */
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
@@ -587,8 +588,21 @@ const BulkDeletePayloadSchema = z.object({
   knexDebug: z.boolean().optional(),
 }).catchall(z.unknown());
 
-const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
+/**
+* Start an AsyncOperation that will perform a bulk granules delete
+*
+* @param {Response} res - express response object
+* @param {BetterZodError} errorPayload
+* @returns {Express.BoomError} the promise of express response object
+*/
+function _returnCustomValidationErrors(res, errorPayload) {
+  if (errorPayload.errors.filter((error) => error.match('forceRemoveFromCmr')).length > 0) {
+    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
+  }
+  return res.boom.badRequest('invalid payload', errorPayload);
+}
 
+const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
 /**
  * Start an AsyncOperation that will perform a bulk granules delete
  *
@@ -599,7 +613,7 @@ const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloa
 async function bulkDelete(req, res) {
   const payload = parseBulkDeletePayload(req.body);
   if (isError(payload)) {
-    return res.status(400).send({ errors: payload.errors });
+    return _returnCustomValidationErrors(res, payload);
   }
 
   const concurrency = payload.concurrency || 10;

@@ -331,7 +331,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /Expected boolean, received string at forceRemoveFromCmr/);
+    .expect(400, /forceRemoveFromCmr must be a boolean value/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
