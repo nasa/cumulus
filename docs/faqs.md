@@ -25,6 +25,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 - [pipenv](https://pypi.org/project/pipenv/)
   
 > Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+
 </details>
 
 <details>
@@ -60,6 +61,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 - AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
 > For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
+
 </details>
 
 ---

@@ -142,11 +142,11 @@ You should not need to reconfigure either, as the secret ARN and the security gr
 
 You should expect to see output that looks like the following (with sensitive identifiers removed):
 
-![Screenshot of shell output showing module.rds_cluster.aws_rds_cluster.cumulus resource changes](assets/rds_cluster_update.jpg)
+![Screenshot of shell output showing module.rds_cluster.aws_rds_cluster.cumulus resource changes](../assets/rds_cluster_update.jpg)
 
 and
 
-![Screenshot of shell output showing module.rds_cluster.aws_secretsmanager_secret_version resource changes](assets/secrets_manager_update.jpg)
+![Screenshot of shell output showing module.rds_cluster.aws_secretsmanager_secret_version resource changes](../assets/secrets_manager_update.jpg)
 
    Once everything looks acceptable, run:
 

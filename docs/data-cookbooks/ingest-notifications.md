@@ -10,7 +10,7 @@ The ingest notification reporting SQS queue is populated via a [Cloudwatch rule 
 
 The `sfEventSqsToDbRecords` Lambda function reads from the `sfEventSqsToDbRecordsInputQueue` queue and updates the RDS database records for granules, executions, and PDRs. When the records are updated, messages are posted to the three SNS topics. This Lambda is invoked both when the workflow starts and when it reaches a terminal state (completion or failure).
 
-![Diagram of architecture for reporting workflow ingest notifications from AWS Step Functions](assets/interfaces.svg)
+![Diagram of architecture for reporting workflow ingest notifications from AWS Step Functions](../assets/interfaces.svg)
 
 ## Sending SQS messages to report status
 

@@ -172,7 +172,7 @@ After creating/updating the rule, any subsequent invocations of the rule should 
 
 ## Architecture
 
-![Architecture diagram showing how executions started from a queue are throttled to a maximum concurrent limit](assets/queued-execution-throttling.png)
+![Architecture diagram showing how executions started from a queue are throttled to a maximum concurrent limit](../assets/queued-execution-throttling.png)
 
 Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` Lambda attempts to increment the semaphore and responds as follows:
 

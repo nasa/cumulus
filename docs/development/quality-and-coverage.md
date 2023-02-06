@@ -1,3 +1,6 @@
+---
+id: quality-and-coverage
+---
 # Code Coverage and Quality
 
 ## Code Coverage

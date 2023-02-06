@@ -51,7 +51,7 @@ Understanding the complete `ParsePdr` workflow is not necessary to understanding
 
 In the complete `ParsePdr` workflow definition, the state `QueueGranules` is followed by `CheckStatus`. From `CheckStatus` a loop starts: Given `CheckStatus` returns `meta.isPdrFinished: false`, `CheckStatus` is followed by `CheckAgainChoice` is followed by `PdrStatusReport` is followed by `WaitForSomeTime`, which returns to `CheckStatus`. Once `CheckStatus` returns `meta.isPdrFinished: true`, `CheckAgainChoice` proceeds to `WorkflowSucceeded`.
 
-![Execution graph of SIPS ParsePdr workflow in AWS Step Functions console](assets/sips-parse-pdr.png)
+![Execution graph of SIPS ParsePdr workflow in AWS Step Functions console](../assets/sips-parse-pdr.png)
 
 ## Further documentation
 

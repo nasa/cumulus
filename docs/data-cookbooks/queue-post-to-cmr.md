@@ -10,7 +10,7 @@ In this document, we walk through handling CMR errors in workflows by queueing P
 
 The general concept is that the last task of the ingest workflow will be `QueueWorkflow`, which queues the publish workflow. The publish workflow contains the `PostToCmr` task and if a CMR error occurs during `PostToCmr`, the publish workflow will add itself back onto the queue so that it can be executed when CMR is back online. This is achieved by leveraging the `QueueWorkflow` task again in the publish workflow. The following diagram demonstrates this queueing process.
 
-![Diagram of workflow queueing](assets/queue-workflow.png)
+![Diagram of workflow queueing](../assets/queue-workflow.png)
 
 ## Ingest Workflow
 

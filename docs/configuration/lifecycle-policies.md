@@ -103,29 +103,29 @@ To create the example policy on a bucket via the management console, go to the f
 
 You should see a screen similar to:
 
-![Screenshot of AWS console for an S3 bucket](assets/aws_bucket_console_example.png)
+![Screenshot of AWS console for an S3 bucket](../assets/aws_bucket_console_example.png)
 
 Click the "Management" Tab, then lifecycle button and press `+ Add lifecycle rule`:
 
-![Screenshot of "Management" tab of AWS console for an S3 bucket](assets/add_lifecycle_rule.png)
+![Screenshot of "Management" tab of AWS console for an S3 bucket](../assets/add_lifecycle_rule.png)
 
 Give the rule a name (e.g. '90DayRule'), leaving the filter blank:
 
-![Screenshot of window for configuring the name and scope of a lifecycle rule on an S3 bucket in the AWS console](assets/lifecycle_1.png)
+![Screenshot of window for configuring the name and scope of a lifecycle rule on an S3 bucket in the AWS console](../assets/lifecycle_1.png)
 
 Click `next`, and mark `Current Version` and `Previous Versions`.
 
 Then for each, click `+ Add transition` and select `Transition to Standard-IA after` for the `Object creation` field, and set `90` for the `Days after creation`/`Days after objects become concurrent` field.    Your screen should look similar to:
 
-![Screenshot of window for configuring the storage class transitions of a lifecycle rule on an S3 bucket in the AWS console](assets/lifecycle_2.png)
+![Screenshot of window for configuring the storage class transitions of a lifecycle rule on an S3 bucket in the AWS console](../assets/lifecycle_2.png)
 
 Click `next`, then next past the `Configure expiration` screen (we won't be setting this), and on the fourth page, click `Save`:
 
-![Screenshot of window for reviewing the configuration of a lifecycle rule on an S3 bucket in the AWS console](assets/lifecycle_4.png)
+![Screenshot of window for reviewing the configuration of a lifecycle rule on an S3 bucket in the AWS console](../assets/lifecycle_4.png)
 
 You should now see you have a rule configured for your bucket:
 
-![Screenshot of lifecycle rule appearing in the "Management" tab of AWS console for an S3 bucket](assets/lifecycle_5.png)
+![Screenshot of lifecycle rule appearing in the "Management" tab of AWS console for an S3 bucket](../assets/lifecycle_5.png)
 
 You have now set a policy that transitions any version of an object in the bucket to S3IA after each object has not been modified for 90 days.
 

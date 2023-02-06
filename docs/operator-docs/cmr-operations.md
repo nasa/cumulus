@@ -15,7 +15,7 @@ Using either method below, Cumulus will take an unpublished granule and publish 
 
 To do this via the dashboard, use the dashboard's `Execute` button to open the workflow popup shown below and select the `PublishGranule` workflow:
 
-![Screenshot showing workflow popup window with a dropdown containing 'PublishGranule' selected](assets/cd_execute_publish.png)
+![Screenshot showing workflow popup window with a dropdown containing 'PublishGranule' selected](../assets/cd_execute_publish.png)
 
 An example invocation of the API to perform this action is:
 
@@ -36,7 +36,7 @@ The rest of this section will assume you have created this workflow under the na
 Once created and deployed, the workflow is available in the Cumulus dashboard's `Execute` workflow selector.
 However, note that additional configuration is required for this request, to supply an access constraint integer value and optional description to the `UpdateCmrAccessConstraints` workflow, by clicking the `Add Custom Workflow Meta` option in the `Execute` popup, as shown below:
 
-![Screenshot showing granule execute popup with 'updateCmrAccessConstraints' selected and configuration values shown in a collapsible JSON field](assets/cd_execute_updateconstraints.png)
+![Screenshot showing granule execute popup with 'updateCmrAccessConstraints' selected and configuration values shown in a collapsible JSON field](../assets/cd_execute_updateconstraints.png)
 
 An example invocation of the API to perform this action is:
 

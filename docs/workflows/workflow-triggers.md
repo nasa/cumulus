@@ -4,7 +4,7 @@ title: Workflow Triggers
 hide_title: false
 ---
 
-For a workflow to run, it needs to be associated with a rule (see [rule configuration](data-cookbooks/setup.md#rules)). The rule configuration determines how and when a workflow execution is triggered. Rules can be triggered one time, on a schedule, or by new data written to a kinesis stream.
+For a workflow to run, it needs to be associated with a rule (see [rule configuration](../configuration/data-management-types.md#rules)). The rule configuration determines how and when a workflow execution is triggered. Rules can be triggered one time, on a schedule, or by new data written to a kinesis stream.
 
 There are three lambda functions in the API package responsible for scheduling and starting workflows: `SF scheduler`, `message consumer`, and `SF starter`. Each Cumulus instance comes with a Start SF [SQS queue](https://aws.amazon.com/sqs/).
 
@@ -18,4 +18,4 @@ For a kinesis rule, when data is added to the kinesis stream, the Cloudwatch eve
 
 For an sns rule, when a message is published to the SNS topic, the `message consumer` receives the SNS message (JSON expected), parses it into an object, starts a new execution of the workflow associated with the rule and passes the object in the `payload` field of the Cumulus message.
 
-![Diagram showing how workflows are scheduled via rules](assets/schedule-workflows.png)
+![Diagram showing how workflows are scheduled via rules](../assets/schedule-workflows.png)

@@ -1,3 +1,6 @@
+---
+id: integration-tests 
+---
 # Integration Tests
 
 Cumulus has a comprehensive set of integration tests that tests the framework on

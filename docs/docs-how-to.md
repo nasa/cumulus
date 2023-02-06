@@ -1,6 +1,6 @@
 ---
 id: docs-how-to
-title: Cumulus Documentation: How To's
+title: "Cumulus Documentation: How To's"
 hide_title: false
 ---
 

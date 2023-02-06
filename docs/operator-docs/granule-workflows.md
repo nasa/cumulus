@@ -30,7 +30,7 @@ hide_title: false
 * Go to the `Collections` page.
 * Click on `Reingest` and a modal will pop up for your confirmation.
 
-![Screenshot of the Reingest modal workflow](assets/cd_reingest_granule_modal.png)
+![Screenshot of the Reingest modal workflow](../assets/cd_reingest_granule_modal.png)
 
 ### Delete and Ingest
 
@@ -53,11 +53,11 @@ hide_title: false
 * Click on `Failed Granules`.
 * Select multiple granules.
 
-![Screenshot of selected multiple granules](assets/cd_reingest_bulk.png)
+![Screenshot of selected multiple granules](../assets/cd_reingest_bulk.png)
 
 2. Bulk Re-ingest Granules
 
 * Click on `Reingest` and a modal will pop up for your confirmation.
 
-![Screenshot of Bulk Reingest modal workflow](assets/cd_reingest_modal_bulk.png)
+![Screenshot of Bulk Reingest modal workflow](../assets/cd_reingest_modal_bulk.png)
 <!-- markdownlint-enable MD029 -->

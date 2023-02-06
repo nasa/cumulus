@@ -16,4 +16,4 @@ Once Cumulus has been configured to deliver Cloudwatch logs to the ESDIS Metrics
 
 ### Cumulus / ESDIS Metrics distribution system
 
-![Architecture diagram showing how logs are replicated from a Cumulus instance to the ESDIS Metrics account and accessed by the Cumulus dashboard](assets/AWS-Cross-account-log-delivery-and-metrics.png)
+![Architecture diagram showing how logs are replicated from a Cumulus instance to the ESDIS Metrics account and accessed by the Cumulus dashboard](../assets/AWS-Cross-account-log-delivery-and-metrics.png)

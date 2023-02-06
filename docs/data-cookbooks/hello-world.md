@@ -78,7 +78,7 @@ Our goal here is to create a rule through the Cumulus dashboard that will define
 }
 ```
 
-![Screenshot of AWS Step Function execution graph for the HelloWorld workflow](assets/hello_world_workflow.png)
+![Screenshot of AWS Step Function execution graph for the HelloWorld workflow](../assets/hello_world_workflow.png)
 _Executed workflow as seen in AWS Console_
 
 ### Output/Results

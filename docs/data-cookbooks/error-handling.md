@@ -258,7 +258,7 @@ Some best practices for error handling in Cumulus Workflows are:
 
 The above results in a workflow which is visualized in the diagram below:
 
-![Screenshot of a visualization of an AWS Step Function workflow definition with branching logic for failures](assets/kinesis-workflow.png)
+![Screenshot of a visualization of an AWS Step Function workflow definition with branching logic for failures](../assets/kinesis-workflow.png)
 
 ## Summary
 
