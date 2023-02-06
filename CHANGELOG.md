@@ -73,6 +73,8 @@ update the database cluster to use the new configuration.
 
 ### Fixed
 
+- **CUMULUS-3134**
+  - Get tests working on M1 Macs
 - **CUMULUS-3148**:
   - Updates cumulus-rds-tf to use defaults for PostgreSQL 11.13
 - **CUMULUS-3148**
