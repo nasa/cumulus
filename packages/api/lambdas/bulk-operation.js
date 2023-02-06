@@ -62,24 +62,27 @@ async function applyWorkflowToGranules({
 }
 
 /**
+ * @typedef {(granule: unknown, collectionId: string) => Promise<void>} RemoveGranuleFromCmrFn
+ */
+
+/**
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
  * ES using the provided query and index.
  *
  * @param {Object} payload
  * @param {boolean} [payload.forceRemoveFromCmr]
  *   Whether published granule should be deleted from CMR before removal
- * @param {boolean} [payload.maxDbConnections]
+ * @param {number} [payload.maxDbConnections]
  *   Maximum number of postgreSQL DB connections to make available for knex queries
  *   Defaults to `concurrency`
- * @param {integer} [payload.concurrency]
+ * @param {number} [payload.concurrency]
  *   granule concurrency for the bulk deletion operation.  Defaults to 10
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
- * Must exist if payload.query exists.
- * @param {Object} [payload.ids] - Optional list of granule IDs to bulk operate on
- * @param {(granule: any, collectionId: string) => Promise<void>}
- *  [removeGranuleFromCmrFunction] - passed in function used for test mocking
- * @returns {Promise}
+ *   Must exist if payload.query exists.
+ * @param {string[]} [payload.ids] - Optional list of granule IDs to bulk operate on
+ * @param {RemoveGranuleFromCmrFn} [removeGranuleFromCmrFunction] - used for test mocking
+ * @returns {Promise<unknown>}
  */
 async function bulkGranuleDelete(
   payload,
@@ -87,7 +90,8 @@ async function bulkGranuleDelete(
 ) {
   const concurrency = payload.concurrency || 10;
 
-  process.env.dbMaxPool = payload.maxDbConnections || concurrency;
+  const dbPoolMax = payload.maxDbConnections || concurrency;
+  process.env.dbMaxPool = `${dbPoolMax}`;
 
   const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;

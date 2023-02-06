@@ -590,20 +590,19 @@ const BulkDeletePayloadSchema = z.object({
 }).catchall(z.unknown());
 
 /**
-* Start an AsyncOperation that will perform a bulk granules delete
-*
 * @param {Response} res - express response object
-* @param {BetterZodError} errorPayload
+* @param {BetterZodError} zodError
 * @returns {Express.BoomError} the promise of express response object
 */
-function _returnCustomValidationErrors(res, errorPayload) {
-  if (errorPayload.errors.filter((error) => error.match('forceRemoveFromCmr')).length > 0) {
+function _returnCustomValidationErrors(res, zodError) {
+  if (zodError.errors.filter((error) => error.match('forceRemoveFromCmr')).length > 0) {
     return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
   }
-  return res.boom.badRequest('invalid payload', errorPayload);
+  return res.boom.badRequest('invalid payload', zodError);
 }
 
 const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
+
 /**
  * Start an AsyncOperation that will perform a bulk granules delete
  *
