@@ -1,7 +1,11 @@
+// @ts-check
+
 'use strict';
 
+const { z } = require('zod');
+const isError = require('lodash/isError');
+
 const router = require('express-promise-router')();
-const isBoolean = require('lodash/isBoolean');
 
 const asyncOperations = require('@cumulus/async-operations');
 const Logger = require('@cumulus/logger');
@@ -23,6 +27,8 @@ const {
 const { Search } = require('@cumulus/es-client/search');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
+const { zodParser } = require('../src/zod-utils');
+
 const { chooseTargetExecution } = require('../lib/executions');
 const {
   createGranuleFromApi,
@@ -39,6 +45,12 @@ const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = require('../lib/request');
+
+/**
+ * @typedef {import('express').Request} Request
+ * @typedef {import('express').Response} Response
+ * @typedef {import('@cumulus/zod-utils').BetterZodError} BetterZodError
+ */
 
 const log = new Logger({ sender: '@cumulus/api/granules' });
 
@@ -549,14 +561,15 @@ async function bulkOperations(req, res) {
       type: 'BULK_GRANULE',
       envVars: {
         ES_HOST: process.env.ES_HOST,
-        GranulesTable: process.env.GranulesTable,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-        system_bucket: process.env.system_bucket,
-        stackName: process.env.stackName,
+        GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-        METRICS_ES_USER: process.env.METRICS_ES_USER,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket,
       },
     },
     esHost: process.env.ES_HOST,
@@ -569,19 +582,43 @@ async function bulkOperations(req, res) {
   return res.status(202).send(asyncOperation);
 }
 
+const BulkDeletePayloadSchema = z.object({
+  forceRemoveFromCmr: z.boolean().optional(),
+  concurrency: z.number().int().positive().optional(),
+  maxDbConnections: z.number().int().positive().optional(),
+  knexDebug: z.boolean().optional(),
+}).catchall(z.unknown());
+
+/**
+* @param {Response} res - express response object
+* @param {BetterZodError} zodError
+* @returns {Express.BoomError} the promise of express response object
+*/
+function _returnCustomValidationErrors(res, zodError) {
+  if (zodError.errors.filter((error) => error.match('forceRemoveFromCmr')).length > 0) {
+    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
+  }
+  return res.boom.badRequest('invalid payload', zodError);
+}
+
+const parseBulkDeletePayload = zodParser('Bulk delete payload', BulkDeletePayloadSchema);
+
 /**
  * Start an AsyncOperation that will perform a bulk granules delete
  *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object
+ * @param {Request} req - express request object
+ * @param {Response} res - express response object
+ * @returns {Promise<unknown>} the promise of express response object
  */
 async function bulkDelete(req, res) {
-  const payload = req.body;
-
-  if (payload.forceRemoveFromCmr && !isBoolean(payload.forceRemoveFromCmr)) {
-    return res.boom.badRequest('forceRemoveFromCmr must be a boolean value');
+  const payload = parseBulkDeletePayload(req.body);
+  if (isError(payload)) {
+    return _returnCustomValidationErrors(res, payload);
   }
+
+  const concurrency = payload.concurrency || 10;
+
+  const maxDbConnections = payload.maxDbConnections || concurrency;
 
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
@@ -596,7 +633,7 @@ async function bulkDelete(req, res) {
     operationType: 'Bulk Granule Delete', // this value is set on an ENUM field, so cannot change
     payload: {
       type: 'BULK_GRANULE_DELETE',
-      payload,
+      payload: { ...payload, concurrency, maxDbConnections },
       envVars: {
         cmr_client_id: process.env.cmr_client_id,
         CMR_ENVIRONMENT: process.env.CMR_ENVIRONMENT,
@@ -604,17 +641,18 @@ async function bulkDelete(req, res) {
         cmr_password_secret_name: process.env.cmr_password_secret_name,
         cmr_provider: process.env.cmr_provider,
         cmr_username: process.env.cmr_username,
-        GranulesTable: process.env.GranulesTable,
+        ES_HOST: process.env.ES_HOST,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+        GranulesTable: process.env.GranulesTable,
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         launchpad_api: process.env.launchpad_api,
         launchpad_certificate: process.env.launchpad_certificate,
         launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-        METRICS_ES_USER: process.env.METRICS_ES_USER,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
         stackName: process.env.stackName,
         system_bucket: process.env.system_bucket,
-        ES_HOST: process.env.ES_HOST,
       },
     },
     stackName,
@@ -648,14 +686,15 @@ async function bulkReingest(req, res) {
       type: 'BULK_GRANULE_REINGEST',
       envVars: {
         ES_HOST: process.env.ES_HOST,
-        GranulesTable: process.env.GranulesTable,
         granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-        system_bucket: process.env.system_bucket,
-        stackName: process.env.stackName,
+        GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
+        KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
-        METRICS_ES_USER: process.env.METRICS_ES_USER,
         METRICS_ES_PASS: process.env.METRICS_ES_PASS,
+        METRICS_ES_USER: process.env.METRICS_ES_USER,
+        stackName: process.env.stackName,
+        system_bucket: process.env.system_bucket,
       },
     },
     esHost: process.env.ES_HOST,

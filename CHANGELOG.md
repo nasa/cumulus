@@ -19,8 +19,9 @@ database clusters forcibly upgraded at the next maintenance window after 31 Jan
 terraform) upgrade.   This will result in the cluster being upgraded with a
 manually set parameter group not managed by terraform.
 
-If you manually upgraded and the cluster is now on version 11.13, to continue using the `cumulus-rds-tf` module *once
-upgraded* update following module configuration values:
+If you manually upgraded and the cluster is now on version 11.13, to continue
+using the `cumulus-rds-tf` module *once upgraded* update following module
+configuration values:
 
 ```terraform
 parameter_group_family = "aurora-postgresql11"
@@ -34,6 +35,23 @@ update the database cluster to use the new configuration.
 
 ### Fixed
 
+- **CUMULUS-3149**
+
+  - Updates the api `/graunles/bulkDelete` endpoint to take the
+    following configuration keys for the bulkDelete:
+    - concurrency - Number of concurrent bulk deletions to process at a time.
+            Defaults to 10, increasing this value may improve throughput at the cost
+            of additional database/CMR/etc load.
+    - maxDbConnections - Defaults to `concurrency`, and generally should not be
+        changed unless troubleshooting performance concerns.
+  - Updates all bulk api endpoints to add knexDebug boolean query parameter to
+    allow for debugging of database connection issues in the future.  Defaults
+    to false.
+  - Fixed logic defect in bulk deletion logic where an information query was
+    nested in a transaction call, resulting in transactions holding knex
+    connection pool connections in a blocking way that would not resolve,
+    resulting in deletion failures.
+
 - **CUMULUS-3148**
   - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
     PostgreSQL v11 upgrade exposed dependency on database results in the API return
@@ -44,6 +62,10 @@ update the database cluster to use the new configuration.
 - **Snyk Security**-
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
+- **CUMULUS-3149**
+  - Added zod (https://www.npmjs.com/package/zod) to handle bulkDelete input
+    validation (and future input validators), and brought in
+    `@cumulus/zod-utils` to support that
 
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
