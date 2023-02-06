@@ -19,9 +19,9 @@ database clusters forcibly upgraded at the next maintenance window after 31 Jan
 terraform) upgrade.   This will result in the cluster being upgraded with a
 manually set parameter group not managed by terraform.
 
-If you manually upgraded and the cluster is now on version 11.13, to continue using the `cumulus-rds-tf` module *once
-upgraded* update following module configuration values if set, or allow their
-defaults to be utilized:
+If you manually upgraded and the cluster is now on version 11.13, to continue
+using the `cumulus-rds-tf` module *once upgraded* update following module
+configuration values if set, or allow their defaults to be utilized:
 
 ```terraform
 parameter_group_family = "aurora-postgresql11"
@@ -73,8 +73,28 @@ update the database cluster to use the new configuration.
 
 ### Fixed
 
+<<<<<<< HEAD
 - **CUMULUS-3148**:
   - Updates cumulus-rds-tf to use defaults for PostgreSQL 11.13
+=======
+- **CUMULUS-3149**
+
+  - Updates the api `/graunles/bulkDelete` endpoint to take the
+    following configuration keys for the bulkDelete:
+    - concurrency - Number of concurrent bulk deletions to process at a time.
+            Defaults to 10, increasing this value may improve throughput at the cost
+            of additional database/CMR/etc load.
+    - maxDbConnections - Defaults to `concurrency`, and generally should not be
+        changed unless troubleshooting performance concerns.
+  - Updates all bulk api endpoints to add knexDebug boolean query parameter to
+    allow for debugging of database connection issues in the future.  Defaults
+    to false.
+  - Fixed logic defect in bulk deletion logic where an information query was
+    nested in a transaction call, resulting in transactions holding knex
+    connection pool connections in a blocking way that would not resolve,
+    resulting in deletion failures.
+
+>>>>>>> c4c4e1be65 (CUMULUS-3149 -- Update bulk deletion lambda to allow for concurrent deletion when CMR deletion option is selected  (#3226))
 - **CUMULUS-3148**
   - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
     PostgreSQL 11 upgrade exposed dependency on database results in the API return
@@ -86,12 +106,13 @@ update the database cluster to use the new configuration.
     unexpected insertion failure on PATCH.
 - **CUMULUS-3181**
   - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
-    
+
 ### Changed
 
 - **Snyk Security**
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
+<<<<<<< HEAD
   - Upgraded got from 11.8.3 to ^11.8.5
 - **Dependabot Security**
   - Upgraded the python package dependencies of the example lambdas
@@ -678,6 +699,12 @@ releases.
   - Updates `SyncGranule` example worfklow config
     `example/cumulus-tf/sync_granule_workflow.asl.json` to include `ACL`
     parameter.
+=======
+- **CUMULUS-3149**
+  - Added zod (https://www.npmjs.com/package/zod) to handle bulkDelete input
+    validation (and future input validators), and brought in
+    `@cumulus/zod-utils` to support that
+>>>>>>> c4c4e1be65 (CUMULUS-3149 -- Update bulk deletion lambda to allow for concurrent deletion when CMR deletion option is selected  (#3226))
 
 ## [v11.1.8] 2022-11-07 [BACKPORT]
 
