@@ -104,7 +104,7 @@ function lookupCollectionInEvent(eventObject) {
   });
 }
 
-/*
+/**
  * Build payload from rule for lambda invocation
  *
  * @param {ApiRule} rule              - API rule
