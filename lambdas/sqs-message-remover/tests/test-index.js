@@ -235,7 +235,7 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 1);
 
-  await sleep(5 * 1000);
+  await sleep(6 * 1000);
   numberOfMessages = await getSqsQueueMessageCounts(sqsQueues.queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 1);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
