@@ -108,12 +108,12 @@ function lookupCollectionInEvent(eventObject) {
  * Build payload from rule for lambda invocation
  *
  * @param {ApiRule} rule              - API rule
- * @param {object} [cumulusMeta]      - Optional cumulus_meta object
+ * @param {Object} [cumulusMeta]      - Optional cumulus_meta object
  * @param {string} [asyncOperationId] - Optional ID for asynchronous operation
  *
  * @returns {Object} lambda invocation payload
  */
-async function buildPayload(rule, cumulusMeta, asyncOperationId) {
+async function buildPayload(rule, cumulusMeta) {
   // makes sure the workflow exists
   const bucket = process.env.system_bucket;
   const stack = process.env.stackName;
@@ -138,7 +138,7 @@ async function buildPayload(rule, cumulusMeta, asyncOperationId) {
     payload: get(rule, 'payload', {}),
     queueUrl: rule.queueUrl,
     executionNamePrefix: rule.executionNamePrefix,
-    asyncOperationId: asyncOperationId,
+    asyncOperationId: rule.asyncOperationId,
   };
 }
 
