@@ -180,6 +180,13 @@ i-abc123
 
 In the [AWS OpenSearch console](https://us-east-1.console.aws.amazon.com/aos/home?region=us-east-1#opensearch/domains), find the domain associated with your Cumulus deployment. Click the domain, and find the "Domain endpoint (VPC)" URL. This URL will contain the hostname of your Elasticsearch domain. For example, if the URL is `https://vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com/`, then the hostname is `vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com`. This hostname will be used when setting up the tunnel to Elasticsearch.
 
+You can also fetch it with:
+
+```sh
+$ aws opensearch describe-domain --domain-name EXAMPLE-es-vpc | jq -r .DomainStatus.Endpoints.vpc
+vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com
+```
+
 ##### Start the ssh tunnel to Elasticsearch
 
 Open an SSH tunnel to Elasticsearch with the following command. You will need to substitute in the values that you found above.
