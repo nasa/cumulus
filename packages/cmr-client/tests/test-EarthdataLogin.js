@@ -25,7 +25,6 @@ test.after.always(() => {
 });
 
 test.serial('retrieveToken returns a valid token', async (t) => {
-
   const expectedresponse = [
     {
       access_token: 'ABCDE',
@@ -43,7 +42,6 @@ test.serial('retrieveToken returns a valid token', async (t) => {
 });
 
 test.serial('retrieveToken returns undefined when there is no valid token', async (t) => {
-
   const expectedresponse = [];
 
   nock('https://urs.earthdata.nasa.gov')
@@ -55,7 +53,6 @@ test.serial('retrieveToken returns undefined when there is no valid token', asyn
 });
 
 test.serial('retrieveToken throws exception where invalid user credential', async (t) => {
-
   const expectedresponse = '{"error":"invalid_credentials","error_description":"Invalid user credentials"}';
   nock('https://urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
@@ -71,7 +68,6 @@ test.serial('retrieveToken throws exception where invalid user credential', asyn
 });
 
 test.serial('createToken creates a token for the user', async (t) => {
-
   const expectedresponse = [
     {
       access_token: 'ABCDE',
@@ -89,7 +85,6 @@ test.serial('createToken creates a token for the user', async (t) => {
 });
 
 test.serial('createToken throws an error where invalid user credential', async (t) => {
-
   const expectedresponse = ' {"error": "invalid_credentials","error_description": "Invalid user credentials"} ';
 
   nock('https://urs.earthdata.nasa.gov')
@@ -100,13 +95,12 @@ test.serial('createToken throws an error where invalid user credential', async (
     () => createEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv),
     {
       name: 'Error',
-      message: 'EarthdataLogin error:  {"error": "invalid_credentials","error_description": "Invalid user credentials"} ,  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
+      message: 'EarthdataLogin error: {"error":"invalid_credentials","error_description":"Invalid user credentials"},  statusCode: 401, statusMessage: Unauthorized. Earthdata Login Request failed',
     }
   );
 });
 
 test.serial('getToken returns a valid token', async (t) => {
-
   const expectedresponse = [
     {
       access_token: 'ABCDE',
@@ -124,7 +118,6 @@ test.serial('getToken returns a valid token', async (t) => {
 });
 
 test.serial('revokeToken revokes the user token', async (t) => {
-
   const revokeToken = 'ABCDE';
 
   nock('https://urs.earthdata.nasa.gov')
@@ -137,7 +130,6 @@ test.serial('revokeToken revokes the user token', async (t) => {
 });
 
 test.serial('revokeToken throws an error with invalid user credentials', async (t) => {
-
   const revokeToken = 'ABCDE';
 
   const expectedresponse = ' {"error": "invalid_credentials","error_description": "Invalid user credentials"} ';

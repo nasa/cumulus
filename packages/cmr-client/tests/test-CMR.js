@@ -226,7 +226,7 @@ test('getCmrPassword returns the set password if no secret exists', async (t) =>
   t.is(await cmr.getCmrPassword(), 'test-password');
 });
 
-/*test('getCmrPassword returns password from AWS secret when set', async (t) => {
+test('getCmrPassword returns password from AWS secret when set', async (t) => {
   // Store the CMR password
   const secretName = 'secret-name';
   await awsServices.secretsManager().createSecret({
@@ -244,7 +244,7 @@ test('getCmrPassword returns the set password if no secret exists', async (t) =>
       ForceDeleteWithoutRecovery: true,
     }).promise();
   }
-});*/
+});
 
 test('getToken returns a token when the user\'s token is provided', async (t) => {
   const cmrObj = new CMR({

@@ -2,14 +2,13 @@
 
 const { CMR } = require('@cumulus/cmr-client');
 const { loadConfig } = require('../../helpers/testUtils');
-const { EarthdataLogin } = require('../../../../packages/cmr-client/EarthdataLogin');
+const { getEDLToken, revokeEDLToken } = require('../../../../packages/cmr-client/EarthdataLogin');
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 describe('When using Earthdata Login Token from CMR', () => {
   let username;
   let password;
   let config;
-  let earthdataLoginObject;
   let cmrObject;
   let beforeAllFailed = false;
 
@@ -29,12 +28,6 @@ describe('When using Earthdata Login Token from CMR', () => {
         username: username,
         password: password,
       });
-
-      earthdataLoginObject = new EarthdataLogin({
-        username: username,
-        password: password,
-        edlEnv: process.env.CMR_ENVIRONMENT,
-      });
     } catch (error) {
       beforeAllFailed = true;
       console.log(error);
@@ -42,7 +35,7 @@ describe('When using Earthdata Login Token from CMR', () => {
   });
 
   afterAll(async () => {
-    await earthdataLoginObject.revokeEDLToken(earthdataLoginObject.getEDLToken());
+    await revokeEDLToken(cmrObject.getToken());
   });
 
   describe('Request for getting an Earthdata Login Token for the user using Earthdata credentials', () => {
@@ -50,7 +43,7 @@ describe('When using Earthdata Login Token from CMR', () => {
       if (beforeAllFailed) {
         fail('beforeAll() failed');
       } else {
-        const response = await earthdataLoginObject.getEDLToken();
+        const response = await getEDLToken(username, password, process.env.CMR_ENVIRONMENT);
         expect(response).toBeDefined();
         expect(response).toBeInstanceOf(String);
       }
