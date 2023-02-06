@@ -54,10 +54,11 @@ const getEdlUrl = (env:string) =>  {
 *
 * @throws {Error} - EarthdataLogin error
 */
-const parseHttpError = (error: HTTPError): Error => {
+const parseHttpError = (error: HTTPError, requestType: string): Error => {
   const statusCode = error.response.statusCode;
   const statusMessage = error.response.statusMessage || 'Unknown';
-  const message = `EarthdataLogin error: ${error.response.body},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
+  const errorBody = requestType === 'retrieve' ? JSON.stringify(error.response.body) : error.response.body;
+  const message = `EarthdataLogin error: ${errorBody},  statusCode: ${statusCode}, statusMessage: ${statusMessage}. Earthdata Login Request failed`;
   return new Error(message);
 };
 
@@ -99,7 +100,7 @@ export const retrieveEDLToken = async (username: string, password: string, edlEn
         password: password,
       });
   } catch (error) {
-    if (error instanceof got.HTTPError) throw parseHttpError(error);
+    if (error instanceof got.HTTPError) throw parseHttpError(error, 'retrieve');
     throw parseCaughtError(error);
   }
 const array: { access_token: string; token_type: string; expiration_date: string; }[] = rawResponse.body;
@@ -127,10 +128,11 @@ export const createEDLToken = async (username: string, password: string, edlEnv:
         password: password
       });
   } catch (error) {
-    if (error instanceof got.HTTPError) throw parseHttpError(error);
+    if (error instanceof got.HTTPError) throw parseHttpError(error, 'create');
     throw parseCaughtError(error);
   }
   const array: { access_token: string; token_type: string; expiration_date: string; }[] = rawResponse.body;
+  console.log("\n", rawResponse.body);
   const response = PostTokenResponseBody.parse(array);
   return response[0].access_token;
 }
@@ -151,7 +153,7 @@ export const revokeEDLToken = async (username: string, password: string, edlEnv:
         password: password,
       });
   } catch (error) {
-    if (error instanceof got.HTTPError) throw parseHttpError(error);
+    if (error instanceof got.HTTPError) throw parseHttpError(error, 'revoke');
     throw parseCaughtError(error);
   }
 }
