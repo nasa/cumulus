@@ -79,6 +79,8 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3142**
   - Fix issue from CUMULUS-3070 where undefined values for status results in
     unexpected insertion failure on PATCH.
+- **CUMULUS-3181**
+  - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
     
 ### Changed
 - **CUMULUS-3147**
