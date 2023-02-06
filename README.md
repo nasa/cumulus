@@ -169,31 +169,12 @@ Host i-*
   UserKnownHostsFile /dev/null
 ```
 
-##### Find an EC2 instance to tunnel through
-
-```sh
-$ aws ec2 describe-instances --filters "Name=tag:Deployment,Values=EXAMPLE" "Name=instance-state-name,Values=running" | jq -r '.Reservations[0].Instances[0].InstanceId'
-i-abc123
-```
-
-##### Find the hostname of the Elasticsearch domain
-
-In the [AWS OpenSearch console](https://us-east-1.console.aws.amazon.com/aos/home?region=us-east-1#opensearch/domains), find the domain associated with your Cumulus deployment. Click the domain, and find the "Domain endpoint (VPC)" URL. This URL will contain the hostname of your Elasticsearch domain. For example, if the URL is `https://vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com/`, then the hostname is `vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com`. This hostname will be used when setting up the tunnel to Elasticsearch.
-
-You can also fetch it with:
-
-```sh
-$ aws opensearch describe-domain --domain-name EXAMPLE-es-vpc | jq -r .DomainStatus.Endpoints.vpc
-vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com
-```
-
 ##### Start the ssh tunnel to Elasticsearch
 
-Open an SSH tunnel to Elasticsearch with the following command. You will need to substitute in the values that you found above.
+Open an SSH tunnel to Elasticsearch with the following command.
 
 ```sh
-ssh -L 8443:vpc-abc-es-vpc-123.us-east-1.es.amazonaws.com:443 i-abc123
-[ec2-user@ip-10.0.0.5 ~]$
+./bin/es-tunnel.sh EXAMPLE
 ```
 
 At this point you can send requests to <https://localhost:8443> and get responses from your Elasticsearch domain running in AWS. Note that, because you're tunneling TLS-encrypted traffic, the certificates are not going to match. The test code handles this already but, if you're using `curl`, make sure to use the `-k` option to disable strict certificate checks.
