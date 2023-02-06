@@ -11,10 +11,9 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
-
 const models = require('../../../models');
-
 const { app } = require('../../../app');
+const { testBulkPayloadEnvVarsMatchSetEnvVars } = require('../../helpers/bulkTestHelpers');
 
 const { bulkOperations } = require('../../../endpoints/granules');
 const { buildFakeExpressResponse } = require('../utils');
@@ -70,7 +69,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.serial('POST /granules/bulk starts an async-operation with the correct payload and list of IDs', async (t) => {
+test.only('POST /granules/bulk starts an async-operation with the correct payload and list of IDs', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -80,6 +79,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
     ids: expectedIds,
+    knexDebug: false,
   };
 
   const response = await request(app)
@@ -116,9 +116,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
-  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
 });
 
 test.serial('bulkOperations() uses correct caller lambda function name', async (t) => {
@@ -162,6 +160,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     workflowName: expectedWorkflowName,
     index: expectedIndex,
     query: expectedQuery,
+    knexDebug: false,
   };
 
   const response = await request(app)
@@ -200,9 +199,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
-  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
 });
 
 test.serial('POST /granules/bulk returns 400 when a query is provided with no index', async (t) => {
