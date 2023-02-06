@@ -357,26 +357,5 @@ describe('the sf-starter lambda function', () => {
       const runningExecutions = executions.filter((execution) => execution.status === 'RUNNING');
       expect(runningExecutions.length).toBeLessThanOrEqual(queueMaxExecutions);
     });
-
-    xdescribe('and the semaphore', () => {
-      beforeAll(async () => {
-        await sqs().purgeQueue({
-          QueueUrl: maxQueueUrl,
-        });
-
-        // Wait 10 seconds to allow running executions to finish.
-        await delay(10000);
-      });
-
-      it('is decremented to 0', async () => {
-        const semItem = await dynamodbDocClient().get({
-          TableName: `${config.stackName}-SemaphoresTable`,
-          Key: {
-            key: maxQueueUrl,
-          },
-        });
-        expect(semItem.Item.semvalue).toBe(0);
-      });
-    });
   });
 });
