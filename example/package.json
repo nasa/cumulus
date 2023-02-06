@@ -15,7 +15,7 @@
     "timeout": "15m"
   },
   "scripts": {
-    "all-tests": "npm run parallel-tests && ../node_modules/.bin/jasmine && npm run redeploy-test",
+    "all-tests": "npm run parallel-tests && ../node_modules/.bin/jasmine",
     "deploy": "npm run deploy-cumulus --",
     "deploy-all": "npm run deploy-data && npm run deploy-cumulus",
     "deploy-cumulus": "cd cumulus-tf && terraform init && terraform apply",
@@ -25,7 +25,6 @@
     "package": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm run package); done",
     "package-deployment": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm install && npm run package); done",
     "parallel-tests": "sh scripts/tests-parallel.sh",
-    "redeploy-test": "../node_modules/.bin/jasmine spec/standalone/redeployment/*.js",
     "test": "npm run test:ava && for x in lambdas/*; do cd $x && npm test && cd -; done",
     "test:ava": "../node_modules/.bin/ava",
     "test:coverage": "../node_modules/.bin/nyc npm run test:ava"

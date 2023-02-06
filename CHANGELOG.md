@@ -47,7 +47,12 @@ update the database cluster to use the new configuration.
     - Granules being set to non-complete state will update all values passed in,
       instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
       'status', 'execution']`
+- The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
+- The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
 
+### Removed
+
+- Removed a few tests that were disabled 3-4 years ago
 
 ### Added
 

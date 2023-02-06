@@ -760,8 +760,6 @@ module.exports = {
   getExecutionOutput,
   getExecutions,
   getExecutionInputObject,
-  getLambdaAliases: lambda.getLambdaAliases,
-  getLambdaVersions: lambda.getLambdaVersions,
   getOnlineResources: cmr.getOnlineResources,
   getProviderHost,
   getProviderPort,
