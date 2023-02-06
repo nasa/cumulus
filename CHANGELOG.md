@@ -35,38 +35,7 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3121**
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 
-### Breaking Changes
-
-- **CUMULUS-3070/3074**
-  - Updated granule PUT/POST endpoints to no longer respect message write
-    constraints.  Functionally this means that:
-    - Granules with older createdAt values will replace newer ones, instead of
-        ignoring the write request
-    - Granules that attempt to set a non-complete state (e.g. 'queued' and
-        'running') will now ignore execution state/state change and always write
-    - Granules being set to non-complete state will update all values passed in,
-      instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
-      'status', 'execution']`
-
-
-### Added
-
-- **CUMULUS-3070**
-  - Remove granules dynamoDb model logic that sets default publish value on record
-    validation
-  - Update API granule write logic to not set default publish value on record
-    updates to avoid overwrite (PATCH behavior)
-  - Update API granule write logic to publish to false on record
-    creation if not specified
-  - Update message granule write logic to set default publish value on record
-    creation update.
-  - Update granule write logic to set published to default value of `false` if
-    `null` is explicitly set with intention to delete the value.
-  - Removed dataType/version from api granule schema
-  - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
-    logic for PUT/PATCH endpoint.
-
-### Fixed
+#### Fixed
 
 - **CUMULUS-3148**:
   - Updates cumulus-rds-tf to use defaults for PostgreSQL 11.13
@@ -81,7 +50,7 @@ update the database cluster to use the new configuration.
     unexpected insertion failure on PATCH.
 - **CUMULUS-3181**
   - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
-    
+
 ### Changed
 
 - **Snyk Security**
