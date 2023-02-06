@@ -35,6 +35,11 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3121**
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 
+
+### Removed
+
+- Removed a few tests that were disabled 3-4 years ago
+
 #### Fixed
 
 - **CUMULUS-3148**:
