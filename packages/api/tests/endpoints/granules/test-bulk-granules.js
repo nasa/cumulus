@@ -69,7 +69,7 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.only('POST /granules/bulk starts an async-operation with the correct payload and list of IDs', async (t) => {
+test.serial('POST /granules/bulk starts an async-operation with the correct payload and list of IDs', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
