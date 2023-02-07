@@ -118,6 +118,8 @@ update the database cluster to use the new configuration.
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
+- **CUMULUS-3140**
+  - Update release note to include cumulus-api release
 
 ## [v14.0.0] 2022-12-08
 
