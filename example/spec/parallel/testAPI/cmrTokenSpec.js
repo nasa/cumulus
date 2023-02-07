@@ -35,7 +35,7 @@ describe('When using Earthdata Login Token from CMR', () => {
   });
 
   afterAll(async () => {
-    await revokeEDLToken(cmrObject.getToken());
+    await revokeEDLToken(username, password, process.env.CMR_ENVIRONMENT, cmrObject.getToken());
   });
 
   describe('Request for getting an Earthdata Login Token for the user using Earthdata credentials', () => {
