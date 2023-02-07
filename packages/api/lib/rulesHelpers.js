@@ -107,7 +107,7 @@ function lookupCollectionInEvent(eventObject) {
 /**
  * Build payload from rule for lambda invocation
  *
- * @param {ApiRule} rule              - API rule
+ * @param {RuleRecord} rule           - API rule
  * @param {Object} [cumulusMeta]      - Optional cumulus_meta object
  * @param {string} [asyncOperationId] - Optional ID for asynchronous operation
  *
@@ -146,7 +146,7 @@ async function buildPayload(rule, cumulusMeta) {
  * Queue a workflow message for the kinesis/sqs rule with the message passed
  * to stream/queue as the payload
  *
- * @param {Object} rule - rule to queue the message for
+ * @param {RuleRecord} rule - rule to queue the message for
  * @param {Object} eventObject - message passed to stream/queue
  * @param {Object} eventSource - source information of the event
  * @returns {Promise} promise resolved when the message is queued
@@ -171,7 +171,7 @@ async function queueMessageForRule(rule, eventObject, eventSource) {
  * Check if a rule's event source mapping is shared with other rules
  *
  * @param {Knex}    knex      - DB client
- * @param {ApiRule} rule      - the rule item
+ * @param {RuleRecord} rule   - the rule item
  * @param {Object}  eventType - the rule's event type
  * @returns {Promise<boolean>} return true if other rules share the same event source mapping
  */
@@ -191,7 +191,7 @@ async function isEventSourceMappingShared(knex, rule, eventType) {
  * Deletes an event source from an event lambda function
  *
  * @param {Knex}    knex      - DB client
- * @param {ApiRule} rule      - the rule item
+ * @param {RuleRecord} rule   - the rule item
  * @param {string}  eventType - kinesisSourceEvent type ['arn', 'log_event_arn']
  * @param {string}  id        - event source id
  * @returns {Promise} the response from event source delete
@@ -210,8 +210,8 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
 
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
- * @param {Knex}    knex - DB client
- * @param {ApiRule} rule - the rule item
+ * @param {Knex} knex       - DB client
+ * @param {RuleRecord} rule - the rule item
  * @returns {Promise<Array>} array of responses from the event source deletion
  */
 async function deleteKinesisEventSources(knex, rule) {
@@ -244,8 +244,8 @@ async function deleteKinesisEventSources(knex, rule) {
 
 /**
  * Delete a rule's SNS trigger
- * @param {Knex}    knex - DB client
- * @param {ApiRule} rule - the rule item
+ * @param {Knex} knex       - DB client
+ * @param {RuleRecord} rule - the rule item
  * @returns {Promise} the response from SNS unsubscribe
  */
 async function deleteSnsTrigger(knex, rule) {
@@ -279,7 +279,7 @@ async function deleteSnsTrigger(knex, rule) {
 /**
  * Delete rule resources by rule type
  * @param {Knex}    knex - DB client
- * @param {ApiRule} rule - Rule
+ * @param {RuleRecord} rule - Rule
  */
 async function deleteRuleResources(knex, rule) {
   const type = rule.rule.type;
@@ -313,10 +313,10 @@ async function deleteRuleResources(knex, rule) {
  *
  * Avoids object mutation by cloning the original rule item.
  *
- * @param {ApiRule} ruleItem - A rule item
+ * @param {RuleRecord} ruleItem - A rule item
  * @param {string} snsSubscriptionArn
  *   UUID for event source mapping from SNS topic to messageConsumer Lambda
- * @returns {ApiRule} - Updated rule item
+ * @returns {RuleRecord} - Updated rule item
  */
 function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
   const updatedRuleItem = cloneDeep(ruleItem);
@@ -327,8 +327,8 @@ function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
 /**
    * Validate and update sqs rule with queue property
    *
-   * @param {ApiRule} rule -  the sqs rule
-   * @returns {ApiRule} the updated sqs rule
+   * @param {RuleRecord} rule -  the sqs rule
+   * @returns {RuleRecord} the updated sqs rule
    */
 async function validateAndUpdateSqsRule(rule) {
   const queueUrl = rule.rule.value;
@@ -357,7 +357,7 @@ async function validateAndUpdateSqsRule(rule) {
 /**
    * Add an event source to a target lambda function
    *
-   * @param {ApiRule} item   - The rule item
+   * @param {RuleRecord} item   - The rule item
    * @param {string}  lambda - The name of the target lambda
    * @returns {Promise}
    */
@@ -393,7 +393,7 @@ async function addKinesisEventSource(item, lambda) {
 
 /**
  * Add event sources for all mappings in the kinesisSourceEvents
- * @param {ApiRule} rule - The rule item
+ * @param {RuleRecord} rule - The rule item
  * @returns {Object}     - Returns arn and logEventArn
  */
 async function addKinesisEventSources(rule) {
@@ -423,8 +423,8 @@ async function addKinesisEventSources(rule) {
 /**
  * Add SNS event sources
  *
- * @param {ApiRule} item - The rule item
- * @returns {string}     - Returns snsSubscriptionArn
+ * @param {RuleRecord} item - The rule item
+ * @returns {string}        - Returns snsSubscriptionArn
  */
 async function addSnsTrigger(item) {
   // check for existing subscription
@@ -480,7 +480,7 @@ async function addSnsTrigger(item) {
  *
  * Avoids object mutation by cloning the original rule item.
  *
- * @param {ApiRule} ruleItem
+ * @param {RuleRecord} ruleItem
  *   A rule item
  * @param {Object} ruleArns
  *   An object containing arn and logEventArn values
@@ -488,7 +488,7 @@ async function addSnsTrigger(item) {
  *   UUID for event source mapping from Kinesis stream for messageConsumer Lambda
  * @param {string} ruleArns.logEventArn
  *   UUID for event source mapping from Kinesis stream to KinesisInboundEventLogger Lambda
- * @returns {ApiRule}
+ * @returns {RuleRecord}
  *   Updated rule item
  */
 function updateKinesisRuleArns(ruleItem, ruleArns) {
@@ -501,8 +501,8 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
 /**
    * Adds CloudWatch event rule and target
    *
-   * @param {ApiRule} item    - The rule item
-   * @param {Object}  payload - The payload input of the CloudWatch event
+   * @param {RuleRecord} item - The rule item
+   * @param {Object} payload  - The payload input of the CloudWatch event
    * @returns {void}
    */
 async function addRule(item, payload) {
@@ -523,11 +523,11 @@ async function addRule(item, payload) {
   );
 }
 
-/*
+/**
  * Checks if record is valid
  *
- * @param {ApiRule} rule - Rule to check validation
- * @returns {void}       - Returns if record is valid, throws error otherwise
+ * @param {RuleRecord} rule - Rule to check validation
+ * @returns {void}          - Returns if record is valid, throws error otherwise
  */
 function recordIsValid(rule) {
   const error = new Error('The record has validation errors. ');
@@ -546,10 +546,10 @@ function recordIsValid(rule) {
   }
 }
 
-/*
+/**
  * Invokes lambda for rule rerun
  *
- * @param {ApiRule} rule
+ * @param {RuleRecord} rule
  *
  * @returns {Promise} lambda invocation response
  */
@@ -558,13 +558,13 @@ async function invokeRerun(rule) {
   await invoke(process.env.invoke, payload);
 }
 
-/*
+/**
  * Updates rule trigger for rule
  *
- * @param {ApiRule}        original- Rule to update trigger for
- * @param {ApiRule}        updates - Updates for rule trigger
- * @param {Knex}           knex    - Knex DB Client
- * @returns {ApiRule}              - Returns new rule object
+ * @param {RuleRecord} original - Rule to update trigger for
+ * @param {Object} updates      - Updates for rule trigger
+ * @param {Knex} knex           - Knex DB Client
+ * @returns {RuleRecord}        - Returns new rule object
  */
 async function updateRuleTrigger(original, updates, knex) {
   let clonedRuleItem = cloneDeep(original);
@@ -618,12 +618,12 @@ async function updateRuleTrigger(original, updates, knex) {
   return mergedRule;
 }
 
-/*
+/**
  * Creates rule trigger for rule
  *
- * @param {ApiRule} ruleItem - Rule to create trigger for
+ * @param {RuleRecord} ruleItem - Rule to create trigger for
  *
- * @returns {ApiRule}        - Returns new rule object
+ * @returns {RuleRecord}        - Returns new rule object
  */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
