@@ -208,10 +208,29 @@ async function moveGranule(apiGranule, destinations, distEndpoint, granulesModel
 
 const SCROLL_SIZE = 500; // default size in Kibana
 
+function getTotalHits(bodyHits) {
+  if (bodyHits.total.value === 0) {
+    return 0;
+  }
+  return bodyHits.total.value || bodyHits.total;
+}
+
+/**
+ * Returns an array of granules from ElasticSearch query
+ *
+ * @param {Object} payload
+ * @param {string} [payload.index] - ES index to query
+ * @param {string} [payload.query] - ES query
+ * @param {Object} [payload.source] - List of IDs to operate on
+ * @param {Object} [payload.testBodyHits] - Optional body.hits for testing.
+ *  Some ES such as Cloud Metrics returns `hits.total.value` rather than `hits.total`
+ * @returns {Promise<Array<Object>>}
+ */
 async function granuleEsQuery({
   index,
   query,
   source,
+  testBodyHits,
 }) {
   const granules = [];
   const responseQueue = [];
@@ -229,12 +248,13 @@ async function granuleEsQuery({
 
   while (responseQueue.length) {
     const { body } = responseQueue.shift();
+    const bodyHits = testBodyHits || body.hits;
 
-    body.hits.hits.forEach((hit) => {
+    bodyHits.hits.forEach((hit) => {
       granules.push(hit._source);
     });
 
-    const totalHits = body.hits.total.value || body.hits.total;
+    const totalHits = getTotalHits(bodyHits);
 
     if (totalHits !== granules.length) {
       responseQueue.push(
@@ -300,7 +320,7 @@ async function getGranulesForPayload(payload) {
 
   // query ElasticSearch if needed
   if (!granules && query) {
-    log.info('No granules detected. Searching for granules in Elasticsearch.');
+    log.info('No granules detected. Searching for granules in ElasticSearch.');
 
     const esGranules = await granuleEsQuery({
       index,
@@ -325,5 +345,6 @@ module.exports = {
   getExecutionProcessingTimeInfo,
   getGranulesForPayload,
   getGranuleIdsForPayload,
+  granuleEsQuery,
   moveGranuleFilesAndUpdateDatastore,
 };

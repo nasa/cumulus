@@ -698,14 +698,14 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
     collection,
   } = t.context;
 
-  const provider = fakeProviderRecordFactory();
-  const [providerCumulusId] = await providerPgModel.create(knex, provider);
+  const fakeProvider = fakeProviderRecordFactory();
+  const [pgProvider] = await providerPgModel.create(knex, fakeProvider);
 
   const [granule] = await granulePgModel.create(
     knex,
     fakeGranuleRecordFactory({
       collection_cumulus_id: collectionCumulusId,
-      provider_cumulus_id: providerCumulusId,
+      provider_cumulus_id: pgProvider.cumulus_id,
     }),
     '*'
   );
@@ -713,13 +713,13 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by provide
   const records = await getGranulesByApiPropertiesQuery(
     knex,
     {
-      providerNames: [provider.name],
+      providerNames: [fakeProvider.name],
     }
   );
   t.deepEqual(
     [{
       ...granule,
-      providerName: provider.name,
+      providerName: fakeProvider.name,
       collectionName: collection.name,
       collectionVersion: collection.version,
     }],
@@ -736,20 +736,20 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by status'
     collection,
   } = t.context;
 
-  const provider = fakeProviderRecordFactory();
-  const [providerCumulusId] = await providerPgModel.create(knex, provider);
+  const fakeProvider = fakeProviderRecordFactory();
+  const [provider] = await providerPgModel.create(knex, fakeProvider);
 
   const granules = await granulePgModel.insert(
     knex,
     [
       fakeGranuleRecordFactory({
         collection_cumulus_id: collectionCumulusId,
-        provider_cumulus_id: providerCumulusId,
+        provider_cumulus_id: provider.cumulus_id,
         status: 'running',
       }),
       fakeGranuleRecordFactory({
         collection_cumulus_id: collectionCumulusId,
-        provider_cumulus_id: providerCumulusId,
+        provider_cumulus_id: provider.cumulus_id,
         status: 'completed',
       }),
     ],
@@ -769,7 +769,7 @@ test.serial('getGranulesByApiPropertiesQuery returns correct granules by status'
   t.deepEqual(
     [{
       ...granules.find((granule) => granule.status === 'completed'),
-      providerName: provider.name,
+      providerName: fakeProvider.name,
       collectionName: collection.name,
       collectionVersion: collection.version,
     }],

@@ -41,6 +41,7 @@ launchpad_api = "https://api.launchpad.nasa.gov/icam/api/sm/v1"
 launchpad_certificate = "launchpad.pfx"
 
 oauth_user_group = "GSFC-Cumulus-Dev"
+cmr_oauth_provider = "earthdata"
 
 saml_idp_login                  = "https://auth.launchpad-sbx.nasa.gov/affwebservices/public/saml2sso"
 saml_launchpad_metadata_url     = "https://auth.launchpad-sbx.nasa.gov/unauth/metadata/launchpad-sbx.idp.xml"

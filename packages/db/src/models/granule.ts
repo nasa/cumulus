@@ -124,7 +124,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     executionCumulusId?: number;
     executionPgModel?: ExecutionPgModel;
     writeConstraints: boolean;
-  }) {
+  }) : Promise<PostgresGranuleRecord[]> {
     if (writeConstraints && (granule.status === 'running' || granule.status === 'queued')) {
       const upsertQuery = knexOrTrx(this.tableName)
         .insert(granule)
@@ -164,8 +164,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // exist at all
         upsertQuery.whereNotExists(exclusionClause);
       }
-      upsertQuery.returning('*');
-      return await upsertQuery;
+      return await upsertQuery.returning('*');
     }
 
     const upsertQuery = knexOrTrx(this.tableName)
@@ -187,8 +186,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         )
       );
     }
-    upsertQuery.returning('*');
-    return await upsertQuery;
+    return await upsertQuery.returning('*');
   }
 
   /**

@@ -359,7 +359,7 @@ async function upsertGranule({
     // undesired behavior via business logic on the message write logic
     inline = `
     if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
-      && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
+      && ((params.doc.status != 'running' && params.doc.status != 'queued') || ((params.doc.status == 'running' || params.doc.status == 'queued') && params.doc.execution != ctx._source.execution))) {
       ${inlineDocWriteString}
     } else {
       ctx.op = 'none';
@@ -367,7 +367,7 @@ async function upsertGranule({
     `;
     if (!updates.createdAt) {
       inline = `
-        if (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution)) {
+        if ((params.doc.status != 'running' && params.doc.status != 'queued') || ((params.doc.status == 'running' || params.doc.status == 'queued') && params.doc.execution != ctx._source.execution)) {
           ${inlineDocWriteString}
         } else {
         ctx.op = 'none';

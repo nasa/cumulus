@@ -215,21 +215,19 @@ Run `npm test`.
 
 Tests are written and run with [jasmine](https://jasmine.github.io/setup/nodejs.html).
 
-Tests are separated into standalone and parallel directories. The `standalone` directory is for tests that cannot be run in parallel with any other tests and should be run in a separate job, for example, the redeployment tests that are only run by Bamboo on master.
-
 The `parallel` directory holds tests that can be run in parallel.
 
 All other tests in the spec directory will be located in the `serial` directory and will be run in serial.
 
-To run all tests outside of standalone, run `DEPLOYMENT=<name-of-your-deployment> npm test` in this directory. The parallel tests will be run in parallel locally and on CI.
+To run the parallel tests , run `DEPLOYMENT=<name-of-your-deployment> npm test` in this directory. The parallel tests will be run in parallel locally and on CI.
 
-To run all of the tests, including standalone, run `DEPLOYMENT=<name-of-your-deployment> npm run all-tests` in this directory.
+To run all of the tests, run `DEPLOYMENT=<name-of-your-deployment> npm run all-tests` in this directory.
 
 ### Run tests for an individual test file
 
 To run an individual test file, include a path to the spec file, i.e. `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/parallel/helloWorld/HelloWorldEcsSpec.js`.
 
-Jasmine supports wildcard expressions for running tests, so an entire test directory can be run using `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/standalone/*`
+Jasmine supports wildcard expressions for running tests, so an entire test directory can be run using `DEPLOYMENT=<name-of-your-deployment> ../node_modules/.bin/jasmine spec/parallel/*`
 
 ### Running Tests on SIT
 
@@ -247,7 +245,7 @@ The workflow should be configured as it would be for a normal Cumulus deployment
 
 The workflows terraform files are located in the `/example/cumulus-tf` directory and are split up to make the workflows easier to find and understand.
 
-A new directory should be added in the `/spec/parallel` directory if the test workflow can be run in parallel. The tests should go in the newly created directory along with any necessary input JSON files. Otherwise, the new test workflow should be added to the `/spec/serial` directory. Only if the test should be run outside of the test suite should it go in the `standalone` directory.
+A new directory should be added in the `/spec/parallel` directory if the test workflow can be run in parallel. The tests should go in the newly created directory along with any necessary input JSON files. Otherwise, the new test workflow should be added to the `/spec/serial` directory.
 
 ## Fake data server
 

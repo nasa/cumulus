@@ -37,7 +37,7 @@ test.before(async (t) => {
     t.context.knex,
     testProvider
   );
-  t.context.provider_cumulus_id = pgProvider;
+  t.context.provider_cumulus_id = pgProvider.cumulus_id;
   t.context.providerName = testProvider.name;
 
   const testCollection = fakeCollectionRecordFactory();

@@ -309,6 +309,26 @@ test.serial('default returns list of rules', async (t) => {
   t.is(results.length, 1);
 });
 
+test.serial('search returns correct list of rules', async (t) => {
+  const response = await request(app)
+    .get('/rules?page=1&rule.type=onetime&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  t.is(results.length, 1);
+
+  const newResponse = await request(app)
+    .get('/rules?page=1&rule.type=sqs&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results: newResults } = newResponse.body;
+  t.is(newResults.length, 0);
+});
+
 test('GET gets a rule', async (t) => {
   const response = await request(app)
     .get(`/rules/${t.context.testRule.name}`)
@@ -412,7 +432,7 @@ test('POST creates a rule in all data stores', async (t) => {
   t.context.collectionCumulusId = pgCollection.cumulus_id;
   const collectionCumulusId = t.context.collectionCumulusId;
 
-  const [providerCumulusId] = await t.context.providerPgModel.create(
+  const [pgProvider] = await t.context.providerPgModel.create(
     t.context.testKnex,
     await translateApiProviderToPostgresProvider(fakeProvider)
   );
@@ -440,7 +460,7 @@ test('POST creates a rule in all data stores', async (t) => {
       {
         ...fetchedDynamoRecord,
         collection_cumulus_id: collectionCumulusId,
-        provider_cumulus_id: providerCumulusId,
+        provider_cumulus_id: pgProvider.cumulus_id,
         arn: fetchedDynamoRecord.rule.arn,
         value: fetchedDynamoRecord.rule.value,
         type: fetchedDynamoRecord.rule.type,

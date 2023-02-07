@@ -268,10 +268,11 @@ test.before(async (t) => {
   t.context.provider = fakeProviderRecordFactory();
   t.context.providerPgModel = new ProviderPgModel();
 
-  [t.context.providerCumulusId] = await t.context.providerPgModel.create(
+  const [pgProvider] = await t.context.providerPgModel.create(
     t.context.knex,
     t.context.provider
   );
+  t.context.providerCumulusId = pgProvider.cumulus_id;
 
   t.context.pdrPgModel = new PdrPgModel();
   t.context.pdr = fakePdrRecordFactory({
@@ -279,10 +280,11 @@ test.before(async (t) => {
     provider_cumulus_id: t.context.providerCumulusId,
   });
 
-  [t.context.providerPdrId] = await t.context.pdrPgModel.create(
+  const [pgPdr] = await t.context.pdrPgModel.create(
     t.context.knex,
     t.context.pdr
   );
+  t.context.providerPdrId = pgPdr;
 
   // Create execution in Dynamo/Postgres
   // we need this as granules *should have* a related execution
@@ -424,7 +426,8 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('default returns list of granules', async (t) => {
+test.serial('default lists and paginates correctly with search_after', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
     .get('/granules')
     .set('Accept', 'application/json')
@@ -436,10 +439,37 @@ test.serial('default returns list of granules', async (t) => {
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
   t.is(meta.count, 2);
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
+  // default paginates correctly with search_after
+  const firstResponse = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: firstMeta, results: firstResults } = firstResponse.body;
+  t.is(firstResults.length, 1);
+  t.is(firstMeta.page, 1);
+  t.truthy(firstMeta.searchContext);
+
+  const newResponse = await request(app)
+    .get(`/granules?limit=1&page=2&searchContext=${firstMeta.searchContext}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+  t.truthy(newMeta.searchContext);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+  t.not(meta.searchContext === newMeta.searchContext);
 });
 
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
@@ -2086,6 +2116,69 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
       timestamp: updatedEsRecord.timestamp,
     }
   );
+});
+
+test.serial('PATCH executes successfully with no non-required-field-updates (testing "inert" update/undefined fields)', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const timestamp = Date.now();
+  const {
+    newPgGranule,
+    newDynamoGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+      timestamp,
+    },
+  });
+
+  const updatedGranule = {
+    granuleId: newDynamoGranule.granuleId,
+    collectionId: newDynamoGranule.collectionId,
+  };
+
+  await request(app)
+    .patch(`/granules/${newDynamoGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualGranule = await t.context.granuleModel.get({
+    granuleId: newDynamoGranule.granuleId,
+  });
+  t.deepEqual(actualGranule, {
+    ...newDynamoGranule,
+    timestamp: actualGranule.timestamp,
+    updatedAt: actualGranule.updatedAt,
+  });
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+
+  t.deepEqual(actualPgGranule, {
+    ...newPgGranule,
+    timestamp: actualPgGranule.timestamp,
+    updated_at: actualPgGranule.updated_at,
+  });
+
+  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newDynamoGranule.granuleId
+  );
+  t.like(updatedEsRecord, {
+    ...esRecord,
+    timestamp: actualGranule.timestamp,
+    updatedAt: actualGranule.updatedAt,
+  });
 });
 
 test.serial('PATCH does not update non-current-timestamp undefined fields for existing granules in all datastores', async (t) => {

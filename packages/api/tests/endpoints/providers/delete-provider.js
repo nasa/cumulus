@@ -120,11 +120,11 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   t.context.testProvider = fakeProviderFactory();
   const createObject = await translateApiProviderToPostgresProvider(t.context.testProvider);
-  [t.context.providerCumulusId] = await t.context.providerPgModel
-    .create(
-      t.context.testKnex,
-      createObject
-    );
+  const [pgProvider] = await t.context.providerPgModel.create(
+    t.context.testKnex,
+    createObject
+  );
+  t.context.providerCumulusId = pgProvider.cumulus_id;
   await providerModel.create(t.context.testProvider);
   await indexer.indexProvider(t.context.esClient, t.context.testProvider, t.context.esIndex);
 });
@@ -188,11 +188,10 @@ test('Deleting a provider removes the provider from all data stores', async (t) 
 test('Deleting a provider that exists in PostgreSQL and not Elasticsearch succeeds', async (t) => {
   const testProvider = fakeProviderFactory();
   const createObject = await translateApiProviderToPostgresProvider(testProvider);
-  await t.context.providerPgModel
-    .create(
-      t.context.testKnex,
-      createObject
-    );
+  await t.context.providerPgModel.create(
+    t.context.testKnex,
+    createObject
+  );
 
   await request(app)
     .delete(`/providers/${testProvider.id}`)
