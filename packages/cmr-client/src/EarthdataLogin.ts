@@ -124,7 +124,7 @@ Promise<string> => {
 export const revokeEDLToken = async (username: string, password: string, edlEnv: string,
   token: string): Promise<void> => {
   try {
-    await got.post(`${getEdlUrl(edlEnv)}/api/users/revoke_token?token=${token}`,
+    await got.post(`${getEdlUrl(edlEnv)}/api/users/revoke_token`,
       {
         searchParams: {
           token,
