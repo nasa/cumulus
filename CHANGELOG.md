@@ -46,10 +46,7 @@ update the database cluster to use the new configuration.
         'running') will now ignore execution state/state change and always write
     - Granules being set to non-complete state will update all values passed in,
       instead of being restricted to `['createdAt', 'updatedAt', 'timestamp',
-      'status', 'execution']`
-- The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
-- The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
-
+      
 ### Removed
 
 - Removed a few tests that were disabled 3-4 years ago
@@ -73,6 +70,11 @@ update the database cluster to use the new configuration.
 
 ### Fixed
 
+- **CUMULUS-3117**
+  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
+    constraints for queued granules.    Queued writes will now be properly
+    dropped from elasticsearch writes along with the primary datastore(s) when
+    write constraints apply
 - **CUMULUS-3149**
   - Updates the api `/graunles/bulkDelete` endpoint to take the
     following configuration keys for the bulkDelete:
@@ -99,6 +101,19 @@ update the database cluster to use the new configuration.
     unexpected insertion failure on PATCH.
 - **CUMULUS-3181**
   - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
+- **CUMULUS-3072**
+  - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
+    a value for `files` as `[]` to elasticsearch instead of undefined in cases
+    where `[]` is specified in the new granule.
+  - Fixed issue introduced in CUMULUS-3070 where DynamoDB granules with a value
+   `files` as `[]` when the granule does *not* have the files value set as
+   mutable (e.g. in a `running` state) from a framework message write *and*
+   files was not previously defined will write `[]` instead of leaving the value
+   undefined.
+
+- The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
+- The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
+
 
 ### Changed
 
@@ -133,14 +148,6 @@ update the database cluster to use the new configuration.
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
-
-### Fixed
-
-- **CUMULUS-3117**
-  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
-    constraints for queued granules.    Queued writes will now be properly
-    dropped from elasticsearch writes along with the primary datastore(s) when
-    write constraints apply
 
 ## [v14.0.0] 2022-12-08
 
