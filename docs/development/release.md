@@ -284,7 +284,7 @@ Make sure to verify the appropriate .zip files are present on Github after the r
 
 ### 13. Update Cumulus API document
 
-There may be unreleased changes in the [Cumulus API document](https://github.com/nasa/cumulus-api) that wait on the Cumulus Core release.
+There may be unreleased changes in the [Cumulus API document](https://github.com/nasa/cumulus-api) that are waiting on the Cumulus Core release.
 If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
 the Cumulus Core release.
 
