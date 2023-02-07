@@ -6,7 +6,6 @@ const path = require('path');
 const { tmpdir } = require('os');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-const delay = require('delay');
 const pTimeout = require('p-timeout');
 const { Readable } = require('stream');
 const { promisify } = require('util');
@@ -43,6 +42,10 @@ const mkdtemp = promisify(fs.mkdtemp);
 const rmdir = promisify(fs.rmdir);
 const unlink = promisify(fs.unlink);
 const writeFile = promisify(fs.writeFile);
+
+// Not using @cumulus/common/sleep() because adding @cumulus/common as a dependency introduces a
+// circular dependency.
+const sleep = (duration) => new Promise((resolve) => setTimeout(resolve, duration));
 
 const randomString = () => cryptoRandomString({ length: 10 });
 
@@ -178,7 +181,7 @@ test('getS3Object() will retry if the requested key does not exist', async (t) =
   const Key = randomString();
 
   const promisedGetS3Object = getS3Object(Bucket, Key, { retries: 5 });
-  await delay(3000)
+  await sleep(3000)
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }))
     .catch(console.log);
 
@@ -338,7 +341,7 @@ test('headObject() will retry if the requested key does not exist', async (t) =>
   const Key = randomString();
 
   const promisedHeadObject = headObject(Bucket, Key, { retries: 5 });
-  await delay(3000)
+  await sleep(3000)
     .then(() => awsServices.s3().putObject({ Bucket, Key, Body: 'asdf' }));
 
   await t.notThrowsAsync(promisedHeadObject);

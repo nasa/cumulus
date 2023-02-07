@@ -2,7 +2,6 @@
 
 'use strict';
 
-const delay = require('delay');
 const replace = require('lodash/replace');
 const orderBy = require('lodash/orderBy');
 const cloneDeep = require('lodash/cloneDeep');
@@ -21,6 +20,7 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
+const { sleep } = require('@cumulus/common');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
@@ -613,7 +613,7 @@ async function waitForTestExecutionStart({
   );
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
-    await delay(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowArn);
 
@@ -675,7 +675,7 @@ async function waitForAllTestSf(
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
-    await delay(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
     const sfExecutions = await getExecutions(workflowArn, 100);
     const executions = sfExecutions.filter(
