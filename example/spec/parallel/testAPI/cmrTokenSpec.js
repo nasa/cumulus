@@ -11,6 +11,7 @@ describe('When using Earthdata Login Token from CMR', () => {
   let config;
   let cmrObject;
   let beforeAllFailed = false;
+  let token;
 
   beforeAll(async () => {
     try {
@@ -35,7 +36,8 @@ describe('When using Earthdata Login Token from CMR', () => {
   });
 
   afterAll(async () => {
-    await revokeEDLToken(username, password, process.env.CMR_ENVIRONMENT, await cmrObject.getToken());
+    token = await cmrObject.getToken();
+    await revokeEDLToken(username, password, process.env.CMR_ENVIRONMENT, token);
   });
 
   describe('Request for getting an Earthdata Login Token for the user using Earthdata credentials', () => {
