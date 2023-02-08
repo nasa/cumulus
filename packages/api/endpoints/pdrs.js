@@ -24,13 +24,31 @@ const log = new Logger({ sender: '@cumulus/api/pdrs' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'pdr',
-    process.env.ES_INDEX
-  );
-  const result = await search.query();
-  return res.send(result);
+ // const search = new Search(
+ //   { queryStringParameters: req.query },
+ //   'pdr',
+ //   process.env.ES_INDEX
+ // );
+ // const result = await search.query();
+ // return res.send(result);
+ const queryParameters = req.query;
+ const perPage = Number.parseInt((queryParameters.limit) ? queryParameters.limit : 10, 10)
+ const currentPage = Number.parseInt((queryParameters.page) ? queryParameters.page : 1, 10);
+ const knex = await getKnexClient();
+ const response = await knex('pdrs').paginate({
+   perPage,
+   currentPage,
+ });
+ const results = response.data;
+
+ const queryResults = {
+   results,
+   meta: {
+     ...response.pagination,
+   }
+ };
+
+ return res.send(queryResults);
 }
 
 /**
