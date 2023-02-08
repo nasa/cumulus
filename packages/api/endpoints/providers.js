@@ -32,14 +32,32 @@ const log = new Logger({ sender: '@cumulus/api/providers' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  const search = new Search(
-    { queryStringParameters: req.query },
-    'provider',
-    process.env.ES_INDEX
-  );
+  // const search = new Search(
+  //   { queryStringParameters: req.query },
+  //   'provider',
+  //   process.env.ES_INDEX
+  // );
 
-  const response = await search.query();
-  return res.send(response);
+  // const response = await search.query();
+  const queryParameters = req.query;
+  const perPage = Number.parseInt((queryParameters.limit) ? queryParameters.limit : 10, 10)
+  const currentPage = Number.parseInt((queryParameters.page) ? queryParameters.page : 1, 10);
+  const knex = await getKnexClient();
+  const response = await knex('providers').paginate({
+    perPage,
+    currentPage,
+  });
+  const results = response.data;
+  const translatedResults = results.map((providerRecord) => translatePostgresProviderToApiProvider(providerRecord));
+
+  const queryResults = {
+    results: translatedResults,
+    meta: {
+      ...response.pagination,
+    }
+  };
+
+  return res.send(queryResults);
 }
 
 /**
