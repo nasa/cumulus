@@ -1,8 +1,10 @@
 import AWS from 'aws-sdk';
 import { Knex } from 'knex';
+import { attachPaginate } from 'knex-paginate';
 
 import { envUtils } from '@cumulus/common';
 
+attachPaginate();
 export const localStackConnectionEnv = {
   PG_HOST: 'localhost',
   PG_USER: 'postgres',

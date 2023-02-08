@@ -38,6 +38,7 @@
     "crypto-random-string": "^3.2.0",
     "is-valid-hostname": "1.0.2",
     "knex": "2.4.1",
+    "knex-paginate": "^3.0.2",
     "lodash": "^4.17.21",
     "pg": "^8.3.0",
     "snake-camel": "^1.0.6",
