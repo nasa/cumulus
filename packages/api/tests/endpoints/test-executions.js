@@ -55,7 +55,6 @@ const assertions = require('../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
 process.env.ExecutionsTable = randomString();
-process.env.GranulesTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -74,7 +73,6 @@ let asyncOperationModel;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('asyncOperation');
 process.env.ExecutionsTable = randomId('executions');
-process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');

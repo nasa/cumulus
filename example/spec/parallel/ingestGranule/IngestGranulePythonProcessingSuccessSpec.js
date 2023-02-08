@@ -69,7 +69,6 @@ describe('The TestPythonProcessing workflow', () => {
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       provider = { id: `s3_provider${testSuffix}` };
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.system_bucket = config.bucket;
 

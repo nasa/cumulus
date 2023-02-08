@@ -6,7 +6,6 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
     CollectionsTable           = var.dynamo_tables.collections.name
     ExecutionsTable            = var.dynamo_tables.executions.name
-    GranulesTable              = var.dynamo_tables.granules.name
     PdrsTable                  = var.dynamo_tables.pdrs.name
     ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
@@ -23,7 +22,6 @@ locals {
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
     CollectionsTable           = var.dynamo_tables.collections.name
     ExecutionsTable            = var.dynamo_tables.executions.name
-    GranulesTable              = var.dynamo_tables.granules.name
     PdrsTable                  = var.dynamo_tables.pdrs.name
     ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name

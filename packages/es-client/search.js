@@ -280,7 +280,7 @@ class BaseSearch {
 
     const ag = await this.client.search({
       index: this.index,
-      type: process.env.GranulesTable,
+      type: process.env.GranulesTable, // TODO -- what happens here?
       body: body,
       size: 0,
     });
