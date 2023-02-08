@@ -459,7 +459,6 @@ const _writeGranuleFiles = async ({
 const _writeGranuleRecords = async (params) => {
   const {
     postgresGranuleRecord,
-    apiGranuleRecord,
     knex,
     esClient = await Search.es(),
     granuleModel,
@@ -467,6 +466,7 @@ const _writeGranuleRecords = async (params) => {
     granulePgModel,
     writeConstraints = true,
   } = params;
+  let { apiGranuleRecord } = params;
   let pgGranule;
   let pgGranuleResult;
 
@@ -492,6 +492,15 @@ const _writeGranuleRecords = async (params) => {
       // in the case where _writeGranule is called without createdAt set
       if (!apiGranuleRecord.createdAt) {
         apiGranuleRecord.createdAt = pgGranule.created_at.getTime();
+      }
+
+      if (writeConstraints && (pgGranule.status === 'running' || pgGranule.status === 'queued')) {
+        // pgGranule was updated, but with writeConstraints conditions, so only some values were
+        // updated. we need to ensure the correct values are propogated to Dynamo and ES
+        apiGranuleRecord = await translatePostgresGranuleToApiGranule({
+          granulePgRecord: pgGranule,
+          knexOrTransaction: trx,
+        });
       }
 
       await granuleModel.storeGranule(apiGranuleRecord, writeConstraints);

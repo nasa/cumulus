@@ -79,6 +79,9 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3142**
   - Fix issue from CUMULUS-3070 where undefined values for status results in
     unexpected insertion failure on PATCH.
+- **CUMULUS-3111**
+  - Fix issue where if granule update dropped due to write constraints for writeGranuleFromMessage, still possible for granule files to be written
+  - Fix issue where if granule update is limited to status and timestamp values due to write constraints for writeGranuleFromMessage, Dynamo or ES granules could be out of sync with PG
     
 ### Changed
 
