@@ -567,6 +567,9 @@ async function invokeRerun(rule) {
  *
  * @param {RuleRecord} original - Rule to update trigger for
  * @param {Object} updates      - Updates for rule trigger
+ * @param {string} updates.state
+*  @param {Object} updates.rule
+ * @param {unknown} updates.rule.value
  * @param {Knex} knex           - Knex DB Client
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
