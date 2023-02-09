@@ -119,8 +119,8 @@ function lookupCollectionInEvent(eventObject) {
  */
 async function buildPayload(rule, cumulusMeta) {
   // makes sure the workflow exists
-  const bucket = process.env.system_bucket;
-  const stack = process.env.stackName;
+  const bucket = getRequiredEnvVar('system_bucket');
+  const stack = getRequiredEnvVar('stackName');
   const workflowFileKey = workflows.getWorkflowFileKey(stack, rule.workflow);
 
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
