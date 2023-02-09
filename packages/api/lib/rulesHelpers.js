@@ -627,7 +627,7 @@ async function updateRuleTrigger(original, updates, knex) {
  *
  * @param {RuleRecord} ruleItem - Rule to create trigger for
  *
- * @returns {RuleRecord}        - Returns new rule object
+ * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
