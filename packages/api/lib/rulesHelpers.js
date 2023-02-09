@@ -568,7 +568,7 @@ async function invokeRerun(rule) {
  * @param {RuleRecord} original - Rule to update trigger for
  * @param {Object} updates      - Updates for rule trigger
  * @param {Knex} knex           - Knex DB Client
- * @returns {RuleRecord}        - Returns new rule object
+ * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
 async function updateRuleTrigger(original, updates, knex) {
   let clonedRuleItem = cloneDeep(original);
