@@ -19,6 +19,8 @@ const {
 const {
   verifyJwtAuthorization,
   getFunctionNameFromRequestContext,
+  isMinVersionApi,
+  invalidApiVersion,
 } = require('../../lib/request');
 const {
   fakeAccessTokenFactory,
@@ -38,6 +40,42 @@ test.before(async () => {
 
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket).catch(noop);
+});
+
+test('isMinVersionApi returns true if req.headers.version is equal to the minVersion', (t) => {
+  const reqObject = { headers: { version: '2' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.true(isMinVersionApi(reqObject, minVersion));
+});
+
+test('isMinVersionApi returns false if req.headers.version is less than the minVersion', (t) => {
+  const reqObject = { headers: { version: '1' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.false(isMinVersionApi(reqObject, minVersion));
+});
+
+test('isMinVersionApi returns false if req.headers.version is greater than the minVersion', (t) => {
+  const reqObject = { headers: { version: '50' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.true(isMinVersionApi(reqObject, minVersion));
+});
+
+test('isMinVersionApi returns false if req.headers.version is NaN', async (t) => {
+  const reqObject = { headers: { version: 'foobar' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.false(isMinVersionApi(reqObject, minVersion));
+});
+
+test('invalidApiVersion returns the expected with the expected output', (t) => {
+  const resMock = { boom: { badRequest: (str) => str } };
+  const testVersion = 5;
+  const actual = invalidApiVersion(resMock, testVersion);
+  const expectedString = `This API endpoint requires 'version' header to be set to at least ${testVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`
+  t.is(actual, expectedString);
 });
 
 test('verifyJwtAuthorization() throws JsonWebTokenError for non-JWT token', async (t) => {

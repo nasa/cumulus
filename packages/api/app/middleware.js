@@ -1,9 +1,23 @@
+// @ts-check
+
 'use strict';
 
 const bodyParser = require('body-parser');
 const has = require('lodash/has');
 const { EcsStartTaskError } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+
+const { version } = require('../lib/version');
+const {
+  invalidApiVersion,
+  isMinVersionApi,
+} = require('../lib/request');
+
+/**
+* @typedef { import("../lib/expressTypes").ExpressRequest } Request
+* @typedef { import("../lib/expressTypes").BoomResponse } BoomResponse
+* @typedef { import("../lib/expressTypes").ExpressNextFunction } NextFunction
+*/
 
 const logger = new Logger({ sender: '@cumulus/api' });
 
@@ -39,6 +53,21 @@ const handleBodyParserError = (res, error) => {
   }
 };
 
+/**
+ * Validates a request has the 'version' header set to at least the same version as the API
+ * @param {Request} req - Express Request Object
+ * @param {BoomResponse} res - Express Response Object with Boom middleware
+ * @param {NextFunction} next - Express 'next' Function
+ * @returns { Express.BoomError } // TODO fix this type
+ */
+const validateApiVersionCompliance = (req, res, next) => {
+  if (!isMinVersionApi(req, version)) {
+    return invalidApiVersion(res, version);
+  }
+  next();
+  return undefined;
+};
+
 const jsonBodyParser = (req, res, next) => {
   const nextWithErrorHandling = (error) => {
     if (error) {
@@ -60,4 +89,5 @@ module.exports = {
   asyncOperationEndpointErrorHandler,
   defaultErrorHandler,
   jsonBodyParser,
+  validateApiVersionCompliance,
 };

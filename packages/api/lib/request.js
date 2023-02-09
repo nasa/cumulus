@@ -1,3 +1,4 @@
+// @ts-check
 const get = require('lodash/get');
 
 const log = require('@cumulus/common/log');
@@ -9,6 +10,24 @@ const { verifyJwtToken } = require('./token');
 const { isAuthorizedOAuthUser } = require('../app/auth');
 
 /**
+* typedef {import('express').Request} Request
+* typedef {import('express').Response} Response
+* typedef {(message?: string, data?: any) => Error } BoomBadRequest
+* typedef BoomResponse @extends Response { badRequest: BoomBadRequest }
+* typedef {import('express').NextFunction} NextFunction
+* BoomError based on https://github.com/hapijs/boom/blob/master/lib/index.js#L69
+* and https://github.com/scottcorgan/express-boom/blob/master/index.js#L4
+*/
+
+/**
+ * @typedef { import("./expressTypes").ExpressRequest } Request
+ * @typedef { import("./expressTypes").ExpressResponse } Response
+ * @typedef { import("./expressTypes").BoomResponse } BoomResponse
+ * @typedef { import("./expressTypes").BoomResponse } BoomBadRequest
+ * @typedef { import('boom') } Boom
+ */
+
+/**
  * Verify the validity and access of JWT for request authorization.
  *
  * @param {string} requestJwtToken - The JWT token used for request authorization
@@ -16,7 +35,7 @@ const { isAuthorizedOAuthUser } = require('../app/auth');
  * @throws {TokenExpiredError} - thown if the JWT is expired
  * @throws {TokenUnauthorizedUserError} - thrown if the user is not authorized
  *
- * @returns {string} accessToken - The access token from the OAuth provider
+ * @returns {Promise<string>} accessToken - The access token from the OAuth provider
  */
 async function verifyJwtAuthorization(requestJwtToken) {
   let accessToken;
@@ -33,6 +52,28 @@ async function verifyJwtAuthorization(requestJwtToken) {
   }
 
   return accessToken;
+}
+
+/**
+* Validate request has header matching expected minimum version
+* @param {Request} req - express Request object
+* @param {number} minVersion - Minimum API version to allow
+* @returns {boolean}
+*/
+function isMinVersionApi(req, minVersion) {
+  const requestVersion = Number(req.headers.version);
+  if (requestVersion && minVersion <= requestVersion) return true;
+  return false;
+}
+
+/**
+ *
+ * @param {BoomResponse} res - Express Response object
+ * @param {number} minVersion - Minimum version required to be displayed to user
+ * @returns {Boom} -- Boom Error response object
+ */
+function invalidApiVersion(res, minVersion) {
+  return res.boom.badRequest(`This API endpoint requires 'version' header to be set to at least ${minVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`);
 }
 
 function validateBulkGranulesRequest(req, res, next) {
@@ -111,8 +152,10 @@ function getFunctionNameFromRequestContext(req) {
 }
 
 module.exports = {
+  getFunctionNameFromRequestContext,
+  invalidApiVersion,
+  isMinVersionApi,
   validateBulkGranulesRequest,
   validateGranuleExecutionRequest,
   verifyJwtAuthorization,
-  getFunctionNameFromRequestContext,
 };
