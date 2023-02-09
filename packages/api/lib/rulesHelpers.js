@@ -332,7 +332,7 @@ function updateSnsRuleArn(ruleItem, snsSubscriptionArn) {
    * Validate and update sqs rule with queue property
    *
    * @param {RuleRecord} rule -  the sqs rule
-   * @returns {RuleRecord} the updated sqs rule
+   * @returns {Promise<RuleRecord>} the updated sqs rule
    */
 async function validateAndUpdateSqsRule(rule) {
   const queueUrl = rule.rule.value;
