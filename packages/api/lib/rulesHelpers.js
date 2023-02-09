@@ -428,7 +428,7 @@ async function addKinesisEventSources(rule) {
  * Add SNS event sources
  *
  * @param {RuleRecord} item - The rule item
- * @returns {string}        - Returns snsSubscriptionArn
+ * @returns {Promise<string>}        - Returns snsSubscriptionArn
  */
 async function addSnsTrigger(item) {
   // check for existing subscription
