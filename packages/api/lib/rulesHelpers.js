@@ -115,7 +115,7 @@ function lookupCollectionInEvent(eventObject) {
  * @param {RuleRecord} rule           - API rule
  * @param {unknown} [cumulusMeta]      - Optional cumulus_meta object
  *
- * @returns {Object} lambda invocation payload
+ * @returns {Promise<unknown>} lambda invocation payload
  */
 async function buildPayload(rule, cumulusMeta) {
   // makes sure the workflow exists
