@@ -1313,11 +1313,6 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
-  const deleteOldEventSourceMappingsSpy = sinon.spy(rulesHelpers, 'deleteOldEventSourceMappings');
-  t.teardown(() => {
-    deleteOldEventSourceMappingsSpy.restore();
-  });
-
   const {
     originalPgRecord,
     originalEsRecord,
@@ -1371,8 +1366,6 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     { message: 'PG fail' }
   );
 
-  t.false(deleteOldEventSourceMappingsSpy.called);
-
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
   const updatedEsRule = await t.context.esRulesClient.get(
@@ -1410,11 +1403,6 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
 
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
-
-  const deleteOldEventSourceMappingsSpy = sinon.spy(rulesHelpers, 'deleteOldEventSourceMappings');
-  t.teardown(() => {
-    deleteOldEventSourceMappingsSpy.restore();
-  });
 
   const {
     originalPgRecord,
@@ -1467,8 +1455,6 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     put(expressRequest, response),
     { message: 'ES fail' }
   );
-
-  t.false(deleteOldEventSourceMappingsSpy.called);
 
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
