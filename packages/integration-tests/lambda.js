@@ -16,7 +16,7 @@ async function getEventSourceMapping(uuid) {
  * Delete a rule's Kinesis Event Source Mappings
  *
  * @param {Object} uuid - unique identifier for a rule
- * @returns {Promise<void>}
+ * @returns {Promise<Object>}
  */
 async function deleteEventSourceMapping(uuid) {
   return await lambda().deleteEventSourceMapping({ UUID: uuid }).promise();
