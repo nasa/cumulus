@@ -22,12 +22,12 @@ const { removeNilProperties } = require('@cumulus/common/util');
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 
-const log = new Logger({ sender: '@cumulus/rulesHelpers' });
-
 /**
  * @typedef {import('@cumulus/types/api/rules').RuleRecord} RuleRecord
  * @typedef {import('knex').Knex} Knex
  */
+
+const log = new Logger({ sender: '@cumulus/rulesHelpers' });
 
 /**
  * fetch all rules in the Cumulus API
