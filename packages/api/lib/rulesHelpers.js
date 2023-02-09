@@ -14,6 +14,7 @@ const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const { RulePgModel } = require('@cumulus/db');
 const { ValidationError } = require('@cumulus/errors');
+const { getRequiredEnvVar } = require('@cumulus/common/env.js');
 
 const { listRules } = require('@cumulus/api-client/rules');
 const { removeNilProperties } = require('@cumulus/common/util');

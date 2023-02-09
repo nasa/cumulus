@@ -27,6 +27,7 @@ const providersApi = require('@cumulus/api-client/providers');
 const rulesApi = require('@cumulus/api-client/rules');
 const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
+const { getRequiredEnvVar } = require('@cumulus/common/env.js');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
 const executionsApi = require('./api/executions');
@@ -40,8 +41,8 @@ const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 const { ActivityStep, LambdaStep } = require('./sfnStep');
 const { setProcessEnvironment, readJsonFilesFromDir } = require('./utils');
-const waitPeriodMs = 1000;
 
+const waitPeriodMs = 1000;
 const maxWaitForStartedExecutionSecs = 60 * 5;
 const lambdaStep = new LambdaStep();
 
@@ -575,14 +576,14 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 async function deleteRuleResources(rule) {
   const kinesisSourceEvents = [
     {
-      name: process.env.messageConsumer,
+      name: getRequiredEnvVar(process.env.messageConsumer),
       eventType: 'arn',
       type: {
         arn: rule.rule.arn,
       },
     },
     {
-      name: process.env.KinesisInboundEventLogger,
+      name: getRequiredEnvVar(process.env.KinesisInboundEventLogger),
       eventType: 'log_event_arn',
       type: {
         log_event_arn: rule.rule.logEventArn,
