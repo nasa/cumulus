@@ -113,7 +113,7 @@ function lookupCollectionInEvent(eventObject) {
  * Build payload from rule for lambda invocation
  *
  * @param {RuleRecord} rule           - API rule
- * @param {Object} [cumulusMeta]      - Optional cumulus_meta object
+ * @param {unknown} [cumulusMeta]      - Optional cumulus_meta object
  *
  * @returns {Object} lambda invocation payload
  */
