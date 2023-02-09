@@ -8,7 +8,7 @@ module.exports = {
   scripts: [
     'https://buttons.github.io/buttons.js',
   ],
-  favicon: 'img/cumulus-logo.png',
+  favicon: 'img/cumulus-logo.ico',
   customFields: {},
   onBrokenLinks: 'log',
   onBrokenMarkdownLinks: 'log',
@@ -20,18 +20,25 @@ module.exports = {
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
           path: '../docs',
-          sidebarPath: './sidebars.json',
+          sidebarPath: require.resolve('./sidebars.js'),
         },
         blog: {},
         theme: {
-          customCss: './src/css/customTheme.css',
+          customCss: './src/css/custom.css',
         },
       },
     ],
   ],
   plugins: [],
   themeConfig: {
+    docs: {
+      sidebar: {
+        hideable: true,
+      },
+    },
     navbar: {
+      hideOnScroll: true,
+      style: 'primary',
       title: 'Cumulus Documentation',
       items: [
         {
@@ -45,32 +52,50 @@ module.exports = {
           position: 'left',
         },
         {
-          to: 'docs/cumulus-docs-readme',
+          type: 'doc',
+          position: 'left',
+          docId: 'cumulus-docs-readme',
           label: 'Developer Docs',
-          position: 'left',
         },
         {
-          to: 'docs/data-cookbooks/about-cookbooks',
-          label: 'Data-Cookbooks',
+          type: 'doc',
           position: 'left',
+          docId: 'data-cookbooks/about-cookbooks',
+          label: 'Data Cookbooks',
         },
         {
-          to: 'docs/operator-docs/about-operator-docs',
+          type: 'doc',
+          position: 'left',
+          docId: 'operator-docs/about-operator-docs',
           label: 'Operator Docs',
-          position: 'left',
+        },
+        {
+          type: 'docsVersionDropdown',
+          position: 'right',
+          dropdownActiveClassDisabled: true,
+          dropdownItemsAfter: [
+            {
+              type: 'html',
+              value: '<hr class="dropdown-separator">',
+            },
+            {
+              to: '/versions',
+              label: 'All versions',
+            },
+          ],
+        },
+        {
+          href: 'https://github.com/nasa/cumulus',
+          position: 'right',
+          className: 'header-github-link',
+          'aria-label': 'GitHub repository',
         },
       ],
     },
-    footer: {
-      links: [],
-      logo: {
-        src: '/img/meta_opensource_logo_negative.svg',
-      },
-    },
     algolia: {
-      appId: 'X1Z85QJPUV',
-      apiKey: 'bf7211c161e8205da2f933a02534105a',
-      indexName: 'docusaurus-2',
+      appId: process.env.DOCSEARCH_API_ID || 'fakeApiId',
+      apiKey: process.env.DOCSEARCH_API_KEY || 'fakeApiKey',
+      indexName: process.env.DOCSEARCH_INDEX_NAME || 'fakeIndexName',
       algoliaOptions: {
         facetFilters: [
           'version:VERSION',

@@ -1,5 +1,6 @@
 ---
 id: cumulus-docs-readme
+slug: /
 title: Introduction
 hide_title: false
 ---

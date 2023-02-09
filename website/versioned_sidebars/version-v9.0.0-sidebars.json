@@ -1,6 +1,6 @@
 {
   "docs": {
-    "Getting Started":[
+    "Getting Started": [
       "cumulus-docs-readme",
       "getting-started",
       "glossary",
@@ -20,17 +20,15 @@
     ],
     "Deployment": [
       "deployment/deployment-readme",
-      "deployment/create_bucket",
-      "deployment/terraform-best-practices",
-      "deployment/choosing_configuring_rds",
       "deployment/postgres_database_deployment",
+      "deployment/terraform-best-practices",
+      "deployment/upgrade-readme",
       "deployment/components",
+      "deployment/create_bucket",
       "deployment/thin_egress_app",
-      "deployment/cumulus_distribution",
       "deployment/api-gateway-logging",
       "deployment/share-s3-access-logs",
-      "deployment/cloudwatch-logs-delivery",
-      "deployment/upgrade-readme"
+      "deployment/cloudwatch-logs-delivery"
     ],
     "Configuration": [
       "configuration/data-management-types",
@@ -38,8 +36,7 @@
       "configuration/server_access_logging",
       "configuration/cloudwatch-retention",
       "configuration/lifecycle-policies",
-      "configuration/collection-storage-best-practices",
-      "configuration/task-configuration"
+      "configuration/collection-storage-best-practices"
     ],
     "Development": [
       "workflows/developing-a-cumulus-workflow",
@@ -53,16 +50,17 @@
       "tasks",
       "workflow_tasks/discover_granules",
       "workflow_tasks/files_to_granules",
-      "workflow_tasks/lzards_backup",
       "workflow_tasks/move_granules",
-      "workflow_tasks/parse_pdr",
-      "workflow_tasks/queue_granules"
+      "workflow_tasks/parse_pdr"
     ],
     "Features": [
       "features/backup_and_restore",
+      "features/data_in_dynamodb",
       "features/dead_letter_queues",
+      "features/ems_reporting",
       "features/execution_payload_retention",
       "features/reports",
+      "features/lambda_versioning",
       "features/ancillary_metadata",
       "features/distribution-metrics",
       "features/logging-esdis-metrics",
@@ -88,10 +86,7 @@
     "Upgrade Notes": [
       "upgrade-notes/migrate_tea_standalone",
       "upgrade-notes/upgrade_tf_version_0.13.6",
-      "upgrade-notes/upgrade-rds",
-      "upgrade-notes/cumulus_distribution_migration",
-      "upgrade-notes/update-task-file-schemas",
-      "upgrade-notes/update-cma-2.0.2"
+      "upgrade-notes/upgrade-rds"
     ],
     "External Contributions": [
       "external-contributions/external-contributions"

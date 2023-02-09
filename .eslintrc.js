@@ -58,6 +58,9 @@ module.exports = {
     node: true,
     es2020: true,
   },
+  globals: {
+    JSX: true,
+  },
   rules: {
     complexity: ['error', 15],
     indent: ['error', 2],

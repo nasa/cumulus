@@ -17,7 +17,7 @@ npm run docs-install
 npm run docs-serve
 ```
 
-**Note:** `docs-build` will build the documents into `website/build/Cumulus`.
+**Note:** `docs-build` will build the documents into `website/build`.
 
 ### Cumulus Documentation
 
@@ -37,7 +37,7 @@ hide_title: false
 ---
 ```
 
-**Note:** To have the new page show up in a sidebar the designated `id` must be added to a sidebar in the `website/sidebars.json` file. Docusaurus has an in depth explanation of sidebars [here](https://docusaurus.io/docs/en/navigation).
+**Note:** To have the new page show up in a sidebar the designated `id` must be added to a sidebar in the `website/sidebars.js` file. Docusaurus has an in depth explanation of sidebars [here](https://docusaurus.io/docs/en/navigation).
 
 #### Versioning Docs
 
