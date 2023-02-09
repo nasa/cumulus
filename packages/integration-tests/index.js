@@ -565,7 +565,11 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 /**
  * Delete a rule's Kinesis Event Source Mappings
  *
- * @param {Object} rule - a Rule record as returned by the Rules API
+ * @param {Object} rule - a Rule record as returned by the Rules api
+ * @param {string} rule.name
+ * @param {Object} rule.rule
+ * @param {string} rule.rule.arn
+ * @param {string} rule.rule.logEventArn
  * @returns {Promise<number>} - Number of rules deleted
  */
 async function deleteRuleResources(rule) {
