@@ -506,7 +506,7 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
    * Adds CloudWatch event rule and target
    *
    * @param {RuleRecord} item - The rule item
-   * @param {Object} payload  - The payload input of the CloudWatch event
+   * @param {unknown} payload  - The payload input of the CloudWatch event
    * @returns {void}
    */
 async function addRule(item, payload) {
