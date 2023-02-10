@@ -53,8 +53,6 @@ const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
 const {
   getFunctionNameFromRequestContext,
-  invalidApiVersion,
-  isMinVersionApi,
   validateBulkGranulesRequest,
 } = require('../lib/request');
 

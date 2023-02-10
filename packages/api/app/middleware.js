@@ -7,9 +7,7 @@ const has = require('lodash/has');
 const { EcsStartTaskError } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 
-const { version } = require('../lib/version');
 const {
-  invalidApiVersion,
   isMinVersionApi,
 } = require('../lib/request');
 
