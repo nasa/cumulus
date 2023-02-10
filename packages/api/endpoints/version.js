@@ -5,7 +5,7 @@
 const router = require('express-promise-router')();
 const pckg = require('../package.json');
 
-const version = require('../lib/version');
+const { version } = require('../lib/version');
 
 /**
  * get the API response and package versions
