@@ -17,7 +17,7 @@ const { secretsManager } = require('@cumulus/aws-client/services');
 const Logger = require('@cumulus/logger');
 
 const router = require('./routes');
-const { jsonBodyParser, validateApiVersionCompliance } = require('./middleware');
+const { jsonBodyParser } = require('./middleware');
 
 const log = new Logger({ sender: '@api/index' });
 
@@ -74,9 +74,6 @@ app.use(cookieParser());
 app.use(bodyParser.urlencoded({ limit: '6mb', extended: true }));
 app.use(jsonBodyParser);
 app.use(hsts({ maxAge: 31536000 }));
-
-// Version validation
-app.use(validateApiVersionCompliance);
 
 // v1 routes
 app.use('/v1', router);

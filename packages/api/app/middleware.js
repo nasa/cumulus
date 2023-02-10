@@ -14,9 +14,7 @@ const {
 } = require('../lib/request');
 
 /**
-* @typedef { import("../lib/expressTypes").ExpressRequest } Request
-* @typedef { import("../lib/expressTypes").BoomResponse } BoomResponse
-* @typedef { import("../lib/expressTypes").ExpressNextFunction } NextFunction
+* @typedef {import('express').RequestHandler} RequestHandler
 */
 
 const logger = new Logger({ sender: '@cumulus/api' });
@@ -54,18 +52,18 @@ const handleBodyParserError = (res, error) => {
 };
 
 /**
- * Validates a request has the 'version' header set to at least the same version as the API
- * @param {Request} req - Express Request Object
- * @param {BoomResponse} res - Express Response Object with Boom middleware
- * @param {NextFunction} next - Express 'next' Function
- * @returns { Express.BoomError } // TODO fix this type
- */
-const validateApiVersionCompliance = (req, res, next) => {
-  if (!isMinVersionApi(req, version)) {
-    return invalidApiVersion(res, version);
+* @param {number} minVersion -- Minimum supported version
+* @returns { RequestHandler } -- Request Handler
+*/
+const validateApiVersionCompliance = (minVersion) => (req, res, next) => {
+  if (!isMinVersionApi(req, minVersion)) {
+    return res
+      .status(400)
+      .send({
+        error: `This API endpoint requires 'version' header to be an integer set to at least ${minVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`,
+      });
   }
-  next();
-  return undefined;
+  return next();
 };
 
 const jsonBodyParser = (req, res, next) => {
@@ -80,7 +78,6 @@ const jsonBodyParser = (req, res, next) => {
       next();
     }
   };
-
   // Setting limit to 6 MB which is the AWS lambda limit https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
   bodyParser.json({ limit: '6mb' })(req, res, nextWithErrorHandling);
 };

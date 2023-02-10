@@ -40,7 +40,10 @@ const {
   updateGranuleStatusToQueued,
   writeGranuleRecordAndPublishSns,
 } = require('../lib/writeRecords/write-granules');
-const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const {
+  asyncOperationEndpointErrorHandler,
+  validateApiVersionCompliance,
+} = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const Granule = require('../models/granules');
 const schemas = require('../models/schemas.js');
@@ -48,7 +51,12 @@ const { moveGranule } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
-const { validateBulkGranulesRequest, getFunctionNameFromRequestContext } = require('../lib/request');
+const {
+  getFunctionNameFromRequestContext,
+  invalidApiVersion,
+  isMinVersionApi,
+  validateBulkGranulesRequest,
+} = require('../lib/request');
 
 /**
  * @typedef {import('express').Request} Request
@@ -786,8 +794,8 @@ router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', put);
-router.patch('/:granuleName', patch);
+router.put('/:granuleName', validateApiVersionCompliance(2), put);
+router.patch('/:granuleName', validateApiVersionCompliance(2), patch);
 
 router.post(
   '/bulk',

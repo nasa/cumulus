@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
@@ -76,6 +75,8 @@ const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const { sortFilesByKey } = require('../helpers/sort');
 const models = require('../../models');
+const { request } = require('../helpers/request');
+//const request = require('supertest');
 
 // Dynamo mock data factories
 const {
