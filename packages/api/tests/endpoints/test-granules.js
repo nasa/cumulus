@@ -2119,20 +2119,22 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
   );
 });
 
-test.serial('PATCH executes successfully with no non-required-field-updates (testing "inert" update/undefined fields)', async (t) => {
+test.serial('PATCH executes successfully with no non-required-field-updates (testing "insert" update/undefined fields)', async (t) => {
   const {
     esClient,
+    executionPgRecord,
     executionUrl,
     knex,
   } = t.context;
   const timestamp = Date.now();
   const {
-    newPgGranule,
-    newDynamoGranule,
     esRecord,
+    newDynamoGranule,
+    newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: executionPgRecord.cumulus_id,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
