@@ -3904,7 +3904,7 @@ test.serial('default paginates correctly with search_after', async (t) => {
   t.not(meta.searchContext === newMeta.searchContext);
 });
 
-test.only('PUT returns 400 for version value less than the configured value', async (t) => {
+test.serial('PUT returns 400 for version value less than the configured value', async (t) => {
   const granuleId = t.context.createGranuleId();
   const response = await request(app)
     .put(`/granules/${granuleId}`)
@@ -3917,7 +3917,7 @@ test.only('PUT returns 400 for version value less than the configured value', as
   t.true(response.text.includes("This API endpoint requires 'version' header"));
 });
 
-test.only('PATCH returns 400 for version value less than the configured value', async (t) => {
+test.serial('PATCH returns 400 for version value less than the configured value', async (t) => {
   const granuleId = t.context.createGranuleId();
   const response = await request(app)
     .patch(`/granules/${granuleId}`)
