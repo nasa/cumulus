@@ -51,10 +51,7 @@ const { moveGranule } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const { addOrcaRecoveryStatus, getOrcaRecoveryStatusByGranuleId } = require('../lib/orca');
-const {
-  getFunctionNameFromRequestContext,
-  validateBulkGranulesRequest,
-} = require('../lib/request');
+const { getFunctionNameFromRequestContext, validateBulkGranulesRequest } = require('../lib/request');
 
 /**
  * @typedef {import('express').Request} Request
