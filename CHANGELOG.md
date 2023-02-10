@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### MIGRATION notes
 
+#### PostgreSQL compatibility update
+
 From this release forward Core will be tested against PostgreSQL 11   Existing
 release compatibility testing was done for release 11.1.8/14.0.0+.   Users
 should migrate their datastores to Aurora PostgreSQL 11.13+ compatible data stores
@@ -31,6 +33,27 @@ engine_version = 11.13
 When you apply this update, the original PostgreSQL v10 parameter group will be
 removed, and recreated using PG11 defaults/configured terraform values and
 update the database cluster to use the new configuration.
+
+#### API Endpoint Versioning
+
+As part of the work on CUMULUS-3072, we have added a required header for the
+granule PUT/PATCH endpoints -- to ensure that older clients/utilities do not
+unexpectedly make destructive use of those endpoints, a validation check of a
+header value against supported versions has been implemented.
+
+Moving forward, if a breaking change is made to an existing endpoint that
+requires user updates, as part of that update we will set the current version of
+the core API and require a header that confirms the client is compatible with
+the version required or greater.
+
+In this instance, the granule PUT/PATCH
+endpoints will require a `version` value of at least `2`.
+
+```json
+'version': '2'
+```
+
+Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Added
 
@@ -91,7 +114,7 @@ update the database cluster to use the new configuration.
 - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
 - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
 
-### Changed
+### Breaking Changes
 
 - **CUMULUS-3072**
   - Removed original PUT granule endpoint logic (in favor of utilizing new PATCH
@@ -104,7 +127,14 @@ update the database cluster to use the new configuration.
       excepting collectionId and granuleId which cannot be modified.
     - PUT will create a new granule record if one does not already exist
     - Like PATCH, the execution field is additive only - executions, once
-      associated with a granule record cannot be unassociated via the granule endpoint.
+      associated with a granule record cannot be unassociated via the granule
+      endpoint.
+  - /granule PUT and PATCH endpoints now require a header with values `{
+    version: 2 }`
+  - Cumulus API version updated to `2`
+
+### Changed
+
 - **Snyk Security**
   - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
   - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
