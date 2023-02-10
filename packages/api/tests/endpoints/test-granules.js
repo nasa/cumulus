@@ -75,8 +75,9 @@ const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const { sortFilesByKey } = require('../helpers/sort');
 const models = require('../../models');
+
 const { request } = require('../helpers/request');
-//const request = require('supertest');
+const supertest = require('supertest');
 
 // Dynamo mock data factories
 const {
@@ -3901,4 +3902,30 @@ test.serial('default paginates correctly with search_after', async (t) => {
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);
   t.not(meta.searchContext === newMeta.searchContext);
+});
+
+test.only('PUT returns 400 for version value less than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({})
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'version' header"));
+});
+
+test.only('PATCH returns 400 for version value less than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .patch(`/granules/${granuleId}`)
+    .set('version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({})
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'version' header"));
 });
