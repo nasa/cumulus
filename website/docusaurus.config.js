@@ -1,3 +1,12 @@
+const versions = require('./versions.json');
+
+function versionOptions() {
+  const options = {};
+  versions.map((version) =>
+    (options[version] = { banner: 'none' }));
+  return options;
+}
+
 module.exports = {
   title: 'Cumulus Documentation',
   tagline: 'This is a default tagline',
@@ -8,7 +17,7 @@ module.exports = {
   scripts: [
     'https://buttons.github.io/buttons.js',
   ],
-  favicon: 'img/cumulus-logo.ico',
+  favicon: 'img/cumulus.ico',
   customFields: {},
   onBrokenLinks: 'log',
   onBrokenMarkdownLinks: 'log',
@@ -21,6 +30,7 @@ module.exports = {
           showLastUpdateTime: true,
           path: '../docs',
           sidebarPath: require.resolve('./sidebars.js'),
+          versions: versionOptions(),
         },
         blog: {},
         theme: {
@@ -40,6 +50,13 @@ module.exports = {
       hideOnScroll: true,
       style: 'primary',
       title: 'Cumulus Documentation',
+      logo: {
+        alt: '',
+        src: 'img/ic_cumulus_logo_white.svg',
+        srcDark: 'img/ic_cumulus_logo_white.svg',
+        width: 32,
+        height: 32,
+      },
       items: [
         {
           href: 'https://nasa.github.io/cumulus-api',
