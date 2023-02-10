@@ -63,7 +63,7 @@ test('isMinVersionApi returns false if req.headers.version is greater than the m
   t.true(isMinVersionApi(reqObject, minVersion));
 });
 
-test('isMinVersionApi returns false if req.headers.version is NaN', async (t) => {
+test('isMinVersionApi returns false if req.headers.version is NaN', (t) => {
   const reqObject = { headers: { version: 'foobar' } };
   const minVersion = 2;
   isMinVersionApi(reqObject, minVersion);
