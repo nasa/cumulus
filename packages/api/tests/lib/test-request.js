@@ -70,14 +70,6 @@ test('isMinVersionApi returns false if req.headers.version is NaN', async (t) =>
   t.false(isMinVersionApi(reqObject, minVersion));
 });
 
-test('invalidApiVersion returns the expected with the expected output', (t) => {
-  const resMock = { boom: { badRequest: (str) => str } };
-  const testVersion = 5;
-  const actual = invalidApiVersion(resMock, testVersion);
-  const expectedString = `This API endpoint requires 'version' header to be set to at least ${testVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`
-  t.is(actual, expectedString);
-});
-
 test('verifyJwtAuthorization() throws JsonWebTokenError for non-JWT token', async (t) => {
   try {
     await verifyJwtAuthorization('invalid-token');
