@@ -49,8 +49,11 @@ the version required or greater.
 In this instance, the granule PUT/PATCH
 endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
-```json
-'version': '2'
+```bash
+ curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
+ --header 'Cumulus-API-Version': '2'\
+ --header 'Authorization: Bearer ReplaceWithToken'\
+ --data ...
 ```
 
 Users/clients that do not make use of these endpoints will not be impacted.
