@@ -20,7 +20,6 @@ const {
   verifyJwtAuthorization,
   getFunctionNameFromRequestContext,
   isMinVersionApi,
-  invalidApiVersion,
 } = require('../../lib/request');
 const {
   fakeAccessTokenFactory,

@@ -6,7 +6,6 @@ const sinon = require('sinon');
 const test = require('ava');
 const omit = require('lodash/omit');
 
-
 const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
 const {
