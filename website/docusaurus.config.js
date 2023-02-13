@@ -2,8 +2,10 @@ const versions = require('./versions.json');
 
 function versionOptions() {
   const options = {};
-  versions.map((version) =>
-    (options[version] = { banner: 'none' }));
+  versions.map((version) => {
+    options[version] = { banner: 'none' };
+    return undefined;
+  });
   return options;
 }
 

@@ -1,24 +1,24 @@
 module.exports = {
-  'docs': {
-    'Getting Started':[
+  docs: {
+    'Getting Started': [
       'cumulus-docs-readme',
       'getting-started',
       'glossary',
-      'faqs'
+      'faqs',
     ],
     'About Cumulus': [
       'architecture',
       'interfaces',
-      'team'
+      'team',
     ],
-    'Overviews': [
+    Overviews: [
       'workflows/workflows-readme',
       'workflows/protocol',
       'workflows/input_output',
       'workflows/cumulus-task-message-flow',
-      'workflows/workflow-triggers'
+      'workflows/workflow-triggers',
     ],
-    'Deployment': [
+    Deployment: [
       'deployment/deployment-readme',
       'deployment/create_bucket',
       'deployment/terraform-best-practices',
@@ -30,24 +30,24 @@ module.exports = {
       'deployment/api-gateway-logging',
       'deployment/share-s3-access-logs',
       'deployment/cloudwatch-logs-delivery',
-      'deployment/upgrade-readme'
+      'deployment/upgrade-readme',
     ],
-    'Configuration': [
+    Configuration: [
       'configuration/data-management-types',
       'configuration/monitoring-readme',
       'configuration/server_access_logging',
       'configuration/cloudwatch-retention',
       'configuration/lifecycle-policies',
       'configuration/collection-storage-best-practices',
-      'configuration/task-configuration'
+      'configuration/task-configuration',
     ],
-    'Development': [
+    Development: [
       'workflows/developing-a-cumulus-workflow',
       'workflows/developing-workflow-tasks',
       'workflows/lambda',
       'workflows/docker',
       'workflows/workflow-configuration-how-to',
-      'adding-a-task'
+      'adding-a-task',
     ],
     'Workflow Tasks': [
       'tasks',
@@ -56,9 +56,9 @@ module.exports = {
       'workflow_tasks/lzards_backup',
       'workflow_tasks/move_granules',
       'workflow_tasks/parse_pdr',
-      'workflow_tasks/queue_granules'
+      'workflow_tasks/queue_granules',
     ],
-    'Features': [
+    Features: [
       'features/backup_and_restore',
       'features/dead_letter_queues',
       'features/dead_letter_archive',
@@ -68,24 +68,24 @@ module.exports = {
       'features/distribution-metrics',
       'features/logging-esdis-metrics',
       'features/replay-kinesis-messages',
-      'features/replay-archived-sqs-messages'
+      'features/replay-archived-sqs-messages',
     ],
-    'Troubleshooting': [
+    Troubleshooting: [
       'troubleshooting/troubleshooting-readme',
       'troubleshooting/troubleshooting-deployment',
       'troubleshooting/rerunning-workflow-executions',
       'troubleshooting/troubleshooting-deployment',
-      'troubleshooting/reindex-elasticsearch'
+      'troubleshooting/reindex-elasticsearch',
     ],
     'Cumulus Development': [
       'adding-a-task',
-      'docs-how-to'
+      'docs-how-to',
     ],
     'Integrator Guide': [
       'integrator-guide/about-int-guide',
       'integrator-guide/int-common-use-cases',
       'integrator-guide/workflow-add-new-lambda',
-      'integrator-guide/workflow-ts-failed-step'
+      'integrator-guide/workflow-ts-failed-step',
     ],
     'Upgrade Notes': [
       'upgrade-notes/migrate_tea_standalone',
@@ -93,17 +93,17 @@ module.exports = {
       'upgrade-notes/upgrade-rds',
       'upgrade-notes/cumulus_distribution_migration',
       'upgrade-notes/update-task-file-schemas',
-      'upgrade-notes/update-cma-2.0.2'
+      'upgrade-notes/update-cma-2.0.2',
     ],
     'External Contributions': [
-      'external-contributions/external-contributions'
-    ]
+      'external-contributions/external-contributions',
+    ],
   },
   'Data Cookbooks': {
     'About Cookbooks': [
-      'data-cookbooks/about-cookbooks'
+      'data-cookbooks/about-cookbooks',
     ],
-    'Cookbooks': [
+    Cookbooks: [
       'data-cookbooks/hello-world',
       'data-cookbooks/ingest-notifications',
       'data-cookbooks/sips-workflow',
@@ -114,31 +114,31 @@ module.exports = {
       'data-cookbooks/tracking-files',
       'data-cookbooks/run-tasks-in-lambda-or-docker',
       'data-cookbooks/throttling-queued-executions',
-      'data-cookbooks/queue-post-to-cmr'
-    ]
+      'data-cookbooks/queue-post-to-cmr',
+    ],
   },
   'Operator Docs': {
     'About Operator Docs': [
-      'operator-docs/about-operator-docs'
+      'operator-docs/about-operator-docs',
     ],
-    'Configuration': [
+    Configuration: [
       'operator-docs/locating-access-logs',
-      'configuration/data-management-types'
+      'configuration/data-management-types',
     ],
-    'Operations': [
+    Operations: [
       'operator-docs/discovery-filtering',
       'operator-docs/bulk-operations',
       'operator-docs/cmr-operations',
       'operator-docs/naming-executions',
       'troubleshooting/rerunning-workflow-executions',
-      'features/replay-kinesis-messages'
+      'features/replay-kinesis-messages',
     ],
     'Common Use Cases': [
       'operator-docs/ops-common-use-cases',
       'operator-docs/kinesis-stream-for-ingest',
       'operator-docs/create-rule-in-cumulus',
       'operator-docs/granule-workflows',
-      'operator-docs/trigger-workflow'
-    ]
-  }
+      'operator-docs/trigger-workflow',
+    ],
+  },
 };

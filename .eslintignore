@@ -7,7 +7,6 @@
 tmp/**
 docs/**
 _book/**
-website/**
 v1-website/**
 *.tsbuildinfo
 *.map

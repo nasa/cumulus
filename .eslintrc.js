@@ -43,6 +43,7 @@ module.exports = {
   ],
   extends: [
     'airbnb-base',
+    'plugin:@docusaurus/recommended',
     'plugin:eslint-comments/recommended',
     'plugin:import/errors',
     'plugin:import/warnings',
@@ -62,6 +63,10 @@ module.exports = {
     JSX: true,
   },
   rules: {
+    'import/no-unresolved': [
+      2,
+      { ignore: ['^@theme', '^@docusaurus', '^@generated'] },
+    ],
     complexity: ['error', 15],
     indent: ['error', 2],
     'object-curly-newline': ['warn', { consistent: true, minProperties: 6 }],
@@ -254,6 +259,13 @@ module.exports = {
       files: ['packages/db/src/migration-template.ts'],
       rules: {
         '@typescript-eslint/no-unused-vars': 'off',
+      },
+    },
+    {
+      files: ['website/src/pages/*.tsx'],
+      rules: {
+        'no-unused-vars': 'off',
+        'node/no-unsupported-features/es-syntax': 'off',
       },
     },
   ],
