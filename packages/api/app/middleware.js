@@ -50,8 +50,8 @@ const handleBodyParserError = (res, error) => {
 };
 
 /**
-* @param {number} minVersion -- Minimum supported version
-* @returns { RequestHandler } -- Request Handler
+* @param {number} minVersion - Minimum supported version
+* @returns { RequestHandler } - Request Handler
 */
 const requireApiVersion = (minVersion) => (req, res, next) => {
   if (!isMinVersionApi(req, minVersion)) {
