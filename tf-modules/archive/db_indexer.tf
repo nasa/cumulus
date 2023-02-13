@@ -23,7 +23,6 @@ resource "aws_lambda_function" "db_indexer" {
       CMR_ENVIRONMENT            = var.cmr_environment
       CMR_HOST                   = var.cmr_custom_host
       CollectionsTable           = var.dynamo_tables.collections.name
-      ExecutionsTable            = var.dynamo_tables.executions.name
       AsyncOperationsTable       = var.dynamo_tables.async_operations.name
       FilesTable                 = var.dynamo_tables.files.name
       GranulesTable              = var.dynamo_tables.granules.name
@@ -47,9 +46,7 @@ resource "aws_lambda_function" "db_indexer" {
   }
 }
 
-data "aws_dynamodb_table" "executions" {
-  name = var.dynamo_tables.executions.name
-}
+
 
 data "aws_dynamodb_table" "granules" {
   name = var.dynamo_tables.granules.name

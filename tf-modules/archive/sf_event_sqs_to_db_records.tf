@@ -20,7 +20,6 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
       "dynamodb:UpdateItem"
     ]
     resources = [
-      var.dynamo_tables.executions.arn,
       var.dynamo_tables.granules.arn,
       var.dynamo_tables.pdrs.arn
     ]
@@ -192,7 +191,6 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
       createTimeoutMillis            = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn    = var.rds_user_access_secret_arn
       DeadLetterQueue                = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.id
-      ExecutionsTable                = var.dynamo_tables.executions.name
       execution_sns_topic_arn        = aws_sns_topic.report_executions_topic.arn
       GranulesTable                  = var.dynamo_tables.granules.name
       granule_sns_topic_arn          = aws_sns_topic.report_granules_topic.arn

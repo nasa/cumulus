@@ -140,7 +140,6 @@ resource "aws_lambda_function" "execute_migrations" {
   environment {
     variables = {
       ES_HOST                    = var.elasticsearch_hostname
-      ExecutionsTable            = var.dynamo_tables.executions.name
       FilesTable                 = var.dynamo_tables.files.name
       GranulesTable              = var.dynamo_tables.granules.name
       KinesisInboundEventLogger  = var.kinesis_inbound_event_logger_lambda_function_arn
