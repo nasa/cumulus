@@ -87,14 +87,6 @@ const unpublishGranule = async ({
       ['*']
     );
 
-    let collectionId;
-
-    if (pgCollection) {
-      collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
-    } else {
-      collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
-    }
-
     await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId);
     return { pgGranule };
   });

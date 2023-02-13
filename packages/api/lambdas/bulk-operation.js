@@ -90,16 +90,17 @@ async function applyWorkflowToGranules({
  * Must exist if payload.query exists.
  * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
  * e.g. { granuleId: xxx, collectionID: xxx }
+ * @param {RemoveGranuleFromCmrFn} [removeGranuleFromCmrFunction] - used for test mocking
  * @param {Function} [unpublishGranuleFunc] - Optional function to delete the
  * granule from CMR. Useful for testing.
  * @returns {Promise}
  *   Must exist if payload.query exists.
- * @param {RemoveGranuleFromCmrFn} [removeGranuleFromCmrFunction] - used for test mocking
  * @returns {Promise<unknown>}
  */
 async function bulkGranuleDelete(
   payload,
-  removeGranuleFromCmrFunction
+  removeGranuleFromCmrFunction,
+  unpublishGranuleFunc = unpublishGranule
 ) {
   const concurrency = payload.concurrency || 10;
 

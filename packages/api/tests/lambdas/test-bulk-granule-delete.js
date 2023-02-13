@@ -134,6 +134,13 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
 
   const removeGranuleFromCmrFunctionMock = () => true;
 
+  const apiGranules = await Promise.all(
+    granules.map((granule) => translatePostgresGranuleToApiGranule({
+      granulePgRecord: granule.newPgGranule,
+      knexOrTransaction: knex,
+    }))
+  );
+
   const { deletedGranules } = await bulkGranuleDelete(
     {
       granules: apiGranules,
