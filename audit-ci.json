@@ -2,5 +2,5 @@
     "high": true,
     "pass-enoaudit": true,
     "retry-count": 20,
-    "allowlist": ["knex", "jsonwebtoken", "http-cache-semantics"]
+    "allowlist": ["knex", "jsonwebtoken", "cacheable-request", "http-cache-semantics"]
 }
