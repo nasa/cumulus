@@ -43,28 +43,28 @@ test.after.always(async () => {
 });
 
 test('isMinVersionApi returns true if req.headers.version is equal to the minVersion', (t) => {
-  const reqObject = { headers: { version: '2' } };
+  const reqObject = { headers: { 'cumulus-api-version': '2' } };
   const minVersion = 2;
   isMinVersionApi(reqObject, minVersion);
   t.true(isMinVersionApi(reqObject, minVersion));
 });
 
 test('isMinVersionApi returns false if req.headers.version is less than the minVersion', (t) => {
-  const reqObject = { headers: { version: '1' } };
+  const reqObject = { headers: { 'cumulus-api-version': '1' } };
   const minVersion = 2;
   isMinVersionApi(reqObject, minVersion);
   t.false(isMinVersionApi(reqObject, minVersion));
 });
 
 test('isMinVersionApi returns false if req.headers.version is greater than the minVersion', (t) => {
-  const reqObject = { headers: { version: '50' } };
+  const reqObject = { headers: { 'cumulus-api-version': '50' } };
   const minVersion = 2;
   isMinVersionApi(reqObject, minVersion);
   t.true(isMinVersionApi(reqObject, minVersion));
 });
 
 test('isMinVersionApi returns false if req.headers.version is NaN', (t) => {
-  const reqObject = { headers: { version: 'foobar' } };
+  const reqObject = { headers: { 'cumulus-api-version': 'foobar' } };
   const minVersion = 2;
   isMinVersionApi(reqObject, minVersion);
   t.false(isMinVersionApi(reqObject, minVersion));
