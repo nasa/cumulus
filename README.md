@@ -145,6 +145,70 @@ Stop localstack/unit test services:
 $ npm run db:local:migrate
 ```
 
+#### Using an AWS-hosted Elasticsearch server
+
+The tests can be run against an Elasticsearch server running in AWS. This is useful if you are using an ARM-equipped Mac and are unable to run the old Intel version of Elasticsearch in Docker. These instructions assume that you have a deployment of Cumulus available, and the deployment name is "EXAMPLE".
+
+##### Pre-Reqs
+
+- The [AWS CLI](https://aws.amazon.com/cli/) is installed
+- The [Session Manager plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) for the AWS CLI is installed
+- [jq](https://stedolan.github.io/jq/) is installed
+- Your Cumulus deployment specified a `key_name` in `cumulus-tf/terraform.tfvars` that will grant you access to the EC2 instances that are part of that deployment
+- You are able to SSH into one of your EC2 instances (you are connected to a NASA VPN if required)
+
+##### Configure ssh
+
+Add the following to your `~/.ssh/config` file
+
+```text
+Host i-*
+  User ec2-user
+  ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+```
+
+##### Start the ssh tunnel to Elasticsearch
+
+Open an SSH tunnel to Elasticsearch with the following command.
+
+```sh
+./bin/es-tunnel.sh EXAMPLE
+```
+
+At this point you can send requests to <https://localhost:8443> and get responses from your Elasticsearch domain running in AWS. Note that, because you're tunneling TLS-encrypted traffic, the certificates are not going to match. The test code handles this already but, if you're using `curl`, make sure to use the `-k` option to disable strict certificate checks.
+
+```sh
+$ curl -k https://localhost:8443
+{
+  "name" : "ABC123",
+  "cluster_name" : "123:abc-es-vpc",
+  "cluster_uuid" : "abc-Ti6N3IA2ULvpBQ",
+  "version" : {
+    "number" : "5.3.2",
+    "build_hash" : "6bc5aba",
+    "build_date" : "2022-09-02T09:03:07.611Z",
+    "build_snapshot" : false,
+    "lucene_version" : "6.4.2"
+  },
+  "tagline" : "You Know, for Search"
+}
+```
+
+##### Run the tests
+
+With the tunnel configured, you can now run the tests with the following command:
+
+```sh
+env \
+  LOCAL_ES_HOST_PORT=8443 \
+  LOCAL_ES_HOST_PROTOCOL=https \
+  LOCAL_ES_HOST=localhost \
+  LOCALSTACK_HOST=127.0.0.1 \
+npm test
+```
+
 #### Run tests
 
 Run the test commands next
