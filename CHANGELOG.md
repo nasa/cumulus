@@ -100,6 +100,9 @@ update the database cluster to use the new configuration.
   - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
   - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
   - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
+- **CUMULUS-3189**
+  - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
+    support pip 23.0
 - **CUMULUS-3111**
   - Fix issue where if granule update dropped due to write constraints for writeGranuleFromMessage, still possible for granule files to be written
   - Fix issue where if granule update is limited to status and timestamp values due to write constraints for writeGranuleFromMessage, Dynamo or ES granules could be out of sync with PG
