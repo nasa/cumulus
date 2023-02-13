@@ -9,7 +9,7 @@ const { validateApiVersionCompliance } = require('../../app/middleware');
 test('validateApiVersionCompliance returns 400 if request version is less than minVersion', (t) => {
   const minVersion = 4;
   const response = buildFakeExpressResponse();
-  const fakeReq = { headers: { version: 2 } };
+  const fakeReq = { headers: { 'cumulus-api-version': 2 } };
   const nextStub = sinon.stub();
 
   validateApiVersionCompliance(minVersion)(fakeReq, response, nextStub);
@@ -24,7 +24,7 @@ test('validateApiVersionCompliance returns 400 if request version is less than m
 test('validateApiVersionCompliance calls next if request version is equal to minVersion', (t) => {
   const minVersion = 2;
   const response = buildFakeExpressResponse();
-  const fakeReq = { headers: { version: 2 } };
+  const fakeReq = { headers: { 'cumulus-api-version': 2 } };
   const nextStub = sinon.stub();
 
   validateApiVersionCompliance(minVersion)(fakeReq, response, nextStub);
@@ -36,7 +36,7 @@ test('validateApiVersionCompliance calls next if request version is equal to min
 test('validateApiVersionCompliance calls next if request version is greater than minVersion', (t) => {
   const minVersion = 2;
   const response = buildFakeExpressResponse();
-  const fakeReq = { headers: { version: 4 } };
+  const fakeReq = { headers: { 'cumulus-api-version': 4 } };
   const nextStub = sinon.stub();
 
   validateApiVersionCompliance(minVersion)(fakeReq, response, nextStub);

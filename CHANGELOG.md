@@ -47,7 +47,7 @@ the core API and require a header that confirms the client is compatible with
 the version required or greater.
 
 In this instance, the granule PUT/PATCH
-endpoints will require a `version` value of at least `2`.
+endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
 ```json
 'version': '2'

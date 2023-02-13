@@ -3908,7 +3908,7 @@ test.serial('PUT returns 400 for version value less than the configured value', 
   const granuleId = t.context.createGranuleId();
   const response = await request(app)
     .put(`/granules/${granuleId}`)
-    .set('version', '0')
+    .set('Cumulus-API-Version', '0')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({})
@@ -3921,7 +3921,7 @@ test.serial('PATCH returns 400 for version value less than the configured value'
   const granuleId = t.context.createGranuleId();
   const response = await request(app)
     .patch(`/granules/${granuleId}`)
-    .set('version', '0')
+    .set('Cumulus-API-Version', '0')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({})

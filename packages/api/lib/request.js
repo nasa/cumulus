@@ -48,7 +48,7 @@ async function verifyJwtAuthorization(requestJwtToken) {
 * @returns {boolean}
 */
 function isMinVersionApi(req, minVersion) {
-  const requestVersion = Number(req.headers.version);
+  const requestVersion = Number(req.headers['cumulus-api-version']);
   if (requestVersion && minVersion <= requestVersion) return true;
   return false;
 }
