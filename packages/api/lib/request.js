@@ -1,4 +1,5 @@
 // @ts-check
+
 const get = require('lodash/get');
 
 const log = require('@cumulus/common/log');
