@@ -1,11 +1,11 @@
 'use strict';
 
-const delay = require('delay');
 const test = require('ava');
 const get = require('lodash/get');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { getQueueNameFromUrl, receiveSQSMessages } = require('@cumulus/aws-client/SQS');
+const { sleep } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   createBucket,
@@ -235,7 +235,7 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 1);
 
-  await delay(5 * 1000);
+  await sleep(6 * 1000);
   numberOfMessages = await getSqsQueueMessageCounts(sqsQueues.queueUrl);
   t.is(numberOfMessages.numberOfMessagesAvailable, 1);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
