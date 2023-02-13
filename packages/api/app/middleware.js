@@ -53,7 +53,7 @@ const handleBodyParserError = (res, error) => {
 * @param {number} minVersion -- Minimum supported version
 * @returns { RequestHandler } -- Request Handler
 */
-const validateApiVersionCompliance = (minVersion) => (req, res, next) => {
+const requireApiVersion = (minVersion) => (req, res, next) => {
   if (!isMinVersionApi(req, minVersion)) {
     return res
       .status(400)
@@ -84,5 +84,5 @@ module.exports = {
   asyncOperationEndpointErrorHandler,
   defaultErrorHandler,
   jsonBodyParser,
-  validateApiVersionCompliance,
+  requireApiVersion,
 };

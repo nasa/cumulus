@@ -42,7 +42,7 @@ const {
 } = require('../lib/writeRecords/write-granules');
 const {
   asyncOperationEndpointErrorHandler,
-  validateApiVersionCompliance,
+  requireApiVersion,
 } = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const Granule = require('../models/granules');
@@ -789,8 +789,8 @@ router.get('/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', validateApiVersionCompliance(2), put);
-router.patch('/:granuleName', validateApiVersionCompliance(2), patch);
+router.put('/:granuleName', requireApiVersion(2), put);
+router.patch('/:granuleName', requireApiVersion(2), patch);
 
 router.post(
   '/bulk',

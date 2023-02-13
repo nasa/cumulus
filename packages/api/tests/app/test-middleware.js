@@ -4,15 +4,15 @@ const test = require('ava');
 const sinon = require('sinon');
 
 const { buildFakeExpressResponse } = require('../endpoints/utils');
-const { validateApiVersionCompliance } = require('../../app/middleware');
+const { requireApiVersion } = require('../../app/middleware');
 
-test('validateApiVersionCompliance returns 400 if request version is less than minVersion', (t) => {
+test('requireApiVersion returns 400 if request version is less than minVersion', (t) => {
   const minVersion = 4;
   const response = buildFakeExpressResponse();
   const fakeReq = { headers: { 'cumulus-api-version': 2 } };
   const nextStub = sinon.stub();
 
-  validateApiVersionCompliance(minVersion)(fakeReq, response, nextStub);
+  requireApiVersion(minVersion)(fakeReq, response, nextStub);
   t.is(response.status.getCall(0).args[0], 400);
   t.is(
     response.status().send.getCall(0).args[0].error,
@@ -21,25 +21,25 @@ test('validateApiVersionCompliance returns 400 if request version is less than m
   t.false(nextStub.calledOnce);
 });
 
-test('validateApiVersionCompliance calls next if request version is equal to minVersion', (t) => {
+test('requireApiVersion calls next if request version is equal to minVersion', (t) => {
   const minVersion = 2;
   const response = buildFakeExpressResponse();
   const fakeReq = { headers: { 'cumulus-api-version': 2 } };
   const nextStub = sinon.stub();
 
-  validateApiVersionCompliance(minVersion)(fakeReq, response, nextStub);
+  requireApiVersion(minVersion)(fakeReq, response, nextStub);
   t.false(response.status.calledOnce);
   t.false(response.status().send.calledOnce);
   t.true(nextStub.calledOnce);
 });
 
-test('validateApiVersionCompliance calls next if request version is greater than minVersion', (t) => {
+test('requireApiVersion calls next if request version is greater than minVersion', (t) => {
   const minVersion = 2;
   const response = buildFakeExpressResponse();
   const fakeReq = { headers: { 'cumulus-api-version': 4 } };
   const nextStub = sinon.stub();
 
-  validateApiVersionCompliance(minVersion)(fakeReq, response, nextStub);
+  requireApiVersion(minVersion)(fakeReq, response, nextStub);
   t.false(response.status.calledOnce);
   t.false(response.status().send.calledOnce);
   t.true(nextStub.calledOnce);
