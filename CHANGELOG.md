@@ -101,7 +101,7 @@ update the database cluster to use the new configuration.
 - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
 - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
 - **CUMULUS-3189**
-  - Upgraded `cumulus-proces`s and `cumulus-message-adapter-python` versions to
+  - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
     support pip 23.0
 
 ### Changed
