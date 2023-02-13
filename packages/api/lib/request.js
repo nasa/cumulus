@@ -4,7 +4,7 @@ const get = require('lodash/get');
 
 const log = require('@cumulus/common/log');
 
-const { isNumber } = require('lodash');
+const isNumber = require('lodash/isNumber');
 
 const {
   TokenUnauthorizedUserError,

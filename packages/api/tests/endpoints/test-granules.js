@@ -6,6 +6,7 @@ const sinon = require('sinon');
 const test = require('ava');
 const omit = require('lodash/omit');
 
+
 const sortBy = require('lodash/sortBy');
 const cryptoRandomString = require('crypto-random-string');
 const {
@@ -77,7 +78,8 @@ const { sortFilesByKey } = require('../helpers/sort');
 const models = require('../../models');
 
 const { request } = require('../helpers/request');
-const supertest = require('supertest');
+
+const { version } = require('../../lib/version');
 
 // Dynamo mock data factories
 const {
@@ -3911,7 +3913,7 @@ test.serial('PUT returns 400 for version value less than the configured value', 
     .set('Cumulus-API-Version', '0')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({})
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
     .expect(400);
   t.is(response.status, 400);
   t.true(response.text.includes("This API endpoint requires 'version' header"));
@@ -3924,8 +3926,32 @@ test.serial('PATCH returns 400 for version value less than the configured value'
     .set('Cumulus-API-Version', '0')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({})
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
     .expect(400);
   t.is(response.status, 400);
   t.true(response.text.includes("This API endpoint requires 'version' header"));
+});
+
+test.serial('PUT returns 201 (granule creation) for version value greater than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(201);
+  t.is(response.status, 201);
+});
+
+test.serial('PATCH returns 201 (granule creation) for version value greater than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .patch(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(201);
+  t.is(response.status, 201);
 });
