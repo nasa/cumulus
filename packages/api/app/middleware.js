@@ -58,7 +58,7 @@ const requireApiVersion = (minVersion) => (req, res, next) => {
     return res
       .status(400)
       .send({
-        error: `This API endpoint requires 'version' header to be an integer set to at least ${minVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`,
+        error: `This API endpoint requires 'Cumulus-API-Version' header to be an integer set to at least ${minVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`,
       });
   }
   return next();

@@ -166,6 +166,7 @@ export const reingestGranule = async (params: {
       path: `/granules/${granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({
         action: 'reingest',
@@ -204,6 +205,7 @@ export const removeFromCMR = async (params: {
       path: `/granules/${granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({ action: 'removeFromCmr' }),
     },
@@ -246,6 +248,7 @@ export const applyWorkflow = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${granuleId}`,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
@@ -324,6 +327,7 @@ export const moveGranule = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
@@ -443,7 +447,10 @@ export const replaceGranule = async (params: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       path: `/granules/${body.granuleId}`,
-      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
+      },
       body: JSON.stringify(body),
     },
     expectedStatusCodes: [200, 201],

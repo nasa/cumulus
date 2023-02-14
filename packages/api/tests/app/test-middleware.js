@@ -16,7 +16,7 @@ test('requireApiVersion returns 400 if request version is less than minVersion',
   t.is(response.status.getCall(0).args[0], 400);
   t.is(
     response.status().send.getCall(0).args[0].error,
-    `This API endpoint requires \'version\' header to be an integer set to at least ${minVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`
+    `This API endpoint requires \'Cumulus-API-Version\' header to be an integer set to at least ${minVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`
   );
   t.false(nextStub.calledOnce);
 });

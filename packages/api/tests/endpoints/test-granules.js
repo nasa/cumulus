@@ -3915,7 +3915,7 @@ test.serial('PUT returns 400 for version value less than the configured value', 
     .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
     .expect(400);
   t.is(response.status, 400);
-  t.true(response.text.includes("This API endpoint requires 'version' header"));
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
 });
 
 test.serial('PATCH returns 400 for version value less than the configured value', async (t) => {
@@ -3928,7 +3928,7 @@ test.serial('PATCH returns 400 for version value less than the configured value'
     .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
     .expect(400);
   t.is(response.status, 400);
-  t.true(response.text.includes("This API endpoint requires 'version' header"));
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
 });
 
 test.serial('PUT returns 201 (granule creation) for version value greater than the configured value', async (t) => {
