@@ -324,17 +324,6 @@ resource "aws_sns_topic" "report_pdrs_topic" {
   tags = var.tags
 }
 
-data "aws_dynamodb_table" "pdrs" {
-  name = var.dynamo_tables.pdrs.name
-}
-
-resource "aws_lambda_event_source_mapping" "publish_pdrs" {
-  event_source_arn  = data.aws_dynamodb_table.pdrs.stream_arn
-  function_name     = aws_lambda_function.publish_pdrs.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
-
 # Report collections
 
 resource "aws_iam_role" "publish_collections_lambda_role" {

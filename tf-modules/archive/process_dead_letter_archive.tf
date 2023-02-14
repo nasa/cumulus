@@ -100,7 +100,6 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
       GranulesTable                  = var.dynamo_tables.granules.name
       granule_sns_topic_arn          = aws_sns_topic.report_granules_topic.arn
       idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
-      PdrsTable                      = var.dynamo_tables.pdrs.name
       pdr_sns_topic_arn              = aws_sns_topic.report_pdrs_topic.arn
       reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                      = var.prefix
