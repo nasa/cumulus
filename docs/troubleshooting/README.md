@@ -10,7 +10,7 @@ While Cumulus is a complex system, there is a focus on maintaining the integrity
 
 Cumulus has backup and restore functionality built-in to protect Cumulus data and allow recovery of a Cumulus stack. This is currently limited to Cumulus data and not full S3 archive data. Backup and restore is not enabled by default and must be enabled and configured to take advantage of this feature.
 
-For more information, read the [Backup and Restore documentation](features/backup_and_restore.md#backup-and-restore-with-aws).
+For more information, read the [Backup and Restore documentation](../features/backup_and_restore.md#backup-and-restore-with-aws).
 
 ## Elasticsearch reindexing
 
