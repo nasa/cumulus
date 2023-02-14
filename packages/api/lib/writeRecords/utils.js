@@ -185,7 +185,10 @@ const getExecutionCumulusId = async (
   }
 };
 
+// TODO: we should make these helper methods in the db package, test there, and make it exportable
 const isStatusFinalState = (status) => status === 'completed' || status === 'failed';
+
+const isStatusActiveState = (status) => status === 'running' || status === 'queued';
 
 module.exports = {
   isPostRDSDeploymentExecution,
@@ -196,4 +199,5 @@ module.exports = {
   getCollectionCumulusId,
   getMessageProviderCumulusId,
   isStatusFinalState,
+  isStatusActiveState,
 };

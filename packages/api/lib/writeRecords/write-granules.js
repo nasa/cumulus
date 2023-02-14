@@ -79,6 +79,7 @@ const {
 const {
   getExecutionCumulusId,
   isStatusFinalState,
+  isStatusActiveState,
 } = require('./utils');
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
@@ -509,7 +510,7 @@ const _writeGranuleRecords = async (params) => {
       }
       pgGranule = writePgGranuleResult.pgGranule;
 
-      if (writeConstraints && (pgGranule.status === 'running' || pgGranule.status === 'queued')) {
+      if (writeConstraints && isStatusActiveState(pgGranule.status)) {
         // pgGranule was updated, but with writeConstraints conditions, so only some values were
         // updated. we need to ensure the correct values are propogated to Dynamo and ES
         const limitedUpdateApiGranuleRecord = await translatePostgresGranuleToApiGranule({
@@ -531,6 +532,7 @@ const _writeGranuleRecords = async (params) => {
           apiGranuleRecord.createdAt = pgGranule.created_at.getTime();
         }
 
+        // TODO: refactor to not need apiGranuleRecord, only need files and a few other fields
         await granuleModel.storeGranule(apiGranuleRecord, writeConstraints);
         await upsertGranule({
           esClient,
@@ -553,6 +555,9 @@ const _writeGranuleRecords = async (params) => {
     return writePgGranuleResult;
   } catch (thrownError) {
     log.error(`Write Granule failed: ${JSON.stringify(thrownError)}`);
+
+    // TODO: apiGranuleRecord is not actually required here, only needs specific id and status
+    // fields. refactor in the future.
 
     // If a postgres record was provided
     // attempt to ensure alignment between postgress/dynamo/es
@@ -668,21 +673,23 @@ const _writeGranule = async ({
   // (e.g. "status: completed") and there is a valid `files` key in the granule.
   // An empty array of files will remove existing file records but a missing
   // `files` key will not.
-  if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord && writePgGranuleResult.status === 'success') {
-    await _writeGranuleFiles({
-      granuleCumulusId: pgGranule.cumulus_id,
-      granule: apiGranuleRecord,
-      knex,
+  if (writePgGranuleResult.status === 'success') {
+    if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord) {
+      await _writeGranuleFiles({
+        granuleCumulusId: pgGranule.cumulus_id,
+        granule: apiGranuleRecord,
+        knex,
+        snsEventType,
+        granuleModel: new Granule(),
+      });
+    }
+
+    await _publishPostgresGranuleUpdateToSns({
       snsEventType,
-      granuleModel: new Granule(),
+      pgGranule,
+      knex,
     });
   }
-
-  await _publishPostgresGranuleUpdateToSns({
-    snsEventType,
-    pgGranule,
-    knex,
-  });
 };
 
 /**
