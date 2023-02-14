@@ -309,6 +309,26 @@ test.serial('default returns list of rules', async (t) => {
   t.is(results.length, 1);
 });
 
+test.serial('search returns correct list of rules', async (t) => {
+  const response = await request(app)
+    .get('/rules?page=1&rule.type=onetime&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  t.is(results.length, 1);
+
+  const newResponse = await request(app)
+    .get('/rules?page=1&rule.type=sqs&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results: newResults } = newResponse.body;
+  t.is(newResults.length, 0);
+});
+
 test('GET gets a rule', async (t) => {
   const response = await request(app)
     .get(`/rules/${t.context.testRule.name}`)
