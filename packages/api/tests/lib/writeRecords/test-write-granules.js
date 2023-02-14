@@ -1055,11 +1055,11 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
-  const originalApiFormattedPostgresGranule =
-  await translatePostgresGranuleToApiGranule({
-    granulePgRecord: originalPostgresGranuleRecord,
-    knexOrTransaction: knex,
-  });
+  const originalApiFormattedPostgresGranule
+    = await translatePostgresGranuleToApiGranule({
+      granulePgRecord: originalPostgresGranuleRecord,
+      knexOrTransaction: knex,
+    });
   const { executionName, pgExecution, executionUrl } = await createGranuleExecution(t, 'running', t.context.stateMachineName);
 
   const updatedGranule = {
@@ -1091,8 +1091,8 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
-  const apiFormattedPostgresGranule =
-    await translatePostgresGranuleToApiGranule({
+  const apiFormattedPostgresGranule
+    = await translatePostgresGranuleToApiGranule({
       granulePgRecord: postgresRecord,
       knexOrTransaction: knex,
     });
