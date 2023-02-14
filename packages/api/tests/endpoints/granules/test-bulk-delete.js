@@ -345,7 +345,12 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
 test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is not an integer', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const body = {
-    ids: ['granule-1'],
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     maxDbConnections: 'one hundred',
   };
 
@@ -362,7 +367,12 @@ test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is no
 test.serial('POST /granules/bulkDelete returns a 400 when concurrency is not an integer', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const body = {
-    ids: ['granule-1'],
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     concurrency: 'one hundred',
   };
 
