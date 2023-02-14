@@ -151,6 +151,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
 
+### Removed
+
+- **CUMULUS-2798**
+  - Removed AsyncOperations model
+
 ## [v14.0.0] 2022-12-08
 
 ### Breaking Changes
