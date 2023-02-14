@@ -178,8 +178,11 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
       path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
-      body: JSON.stringify({ action: 'removeFromCmr' }),
+      body: JSON.stringify({
+        action: 'removeFromCmr',
+      }),
     },
   };
 
