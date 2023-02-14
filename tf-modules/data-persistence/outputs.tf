@@ -24,10 +24,6 @@ output "dynamo_tables" {
       name = aws_dynamodb_table.pdrs_table.name
       arn  = aws_dynamodb_table.pdrs_table.arn
     }
-    providers = {
-      name = aws_dynamodb_table.providers_table.name
-      arn  = aws_dynamodb_table.providers_table.arn
-    }
     reconciliation_reports = {
       name = aws_dynamodb_table.reconciliation_reports_table.name
       arn  = aws_dynamodb_table.reconciliation_reports_table.arn

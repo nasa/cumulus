@@ -43,7 +43,6 @@ variable "enable_point_in_time_tables" {
     "ExecutionsTable",
     "GranulesTable",
     "PdrsTable",
-    "ProvidersTable",
     "RulesTable",
     "UsersTable"
   ]
