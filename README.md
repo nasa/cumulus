@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
 ## About Cumulus
-Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations. 
+Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations.
 To learn more about Cumulus and NASA's Earth Observing System Data and Information System (EOSDIS) cloud initiatives go to [More Information](#more-information).
 
 ---
@@ -171,10 +171,10 @@ Host i-*
 
 ##### Start the ssh tunnel to Elasticsearch
 
-Open an SSH tunnel to Elasticsearch with the following command.
+Open an SSH tunnel to Elasticsearch with the following command. Replace `<STACK-PREFIX>` with the prefix of the desired EC2 instance. Replace `<PATH_TO_KEY_PAIR>` with the local path to the certificate associated with your EC2 container (e.g. `./my_cert.pem`).
 
 ```sh
-./bin/es-tunnel.sh EXAMPLE
+./bin/es-tunnel.sh <STACK-PREFIX> <PATH_TO_KEY_PAIR>
 ```
 
 At this point you can send requests to <https://localhost:8443> and get responses from your Elasticsearch domain running in AWS. Note that, because you're tunneling TLS-encrypted traffic, the certificates are not going to match. The test code handles this already but, if you're using `curl`, make sure to use the `-k` option to disable strict certificate checks.

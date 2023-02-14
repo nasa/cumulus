@@ -10,6 +10,12 @@ if [ -z "$ENV" ]; then
   exit 1
 fi
 
+KEY_PATH="$2"
+if [ -z "$KEY_PATH" ]; then
+  echo "Usage: $0 $1 KEY_PATH" >&2
+  exit 1
+fi
+
 INSTANCES=$(
   aws ec2 describe-instances \
     --filters "Name=tag:Deployment,Values=${ENV}" \
@@ -26,4 +32,4 @@ fi
 DOMAIN=$(aws opensearch describe-domain --domain-name "${ENV}-es-vpc")
 DOMAIN_HOSTNAME=$(echo "$DOMAIN" | jq -r .DomainStatus.Endpoints.vpc)
 
-ssh -L "8443:${DOMAIN_HOSTNAME}:443" "$INSTANCE_ID"
+ssh -L "8443:${DOMAIN_HOSTNAME}:443" "$INSTANCE_ID" "-i" "$KEY_PATH"
