@@ -3,8 +3,7 @@ data "aws_iam_policy_document" "process_dead_letter_archive_policy" {
     actions = ["dynamodb:UpdateItem"]
     resources = [
       var.dynamo_tables.executions.arn,
-      var.dynamo_tables.granules.arn,
-      var.dynamo_tables.pdrs.arn
+      var.dynamo_tables.granules.arn
     ]
   }
 
