@@ -2131,7 +2131,6 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   const timestamp = Date.now();
   const {
     newPgGranule,
-    newDynamoGranule,
     esRecord,
   } = await createGranuleAndFiles({
     dbClient: knex,
@@ -2144,25 +2143,18 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   });
 
   const updatedGranule = {
-    granuleId: newDynamoGranule.granuleId,
-    collectionId: newDynamoGranule.collectionId,
+    granuleId: esRecord.granuleId,
+    collectionId: esRecord.collectionId,
+    status: newPgGranule.status,
   };
 
   await request(app)
-    .patch(`/granules/${newDynamoGranule.granuleId}`)
+    .patch(`/granules/${esRecord.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
     .expect(200);
 
-  const actualGranule = await t.context.granuleModel.get({
-    granuleId: newDynamoGranule.granuleId,
-  });
-  t.deepEqual(actualGranule, {
-    ...newDynamoGranule,
-    timestamp: actualGranule.timestamp,
-    updatedAt: actualGranule.updatedAt,
-  });
   const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
     cumulus_id: newPgGranule.cumulus_id,
   });
@@ -2173,15 +2165,13 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
     updated_at: actualPgGranule.updated_at,
   });
 
-  t.is(actualPgGranule.updated_at.getTime(), actualGranule.updatedAt);
-
   const updatedEsRecord = await t.context.esGranulesClient.get(
-    newDynamoGranule.granuleId
+    newPgGranule.granule_id
   );
   t.like(updatedEsRecord, {
     ...esRecord,
-    timestamp: actualGranule.timestamp,
-    updatedAt: actualGranule.updatedAt,
+    timestamp: updatedEsRecord.timestamp,
+    updatedAt: updatedEsRecord.updatedAt,
   });
 });
 
