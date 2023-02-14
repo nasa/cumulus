@@ -175,11 +175,28 @@ Commit and push these changes, if any.
 
 ### 8. Cut new version of Cumulus Documentation
 
-**If this is a backport, do not create a new version of the documentation.** For various reasons, we do not merge backports back to master, other than changelog notes. Documentation changes for backports will not be published to our documentation website.
+Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs
+does not depends on other version.
+If this is a patch version, or a minor version with no significant functionality changes requiring document update, do not create
+a new version of the documentation, update the existing versioned_docs document instead.
+
+Create a new version:
 
 ```bash
 cd website
-npm run version ${release_version}
+npm run docusaurus docs:version ${release_version}
+# update version in package.json
+git add .
+```
+
+Instructions to rename an existing version:
+
+```bash
+cd website
+git mv versioned_docs/version-<oldversion> versioned_docs/version-${release_version}
+git mv versioned_sidebars/version-<oldversion>-sidebars.json versioned_sidebars/version-${release_version}-sidebars.json
+# update versions.json with new version
+# update documents under versioned_docs/version-${release_version}
 git add .
 ```
 
