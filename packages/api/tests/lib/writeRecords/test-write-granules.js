@@ -1120,17 +1120,7 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     expectedGranule
   );
   t.deepEqual(dynamoRecord, expectedGranule);
-  // ES fails here because of bad write logic in <TICKET>
-  // This test is explicitly called out to be fixed, but for now set it to validate
-  // invalid running behavior:
-  const expectedEsGranule = {
-    ...expectedGranule,
-    published: false,
-    duration: esRecord.duration,
-  };
-  delete expectedEsGranule.cmrLink;
-
-  t.deepEqual(omit(esRecord, ['_id']), expectedEsGranule);
+  t.deepEqual(omit(esRecord, ['_id']), expectedGranule);
 });
 
 test.serial('writeGranulesFromMessage() saves the same values to DynamoDB, PostgreSQL and Elasticsearch', async (t) => {
