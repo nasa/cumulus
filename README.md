@@ -61,7 +61,7 @@ with an individual package.
 
 ## Installation
 
-This is for installation for Cumulus development. See the [Cumulus deployment section](https://nasa.github.io/cumulus/docs/deployment/deployment-readme) for instructions on deploying the released Cumulus packages.
+This is for installation for Cumulus development. See the [Cumulus deployment section](https://nasa.github.io/cumulus/docs/deployment) for instructions on deploying the released Cumulus packages.
 
 ### Prerequisites
 

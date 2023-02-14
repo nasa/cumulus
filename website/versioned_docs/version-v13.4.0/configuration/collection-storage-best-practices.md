@@ -65,7 +65,7 @@ There is no easy way to get the cost by folder in the buckets. You could calcula
 
 ## Storage Configuration
 
-Cumulus allows for the configuration of many buckets for your files. Buckets are created and added to your deployment as part of the [deployment process](../deployment/deployment-readme#create-s3-buckets).
+Cumulus allows for the configuration of many buckets for your files. Buckets are created and added to your deployment as part of the [deployment process](../deployment/#create-s3-buckets).
 
 In your Cumulus [collection configuration](../data-cookbooks/setup#collections), you specify where you want the files to be stored post-processing. This is done by matching a regular expression on the file with the configured bucket.
 

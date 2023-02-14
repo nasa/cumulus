@@ -11,7 +11,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>How do I deploy a new instance in Cumulus?</summary>
 
-  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](../deployment/deployment-readme).
+  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](deployment).
 </details>
 
 <details>
@@ -29,7 +29,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>How do I quickly troubleshoot an issue in Cumulus?</summary>
 
-  Answer: To troubleshoot and fix issues in Cumulus reference our recommended solutions in [Troubleshooting Cumulus](../troubleshooting/troubleshooting-readme).
+  Answer: To troubleshoot and fix issues in Cumulus reference our recommended solutions in [Troubleshooting Cumulus](troubleshooting).
 </details>
 
 <details>
@@ -84,13 +84,13 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What is a Cumulus workflow?</summary>
 
-  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting [here](../workflows/workflows-readme).
+  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting [here](workflows).
 </details>
 
 <details>
   <summary>How do I set up a Cumulus workflow?</summary>
 
-  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](../workflows/developing-a-cumulus-workflow).
+  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](workflows/developing-a-cumulus-workflow).
 </details>
 
 <details>

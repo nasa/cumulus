@@ -20,13 +20,13 @@ We will discuss how to run a processing workflow against an inbound granule that
 
 ### Cumulus
 
-This entry assumes you have a deployed instance of Cumulus v1.16.0 or later, and a working dashboard following the instructions in the [deployment documentation](../deployment/deployment-readme). This entry also assumes you have some knowledge of how to configure Collections, Providers and Rules and basic Cumulus operation.
+This entry assumes you have a deployed instance of Cumulus v1.16.0 or later, and a working dashboard following the instructions in the [deployment documentation](../deployment). This entry also assumes you have some knowledge of how to configure Collections, Providers and Rules and basic Cumulus operation.
 
-Prior to working through this entry, you should be somewhat familiar with the [Hello World](hello-world) example the [Workflows](../workflows/workflows-readme) section of the documentation, and [building Cumulus lambdas](../workflows/lambda).
+Prior to working through this entry, you should be somewhat familiar with the [Hello World](hello-world) example the [Workflows](../workflows) section of the documentation, and [building Cumulus lambdas](../workflows/lambda).
 
 You should also review the [Data Cookbooks Setup](setup) portion of the documentation as it contains useful information on the inter-task message schema expectations.
 
-This entry will utilize the [dashboard application](https://github.com/nasa/cumulus-dashboard). You will need to have a dashboard deployed as described in the [Cumulus deployment documentation](../deployment/deployment-readme) to follow the instructions in this example.
+This entry will utilize the [dashboard application](https://github.com/nasa/cumulus-dashboard). You will need to have a dashboard deployed as described in the [Cumulus deployment documentation](../deployment) to follow the instructions in this example.
 
 If you'd prefer to _not_ utilize a running dashboard to add Collections, Providers and trigger Rules, you can set the Collection/Provider and Rule via the API, however in that instance you should be very familiar with the [Cumulus API](https://nasa.github.io/cumulus-api/) before attempting the example in this entry.
 

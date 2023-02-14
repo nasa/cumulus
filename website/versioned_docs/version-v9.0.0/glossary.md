@@ -217,4 +217,4 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### Workflows
 
-  [Workflows](workflows/workflows-readme) are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.
+  [Workflows](workflows) are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.

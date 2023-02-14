@@ -16,7 +16,7 @@ Limiting the number of executions that can be running from a given queue is usef
 
 #### Add a new queue
 
-In a `.tf` file for your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance), add a new SQS queue:
+In a `.tf` file for your [Cumulus deployment](./../deployment/#deploy-the-cumulus-instance), add a new SQS queue:
 
 ```hcl
 resource "aws_sqs_queue" "background_job_queue" {
@@ -28,7 +28,7 @@ resource "aws_sqs_queue" "background_job_queue" {
 
 #### Set maximum executions for the queue
 
-Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
+Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
 
 ```hcl
 module "cumulus" {
