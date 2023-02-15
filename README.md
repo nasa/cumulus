@@ -39,6 +39,7 @@ Below is in-depth guidance to help get you started with your Cumulus development
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
 - Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
+- Documentation: [How To's](./docs/docs-how-to.md)
 
 # 🔨 Development
 
