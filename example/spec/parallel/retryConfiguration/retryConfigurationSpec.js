@@ -38,7 +38,6 @@ describe('When a task is configured', () => {
   beforeAll(async () => {
     config = await loadConfig();
 
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
 
     const retryPassPromise = buildAndExecuteWorkflow(
       config.stackName,
