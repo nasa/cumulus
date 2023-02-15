@@ -37,15 +37,6 @@ data "aws_iam_policy_document" "publish_executions_policy_document" {
     resources = [aws_sqs_queue.publish_executions_dead_letter_queue.arn]
   }
 
-  statement {
-    actions = [
-      "dynamodb:GetRecords",
-      "dynamodb:GetShardIterator",
-      "dynamodb:DescribeStream",
-      "dynamodb:ListStreams"
-    ]
-    resources = ["${var.dynamo_tables.executions.arn}/stream/*"]
-  }
 }
 
 resource "aws_iam_role_policy" "publish_executions_lambda_role_policy" {
