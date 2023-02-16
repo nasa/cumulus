@@ -1,15 +1,14 @@
 'use strict';
 
-const delay = require('delay');
 const got = require('got');
 const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const { sleep } = require('@cumulus/common');
 const log = require('@cumulus/common/log');
 const { getSearchUrl } = require('@cumulus/cmr-client');
 
-const ONE_SECOND = 1000;
 const THREE_SECONDS = 3000;
 const ONE_MINUTE = 60000;
 
@@ -153,9 +152,6 @@ async function conceptExists(cmrLink) {
   return true;
 }
 
-// See https://bugs.earthdata.nasa.gov/browse/CUMULUS-962
-const waitForCmrToBeConsistent = () => delay(ONE_SECOND);
-
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
  * the number of retries.
@@ -172,7 +168,8 @@ async function waitForConceptExistsOutcome(cmrLink, expectation) {
       { interval: THREE_SECONDS, timeout: ONE_MINUTE }
     );
 
-    await waitForCmrToBeConsistent();
+    // Wait for CMR to be consistent. See CUMULUS-962.
+    await sleep(1000);
   } catch (error) {
     console.error('waitForConceptExistsOutcome() failed:', error);
     throw error;

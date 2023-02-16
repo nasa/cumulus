@@ -1,9 +1,9 @@
 'use strict';
 
-const delay = require('delay');
 const replace = require('lodash/replace');
 const get = require('lodash/get');
 
+const { sleep } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const { postKinesisReplays } = require('@cumulus/api-client/replays');
@@ -135,13 +135,13 @@ describe('The Kinesis Replay API', () => {
       await deleteRuleResources(rules[0]);
 
       await Promise.all(tooOldToFetchRecords.map((r) => putRecordOnStream(streamName, r)));
-      await delay(10 * 1000);
+      await sleep(10 * 1000);
       startTimestamp = Date.now();
-      await delay(5 * 1000);
+      await sleep(5 * 1000);
       await Promise.all(targetedRecords.map((r) => putRecordOnStream(streamName, r)));
-      await delay(5 * 1000);
+      await sleep(5 * 1000);
       endTimestamp = Date.now();
-      await delay(10 * 1000);
+      await sleep(10 * 1000);
       await Promise.all(newRecordsToSkip.map((r) => putRecordOnStream(streamName, r)));
 
       const apiRequestBody = {
