@@ -1,7 +1,6 @@
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
-const delay = require('delay');
 const fs = require('fs');
 const path = require('path');
 const test = require('ava');
@@ -9,6 +8,7 @@ const sinon = require('sinon');
 const proxyquire = require('proxyquire');
 const pickAll = require('lodash/fp/pickAll');
 
+const { sleep } = require('@cumulus/common');
 const cmrClient = require('@cumulus/cmr-client');
 const awsServices = require('@cumulus/aws-client/services');
 const {
@@ -306,7 +306,7 @@ test.serial('postToCMR eventually succeeds using metadata file ETag', async (t) 
     // Invoke postToCMR and then upload the updated XML to test that postToCMR
     // will properly wait for the correct version of the CMR file to exist.
     const outputPromise = postToCMR(newPayload);
-    await delay(3000).then(promiseS3Upload({
+    await sleep(3000).then(promiseS3Upload({
       params: {
         Bucket: t.context.bucket,
         Key: cmrFileKey,
