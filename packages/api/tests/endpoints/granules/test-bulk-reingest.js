@@ -17,6 +17,7 @@ const { app } = require('../../../app');
 
 const { bulkReingest } = require('../../../endpoints/granules');
 const { buildFakeExpressResponse } = require('../utils');
+const { testBulkPayloadEnvVarsMatchSetEnvVars } = require('../../helpers/bulkTestHelpers');
 
 process.env = {
   ...process.env,
@@ -77,6 +78,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
         collectionId: 'name___version',
       },
     ],
+    knexDebug: false,
   };
 
   const response = await request(app)
@@ -105,14 +107,13 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
       METRICS_ES_HOST: process.env.METRICS_ES_HOST,
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
-  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
 });
 
 test.serial('bulkReingest() uses correct caller lambda function name', async (t) => {
@@ -152,6 +153,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
   const body = {
     index: expectedIndex,
     query: expectedQuery,
+    knexDebug: false,
   };
 
   const response = await request(app)
@@ -182,14 +184,13 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
       METRICS_ES_HOST: process.env.METRICS_ES_HOST,
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
-  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
 });
 
 test.serial('POST /granules/bulkReingest returns 400 when a query is provided with no index', async (t) => {

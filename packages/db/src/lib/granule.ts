@@ -20,8 +20,8 @@ const { deprecate } = require('@cumulus/common/util');
 const { TableNames } = require('../tables');
 
 export const getGranuleCollectionId = async (
-  knexOrTransaction: Knex | Knex.Transaction,
-  granule: PostgresGranule
+  knexOrTransaction: Knex,
+  granule: { collection_cumulus_id: number }
 ) => {
   const collectionPgModel = new CollectionPgModel();
   const collection = await collectionPgModel.get(
