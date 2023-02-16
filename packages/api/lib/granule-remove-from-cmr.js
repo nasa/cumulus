@@ -11,6 +11,14 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const models = require('../models');
 
 /**
+ * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
+ * @typedef {import('@cumulus/db').PostgresGranuleRecord} PostgresGranuleRecord
+ * @typedef {import('knex').Knex} Knex
+ *
+ * @typedef {(granule: unknown, collectionId: string) => Promise<void>} RemoveGranuleFromCmrFn
+ */
+
+/**
  * Remove granule record from CMR
  *
  * @param {Object} granule - A postgres granule record
@@ -37,13 +45,16 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
  *
  * @param {Object} params
  * @param {Knex} params.knex - DB client
- * @param {Object} params.pgGranuleRecord - A Postgres granule record
- * @param {string} params.pgCollection - A Postgres Collection record
- * @param {Object} params.granulePgModel - Instance of granules model for PostgreSQL
- * @param {Object} params.granuleDynamoModel - Instance of granules model for DynamoDB
- * @returns {Object} - Updated granules
- * @returns {Object.dynamoGranule} - Updated Dynamo Granule
- * @returns {Object.pgGranule} - Updated Postgres Granule
+ * @param {PostgresGranuleRecord} params.pgGranuleRecord - A Postgres granule record
+ * @param {PostgresCollectionRecord} [params.pgCollection] - A Postgres Collection record
+ * @param {GranulePgModel} [params.granulePgModel=new GranulePgModel()]
+ *  - Instance of granules model for PostgreSQL
+ * @param {models.Granule} [params.granuleDynamoModel=new models.Granule()]
+ *  - Instance of granules model for DynamoDB
+ * @param {RemoveGranuleFromCmrFn} [params.removeGranuleFromCmrFunction]
+ *  - passed in function used for test mocking
+ * @returns {Promise<{dynamoGranule: boolean, pgGranule: unknown}>}
+ *  - Updated dynamo and postgres granule
  */
 const unpublishGranule = async ({
   knex,
@@ -51,7 +62,16 @@ const unpublishGranule = async ({
   pgCollection,
   granulePgModel = new GranulePgModel(),
   granuleDynamoModel = new models.Granule(),
+  removeGranuleFromCmrFunction = _removeGranuleFromCmr,
 }) => {
+  /** @type {string} */
+  let collectionId;
+  if (pgCollection) {
+    collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
+  } else {
+    collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
+  }
+
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
   const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
@@ -78,16 +98,7 @@ const unpublishGranule = async ({
         ['cmrLink']
       );
       dynamoGranuleDeleted = true;
-
-      let collectionId;
-
-      if (pgCollection) {
-        collectionId = constructCollectionId(pgCollection.name, pgCollection.version);
-      } else {
-        collectionId = await getGranuleCollectionId(knex, pgGranuleRecord);
-      }
-
-      await _removeGranuleFromCmr(pgGranuleRecord, collectionId);
+      await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId);
       return { dynamoGranule, pgGranule };
     });
   } catch (error) {
