@@ -1,9 +1,9 @@
 'use strict';
 
-const delay = require('delay');
 const sinon = require('sinon');
 const test = require('ava');
 
+const { sleep } = require('@cumulus/common');
 const SQS = require('@cumulus/aws-client/SQS');
 
 const { Consumer } = require('../consumer');
@@ -14,7 +14,7 @@ const sqsMessage = { Body: 'message', MessageId: 'id' };
 let testConsumer;
 
 async function stubReceiveSQSMessages(_url, { numOfMessages }) {
-  await delay(timeToReceiveMessages);
+  await sleep(timeToReceiveMessages);
   // eslint-disable-next-line prefer-spread
   return Array.apply(undefined, { length: numOfMessages }).map(() => sqsMessage);
 }
@@ -22,7 +22,7 @@ async function stubReceiveSQSMessages(_url, { numOfMessages }) {
 sinon.stub(SQS, 'deleteSQSMessage').resolves();
 sinon.stub(SQS, 'receiveSQSMessages').callsFake(stubReceiveSQSMessages);
 
-function processFn() {}
+function processFn() { }
 
 const sandbox = sinon.createSandbox();
 let batchSpy;
