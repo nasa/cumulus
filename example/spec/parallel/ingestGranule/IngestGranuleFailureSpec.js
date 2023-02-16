@@ -102,6 +102,9 @@ describe('The Ingest Granule failure workflow', () => {
       await deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        pRetryOptions: {
+          retries: 0,
+        },
       });
     } catch (error) {
       console.log(`***error deleteGranule ${error.statusCode} ***${error.apiMessage}`);
