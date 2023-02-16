@@ -4,8 +4,6 @@ const get = require('lodash/get');
 
 const log = require('@cumulus/common/log');
 
-const isNumber = require('lodash/isNumber');
-
 const {
   TokenUnauthorizedUserError,
 } = require('./errors');
@@ -52,7 +50,7 @@ async function verifyJwtAuthorization(requestJwtToken) {
 */
 function isMinVersionApi(req, minVersion) {
   const requestVersion = Number(req.headers['cumulus-api-version']);
-  return isNumber(requestVersion) && minVersion <= requestVersion;
+  return Number.isFinite(requestVersion) && minVersion <= requestVersion;
 }
 
 function validateBulkGranulesRequest(req, res, next) {
