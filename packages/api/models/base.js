@@ -461,7 +461,6 @@ class Manager {
     Object.entries(item).forEach(([fieldName, value]) => {
       // If the value is the index key, don't include it in the params
       if (itemKeyFieldNames.includes(fieldName)) return;
-
       if (value === undefined) return;
       if (this.allowNulls) {
         if (value === null && mutableFieldNames.includes(fieldName)) {
@@ -470,12 +469,15 @@ class Manager {
           return;
         }
       }
-      if (this.parseEmptyFilesArrayAsNull) {
-        // If files are [], *and* files are assume removal of record as this value
+      if (this.parseEmptyFilesArrayAsNull && fieldName === 'files') {
+        // If files are [], *and* files are to be mutated assume removal of record as this value
         // has that effect for PostGres
-        if (fieldName === 'files' && mutableFieldNames.includes(fieldName) && isEqual(value, [])) {
-          fieldsToDelete.push(`#${fieldName}`);
-          ExpressionAttributeNames[`#${fieldName}`] = fieldName;
+        if (isEqual(value, [])) {
+          if (mutableFieldNames.includes(fieldName)) {
+            fieldsToDelete.push(`#${fieldName}`);
+            ExpressionAttributeNames[`#${fieldName}`] = fieldName;
+            return;
+          }
           return;
         }
       }

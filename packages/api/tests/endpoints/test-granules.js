@@ -406,7 +406,8 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('default returns list of granules', async (t) => {
+test.serial('default lists and paginates correctly with search_after', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
     .get('/granules')
     .set('Accept', 'application/json')
@@ -418,28 +419,24 @@ test.serial('default returns list of granules', async (t) => {
   t.is(meta.stack, process.env.stackName);
   t.is(meta.table, 'granule');
   t.is(meta.count, 3);
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
-});
 
-test.serial('default paginates correctly with search_after', async (t) => {
-  const response = await request(app)
+  // default paginates correctly with search_after
+  const firstResponse = await request(app)
     .get('/granules?limit=1')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
-
-  const { meta, results } = response.body;
-  t.is(results.length, 1);
-  t.is(meta.page, 1);
-  t.truthy(meta.searchContext);
+  const { meta: firstMeta, results: firstResults } = firstResponse.body;
+  t.is(firstResults.length, 1);
+  t.is(firstMeta.page, 1);
+  t.truthy(firstMeta.searchContext);
 
   const newResponse = await request(app)
-    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
+    .get(`/granules?limit=1&page=2&searchContext=${firstMeta.searchContext}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
@@ -2122,6 +2119,59 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
     queryFields: newQueryFields,
     updatedAt: updatedEsRecord.updatedAt,
     timestamp: updatedEsRecord.timestamp,
+  });
+});
+
+test.serial('PATCH executes successfully with no non-required-field-updates (testing "inert" update/undefined fields)', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+  } = t.context;
+  const timestamp = Date.now();
+  const {
+    newPgGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
+    dbClient: knex,
+    esClient,
+    granuleParams: {
+      status: 'running',
+      execution: executionUrl,
+      timestamp,
+    },
+  });
+
+  const updatedGranule = {
+    granuleId: esRecord.granuleId,
+    collectionId: esRecord.collectionId,
+    status: newPgGranule.status,
+  };
+
+  await request(app)
+    .patch(`/granules/${esRecord.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedGranule)
+    .expect(200);
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+
+  t.deepEqual(actualPgGranule, {
+    ...newPgGranule,
+    timestamp: actualPgGranule.timestamp,
+    updated_at: actualPgGranule.updated_at,
+  });
+
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    newPgGranule.granule_id
+  );
+  t.like(updatedEsRecord, {
+    ...esRecord,
+    timestamp: updatedEsRecord.timestamp,
+    updatedAt: updatedEsRecord.updatedAt,
   });
 });
 

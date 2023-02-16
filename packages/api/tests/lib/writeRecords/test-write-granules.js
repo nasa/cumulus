@@ -2087,6 +2087,43 @@ test.serial('writeGranulesFromMessage() writes a granule and marks as failed if 
   t.true(pgGranuleError[0].Cause.includes('AggregateError'));
 });
 
+test.serial('writeGranuleFromMessage() writes a new granule with files set to "[]" results in file value set to undefined/default in all datastores', async (t) => {
+  const {
+    collectionCumulusId,
+    cumulusMessage,
+    executionCumulusId,
+    granuleId,
+    granulePgModel,
+    knex,
+    providerCumulusId,
+    stepFunctionUtils,
+  } = t.context;
+
+  cumulusMessage.payload.granules[0].files = [];
+
+  await writeGranulesFromMessage({
+    cumulusMessage,
+    executionCumulusId,
+    providerCumulusId,
+    knex,
+    testOverrides: { stepFunctionUtils },
+  });
+
+  const granulePgRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(translatedPgRecord.files, []);
+  t.is(esRecord.files, undefined);
+});
+
 test.serial('_writeGranules attempts to mark granule as failed if a SchemaValidationException occurs when a granule is in a final state', async (t) => {
   const {
     collectionCumulusId,
@@ -4058,6 +4095,34 @@ test.serial('writeGranuleFromApi() overwrites granule record with status "comple
   t.is(result, `Wrote Granule ${granuleId}`);
 
   const updateResult = await writeGranuleFromApi({ ...granule, files: null, status: 'completed' }, knex, esClient, 'Create');
+  t.is(updateResult, `Wrote Granule ${granuleId}`);
+
+  const granulePgRecord = await granulePgModel.get(
+    knex,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
+  const esRecord = await t.context.esGranulesClient.get(granuleId);
+
+  const translatedPgRecord = await translatePostgresGranuleToApiGranule({
+    granulePgRecord,
+    knexOrTransaction: knex,
+  });
+
+  t.deepEqual(translatedPgRecord.files, []);
+  t.is(esRecord.files, undefined);
+});
+
+test.serial('writeGranuleFromApi() writes a new granule with files set to "[]" results in file value set to undefined/default in all datastores', async (t) => {
+  const {
+    esClient,
+    knex,
+    collectionCumulusId,
+    granule,
+    granuleId,
+    granulePgModel,
+  } = t.context;
+
+  const updateResult = await writeGranuleFromApi({ ...granule, files: [] }, knex, esClient, 'Create');
   t.is(updateResult, `Wrote Granule ${granuleId}`);
 
   const granulePgRecord = await granulePgModel.get(

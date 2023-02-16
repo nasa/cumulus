@@ -11,6 +11,7 @@ const {
   sendSQSMessage,
 } = require('@cumulus/aws-client/SQS');
 const { ResourcesLockedError } = require('@cumulus/errors');
+const { sleep } = require('@cumulus/common');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const Semaphore = require('../../lib/Semaphore');
@@ -166,18 +167,6 @@ test(
     )
 );
 
-test('handleEvent throws error when timeLimit is <= 0', async (t) => {
-  await t.throwsAsync(
-    () => handleEvent(createRuleInput('test', 0)),
-    { message: 'timeLimit must be greater than 0' }
-  );
-
-  await t.throwsAsync(
-    () => handleEvent(createRuleInput('test', -1)),
-    { message: 'timeLimit must be greater than 0' }
-  );
-});
-
 test.serial('handleEvent returns the number of messages consumed', async (t) => {
   const revert = sfStarter.__set__('Consumer', stubConsumer);
   const ruleInput = createRuleInput('queue');
@@ -311,10 +300,13 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
   const result = await handleThrottledEvent({
     queueUrl,
     messageLimit,
-  }, 0);
+    timeLimit: 0,
+  }, 1);
   // Only 3 executions should have been started, even though 4 messages are in the queue
   //   5 (semaphore max )- 2 (initial value) = 3 available executions
   t.is(result, maxExecutions - initialSemValue);
+
+  await sleep(2000);
 
   // There should be 1 message left in the queue.
   //   4 initial messages - 3 messages read/deleted = 1 message
