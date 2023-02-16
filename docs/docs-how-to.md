@@ -23,7 +23,7 @@ npm run docs-serve
 
 Our project documentation is hosted on [GitHub Pages](https://pages.github.com/). The resources published to this website are housed in `docs/` directory at the top of the Cumulus repository. Those resources primarily consist of markdown files and images.
 
-We use the open-source static website generator [Docusaurus](https://docusaurus.io) to build html files from our markdown documentation, add some organization and navigation, and provide some other niceties in the final website (search, easy templating, etc.).
+We use the open-source static website generator [Docusaurus](https://docusaurus.io/docs) to build html files from our markdown documentation, add some organization and navigation, and provide some other niceties in the final website (search, easy templating, etc.).
 
 #### Add a New Page and Sidebars
 
@@ -41,12 +41,12 @@ hide_title: false
 
 #### Versioning Docs
 
-We lean heavily on Docusaurus for versioning. Their suggestions and walk-through can be found [here](https://docusaurus.io/docs/versioning). Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs does not depends on other version.
+We lean heavily on Docusaurus for versioning. Their suggestions and walk-through can be found [here](https://docusaurus.io/docs/versioning). Docusaurus v2 uses snapshot approach for documentation versioning. Every versioned docs does not depends on other version.
 It is worth noting that we would like the Documentation versions to match up directly with release versions. However, a new versioned docs can take up a lot of repo space and require maintenance, we suggest to update existing versioned docs for minor releases when there are no significant functionality changes.  Cumulus versioning is explained in the [Versioning Docs](https://github.com/nasa/cumulus/tree/master/docs/development/release.md).
 
 #### Search
 
-Search on our documentation site is taken care of by [DocSearch](https://community.algolia.com/docsearch/). We have been provided with an `apiId`, `apiKey` and an `indexName` by DocSearch that we include in our `website/docusaurus.config.js` file. The rest, indexing and actual searching, we leave to DocSearch. Our builds expect environment variables for both these values to exist - `DOCSEARCH_API_KEY` and `DOCSEARCH_NAME_INDEX`.
+Search on our documentation site is taken care of by [DocSearch](https://docsearch.algolia.com/). We have been provided with an `apiId`, `apiKey` and an `indexName` by DocSearch that we include in our `website/docusaurus.config.js` file. The rest, indexing and actual searching, we leave to DocSearch. Our builds expect environment variables for these values to exist - `DOCSEARCH_API_ID`, `DOCSEARCH_API_KEY` and `DOCSEARCH_NAME_INDEX`.
 
 #### Add a new task
 
