@@ -576,14 +576,14 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
 async function deleteRuleResources(rule) {
   const kinesisSourceEvents = [
     {
-      name: getRequiredEnvVar(process.env.messageConsumer),
+      name: getRequiredEnvVar('messageConsumer'),
       eventType: 'arn',
       type: {
         arn: rule.rule.arn,
       },
     },
     {
-      name: getRequiredEnvVar(process.env.KinesisInboundEventLogger),
+      name: getRequiredEnvVar('KinesisInboundEventLogger'),
       eventType: 'log_event_arn',
       type: {
         log_event_arn: rule.rule.logEventArn,
