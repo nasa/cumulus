@@ -100,6 +100,9 @@ update the database cluster to use the new configuration.
   - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
 - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
 - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
+- **CUMULUS-3189**
+  - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
+    support pip 23.0
 
 ### Changed
 
@@ -136,6 +139,7 @@ update the database cluster to use the new configuration.
   - Increased the memory of API lambda to 1280MB
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
+- Add a Python version file
 
 ## [v14.0.0] 2022-12-08
 
