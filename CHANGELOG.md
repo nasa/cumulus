@@ -135,6 +135,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3189**
   - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
     support pip 23.0
+- README shell snippets better support copying
 
 ### Breaking Changes
 
@@ -188,6 +189,15 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
+- Improve linting of TS files
+
+### Fixed
+
+- **CUMULUS-3117**
+  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
+    constraints for queued granules.    Queued writes will now be properly
+    dropped from elasticsearch writes along with the primary datastore(s) when
+    write constraints apply
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
 - Add a Python version file
