@@ -114,11 +114,10 @@ function lookupCollectionInEvent(eventObject) {
  * Build payload from rule for lambda invocation
  *
  * @param {RuleRecord} rule           - API rule
- * @param {unknown} [cumulusMeta]      - Optional cumulus_meta object
  *
  * @returns {Promise<unknown>} lambda invocation payload
  */
-async function buildPayload(rule, cumulusMeta) {
+async function buildPayload(rule) {
   // makes sure the workflow exists
   const bucket = getRequiredEnvVar('system_bucket');
   const stack = getRequiredEnvVar('stackName');
@@ -127,7 +126,7 @@ async function buildPayload(rule, cumulusMeta) {
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
   if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
 
-  const definition = await s3Utils.getJsonS3Object(
+  const fullDefinition = await s3Utils.getJsonS3Object(
     bucket,
     workflowFileKey
   );
@@ -135,11 +134,14 @@ async function buildPayload(rule, cumulusMeta) {
 
   return {
     template,
-    definition,
+    definition: {
+      name: fullDefinition.name,
+      arn: fullDefinition.arn,
+    },
     provider: rule.provider,
     collection: rule.collection,
     meta: get(rule, 'meta', {}),
-    cumulus_meta: cumulusMeta || get(rule, 'cumulus_meta', {}),
+    cumulus_meta: get(rule, 'cumulus_meta', {}),
     payload: get(rule, 'payload', {}),
     queueUrl: rule.queueUrl,
     executionNamePrefix: rule.executionNamePrefix,
@@ -265,6 +267,7 @@ async function deleteSnsTrigger(knex, rule) {
     StatementId: `${rule.name}Permission`,
   };
   try {
+    // TODO HERE
     await awsServices.lambda().removePermission(permissionParams).promise();
   } catch (error) {
     if (isResourceNotFoundException(error)) {

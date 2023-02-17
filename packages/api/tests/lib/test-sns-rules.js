@@ -16,9 +16,9 @@ const {
 } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
-const rulesHelpers = require('../../../lib/rulesHelpers');
-const { fakeRuleFactoryV2 } = require('../../../lib/testUtils');
-const { ResourceNotFoundError, resourceNotFoundInfo } = require('../../../lib/errors');
+const rulesHelpers = require('../../lib/rulesHelpers');
+const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { ResourceNotFoundError, resourceNotFoundInfo } = require('../../lib/errors');
 
 const workflow = randomString();
 const testDbName = randomString(12);
