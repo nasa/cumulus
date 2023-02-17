@@ -21,6 +21,7 @@ const { removeNilProperties } = require('@cumulus/common/util');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
+const { getSnsTriggerPermissionId } = require('./snsRuleHelpers');
 
 /**
  * @typedef {import('@cumulus/types/api/rules').RuleRecord} RuleRecord
@@ -264,7 +265,7 @@ async function deleteSnsTrigger(knex, rule) {
   // delete permission statement
   const permissionParams = {
     FunctionName: process.env.messageConsumer,
-    StatementId: `${rule.name}Permission`,
+    StatementId: getSnsTriggerPermissionId(rule),
   };
   try {
     await awsServices.lambda().removePermission(permissionParams).promise();
@@ -475,7 +476,7 @@ async function addSnsTrigger(item) {
       FunctionName: process.env.messageConsumer,
       Principal: 'sns.amazonaws.com',
       SourceArn: item.rule.value,
-      StatementId: `${item.name}Permission`,
+      StatementId: getSnsTriggerPermissionId(item),
     };
     await awsServices.lambda().addPermission(permissionParams).promise();
   }
@@ -605,9 +606,6 @@ async function updateRuleTrigger(original, updates, knex) {
         throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
       }
       let snsSubscriptionArn;
-      if (mergedRule.rule.arn) {
-        await deleteSnsTrigger(knex, mergedRule);
-      }
       if (enabled) {
         snsSubscriptionArn = await addSnsTrigger(mergedRule);
       }
