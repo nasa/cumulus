@@ -1,7 +1,11 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
 const pckg = require('../package.json');
+
+const { version } = require('../lib/version');
 
 /**
  * get the API response and package versions
@@ -12,7 +16,7 @@ const pckg = require('../package.json');
  */
 function get(req, res) {
   return res.send({
-    response_version: 'v2',
+    response_version: `v${version}`,
     api_version: pckg.version,
   });
 }

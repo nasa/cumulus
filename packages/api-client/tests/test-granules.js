@@ -148,6 +148,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
       path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({
         action: 'reingest',
@@ -177,8 +178,11 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
       path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
-      body: JSON.stringify({ action: 'removeFromCmr' }),
+      body: JSON.stringify({
+        action: 'removeFromCmr',
+      }),
     },
   };
 
@@ -203,6 +207,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
@@ -254,6 +259,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
@@ -385,7 +391,7 @@ test('replaceGranule calls the callback with the expected object', async (t) => 
       httpMethod: 'PUT',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
     expectedStatusCodes: [200, 201],
@@ -414,7 +420,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
     expectedStatusCodes: [200, 201],

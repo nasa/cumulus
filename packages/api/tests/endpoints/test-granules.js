@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
@@ -76,6 +75,10 @@ const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const { sortFilesByKey } = require('../helpers/sort');
 const models = require('../../models');
+
+const { request } = require('../helpers/request');
+
+const { version } = require('../../lib/version');
 
 // Dynamo mock data factories
 const {
@@ -2118,20 +2121,22 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
   );
 });
 
-test.serial('PATCH executes successfully with no non-required-field-updates (testing "inert" update/undefined fields)', async (t) => {
+test.serial('PATCH executes successfully with no non-required-field-updates (testing "insert" update/undefined fields)', async (t) => {
   const {
     esClient,
+    executionPgRecord,
     executionUrl,
     knex,
   } = t.context;
   const timestamp = Date.now();
   const {
-    newPgGranule,
-    newDynamoGranule,
     esRecord,
+    newDynamoGranule,
+    newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: executionPgRecord.cumulus_id,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -3898,4 +3903,54 @@ test.serial('default paginates correctly with search_after', async (t) => {
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);
   t.not(meta.searchContext === newMeta.searchContext);
+});
+
+test.serial('PUT returns 400 for version value less than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
+});
+
+test.serial('PATCH returns 400 for version value less than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .patch(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
+});
+
+test.serial('PUT returns 201 (granule creation) for version value greater than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(201);
+  t.is(response.status, 201);
+});
+
+test.serial('PATCH returns 201 (granule creation) for version value greater than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .patch(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(201);
+  t.is(response.status, 201);
 });
