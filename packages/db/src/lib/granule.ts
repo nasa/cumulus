@@ -262,7 +262,7 @@ export const getGranulesByApiPropertiesQuery = (
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
  * @param {string} granuleId - Granule ID
- * @returns {Promise<Array<PostgresGranuleRecord>} The returned list of records
+ * @returns {Promise<PostgresGranuleRecord[]>} The returned list of records
  */
 export const getGranulesByGranuleId = async (
   knexOrTransaction: Knex | Knex.Transaction,

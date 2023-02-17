@@ -185,9 +185,23 @@ const getExecutionCumulusId = async (
   }
 };
 
-// TODO: we should make these helper methods in the db package, test there, and make it exportable
+// TODO: we should implement these status helper methods in the db package,
+// test there, and make it exportable
+
+/**
+ * Check if the granule status is a Final State - 'completed' or 'failed'
+ *
+ * @param {string} status - status of the granule
+ * @returns {boolean}
+ */
 const isStatusFinalState = (status) => status === 'completed' || status === 'failed';
 
+/**
+ * Check if the granule status is an Active State - 'running' or 'queued'
+ *
+ * @param {string} status - status of the granule
+ * @returns {boolean}
+ */
 const isStatusActiveState = (status) => status === 'running' || status === 'queued';
 
 module.exports = {
