@@ -70,7 +70,7 @@ This is for installation for Cumulus development. See the [Cumulus deployment se
 - Bash
 - [Docker](https://www.docker.com/) (only required for testing)
 - docker-compose (only required for testing `pip install docker-compose`)
-- Python 3.6+
+- Python 3.7
 - [pipenv](https://pypi.org/project/pipenv/)
 
 > You may use `brew` to install the prerequisites. Visit [Homebrew documentation](https://brew.sh/) for guidance.
