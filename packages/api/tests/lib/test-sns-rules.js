@@ -13,6 +13,11 @@ const {
   generateLocalTestDb,
   migrationDir,
   RulePgModel,
+  fakeProviderRecordFactory,
+  fakeCollectionRecordFactory,
+  ProviderPgModel,
+  CollectionPgModel,
+  translateApiRuleToPostgresRule,
 } = require('@cumulus/db');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 
@@ -33,6 +38,8 @@ test.before(async (t) => {
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
   t.context.rulePgModel = new RulePgModel();
+  t.context.providerPgModel = new ProviderPgModel();
+  t.context.collectionPgModel = new CollectionPgModel();
 
   const lambda = await awsServices.lambda().createFunction({
     Code: {
@@ -216,6 +223,106 @@ test.serial('deleting an SNS rule updates the event source mapping', async (t) =
 
   t.teardown(() => {
     unsubscribeSpy.restore();
+  });
+});
+
+test.serial('Multiple rules using same SNS topic can be created and deleted', async (t) => {
+  const {
+    collectionPgModel,
+    providerPgModel,
+    testKnex,
+    rulePgModel,
+  } = t.context;
+  const testPgProvider = fakeProviderRecordFactory();
+  await providerPgModel.create(
+    testKnex,
+    testPgProvider,
+    '*'
+  );
+
+  const testPgCollection1 = fakeCollectionRecordFactory({
+    name: randomId(),
+    version: 'v1',
+  });
+  const testPgCollection2 = fakeCollectionRecordFactory({
+    name: randomId(),
+    version: 'v2',
+  });
+  await Promise.all([
+    collectionPgModel.create(
+      testKnex,
+      testPgCollection1,
+      '*'
+    ),
+    collectionPgModel.create(
+      testKnex,
+      testPgCollection2,
+      '*'
+    ),
+  ]);
+  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
+  const { TopicArn } = await awsServices.sns().createTopic({
+    Name: randomId('topic'),
+  }).promise();
+
+  const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
+    name: randomId('rule1'),
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
+    workflow,
+    state: 'ENABLED',
+    collection: {
+      name: testPgCollection1.name,
+      version: testPgCollection1.version,
+    },
+    provider: testPgProvider.name,
+  }));
+  const ruleWithTrigger2 = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
+    name: randomId('rule2'),
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
+    workflow,
+    state: 'ENABLED',
+    collection: {
+      name: testPgCollection2.name,
+      version: testPgCollection2.version,
+    },
+    provider: testPgProvider.name,
+  }));
+
+  const pgRule = await translateApiRuleToPostgresRule(ruleWithTrigger, testKnex);
+  const pgRule2 = await translateApiRuleToPostgresRule(ruleWithTrigger2, testKnex);
+
+  const [rule1] = await rulePgModel.create(testKnex, pgRule);
+  const [rule2] = await rulePgModel.create(testKnex, pgRule2);
+
+  // rules share the same subscription
+  t.is(rule1.arn, rule2.arn);
+
+  // Have to delete rules serially otherwise all rules still exist
+  // when logic to check for shared source mapping is evaluated
+
+  await rulesHelpers.deleteSnsTrigger(testKnex, ruleWithTrigger);
+  await rulePgModel.delete(testKnex, rule1);
+
+  await t.notThrowsAsync(rulesHelpers.deleteSnsTrigger(testKnex, ruleWithTrigger2));
+  await t.notThrowsAsync(rulePgModel.delete(testKnex, rule2));
+
+  // Ensure that cleanup for SNS rule subscription was actually called
+  t.true(unsubscribeSpy.called);
+  t.true(unsubscribeSpy.calledWith({
+    SubscriptionArn: ruleWithTrigger.rule.arn,
+  }));
+
+  t.teardown(async () => {
+    unsubscribeSpy.restore();
+    await awsServices.sns().deleteTopic({
+      TopicArn,
+    });
   });
 });
 

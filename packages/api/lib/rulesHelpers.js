@@ -267,7 +267,6 @@ async function deleteSnsTrigger(knex, rule) {
     StatementId: `${rule.name}Permission`,
   };
   try {
-    // TODO HERE
     await awsServices.lambda().removePermission(permissionParams).promise();
   } catch (error) {
     if (isResourceNotFoundException(error)) {
