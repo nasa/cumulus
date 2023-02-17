@@ -8,7 +8,7 @@ It is possible to configure Cumulus and the Cumulus Dashboard to display informa
 
 ## ESDIS Metrics in NGAP
 
-Work with the ESDIS metrics team to set up permissions and access to forward [Cloudwatch Logs to a shared AWS:Logs:Destination](../additional-deployment-options/cloudwatch-logs-delivery) as well as transferring your [S3 Server Access logs to a metrics team bucket](../additional-deployment-options/share-s3-access-logs).
+Work with the ESDIS metrics team to set up permissions and access to forward [Cloudwatch Logs to a shared AWS:Logs:Destination](../deployment/cloudwatch-logs-delivery) as well as transferring your [S3 Server Access logs to a metrics team bucket](../deployment/share-s3-access-logs).
 
 The metrics team has taken care of setting up logstash to ingest the files that get delivered to their bucket into their Elasticsearch instance.
 

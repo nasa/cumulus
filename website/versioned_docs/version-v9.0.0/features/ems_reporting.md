@@ -32,7 +32,7 @@ A scheduled Lambda task will run nightly that generates Ingest, Archive and Arch
 
 Cumulus reports all data distribution requests that pass through the distribution API to EMS. In order to track these requests, S3 server access logging must be enabled on all protected buckets.
 
-You must manually enable logging for each bucket before distribution logging will work, see [S3 Server Access Logging.](../deployment/server_access_logging)
+You must manually enable logging for each bucket before distribution logging will work, see [S3 Server Access Logging.](../configuration/server_access_logging)
 
 A scheduled Lambda task will run nightly that collects distribution events and builds an EMS distribution report.
 

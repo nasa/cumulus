@@ -17,7 +17,22 @@ npm run docs-install
 npm run docs-serve
 ```
 
-**Note:** `docs-build` will build the documents into `website/build`.
+:::note
+
+`docs-build` will build the documents into `website/build`.
+`docs-clear` will clear the documents.
+
+:::
+
+:::caution
+
+Fix any broken links reported by Docusaurus if you see the following messages during build.
+
+[INFO] Docusaurus found broken links!
+
+Exhaustive list of all broken links found:
+
+:::
 
 ### Cumulus Documentation
 

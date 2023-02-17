@@ -15,7 +15,7 @@ This documentation includes both guidelines, examples, and source code docs. It 
 ### Get To Know Cumulus
 
 * Getting Started - [here](getting-started) - If you are new to Cumulus we suggest that you begin with this section to help you understand and work in the environment.
-* General Cumulus Documentation - [here](cumulus-docs-readme) <- you're here
+* General Cumulus Documentation - [here](README.md) <- you're here
 
 ### Cumulus Reference Docs
 

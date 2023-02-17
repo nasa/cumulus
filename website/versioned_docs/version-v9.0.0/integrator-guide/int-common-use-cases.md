@@ -6,6 +6,6 @@ hide_title: false
 
 Listed below are some example use cases that you may encounter during your onboarding process and daily activities as a Cumulus Integrator.
 
-* [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
-* [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
-* [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+* [Creating Cumulus Data Management Types](../configuration/data-management-types)
+* [Workflow: Add New Lambda](workflow-add-new-lambda)
+* [Workflow: Troubleshoot Failed Step(s)](workflow-ts-failed-step)

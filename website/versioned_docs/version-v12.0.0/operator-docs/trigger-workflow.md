@@ -16,7 +16,7 @@ You can leave the provider and collection blank and do not need any additional m
 
 To ingest data, you will need a provider and collection configured to tell your workflow where to discover data and where to archive the data respectively.
 
-Follow the instructions to [create a provider](../configuration/data-management-types#create-a-provider) and [create a collection](../configuration/data-management-types#create-a-collection) and [configure their fields](../data-cookbooks/setup#working-with-data-cookbooks) for your data ingest.
+Follow the instructions to [create a provider](../configuration/data-management-types#create-a-provider) and [create a collection](../configuration/data-management-types#create-a-collection) and [configure their fields](../configuration/data-management-types#configuration-fields) for your data ingest.
 
 In the rule's additional metadata you can specify a `provider_path` from which to get the data from the provider.
 

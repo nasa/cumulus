@@ -89,7 +89,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>Are there any third-party workflows or applications that I can use with Cumulus?</summary>
 
-  Answer: The Cumulus team works with various partners to help build a robust framework. You can visit our [External Contributions](../external-contributions/external-contributions) section to see what other options are available to help you customize Cumulus for your needs.
+  Answer: The Cumulus team works with various partners to help build a robust framework. You can visit our [External Contributions](external-contributions/external-contributions.md) section to see what other options are available to help you customize Cumulus for your needs.
 </details>
 
 ---
@@ -110,7 +110,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What are the steps if I run into an issue during deployment?</summary>
 
-  Answer: If you encounter an issue with your deployment go to the [Troubleshooting Deployment](../troubleshooting/troubleshooting-deployment) guide.
+  Answer: If you encounter an issue with your deployment go to the [Troubleshooting Deployment](troubleshooting/troubleshoot_deployment.md) guide.
 </details>
 
 <details>
@@ -136,9 +136,9 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-- [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
-- [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
-- [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+- [Creating Cumulus Data Management Types](configuration/data-management-types)
+- [Workflow: Add New Lambda](integrator-guide/workflow-add-new-lambda)
+- [Workflow: Troubleshoot Failed Step(s)](integrator-guide/workflow-ts-failed-step)
 
 </details>
 
@@ -167,15 +167,15 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-- [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest)
-- [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
-- [Granule Workflows](../operator-docs/granule-workflows)
+- [Kinesis Stream For Ingest](operator-docs/kinesis-stream-for-ingest)
+- [Create Rule In Cumulus](operator-docs/create-rule-in-cumulus)
+- [Granule Workflows](operator-docs/granule-workflows)
 
-Explore more Cumulus operator best practices and how-tos in the dedicated [Operator Docs](../operator-docs/).
+Explore more Cumulus operator best practices and how-tos in the dedicated [Operator Docs](operator-docs/about-operator-docs).
 </details>
 
 <details>
   <summary>Can you re-run a workflow execution in AWS?</summary>
 
-  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](../operator-docs/rerunning-workflow-executions) in the [Cumulus Operator Docs](../operator-docs/about-operator-docs).
+  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](troubleshooting/rerunning-workflow-executions) in the [Cumulus Operator Docs](operator-docs/about-operator-docs).
 </details>

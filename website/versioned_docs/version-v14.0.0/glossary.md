@@ -22,7 +22,7 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
 ### AWS
 
-  See: [aws.amazon.com](aws.amazon.com)
+  See: [aws.amazon.com](https://aws.amazon.com/)
 
 ### AWS Lambda/Lambda Function
 
@@ -170,13 +170,13 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   Data source that generates and/or distributes data for Cumulus workflows to act upon.
 
-  For more information, see the [Cumulus documentation](./data-cookbooks/setup#providers).
+  For more information, see the [Cumulus documentation](./configuration/data-management-types#providers).
 
 ### Rule
 
   Rules are configurable scheduled events that trigger workflows based on various criteria.
 
-  For more information, see the [Cumulus Rules documentation](./data-cookbooks/setup#rules).
+  For more information, see the [Cumulus Rules documentation](./configuration/data-management-types#rules).
 
 ### S3
 

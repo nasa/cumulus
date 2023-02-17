@@ -15,13 +15,13 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 Before releasing a new major version of Cumulus, we should test the deployment upgrade path from the latest release of Cumulus to the upcoming release.
 
-It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
+It is preferable to use the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
 
 You should create an entirely new deployment for this testing to replicate the end user upgrade path. Using an existing test or CI deployment would not be useful because that deployment may already have been deployed with the latest changes and not match the upgrade path for end users.
 
 Pre-release testing steps:
 
-1. Checkout the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo
+1. Checkout the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
 2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `5.0.1`, update the deployment files as follows:
 
     ```text

@@ -94,12 +94,12 @@ Here are some useful tips to keep in mind when deploying or working in Cumulus.
 
 * [Versioning and Releases](https://github.com/nasa/cumulus/blob/master/docs/development/release.md): This documentation gives information on our global versioning approach. We suggest upgrading to the supported version for Cumulus, Cumulus dashboard, and Thin Egress App (TEA).
 * [Cumulus Developer Documentation](https://github.com/nasa/cumulus#cumulus-framework): We suggest that you read through and reference this resource for development best practices in Cumulus.
-* [Cumulus Deployment](../deployment): It's good to know how to manually deploy to a Cumulus sandbox environment.
-* [Integrator Common Use Cases](../integrator-guide/int-common-use-cases): Scenarios to help integrators along in the Cumulus environment.
+* [Cumulus Deployment](deployment): It's good to know how to manually deploy to a Cumulus sandbox environment.
+* [Integrator Common Use Cases](integrator-guide/int-common-use-cases): Scenarios to help integrators along in the Cumulus environment.
 
 ### Operator
 
-* [Operator Common Use Cases](../operator-docs/ops-common-use-cases): Scenarios to help operators along in the Cumulus environment.
+* [Operator Common Use Cases](operator-docs/ops-common-use-cases): Scenarios to help operators along in the Cumulus environment.
 
 ### Troubleshooting
 

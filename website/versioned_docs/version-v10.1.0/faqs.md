@@ -98,9 +98,9 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-* [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
-* [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
-* [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+* [Creating Cumulus Data Management Types](configuration/data-management-types)
+* [Workflow: Add New Lambda](integrator-guide/workflow-add-new-lambda)
+* [Workflow: Troubleshoot Failed Step(s)](integrator-guide/workflow-ts-failed-step)
 
 </details>
 
@@ -138,5 +138,5 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>Can you re-run a workflow execution in AWS?</summary>
 
-  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](../operator-docs/rerunning-workflow-executions) in the [Cumulus Operator Docs](../operator-docs/about-operator-docs).
+  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](troubleshooting/rerunning-workflow-executions) in the [Cumulus Operator Docs](operator-docs/about-operator-docs).
 </details>

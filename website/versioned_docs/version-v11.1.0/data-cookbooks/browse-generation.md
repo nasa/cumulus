@@ -24,7 +24,7 @@ This entry assumes you have a deployed instance of Cumulus v1.16.0 or later, and
 
 Prior to working through this entry, you should be somewhat familiar with the [Hello World](hello-world) example the [Workflows](../workflows) section of the documentation, and [building Cumulus lambdas](../workflows/lambda).
 
-You should also review the [Data Cookbooks Setup](setup) portion of the documentation as it contains useful information on the inter-task message schema expectations.
+You should also review the [Data Cookbooks Setup](about-cookbooks#setup) portion of the documentation as it contains useful information on the inter-task message schema expectations.
 
 This entry will utilize the [dashboard application](https://github.com/nasa/cumulus-dashboard). You will need to have a dashboard deployed as described in the [Cumulus deployment documentation](../deployment) to follow the instructions in this example.
 

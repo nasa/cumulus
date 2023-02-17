@@ -28,4 +28,4 @@ in the commit message.
 
 If you create a new stack and want to be able to run integration tests against
 it in CI, you will need to add it to
-[bamboo/select-stack.js](bamboo/select-stack.js).
+[bamboo/select-stack.js](https://github.com/nasa/cumulus/tree/master/bamboo/select-stack.js).
