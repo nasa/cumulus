@@ -602,6 +602,11 @@ async function updateRuleTrigger(original, updates, knex) {
       if (enabled && stateChanged && mergedRule.rule.arn) {
         throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
       }
+
+      if (mergedRule.rule.arn) {
+        await deleteSnsTrigger(knex, mergedRule);
+      }
+
       let snsSubscriptionArn;
       if (enabled) {
         snsSubscriptionArn = await addSnsTrigger(mergedRule);
