@@ -39,13 +39,45 @@ update the database cluster to use the new configuration.
 
 - Removed a few tests that were disabled 3-4 years ago
 
-#### Fixed
+### Fixed
 
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+- **CUMULUS-3070**
+  - Remove granules dynamoDb model logic that sets default publish value on record
+    validation
+  - Update API granule write logic to not set default publish value on record
+    updates to avoid overwrite (PATCH behavior)
+  - Update API granule write logic to publish to false on record
+    creation if not specified
+  - Update message granule write logic to set default publish value on record
+    creation update.
+  - Update granule write logic to set published to default value of `false` if
+    `null` is explicitly set with intention to delete the value.
+  - Removed dataType/version from api granule schema
+  - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
+    logic for PUT/PATCH endpoint.
+- **CUMULUS-3072**
+  - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
+    a value for `files` as `[]` to elasticsearch instead of undefined in cases
+    where `[]` is specified in the new granule.
+  - Fixed issue introduced in CUMULUS-3070 where DynamoDB granules with a value
+   `files` as `[]` when the granule does *not* have the files value set as
+   mutable (e.g. in a `running` state) from a framework message write *and*
+   files was not previously defined will write `[]` instead of leaving the value
+   undefined.
 - **CUMULUS-3117**
   - Update `@cumulus/es-client/indexer.js` to properly handle framework write
     constraints for queued granules.    Queued writes will now be properly
     dropped from elasticsearch writes along with the primary datastore(s) when
     write constraints apply
+- **CUMULUS-3134**
+  - Get tests working on M1 Macs
+- **CUMULUS-3148**:
+  - Updates cumulus-rds-tf to use defaults for PostgreSQL 11.13
+  - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
+    PostgreSQL 11 upgrade exposed dependency on database results in the API return
+  - Update unit test container to utilize PostgreSQL 11.13 container
 - **CUMULUS-3149**
   - Updates the api `/graunles/bulkDelete` endpoint to take the
     following configuration keys for the bulkDelete:
@@ -61,29 +93,16 @@ update the database cluster to use the new configuration.
     nested in a transaction call, resulting in transactions holding knex
     connection pool connections in a blocking way that would not resolve,
     resulting in deletion failures.
-- **CUMULUS-3148**
-  - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
-    PostgreSQL 11 upgrade exposed dependency on database results in the API return
-  - Update unit test container to utilize PostgreSQL 11.13 container
-- **CUMULUS-3033**
-  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
 - **CUMULUS-3142**
   - Fix issue from CUMULUS-3070 where undefined values for status results in
     unexpected insertion failure on PATCH.
 - **CUMULUS-3181**
   - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
-- **CUMULUS-3072**
-  - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
-    a value for `files` as `[]` to elasticsearch instead of undefined in cases
-    where `[]` is specified in the new granule.
-  - Fixed issue introduced in CUMULUS-3070 where DynamoDB granules with a value
-   `files` as `[]` when the granule does *not* have the files value set as
-   mutable (e.g. in a `running` state) from a framework message write *and*
-   files was not previously defined will write `[]` instead of leaving the value
-   undefined.
-
 - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
 - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
+- **CUMULUS-3189**
+  - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
+    support pip 23.0
 
 ### Changed
 
@@ -118,6 +137,8 @@ update the database cluster to use the new configuration.
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
+- **CUMULUS-3140**
+  - Update release note to include cumulus-api release
 
 ## [v14.0.0] 2022-12-08
 
