@@ -139,6 +139,7 @@ update the database cluster to use the new configuration.
   - Increased the memory of API lambda to 1280MB
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
+- Add a Python version file
 
 ## [v14.0.0] 2022-12-08
 
