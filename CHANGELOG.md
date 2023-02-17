@@ -244,6 +244,11 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
 
+### Removed
+
+- **CUMULUS-2798**
+  - Removed AsyncOperations model
+
 ## [v14.0.0] 2022-12-08
 
 ### Breaking Changes
