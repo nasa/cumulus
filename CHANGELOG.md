@@ -103,6 +103,7 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3189**
   - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
     support pip 23.0
+- README shell snippets better support copying
 
 ### Changed
 
