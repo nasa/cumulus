@@ -23,6 +23,7 @@ const { sns, lambda } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');
+const { getSnsTriggerPermissionId } = require('@cumulus/api');
 
 const {
   waitForRuleInList,
@@ -83,7 +84,6 @@ describe('The SNS-type rule', () => {
       testId = createTimestampedTestId(config.stackName, 'SnsRule');
       testSuffix = createTestSuffix(testId);
       ruleName = timestampedName('SnsRuleIntegrationTestRule');
-      expectedStatementId = `${ruleName}Permission`;
       const snsTopicName = timestampedName(`${config.stackName}_SnsRuleIntegrationTestTopic`);
       newValueTopicName = timestampedName(`${config.stackName}_SnsRuleValueChangeTestTopic`);
       consumerName = `${config.stackName}-messageConsumer`;
@@ -116,6 +116,7 @@ describe('The SNS-type rule', () => {
         rule: snsRuleDefinition,
       });
       createdRule = JSON.parse(postRuleResponse.body);
+      expectedStatementId = getSnsTriggerPermissionId(createdRule);
     } catch (error) {
       beforeAllFailed = error;
       throw beforeAllFailed;
@@ -128,7 +129,7 @@ describe('The SNS-type rule', () => {
     try {
       const permissionParams = {
         FunctionName: consumerName,
-        StatementId: `${ruleName}Permission`,
+        StatementId: expectedStatementId,
       };
       await lambda().removePermission(permissionParams).promise();
     } catch (error) {
@@ -186,7 +187,7 @@ describe('The SNS-type rule', () => {
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
 
-      expect(statementSids).toContain(`${ruleName}Permission`);
+      expect(statementSids).toContain(expectedStatementId);
     });
   });
 
