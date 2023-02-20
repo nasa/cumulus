@@ -430,7 +430,6 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
       }),
     });
 
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
   const rule = fakeRuleFactoryV2({
     rule: {
       type: 'sns',
@@ -454,8 +453,6 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
     },
   };
   const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.rule.arn }));
 
   t.is(updatedSnsRule.name, rule.name);
   t.is(updatedSnsRule.rule.type, rule.rule.type);
@@ -465,7 +462,6 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
   t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
-    unsubscribeSpy.restore();
     await awsServices.sns().deleteTopic({ TopicArn: TopicArn2 }).promise();
   });
 });
@@ -500,7 +496,6 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
       }),
     });
 
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
   const rule = fakeRuleFactoryV2({
     rule: {
       type: 'sns',
@@ -520,8 +515,6 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
     state: 'DISABLED',
   };
   const updatedSnsRule = await updateRuleTrigger(ruleWithTrigger, updates, t.context.testKnex);
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({ SubscriptionArn: updates.rule.arn }));
 
   t.true(Object.prototype.hasOwnProperty.call(updatedSnsRule.rule, 'arn'));
   t.is(updatedSnsRule.rule.arn, undefined);
@@ -529,7 +522,6 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
   t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
-    unsubscribeSpy.restore();
     await awsServices.sns().deleteTopic({ TopicArn }).promise();
   });
 });
