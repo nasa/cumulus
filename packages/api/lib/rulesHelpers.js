@@ -473,7 +473,7 @@ async function addSnsTrigger(item) {
       FunctionName: process.env.messageConsumer,
       Principal: 'sns.amazonaws.com',
       SourceArn: item.rule.value,
-      StatementId: getSnsTriggerPermissionId(item),
+      StatementId: `${item.name}Permission`,
     };
     await awsServices.lambda().addPermission(permissionParams).promise();
   }
