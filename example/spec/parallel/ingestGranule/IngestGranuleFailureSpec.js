@@ -77,7 +77,7 @@ describe('The Ingest Granule failure workflow', () => {
         {
           name: 'non-existent-file',
           key: 'non-existent-path/non-existent-file',
-          bucket: 'cumulus-test-sandbox-public',
+          bucket: config.bucket,
         },
       ];
 

@@ -103,6 +103,7 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3189**
   - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
     support pip 23.0
+- README shell snippets better support copying
 - **CUMULUS-3111**
   - Fix issue where if granule update dropped due to write constraints for writeGranuleFromMessage, still possible for granule files to be written
   - Fix issue where if granule update is limited to status and timestamp values due to write constraints for writeGranuleFromMessage, Dynamo or ES granules could be out of sync with PG
@@ -140,8 +141,18 @@ update the database cluster to use the new configuration.
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
+- Improve linting of TS files
+
+### Fixed
+
+- **CUMULUS-3117**
+  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
+    constraints for queued granules.    Queued writes will now be properly
+    dropped from elasticsearch writes along with the primary datastore(s) when
+    write constraints apply
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
+- Add a Python version file
 
 ## [v14.0.0] 2022-12-08
 
