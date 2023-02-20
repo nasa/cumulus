@@ -50,7 +50,6 @@ const rdsDbCapacityThreshold = 3; // RDS ACU capacity threshold
 const rdsConnectionsThreshold = 140; // Max connections threshold
 
 const expectedMaxWorkflowInvocation = expectedGranuleCount * providerPaths.length; // Number of Ingest workflow invocations.
-const publishGranulesMinInvocations = (expectedGranuleCount * providerPaths.length) / 10; // Number of publish invocations to require to pass metrics.
 const publishExecutionsMinInvocations = (expectedGranuleCount * providerPaths.length) / 10; // Number of execution publish invocations to require to pass metrics
 
 const rdsClusterName = process.env.rdsClusterName || 'cumulus-dev-rds-cluster';
@@ -235,43 +234,6 @@ describe('The Ingest Load Test', () => {
       expect(dbThrottleCount).toBeLessThan(dbLambdaMaxThrottleCountThreshold);
       expect(dbErrorCount).toBeLessThan(expectedGranuleCount * dbLambdaErrorThreshold);
       expect(durationAverage).toBeLessThan(dbLambdaDurationMaxThreshold);
-    }
-  });
-
-  it('triggers the granules publish lambda and completes with no errors/throttling', async () => {
-    if (!beforeAllCompleted) fail('beforeAll() failed');
-    else {
-      const lambda = `${testConfig.stackName}-publishGranules`;
-      const EndTime = new Date();
-      const invocationCount = await getInvocationCount({
-        beginTime: testBeginTime,
-        lambda,
-        maxCount: expectedMaxWorkflowInvocation * 2,
-        minCount: 2,
-        timeout: statsTimeout,
-      });
-      const queryObject = {
-        Namespace: 'AWS/Lambda',
-        StartTime: testBeginTime,
-        EndTime,
-        Statistics: ['Sum'],
-        Period: 120,
-        Dimensions: [{ Name: 'FunctionName', Value: lambda }],
-      };
-
-      const throttleCount = await getAggregateMetricQuery({
-        ...queryObject,
-        MetricName: 'Throttles',
-      });
-
-      const errorCount = await getAggregateMetricQuery({
-        ...queryObject,
-        MetricName: 'Errors',
-      });
-      console.log(`Counts:  Invocations: ${invocationCount}, throttleCount ${throttleCount}, rrrorCount: ${errorCount}`);
-      expect(invocationCount).toBeGreaterThan(publishGranulesMinInvocations); // Checking for interference
-      expect(throttleCount).toBe(0);
-      expect(errorCount).toBe(0);
     }
   });
 
