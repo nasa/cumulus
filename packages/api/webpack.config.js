@@ -35,7 +35,6 @@ module.exports = {
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
     processDeadLetterArchive: './lambdas/process-s3-dead-letter-archive.js',
-    publishExecutions: './lambdas/publish-executions.js',
     replaySqsMessages: './lambdas/replay-sqs-messages.js',
     sfEventSqsToDbRecords: './lambdas/sf-event-sqs-to-db-records/index.js',
     sfScheduler: './lambdas/sf-scheduler.js',
