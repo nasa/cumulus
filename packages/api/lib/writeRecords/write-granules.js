@@ -83,6 +83,21 @@ const {
   isStatusFinalState,
   isStatusActiveState,
 } = require('./utils');
+
+/**
+* @typedef { import('knex').Knex } Knex
+* @typedef { import('knex').Knex.Transaction } KnexTransaction
+* @typedef { typeof Search.es } Esclient and update type
+* @typedef { import('@cumulus/types').ApiGranule } ApiGranule
+* @typedef { import('@cumulus/types').ApiGranuleRecord } ApiGranuleRecord
+* @typedef { Granule } ApiGranuleModel
+* @typedef { import('@cumulus/db').PostgresGranuleRecord } PostgresGranuleRecord
+* @typedef { import('@cumulus/db').PostgresFile } PostgresFile
+* @typedef { import('@cumulus/db').PostgresFileRecord } PostgresFileRecord
+* @typedef { import('@cumulus/db').GranulePgModel } GranulePgModel
+* @typedef { import('@cumulus/db').FilePgModel } FilePgModel
+*/
+
 const log = new Logger({ sender: '@cumulus/api/lib/writeRecords/write-granules' });
 
 /**
@@ -117,10 +132,10 @@ const _generateFilePgRecords = ({
  * Write an array of file records to the database
  *
  * @param {Object} params
- * @param {Object} params.fileRecords - File objects
+ * @param {PostgresFile[]} params.fileRecords - File objects
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @param {Object} [params.filePgModel] - Optional File model override
- * @returns {Promise} - Promise resolved once all file upserts resolve
+ * @param {FilePgModel} [params.filePgModel] - Optional File model override
+ * @returns {Promise<PostgresFileRecord[]>} - Promise resolved once all file upserts resolve
  */
 const _writeFiles = async ({
   fileRecords,
@@ -145,11 +160,11 @@ const _writeFiles = async ({
  * cases, this function will lookup the granule cumulus ID from the record.
  *
  * @param {Object} params
- * @param {Object} params.trx - A Knex transaction
- * @param {Object} params.queryResult - Query result
- * @param {Object} params.granuleRecord - A granule record
- * @param {Object} [params.granulePgModel] - Database model for granule data
- * @returns {Promise<Object|undefined>} - Granule record
+ * @param {KnexTransaction} params.trx - A Knex transaction
+ * @param {PostgresGranuleRecord[]} params.queryResult - Query result
+ * @param {PostgresGranuleRecord} params.granuleRecord - A postgres granule record
+ * @param {GranulePgModel} [params.granulePgModel] - PG Database model for granule data
+ * @returns {Promise<PostgresGranuleRecord>} - PG Granule record
  */
 const getGranuleFromQueryResultOrLookup = async ({
   queryResult = [],
@@ -171,17 +186,14 @@ const getGranuleFromQueryResultOrLookup = async ({
 };
 
 /**
- * @typedef {import('@cumulus/db').PostgresGranuleRecord} PostgresGranuleRecord
- */
-/**
  * Write a granule to PostgreSQL
  *
  * @param {Object} params
- * @param {Object} params.granuleRecord      - A postgres granule record
+ * @param {PostgresGranuleRecord} params.granuleRecord - A postgres granule record
  * @param {number} params.executionCumulusId - Cumulus ID for execution referenced in workflow
  *                                             message, if any
- * @param {Knex.transaction} params.trx      - Transaction to interact with PostgreSQL database
- * @param {Object} params.granulePgModel     - postgreSQL granule model
+ * @param {KnexTransaction} params.trx      - Transaction to interact with PostgreSQL database
+ * @param {GranulePgModel} params.granulePgModel     - postgreSQL granule model
  * @param {boolean} params.writeConstraints  - Boolean flag to set if createdAt/execution write
  *                                            constraints should restrict write behavior in the
  *                                            database via upsertGranuleWithExecutionJoinRecord
@@ -234,12 +246,13 @@ const _writePostgresGranuleViaTransaction = async ({
 * from the postgres database for the provided granuleCumulusId
 *
 * @param {Object} params
-* @param {[Object]} params.writtenFiles - List of postgres file objects that should
-*                                         not be removed by this method.
-* @param {Object} params.granuleCumulusId - postgres cumulus_id identifying
+* @param {PostgresFileRecord[]} params.writtenFiles - List of postgres file objects that should
+*                                                     not be removed by this method.
+* @param {number} params.granuleCumulusId - postgres cumulus_id identifying
 *                                           the granule to be updated
-* @param {Object} params.knex - Instance of a Knex client
-* @param {Object} [params.filePgModel] - @cumulus/db compatible FilePgModel, provided for test/mocks
+* @param {Knex} params.knex - Instance of a Knex client
+* @param {FilePgModel} [params.filePgModel] - @cumulus/db compatible FilePgModel,
+                                              provided for test/mocks
 * @returns {Promise<number>} The number of rows deleted
 */
 const _removeExcessFiles = async ({
@@ -408,9 +421,9 @@ const updateGranuleStatusToFailed = async (params) => {
  *
  * @param {Object} params
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
- * @param {Object} params.granule - Granule from the payload
+ * @param {ApiGranule} params.granule - Granule from the payload
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @returns {Promise}
+ * @returns {Promise<void>}
  */
 const _writeGranuleFiles = async ({
   granuleCumulusId,
@@ -463,29 +476,23 @@ const _writeGranuleFiles = async ({
 };
 
 /**
- * @typedef { import('knex').Knex } Knex
- * @typedef { import('@cumulus/types').ApiGranuleRecord } ApiGranuleRecord
- * @typedef { typeof Search.es } Esclient and update type
- * @typedef { import('@cumulus/db').GranulePgModel } GranulePgModel
- */
-/**
  * Write granule to PostgreSQL, DynamoDB, and ElasticSearch, keeping granules to be written in sync
  * as necessary.
  * If any granule writes fail, keep the data stores in sync.
  *
- * @param {Object}          params
- * @param {Object}          params.postgresGranuleRecord - PostgreSQL granule record to write
- *                                                         to the database
- * @param {Object}          params.apiGranuleRecord - Api Granule object to write to the database
- * @param {Knex}            params.knex - Knex object
- * @param {Object}          params.esClient - Elasticsearch client
- * @param {Object}          params.granuleModel - Instance of DynamoDB granule model
- * @param {number}          params.executionCumulusId - Execution ID the granule was written from
- * @param {boolean}         params.writeConstraints - Boolean flag to set if createdAt/execution
- *                                                    write constraints should restrict write
- *                                                    behavior in the database via
- *                                                    upsertGranuleWithExecutionJoinRecord
- * @param {Object}          params.granulePgModel - @cumulus/db compatible granule module instance
+ * @param {Object}            params
+ * @param {PostgresGranuleRecord} params.postgresGranuleRecord - PostgreSQL granule record to write
+ *                                                               to the database
+ * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
+ * @param {Knex}              params.knex - Knex object
+ * @param {Esclient}          params.esClient - Elasticsearch client
+ * @param {ApiGranuleModel}   params.granuleModel - Instance of DynamoDB granule model
+ * @param {number}            params.executionCumulusId - Execution ID the granule was written from
+ * @param {boolean}           params.writeConstraints - Boolean flag to set if createdAt/execution
+ *                                                      write constraints should restrict write
+ *                                                      behavior in the database via
+ *                                                      upsertGranuleWithExecutionJoinRecord
+ * @param {GranulePgModel}    params.granulePgModel - @cumulus/db compatible granule module instance
  * @returns {Promise<{status:string, pgGranule:PostgresGranuleRecord}>} - Object containing status
  *                              of upsertGranuleWithExecutionJoinRecord ('succeeded' or 'dropped'),
  *                              along with the latest granule in PG, which is the result of the
@@ -527,8 +534,9 @@ const _writeGranuleRecords = async (params) => {
       pgGranule = writePgGranuleResult.pgGranule;
 
       if (writeConstraints && isStatusActiveState(pgGranule.status)) {
-        // pgGranule was updated, but with writeConstraints conditions, so only some values were
-        // updated. we need to ensure the correct values are propagated to Dynamo and ES.
+        // pgGranule was updated, but with writeConstraints conditions and the granule status is
+        // 'queued' or 'running', so only some values were updated. we need to ensure the correct
+        // values are propagated to Dynamo and ES.
         // The only values allowed to be updated in the PG granule write under these conditions are
         // currently status, timestamp, updated_at, and created_at, and the associated execution
         // as part of the write chain
@@ -568,7 +576,7 @@ const _writeGranuleRecords = async (params) => {
       return writePgGranuleResult;
     }
     log.info(
-      `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${pgGranule.cumulus_id}.`,
+      `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${writePgGranuleResult.pgGranule.cumulus_id}.`,
       postgresGranuleRecord
     );
     log.info(
@@ -589,6 +597,9 @@ const _writeGranuleRecords = async (params) => {
       // Align dynamo granule record with postgres record
       // Retrieve the granule from postgres
       let pgGranuleExists;
+      /**
+       * @type { PostgresGranuleRecord | undefined }
+       */
       let latestPgGranule;
       try {
         latestPgGranule = await granulePgModel.get(knex, {
@@ -601,6 +612,7 @@ const _writeGranuleRecords = async (params) => {
         if (getPgGranuleError instanceof RecordDoesNotExist) {
           pgGranuleExists = false;
         }
+        latestPgGranule = undefined;
       }
 
       // Delete the dynamo record (stays deleted if postgres record does not exist)
@@ -610,6 +622,10 @@ const _writeGranuleRecords = async (params) => {
       });
       // Recreate the dynamo record in alignment with postgres if the postgres record exists
       if (pgGranuleExists) {
+        if (latestPgGranule === undefined) {
+          // unlikely to happen but want a unique message that we can find and diagnose
+          throw new Error("Retrieving granule latestPgGranule from Postgres returned nothing and didn't throw.");
+        }
         const alignedDynamoRecord = await translatePostgresGranuleToApiGranule(
           {
             granulePgRecord: latestPgGranule,
@@ -653,21 +669,21 @@ const _writeGranuleRecords = async (params) => {
 /**
  * Write a granule record to DynamoDB and PostgreSQL
  *
- * @param {Object}          params
- * @param {PostgresGranuleRecord} params.postgresGranuleRecord - PostgreSQL granule record to write
- *                                                               to thedatabase
- * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
- * @param {number}            params.executionCumulusId - Execution ID the granule was written from
- * @param {Object}            params.esClient - Elasticsearch client
- * @param {Object}            params.granuleModel - Instance of DynamoDB granule model
- * @param {Object}            params.granulePgModel - @cumulus/db compatible granule module instance
+ * @param {Object}            params - params object
  * @param {Knex}              params.knex - Knex object
  * @param {string}            params.snsEventType - SNS Event Type
  * @param {boolean}           params.writeConstraints - Boolean flag to set if createdAt/execution
  *                                                      write constraints should restrict write
  *                                                      behavior in the database via
  *                                                      upsertGranuleWithExecutionJoinRecord
- * @returns {Promise}
+ * @param {PostgresGranuleRecord} params.postgresGranuleRecord - PostgreSQL granule record to write
+ *                                                               to the database
+ * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
+ * @param {Esclient}          params.esClient - Elasticsearch client
+ * @param {number}            params.executionCumulusId - Execution ID the granule was written from
+ * @param {ApiGranuleModel}   params.granuleModel - Instance of DynamoDB granule model
+ * @param {GranulePgModel}    params.granulePgModel - @cumulus/db compatible granule module instance
+ * @returns {Promise<void>}
  */
 const _writeGranule = async ({
   postgresGranuleRecord,

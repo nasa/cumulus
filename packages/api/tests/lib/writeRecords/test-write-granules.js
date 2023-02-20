@@ -744,8 +744,8 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
-  const apiFormattedPostgresGranule
-    = await translatePostgresGranuleToApiGranule({
+  const apiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
       granulePgRecord: postgresRecord,
       knexOrTransaction: knex,
     });
@@ -843,8 +843,8 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
-  const apiFormattedPostgresGranule
-    = await translatePostgresGranuleToApiGranule({
+  const apiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
       granulePgRecord: postgresRecord,
       knexOrTransaction: knex,
     });
@@ -938,8 +938,8 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
-  const apiFormattedPostgresGranule
-    = await translatePostgresGranuleToApiGranule({
+  const apiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
       granulePgRecord: postgresRecord,
       knexOrTransaction: knex,
     });
@@ -1055,8 +1055,8 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
-  const originalApiFormattedPostgresGranule
-    = await translatePostgresGranuleToApiGranule({
+  const originalApiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
       granulePgRecord: originalPostgresGranuleRecord,
       knexOrTransaction: knex,
     });
@@ -1091,8 +1091,8 @@ test.serial('writeGranulesFromMessage() on re-write saves granule records to Dyn
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
-  const apiFormattedPostgresGranule
-    = await translatePostgresGranuleToApiGranule({
+  const apiFormattedPostgresGranule =
+    await translatePostgresGranuleToApiGranule({
       granulePgRecord: postgresRecord,
       knexOrTransaction: knex,
     });
