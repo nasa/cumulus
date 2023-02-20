@@ -105,6 +105,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
     - Add new endpoints to update and delete granules by collectionId as well as granuleId
 
+### Removed
+
+- **CUMULUS-2994**
+  - Delete code/lambdas that publish DynamoDB stream events to SNS
+
 ## Unreleased
 
 ### MIGRATION notes
