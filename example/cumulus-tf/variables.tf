@@ -391,13 +391,31 @@ variable "ecs_custom_sg_ids" {
 ## ORCA Variables Definitions
 
 variable "orca_db_user_password" {
-  description = "Password for RDS database user authentication"
+  description = "Password for RDS orca database user authentication"
   type = string
 }
 
 variable "orca_default_bucket" {
   type        = string
   description = "Default ORCA S3 Glacier bucket to use."
+}
+
+variable "orca_dlq_subscription_email" {
+  type        = string
+  description = "The email to notify users when messages are received in dead letter SQS queue due to orca restore failure."
+  default = "test@email.com"
+}
+
+variable "orca_s3_access_key" {
+  type        = string
+  description = "Access key for communicating with Orca S3 buckets."
+  default = ""
+}
+
+variable "orca_s3_secret_key" {
+  type        = string
+  description = "Secret key for communicating with Orca S3 buckets."
+  default = ""
 }
 
 variable "lambda_timeouts" {
