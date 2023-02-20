@@ -139,9 +139,6 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
 - Improve linting of TS files
-
-### Fixed
-
 - **CUMULUS-3117**
   - Update `@cumulus/es-client/indexer.js` to properly handle framework write
     constraints for queued granules.    Queued writes will now be properly
@@ -150,6 +147,10 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
 - Add a Python version file
+- **CUMULUS-3165**
+  - Update example/cumulus-tf/orca.tf to use orca v7.0.1
+- **CUMULUS-3166**
+  - Update example/cumulus-tf/thin_egress_app.tf to use tea 1.3.1
 
 ## [v14.0.0] 2022-12-08
 
