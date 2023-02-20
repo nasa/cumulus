@@ -35,7 +35,6 @@ module.exports = {
     messageConsumer: './lambdas/message-consumer.js',
     payloadLogger: './lambdas/payload-logger.js',
     processDeadLetterArchive: './lambdas/process-s3-dead-letter-archive.js',
-    publishCollections: './lambdas/publish-collections.js',
     publishExecutions: './lambdas/publish-executions.js',
     publishGranules: './lambdas/publish-granules.js',
     publishPdrs: './lambdas/publish-pdrs.js',
