@@ -28,6 +28,29 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Run AVA test against remote ES",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "runtimeArgs": [
+        "debug",
+        "--break",
+        "${file}"
+      ],
+      "skipFiles": [
+        "<node_internals>/**/*.js"
+      ],
+      "port": 9229,
+      "outputCapture": "std",
+      "runtimeVersion": "14.19.1",
+      "env": {
+        "LOCAL_ES_HOST_PORT": "8443",
+        "LOCAL_ES_HOST_PROTOCOL": "https",
+        "LOCALSTACK_HOST": "127.0.0.1",
+        "LOCAL_ES_HOST": "localhost"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Run Jasmine test",
       "cwd": "${workspaceRoot}/example",
       "program": "${workspaceRoot}/node_modules/jasmine/bin/jasmine.js",
