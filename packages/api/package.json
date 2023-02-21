@@ -113,7 +113,8 @@
     "tough-cookie": "~4.0.0",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1",
-    "xml2js": "^0.4.22"
+    "xml2js": "^0.4.22",
+    "zod": "^3.20.2"
   },
   "devDependencies": {
     "@cumulus/test-data": "14.0.0"
