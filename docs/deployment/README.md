@@ -12,7 +12,7 @@ This document assumes familiarity with Terraform. If you are not comfortable
 working with Terraform, the following links should bring you up to speed:
 
 - [Introduction to Terraform](https://www.terraform.io/intro/index.html)
-- [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
+- [Getting Started with Terraform and Amazon Web Services (AWS)](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
 - [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
 The process involves:
@@ -21,7 +21,7 @@ The process involves:
 - Configuring a VPC, if necessary
 - Configuring an Earthdata application, if necessary
 - Creating/configuring a [PostgreSQL 10.2 compatible database](../deployment/postgres_database_deployment), and an AWS Secrets Manager secret to allow database access
-- Creating a Lambda layer for the [Cumulus Message Adapter](./../workflows/input_output.md#cumulus-message-adapter)
+- Creating a Lambda layer for the [Cumulus Message Adapter (CMA)](./../workflows/input_output.md#cumulus-message-adapter)
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
 
@@ -29,16 +29,16 @@ The process involves:
 
 ## Requirements
 
-### Linux/MacOS software requirements
+### Linux/MacOS Software Requirements
 
 - git
 - zip
-- AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
+- AWS CLI - [AWS Command Line Interface](https://aws.amazon.com/cli/)
 - [Terraform](https://www.terraform.io)
 
 ### Install Terraform
 
-It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a CI environment (or any other machine) that you are using to deploy the same stack, **you should pin your version across those machines as well**, otherwise you will run into errors trying to re-deploy from your local machine.
+It is recommended to keep a consistent version of Terraform as you deploy. Once your state files are migrated to a higher version, they are not always backwards compatible so integrators should pin their Terraform version. This is easily accomplished using the Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv). If you have a Continuous Integration (CI) environment (or any other machine) that you are using to deploy the same stack, **you should pin your version across those machines as well**, otherwise you will run into errors trying to re-deploy from your local machine.
 
 If you are using a Mac and [Homebrew](https://brew.sh), installing tfenv is
 as simple as:
@@ -48,9 +48,7 @@ brew update
 brew install tfenv
 ```
 
-For other cases,
-[installation instructions](https://github.com/tfutils/tfenv#installation)
-are available.
+For other cases, installation instructions are available to follow along [here]((https://github.com/tfutils/tfenv#installation)).
 
 ```shell
  $ tfenv install 0.13.6
@@ -64,7 +62,7 @@ $ tfenv use 0.13.6
 [INFO] Switching completed
 ```
 
-It is recommended to stay on the Cumulus Core TF version which can be found [here](https://github.com/nasa/cumulus/blob/master/example/.tfversion). Any changes to that will be noted in the release notes.
+It is recommended to stay on the Cumulus Core TF version which can be found [here](https://github.com/nasa/cumulus/blob/master/example/.tfversion). Any changes to that will be noted in the [release notes](https://github.com/nasa/cumulus/releases).
 
 To verify your Terraform version run:
 
@@ -86,7 +84,7 @@ Terraform v0.13.6
 
 ---
 
-## Prepare deployment repository
+## Prepare Deployment Repository
 
  > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
 
@@ -96,7 +94,7 @@ Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-d
   git clone https://github.com/nasa/cumulus-template-deploy <repository-name>
 ```
 
-We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
+We will return to [configuring this repo and using it for deployment below](#deploy-the-cumulus-instance).
 
 <details>
   <summary>Optional: Create a new repository</summary>
@@ -116,11 +114,11 @@ You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-re
 
 ---
 
-## Prepare AWS configuration
+## Prepare AWS Configuration
 
 ### Set Access Keys
 
-You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must [Create Access Keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for such a user with IAM Create-User permissions, then export the access keys:
+You need to make some AWS information available to your environment. If you don't already have the access key and secret access key of an AWS user with IAM Create-User permissions, you must [create access keys](https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html) for such a user with IAM Create-User permissions, then export the access keys:
 
 ```bash
   export AWS_ACCESS_KEY_ID=<AWS access key>
@@ -132,17 +130,17 @@ If you don't want to set environment variables, [access keys can be stored local
 
 ### Create S3 Buckets
 
-See [creating s3 buckets](deployment/create_bucket.md) for more information on how to create a bucket.
+See [creating S3 buckets](deployment/create_bucket.md) for more information on how to create a bucket.
 
-The following s3 bucket should be created (replacing `<prefix>` with whatever you'd like, generally your organization/DAAC's name):
+The following S3 bucket should be created (replacing `<prefix>` with whatever you'd like, generally your organization/DAAC's name):
 
 - `<prefix>-internal`
 
-You can create additional s3 buckets based on the needs of your workflows.
+You can create additional S3 buckets based on the needs of your workflows.
 
-These buckets do not need any non-default permissions to function with Cumulus, however your local security requirements may vary.
+These buckets do not need any non-default permissions to function with Cumulus; however, your local security requirements may vary.
 
-**Note**: S3 bucket object names are global and must be unique across all accounts/locations/etc.
+> **Note**: S3 bucket object names are global and must be unique across all accounts/locations/etc.
 
 ### VPC, Subnets and Security Group
 
@@ -153,11 +151,11 @@ Cumulus supports operation within a VPC, but you will need to separately create:
 - Security group
 - VPC endpoints for the various services used by Cumulus if you wish to route traffic through the VPC
 
-These resources only need to be created once per AWS account and their ids will be used to configure your Terraform deployment.
+These resources only need to be created once per AWS account and their IDs will be used to configure your Terraform deployment.
 
 #### Elasticsearch in a VPC
 
-Amazon Elasticsearch Service does not use a VPC Endpoint. To use ES within a VPC, before deploying run:
+Amazon Elasticsearch Service (ES) does not use a VPC Endpoint. To use ES within a VPC, before deploying run:
 
 ```shell
 aws iam create-service-linked-role --aws-service-name es.amazonaws.com
@@ -165,14 +163,14 @@ aws iam create-service-linked-role --aws-service-name es.amazonaws.com
 
 This operation only needs to be done once per account, but it must be done for both NGAP and regular AWS environments.
 
-### Look up ECS-optimized AMI (DEPRECATED)
+### Look Up ECS-optimized AMI (DEPRECATED)
 
 > **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically determine the AMI ID for you
 based on your `deploy_to_ngap` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
 
 Look up the recommended machine image ID for the Linux version and AWS region of your deployment. See [Linux Amazon ECS-optimized AMIs docs](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html#ecs-optimized-ami-linux). The image ID, beginning with `ami-`, will be assigned to the `ecs_cluster_instance_image_id` variable for the [cumulus-tf module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
 
-### Set up EC2 key pair (optional)
+### Set Up EC2 Key Pair (Optional)
 
 The key pair will be used to SSH into your EC2 instance(s). It is recommended to [create or import a key pair](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) and specify it in your Cumulus deployment.
 
@@ -180,7 +178,7 @@ This can also be done post-deployment by redeploying your Cumulus instance.
 
 ---
 
-## Configure EarthData application
+## Configure EarthData Application
 
 The Cumulus stack can authenticate with [Earthdata Login](https://urs.earthdata.nasa.gov/documentation). If you want to use this functionality, you must create and register a new Earthdata application. Use the [User Acceptance Tools (UAT) site](https://uat.urs.earthdata.nasa.gov) unless you intend use a different URS environment (which will require updating the `urs_url` value shown below).
 
@@ -188,13 +186,13 @@ Follow the directions on [how to register an application](https://wiki.earthdata
 
 ---
 
-## Create resources for Terraform state
+## Create Resources for Terraform State
 
 > _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
 
 The state of the Terraform deployment is stored in S3. In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`. You can also use an existing bucket, if desired.
 
-### Create the state bucket
+### Create the State Bucket
 
 ```shell
 aws s3api create-bucket --bucket my-tf-state
@@ -210,7 +208,7 @@ aws s3api put-bucket-versioning \
 
 ⚠️ **Note:** If your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources. In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide.
 
-### Create the locks table
+### Create the Locks Table
 
 Terraform uses a lock stored in DynamoDB in order to prevent multiple simultaneous updates. In the following examples, that table will be called `my-tf-locks`.
 
@@ -225,7 +223,7 @@ $ aws dynamodb create-table \
 
 ---
 
-## Configure the PostgreSQL database
+## Configure the PostgreSQL Database
 
 Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS. We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html). For further guidance about what type of RDS database to use, please [see the guide on choosing and configuring your RDS database](./choosing_configuring_rds.md).
 
@@ -262,7 +260,7 @@ To configure Cumulus you will need:
 
 ---
 
-## Deploy the Cumulus instance
+## Deploy the Cumulus Instance
 
 A typical Cumulus deployment is broken into two
 [Terraform root modules](https://www.terraform.io/docs/configuration/modules.html):
@@ -276,7 +274,7 @@ Each of these modules have to be deployed independently and require their own Te
 
 Please see our [troubleshooting documentation for any issues with your deployment](../troubleshooting/troubleshooting-deployment) when performing the upcoming steps.
 
-### Configure and deploy the `data-persistence-tf` root module
+### Configure and Deploy the `data-persistence-tf` Root Module
 
 These steps should be executed in the `data-persistence-tf` directory of the template deploy repo that you previously cloned. Run the following to copy the example files.
 
@@ -342,7 +340,7 @@ elasticsearch_security_group_id = sg-12345
 
 Your data persistence resources are now deployed.
 
-### Deploy the Cumulus Message Adapter layer (DEPRECATED)
+### Deploy the Cumulus Message Adapter Layer (DEPRECATED)
 
 > **Note:** This step is unnecessary if you using the latest changes in the [`cumulus-template-deploy` repo which will automatically download the Cumulus Message Adapter and create the layer for you based on your `cumulus_message_adapter_version` variable](https://github.com/nasa/cumulus-template-deploy/commit/8472e2f3a7185d77bb68bf9e0f21a92a91b0cba9).
 
@@ -367,7 +365,7 @@ $ aws lambda publish-layer-version \
 
 Make sure to copy the `LayerVersionArn` of the deployed layer, as it will be used to configure the `cumulus-tf` deployment in the next step.
 
-### Configure and deploy the `cumulus-tf` root module
+### Configure and Deploy the `cumulus-tf` Root Module
 
 These steps should be executed in the `cumulus-tf` directory of the template repo that was cloned previously.
 
@@ -398,7 +396,7 @@ for deployment's EC2 instances and allows you to connect to them via [SSH/SSM](h
 
 Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when configuring your variables.
 
-#### Choose a distribution API
+#### Choose a Distribution API
 
 Cumulus can be configured to use either the Thin Egress App (TEA) or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
 
@@ -409,7 +407,7 @@ the new API gateway.
 
 The Thin Egress App can be used for Cumulus distribution and is the default selection. It allows authentication using Earthdata Login. Follow the steps [in the documentation](./thin_egress_app) to configure distribution in your `cumulus-tf` deployment.
 
-#### Configure the Cumulus Distribution API (optional)
+#### Configure the Cumulus Distribution API (Optional)
 
 If you would prefer to use the Cumulus Distribution API, which supports [AWS Cognito authentication](https://aws.amazon.com/cognito/), follow [these steps](./cumulus_distribution) to configure distribution in your `cumulus-tf` deployment.
 
@@ -450,7 +448,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ---
 
-## Deploy Cumulus dashboard
+## Deploy Cumulus Dashboard
 
 ### Dashboard Requirements
 
@@ -460,12 +458,12 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 - [node 12.18](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
 - [npm](https://www.npmjs.com/get-npm)
 - zip
-- AWS CLI - [AWS command line interface](https://aws.amazon.com/cli/)
+- AWS CLI - [AWS Command Line Interface](https://aws.amazon.com/cli/)
 - python
 
 ### Prepare AWS
 
-**Create S3 bucket for dashboard:**
+**Create S3 Bucket for Dashboard:**
 
 - Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](deployment-readme#prepare-aws-configuration).
 - Configure the bucket to host a website:
@@ -474,7 +472,7 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 - The bucket's url will be `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or you can find it on the AWS console via "Properties" -> "Static website hosting" -> "Endpoint"
 - Ensure the bucket's access permissions allow your deployment user access to write to the bucket
 
-### Install dashboard
+### Install Dashboard
 
 To install the dashboard, clone the [Cumulus dashboard](https://github.com/nasa/cumulus-dashboard) repository into the root deploy directory and install dependencies with `npm install`:
 
@@ -487,7 +485,7 @@ To install the dashboard, clone the [Cumulus dashboard](https://github.com/nasa/
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
 
-#### Dashboard versioning
+#### Dashboard Versioning
 
 By default, the `master` branch will be used for dashboard deployments. The `master` branch of the dashboard repo contains the most recent stable release of the dashboard.
 
@@ -506,7 +504,7 @@ To checkout and install a specific version of the dashboard:
 
 If you do not have the correct version of node installed, replace `nvm use` with `nvm install $(cat .nvmrc)` in the above example.
 
-### Building the dashboard
+### Building the Dashboard
 
 **Note**: These environment variables are available during the build: `APIROOT`, `DAAC_NAME`, `STAGE`, `HIDE_PDR`. Any of these can be set on the command line to override the values contained in `config.js` when running the build below.
 
@@ -518,7 +516,7 @@ Build the dashboard from the dashboard repository root directory, `cumulus-dashb
   APIROOT=<your_api_root> npm run build
 ```
 
-### Dashboard deployment
+### Dashboard Deployment
 
 Deploy dashboard to s3 bucket from the `cumulus-dashboard` directory:
 
@@ -555,7 +553,7 @@ Configuration can be done in the [data persistence module](https://github.com/na
 
 > If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
 
-### EC2 instances and autoscaling groups
+### EC2 Instances and Autoscaling Groups
 
 EC2 instances are used for long-running operations (i.e. generating a reconciliation report) and long-running workflow tasks. Configuration for your ECS cluster is achieved via [Cumulus deployment variables](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf).
 
