@@ -32,10 +32,6 @@ output "dynamo_tables" {
       name = aws_dynamodb_table.reconciliation_reports_table.name
       arn  = aws_dynamodb_table.reconciliation_reports_table.arn
     }
-    rules = {
-      name = aws_dynamodb_table.rules_table.name
-      arn  = aws_dynamodb_table.rules_table.arn
-    }
     semaphores = {
       name = aws_dynamodb_table.semaphores_table.name
       arn  = aws_dynamodb_table.semaphores_table.arn

@@ -10,7 +10,6 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
     PdrsTable                  = var.dynamo_tables.pdrs.name
     ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-    RulesTable                 = var.dynamo_tables.rules.name
   })
 }
 locals {
@@ -27,7 +26,6 @@ locals {
     PdrsTable                  = var.dynamo_tables.pdrs.name
     ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-    RulesTable                 = var.dynamo_tables.rules.name
   })
   api_env_variables = {
         auth_mode                      = "public"
