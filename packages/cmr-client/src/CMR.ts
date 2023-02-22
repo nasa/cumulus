@@ -11,8 +11,8 @@ import deleteConcept from './deleteConcept';
 import getConceptMetadata from './getConcept';
 import { getIngestUrl } from './getUrl';
 import { UmmMetadata, ummVersion } from './UmmUtils';
-
 const log = new Logger({ sender: 'cmr-client' });
+const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 const logDetails: { [key: string]: string } = {
   file: 'cmr-client/CMR.js',
@@ -22,16 +22,15 @@ const logDetails: { [key: string]: string } = {
  *
  * @param {string} username - CMR username
  * @param {string} password - CMR password
- * @returns {Promise.<string>} the token
+ * @returns {Promise.<string | undefined>} the token
  *
  * @private
  */
 async function updateToken(
   username: string,
   password: string
-): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/dot-notation
-  const edlEnv = process.env['CMR_ENVIRONMENT'];
+): Promise<string | undefined> {
+  const edlEnv = getRequiredEnvVar('CMR_ENVIRONMENT');
   if (!edlEnv) throw new Error('CMR_ENVIRONMENT not set');
   return await getEDLToken(username, password, edlEnv);
 }
@@ -129,9 +128,9 @@ export class CMR {
   /**
    * The method for getting the token
    *
-   * @returns {Promise.<string>} the token
+   * @returns {Promise.<string | undefined>} the token
    */
-  async getToken(): Promise<string> {
+  async getToken(): Promise<string | undefined> {
     return this.token
       ? this.token
       : updateToken(this.username, await this.getCmrPassword());

@@ -5,7 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
-
+- **CUMULUS-3187**
+  - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
+  - removed typescript checks and reformatted EarthdataLogin code to be more type friendly
+  
 ### MIGRATION notes
 
 From this release forward Core will be tested against PostgreSQL 11   Existing

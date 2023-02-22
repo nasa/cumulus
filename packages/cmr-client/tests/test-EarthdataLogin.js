@@ -67,6 +67,31 @@ test.serial('retrieveToken throws exception where invalid user credential', asyn
   );
 });
 
+test.serial('retrieveToken selects the latest token when the tokens are returned and they are not sorted by expiration_date', async (t) => {
+  const expectedresponse = [{
+    access_token: 'ABCDE',
+    token_type: 'Bearer',
+    expiration_date: '1/1/2998',
+  },
+  {
+    access_token: 'FGHIJ',
+    token_type: 'Bearer',
+    expiration_date: '1/1/2999',
+  },
+  {
+    access_token: 'KLMAO',
+    token_type: 'Bearer',
+    expiration_date: '1/1/2997',
+  }];
+
+  nock('https://urs.earthdata.nasa.gov')
+    .get('/api/users/tokens')
+    .reply(200, expectedresponse);
+
+  const token = await retrieveEDLToken(edlObj.username, edlObj.password, edlObj.edlEnv);
+  t.is(token, 'FGHIJ');
+});
+
 test.serial('createToken creates a token for the user', async (t) => {
   const expectedresponse = [
     {
