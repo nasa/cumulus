@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Notable changes
   - Published new tag 44 of cumuluss/async-operation to Docker Hub which was built with node:16.19.0-buster.
+
 ### MIGRATION notes
 
 From this release forward Core will be tested against PostgreSQL 11   Existing
