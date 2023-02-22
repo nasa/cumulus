@@ -69,7 +69,6 @@ describe('The Queue Granules workflow', () => {
     provider = { id: `s3_provider${testSuffix}` };
 
     process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
     // populate collections, providers and test data
     await Promise.all([

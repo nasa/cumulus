@@ -26,6 +26,9 @@ const getTableIndexDetails = (tableName) => {
     },
   };
   return indexTables[tableName];
+  // TODO: this is being flagged for removal for CollectionsTable
+  // This entire file looks like it is focused on Dynamo tables, can this whole file be removed
+  // with the last Dynamo table, or is there later cleanup planned?
 };
 
 /**
