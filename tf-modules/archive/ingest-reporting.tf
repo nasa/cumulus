@@ -36,7 +36,6 @@ data "aws_iam_policy_document" "publish_executions_policy_document" {
     actions = ["sqs:SendMessage"]
     resources = [aws_sqs_queue.publish_executions_dead_letter_queue.arn]
   }
-
 }
 
 resource "aws_iam_role_policy" "publish_executions_lambda_role_policy" {
