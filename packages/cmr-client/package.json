@@ -16,6 +16,9 @@
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
+    "files": [
+      "tests/**/test-*.js"
+    ],
     "fail-fast": true,
     "timeout": "15m"
   },
@@ -43,5 +46,8 @@
     "public-ip": "^3.0.0",
     "xml2js": "^0.4.19",
     "zod": "^3.20.2"
+  },
+  "devDependencies": {
+    "jose": "^4.12.0"
   }
 }
