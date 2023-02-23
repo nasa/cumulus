@@ -1,6 +1,5 @@
 import * as z from 'zod';
 import got, { Response, HTTPError } from 'got';
-import sortBy from 'lodash/sortBy';
 const parseCaughtError = require('@cumulus/common');
 
 const TokenSchema = z.object({
@@ -19,6 +18,15 @@ type Token = z.infer<typeof TokenSchema>;
 const GetTokenResponseBody = z.array(TokenSchema);
 
 const PostTokenResponseBody = z.tuple([PostTokenSchema]);
+
+/** Returns the exp field (number of seconds after 1970) of a token's
+ * payload which is used to compare expiration dates precisely
+ *
+ * @returns {number} the token payload's exp
+ */
+
+const returnJWTexp = (token: string) : number =>
+  JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString()).exp;
 
 /**
  * The method for getting the Earthdata Login endpoint URL based on the EDL environment
@@ -80,9 +88,11 @@ export const retrieveEDLToken = async (
     throw parseCaughtError(error);
   }
   const tokens = GetTokenResponseBody.parse(rawResponse.body);
-  const isTokenExpired = (token: Token) => new Date(token.expiration_date) < new Date();
+  const isTokenExpired = (token: Token) => (returnJWTexp(token.access_token) < +new Date() / 1000);
   const unExpiredTokens = tokens.filter((token: Token) => !isTokenExpired(token));
-  return unExpiredTokens.length > 0 ? sortBy(unExpiredTokens, ['expiration_date'])[unExpiredTokens.length - 1].access_token : undefined;
+  const sortedTokens = unExpiredTokens.sort((a, b) =>
+    returnJWTexp(a.access_token) - returnJWTexp(b.access_token));
+  return sortedTokens.length > 0 ? sortedTokens[sortedTokens.length - 1].access_token : undefined;
 };
 
 /**
@@ -110,7 +120,7 @@ export const createEDLToken = async (
     if (error instanceof got.HTTPError) throw parseHttpError(error, 'create');
     throw parseCaughtError(error);
   }
-  const response = PostTokenResponseBody.parse(rawResponse.body);
+  const response = PostTokenResponseBody.parse([rawResponse.body]);
   return response.length > 0 ? response[0].access_token : undefined;
 };
 

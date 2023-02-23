@@ -67,9 +67,9 @@ test('retrieveEDLToken returns the token if it expires later the same day', asyn
   // There is a race condition in this test that could pop up if the test is run near midnight
 
   const { username, password } = t.context;
-
   const now = new Date();
-  const fiveSecondsFromNow = new Date(now.valueOf() + (5 * 1000));
+
+  const fiveSecondsFromNow = new Date(now.valueOf() + (300 * 1000));
 
   const token = createToken({
     expirationTime: fiveSecondsFromNow.valueOf() / 1000,
@@ -78,8 +78,7 @@ test('retrieveEDLToken returns the token if it expires later the same day', asyn
   nock('https://sit.urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
     .reply(200, buildGetTokensResponse([token]));
-
-  const result = await retrieveEDLToken(username, password, 'SIT');
+  const result = await retrieveEDLToken(username, password, 'sit');
 
   t.is(result, token);
 });
@@ -142,7 +141,6 @@ test('retrieveEDLToken returns the last-expiring token if there are multiple tok
   const result1 = await retrieveEDLToken(username, password, 'SIT');
 
   t.is(result1, secondExpiringToken);
-
   // Second expiring, then first
   nock('https://sit.urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
