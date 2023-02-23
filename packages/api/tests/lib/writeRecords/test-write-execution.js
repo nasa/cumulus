@@ -29,8 +29,6 @@ const {
 } = require('../../../lib/writeRecords/write-execution');
 
 test.before(async (t) => {
-  process.env.ExecutionsTable = cryptoRandomString({ length: 10 });
-
   t.context.testDbName = `writeExecutions_${cryptoRandomString({ length: 10 })}`;
 
   const { knexAdmin, knex } = await generateLocalTestDb(
