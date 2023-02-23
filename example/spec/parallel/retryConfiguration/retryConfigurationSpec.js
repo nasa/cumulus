@@ -37,8 +37,6 @@ describe('When a task is configured', () => {
   let retryFailLambdaExecutions;
   beforeAll(async () => {
     config = await loadConfig();
-
-
     const retryPassPromise = buildAndExecuteWorkflow(
       config.stackName,
       config.bucket,
