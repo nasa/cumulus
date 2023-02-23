@@ -709,11 +709,11 @@ const _writeGranule = async ({
   });
   const pgGranule = writePgGranuleResult.pgGranule;
 
-  // Files are only written to Postgres if the granule is in a "final" state
-  // (e.g. "status: completed") and there is a valid `files` key in the granule.
-  // An empty array of files will remove existing file records but a missing
-  // `files` key will not.
   if (writePgGranuleResult.status === 'success') {
+    // Files are only written to Postgres if the granule is in a "final" state
+    // (e.g. "status: completed") and there is a valid `files` key in the granule.
+    // An empty array of files will remove existing file records but a missing
+    // `files` key will not.
     if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord) {
       await _writeGranuleFiles({
         granuleCumulusId: pgGranule.cumulus_id,
