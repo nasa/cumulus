@@ -200,6 +200,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
     write constraints apply
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
+- **CUMULUS-3193**
+  - Update eslint config to better support typing
 - Add a Python version file
 
 ## [v14.0.0] 2022-12-08
