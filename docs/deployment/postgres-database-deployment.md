@@ -103,7 +103,7 @@ To deploy this module, you need to make sure that you have the following steps f
 
 ### Configure and Deploy the Module
 
-When configuring this module, please keep in mind that unlike Cumulus deployment, **this module should be deployed once** to create the database cluster and only thereafter to make changes to that configuration/upgrade/etc. 
+When configuring this module, please keep in mind that unlike Cumulus deployment, **this module should be deployed once** to create the database cluster and only thereafter to make changes to that configuration/upgrade/etc.
 
 >**Tip**: This module does not need to be re-deployed for each Core update.
 

@@ -362,8 +362,7 @@ Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when co
 
 Cumulus can be configured to use either the Thin Egress App (TEA) or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
 
->  ⚠️ **IMPORTANT:** If you already have a deployment using the TEA distribution and want to switch to Cumulus Distribution, there will be an API Gateway change. This means that there will be downtime while you update your CloudFront endpoint to use
-the new API gateway.
+> ⚠️ **IMPORTANT:** If you already have a deployment using the TEA distribution and want to switch to Cumulus Distribution, there will be an API Gateway change. This means that there will be downtime while you update your CloudFront endpoint to use the new API gateway.
 
 #### Configure the Thin Egress App
 
