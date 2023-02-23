@@ -115,8 +115,8 @@ update the database cluster to use the new configuration.
   - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
-  - Update Getting Started sections with current content
-  - **CUMULUS-3046**
+  - Update Getting Started sections with current content 
+- **CUMULUS-3046**
   - Update 'Deployment' public docs
   - Apply grammar, link fixes, and continuity/taxonomy standards
 - **CUMULUS-3071**
