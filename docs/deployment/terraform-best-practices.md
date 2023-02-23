@@ -14,7 +14,7 @@ that versioning is enabled on the S3 bucket used for persisting your
 deployment's Terraform state file.
 
 To enable bucket versioning, either use the AWS CLI command given in
-[Configuring the Cumulus deployment], or the AWS Management Console, as follows:
+[Configuring the Cumulus deployment](../deployment/README.md#create-resources-for-terraform-state), or the AWS Management Console, as follows:
 
 1. Go to the S3 service
 2. Go to the bucket used for storing Terraform state files
@@ -72,7 +72,7 @@ of the state file:
 
 At this point, the previous version is now the latest version.
 
-> **NOTE:** When attempting to delete the latest (corrupt) version of the file,
+> ⚠️ **Note:** When attempting to delete the latest (corrupt) version of the file,
 you must _explicitly_ choose the **latest version**. Otherwise, if you simply
 choose the file when versions are hidden, deleting it will insert a
 _delete marker_ as the latest version of the file. This means that all prior
@@ -219,7 +219,7 @@ Starting from the root of your deployment repository workspace, perform the
 following commands to first **destroy the resources for your `cumulus` module**
 deployment.
 
-**NOTE:** If you are using Terraform workspaces, be sure to select the relevant
+> ⚠️ **Note:** If you are using Terraform workspaces, be sure to select the relevant
 workspace first.
 
 ```bash

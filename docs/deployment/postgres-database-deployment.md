@@ -38,7 +38,7 @@ Configuration/installation of this module requires the following:
 
 ### Needed Git Repositories
 
-- [Deployment Template](https://github.com/nasa/cumulus-template-deploy)
+- [Cumulus Deployment Template](https://github.com/nasa/cumulus-template-deploy)
 
 ### Assumptions
 
@@ -55,15 +55,15 @@ working with Terraform, the following links should bring you up to speed:
 - [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
 - [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
-For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#install-terraform)
+For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#install-terraform).
 
 #### Aurora/RDS
 
-This document also assumes some basic familiarity with PostgreSQL databases, and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the [AWS docs](https://aws.amazon.com/rds/aurora/), and the [Aurora Serverless V1 docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.html).
+This document also assumes some basic familiarity with PostgreSQL databases and Amazon Aurora/RDS.   If you're unfamiliar consider perusing the [AWS docs](https://aws.amazon.com/rds/aurora/) and the [Aurora Serverless V1 docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.html).
 
-## Prepare deployment repository
+## Prepare Deployment Repository
 
- > If you already are working with an existing repository that has a configured `rds-cluster-tf` deployment for the version of Cumulus you intend to deploy or update, *or*  just need to configure this module for your repository, skip to [Prepare AWS configuration.](postgres_database_deployment#prepare-aws-configuration)
+ > If you already are working with an existing repository that has a configured `rds-cluster-tf` deployment for the version of Cumulus you intend to deploy or update, *or*  just need to configure this module for your repository, skip to [Prepare AWS Configuration.](postgres_database_deployment#prepare-aws-configuration)
 
 Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-deploy) repo and name appropriately for your organization:
 
@@ -71,10 +71,10 @@ Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-d
   git clone https://github.com/nasa/cumulus-template-deploy <repository-name>
 ```
 
-We will return to [configuring this repo and using it for deployment below](#deploying-the-cumulus-instance).
+We will return to [configuring this repo and using it for deployment below](#configure-and-deploy-the-module).
 
 <details>
-  <summary>Optional: Create a new repository</summary>
+  <summary>Optional: Create a New Repository</summary>
 
   [Create a new repository](https://help.github.com/articles/creating-a-new-repository/) on Github so that you can add your workflows and other modules to source control:
 
@@ -85,25 +85,27 @@ We will return to [configuring this repo and using it for deployment below](#dep
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
 
-> **Note**: If you are pushing your deployment code to a git repo, make sure to add `terraform.tf` and `terraform.tfvars` to `.gitignore`, **as these files will contain sensitive data related to your AWS account**.
+> ⚠️ **Note**: If you are pushing your deployment code to a git repo, make sure to add `terraform.tf` and `terraform.tfvars` to `.gitignore`, **as these files will contain sensitive data related to your AWS account**.
 
 </details>
 
 ---
 
-## Prepare AWS configuration
+## Prepare AWS Configuration
 
 To deploy this module, you need to make sure that you have the following steps from the [Cumulus deployment instructions](deployment-readme#prepare-aws-configuration) in similar fashion *for this module*:
 
 - [Set Access Keys](deployment-readme#set-access-keys)
-- [Create the state bucket](deployment-readme#create-the-state-bucket)
-- [Create the locks table](deployment-readme#create-the-locks-table)
+- [Create the State Bucket](deployment-readme#create-the-state-bucket)
+- [Create the Locks Table](deployment-readme#create-the-locks-table)
 
 --
 
-### Configure and deploy the module
+### Configure and Deploy the Module
 
-When configuring this module, please keep in mind that unlike Cumulus deployment, this module should be deployed once to create the database cluster and only thereafter to make changes to that configuration/upgrade/etc. This module does not need to be re-deployed for each Core update.
+When configuring this module, please keep in mind that unlike Cumulus deployment, **this module should be deployed once** to create the database cluster and only thereafter to make changes to that configuration/upgrade/etc. 
+
+>**Tip**: This module does not need to be re-deployed for each Core update.
 
 These steps should be executed in the `rds-cluster-tf` directory of the template deploy repo that you previously cloned. Run the following to copy the example files:
 
@@ -119,7 +121,7 @@ In `terraform.tf`, configure the remote state settings by substituting the appro
 - `dynamodb_table`
 - `PREFIX` (whatever prefix you've chosen for your deployment)
 
-Fill in the appropriate values in `terraform.tfvars`. See the [rds-cluster-tf module variable definitions](https://github.com/nasa/cumulus/blob/master/tf-modules/rds-cluster-tf/variables.tf) for more detail on all of the configuration options.  A few notable configuration options are documented in the next section.
+Fill in the appropriate values in `terraform.tfvars`. See the [rds-cluster-tf module variable definitions](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-rds-tf) for more detail on all of the configuration options.  A few notable configuration options are documented in the next section.
 
 #### Configuration Options
 
@@ -130,28 +132,28 @@ Fill in the appropriate values in `terraform.tfvars`. See the [rds-cluster-tf mo
 - `subnets` -- requires at least 2 across different AZs.   For use with Cumulus, these AZs should match the values you configure for your `lambda_subnet_ids`.
 - `max_capacity` -- the max ACUs the cluster is allowed to use.    Carefully consider cost/performance concerns when setting this value.
 - `min_capacity` -- the minimum ACUs the cluster will scale to
-- `provision_user_database` -- Optional flag to allow module to provision a user database in addition to creating the cluster.   Described in the next section.
+- `provision_user_database` -- Optional flag to allow module to provision a user database in addition to creating the cluster.   Described in the [next section](#provision-user-and-user-database).
 
-#### Provision user and user database
+#### Provision User and User Database
 
 If you wish for the module to provision a PostgreSQL database on your new cluster and provide a secret for access in the module output, *in addition to* managing the cluster itself, the following configuration keys are required:
 
-- `provision_user_database` -- must be set to `true`, this configures the module to deploy a lambda that will create the user database, and update the provided configuration on deploy.
+- `provision_user_database` -- must be set to `true`. This configures the module to deploy a lambda that will create the user database, and update the provided configuration on deploy.
 - `permissions_boundary_arn` -- the permissions boundary to use in creating the roles for access the provisioning lambda will need.  This should in most use cases be the same one used for Cumulus Core deployment.
-- `rds_user_password` -- the value to set the user password to
-- `prefix` -- this value will be used to set a unique identifier the `ProvisionDatabase` lambda, as well as name the provisioned user/database.
+- `rds_user_password` -- the value to set the user password to.
+- `prefix` -- this value will be used to set a unique identifier for the `ProvisionDatabase` lambda, as well as name the provisioned user/database.
 
-Once configured, the module will deploy the lambda, and run it on each provision, creating the configured database if it does not exist, updating the user password if that value has been changed, and updating the output user database secret.
+Once configured, the module will deploy the lambda and run it on each provision thus creating the configured database (if it does not exist), updating the user password (if that value has been changed), and updating the output user database secret.
 
 Setting `provision_user_database` to false after provisioning will **not** result in removal of the configured database, as the lambda is non-destructive as configured in this module.
 
-**Please Note:** This functionality is limited in that it will only provision a single database/user and configure a basic database, and should not be used in scenarios where more complex configuration is  required.
+> ⚠️ **Note:** This functionality is limited in that it will only provision a single database/user and configure a basic database, and should not be used in scenarios where more complex configuration is required.
 
 #### Initialize Terraform
 
 Run `terraform init`
 
-You should see output like:
+You should see a similar output:
 
 ```shell
 * provider.aws: version = "~> 2.32"
@@ -163,7 +165,7 @@ Terraform has been successfully initialized!
 
 Run `terraform apply` to deploy the resources.
 
-**If re-applying this module, variables (e.g. `engine_version`, `snapshot_identifier` ) that force a recreation of the database cluster may result in data loss if deletion protection is disabled.   Examine the changeset *carefully* for resources that will be re-created/destroyed before applying.**
+> ⚠️ **Caution**: If re-applying this module, variables (e.g. `engine_version`, `snapshot_identifier` ) that force a recreation of the database cluster may result in data loss if deletion protection is disabled.  Examine the changeset **carefully** for resources that will be re-created/destroyed before applying.
 
 Review the changeset, and assuming it looks correct, type `yes` when prompted to confirm that you want to create all of the resources.
 
@@ -326,9 +328,9 @@ security_group_id = xxxxxxxxx
 user_credentials_secret_arn = arn:aws:secretsmanager:us-east-1:xxxxx:secret:xxxxxxxxxx20210407182709367700000002-dpmpXA
 ```
 
-Note the output values for `admin_db_login_secret_arn` (and optionally `user_credentials_secret_arn`) as these provide the AWS Secrets Manager secret required to access the database as the administrative user and, optionally, the user database credentials Cumulus requires as well.
+Note the output values for `admin_db_login_secret_arn` (and optionally `user_credentials_secret_arn`) as these provide the AWS Secrets Manager secrets required to access the database as the administrative user and, optionally, the user database credentials Cumulus requires as well.
 
-The content of each of these secrets are is in the form:
+The content of each of these secrets are in the form:
 
 ```json
 {
@@ -352,4 +354,4 @@ The content of each of these secrets are is in the form:
 
 ### Next Steps
 
-The database cluster has been created/updated!    From here you can continue to add additional user accounts, databases and other database configuration.
+The database cluster has been created/updated! From here you can continue to add additional user accounts, databases, and other database configuration.

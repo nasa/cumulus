@@ -22,7 +22,7 @@ $ aws s3api create-bucket \
 }
 ```
 
-> **Note:** The `region` and `create-bucket-configuration` arguments are only necessary if you are creating a bucket outside of the `us-east-1` region.
+> ⚠️ **Note:** The `region` and `create-bucket-configuration` arguments are only necessary if you are creating a bucket outside of the `us-east-1` region.
 
 Please note security settings and other bucket options can be set via the options listed in the ``s3api`` documentation.
 

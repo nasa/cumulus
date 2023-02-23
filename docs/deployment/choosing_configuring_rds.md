@@ -6,7 +6,7 @@ hide_title: false
 
 ## Background
 
-Cumulus uses a PostgreSQL database as its primary data store
+Cumulus uses a [PostgreSQL](https://www.postgresql.org/) database as its primary data store
 for operational and archive records (e.g. collections, granules, etc). The Cumulus
 core deployment code expects this database to be provided by the [AWS RDS](https://docs.aws.amazon.com/rds/index.html) service; however, it is agnostic about the type of the RDS database.
 
@@ -49,7 +49,7 @@ If you are going to use an Aurora Serverless RDS database, we recommend the foll
 The reason for these recommendations requires an understanding of Aurora Serverless scaling.
 Aurora Serverless scaling works as described in [the Amazon Aurora documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.how-it-works.html):
 
-> When it does need to perform a scaling operation, Aurora Serverless v1 first tries to identify a scaling point, a moment when no queries are being processed
+> When it does need to perform a scaling operation, Aurora Serverless v1 first tries to identify a scaling point, a moment when no queries are being processed.
 
 However, during periods of heavy ingest, Cumulus will be continuously writing granules and other
 records to the database, so a "scaling point" will never be reached. This is where the
