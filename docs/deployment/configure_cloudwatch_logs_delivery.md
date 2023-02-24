@@ -4,7 +4,7 @@ title: Configure Cloudwatch Logs Delivery
 hide_title: false
 ---
 
-As an optional configuration step, it is possible to deliver CloudWatch logs to a cross-account shared AWS::Logs::Destination. An operator does this by configuring the `cumulus` module for [your deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module) as shown below. The value of the `log_destination_arn` variable is the ARN of a writeable log destination.
+As an optional configuration step, it is possible to deliver CloudWatch logs to a cross-account shared AWS::Logs::Destination. An [operator](https://nasa.github.io/cumulus/docs/glossary#operator) does this by configuring the `cumulus` module for [your deployment](../deployment/README.md#configure-and-deploy-the-cumulus-tf-root-module) as shown below. The value of the `log_destination_arn` variable is the ARN of a writeable log destination.
 
 The value can be either an [AWS::Logs::Destination](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-logs-destination.html) or a [Kinesis Stream](https://aws.amazon.com/kinesis/data-streams/) ARN to which your account can write.
 
@@ -14,7 +14,7 @@ log_destination_arn           = arn:aws:[kinesis|logs]:us-east-1:123456789012:[s
 
 ## Logs Sent
 
-Be default, the following logs will be sent to the destination when one is given.
+By default, the following logs will be sent to the destination when one is given.
 
 * Ingest logs
 * Async Operation logs
