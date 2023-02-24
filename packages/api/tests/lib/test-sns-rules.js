@@ -172,11 +172,11 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
   );
 
   const testPgCollection1 = fakeCollectionRecordFactory({
-    name: randomId(),
+    name: randomId('collection-'),
     version: 'v1',
   });
   const testPgCollection2 = fakeCollectionRecordFactory({
-    name: randomId(),
+    name: randomId('collection-'),
     version: 'v2',
   });
   await Promise.all([
@@ -241,7 +241,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
   await rulePgModel.delete(testKnex, rule1);
 
   await t.notThrowsAsync(rulesHelpers.deleteSnsTrigger(testKnex, ruleWithTrigger2));
-  await t.notThrowsAsync(rulePgModel.delete(testKnex, rule2));
+  await rulePgModel.delete(testKnex, rule2);
 
   // Ensure that cleanup for SNS rule subscription was actually called
   t.true(unsubscribeSpy.called);
