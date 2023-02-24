@@ -104,6 +104,9 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3189**
   - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
     support pip 23.0
+- **CUMULUS-3196**
+  - Moved `createServer` initialization outside the `s3-credentials-endpoint` lambda
+    handler to reduce file descriptor usage
 - README shell snippets better support copying
 - **CUMULUS-3111**
   - Fix issue where if granule update dropped due to write constraints for writeGranuleFromMessage, still possible for granule files to be written
