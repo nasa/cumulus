@@ -35,6 +35,19 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3121**
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 
+### Added
+
+- **CUMULUS-3193**
+  - Add a Python version file
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+- **CUMULUS-3071**
+  - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
+    endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
+    behavior (complete overwrite) in a future release.   **The existing PUT
+    implementation is deprecated** and users should move all existing usage of
+    `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
+
 ### Removed
 
 - Removed a few tests that were disabled 3-4 years ago
@@ -91,11 +104,6 @@ update the database cluster to use the new configuration.
   - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
     support pip 23.0
 - README shell snippets better support copying
-- **CUMULUS-3140**
-  - Update release note to include cumulus-api release
-- **CUMULUS-3193**
-  - Update eslint config to better support typing
-  - Add a Python version file
 
 ### Changed
 
@@ -109,11 +117,6 @@ update the database cluster to use the new configuration.
   - Organize & link Getting Started public docs for better user guidance
   - Update Getting Started sections with current content
 - **CUMULUS-3071**
-  - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
-    endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
-    behavior (complete overwrite) in a future release.   **The existing PUT
-    implementation is deprecated** and users should move all existing usage of
-    `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
   - Updated `@cumulus/api-client` packages to use `PATCH` protocol for existing
     granule `PUT` calls, this change should not require user updates for
     `api-client` users.
@@ -126,10 +129,12 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3097**
   - Changed `@cumulus/cmr-client` package's token from Echo-Token to Earthdata Login (EDL) token in updateToken method
   - Updated CMR header and token tests to reflect the Earthdata Login changes
-- **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
+- **CUMULUS-3140**
+  - Update release note to include cumulus-api release
+- **CUMULUS-3193**
+  - Update eslint config to better support typing
 - Improve linting of TS files
 
 ## [v14.0.0] 2022-12-08
