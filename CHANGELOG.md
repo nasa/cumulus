@@ -338,8 +338,6 @@ releases.
 
 ### Fixed
 
-- Removed ts-nocheck call in EarthdataLogin.ts and CMR.ts and fixed TS issues while also
-removing the EarthdataLogin class and instead exporting the individual methods
 - **CUMULUS-2557**
   - Updated `@cumulus/aws-client/S3/moveObject` to handle zero byte files (0 byte files).
 - **CUMULUS-2971**
