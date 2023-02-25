@@ -378,7 +378,6 @@ data "aws_iam_policy_document" "publish_collections_policy_document" {
       "dynamodb:DescribeStream",
       "dynamodb:ListStreams"
     ]
-    resources = ["${var.dynamo_tables.collections.arn}/stream/*"]
   }
 }
 
@@ -401,6 +400,3 @@ resource "aws_sns_topic" "report_collections_topic" {
   tags = var.tags
 }
 
-data "aws_dynamodb_table" "collections" {
-  name = var.dynamo_tables.collections.name
-}
