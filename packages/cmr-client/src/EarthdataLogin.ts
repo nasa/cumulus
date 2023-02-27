@@ -88,7 +88,7 @@ export const retrieveEDLToken = async (
     throw parseCaughtError(error);
   }
   const tokens = GetTokenResponseBody.parse(rawResponse.body);
-  const isTokenExpired = (token: Token) => (returnJWTexp(token.access_token) < +new Date() / 1000);
+  const isTokenExpired = (token: Token) => (token.access_token == undefined || returnJWTexp(token.access_token) < +new Date() / 1000);
   const unExpiredTokens = tokens.filter((token: Token) => !isTokenExpired(token));
   const sortedTokens = unExpiredTokens.sort((a, b) =>
     returnJWTexp(a.access_token) - returnJWTexp(b.access_token));
