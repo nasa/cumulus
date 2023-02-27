@@ -456,24 +456,26 @@ async function addSnsTrigger(item) {
   }
   while (token);
   /* eslint-enable no-await-in-loop */
-  // create sns subscription
-  const subscriptionParams = {
-    TopicArn: item.rule.value,
-    Protocol: 'lambda',
-    Endpoint: process.env.messageConsumer,
-    ReturnSubscriptionArn: true,
-  };
-  const r = await awsServices.sns().subscribe(subscriptionParams).promise();
-  subscriptionArn = r.SubscriptionArn;
-  // create permission to invoke lambda
-  const permissionParams = {
-    Action: 'lambda:InvokeFunction',
-    FunctionName: process.env.messageConsumer,
-    Principal: 'sns.amazonaws.com',
-    SourceArn: item.rule.value,
-    StatementId: `${item.name}Permission`,
-  };
-  await awsServices.lambda().addPermission(permissionParams).promise();
+  if (!subExists) {
+    // create sns subscription
+    const subscriptionParams = {
+      TopicArn: item.rule.value,
+      Protocol: 'lambda',
+      Endpoint: process.env.messageConsumer,
+      ReturnSubscriptionArn: true,
+    };
+    const r = await awsServices.sns().subscribe(subscriptionParams).promise();
+    subscriptionArn = r.SubscriptionArn;
+    // create permission to invoke lambda
+    const permissionParams = {
+      Action: 'lambda:InvokeFunction',
+      FunctionName: process.env.messageConsumer,
+      Principal: 'sns.amazonaws.com',
+      SourceArn: item.rule.value,
+      StatementId: `${item.name}Permission`,
+    };
+    await awsServices.lambda().addPermission(permissionParams).promise();
+  }
   return subscriptionArn;
 }
 
