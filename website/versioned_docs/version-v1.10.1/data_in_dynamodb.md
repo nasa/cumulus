@@ -76,6 +76,7 @@ To restore data from a json file run the following command:
 
 ```
 <deployment_name>:
+  PdrsTable:
   Granules:
     enableAutoScaling: true  
 ```
