@@ -118,7 +118,6 @@ test.serial('getToken returns a valid token', async (t) => {
 
   const now = new Date();
   const oneHourLater = new Date(now.valueOf() + (60 * 60 * 1000));
-
   const unexpiredToken = createToken({
     expirationTime: oneHourLater.valueOf() / 1000,
   });
