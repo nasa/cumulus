@@ -75,7 +75,6 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
       functionName = `${config.stackName}-populateTestLambda`;
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
       testSuffix = createTestSuffix(testId);

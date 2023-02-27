@@ -44,55 +44,6 @@ module.exports.accessToken = {
 
 // NOTE -- This schema is being removed/deprecated in P3,
 // updates to this schema MUST be made to /api/lib/schemas.js
-
-// Async Operation record definition
-module.exports.asyncOperation = {
-  title: 'AsyncOperation Object',
-  description: 'Cumulus API AsyncOperation Table schema',
-  type: 'object',
-  required: [
-    'createdAt',
-    'id',
-    'status',
-    'updatedAt',
-    'description',
-    'operationType',
-  ],
-  additionalProperties: false,
-  properties: {
-    createdAt: { type: 'integer' },
-    id: { type: 'string' },
-    description: { type: 'string' },
-    operationType: {
-      type: 'string',
-      enum: [
-        'Data Migration',
-        'Dead-Letter Processing',
-        'Migration Count Report',
-        'ES Index',
-        'Bulk Granules',
-        'Bulk Granule Delete',
-        'Bulk Granule Reingest',
-        'Kinesis Replay',
-        'Reconciliation Report',
-        'SQS Replay',
-      ],
-    },
-    output: {
-      description: 'The result of the operation, stored as JSON',
-      type: 'string',
-    },
-    status: {
-      type: 'string',
-      enum: ['RUNNING', 'SUCCEEDED', 'RUNNER_FAILED', 'TASK_FAILED'],
-    },
-    taskArn: { type: 'string' },
-    updatedAt: { type: 'integer' },
-  },
-};
-
-// NOTE -- This schema is being removed/deprecated in P3,
-// updates to this schema MUST be made to /api/lib/schemas.js
 // Collection Record Definition
 module.exports.collection = {
   title: 'Collection Object',

@@ -373,6 +373,7 @@ async function upsertGranule({
     // File removal is a special case as null gets set to []
     if (fieldName === 'files' && isEqual(value, [])) {
       removeString += `ctx._source.remove('${fieldName}'); `;
+      delete upsertDoc.files; // Remove files in case this is not a scripted upsert
     }
     if (value === null) {
       removeString += `ctx._source.remove('${fieldName}'); `;
@@ -391,7 +392,7 @@ async function upsertGranule({
     // undesired behavior via business logic on the message write logic
     inline = `
     if ((ctx._source.createdAt === null || params.doc.createdAt >= ctx._source.createdAt)
-      && (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution))) {
+      && ((params.doc.status != 'running' && params.doc.status != 'queued') || ((params.doc.status == 'running' || params.doc.status == 'queued') && params.doc.execution != ctx._source.execution))) {
       ${inlineDocWriteString}
     } else {
       ctx.op = 'none';
@@ -399,7 +400,7 @@ async function upsertGranule({
     `;
     if (!updates.createdAt) {
       inline = `
-        if (params.doc.status != 'running' || (params.doc.status == 'running' && params.doc.execution != ctx._source.execution)) {
+        if ((params.doc.status != 'running' && params.doc.status != 'queued') || ((params.doc.status == 'running' || params.doc.status == 'queued') && params.doc.execution != ctx._source.execution)) {
           ${inlineDocWriteString}
         } else {
         ctx.op = 'none';
