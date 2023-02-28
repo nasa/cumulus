@@ -10,9 +10,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3147**
   - The minimum supported version for all published Cumulus Core npm packages is now Node 16.19.0
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to `cumuluss/cumulus-ecs-task:1.9.0.` This can be done by updating the `image` property of any tasks defined using the `cumulus_ecs_service` Terraform module.
 
 ## Notable changes
-  - Published new tag 44 of cumuluss/async-operation to Docker Hub which was built with node:16.19.0-buster.
+  - Updated Dockerfile of async operation docker image to build from node:16.19.0-buster
+  - Published new tag [`44` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/44/images/sha256-8d757276714153e4ab8c24a2b7b6b9ffee14cc78b482d9924e7093af88362b04?context=explore) which was built with node:16.19.0-buster.
+  - Sets default async_operation_image version to 44.
 
 ### MIGRATION notes
 

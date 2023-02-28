@@ -105,7 +105,7 @@ module "queue_granules_service" {
 
   cluster_arn                           = module.cumulus.ecs_cluster_arn
   desired_count                         = 1
-  image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
+  image                                 = "cumuluss/cumulus-ecs-task:1.9.0"
 
   cpu                = 400
   memory_reservation = 700
