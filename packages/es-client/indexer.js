@@ -1,3 +1,5 @@
+// @ts-check
+
 /* functions for transforming and indexing Cumulus Payloads
  * in Elasticsearch. These functions are specifically designed
  * to transform data for use in cumulus api
@@ -299,12 +301,13 @@ const granuleInvalidNullFields = [
  * Upserts a granule in Elasticsearch
  *
  * @param {Object} params
- * @param {Object} params.esClient        - Elasticsearch Connection object
- * @param {Object} params.updates         - Updates to make
- * @param {string} params.index           - Elasticsearch index alias (default defined in search.js)
- * @param {string} params.type            - Elasticsearch type (default: granule)
- * @param {string} [params.refresh]       - whether to refresh the index on update or not
- * @param {boolean}   writeConstraints       - boolean toggle restricting if conditionals should
+ * @param {Object} params.esClient          - Elasticsearch Connection object
+ * @param {Object} params.updates           - Updates to make
+ * @param {string | undefined} params.index - Elasticsearch index alias
+ *                                            (default defined in search.js)
+ * @param {string} [params.type]              - Elasticsearch type (default: granule)
+ * @param {string} [params.refresh]         - whether to refresh the index on update or not
+ * @param {boolean} writeConstraints      - boolean toggle restricting if conditionals should
  *                                          be used to determine write eligibility
  * @returns {Promise} Elasticsearch response
  */
