@@ -40,7 +40,7 @@
       ],
       "port": 9229,
       "outputCapture": "std",
-      "runtimeVersion": "14.19.1",
+      "runtimeVersion": "16.19.0",
       "env": {
         "LOCAL_ES_HOST_PORT": "8443",
         "LOCAL_ES_HOST_PROTOCOL": "https",
