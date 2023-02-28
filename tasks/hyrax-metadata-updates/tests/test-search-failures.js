@@ -6,6 +6,7 @@ const nock = require('nock');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const rewire = require('rewire');
 const HyraxMetadataUpdate = rewire('../index');
+const { createToken, buildGetTokensResponse } = require('@cumulus/cmr-client/tests/EarthdataLogin/utils');
 const { secretsManager } = require('@cumulus/aws-client/services');
 const {
   randomId,
@@ -28,13 +29,13 @@ const event = {
   input: {},
 };
 
-const expectedresponse = [
-  {
-    access_token: 'ABCDE',
-    token_type: 'Bearer',
-    expiration_date: '1/1/2999',
-  },
-];
+const yearsFromNow = new Date('12/31/2999');
+
+const expectedToken = createToken({
+  expirationTime: yearsFromNow.valueOf() / 1000,
+});
+
+const expectedresponse = buildGetTokensResponse([expectedToken]);
 
 test.before(async () => {
   await secretsManager().createSecret({

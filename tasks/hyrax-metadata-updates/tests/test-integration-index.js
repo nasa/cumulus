@@ -16,6 +16,7 @@ const xmlParseOptions = {
 
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
 const { randomId, randomString, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
+const { createToken, buildGetTokensResponse } = require('@cumulus/cmr-client/tests/EarthdataLogin/utils');
 const path = require('path');
 const {
   buildS3Uri,
@@ -90,13 +91,13 @@ const setupNock = (params) => {
     provider_short_name: 'GES_DISC',
   };
 
-  const expectedresponse = [
-    {
-      access_token: 'ABCDE',
-      token_type: 'Bearer',
-      expiration_date: '1/1/2999',
-    },
-  ];
+  const yearsFromNow = new Date('12/31/2999');
+
+  const expectedToken = createToken({
+    expirationTime: yearsFromNow.valueOf() / 1000,
+  });
+
+  const expectedresponse = buildGetTokensResponse([expectedToken]);
 
   // Mock out retrieval of collection entry from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
