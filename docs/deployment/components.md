@@ -15,8 +15,8 @@ able to make use of the large number of publicly available modules on the [Terra
 ## Available Cumulus Components
 
 * [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus)
-* [Data persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence)
-* [ECS service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-ecs-service)
+* [Data Persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/data-persistence)
+* [ECS Service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus_ecs_service)
 * [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution)
 * [Thin Egress App](./thin_egress_app)
 * [Cumulus Distribution App](./cumulus_distribution)
@@ -59,7 +59,7 @@ of the Cumulus repo.
 
 ## Remote State
 
-From Terraform's [Remote State](https://www.terraform.io/docs/state/remote.html)
+We suggest to follow the recommendations from the Terraform's [Remote State](https://www.terraform.io/docs/state/remote.html)
 documentation:
 
 > By default, Terraform stores state locally in a file named `terraform.tfstate`.
