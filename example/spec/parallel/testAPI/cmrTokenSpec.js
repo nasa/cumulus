@@ -1,6 +1,7 @@
 'use strict';
 
-const { CMR, EarthdataLogin } = require('@cumulus/cmr-client');
+const { CMR } = require('@cumulus/cmr-client');
+const { EarthdataLogin } = require('@cumulus/cmr-client/EarthdataLogin');
 const { loadConfig } = require('../../helpers/testUtils');
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
