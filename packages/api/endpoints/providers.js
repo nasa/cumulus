@@ -32,13 +32,7 @@ const log = new Logger({ sender: '@cumulus/api/providers' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  // const search = new Search(
-  //   { queryStringParameters: req.query },
-  //   'provider',
-  //   process.env.ES_INDEX
-  // );
-
-  // const response = await search.query();
+  const table = 'providers';
   const queryParameters = req.query;
   const perPage = Number.parseInt((queryParameters.limit) ? queryParameters.limit : 10, 10)
   const currentPage = Number.parseInt((queryParameters.page) ? queryParameters.page : 1, 10);
@@ -54,6 +48,11 @@ async function list(req, res) {
     results: translatedResults,
     meta: {
       ...response.pagination,
+      count: response.pagination.total,
+      stack: process.env.stackName,
+      page: response.pagination.currentPage,
+      table,
+      limit: 10,
     }
   };
 

@@ -29,28 +29,26 @@ const log = new Logger({ sender: '@cumulus/api/rules' });
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  // const search = new Search(
-  //   { queryStringParameters: req.query },
-  //   'rule',
-  //   process.env.ES_INDEX
-  // );
-  // const response = await search.query();
-  // return res.send(response);
-
+  const table = 'rules';
   const queryParameters = req.query;
   const perPage = Number.parseInt((queryParameters.limit) ? queryParameters.limit : 10, 10)
   const currentPage = Number.parseInt((queryParameters.page) ? queryParameters.page : 1, 10);
   const knex = await getKnexClient();
-  const response = await knex('rule').paginate({
+  const response = await knex('rules').paginate({
     perPage,
     currentPage,
   });
   const results = response.data;
+  const translatedResults = await Promise.all(results.map(async (ruleRecord) => await translatePostgresRuleToApiRule(ruleRecord, knex)));
 
   const queryResults = {
-    results,
+    results: translatedResults,
     meta: {
       ...response.pagination,
+      stack: process.env.stackName,
+      count: response.pagination.total,
+      page: response.pagination.currentPage,
+      table,
     }
   };
 

@@ -128,13 +128,6 @@ async function update(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
-  // const search = new Search(
-  //   { queryStringParameters: req.query },
-  //   'execution',
-  //   process.env.ES_INDEX
-  // );
-  // const response = await search.query();
-  // return res.send(response);
   const queryParameters = req.query;
   const perPage = Number.parseInt((queryParameters.limit) ? queryParameters.limit : 10, 10)
   const currentPage = Number.parseInt((queryParameters.page) ? queryParameters.page : 1, 10);
@@ -144,11 +137,19 @@ async function list(req, res) {
     currentPage,
   });
   const results = response.data;
+  const table = 'execution';
+  const translatedResults = await Promise.all(results.map(async (executionRecord) => await translatePostgresExecutionToApiExecution(executionRecord, knex)));
 
   const queryResults = {
-    results,
+    results: translatedResults,
     meta: {
       ...response.pagination,
+      stack: process.env.stackName,
+      count: response.pagination.total,
+      page: response.pagination.currentPage,
+      table,
+      limit: 10,
+      // searchContext
     }
   };
 
