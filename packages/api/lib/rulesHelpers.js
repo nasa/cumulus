@@ -677,14 +677,14 @@ async function createRuleTrigger(ruleItem) {
   return newRuleItem;
 }
 
-async function deleteOldEventSourceMappings(item) {
+async function deleteOldEventSourceMappings(knex, item) {
   switch (item.rule.type) {
   case 'kinesis':
-    await this.deleteKinesisEventSources(item);
+    await deleteKinesisEventSources(knex, item);
     break;
   case 'sns': {
     if (item.rule.arn) {
-      await this.deleteSnsTrigger(item);
+      await deleteSnsTrigger(knex, item);
     }
     break;
   }

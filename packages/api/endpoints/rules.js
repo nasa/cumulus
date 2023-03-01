@@ -169,7 +169,7 @@ async function put(req, res) {
       await indexRule(esClient, translatedRule, process.env.ES_INDEX);
     });
 
-    await deleteOldEventSourceMappings(oldApiRule);
+    await deleteOldEventSourceMappings(knex, oldApiRule);
 
     return res.send(translatedRule);
   } catch (error) {
