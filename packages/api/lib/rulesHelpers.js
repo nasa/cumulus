@@ -677,11 +677,28 @@ async function createRuleTrigger(ruleItem) {
   return newRuleItem;
 }
 
+async function deleteOldEventSourceMappings(item) {
+  switch (item.rule.type) {
+  case 'kinesis':
+    await this.deleteKinesisEventSources(item);
+    break;
+  case 'sns': {
+    if (item.rule.arn) {
+      await this.deleteSnsTrigger(item);
+    }
+    break;
+  }
+  default:
+    break;
+  }
+}
+
 module.exports = {
   buildPayload,
   createRuleTrigger,
   deleteKinesisEventSource,
   deleteKinesisEventSources,
+  deleteOldEventSourceMappings,
   deleteRuleResources,
   deleteSnsTrigger,
   fetchAllRules,
