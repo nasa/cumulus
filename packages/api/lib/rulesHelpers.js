@@ -574,7 +574,7 @@ async function invokeRerun(rule) {
  * @param {Knex} knex           - Knex DB Client
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
-async function updateRuleTrigger(original, updates, knex) {
+async function updateRuleTrigger(original, updates) {
   let clonedRuleItem = cloneDeep(original);
   let mergedRule = merge(clonedRuleItem, updates);
   recordIsValid(mergedRule);
@@ -591,7 +591,6 @@ async function updateRuleTrigger(original, updates, knex) {
   }
   case 'kinesis':
     if (valueUpdated) {
-      await deleteKinesisEventSources(knex, mergedRule);
       const updatedRuleItemArns = await addKinesisEventSources(mergedRule);
       mergedRule = updateKinesisRuleArns(mergedRule,
         updatedRuleItemArns);
