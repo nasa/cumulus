@@ -70,25 +70,43 @@ async function applyWorkflowToGranules({
 }
 
 /**
+ * @typedef {(granule: unknown, collectionId: string) => Promise<void>} RemoveGranuleFromCmrFn
+ */
+
+/**
  * Bulk delete granules based on either a list of granules (IDs) or the query response from
  * ES using the provided query and index.
  *
  * @param {Object} payload
  * @param {boolean} [payload.forceRemoveFromCmr]
  *   Whether published granule should be deleted from CMR before removal
+ * @param {number} [payload.maxDbConnections]
+ *   Maximum number of postgreSQL DB connections to make available for knex queries
+ *   Defaults to `concurrency`
+ * @param {number} [payload.concurrency]
+ *   granule concurrency for the bulk deletion operation.  Defaults to 10
  * @param {Object} [payload.query] - Optional parameter of query to send to ES
  * @param {string} [payload.index] - Optional parameter of ES index to query.
  * Must exist if payload.query exists.
  * @param {Object} [payload.granules] - Optional list of granule unique IDs to bulk operate on
  * e.g. { granuleId: xxx, collectionID: xxx }
+ * @param {RemoveGranuleFromCmrFn} [removeGranuleFromCmrFunction] - used for test mocking
  * @param {Function} [unpublishGranuleFunc] - Optional function to delete the
  * granule from CMR. Useful for testing.
  * @returns {Promise}
+ *   Must exist if payload.query exists.
+ * @returns {Promise<unknown>}
  */
 async function bulkGranuleDelete(
   payload,
+  removeGranuleFromCmrFunction,
   unpublishGranuleFunc = unpublishGranule
 ) {
+  const concurrency = payload.concurrency || 10;
+
+  const dbPoolMax = payload.maxDbConnections || concurrency;
+  process.env.dbMaxPool = `${dbPoolMax}`;
+
   const deletedGranules = [];
   const forceRemoveFromCmr = payload.forceRemoveFromCmr === true;
   const granules = await getGranulesForPayload(payload);
@@ -118,7 +136,6 @@ async function bulkGranuleDelete(
         if (error instanceof RecordDoesNotExist) {
           log.info(error.message);
         }
-
         return;
       }
 
@@ -126,6 +143,7 @@ async function bulkGranuleDelete(
         ({ pgGranule } = await unpublishGranuleFunc({
           knex,
           pgGranuleRecord: pgGranule,
+          removeGranuleFromCmrFunction,
         }));
       }
 
@@ -137,7 +155,7 @@ async function bulkGranuleDelete(
       deletedGranules.push(granule.granuleId);
     },
     {
-      concurrency: 10, // is this necessary?
+      concurrency,
       stopOnError: false,
     }
   );

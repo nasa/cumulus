@@ -14,7 +14,6 @@ elasticsearch_config = {
 }
 enable_point_in_time_tables = [
   "CollectionsTable",
-  "ExecutionsTable"
 ]
 include_elasticsearch            = true
 subnet_ids                       = ["subnet-123456"]
