@@ -140,6 +140,8 @@ class BaseSearch {
 
     if (this.type === process.env.CollectionsTable) {
       this.hash = 'collectionName';
+    } else if (this.type === process.env.PdrsTable) {
+      this.hash = 'pdrName';
     }
   }
 

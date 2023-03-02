@@ -25,6 +25,7 @@ resource "aws_lambda_function" "db_indexer" {
       CollectionsTable           = var.dynamo_tables.collections.name
       AsyncOperationsTable       = var.dynamo_tables.async_operations.name
       GranulesTable              = var.dynamo_tables.granules.name
+      PdrsTable                  = var.dynamo_tables.pdrs.name
       ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
       RulesTable                 = var.dynamo_tables.rules.name
       ES_HOST                    = var.elasticsearch_hostname
