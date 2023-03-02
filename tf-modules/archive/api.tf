@@ -39,6 +39,7 @@ locals {
       AsyncOperationTaskDefinition     = aws_ecs_task_definition.async_operation.arn
       backgroundQueueUrl               = var.background_queue_url
       BulkOperationLambda              = aws_lambda_function.bulk_operation.arn
+      collection_sns_topic_arn         = aws_sns_topic.report_collections_topic.arn
       cmr_client_id                    = var.cmr_client_id
       CMR_ENVIRONMENT                  = var.cmr_environment
       CMR_HOST                         = var.cmr_custom_host
