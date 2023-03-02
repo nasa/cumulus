@@ -26,10 +26,6 @@ output "provider_kms_key_id" {
   value = aws_kms_key.provider_kms_key.id
 }
 
-output "report_collections_sns_topic_arn" {
-  value = aws_sns_topic.report_collections_topic.arn
-}
-
 output "report_executions_sns_topic_arn" {
   value = aws_sns_topic.report_executions_topic.arn
 }
