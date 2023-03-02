@@ -20,8 +20,16 @@ const GetTokenResponseBody = z.array(TokenSchema);
 const PostTokenResponseBody = z.tuple([PostTokenSchema]);
 
 /**
- * Returns the exp field (number of seconds after 1970) of a token's
- * payload which is used to compare expiration dates precisely
+ * When another function calls this method and passes the expected JSON Web 
+ * Token which Earthdata Login API returns and uses, the token's payload is parsed and 
+ * the exp field (the number of seconds after January 1st, 1970) is returned to be compared 
+ * against other dates. For example:
+ * 
+ *    returnJWTexp(token) -> 1677775742859, assuming token is a valid JSON Web Token
+ * 
+ * This value is used to compare against other tokens' expiration date's and the
+ * current date to determine whether a token is expired or which token (the fresher token) 
+ * should be returned.
  *
  * @returns {number} the token payload's exp
  */
@@ -89,7 +97,7 @@ export const retrieveEDLToken = async (
     throw parseCaughtError(error);
   }
   const tokens = GetTokenResponseBody.parse(rawResponse.body);
-  const isTokenExpired = (token: Token) => (returnJWTexp(token.access_token) < +new Date() / 1000);
+  const isTokenExpired = (token: Token) => (returnJWTexp(token.access_token) < Number(new Date()) / 1000);
   const unExpiredTokens = tokens.filter((token: Token) =>
     token.access_token !== undefined && !isTokenExpired(token));
   const sortedTokens = unExpiredTokens.sort((a, b) =>

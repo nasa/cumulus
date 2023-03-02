@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
-  - removed typescript checks and reformatted EarthdataLogin code to be more type friendly
+  - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
 
 ### MIGRATION notes
 
