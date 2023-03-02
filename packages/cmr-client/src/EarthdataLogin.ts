@@ -19,7 +19,8 @@ const GetTokenResponseBody = z.array(TokenSchema);
 
 const PostTokenResponseBody = z.tuple([PostTokenSchema]);
 
-/** Returns the exp field (number of seconds after 1970) of a token's
+/**
+ * Returns the exp field (number of seconds after 1970) of a token's
  * payload which is used to compare expiration dates precisely
  *
  * @returns {number} the token payload's exp

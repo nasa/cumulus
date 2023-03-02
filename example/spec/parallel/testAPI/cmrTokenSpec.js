@@ -1,8 +1,8 @@
 'use strict';
 
 const { CMR } = require('@cumulus/cmr-client');
+const { getEDLToken, revokeEDLToken } = require('@cumulus/cmr-client/EarthdataLogin');
 const { loadConfig } = require('../../helpers/testUtils');
-const { getEDLToken, revokeEDLToken } = require('../../../../packages/cmr-client/EarthdataLogin');
 const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 describe('When using Earthdata Login Token from CMR', () => {
@@ -26,8 +26,8 @@ describe('When using Earthdata Login Token from CMR', () => {
 
       cmrObject = new CMR({
         provider: 'provider',
-        username: username,
-        password: password,
+        username,
+        password,
       });
     } catch (error) {
       beforeAllFailed = true;
