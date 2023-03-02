@@ -1,4 +1,4 @@
-// @ts-check
+'use strict';
 
 const { default: test } = require('ava');
 const nock = require('nock');

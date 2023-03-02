@@ -1,6 +1,6 @@
-// @ts-check
+'use strict';
 
-const jose = require('jose');
+const jwt = require('jsonwebtoken');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const buildBasicAuthHeader = (username, password) => {
@@ -10,26 +10,29 @@ const buildBasicAuthHeader = (username, password) => {
 };
 
 const createToken = (params = {}) => {
+  const expiration = Number(new Date().valueOf() + (60 * 120 * 1000));
+  const expirationTime = params.expirationTime === undefined ? expiration : (params.expirationTime);
   const payload = {
     type: 'User',
     uid: randomId('uid-'),
+    exp: expirationTime,
     ...params.payload,
   };
 
-  const expirationTime = params.expirationTime === undefined ? '2h' : params.expirationTime;
-
-  return new jose.UnsecuredJWT(payload)
-    .setIssuer('Earthdata Login')
-    .setIssuedAt()
-    .setExpirationTime(expirationTime)
-    .encode();
+  return jwt.sign(
+    payload,
+    'test',
+    {
+      issuer: 'Earthdata Login',
+    }
+  );
 };
 
 const buildCreateTokenResponse = (token) => {
-  const decodedToken = jose.UnsecuredJWT.decode(token);
-  if (decodedToken.payload.exp === undefined) throw new Error('token exp is undefined');
+  const decodedToken = jwt.verify(token, 'test');
+  if (decodedToken.exp === undefined) throw new Error('token exp is undefined');
 
-  const expiration = new Date(decodedToken.payload.exp * 1000);
+  const expiration = new Date(decodedToken.exp * 1000);
 
   const expirationDate = expiration.toLocaleDateString('en', {
     month: '2-digit',
@@ -46,10 +49,10 @@ const buildCreateTokenResponse = (token) => {
 
 const buildGetTokensResponse = (tokens) => tokens.map(
   (token) => {
-    const decodedToken = jose.UnsecuredJWT.decode(token);
-    if (decodedToken.payload.exp === undefined) throw new Error('token exp is undefined');
+    const decodedToken = jwt.verify(token, 'test');
+    if (decodedToken.exp === undefined) throw new Error('token exp is undefined');
 
-    const expiration = new Date(decodedToken.payload.exp * 1000);
+    const expiration = new Date(decodedToken.exp * 1000);
 
     const expirationDate = expiration.toLocaleDateString('en', {
       month: '2-digit',
