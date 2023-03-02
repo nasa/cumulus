@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cmr-client",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "description": "A Node.js client to NASA's Common Metadata Repository (CMR) API.",
   "engines": {
     "node": ">=14.19.1"

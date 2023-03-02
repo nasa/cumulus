@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
   - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
 
+## [v14.1.0] 2023-02-27
+
 ### MIGRATION notes
 
 From this release forward Core will be tested against PostgreSQL 11   Existing
@@ -126,7 +128,7 @@ update the database cluster to use the new configuration.
   - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
-  - Update Getting Started sections with current content 
+  - Update Getting Started sections with current content
 - **CUMULUS-3046**
   - Update 'Deployment' public docs
   - Apply grammar, link fixes, and continuity/taxonomy standards
@@ -6857,7 +6859,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v14.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v14.1.0...HEAD
+[v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
 [v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
 [v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2
