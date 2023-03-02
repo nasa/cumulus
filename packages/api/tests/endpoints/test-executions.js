@@ -40,7 +40,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, AsyncOperation } = require('../../models');
+const { AccessToken } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -69,7 +69,6 @@ const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
 const fakeExecutions = [];
 let jwtAuthToken;
 let accessTokenModel;
-let asyncOperationModel;
 process.env.AccessTokensTable = randomId('token');
 process.env.AsyncOperationsTable = randomId('asyncOperation');
 process.env.ExecutionsTable = randomId('executions');
@@ -89,13 +88,6 @@ test.before(async (t) => {
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);
-
-  // create fake AsyncOperation table
-  asyncOperationModel = new AsyncOperation({
-    systemBucket: process.env.system_bucket,
-    stackName: process.env.stackName,
-  });
-  await asyncOperationModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -170,13 +162,10 @@ test.before(async (t) => {
   }));
 
   // Create AsyncOperation in Postgres
-  const testAsyncOperation = fakeAsyncOperationFactory({
+  t.context.testAsyncOperation = fakeAsyncOperationFactory({
     id: uuidv4(),
     output: JSON.stringify({ test: randomId('output') }),
   });
-  t.context.testAsyncOperation = await asyncOperationModel.create(
-    testAsyncOperation
-  );
 
   const testPgAsyncOperation = translateApiAsyncOperationToPostgresAsyncOperation(
     t.context.testAsyncOperation
@@ -298,7 +287,6 @@ test.beforeEach(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await asyncOperationModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -746,10 +734,12 @@ test.serial('POST /executions/search-by-granules returns 1 record by default', a
 
   const response = await request(app)
     .post('/executions/search-by-granules')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -767,19 +757,23 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
 
   const page1 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=1')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
   const page2 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=2')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -799,10 +793,12 @@ test.serial('POST /executions/search-by-granules supports sorting', async (t) =>
 
   const response = await request(app)
     .post('/executions/search-by-granules?sort_by=arn&order=asc&limit=10')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -816,10 +812,12 @@ test.serial('POST /executions/search-by-granules returns correct executions when
 
   const response = await request(app)
     .post('/executions/search-by-granules?limit=10')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -1019,10 +1017,12 @@ test.serial('POST /executions/workflows-by-granules returns correct executions w
 
   const response = await request(app)
     .post('/executions/workflows-by-granules')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -1057,9 +1057,11 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
 
   const response = await request(app)
     .post('/executions/workflows-by-granules')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 

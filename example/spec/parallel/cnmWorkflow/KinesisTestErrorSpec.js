@@ -1,9 +1,9 @@
 'use strict';
 
-const delay = require('delay');
 const fs = require('fs');
 const replace = require('lodash/replace');
 const { deleteSQSMessage } = require('@cumulus/aws-client/SQS');
+const { sleep } = require('@cumulus/common');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const {
@@ -137,7 +137,7 @@ describe('The messageConsumer receives a bad record.\n', () => {
 
   it('Eventually puts the bad record on the failure queue.', async () => {
     console.log('\nWait for minimum duration of failure process ~3.5 min');
-    await delay(3.5 * 60 * 1000);
+    await sleep(3.5 * 60 * 1000);
     console.log('\nWait for record on:', failureSqsUrl);
     const queuedRecord = await waitForQueuedRecord(testRecordIdentifier, failureSqsUrl);
     this.ReceiptHandle = queuedRecord.ReceiptHandle;

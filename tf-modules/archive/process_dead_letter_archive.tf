@@ -2,7 +2,6 @@ data "aws_iam_policy_document" "process_dead_letter_archive_policy" {
   statement {
     actions = ["dynamodb:UpdateItem"]
     resources = [
-      var.dynamo_tables.executions.arn,
       var.dynamo_tables.granules.arn,
       var.dynamo_tables.pdrs.arn
     ]
@@ -95,7 +94,6 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
       createRetryIntervalMillis      = var.rds_connection_timing_configuration.createRetryIntervalMillis
       createTimeoutMillis            = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn    = var.rds_user_access_secret_arn
-      ExecutionsTable                = var.dynamo_tables.executions.name
       execution_sns_topic_arn        = aws_sns_topic.report_executions_topic.arn
       granule_sns_topic_arn          = aws_sns_topic.report_granules_topic.arn
       idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis

@@ -133,7 +133,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       provider = { id: `s3_provider${testSuffix}` };
       const newCollectionId = constructCollectionId(collection.name, collection.version);
 
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.system_bucket = config.bucket;
 
       const collectionUrlPath = '{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}/';

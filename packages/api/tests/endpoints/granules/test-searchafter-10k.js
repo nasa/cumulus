@@ -47,6 +47,7 @@ test.serial('CUMULUS-2930 /GET granules allows searching past 10K results window
     const granules = granuleFactory(1000);
     // eslint-disable-next-line no-await-in-loop
     await loadGranules(granules, t);
+    console.log(`${i} of ${numGranules} loaded`);
   }
   console.log('Granules loaded.');
 
