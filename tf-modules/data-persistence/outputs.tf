@@ -12,10 +12,6 @@ output "dynamo_tables" {
       name = aws_dynamodb_table.collections_table.name
       arn  = aws_dynamodb_table.collections_table.arn
     }
-    granules = {
-      name = aws_dynamodb_table.granules_table.name
-      arn  = aws_dynamodb_table.granules_table.arn
-    }
     pdrs = {
       name = aws_dynamodb_table.pdrs_table.name
       arn  = aws_dynamodb_table.pdrs_table.arn
