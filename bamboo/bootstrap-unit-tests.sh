@@ -5,8 +5,6 @@ set -ex
 . ./bamboo/abort-if-not-pr.sh
 . ./bamboo/abort-if-skip-unit-tests.sh
 
-git config --global --add safe.directory $bamboo_working_directory/source/cumulus
-
 # Export user information for sshd container
 export SSH_USERS=user:$(id -u):$(id -u)
 export COMPOSE_FILE=./bamboo/docker-compose.yml
