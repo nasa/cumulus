@@ -5,7 +5,6 @@ locals {
     async_operations_table       = "${var.prefix}-AsyncOperationsTable"
     collections_table            = "${var.prefix}-CollectionsTable"
     granules_table               = "${var.prefix}-GranulesTable"
-    pdrs_table                   = "${var.prefix}-PdrsTable"
     reconciliation_reports_table = "${var.prefix}-ReconciliationReportsTable"
     rules_table                  = "${var.prefix}-RulesTable"
     semaphores_table             = "${var.prefix}-SemaphoresTable"
