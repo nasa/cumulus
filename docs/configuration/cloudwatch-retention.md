@@ -35,7 +35,7 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 
 ## Terraform
 
-The `cumulus` module exposes values for configuration of log retention for 
+The `cumulus` module exposes values for configuration of log retention for
 cloudwatch log groups (in days). A configurable map of `cloudwatch_log_retention_periods` currently supports the following variables:
 
 - cumulus-tf_egress_lambda_log_retention
