@@ -226,9 +226,10 @@ distributionApp.use((err, req, res, _next) => {
   return res.boom.badImplementation('Something broke!');
 });
 
+const server = awsServerlessExpress.createServer(distributionApp);
 const handler = async (event, context) =>
   await awsServerlessExpress.proxy(
-    awsServerlessExpress.createServer(distributionApp),
+    server,
     event,
     context,
     'PROMISE'

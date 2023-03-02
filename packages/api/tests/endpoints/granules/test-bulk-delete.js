@@ -4,6 +4,8 @@ const test = require('ava');
 const request = require('supertest');
 const sinon = require('sinon');
 
+const omit = require('lodash/omit');
+
 const { s3 } = require('@cumulus/aws-client/services');
 const {
   recursivelyDeleteS3Bucket,
@@ -104,7 +106,11 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(description, 'Bulk granule deletion');
   t.deepEqual(payload, {
-    payload: body,
+    payload: {
+      ...body,
+      concurrency: 10,
+      maxDbConnections: 10,
+    },
     type: 'BULK_GRANULE_DELETE',
     envVars: {
       cmr_client_id: process.env.cmr_client_id,
@@ -115,6 +121,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_username: process.env.cmr_username,
       GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
       launchpad_certificate: process.env.launchpad_certificate,
       launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -126,7 +133,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       ES_HOST: process.env.ES_HOST,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
+  Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
 });
@@ -186,7 +193,11 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
   t.is(lambdaName, process.env.BulkOperationLambda);
   t.is(description, 'Bulk granule deletion');
   t.deepEqual(payload, {
-    payload: body,
+    payload: {
+      ...body,
+      concurrency: 10,
+      maxDbConnections: 10,
+    },
     type: 'BULK_GRANULE_DELETE',
     envVars: {
       cmr_client_id: process.env.cmr_client_id,
@@ -197,6 +208,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_username: process.env.cmr_username,
       GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
+      KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
       launchpad_certificate: process.env.launchpad_certificate,
       launchpad_passphrase_secret_name: process.env.launchpad_passphrase_secret_name,
@@ -208,7 +220,7 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       ES_HOST: process.env.ES_HOST,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
+  Object.keys(omit(payload.envVars, ['KNEX_DEBUG'])).forEach((envVarKey) => {
     t.is(payload.envVars[envVarKey], process.env[envVarKey]);
   });
 });
@@ -313,6 +325,40 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
     .expect(400, /forceRemoveFromCmr must be a boolean value/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const body = {
+    ids: ['granule-1'],
+    maxDbConnections: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at maxDbConnections/);
+
+  t.true(asyncOperationStartStub.notCalled);
+});
+
+test.serial('POST /granules/bulkDelete returns a 400 when concurrency is not an integer', async (t) => {
+  const { asyncOperationStartStub } = t.context;
+  const body = {
+    ids: ['granule-1'],
+    concurrency: 'one hundred',
+  };
+
+  await request(app)
+    .post('/granules/bulkDelete')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(body)
+    .expect(400, /Expected number, received string at concurrency/);
 
   t.true(asyncOperationStartStub.notCalled);
 });

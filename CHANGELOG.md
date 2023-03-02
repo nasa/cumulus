@@ -6,30 +6,129 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Fixed
+## [v14.1.0] 2023-02-27
 
-- **CUMULUS-3148**
-  - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
-    PostgreSQL 11 upgrade exposed dependency on database results in the API return
-  - Update unit test container to utilize PostgreSQL 11.13 container
+### MIGRATION notes
 
-- **CUMULUS-3033**
-  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+From this release forward Core will be tested against PostgreSQL 11   Existing
+release compatibility testing was done for release 11.1.8/14.0.0+.   Users
+should migrate their datastores to Aurora PostgreSQL 11.13+ compatible data stores
+as soon as possible.
 
-### Changed
+Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
+database clusters forcibly upgraded at the next maintenance window after 31 Jan
+2023.   Our guidance to mitigate this issue is to do a manual (outside of
+terraform) upgrade.   This will result in the cluster being upgraded with a
+manually set parameter group not managed by terraform.
 
-- **Snyk Security**-
-  - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
-  - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
-- **CUMULUS-3043**
-  - Organize & link Getting Started public docs for better user guidance
-  - Update Getting Started sections with current content
+If you manually upgraded and the cluster is now on version 11.13, to continue
+using the `cumulus-rds-tf` module *once upgraded* update following module
+configuration values if set, or allow their defaults to be utilized:
+
+```terraform
+parameter_group_family = "aurora-postgresql11"
+engine_version = 11.13
+```
+
+When you apply this update, the original PostgreSQL v10 parameter group will be
+removed, and recreated using PG11 defaults/configured terraform values and
+update the database cluster to use the new configuration.
+
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+
+### Added
+
+- **CUMULUS-3193**
+  - Add a Python version file
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
     endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
     behavior (complete overwrite) in a future release.   **The existing PUT
     implementation is deprecated** and users should move all existing usage of
     `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
+
+### Removed
+
+- Removed a few tests that were disabled 3-4 years ago
+
+### Fixed
+
+- **CUMULUS-3033**
+  - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
+- **CUMULUS-3072**
+  - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
+    a value for `files` as `[]` to elasticsearch instead of undefined in cases
+    where `[]` is specified in the new granule.
+  - Fixed issue introduced in CUMULUS-3070 where DynamoDB granules with a value
+   `files` as `[]` when the granule does *not* have the files value set as
+   mutable (e.g. in a `running` state) from a framework message write *and*
+   files was not previously defined will write `[]` instead of leaving the value
+   undefined.
+
+- The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
+- The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
+- **CUMULUS-3117**
+  - Update `@cumulus/es-client/indexer.js` to properly handle framework write
+    constraints for queued granules.    Queued writes will now be properly
+    dropped from elasticsearch writes along with the primary datastore(s) when
+    write constraints apply
+- **CUMULUS-3134**
+  - Get tests working on M1 Macs
+- **CUMULUS-3148**:
+  - Updates cumulus-rds-tf to use defaults for PostgreSQL 11.13
+  - Update IngestGranuleSuccessSpec as test was dependant on file ordering and
+    PostgreSQL 11 upgrade exposed dependency on database results in the API return
+  - Update unit test container to utilize PostgreSQL 11.13 container
+- **CUMULUS-3149**
+  - Updates the api `/granules/bulkDelete` endpoint to take the
+    following configuration keys for the bulkDelete:
+    - concurrency - Number of concurrent bulk deletions to process at a time.
+            Defaults to 10, increasing this value may improve throughput at the cost
+            of additional database/CMR/etc load.
+    - maxDbConnections - Defaults to `concurrency`, and generally should not be
+        changed unless troubleshooting performance concerns.
+  - Updates all bulk api endpoints to add knexDebug boolean query parameter to
+    allow for debugging of database connection issues in the future.  Defaults
+    to false.
+  - Fixed logic defect in bulk deletion logic where an information query was
+    nested in a transaction call, resulting in transactions holding knex
+    connection pool connections in a blocking way that would not resolve,
+    resulting in deletion failures.
+- **CUMULUS-3142**
+  - Fix issue from CUMULUS-3070 where undefined values for status results in
+    unexpected insertion failure on PATCH.
+- **CUMULUS-3181**
+  - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
+
+- **CUMULUS-3189**
+  - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
+    support pip 23.0
+- **CUMULUS-3196**
+  - Moved `createServer` initialization outside the `s3-credentials-endpoint` lambda
+    handler to reduce file descriptor usage
+- README shell snippets better support copying
+- **CUMULUS-3111**
+  - Fix issue where if granule update dropped due to write constraints for writeGranuleFromMessage, still possible for granule files to be written
+  - Fix issue where if granule update is limited to status and timestamp values due to write constraints for writeGranuleFromMessage, Dynamo or ES granules could be out of sync with PG
+
+### Changed
+
+- **Snyk Security**
+  - Upgraded jsonwebtoken from 8.5.1 to 9.0.0
+  - CUMULUS-3160: Upgrade knex from 0.95.15 to 2.4.1
+  - Upgraded got from 11.8.3 to ^11.8.5
+- **Dependabot Security**
+  - Upgraded the python package dependencies of the example lambdas
+- **CUMULUS-3043**
+  - Organize & link Getting Started public docs for better user guidance
+  - Update Getting Started sections with current content
+- **CUMULUS-3046**
+  - Update 'Deployment' public docs
+  - Apply grammar, link fixes, and continuity/taxonomy standards
+- **CUMULUS-3071**
   - Updated `@cumulus/api-client` packages to use `PATCH` protocol for existing
     granule `PUT` calls, this change should not require user updates for
     `api-client` users.
@@ -42,10 +141,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3097**
   - Changed `@cumulus/cmr-client` package's token from Echo-Token to Earthdata Login (EDL) token in updateToken method
   - Updated CMR header and token tests to reflect the Earthdata Login changes
-- **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
+- **CUMULUS-3140**
+  - Update release note to include cumulus-api release
+- **CUMULUS-3193**
+  - Update eslint config to better support typing
+- Improve linting of TS files
 
 ## [v14.0.0] 2022-12-08
 
@@ -6755,7 +6857,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v14.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v14.1.0...HEAD
+[v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
 [v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
 [v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2
