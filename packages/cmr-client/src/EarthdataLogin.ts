@@ -27,11 +27,12 @@ const PostTokenResponseBody = z.tuple([PostTokenSchema]);
  *
  *    returnJWTexp(token) -> 1677775742859, assuming token is a valid JSON Web Token
  *
- * This value is used to compare against other tokens' expiration date's and the
+ * This value is used to compare against other tokens' expiration time's and the
  * current date to determine whether a token is expired or which token (the fresher token)
  * should be returned.
  *
- * @returns {number} the token payload's exp
+ * @param {string} token - the JSON Web Token string from EarthdataLogin
+ * @returns {number} - the token payload's exp
  */
 
 const returnJWTexp = (token: string) : number =>
@@ -40,7 +41,8 @@ const returnJWTexp = (token: string) : number =>
 /**
  * The method for getting the Earthdata Login endpoint URL based on the EDL environment
  *
- * @returns {string} the endpoint URL
+ * @param {string} env - the CMR environment of the user (ex. 'SIT')
+ * @returns {string} - the endpoint URL
  */
 const getEdlUrl = (env: string): string => {
   switch (env) {
@@ -60,6 +62,8 @@ const getEdlUrl = (env: string): string => {
  * tokens for error-handling. If API call made to the EarthdataLogin endpoint results in an error.
  * The statuscode, statusmessage, error description, and error message are thrown and outputted.
  *
+ * @param {HTTPError} error - the HTTP error response returned by the EarthdataLogin endpoint
+ * @param {string} requestType - the type of token request (options: 'retrieve', 'create', 'revoke')
  * @returns {Error} - EarthdataLogin error
  */
 export const parseHttpError = (error: HTTPError, requestType: string): Error => {
@@ -77,6 +81,11 @@ export const parseHttpError = (error: HTTPError, requestType: string): Error => 
  * returned on their behalf, if not, an error is thrown. If the user does not have a token
  * in Earthdata Login then undefined is returned to indicate to token needs to be created.
  *
+ * @param {string} username - the username of the Earthdata Login user making the request
+ * @param {string} password - the password of the Earthdata Login user making the request
+ * @param {string} edlEnv - the CMR environment of the Earthdata Login user (ex. 'SIT')
+ * @returns {Promise <string | undefined>} - the Json Web Token string or undefined if there
+ * are no valid tokens returned from EDL endpoint
  */
 export const retrieveEDLToken = async (
   username: string,
@@ -112,6 +121,11 @@ export const retrieveEDLToken = async (
  * authorization. If the users' credentials are accepted a token is created on their
  * behalf and returned, if not, an error is thrown.
  *
+ * @param {string} username - the username of the Earthdata Login user making the request
+ * @param {string} password - the password of the Earthdata Login user making the request
+ * @param {string} edlEnv - the CMR environment of the Earthdata Login user (ex. 'SIT')
+ * @returns {Promise <string | undefined>} - the Json Web Token string or undefined if there are
+ * no valid tokens returned from EDL endpoint
  */
 export const createEDLToken = async (
   username: string,
@@ -138,6 +152,11 @@ export const createEDLToken = async (
  * This method is used for the cmrTokenSpec integration test in order to revoke the
  * token that is created for testing.
  *
+ * @param {string} username - the username of the Earthdata Login user making the request
+ * @param {string} password - the password of the Earthdata Login user making the request
+ * @param {string} edlEnv - the CMR environment of the Earthdata Login user (ex. 'SIT')
+ * @param {string} token - the JSON Web Token string to revoke
+ * @returns {void}
  */
 export const revokeEDLToken = async (
   username: string,
@@ -165,6 +184,11 @@ export const revokeEDLToken = async (
  * which makes an API call to the Earthdata Login endpoint, or to create the token with the
  * createEDLToken function. Returns the token as a string.
  *
+ * @param {string} username - the username of the Earthdata Login user making the request
+ * @param {string} password - the password of the Earthdata Login user making the request
+ * @param {string} edlEnv - the CMR environment of the Earthdata Login user (ex. 'SIT')
+ * @returns {Promise <string | undefined>} - the JSON Web Token string or undefined if there are
+ * no valid tokens returned from EDL endpoint
  */
 export const getEDLToken = async (
   username: string,

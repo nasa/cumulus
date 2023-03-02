@@ -3,8 +3,8 @@
 const { default: test } = require('ava');
 const nock = require('nock');
 const { randomId } = require('@cumulus/common/test-utils');
-const { getEDLToken, retrieveEDLToken, createEDLToken, revokeEDLToken } = require('../../EarthdataLogin');
-const { createToken, buildBasicAuthHeader, buildGetTokensResponse, buildCreateTokenResponse } = require('./utils');
+const { getEDLToken, retrieveEDLToken, createEDLToken, revokeEDLToken } = require('../EarthdataLogin');
+const { buildBasicAuthHeader, createToken, buildCreateTokenResponse, buildGetTokensResponse } = require('./EarthdataLoginUtils.js');
 
 test.before(() => {
   nock.disableNetConnect();

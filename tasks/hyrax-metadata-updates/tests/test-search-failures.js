@@ -6,7 +6,7 @@ const nock = require('nock');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const rewire = require('rewire');
 const HyraxMetadataUpdate = rewire('../index');
-const { createToken, buildGetTokensResponse } = require('@cumulus/cmr-client/tests/EarthdataLogin/utils');
+const { createToken, buildGetTokensResponse } = require('@cumulus/cmr-client/tests/EarthdataLoginUtils');
 const { secretsManager } = require('@cumulus/aws-client/services');
 const {
   randomId,

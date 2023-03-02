@@ -1,5 +1,3 @@
-'use strict';
-
 const jwt = require('jsonwebtoken');
 const { randomId } = require('@cumulus/common/test-utils');
 
