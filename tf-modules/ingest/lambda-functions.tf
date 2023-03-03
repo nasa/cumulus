@@ -233,7 +233,6 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
     variables = {
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
       stackName                   = var.prefix
-      ExecutionsTable             = var.dynamo_tables.executions.name
       reporting_queue_url         = var.sf_event_sqs_to_db_records_sqs_queue_url
     }
   }
