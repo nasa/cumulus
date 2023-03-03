@@ -137,7 +137,6 @@ class BaseSearch {
     this.frm = (page - 1) * this.size;
     this.page = Number.parseInt((params.skip) ? params.skip : page, 10);
     this.index = index || defaultIndexAlias;
-    }
   }
 
   _buildSearch() {
