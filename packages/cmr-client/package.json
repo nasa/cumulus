@@ -35,11 +35,17 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "14.1.0",
+    "@cumulus/common": "14.1.0",
     "@cumulus/errors": "14.1.0",
     "@cumulus/logger": "14.1.0",
+    "jsonwebtoken": "^9.0.0",
     "got": "^11.8.5",
     "lodash": "^4.17.21",
     "public-ip": "^3.0.0",
-    "xml2js": "^0.4.19"
+    "xml2js": "^0.4.19",
+    "zod": "^3.20.2"
+  },
+  "devDependencies": {
+    "moment": "^2.29.4"
   }
 }

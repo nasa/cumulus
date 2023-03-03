@@ -3,6 +3,7 @@
 const test = require('ava');
 const fs = require('fs');
 const nock = require('nock');
+const jwt = require('jsonwebtoken');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const rewire = require('rewire');
 const HyraxMetadataUpdate = rewire('../index');
@@ -30,7 +31,11 @@ const event = {
 
 const expectedresponse = [
   {
-    access_token: 'ABCDE',
+    access_token: jwt.sign(
+      { data: 'foobar' },
+      randomId('secret'),
+      { expiresIn: '365d' }
+    ),
     token_type: 'Bearer',
     expiration_date: '1/1/2999',
   },
