@@ -222,7 +222,6 @@ test.before(async (t) => {
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
-  process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });

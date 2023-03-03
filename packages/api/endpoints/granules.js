@@ -891,8 +891,6 @@ async function bulkOperations(req, res) {
       type: 'BULK_GRANULE',
       envVars: {
         ES_HOST: process.env.ES_HOST,
-        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-        GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,
@@ -970,8 +968,6 @@ async function bulkDelete(req, res) {
         cmr_provider: process.env.cmr_provider,
         cmr_username: process.env.cmr_username,
         ES_HOST: process.env.ES_HOST,
-        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-        GranulesTable: process.env.GranulesTable,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         launchpad_api: process.env.launchpad_api,
         launchpad_certificate: process.env.launchpad_certificate,
@@ -1013,8 +1009,6 @@ async function bulkReingest(req, res) {
       type: 'BULK_GRANULE_REINGEST',
       envVars: {
         ES_HOST: process.env.ES_HOST,
-        granule_sns_topic_arn: process.env.granule_sns_topic_arn,
-        GranulesTable: process.env.GranulesTable,
         invoke: process.env.invoke,
         KNEX_DEBUG: payload.knexDebug ? 'true' : 'false',
         METRICS_ES_HOST: process.env.METRICS_ES_HOST,

@@ -8,7 +8,6 @@ const { handler } = require('../../lambdas/publish-granules');
 test.before(async (t) => {
   const topicName = randomString();
   const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
-  process.env.granule_sns_topic_arn = TopicArn;
 
   const QueueName = randomString();
   const { QueueUrl } = await sqs().createQueue({
