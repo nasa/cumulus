@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 cumuluss/cumulus-build-env:build
+FROM cumuluss/cumulus-build-env:build
 RUN mkdir -p uncached && cd uncached && git clone https://github.com/nasa/cumulus && cd -
 RUN git clone https://github.com/nasa/cumulus && \
   cd cumulus && npm install --no-package-lock && \
