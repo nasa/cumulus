@@ -23,6 +23,7 @@ process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
   CollectionsTable: randomId('CollectionsTable'),
+  granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomId('tokenSecret'),
   stackName: randomId('stackName'),
   system_bucket: randomId('bucket'),
@@ -100,6 +101,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
       ES_HOST: process.env.ES_HOST,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
@@ -175,6 +177,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
       ES_HOST: process.env.ES_HOST,
+      granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
