@@ -61,7 +61,6 @@ export const parseHttpError = (error: HTTPError, requestType: string): Error => 
  * @param {string} password - the password of the Earthdata Login user
  * @param {string} edlEnv - the environment of the Earthdata Login (ex. 'SIT')
  * @returns {Promise <string | undefined>} - the token or undefined if there
- * are no valid tokens
  */
 export const retrieveEDLToken = async (
   username: string,

@@ -170,7 +170,6 @@ test('createEDLToken sends the correct credentials', async (t) => {
 
 test('retrieveEDLToken returns undefined if the returned token is expired', async (t) => {
   const { username, password } = t.context;
-
   const expectedTokenRecord = buildGetTokenRecord({ expiresIn: -60 });
 
   nock('https://sit.urs.earthdata.nasa.gov')
@@ -184,7 +183,6 @@ test('retrieveEDLToken returns undefined if the returned token is expired', asyn
 
 test('retrieveEDLToken returns the token if it expires later the same day', async (t) => {
   // There is a race condition in this test that could pop up if the test is run near midnight
-
   const { username, password } = t.context;
   const tokenRecord = buildGetTokenRecord({ expiresIn: 5 });
 
@@ -198,7 +196,6 @@ test('retrieveEDLToken returns the token if it expires later the same day', asyn
 
 test('retrieveEDLToken returns the last-expiring token if there are multiple tokens', async (t) => {
   const { username, password } = t.context;
-
   const expires = [30, 3600 * 12 + 2, 3600 * 12, 3600 * 12 - 2, 3600];
   const tokenRecords = expires.map((expiresIn) => buildGetTokenRecord({ expiresIn }));
 
