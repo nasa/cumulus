@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import { z } from 'zod';
 import got, { Response, HTTPError } from 'got';
 const parseCaughtError = require('@cumulus/common');
 
@@ -85,7 +85,7 @@ export const parseHttpError = (error: HTTPError, requestType: string): Error => 
  * @param {string} password - the password of the Earthdata Login user making the request
  * @param {string} edlEnv - the CMR environment of the Earthdata Login user (ex. 'SIT')
  * @returns {Promise <string | undefined>} - the Json Web Token string or undefined if there
- * are no valid tokens returned from EDL endpoint
+ * are no valid tokens
  */
 export const retrieveEDLToken = async (
   username: string,
@@ -124,8 +124,7 @@ export const retrieveEDLToken = async (
  * @param {string} username - the username of the Earthdata Login user making the request
  * @param {string} password - the password of the Earthdata Login user making the request
  * @param {string} edlEnv - the CMR environment of the Earthdata Login user (ex. 'SIT')
- * @returns {Promise <string | undefined>} - the Json Web Token string or undefined if there are
- * no valid tokens returned from EDL endpoint
+ * @returns {Promise <string | undefined>} - the Json Web Token string or undefined
  */
 export const createEDLToken = async (
   username: string,
@@ -187,8 +186,7 @@ export const revokeEDLToken = async (
  * @param {string} username - the username of the Earthdata Login user making the request
  * @param {string} password - the password of the Earthdata Login user making the request
  * @param {string} edlEnv - the CMR environment of the Earthdata Login user (ex. 'SIT')
- * @returns {Promise <string | undefined>} - the JSON Web Token string or undefined if there are
- * no valid tokens returned from EDL endpoint
+ * @returns {Promise <string | undefined>} - the JSON Web Token string or undefined
  */
 export const getEDLToken = async (
   username: string,

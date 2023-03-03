@@ -3,7 +3,6 @@
 const { CMR } = require('@cumulus/cmr-client');
 const { getEDLToken, revokeEDLToken } = require('@cumulus/cmr-client/EarthdataLogin');
 const { loadConfig } = require('../../helpers/testUtils');
-const { setDistributionApiEnvVars } = require('../../helpers/apiUtils');
 
 describe('When using Earthdata Login Token from CMR', () => {
   let username;
@@ -11,16 +10,14 @@ describe('When using Earthdata Login Token from CMR', () => {
   let config;
   let cmrObject;
   let beforeAllFailed = false;
-  let token;
+  let tokenToRevoke;
 
   beforeAll(async () => {
     try {
       config = await loadConfig();
       process.env.stackName = config.stackName;
-      setDistributionApiEnvVars();
 
       process.env.CMR_ENVIRONMENT = 'UAT';
-      process.env.AWS_REGION = 'us-east-1';
       username = process.env.EARTHDATA_USERNAME;
       password = process.env.EARTHDATA_PASSWORD;
 
@@ -36,8 +33,8 @@ describe('When using Earthdata Login Token from CMR', () => {
   });
 
   afterAll(async () => {
-    token = await cmrObject.getToken();
-    await revokeEDLToken(username, password, process.env.CMR_ENVIRONMENT, token);
+    tokenToRevoke = await cmrObject.getToken();
+    await revokeEDLToken(username, password, process.env.CMR_ENVIRONMENT, tokenToRevoke);
   });
 
   describe('Request for getting an Earthdata Login Token for the user using Earthdata credentials', () => {
@@ -45,9 +42,9 @@ describe('When using Earthdata Login Token from CMR', () => {
       if (beforeAllFailed) {
         fail('beforeAll() failed');
       } else {
-        const response = await getEDLToken(username, password, process.env.CMR_ENVIRONMENT);
-        expect(response).toBeDefined();
-        expect(response).toBeInstanceOf(String);
+        const token = await getEDLToken(username, password, process.env.CMR_ENVIRONMENT);
+        expect(token).toBeDefined();
+        expect(token).toBeInstanceOf(String);
       }
     });
   });
@@ -57,9 +54,9 @@ describe('When using Earthdata Login Token from CMR', () => {
       if (beforeAllFailed) {
         fail('beforeAll() failed');
       } else {
-        const response = await cmrObject.getToken();
-        expect(response).toBeDefined();
-        expect(response).toBeInstanceOf(String);
+        const token = await cmrObject.getToken();
+        expect(token).toBeDefined();
+        expect(token).toBeInstanceOf(String);
       }
     });
   });

@@ -8,7 +8,8 @@ const buildBasicAuthHeader = (username, password) => {
 };
 
 const createToken = (params = {}) => {
-  const expiration = Number(new Date().valueOf() + (60 * 120 * 1000));
+  const now = new Date();
+  const expiration = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 2);
   const expirationTime = params.expirationTime === undefined ? expiration : (params.expirationTime);
   const payload = {
     type: 'User',

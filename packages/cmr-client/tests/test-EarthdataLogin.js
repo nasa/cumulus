@@ -31,7 +31,7 @@ test.serial('getToken returns a valid token', async (t) => {
   const { username, password } = t.context;
 
   const now = new Date();
-  const oneHourLater = new Date(now.valueOf() + (60 * 60 * 1000));
+  const oneHourLater = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   const unexpiredToken = createToken({
     expirationTime: oneHourLater.valueOf() / 1000,
   });
@@ -74,7 +74,7 @@ test.serial('retrieveToken returns a valid token', async (t) => {
   const { username, password } = t.context;
 
   const now = new Date();
-  const oneHourLater = new Date(now.valueOf() + (60 * 60 * 1000));
+  const oneHourLater = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 
   const unexpiredToken = createToken({
     expirationTime: oneHourLater.valueOf() / 1000,
@@ -184,7 +184,7 @@ test('retrieveEDLToken returns undefined if the returned token is expired', asyn
   const { username, password } = t.context;
 
   const now = new Date();
-  const oneHourAgo = new Date(now.valueOf() - (60 * 60 * 1000));
+  const oneHourAgo = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() - 1);
 
   const expiredToken = createToken({
     expirationTime: oneHourAgo.valueOf() / 1000,
@@ -214,7 +214,8 @@ test('retrieveEDLToken returns the token if it expires later the same day', asyn
   const { username, password } = t.context;
   const now = new Date();
 
-  const fiveSecondsFromNow = new Date(now.valueOf() + (300 * 1000));
+  const fiveSecondsFromNow = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
+    now.getHours(), now.getMinutes(), now.getSeconds() + 5);
 
   const token = createToken({
     expirationTime: fiveSecondsFromNow.valueOf() / 1000,
@@ -232,68 +233,58 @@ test('retrieveEDLToken returns the last-expiring token if there are multiple tok
   const { username, password } = t.context;
 
   const now = new Date();
-  const nextYear = now.getFullYear() + 1;
-  const julyFirstNextYear = new Date(nextYear, 6, 1);
-  const juneFirstTheYearAfterNext = new Date(nextYear + 1, 5, 1);
+  const day = now.getUTCDate();
+  const oneDayLater = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), day + 1));
+  const twoDaysLater = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), day + 2));
+  const threeDaysLater = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), day + 3));
+  const expirationDates = [oneDayLater, twoDaysLater, threeDaysLater];
+  const tokens = expirationDates.map((a) => (createToken({ expirationTime: a.valueOf() / 1000 })));
+  const expectedToken = tokens[2];
 
-  const firstExpiringToken = createToken({
-    expirationTime: julyFirstNextYear.valueOf() / 1000,
-  });
-  const secondExpiringToken = createToken({
-    expirationTime: juneFirstTheYearAfterNext.valueOf() / 1000,
-  });
-
-  // First expiring, then second
+  // First expiring, then second, then third
   nock('https://sit.urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
-    .reply(200, buildGetTokensResponse([firstExpiringToken, secondExpiringToken]));
+    .reply(200, buildGetTokensResponse([tokens[0], tokens[1], tokens[2]]));
 
   const result1 = await retrieveEDLToken(username, password, 'SIT');
 
-  t.is(result1, secondExpiringToken);
+  t.is(result1, expectedToken);
 
-  // Second expiring, then first
+  // Second Expiring, then third, then first
   nock('https://sit.urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
-    .reply(200, buildGetTokensResponse([secondExpiringToken, firstExpiringToken]));
+    .reply(200, buildGetTokensResponse([tokens[1], tokens[2], tokens[0]]));
 
   const result2 = await retrieveEDLToken(username, password, 'SIT');
 
-  t.is(result2, secondExpiringToken);
+  t.is(result2, expectedToken);
 });
 
 test('retrieveEDLToken returns the last-expiring token if there are multiple tokens that expire on the same day', async (t) => {
   const { username, password } = t.context;
 
   const now = new Date();
-  const nextYear = now.getFullYear() + 1;
-  const firstExpirationDate = new Date(nextYear, 6, 1, 12, 0, 0);
-  const secondExpirationDate = new Date(nextYear, 6, 1, 12, 0, 1);
-
-  const firstExpiringToken = createToken({
-    expirationTime: firstExpirationDate.valueOf() / 1000,
-  });
-
-  const secondExpiringToken = createToken({
-    expirationTime: secondExpirationDate.valueOf() / 1000,
-  });
+  const firstExp = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 1);
+  const secondExp = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() + 2);
+  const expirationDates = [firstExp, secondExp];
+  const tokens = expirationDates.map((a) => (createToken({ expirationTime: a.valueOf() / 1000 })));
 
   // First expiring, then second
   nock('https://sit.urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
-    .reply(200, buildGetTokensResponse([firstExpiringToken, secondExpiringToken]));
+    .reply(200, buildGetTokensResponse([tokens[0], tokens[1]]));
 
   const result1 = await retrieveEDLToken(username, password, 'SIT');
 
-  t.is(result1, secondExpiringToken);
+  t.is(result1, tokens[1]);
   // Second expiring, then first
   nock('https://sit.urs.earthdata.nasa.gov')
     .get('/api/users/tokens')
-    .reply(200, buildGetTokensResponse([secondExpiringToken, firstExpiringToken]));
+    .reply(200, buildGetTokensResponse([tokens[1], tokens[0]]));
 
   const result2 = await retrieveEDLToken(username, password, 'SIT');
 
-  t.is(result2, secondExpiringToken);
+  t.is(result2, tokens[1]);
 });
 
 test('retrieveEDLToken sends the correct credentials', async (t) => {
