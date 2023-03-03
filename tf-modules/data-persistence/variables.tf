@@ -41,7 +41,6 @@ variable "enable_point_in_time_tables" {
   default = [
     "CollectionsTable",
     "GranulesTable",
-    "PdrsTable",
     "ProvidersTable",
     "RulesTable",
     "UsersTable"
