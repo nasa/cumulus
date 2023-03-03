@@ -1,9 +1,7 @@
 data "aws_iam_policy_document" "process_dead_letter_archive_policy" {
   statement {
     actions = ["dynamodb:UpdateItem"]
-    resources = [
-      var.dynamo_tables.pdrs.arn
-    ]
+    resources = []
   }
 
   statement {
@@ -96,7 +94,6 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
       execution_sns_topic_arn        = aws_sns_topic.report_executions_topic.arn
       granule_sns_topic_arn          = aws_sns_topic.report_granules_topic.arn
       idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
-      PdrsTable                      = var.dynamo_tables.pdrs.name
       pdr_sns_topic_arn              = aws_sns_topic.report_pdrs_topic.arn
       reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                      = var.prefix

@@ -40,7 +40,6 @@ variable "enable_point_in_time_tables" {
   type        = list(string)
   default = [
     "CollectionsTable",
-    "PdrsTable",
     "ProvidersTable",
     "RulesTable",
     "UsersTable"

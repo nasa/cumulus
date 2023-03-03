@@ -161,15 +161,6 @@ data "aws_iam_policy_document" "publish_pdrs_policy_document" {
     actions = ["sqs:SendMessage"]
     resources = [aws_sqs_queue.publish_pdrs_dead_letter_queue.arn]
   }
-  statement {
-    actions = [
-      "dynamodb:GetRecords",
-      "dynamodb:GetShardIterator",
-      "dynamodb:DescribeStream",
-      "dynamodb:ListStreams"
-    ]
-    resources = ["${var.dynamo_tables.pdrs.arn}/stream/*"]
-  }
 }
 
 resource "aws_iam_role_policy" "publish_pdrs_lambda_role_policy" {
@@ -228,17 +219,6 @@ resource "aws_cloudwatch_log_group" "publish_pdrs_logs" {
 resource "aws_sns_topic" "report_pdrs_topic" {
   name = "${var.prefix}-report-pdrs-topic"
   tags = var.tags
-}
-
-data "aws_dynamodb_table" "pdrs" {
-  name = var.dynamo_tables.pdrs.name
-}
-
-resource "aws_lambda_event_source_mapping" "publish_pdrs" {
-  event_source_arn  = data.aws_dynamodb_table.pdrs.stream_arn
-  function_name     = aws_lambda_function.publish_pdrs.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
 }
 
 # Report collections

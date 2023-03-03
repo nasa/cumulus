@@ -246,6 +246,11 @@ update the database cluster to use the new configuration.
 - **CUMULUS-2798**
   - Removed AsyncOperations model
 
+### Removed
+
+- **CUMULUS-3009**
+  - Removed Dynamo PDRs table
+
 ## [v14.0.0] 2022-12-08
 
 ### Breaking Changes
