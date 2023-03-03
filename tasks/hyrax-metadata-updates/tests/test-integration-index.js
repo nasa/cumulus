@@ -96,7 +96,7 @@ const setupNock = (params) => {
       access_token: jwt.sign(
         { data: 'foobar' },
         randomId('secret'),
-        { expiresIn: '1y' }
+        { expiresIn: '365d' }
       ),
       token_type: 'Bearer',
       expiration_date: '1/1/2999',
