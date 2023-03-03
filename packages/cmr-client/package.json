@@ -16,9 +16,6 @@
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
   },
   "ava": {
-    "files": [
-      "tests/**/test-*.js"
-    ],
     "fail-fast": true,
     "timeout": "15m"
   },
