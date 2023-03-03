@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Published new tag [`44` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/44/images/sha256-8d757276714153e4ab8c24a2b7b6b9ffee14cc78b482d9924e7093af88362b04?context=explore) which was built with node:16.19.0-buster.
   - Sets default async_operation_image version to 44.
 
+## [v14.1.0] 2023-02-27
+
 ### MIGRATION notes
 
 From this release forward Core will be tested against PostgreSQL 11   Existing
@@ -132,7 +134,7 @@ update the database cluster to use the new configuration.
   - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
-  - Update Getting Started sections with current content 
+  - Update Getting Started sections with current content
 - **CUMULUS-3046**
   - Update 'Deployment' public docs
   - Apply grammar, link fixes, and continuity/taxonomy standards
@@ -6863,7 +6865,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v14.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v14.1.0...HEAD
+[v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
 [v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
 [v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2
