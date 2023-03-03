@@ -29,13 +29,17 @@ const event = {
   input: {},
 };
 
-const yearsFromNow = new Date('12/31/2999');
-
-const expectedToken = createToken({
-  expirationTime: yearsFromNow.valueOf() / 1000,
-});
-
-const expectedresponse = buildGetTokensResponse([expectedToken]);
+const expectedresponse = [
+  {
+    access_token: jwt.sign(
+      { data: 'foobar' },
+      randomId('secret'),
+      { expiresIn: '1y' }
+    ),
+    token_type: 'Bearer',
+    expiration_date: '1/1/2999',
+  },
+];
 
 test.before(async () => {
   await secretsManager().createSecret({

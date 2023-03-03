@@ -91,13 +91,17 @@ const setupNock = (params) => {
     provider_short_name: 'GES_DISC',
   };
 
-  const yearsFromNow = new Date('12/31/2999');
-
-  const expectedToken = createToken({
-    expirationTime: yearsFromNow.valueOf() / 1000,
-  });
-
-  const expectedresponse = buildGetTokensResponse([expectedToken]);
+  const expectedresponse = [
+    {
+      access_token: jwt.sign(
+        { data: 'foobar' },
+        randomId('secret'),
+        { expiresIn: '1y' }
+      ),
+      token_type: 'Bearer',
+      expiration_date: '1/1/2999',
+    },
+  ];
 
   // Mock out retrieval of collection entry from CMR
   const headers = { 'cmr-hits': 1, 'Content-Type': 'application/json;charset=utf-8' };
