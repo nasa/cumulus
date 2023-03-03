@@ -6,6 +6,7 @@ const { promisify } = require('util');
 const test = require('ava');
 const proxyquire = require('proxyquire');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
 const xml2js = require('xml2js');
 
 const xmlParseOptions = {
@@ -16,7 +17,6 @@ const xmlParseOptions = {
 
 const { s3, secretsManager } = require('@cumulus/aws-client/services');
 const { randomId, randomString, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
-const { createToken, buildGetTokensResponse } = require('@cumulus/cmr-client/tests/EarthdataLoginUtils');
 const path = require('path');
 const {
   buildS3Uri,

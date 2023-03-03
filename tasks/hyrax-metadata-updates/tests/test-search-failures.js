@@ -3,10 +3,10 @@
 const test = require('ava');
 const fs = require('fs');
 const nock = require('nock');
+const jwt = require('jsonwebtoken');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const rewire = require('rewire');
 const HyraxMetadataUpdate = rewire('../index');
-const { createToken, buildGetTokensResponse } = require('@cumulus/cmr-client/tests/EarthdataLoginUtils');
 const { secretsManager } = require('@cumulus/aws-client/services');
 const {
   randomId,
