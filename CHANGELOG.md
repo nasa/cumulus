@@ -17,6 +17,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Published new tag [`44` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/44/images/sha256-8d757276714153e4ab8c24a2b7b6b9ffee14cc78b482d9924e7093af88362b04?context=explore) which was built with node:16.19.0-buster.
   - Sets default async_operation_image version to 44.
 
+## Fixed 
+
+- **CUMULUS-3187**
+  - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
+  - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
+
 ## [v14.1.0] 2023-02-27
 
 ### MIGRATION notes
