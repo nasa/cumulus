@@ -47,5 +47,8 @@
     "public-ip": "^3.0.0",
     "xml2js": "^0.4.19",
     "zod": "^3.20.2"
+  },
+  "devDependencies": {
+    "moment": "^2.29.4"
   }
 }
