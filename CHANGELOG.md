@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-3166**
+  - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
+
 ### MIGRATION notes
 
 From this release forward Core will be tested against PostgreSQL 11   Existing
