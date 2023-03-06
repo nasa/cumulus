@@ -740,7 +740,7 @@ test.serial('POST /executions/search-by-granules returns 1 record by default', a
       granules: [
         { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
         { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ]
+      ],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -763,7 +763,7 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
       granules: [
         { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
         { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ]
+      ],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -774,7 +774,7 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
       granules: [
         { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
         { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ]
+      ],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -799,7 +799,7 @@ test.serial('POST /executions/search-by-granules supports sorting', async (t) =>
       granules: [
         { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
         { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ]
+      ],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -818,7 +818,7 @@ test.serial('POST /executions/search-by-granules returns correct executions when
       granules: [
         { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
         { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-      ]
+      ],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -1023,7 +1023,7 @@ test.serial('POST /executions/workflows-by-granules returns correct executions w
       granules: [
         { granuleId: fakeGranules[0].granuleId, collectionId },
         { granuleId: fakeGranules[1].granuleId, collectionId },
-      ]
+      ],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
@@ -1062,7 +1062,7 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
     .send({
       granules: [
         { granuleId: fakeGranules[0].granuleId, collectionId },
-      ]
+      ],
     })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);

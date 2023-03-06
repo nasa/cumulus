@@ -4,9 +4,7 @@ locals {
     access_tokens_table          = "${var.prefix}-AccessTokensTable"
     async_operations_table       = "${var.prefix}-AsyncOperationsTable"
     collections_table            = "${var.prefix}-CollectionsTable"
-    executions_table             = "${var.prefix}-ExecutionsTable"
     granules_table               = "${var.prefix}-GranulesTable"
-    pdrs_table                   = "${var.prefix}-PdrsTable"
     providers_table              = "${var.prefix}-ProvidersTable"
     reconciliation_reports_table = "${var.prefix}-ReconciliationReportsTable"
     rules_table                  = "${var.prefix}-RulesTable"
@@ -93,28 +91,6 @@ resource "aws_dynamodb_table" "collections_table" {
   tags = var.tags
 }
 
-resource "aws_dynamodb_table" "executions_table" {
-  name             = local.table_names.executions_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "arn"
-
-  attribute {
-    name = "arn"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.executions_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
 resource "aws_dynamodb_table" "granules_table" {
   name             = local.table_names.granules_table
   billing_mode     = "PAY_PER_REQUEST"
@@ -141,30 +117,6 @@ resource "aws_dynamodb_table" "granules_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.granules_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_dynamodb_table" "pdrs_table" {
-  name             = local.table_names.pdrs_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "pdrName"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "pdrName"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.pdrs_table)
   }
 
   lifecycle {

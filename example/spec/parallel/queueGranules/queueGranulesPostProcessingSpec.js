@@ -64,7 +64,6 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       provider = { id: `s3_provider${testSuffix}` };
 
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
       // populate collections, providers and test data
