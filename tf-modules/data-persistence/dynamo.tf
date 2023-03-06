@@ -126,54 +126,6 @@ resource "aws_dynamodb_table" "granules_table" {
   tags = var.tags
 }
 
-resource "aws_dynamodb_table" "pdrs_table" {
-  name             = local.table_names.pdrs_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "pdrName"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "pdrName"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.pdrs_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_dynamodb_table" "providers_table" {
-  name             = local.table_names.providers_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "id"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "id"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.providers_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
 resource "aws_dynamodb_table" "reconciliation_reports_table" {
   name             = local.table_names.reconciliation_reports_table
   billing_mode     = "PAY_PER_REQUEST"
