@@ -17,6 +17,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Changed
   - Sets default async_operation_image version to 44.
 
+## Fixed 
+
+- **CUMULUS-3187**
+  - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
+  - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
+
 ## [v14.1.0] 2023-02-27
 
 ### MIGRATION notes
