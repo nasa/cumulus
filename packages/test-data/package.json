@@ -25,7 +25,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"
