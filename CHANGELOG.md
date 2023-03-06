@@ -6,9 +6,30 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Changed
+### Breaking Changes
+
+- **CUMULUS-3147**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 16.19.0
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to `cumuluss/cumulus-ecs-task:1.9.0.` which is built with node:16.19.0-alpine.  This can be done by updating the `image` property of any tasks defined using the `cumulus_ecs_service` Terraform module.
+  - Updated Dockerfile of async operation docker image to build from node:16.19.0-buster
+  - Published new tag [`44` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/44/images/sha256-8d757276714153e4ab8c24a2b7b6b9ffee14cc78b482d9924e7093af88362b04?context=explore).
+  - The `async_operation_image` property of `cumulus` module must be updated to pull the ECR image for `cumuluss/async-operation:44`.
+
+## Changed
+
 - **CUMULUS-2997**
-  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3
+- **CUMULUS-3147**
+  - Set example/cumulus-tf default async_operation_image_version to 44.
+  - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
+
+## Fixed 
+
+- **CUMULUS-3187**
+  - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
+  - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
+
+## [v14.1.0] 2023-02-27
 
 ### MIGRATION notes
 
@@ -126,7 +147,7 @@ update the database cluster to use the new configuration.
   - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
-  - Update Getting Started sections with current content 
+  - Update Getting Started sections with current content
 - **CUMULUS-3046**
   - Update 'Deployment' public docs
   - Apply grammar, link fixes, and continuity/taxonomy standards
@@ -6857,7 +6878,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v14.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v14.1.0...HEAD
+[v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
 [v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
 [v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2

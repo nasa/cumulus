@@ -66,7 +66,7 @@ This is for installation for Cumulus development. See the [Cumulus deployment se
 
 ### Prerequisites
 
-- [NVM](https://github.com/creationix/nvm) and node version 14.19.1
+- [NVM](https://github.com/creationix/nvm) and node version 16.19.0
 - [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 - Bash
 - [Docker](https://www.docker.com/) (only required for testing)

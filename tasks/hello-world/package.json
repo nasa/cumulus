@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hello-world",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "description": "Example task",
   "main": "index.js",
   "directories": {
@@ -12,7 +12,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
@@ -32,8 +32,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "14.0.0",
-    "@cumulus/common": "14.0.0",
+    "@cumulus/aws-client": "14.1.0",
+    "@cumulus/common": "14.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.4"
   }
 }

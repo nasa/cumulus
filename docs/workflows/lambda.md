@@ -10,7 +10,7 @@ AWS provides great getting started guide for building Lambdas in the [developer 
 
 Cumulus currently supports the following environments for Cumulus Message Adapter enabled functions:
 
-* [Node.js 12.18 - 14.19](https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html)
+* [Node.js 12.18 - 16.19](https://docs.aws.amazon.com/lambda/latest/dg/programming-model.html)
 * [Java 8](https://docs.aws.amazon.com/lambda/latest/dg/java-programming-model.html)
 * [Python 2.7, 3.6](https://docs.aws.amazon.com/lambda/latest/dg/python-programming-model.html)
 

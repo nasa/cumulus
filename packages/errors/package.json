@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/errors",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "description": "Provides error classes for Cumulus",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

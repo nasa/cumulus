@@ -1,10 +1,10 @@
 {
   "name": "@cumulus/tea-map-cache",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "description": "Tea Bucket Map Cache Writer",
   "main": "index.js",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
@@ -27,8 +27,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "14.0.0",
-    "@cumulus/logger": "14.0.0",
+    "@cumulus/aws-client": "14.1.0",
+    "@cumulus/logger": "14.1.0",
     "got": "^11.8.5",
     "p-retry": "^4.2.0"
   },

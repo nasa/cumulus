@@ -1,13 +1,13 @@
 {
   "name": "@cumulus/es-client",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "description": "Utilities for working with Elasticsearch",
   "keywords": [
     "CUMULUS",
     "NASA"
   ],
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "publishConfig": {
     "access": "public"
@@ -30,10 +30,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/common": "14.0.0",
-    "@cumulus/errors": "14.0.0",
-    "@cumulus/logger": "14.0.0",
-    "@cumulus/message": "14.0.0",
+    "@cumulus/common": "14.1.0",
+    "@cumulus/errors": "14.1.0",
+    "@cumulus/logger": "14.1.0",
+    "@cumulus/message": "14.1.0",
     "@elastic/elasticsearch": "^5.6.20",
     "aws-elasticsearch-connector": "8.2.0",
     "aws-sdk": "^2.585.0",
@@ -42,8 +42,8 @@
     "p-limit": "^1.2.0"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "14.0.0",
-    "@cumulus/test-data": "14.0.0",
+    "@cumulus/aws-client": "14.1.0",
+    "@cumulus/test-data": "14.1.0",
     "p-each-series": "^2.1.0"
   }
 }
