@@ -27,7 +27,7 @@ resource "aws_lambda_function" "tea_cache" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/tea-map-cache/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   memory_size      = 256
   timeout          = 120
   environment {

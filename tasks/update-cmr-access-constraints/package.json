@@ -12,7 +12,7 @@
     "directory": "tasks/update-cmr-access-constraints"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "main": "index.js",
   "directories": {

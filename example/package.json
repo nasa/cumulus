@@ -5,7 +5,7 @@
   "private": true,
   "main": "index.js",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "ava": {
     "files": [
@@ -37,7 +37,7 @@
         "env",
         {
           "targets": {
-            "node": "14.19.1"
+            "node": "16.19.0"
           }
         }
       ]

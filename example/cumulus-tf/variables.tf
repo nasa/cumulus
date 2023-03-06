@@ -362,7 +362,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "43"
+  default = "44"
 }
 
 variable "cumulus_process_activity_version" {
@@ -374,7 +374,7 @@ variable "cumulus_process_activity_version" {
 variable "ecs_task_image_version" {
   description = "docker image version to use for Cumulus hello world task"
     type = string
-    default = "2.0.0"
+    default = "1.9.0"
 }
 
 variable "cumulus_test_ingest_image_version" {

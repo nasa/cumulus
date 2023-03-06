@@ -31,7 +31,7 @@
     "p-retry": "^2.0.0"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "private": true
 }

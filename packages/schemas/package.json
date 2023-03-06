@@ -8,7 +8,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

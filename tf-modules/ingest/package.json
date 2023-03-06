@@ -3,7 +3,7 @@
   "version": "14.1.0",
   "description": "Terraform module for data ingest related functionality",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "scripts": {
     "prepublish": "node scripts/write-cumulus-version.js"
