@@ -935,4 +935,34 @@ test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', as
   t.is(logEventMappingsAfter.EventSourceMappings.length, 0);
 });
 
-test.todo('checkForSnsSubscriptions returns the correct status of a Rule\'s subscription');
+test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s subscription', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    provider: null,
+    collection: null,
+    state: 'ENABLED',
+  });
+
+  const ruleWithTrigger = await createRuleTrigger(snsRule);
+  const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+  const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
+
+  const response = await checkForSnsSubscriptions(ruleWithTrigger);
+
+  t.is(response.subExists, true);
+  // Subscription ARN will be different from but include the Topic ARN
+  t.true(response.existingSubscriptionArn.includes(topic1.TopicArn));
+
+  t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
+});
