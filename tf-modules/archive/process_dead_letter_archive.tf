@@ -1,78 +1,8 @@
-data "aws_iam_policy_document" "process_dead_letter_archive_policy" {
-  statement {
-    actions = ["dynamodb:UpdateItem"]
-    resources = []
-  }
-
-  statement {
-    actions = [
-      "states:DescribeExecution",
-      "states:GetExecutionHistory"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions   = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject"
-    ]
-    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
-  }
-
-  statement {
-    actions   = [
-      "s3:ListBucket"
-    ]
-    resources = ["arn:aws:s3:::${var.system_bucket}"]
-  }
-
-  statement {
-    actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "s3:GetObject*",
-    ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
-  }
-
-  statement {
-    actions = [
-      "secretsmanager:GetSecretValue"
-    ]
-    resources = [var.rds_user_access_secret_arn]
-  }
-}
-
 resource "aws_iam_role" "process_dead_letter_archive_role" {
   name                 = "${var.prefix}_process_dead_letter_archive_role"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
-}
-
-resource "aws_iam_role_policy" "process_dead_letter_archive_role_policy" {
-  name   = "${var.prefix}_process_dead_letter_archive_lambda_role_policy"
-  role   = aws_iam_role.process_dead_letter_archive_role.id
-  policy = data.aws_iam_policy_document.process_dead_letter_archive_policy.json
 }
 
 resource "aws_lambda_function" "process_dead_letter_archive" {
