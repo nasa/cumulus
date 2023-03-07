@@ -175,11 +175,28 @@ Commit and push these changes, if any.
 
 ### 8. Cut new version of Cumulus Documentation
 
-**If this is a backport, do not create a new version of the documentation.** For various reasons, we do not merge backports back to master, other than changelog notes. Documentation changes for backports will not be published to our documentation website.
+Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs
+does not depends on other version.
+If this is a patch version, or a minor version with no significant functionality changes requiring document update, do not create
+a new version of the documentation, update the existing versioned_docs document instead.
+
+Create a new version:
 
 ```bash
 cd website
-npm run version ${release_version}
+npm run docusaurus docs:version ${release_version}
+# update version in package.json
+git add .
+```
+
+Instructions to rename an existing version:
+
+```bash
+cd website
+git mv versioned_docs/version-<oldversion> versioned_docs/version-${release_version}
+git mv versioned_sidebars/version-<oldversion>-sidebars.json versioned_sidebars/version-${release_version}-sidebars.json
+# update versions.json with new version
+# update documents under versioned_docs/version-${release_version}
 git add .
 ```
 
@@ -274,9 +291,24 @@ The CI release scripts will automatically create a GitHub release based on the r
 - A distribution API module
 - An ECS service module
 
-Just make sure to verify the appropriate .zip files are present on Github after the release process is complete.
+Make sure to verify the appropriate .zip files are present on Github after the release process is complete.
 
-### 13. Merge base branch back to master
+- **Important** Copy the release notes for the new version from the changelog to the description of the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
+
+- **Optional** The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_
+  the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
+  - Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
+  - Click the "Edit release" button (pencil icon)
+  - Check the "This is a pre-release" checkbox
+  - Click "Update release"
+
+### 13. Update Cumulus API document
+
+There may be unreleased changes in the [Cumulus API document](https://github.com/nasa/cumulus-api) that are waiting on the Cumulus Core release.
+If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
+the Cumulus Core release.
+
+### 14. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 
@@ -284,7 +316,12 @@ If this is the latest version, you can simply create a PR to merge the minor ver
 
 Do not merge `master` back into the release branch since we want the release branch to _just_ have the code from the release.  Instead, create a new branch off of the release branch and merge that to master. You can freely merge master into this branch and delete it when it is merged to master.
 
-If this is a backport, you will need to create a PR that ports the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example, fixes in backport version `1.14.5` may not be available in `1.15.0` because the fix was introduced in `1.15.3`.
+**Please Note** If this is a backport, you will need to create a PR that merges **ONLY** the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example:
+
+>**Please note** changes in 13.3.2 may not yet be released in future versions, as
+>this is a backport and patch release on the 13.3.x series of releases. Updates that
+>are included in the future will have a corresponding CHANGELOG entry in future
+>releases..
 
 ## Troubleshooting
 

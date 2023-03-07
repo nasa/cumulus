@@ -7,7 +7,6 @@
 tmp/**
 docs/**
 _book/**
-v1-website/**
 *.tsbuildinfo
 *.map
 /packages/api-client/*.d.ts

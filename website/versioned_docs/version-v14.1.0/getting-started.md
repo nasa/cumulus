@@ -58,11 +58,15 @@ For details on how to create or manage data types go to [Data Management Types](
 
 Cumulus is deployed to an AWS account, so you must have access to deploy resources to an AWS account to get started.
 
-### 1. Deploy Cumulus and Cumulus Dashboard to AWS
+### 1. Set up Git Secrets
+
+To ensure your AWS access keys and passwords are protected as you submit commits we recommend setting up [Git Secrets](https://github.com/awslabs/git-secrets).
+
+### 2. Deploy Cumulus Core and Cumulus Dashboard to AWS
 
 Follow the [deployment instructions](deployment) to deploy Cumulus to your AWS account.
 
-### 2. Configure and Run the HelloWorld Workflow
+### 3. Configure and Run the HelloWorld Workflow
 
 If you have deployed using the [cumulus-template-deploy repository](https://github.com/nasa/cumulus-template-deploy), you have a `HelloWorld` workflow deployed to your Cumulus backend.
 
@@ -74,7 +78,7 @@ Then [create a rule](operator-docs/create-rule-in-cumulus) to trigger your Hello
 
 Navigate to the `Executions` page of the dashboard to check the status of your workflow execution.
 
-### 3. Configure a Custom Workflow
+### 4. Configure a Custom Workflow
 
 See [Developing a custom workflow](workflows/developing-a-cumulus-workflow) documentation for adding a new workflow to your deployment.
 
@@ -95,7 +99,10 @@ Here are some useful tips to keep in mind when deploying or working in Cumulus.
 * [Versioning and Releases](https://github.com/nasa/cumulus/blob/master/docs/development/release.md): This documentation gives information on our global versioning approach. We suggest upgrading to the supported version for Cumulus, Cumulus dashboard, and Thin Egress App (TEA).
 * [Cumulus Developer Documentation](https://github.com/nasa/cumulus#cumulus-framework): We suggest that you read through and reference this resource for development best practices in Cumulus.
 * [Cumulus Deployment](deployment): We will guide you on how to manually deploy a new instance of Cumulus. In this reference, you will learn how to install Terraform, create an AWS S3 bucket, configure a compatible database, and create a Lambda layer.
-* [Terraform Best Practices](deployment/terraform-best-practices): This will help guide you through your Terraform configuration and Cumulus deployment. *For an introduction about Terraform go [here](https://www.terraform.io/intro/index.html).*
+* [Terraform Best Practices](deployment/terraform-best-practices): This will help guide you through your Terraform configuration and Cumulus deployment.
+
+> For an introduction about Terraform go [here](https://www.terraform.io/intro/index.html).
+
 * [Integrator Common Use Cases](integrator-guide/int-common-use-cases): Scenarios to help integrators along in the Cumulus environment.
 
 ### Operator

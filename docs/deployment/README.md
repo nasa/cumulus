@@ -48,7 +48,7 @@ brew update
 brew install tfenv
 ```
 
-For other cases, installation instructions are available to follow along [here]((https://github.com/tfutils/tfenv#installation)).
+For other cases, installation instructions are available to follow along [here](https://github.com/tfutils/tfenv#installation).
 
 ```shell
  $ tfenv install 0.13.6

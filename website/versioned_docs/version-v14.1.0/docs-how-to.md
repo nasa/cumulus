@@ -8,7 +8,7 @@ hide_title: false
 
 ### Run a Local Server
 
-Environment variables `DOCSEARCH_API_KEY` and `DOCSEARCH_INDEX_NAME` must be set for search to work. At the moment, search is only truly functional on prod because that is the only website we have registered to be indexed with DocSearch (see below on search).
+Environment variables `DOCSEARCH_API_ID`, `DOCSEARCH_API_KEY` and `DOCSEARCH_INDEX_NAME` must be set for search to work. At the moment, search is only truly functional on prod because that is the only website we have registered to be indexed with DocSearch (see below on search).
 
 ```sh
 git clone git@github.com:nasa/cumulus
@@ -17,13 +17,28 @@ npm run docs-install
 npm run docs-serve
 ```
 
-**Note:** `docs-build` will build the documents into `website/build`.
+:::note
+
+`docs-build` will build the documents into `website/build`.
+`docs-clear` will clear the documents.
+
+:::
+
+:::caution
+
+Fix any broken links reported by Docusaurus if you see the following messages during build.
+
+[INFO] Docusaurus found broken links!
+
+Exhaustive list of all broken links found:
+
+:::
 
 ### Cumulus Documentation
 
 Our project documentation is hosted on [GitHub Pages](https://pages.github.com/). The resources published to this website are housed in `docs/` directory at the top of the Cumulus repository. Those resources primarily consist of markdown files and images.
 
-We use the open-source static website generator [Docusaurus](https://docusaurus.io) to build html files from our markdown documentation, add some organization and navigation, and provide some other niceties in the final website (search, easy templating, etc.).
+We use the open-source static website generator [Docusaurus](https://docusaurus.io/docs) to build html files from our markdown documentation, add some organization and navigation, and provide some other niceties in the final website (search, easy templating, etc.).
 
 #### Add a New Page and Sidebars
 
@@ -41,11 +56,12 @@ hide_title: false
 
 #### Versioning Docs
 
-We lean heavily on Docusaurus for versioning. Their suggestions and walk-through can be found [here](https://docusaurus.io/docs/en/versioning). It is worth noting that we would like the Documentation versions to match up directly with release versions. Cumulus versioning is explained in the [Versioning Docs](https://github.com/nasa/cumulus/tree/master/docs/development/release.md).
+We lean heavily on Docusaurus for versioning. Their suggestions and walk-through can be found [here](https://docusaurus.io/docs/versioning). Docusaurus v2 uses snapshot approach for documentation versioning. Every versioned docs does not depends on other version.
+It is worth noting that we would like the Documentation versions to match up directly with release versions. However, a new versioned docs can take up a lot of repo space and require maintenance, we suggest to update existing versioned docs for minor releases when there are no significant functionality changes.  Cumulus versioning is explained in the [Versioning Docs](https://github.com/nasa/cumulus/tree/master/docs/development/release.md).
 
 #### Search
 
-Search on our documentation site is taken care of by [DocSearch](https://community.algolia.com/docsearch/). We have been provided with an `apiKey` and an `indexName` by DocSearch that we include in our `website/siteConfig.js` file. The rest, indexing and actual searching, we leave to DocSearch. Our builds expect environment variables for both these values to exist - `DOCSEARCH_API_KEY` and `DOCSEARCH_NAME_INDEX`.
+Search on our documentation site is taken care of by [DocSearch](https://docsearch.algolia.com/). We have been provided with an `apiId`, `apiKey` and an `indexName` by DocSearch that we include in our `website/docusaurus.config.js` file. The rest, indexing and actual searching, we leave to DocSearch. Our builds expect environment variables for these values to exist - `DOCSEARCH_API_ID`, `DOCSEARCH_API_KEY` and `DOCSEARCH_NAME_INDEX`.
 
 #### Add a new task
 

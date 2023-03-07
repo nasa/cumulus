@@ -120,9 +120,9 @@ The Provider configuration is defined by a JSON object that takes different conf
 |host|string|Yes|The ftp host to pull data from (e.g. `nasa.gov`) |
 |username|string|No|Username to use to connect to the sftp server.|
 |password|string|No|Password to use to connect to the sftp server. |
-|port|integer|No|Port to connect to the provider on.  Defaults to `22`|
-|privateKey|string|No|filename assumed to be in s3://bucketInternal/stackName/crypto|
-|cmKeyId|string|No|AWS KMS Customer Master Key arn or alias|
+|port|integer|No|Port to connect to the provider on.  Defaults to `22` |
+|privateKey|string|No|filename assumed to be in s3://bucketInternal/stackName/crypto |
+|cmKeyId|string|No|AWS KMS Customer Master Key arn or alias |
 
 </details>
 
