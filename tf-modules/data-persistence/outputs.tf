@@ -8,10 +8,6 @@ output "dynamo_tables" {
       name = aws_dynamodb_table.async_operations_table.name
       arn  = aws_dynamodb_table.async_operations_table.arn
     }
-    collections = {
-      name = aws_dynamodb_table.collections_table.name
-      arn  = aws_dynamodb_table.collections_table.arn
-    }
     providers = {
       name = aws_dynamodb_table.providers_table.name
       arn  = aws_dynamodb_table.providers_table.arn

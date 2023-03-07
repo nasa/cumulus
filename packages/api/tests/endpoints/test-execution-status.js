@@ -38,8 +38,6 @@ const {
 } = require('../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
-process.env.ExecutionsTable = randomString();
-process.env.CollectionsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables

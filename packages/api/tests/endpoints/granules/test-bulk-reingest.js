@@ -22,7 +22,6 @@ const { testBulkPayloadEnvVarsMatchSetEnvVars } = require('../../helpers/bulkTes
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
-  CollectionsTable: randomId('CollectionsTable'),
   granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomId('tokenSecret'),
   stackName: randomId('stackName'),

@@ -45,7 +45,6 @@ const setProcessEnvironment = (stackName, bucketName) => {
   process.env.stackName = stackName;
   process.env.messageConsumer = `${stackName}-messageConsumer`;
   process.env.KinesisInboundEventLogger = `${stackName}-KinesisInboundEventLogger`;
-  process.env.CollectionsTable = `${stackName}-CollectionsTable`;
   process.env.RulesTable = `${stackName}-RulesTable`;
 };
 

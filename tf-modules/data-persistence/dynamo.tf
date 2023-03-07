@@ -3,7 +3,6 @@ locals {
   table_names = {
     access_tokens_table          = "${var.prefix}-AccessTokensTable"
     async_operations_table       = "${var.prefix}-AsyncOperationsTable"
-    collections_table            = "${var.prefix}-CollectionsTable"
     providers_table              = "${var.prefix}-ProvidersTable"
     reconciliation_reports_table = "${var.prefix}-ReconciliationReportsTable"
     rules_table                  = "${var.prefix}-RulesTable"
@@ -52,34 +51,6 @@ resource "aws_dynamodb_table" "async_operations_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.async_operations_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_dynamodb_table" "collections_table" {
-  name             = "${var.prefix}-CollectionsTable"
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "name"
-  range_key        = "version"
-
-  attribute {
-    name = "name"
-    type = "S"
-  }
-
-  attribute {
-    name = "version"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.collections_table)
   }
 
   lifecycle {
