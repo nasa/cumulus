@@ -115,7 +115,7 @@ module.exports = {
       appId: process.env.DOCSEARCH_API_ID || 'fakeApiId',
       apiKey: process.env.DOCSEARCH_API_KEY || 'fakeApiKey',
       indexName: process.env.DOCSEARCH_INDEX_NAME || 'fakeIndexName',
-      algoliaOptions: {
+      searchParameters: {
         facetFilters: [
           'version:VERSION',
         ],
