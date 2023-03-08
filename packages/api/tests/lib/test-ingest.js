@@ -4,6 +4,7 @@ const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const { sns } = require('@cumulus/aws-client/services');
+const { createBucket } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -24,9 +25,7 @@ const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
 } = require('../../lib/testUtils');
-
-const { Rule } = require('../../models');
-
+const rulesHelpers = require('../../lib/rulesHelpers');
 const {
   reingestGranule,
   applyWorkflow,
@@ -42,6 +41,11 @@ FakeEsClient.prototype.search = esSearchStub;
 
 let fakeExecution;
 let testCumulusMessage;
+[
+  'system_bucket',
+  'stackName',
+  // eslint-disable-next-line no-return-assign
+].forEach((varName) => process.env[varName] = randomString());
 
 test.before(async (t) => {
   process.env = {
@@ -49,6 +53,7 @@ test.before(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
+  await createBucket(process.env.system_bucket);
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
@@ -144,14 +149,15 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   const {
     collectionId,
   } = t.context;
-  const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
-
   const granulePgModel = new GranulePgModel();
   const queueUrl = 'testqueueUrl';
 
   const apiGranule = fakeGranuleFactoryV2({
     collectionId,
   });
+
+  const buildPayloadSpy = sinon.stub(rulesHelpers, 'buildPayload').resolves();
+
   await granulePgModel.create(
     t.context.knex,
     await translateApiGranuleToPostgresGranule({
@@ -203,7 +209,7 @@ test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
     },
   };
 
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
+  const buildPayloadStub = sinon.stub(rulesHelpers, 'buildPayload').resolves(lambdaPayload);
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
   await applyWorkflow({ apiGranule, workflow });
@@ -234,7 +240,7 @@ test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
     })
   );
 
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
+  const buildPayloadStub = sinon.stub(rulesHelpers, 'buildPayload').resolves();
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
   try {
