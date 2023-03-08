@@ -7,7 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Breaking Changes
-
+- **CUMULUS-3115**
+  - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
+    after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3147**
   - The minimum supported version for all published Cumulus Core npm packages is now Node 16.19.0
   - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to `cumuluss/cumulus-ecs-task:1.9.0.` which is built with node:16.19.0-alpine.  This can be done by updating the `image` property of any tasks defined using the `cumulus_ecs_service` Terraform module.
