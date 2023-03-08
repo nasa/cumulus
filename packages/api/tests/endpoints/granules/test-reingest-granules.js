@@ -25,7 +25,6 @@ const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.backgroundQueueUrl = randomString();
-process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 let accessTokenModel;
