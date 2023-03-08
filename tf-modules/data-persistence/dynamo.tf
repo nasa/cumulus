@@ -4,6 +4,7 @@ locals {
     access_tokens_table          = "${var.prefix}-AccessTokensTable"
     async_operations_table       = "${var.prefix}-AsyncOperationsTable"
     granules_table               = "${var.prefix}-GranulesTable"
+    providers_table              = "${var.prefix}-ProvidersTable"
     reconciliation_reports_table = "${var.prefix}-ReconciliationReportsTable"
     rules_table                  = "${var.prefix}-RulesTable"
     semaphores_table             = "${var.prefix}-SemaphoresTable"
@@ -65,6 +66,10 @@ resource "aws_dynamodb_table" "granules_table" {
   name             = local.table_names.granules_table
   billing_mode     = "PAY_PER_REQUEST"
   hash_key         = "granuleId"
+resource "aws_dynamodb_table" "providers_table" {
+  name             = local.table_names.providers_table
+  billing_mode     = "PAY_PER_REQUEST"
+  hash_key         = "id"
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
@@ -87,6 +92,12 @@ resource "aws_dynamodb_table" "granules_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.granules_table)
+    name = "id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = contains(local.enable_point_in_time_table_names, local.table_names.providers_table)
   }
 
   lifecycle {
