@@ -143,7 +143,6 @@ describe('The S3 Ingest Granules workflow', () => {
       const newCollectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       process.env.system_bucket = config.bucket;
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));

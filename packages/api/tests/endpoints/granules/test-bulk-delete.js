@@ -38,7 +38,6 @@ test.before(async () => {
   process.env.system_bucket = randomString();
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
-  process.env.GranulesTable = randomString();
   process.env.granule_sns_topic_arn = randomString();
   process.env.METRICS_ES_HOST = randomString();
   process.env.METRICS_ES_USER = randomString();
@@ -123,7 +122,6 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_password_secret_name: process.env.cmr_password_secret_name,
       cmr_provider: process.env.cmr_provider,
       cmr_username: process.env.cmr_username,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
@@ -214,7 +212,6 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_password_secret_name: process.env.cmr_password_secret_name,
       cmr_provider: process.env.cmr_provider,
       cmr_username: process.env.cmr_username,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
