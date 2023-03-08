@@ -92,6 +92,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
+  - **CUMULUS-3008**
+    - Remove DynamoDB Collections table
 
 ### Added
 
@@ -248,6 +250,11 @@ update the database cluster to use the new configuration.
 
 - **CUMULUS-2798**
   - Removed AsyncOperations model
+
+### Removed
+
+- **CUMULUS-3009**
+  - Removed Dynamo PDRs table
 
 ## [v14.0.0] 2022-12-08
 

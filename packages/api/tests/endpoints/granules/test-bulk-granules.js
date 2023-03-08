@@ -21,7 +21,6 @@ process.env = {
   ...process.env,
   AccessTokensTable: randomString(),
   backgroundQueueName: randomString(),
-  CollectionsTable: randomString(),
   GranulesTable: randomString(),
   granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomString(),

@@ -137,12 +137,6 @@ class BaseSearch {
     this.frm = (page - 1) * this.size;
     this.page = Number.parseInt((params.skip) ? params.skip : page, 10);
     this.index = index || defaultIndexAlias;
-
-    if (this.type === process.env.CollectionsTable) {
-      this.hash = 'collectionName';
-    } else if (this.type === process.env.PdrsTable) {
-      this.hash = 'pdrName';
-    }
   }
 
   _buildSearch() {

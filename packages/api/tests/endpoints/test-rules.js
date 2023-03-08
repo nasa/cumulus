@@ -52,7 +52,7 @@ const assertions = require('../../lib/assertions');
 
 [
   'AccessTokensTable',
-  'CollectionsTable',
+  'RulesTable',
   'stackName',
   'system_bucket',
   'TOKEN_SECRET',
