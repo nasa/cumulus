@@ -28,6 +28,6 @@ module "example_ecs_service" {
 
   cluster_arn                           = "arn:aws:ecs:us-east-1:1234567890:cluster/MyECSCluster1"
   desired_count                         = 1
-  image                                 = "cumuluss/cumulus-ecs-task:1.7.0"
+  image                                 = "cumuluss/cumulus-ecs-task:1.9.0"
 }
 ```

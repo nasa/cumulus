@@ -1,10 +1,10 @@
 {
   "name": "@cumulus/cumulus-test-cleanup",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "description": "Nightly cron job for cleaning up integration test artifacts",
   "main": "index.js",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && ../../../node_modules/.bin/webpack",

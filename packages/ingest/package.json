@@ -1,9 +1,9 @@
 {
   "name": "@cumulus/ingest",
-  "version": "14.0.0",
+  "version": "14.1.0",
   "description": "Ingest utilities",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && npm run prepare",
@@ -38,13 +38,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "14.0.0",
-    "@cumulus/common": "14.0.0",
-    "@cumulus/db": "14.0.0",
-    "@cumulus/errors": "14.0.0",
-    "@cumulus/logger": "14.0.0",
-    "@cumulus/message": "14.0.0",
-    "@cumulus/sftp-client": "14.0.0",
+    "@cumulus/aws-client": "14.1.0",
+    "@cumulus/common": "14.1.0",
+    "@cumulus/db": "14.1.0",
+    "@cumulus/errors": "14.1.0",
+    "@cumulus/logger": "14.1.0",
+    "@cumulus/message": "14.1.0",
+    "@cumulus/sftp-client": "14.1.0",
     "aws-sdk": "^2.585.0",
     "cksum": "^1.3.0",
     "encodeurl": "^1.0.2",
@@ -60,9 +60,9 @@
     "tough-cookie": "~4.0.0"
   },
   "devDependencies": {
-    "@cumulus/checksum": "14.0.0",
-    "@cumulus/cmrjs": "14.0.0",
-    "@cumulus/test-data": "14.0.0",
-    "@cumulus/types": "14.0.0"
+    "@cumulus/checksum": "14.1.0",
+    "@cumulus/cmrjs": "14.1.0",
+    "@cumulus/test-data": "14.1.0",
+    "@cumulus/types": "14.1.0"
   }
 }

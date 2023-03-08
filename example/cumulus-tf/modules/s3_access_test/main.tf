@@ -14,7 +14,7 @@ resource "aws_lambda_function" "s3_acccess_test" {
   source_code_hash = filebase64sha256("${path.module}/../../../lambdas/s3AccessTest/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
 
   tags = var.tags
 }
