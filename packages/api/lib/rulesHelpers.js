@@ -426,20 +426,22 @@ async function addKinesisEventSources(rule) {
 }
 
 /**
- * Add SNS event sources
+ * Checks for existing SNS subscriptions
  *
- * @param {RuleRecord} item - The rule item
- * @returns {Promise<string>}        - Returns snsSubscriptionArn
+ * @param {RuleRecord} ruleItem - Rule to check
+ *
+ * @returns {Object}
+ *  subExists - boolean
+ *  existingSubscriptionArn - ARN of subscription
  */
-async function addSnsTrigger(item) {
-  // check for existing subscription
+async function checkForSnsSubscriptions(ruleItem) {
   let token;
   let subExists = false;
   let subscriptionArn;
   /* eslint-disable no-await-in-loop */
   do {
     const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
-      TopicArn: item.rule.value,
+      TopicArn: ruleItem.rule.value,
       NextToken: token,
     }).promise();
     token = subsResponse.NextToken;
@@ -456,6 +458,25 @@ async function addSnsTrigger(item) {
     if (subExists) break;
   }
   while (token);
+  return {
+    subExists,
+    existingSubscriptionArn: subscriptionArn,
+  };
+}
+
+/**
+ * Add SNS event sources
+ *
+ * @param {RuleRecord} item - The rule item
+ * @returns {Promise<string>} - Returns snsSubscriptionArn
+ */
+async function addSnsTrigger(item) {
+  const {
+    subExists,
+    existingSubscriptionArn,
+  } = await checkForSnsSubscriptions(item);
+  let subscriptionArn = existingSubscriptionArn;
+
   /* eslint-enable no-await-in-loop */
   if (!subExists) {
     // create sns subscription
@@ -574,7 +595,7 @@ async function invokeRerun(rule) {
  * @param {Knex} knex           - Knex DB Client
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
-async function updateRuleTrigger(original, updates, knex) {
+async function updateRuleTrigger(original, updates) {
   let clonedRuleItem = cloneDeep(original);
   let mergedRule = merge(clonedRuleItem, updates);
   recordIsValid(mergedRule);
@@ -591,7 +612,6 @@ async function updateRuleTrigger(original, updates, knex) {
   }
   case 'kinesis':
     if (valueUpdated) {
-      await deleteKinesisEventSources(knex, mergedRule);
       const updatedRuleItemArns = await addKinesisEventSources(mergedRule);
       mergedRule = updateKinesisRuleArns(mergedRule,
         updatedRuleItemArns);
@@ -601,10 +621,6 @@ async function updateRuleTrigger(original, updates, knex) {
     if (valueUpdated || stateChanged) {
       if (enabled && stateChanged && mergedRule.rule.arn) {
         throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
-      }
-
-      if (mergedRule.rule.arn) {
-        await deleteSnsTrigger(knex, mergedRule);
       }
 
       let snsSubscriptionArn;
@@ -632,7 +648,7 @@ async function updateRuleTrigger(original, updates, knex) {
  *
  * @param {RuleRecord} ruleItem - Rule to create trigger for
  *
- * @returns {Promise<RuleRecord>}        - Returns new rule object
+ * @returns {Promise<RuleRecord>} - Returns new rule object
  */
 async function createRuleTrigger(ruleItem) {
   let newRuleItem = cloneDeep(ruleItem);
@@ -682,11 +698,37 @@ async function createRuleTrigger(ruleItem) {
   return newRuleItem;
 }
 
+/**
+ * Removes SNS triggers or Kineses events from a rule
+ *
+ * @param {knex} knex - Knex DB Client
+ * @param {RuleRecord} apiRule - API-formatted Rule object
+ *
+ * @returns {Promise} - Returns response from deletion function
+ */
+async function deleteOldEventSourceMappings(knex, apiRule) {
+  switch (apiRule.rule.type) {
+  case 'kinesis':
+    await deleteKinesisEventSources(knex, apiRule);
+    break;
+  case 'sns': {
+    if (apiRule.rule.arn) {
+      await deleteSnsTrigger(knex, apiRule);
+    }
+    break;
+  }
+  default:
+    break;
+  }
+}
+
 module.exports = {
   buildPayload,
+  checkForSnsSubscriptions,
   createRuleTrigger,
   deleteKinesisEventSource,
   deleteKinesisEventSources,
+  deleteOldEventSourceMappings,
   deleteRuleResources,
   deleteSnsTrigger,
   fetchAllRules,
