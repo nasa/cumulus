@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-3201**
+  - Add support for sha512 as checksumType for LZARDs backup task.
+
 ## [v14.1.0] 2023-02-27
 
 ### MIGRATION notes
