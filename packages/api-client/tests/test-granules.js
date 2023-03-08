@@ -13,6 +13,10 @@ test.before((t) => {
 test('getGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
+    pRetryOptions: {
+      retries: 3,
+    },
+    expectedStatusCodes: [200],
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
@@ -40,6 +44,10 @@ test('getGranule calls the callback with the expected object when there is query
   const query = { getRecoveryStatus: true };
   const expected = {
     prefix: t.context.testPrefix,
+    pRetryOptions: {
+      retries: 3,
+    },
+    expectedStatusCodes: [200],
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',

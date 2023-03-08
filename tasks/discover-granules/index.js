@@ -203,6 +203,7 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
   try {
     response = await granules.getGranuleResponse({
       prefix: process.env.STACKNAME,
+      duplicateHandling: duplicateHandling,
       granuleId,
     });
   } catch (error) {

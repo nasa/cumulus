@@ -30,6 +30,7 @@ type AssociateExecutionRequest = {
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  duplicateHandling?: string,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
@@ -40,8 +41,24 @@ export const getGranuleResponse = async (params: {
     callback = invokeApi,
   } = params;
 
+  let pRetryOptions = {};
+  let expectedStatusCodes = [];
+  if (params.duplicateHandling === 'skip' || params.duplicateHandling === 'error') {
+    pRetryOptions = {
+      retries: 0,
+      onFailedAttempt: (e: Error) => logger.error(`API invoke error: ${e.message}.`),
+    };
+    expectedStatusCodes = [200, 404];
+  } else {
+    pRetryOptions = {
+      retries: 3,
+    };
+    expectedStatusCodes = [200];
+  }
   return await callback({
     prefix: prefix,
+    pRetryOptions: pRetryOptions,
+    expectedStatusCodes: expectedStatusCodes,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',

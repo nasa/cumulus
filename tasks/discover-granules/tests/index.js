@@ -410,6 +410,18 @@ test('checkGranuleHasNoDuplicate throws an error on an unexpected API lambda ret
   t.true(error.message.startsWith('Unexpected return from Private API lambda'));
 });
 
+test('checkGranuleHasNoDuplicate does not enter a retry loop when a granule exists and duplicateHandling is set to skip',
+  async (t) => {
+    t.notThrowsAsync(checkGranuleHasNoDuplicate('duplicate', 'skip'));
+    t.false(await (checkGranuleHasNoDuplicate('duplicate', 'skip')));
+  });
+
+test('checkGranuleHasNoDuplicate does not enter a retry loop when a granule exists and duplicateHandling is set to error',
+  async (t) => {
+    const error = await t.throwsAsync(checkGranuleHasNoDuplicate('duplicate', 'error'));
+    t.false(error.message.includes('Attempt 3 failed'));
+  });
+
 test.serial('discover granules uses default concurrency of 3', async (t) => {
   const { event } = t.context;
 
