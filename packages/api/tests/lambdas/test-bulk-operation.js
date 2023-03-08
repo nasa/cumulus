@@ -178,6 +178,7 @@ test.before(async (t) => {
     METRICS_ES_HOST: randomId('host'),
     METRICS_ES_USER: randomId('user'),
     METRICS_ES_PASS: randomId('pass'),
+    GranulesTable: randomId('granule'),
     ...envVars,
   };
 

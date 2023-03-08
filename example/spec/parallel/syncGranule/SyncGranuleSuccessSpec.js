@@ -67,6 +67,8 @@ describe('The Sync Granules workflow', () => {
     config = await loadConfig();
     lambdaStep = new LambdaStep();
 
+    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
+
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
     const s3data = [

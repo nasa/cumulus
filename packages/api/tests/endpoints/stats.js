@@ -25,6 +25,7 @@ const assertions = require('../../lib/assertions');
 const stats = rewire('../../endpoints/stats');
 const getType = stats.__get__('getType');
 
+process.env.GranulesTable = randomId('granulesTable');
 process.env.AccessTokensTable = randomId('accessTokenTable');
 
 process.env.system_bucket = randomId('bucket');

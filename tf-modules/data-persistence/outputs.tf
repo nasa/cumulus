@@ -11,9 +11,6 @@ output "dynamo_tables" {
     granules = {
       name = aws_dynamodb_table.granules_table.name
       arn  = aws_dynamodb_table.granules_table.arn
-    providers = {
-      name = aws_dynamodb_table.providers_table.name
-      arn  = aws_dynamodb_table.providers_table.arn
     }
     reconciliation_reports = {
       name = aws_dynamodb_table.reconciliation_reports_table.name

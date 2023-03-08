@@ -22,6 +22,7 @@ const { testBulkPayloadEnvVarsMatchSetEnvVars } = require('../../helpers/bulkTes
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
+  GranulesTable: randomId('GranulesTable'),
   granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomId('tokenSecret'),
   stackName: randomId('stackName'),
@@ -100,6 +101,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
       ES_HOST: process.env.ES_HOST,
+      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
@@ -176,6 +178,7 @@ test.serial('POST /granules/bulkReingest starts an async-operation with the corr
     type: 'BULK_GRANULE_REINGEST',
     envVars: {
       ES_HOST: process.env.ES_HOST,
+      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,

@@ -29,6 +29,7 @@ const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
+  process.env.GranulesTable = randomId('granule');
   process.env.system_bucket = randomId('bucket');
   process.env = {
     ...process.env,

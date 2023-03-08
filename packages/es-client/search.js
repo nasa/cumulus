@@ -246,6 +246,75 @@ class BaseSearch {
     return response.detail !== recordNotFoundString;
   }
 
+  async granulesStats(key, value) {
+    const body = {
+      query: {
+        term: {
+          [`${key}.keyword`]: value,
+        },
+      },
+      aggs: {
+        statusCount: {
+          terms: {
+            field: 'status.keyword',
+          },
+        },
+        averageDuration: {
+          avg: {
+            field: 'duration',
+          },
+        },
+        granulesCount: {
+          value_count: {
+            field: 'granuleId.keyword',
+          },
+        },
+      },
+    };
+
+    const ag = await this.client.search({
+      index: this.index,
+      type: process.env.GranulesTable,
+      body: body,
+      size: 0,
+    });
+
+    const status = {
+      failed: 0,
+      ingesting: 0,
+      processing: 0,
+      archiving: 0,
+      cmr: 0,
+      completed: 0,
+    };
+
+    const item = ag.body.aggregations;
+
+    const newObj = {
+      averageDuration: item.averageDuration.value,
+      granules: item.granulesCount.value,
+      granulesStatus: { ...status },
+    };
+
+    item.statusCount.buckets.forEach((b) => {
+      newObj.granulesStatus[b.key] = b.doc_count;
+    });
+
+    if (newObj.granules > 0) {
+      newObj.progress = (
+        (
+          (newObj.granulesStatus.completed + newObj.granulesStatus.failed)
+          / newObj.granules
+        )
+        * 100
+      );
+    } else {
+      newObj.progress = 0;
+    }
+
+    return newObj;
+  }
+
   async query(searchParamsOverride) {
     const searchParams = searchParamsOverride || this._buildSearch();
 

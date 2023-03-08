@@ -188,6 +188,12 @@ const createGranuleExecution = async (t, status, stateMachineName) => {
 };
 
 test.before(async (t) => {
+  process.env.GranulesTable = `write-granules-${cryptoRandomString({ length: 10 })}`;
+
+  /*   const fakeFileUtils = {
+    buildDatabaseFiles: (params) => Promise.resolve(params.files),
+  }; */
+
   t.context.stepFunctionUtils = {
     ...StepFunctions,
     describeExecution: () => Promise.resolve({}),
