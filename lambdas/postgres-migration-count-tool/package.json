@@ -4,7 +4,7 @@
   "description": "A Lambda function used for generating counts between Dynamo/ES and Postgres",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "main": "./dist/lambda/index.js",
   "types": "./dist/lambda/index.d.ts",

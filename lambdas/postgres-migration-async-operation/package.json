@@ -4,7 +4,7 @@
   "description": "A Lambda function used to start an ECS task to run data-migrations2 lambda",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "private": true,
   "main": "./dist/lambda/index.js",

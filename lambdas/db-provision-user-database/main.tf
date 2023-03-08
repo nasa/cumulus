@@ -14,7 +14,7 @@ resource "aws_lambda_function" "provision_database" {
   source_code_hash = filebase64sha256("${path.module}/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.db_provision.arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   memory_size      = 256
   timeout          = 500
   environment {

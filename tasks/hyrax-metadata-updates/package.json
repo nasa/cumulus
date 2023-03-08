@@ -15,7 +15,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
@@ -50,6 +50,7 @@
   },
   "devDependencies": {
     "@cumulus/schemas": "14.1.0",
+    "jsonwebtoken": "^9.0.0",
     "nock": "^12.0.1",
     "rewire": "^6.0.0"
   },
