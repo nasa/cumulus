@@ -55,7 +55,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -105,7 +105,7 @@
     "eslint-config-airbnb-typescript": "^14.0.1",
     "eslint-plugin-eslint-comments": "^3.0.1",
     "eslint-plugin-import": "2.22.1",
-    "eslint-plugin-jsdoc": "^38.1.6",
+    "eslint-plugin-jsdoc": "^40.0.0",
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^4.2.1",

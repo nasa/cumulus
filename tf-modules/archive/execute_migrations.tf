@@ -134,7 +134,7 @@ resource "aws_lambda_function" "execute_migrations" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/executeMigrations/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.migration_processing.arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 1024
   environment {
