@@ -103,8 +103,6 @@ resource "aws_lambda_function" "manual_consumer" {
   environment {
     variables = {
       stackName                = var.prefix
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
       RulesTable               = var.dynamo_tables.rules.name
       system_bucket            = var.system_bucket
       FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
@@ -136,8 +134,6 @@ resource "aws_lambda_function" "message_consumer" {
   environment {
     variables = {
       stackName                = var.prefix
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
       RulesTable               = var.dynamo_tables.rules.name
       system_bucket            = var.system_bucket
       FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
@@ -172,8 +168,6 @@ resource "aws_lambda_function" "schedule_sf" {
   }
   environment {
     variables = {
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
       stackName                = var.prefix
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
@@ -319,8 +313,6 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   environment {
     variables = {
       stackName                = var.prefix
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
       RulesTable               = var.dynamo_tables.rules.name
       system_bucket            = var.system_bucket
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
