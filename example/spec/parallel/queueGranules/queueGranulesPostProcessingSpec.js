@@ -50,8 +50,6 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
       config = await loadConfig();
       lambdaStep = new LambdaStep();
 
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-
       const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
       const testId = createTimestampedTestId(config.stackName, 'QueueGranules');
