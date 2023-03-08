@@ -71,52 +71,6 @@ resource "aws_iam_role" "publish_granules_lambda_role" {
   tags = var.tags
 }
 
-data "aws_iam_policy_document" "publish_granules_policy_document" {
-  statement {
-    actions   = ["sns:Publish"]
-    resources = [aws_sns_topic.report_granules_topic.arn]
-  }
-
-  statement {
-    actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = ["sqs:SendMessage"]
-    resources = [aws_sqs_queue.publish_granules_dead_letter_queue.arn]
-  }
-
-  statement {
-    actions = [
-      "dynamodb:GetRecords",
-      "dynamodb:GetShardIterator",
-      "dynamodb:DescribeStream",
-      "dynamodb:ListStreams"
-    ]
-    resources = ["${var.dynamo_tables.granules.arn}/stream/*"]
-  }
-}
-
-resource "aws_iam_role_policy" "publish_granules_lambda_role_policy" {
-  name   = "${var.prefix}_publish_granules_lambda_role_policy"
-  role   = aws_iam_role.publish_granules_lambda_role.id
-  policy = data.aws_iam_policy_document.publish_granules_policy_document.json
-}
 resource "aws_sqs_queue" "publish_granules_dead_letter_queue" {
   name                       = "${var.prefix}-publishGranulesDeadLetterQueue"
   receive_wait_time_seconds  = 20
