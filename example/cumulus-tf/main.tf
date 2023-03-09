@@ -207,6 +207,8 @@ module "cumulus" {
 
   additional_log_groups_to_elk = var.additional_log_groups_to_elk
 
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+
   tags = local.tags
 }
 
