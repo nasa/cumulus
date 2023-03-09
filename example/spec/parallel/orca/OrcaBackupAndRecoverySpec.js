@@ -128,13 +128,13 @@ describe('The S3 Ingest Granules workflow', () => {
     let lambdaOutput;
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'copy_to_orca');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'copy_to_glacier');
     });
 
     it('copies files configured to glacier', async () => {
       const excludedFileExtensions = get(lambdaOutput, 'meta.collection.meta.orca.excludedFileExtensions', []);
       expect(excludedFileExtensions.length).toBe(1);
-      filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_orca', []);
+      filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
       expect(filesCopiedToGlacier.length).toBe(3);
 
       // copiedToGlacier contains a list of the file s3uri in primary buckets

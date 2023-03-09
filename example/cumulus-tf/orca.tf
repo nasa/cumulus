@@ -13,7 +13,7 @@ locals {
 # ORCA Module
 module "orca" {
   count = 1
-  source = "https://github.com/nasa/cumulus-orca/releases/download/v7.0.1/cumulus-orca-terraform.zip"
+  source = "https://github.com/nasa/cumulus-orca/releases/download/v6.0.3/cumulus-orca-terraform.zip"
 
   ## --------------------------
   ## Cumulus Variables
