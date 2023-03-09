@@ -124,7 +124,7 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
-  describe('the CopyToArchive task', () => {
+  describe('the CopyToGlacier task', () => {
     let lambdaOutput;
 
     beforeAll(async () => {

@@ -307,7 +307,7 @@
       },
       "Type": "Task",
       "Resource": "${hyrax_metadata_updates_task_arn}",
-      "Next": "CopyToArchive",
+      "Next": "CopyToGlacier",
       "Catch": [
         {
           "ErrorEquals": [
@@ -330,7 +330,7 @@
         }
       ]
     },
-    "CopyToArchive": {
+    "CopyToGlacier": {
       "Parameters": {
         "cma": {
           "event.$": "$",
