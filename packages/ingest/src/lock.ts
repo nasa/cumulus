@@ -1,9 +1,9 @@
-import delay from 'delay';
 import {
   s3PutObject,
   deleteS3Object,
   listS3ObjectsV2,
 } from '@cumulus/aws-client/S3';
+import { sleep } from '@cumulus/common';
 import * as log from '@cumulus/common/log';
 
 const lockPrefix = 'lock';
@@ -113,7 +113,7 @@ export async function proceed(
   if (count >= globalConnectionLimit) {
     log.debug(`The "${provider.id}" provider's globalConnectionLimit of "${provider.globalConnectionLimit}" has been reached.`);
     // wait for 5 second and try again
-    await delay(5000);
+    await sleep(5000);
     return proceed(bucket, provider, filename, counter + 1);
   }
 

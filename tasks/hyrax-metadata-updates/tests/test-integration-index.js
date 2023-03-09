@@ -1,6 +1,5 @@
 'use strict';
 
-const delay = require('delay');
 const pRetry = require('p-retry');
 const nock = require('nock');
 const { promisify } = require('util');
@@ -29,6 +28,7 @@ const {
 const { isCMRFile } = require('@cumulus/cmrjs');
 const { InvalidArgument, ValidationError } = require('@cumulus/errors');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { sleep } = require('@cumulus/common');
 
 const rewire = require('rewire');
 
@@ -424,7 +424,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     });
 
     const granulesPromise = hyraxMetadataUpdate(e);
-    await delay(3000).then(promiseS3Upload({
+    await sleep(3000).then(promiseS3Upload({
       params: {
         Bucket: bucket,
         Key: metadataFile.key,

@@ -32,8 +32,10 @@ When you apply this update, the original postgresql v10 parameter group will be
 removed, and recreated using PG11 defaults/configured terraform values and
 update the database cluster to use the new configuration.
 
-
 ### Fixed
+
+- **CUMULUS-3134**
+  - Get tests working on M1 Macs
 
 - **CUMULUS-3149**
 
