@@ -187,21 +187,24 @@ export const reingestGranule = async (params: {
  * Removes a granule from CMR via the Cumulus API
  * PATCH /granules/{granuleId}
  *
- * @param {Object} params             - params
- * @param {string} params.prefix      - the prefix configured for the stack
- * @param {string} params.granuleId   - a granule ID
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
- * @returns {Promise<Object>}         - the granule fetched by the API
+ * @param {Object} params                       - params
+ * @param {string} params.prefix                - the prefix configured for the stack
+ * @param {string} params.granuleId             - a granule ID
+ * @param {Function} params.callback            - async function to invoke the api lambda
+ *                                                that takes a prefix / user payload.  Defaults
+ *                                                to cumulusApiClient.invokeApifunction to invoke the
+ *                                                api lambda
+ * @param {number[]} params.expectedStatusCodes - the statusCodes which the granule API is expecting
+ *                                                for the invokeApi Response, default is 200
+ * @returns {Promise<Object>}                   - the granule fetched by the API
  */
 export const removeFromCMR = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  expectedStatusCodes?: number[],
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
+  const { prefix, granuleId, expectedStatusCodes, callback = invokeApi } = params;
 
   return await callback({
     prefix: prefix,
@@ -214,6 +217,7 @@ export const removeFromCMR = async (params: {
       },
       body: JSON.stringify({ action: 'removeFromCmr' }),
     },
+    expectedStatusCodes: expectedStatusCodes,
   });
 };
 
