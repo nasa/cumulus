@@ -59,15 +59,14 @@ When you apply this update, the original PostgreSQL v10 parameter group will be
 removed, and recreated using PG11 defaults/configured terraform values and
 update the database cluster to use the new configuration.
 
-- **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
-
 ### Added
 
 - **CUMULUS-3193**
   - Add a Python version file
 - **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods. 
+    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention) 
+    section of the Cumulus documentation in order for more detailed information and an example into how to do this.
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
     endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
