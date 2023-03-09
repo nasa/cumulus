@@ -194,7 +194,7 @@ test.before(async (t) => {
     buildDatabaseFiles: (params) => Promise.resolve(params.files),
   }; */
 
-  const fakeStepFunctionUtils = {
+  t.context.stepFunctionUtils = {
     ...StepFunctions,
     describeExecution: () => Promise.resolve({}),
   };
@@ -546,7 +546,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
   t.is(actual, undefined);
 });
 
-test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/PostgreSQL/Elasticsearch/SNS if PostgreSQL write is enabled', async (t) => {
+test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/Elasticsearch/SNS', async (t) => {
   const {
     cumulusMessage,
     esGranulesClient,
@@ -582,13 +582,13 @@ test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/Postgr
   const esRecord = await esGranulesClient.get(granuleId);
   const expectedGranule = {
     ...granule,
-    createdAt: dynamoRecord.createdAt,
-    duration: dynamoRecord.duration,
+    createdAt: esRecord.createdAt,
+    duration: esRecord.duration,
     error: {},
-    productVolume: dynamoRecord.productVolume,
+    productVolume: esRecord.productVolume,
     status: cumulusMessage.meta.status,
-    timestamp: dynamoRecord.timestamp,
-    updatedAt: dynamoRecord.updatedAt,
+    timestamp: esRecord.timestamp,
+    updatedAt: esRecord.updatedAt,
   };
   t.like(esRecord, expectedGranule);
 
@@ -609,7 +609,7 @@ test.serial('writeGranulesFromMessage() saves granule records to DynamoDB/Postgr
   t.is(Messages.length, 1);
 });
 
-test.serial('writeGranulesFromMessage() on re-write saves granule records to DynamoDB/PostgreSQL/Elasticsearch/SNS with expected values nullified', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write saves granule records to PostgreSQL/Elasticsearch/SNS with expected values nullified', async (t) => {
   const {
     collection,
     collectionCumulusId,
@@ -1812,7 +1812,7 @@ test.serial('writeGranulesFromMessage() saves the same files to PostgreSQL and E
   t.deepEqual(sortBy(translatedPgRecord.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
 });
 
-test.serial('writeGranulesFromMessage() saves file records to DynamoDB/PostgreSQL if Postgres write is enabled and workflow status is "completed"', async (t) => {
+test.serial('writeGranulesFromMessage() saves file records to when workflow status is "completed"', async (t) => {
   const {
     collectionCumulusId,
     cumulusMessage,
@@ -2630,7 +2630,7 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on re-write with the same granule values but different files with "completed" status saves granule records to DynamoDB/PostgreSQL/Elasticsearch with updated product volume, expected values, and replaces the files', async (t) => {
+test.serial('writeGranulesFromMessage() on re-write with the same granule values but different files with "completed" status saves granule records to PostgreSQL/Elasticsearch with updated product volume, expected values, and replaces the files', async (t) => {
   // a re-write with same values and files accomplishes the same result
   // as an update with different values
   // for completed status, whether the re-write is with the same execution or a new one
@@ -2747,7 +2747,7 @@ test.serial('writeGranulesFromMessage() on re-write with the same granule values
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and the same execution, does not update the granule values or files in Postgres/DynamoDB/ES, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and the same execution, does not update the granule values or files in Postgres/ES, so the pre-existing values and files will persist', async (t) => {
   // a re-write with same values and files accomplishes the same result
   // as an update with different values
   // for running status, there is a difference whether the re-write is with the same execution
@@ -2866,7 +2866,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and the same execution, does not update the granule values or files in Postgres/DynamoDB/ES, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and the same execution, does not update the granule values or files in Postgres/ES, so the pre-existing values and files will persist', async (t) => {
   // a re-write with same values and files accomplishes the same result
   // as an update with different values
   // for queued status, there is a difference whether the re-write is with the same execution
@@ -2985,7 +2985,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and a new execution, updates only limited granule values to Postgres/DynamoDB/ES, and does not persist updates to the files', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files and a new execution, updates only limited granule values to Postgres/ES, and does not persist updates to the files', async (t) => {
   // a re-write with same values accomplishes the same result as an update with different values
   // for running status, there is a difference whether the re-write is with the same execution
   // or a new one
@@ -3116,7 +3116,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and a new execution, does not update the granule values or files in Postgres/DynamoDB/ES, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files and a new execution, does not update the granule values or files in Postgres/ES, so the pre-existing values and files will persist', async (t) => {
   // a re-write with same values accomplishes the same result as an update with different values
   // for queued status, there is a difference whether the re-write is with the same execution
   // or a new one, but only between an existing execution and a non-existing execution
@@ -3243,7 +3243,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres/DynamoDB/ES or to the files, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "running", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres/ES or to the files, so the pre-existing values and files will persist', async (t) => {
   // for running status, there is a difference whether the re-write is with the same execution
   // or a new one
   const {
@@ -3368,7 +3368,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "ru
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres/DynamoDB/ES or to the files, so the pre-existing values and files will persist', async (t) => {
+test.serial('writeGranulesFromMessage() on update changing granule status to "queued", with different files, a new execution, and a stale granule createdAt, does not update the granule values or files in Postgres/ES or to the files, so the pre-existing values and files will persist', async (t) => {
   // for queued status, there is a difference whether the re-write is with the same execution
   // or a new one
   const {
@@ -3493,7 +3493,7 @@ test.serial('writeGranulesFromMessage() on update changing granule status to "qu
   t.deepEqual(omit(esRecord, ['_id']), removeNilProperties(expectedGranule));
 });
 
-test.serial('writeGranulesFromMessage() on update with "completed" status and stale granule createdAt, does not persist the granule updates to Postgres/DynamoDB/ES or to the files', async (t) => {
+test.serial('writeGranulesFromMessage() on update with "completed" status and stale granule createdAt, does not persist the granule updates to Postgres/ES or to the files', async (t) => {
   // for completed status, whether the update is with the same execution or a new one
   // does not make a difference
   const {
@@ -4280,7 +4280,6 @@ test.serial('writeGranuleFromApi() saves updated values for running granule reco
     collectionCumulusId,
     granule,
     granuleId,
-    granuleModel,
     granulePgModel,
   } = t.context;
 
@@ -4337,7 +4336,7 @@ test.serial('writeGranuleFromApi() saves updated values for running granule reco
   t.is(esRecord.status, 'running');
 });
 
-test.serial('writeGranuleFromApi() saves updated values for queued granule record to Dynamo, Postgres and ElasticSearch on rewrite', async (t) => {
+test.serial('writeGranuleFromApi() saves updated values for queued granule record to Postgres and ElasticSearch on rewrite', async (t) => {
   const {
     esClient,
     esGranulesClient,
@@ -4401,7 +4400,7 @@ test.serial('writeGranuleFromApi() saves updated values for queued granule recor
   t.is(esRecord.status, 'queued');
 });
 
-test.serial('writeGranuleFromApi() saves granule records to Dynamo, Postgres and ElasticSearch with same default time values for a new granule', async (t) => {
+test.serial('writeGranuleFromApi() saves granule records to Postgres and ElasticSearch with same default time values for a new granule', async (t) => {
   const {
     esClient,
     knex,
@@ -4787,7 +4786,7 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL/
 
   t.is(updatedPostgresRecord.status, 'queued');
   t.is(updatedEsRecord.status, 'queued');
-  t.is(translatedPgGranule.execution, undefined);
+  t.is(translatedPgGranule.execution, apiGranule.execution);
   t.deepEqual(omit(postgresRecord, omitList), omit(updatedPostgresRecord, omitList));
   t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
   t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
@@ -4823,7 +4822,7 @@ test.serial('updateGranuleStatusToQueued() throws error if record does not exist
     collectionId: constructCollectionId(name, version),
   });
   await t.throwsAsync(
-    updateGranuleStatusToQueued({ granule: badGranule, knex }),
+    updateGranuleStatusToQueued({ apiGranule: badGranule, knex }),
     {
       name: 'RecordDoesNotExist',
       message: `Record in collections with identifiers {"name":"${name}","version":"${version}"} does not exist.`,
