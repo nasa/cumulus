@@ -1971,7 +1971,7 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
     granuleId,
     knex,
     providerCumulusId,
-    stepFunctionUtils
+    stepFunctionUtils,
   } = t.context;
 
   const fakeEsClient = {
@@ -2401,7 +2401,7 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
   const differentCollection = fakeCollectionRecordFactory();
   const [pgCollection] = await collectionPgModel.create(
     knex,
-    differentCollection,
+    differentCollection
   );
 
   const [pgGranule] = await granulePgModel.create(

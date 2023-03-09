@@ -1,4 +1,6 @@
 const { newestExecutionArnFromGranuleIdWorkflowName } = require('@cumulus/db');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@cumulus/api/lib/executions' });
