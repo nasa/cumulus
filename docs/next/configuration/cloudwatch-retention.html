@@ -81,7 +81,42 @@
 <li>Enter/Select the number of days you'd like to retain logs in that log group for.</li>
 </ol>
 <p><img src="/cumulus/docs/assets/cloudwatch-retention.png" alt="Screenshot of AWS console showing how to configure the retention period for Cloudwatch logs"></p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/next/configuration/server_access_logging"><span class="arrow-prev">← </span><span>S3 Server Access Logging</span></a><a class="docs-next button" href="/cumulus/docs/next/configuration/lifecycle-policies"><span>Setting S3 Lifecycle Policies</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#aws-cli">aws-cli</a></li><li><a href="#aws-management-console">AWS Management Console</a></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
+<h2><a class="anchor" aria-hidden="true" id="terraform"></a><a href="#terraform" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Terraform</h2>
+<p>The <code>cumulus</code> module exposes values for configuration of log retention for
+cloudwatch log groups (in days). A configurable map of <code>cloudwatch_log_retention_periods</code> currently supports the following variables:</p>
+<ul>
+<li>cumulus-tf_egress_lambda_log_retention</li>
+<li>archive_private_api_log_retention</li>
+<li>archive_api_log_retention</li>
+<li>archive_async_operation_log_retention</li>
+<li>archive_granule_files_cache_updater_log_retention</li>
+<li>archive_publish_executions_log_retention</li>
+<li>archive_publish_granule_log_retention</li>
+<li>archive_publish_pdrs_log_retention</li>
+<li>archive_replay_sqs_messages_log_retention</li>
+<li>cumulus_distribution_api_log_retention</li>
+<li>cumulus_ecs_service_default_log_retention</li>
+<li>ingest_discover_pdrs_task_log_retention</li>
+<li>ingest_hyrax_metadata_updates_task_log_retention</li>
+<li>ingest_parse_pdr_task_log_retention</li>
+<li>ingest_post_to_cmr_task_log_retention</li>
+<li>ingest_queue_pdrs_task_log_retention</li>
+<li>ingest_queue_workflow_task_log_retention</li>
+<li>ingest_sync_granule_task_log_retention</li>
+<li>ingest_update_cmr_access_constraints_task_log_retention</li>
+</ul>
+<p>In order to configure this value for the cloudwatch log group, the variable for the retention period for the respective group should be in the form of:</p>
+<pre><code class="hljs css language-hcl">&lt;cumulus_module&gt;_&lt;cloudwatch_log_group&gt;_log_retention: &lt;log_retention&gt;
+ <span class="hljs-built_in"> type </span>= number
+</code></pre>
+<p>An example, in the case of configuring the retention period for the <code>parse_pdr_task</code> <code>aws_cloudwatch_log_group</code>:</p>
+<h3><a class="anchor" aria-hidden="true" id="example"></a><a href="#example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Example</h3>
+<pre><code class="hljs css language-tf"><span class="hljs-attribute">cloudwatch_log_retention_periods</span> = {
+  <span class="hljs-attribute">ingest_parse_pdr_task_log_retention</span> = <span class="hljs-number">365</span>
+}
+</code></pre>
+<p>Additionally, the variable <code>default_log_retention_days</code> can be configured separately during deployment in order to set the default log retention for the cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/cumulus/docs/next/configuration/server_access_logging"><span class="arrow-prev">← </span><span>S3 Server Access Logging</span></a><a class="docs-next button" href="/cumulus/docs/next/configuration/lifecycle-policies"><span>Setting S3 Lifecycle Policies</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#aws-cli">aws-cli</a></li><li><a href="#aws-management-console">AWS Management Console</a></li><li><a href="#terraform">Terraform</a><ul class="toc-headings"><li><a href="#example">Example</a></li></ul></li></ul></nav></div></div><script type="text/javascript" src="https://cdn.jsdelivr.net/docsearch.js/1/docsearch.min.js"></script><script>
                 document.addEventListener('keyup', function(e) {
                   if (e.target !== document.body) {
                     return;
