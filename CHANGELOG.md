@@ -23,8 +23,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3166**
   - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 
-## Fixed 
+## Fixed
 
+- **CUMULUS-3210**
+  - Fix broken propagation of cloudwatch_log_retention_periods to
+    cumulus_distribution and archive modules
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
   - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
