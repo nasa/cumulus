@@ -28,5 +28,7 @@ module "distribution" {
   vpc_id                                         = var.vpc_id
   deploy_to_ngap                                 = var.deploy_to_ngap
 
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+
   tags = var.tags
 }

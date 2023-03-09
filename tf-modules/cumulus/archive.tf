@@ -106,5 +106,7 @@ module "archive" {
   postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
   postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
 
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+
   tags = var.tags
 }
