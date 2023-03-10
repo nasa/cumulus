@@ -112,7 +112,7 @@ module.exports = {
       ],
     },
     algolia: {
-      appId: process.env.DOCSEARCH_API_ID || 'fakeApiId',
+      appId: process.env.DOCSEARCH_APP_ID || 'fakeAppId',
       apiKey: process.env.DOCSEARCH_API_KEY || 'fakeApiKey',
       indexName: process.env.DOCSEARCH_INDEX_NAME || 'fakeIndexName',
     },
