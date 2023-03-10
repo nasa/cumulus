@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-terraform-best-practices
+id: terraform-best-practices
 title: Terraform Best Practices
 hide_title: false
-original_id: terraform-best-practices
 ---
 
 ## How to Manage the Terraform State Bucket
@@ -269,7 +268,5 @@ aws resourcegroupstaggingapi get-resources \
 Ideally, the output should be an empty list, but if it is not, then you may
 need to manually delete the listed resources.
 
-[Configuring the Cumulus deployment]:
-  README.md#configuring-the-cumulus-deployment
-[restoring a previous version]:
-  https://docs.aws.amazon.com/AmazonS3/latest/dev/RestoringPreviousVersions.html
+Configuring the Cumulus deployment: [link](README.md#deploy-the-cumulus-instance)
+Restoring a previous version: [link](https://docs.aws.amazon.com/AmazonS3/latest/dev/RestoringPreviousVersions.html)

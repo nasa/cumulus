@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Changed
 
+- **CUMULUS-2997**
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3
 - **CUMULUS-3147**
   - Set example/cumulus-tf default async_operation_image_version to 44.
   - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.

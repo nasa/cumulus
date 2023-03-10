@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-deployment-readme
+id: deployment-readme
 title: How to Deploy Cumulus
 hide_title: false
-original_id: deployment-readme
 ---
 
 ## Overview
@@ -49,7 +48,7 @@ brew update
 brew install tfenv
 ```
 
-For other cases, installation instructions are available to follow along [here]((https://github.com/tfutils/tfenv#installation)).
+For other cases, installation instructions are available to follow along [here](https://github.com/tfutils/tfenv#installation).
 
 ```shell
  $ tfenv install 0.13.6
@@ -87,7 +86,7 @@ Terraform v0.13.6
 
 ## Prepare Deployment Repository
 
- > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
+ > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](#prepare-aws-configuration)_
 
 Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-deploy) repo and name appropriately for your organization:
 
@@ -189,7 +188,7 @@ Follow the directions on [how to register an application](https://wiki.earthdata
 
 ## Create Resources for Terraform State
 
-> _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
+> _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](#deploy-the-cumulus-instance), as these values should already be configured._
 
 The state of the Terraform deployment is stored in S3. In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`. You can also use an existing bucket, if desired.
 
@@ -228,7 +227,7 @@ $ aws dynamodb create-table \
 
 Cumulus requires a [PostgreSQL compatible database](../deployment/postgres-database-deployment.md) cluster deployed to AWS. We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html). For further guidance about what type of RDS database to use, please [see the guide on choosing and configuring your RDS database](./choosing_configuring_rds.md).
 
-Cumulus provides a default [template and RDS cluster module](./postgres-database-deployment.md) utilizing Aurora Serverless.
+Cumulus provides a default [template and RDS cluster module](postgres-database-deployment.md) utilizing Aurora Serverless.
 
 However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
 
@@ -453,7 +452,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Dashboard Requirements
 
-Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the Dashboard repository.
+Please note that the requirements are similar to the [Cumulus stack deployment requirements](#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the Dashboard repository.
 
 - git
 - [node 12.18](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
@@ -466,7 +465,7 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 
 **Create S3 Bucket for Dashboard:**
 
-- Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](deployment-readme#prepare-aws-configuration).
+- Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](#prepare-aws-configuration).
 - Configure the bucket to host a website:
   - AWS S3 console: Select `<prefix>-dashboard` bucket then, "Properties" -> "Static Website Hosting", point to `index.html`
   - CLI: `aws s3 website s3://<prefix>-dashboard --index-document index.html`

@@ -1,8 +1,7 @@
 ---
-id: version-v9.0.0-postgres_database_deployment
+id: postgres_database_deployment
 title: PostgreSQL Database Deployment
 hide_title: false
-original_id: postgres_database_deployment
 ---
 
 ## Overview
@@ -19,7 +18,7 @@ To that end, Cumulus provides a terraform module
 [`cumulus-rds-tf`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-rds-tf)
 that will deploy an AWS RDS Aurora Serverless PostgreSQL 10.2 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
 
-We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/tree/master/rds-cluster-tf) on github.
+We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/rds-cluster-tf/) on github.
 
 Use of this example involves:
 
@@ -34,8 +33,8 @@ Configuration/installation of this module requires the following:
 
 - [Terraform](https://www.terraform.io)
 - git
-- A VPC configured for use with Cumulus Core.  This should match the subnets you provide when [Deploying Cumulus](deployment-readme) to allow Core's lambdas to properly access the database.
-- At least two subnets across multiple AZs.  These should match the subnets you provide as configuration when [Deploying Cumulus](deployment-readme), and should be within the same VPC.
+- A VPC configured for use with Cumulus Core.  This should match the subnets you provide when [Deploying Cumulus](./) to allow Core's lambdas to properly access the database.
+- At least two subnets across multiple AZs.  These should match the subnets you provide as configuration when [Deploying Cumulus](./), and should be within the same VPC.
 
 ### Needed Git Repositories
 
@@ -56,7 +55,7 @@ working with Terraform, the following links should bring you up to speed:
 - [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
 - [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
-For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#install-terraform)
+For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](https://nasa.github.io/cumulus/docs/deployment/#install-terraform)
 
 #### Aurora/RDS
 
@@ -94,11 +93,11 @@ You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-re
 
 ## Prepare AWS configuration
 
-To deploy this module, you need to make sure that you have the following steps from the [Cumulus deployment instructions](deployment-readme#prepare-aws-configuration) in similar fashion *for this module*:
+To deploy this module, you need to make sure that you have the following steps from the [Cumulus deployment instructions](#prepare-aws-configuration) in similar fashion *for this module*:
 
-- [Set Access Keys](deployment-readme#set-access-keys)
-- [Create the state bucket](deployment-readme#create-the-state-bucket)
-- [Create the locks table](deployment-readme#create-the-locks-table)
+- [Set Access Keys](#set-access-keys)
+- [Create the state bucket](#create-the-state-bucket)
+- [Create the locks table](#create-the-locks-table)
 
 --
 
