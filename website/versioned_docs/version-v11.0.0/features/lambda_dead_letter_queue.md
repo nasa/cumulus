@@ -1,8 +1,7 @@
 ---
-id: version-v11.0.0-dead_letter_queues
+id: dead_letter_queues
 title: Dead Letter Queues
 hide_title: false
-original_id: dead_letter_queues
 ---
 
 ## startSF SQS queue
@@ -39,4 +38,4 @@ Ideally an automated process should be configured to poll the queue and process 
 
 For aid in manually troubleshooting, you can utilize the [SQS Management console](https://console.aws.amazon.com/sqs/home) to view/messages available in the queues setup for a particular stack.    The dead letter queues will have a Message Body containing the Lambda payload, as well as Message Attributes that reference both the error returned and a RequestID which can be cross referenced to the associated Lambda's CloudWatch logs for more information:
 
-![Screenshot of the AWS SQS console showing how to view SQS message attributes](assets/sqs_message_attribute.png)
+![Screenshot of the AWS SQS console showing how to view SQS message attributes](../assets/sqs_message_attribute.png)
