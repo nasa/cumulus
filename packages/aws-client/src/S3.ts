@@ -242,7 +242,7 @@ export const waitForObjectToExist = async (params: {
 * @returns {Promise}
 **/
 export const s3PutObject = (params: PutObjectCommandInput) => s3().putObject({
-  ACL: 'private',
+  ACL: 'disabled',
   ...params,
 });
 
