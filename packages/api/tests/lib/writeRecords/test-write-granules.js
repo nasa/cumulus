@@ -1652,7 +1652,6 @@ test.serial('writeGranulesFromMessage() removes preexisting granule file from Po
     granule,
     granulePgModel,
     knex,
-    providerCumulusId,
     stepFunctionUtils,
   } = t.context;
 
@@ -1771,7 +1770,6 @@ test.serial('writeGranulesFromMessage() saves the same files to PostgreSQL and E
     granuleId,
     granulePgModel,
     knex,
-    providerCumulusId,
     stepFunctionUtils,
   } = t.context;
 
@@ -4849,10 +4847,6 @@ test.serial('updateGranuleStatusToQueued() does not update Elasticsearch granule
     knexOrTransaction: knex,
   });
   const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
-  const apiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: postgresRecord,
-    knexOrTransaction: knex,
-  });
 
   t.is(postgresRecord.status, 'completed');
   t.is(esRecord.status, 'completed');
@@ -4918,10 +4912,6 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL granule if
     knexOrTransaction: knex,
   });
   const esRecord = await esGranulesClient.get(granuleId, granule.collectionId);
-  const apiGranule = await translatePostgresGranuleToApiGranule({
-    granulePgRecord: postgresRecord,
-    knexOrTransaction: knex,
-  });
 
   t.is(postgresRecord.status, 'completed');
   t.is(esRecord.status, 'completed');
