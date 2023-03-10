@@ -192,8 +192,8 @@ export const reingestGranule = async (params: {
  * @param {string} params.granuleId             - a granule ID
  * @param {Function} params.callback            - async function to invoke the api lambda
  *                                                that takes a prefix / user payload.  Defaults
- *                                                to cumulusApiClient.invokeApifunction to invoke the
- *                                                api lambda
+ *                                                to cumulusApiClient.invokeApifunction to invoke
+ *                                                the api lambda
  * @param {number[]} params.expectedStatusCodes - the statusCodes which the granule API is expecting
  *                                                for the invokeApi Response, default is 200
  * @returns {Promise<Object>}                   - the granule fetched by the API

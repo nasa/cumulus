@@ -180,6 +180,7 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
       headers: {
         'Content-Type': 'application/json',
       },
+      expectedStatusCodes: [200],
       body: JSON.stringify({ action: 'removeFromCmr' }),
     },
   };
