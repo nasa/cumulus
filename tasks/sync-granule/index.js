@@ -82,20 +82,6 @@ async function download({
 }
 
 /**
-* Disable ACL using value supplied from configuration.
-* Defaults to private. ACL value of 'disabled' disables it.
-*
-* @param {string} acl
-* @returns {string | undefined }
-*/
-function disableOrDefaultAcl(acl) {
-  if (acl === 'disabled') {
-    return undefined;
-  }
-  return 'private';
-}
-
-/**
  * Ingest a list of granules
  *
  * @param {Object} event - contains input and config parameters
@@ -105,7 +91,6 @@ function disableOrDefaultAcl(acl) {
 function syncGranule(event) {
   const now = Date.now();
   const config = event.config;
-  const ACL = disableOrDefaultAcl(config.ACL);
   const input = event.input;
   const stack = config.stack;
   const buckets = config.buckets;
@@ -118,7 +103,6 @@ function syncGranule(event) {
     Math.min(config.workflowStartTime, now) :
     now;
 
-  log.debug(`Putting object in S3 with parameters: ACL: ${ACL}`);
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
@@ -145,7 +129,6 @@ function syncGranule(event) {
     provider,
     granules: input.granules,
     syncChecksumFiles,
-    ACL,
   }).then((granuleResults) => {
     // eslint-disable-next-line camelcase
     const granuleDuplicates = {};
@@ -200,6 +183,5 @@ async function handler(event, context) {
 
 module.exports = {
   handler,
-  disableOrDefaultAcl,
   syncGranule,
 };
