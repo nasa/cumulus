@@ -13,7 +13,6 @@ test.before((t) => {
 test('getGranule calls the callback with the expected object', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
-    expectedStatusCodes: [200],
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
@@ -41,7 +40,6 @@ test('getGranule calls the callback with the expected object when there is query
   const query = { getRecoveryStatus: true };
   const expected = {
     prefix: t.context.testPrefix,
-    expectedStatusCodes: [200],
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
@@ -182,7 +180,6 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
       },
       body: JSON.stringify({ action: 'removeFromCmr' }),
     },
-    expectedStatusCodes: [200],
   };
 
   const callback = (configObject) => {
