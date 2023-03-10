@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-api-gateway-logging
+id: api-gateway-logging
 title: API Gateway Logging
 hide_title: false
-original_id: api-gateway-logging
 ---
 
 ## Enabling API Gateway Logging
