@@ -30,6 +30,7 @@
 * Mark Schwab
 * Matt Savoie
 * Menno Van Diermen
+* Naga Nages
 * Nagavenkata Nageswaran
 * Nate Pauzenga
 * Pat Cappelaere
@@ -40,3 +41,5 @@
 * Slav Korolev
 * Snyk bot
 * Tobias Nießen
+* Vanh Khuyen Nguyen
+* Vanh Nguyen
