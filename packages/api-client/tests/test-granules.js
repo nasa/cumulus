@@ -18,6 +18,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
     },
+    expectedStatusCodes: undefined,
   };
 
   const callback = (configObject) => {
@@ -46,6 +47,7 @@ test('getGranule calls the callback with the expected object when there is query
       path: `/granules/${t.context.granuleId}`,
       queryStringParameters: query,
     },
+    expectedStatusCodes: undefined,
   };
 
   const callback = (configObject) => {
