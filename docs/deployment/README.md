@@ -74,7 +74,7 @@ Terraform v0.13.6
 ### Credentials
 
 - [CMR](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/common-metadata-repository) username and password. CMR credentials must be provided if you are exporting metadata to CMR with Earthdata Login authentication.
-- [NASA Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API.
+- [NASA Launchpad](https://launchpad.nasa.gov). Launchpad credentials must be provided if you are using Launchpad authentication to export metadata to CMR or to authenticate with the Cumulus API. For more information on how to 
 - [Earthdata Login](https://earthdata.nasa.gov/about/science-system-description/eosdis-components/earthdata-login) username and password. User must have the ability to administer and/or create applications in URS. It's recommended to obtain an account in the test environment (UAT).
 
 ### Needed Git Repositories
@@ -86,7 +86,7 @@ Terraform v0.13.6
 
 ## Prepare Deployment Repository
 
- > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](#prepare-aws-configuration)_
+ > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS Configuration.](#prepare-aws-configuration)_
 
 Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-deploy) repo and name appropriately for your organization:
 
@@ -398,7 +398,12 @@ Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when co
 
 ### Choose a Distribution API
 
-Cumulus can be configured to use either the Thin Egress App (TEA) or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
+#### Default Configuration
+
+If you are deploying from the Cumulus Deployment Template or a configuration based on that repo, the Thin Egress App (TEA) distribution app will be used by default.
+
+#### Configuration Options
+Cumulus can be configured to use either TEA or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
 
 > ⚠️ **IMPORTANT:** If you already have a deployment using the TEA distribution and want to switch to Cumulus Distribution, there will be an API Gateway change. This means that there will be downtime while you update your CloudFront endpoint to use
 the new API gateway.
