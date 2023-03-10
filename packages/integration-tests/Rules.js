@@ -45,8 +45,7 @@ const createOneTimeRule = async (prefix, overrides = {}) => {
   if (createResponse.statusCode !== 200) {
     throw new Error(`Failed to create rule: ${JSON.stringify(createResponse)}`);
   }
-
-  return rule;
+  return JSON.parse(createResponse.body).record;
 };
 
 module.exports = {

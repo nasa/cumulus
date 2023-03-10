@@ -21,7 +21,7 @@ type EarthdataPostTokenResponse = Response<{
 export interface EarthdataLoginParams {
   username: string,
   password: string,
-  edlEnv: string,
+  edlEnv?: string,
 }
 
 /**
@@ -41,14 +41,16 @@ export interface EarthdataLoginParams {
 export class EarthdataLogin {
   username: string;
   password: string;
-  edlEnv: string;
+  edlEnv?: string;
 
   /**
   * The constructor for the EarthdataLogin class
   *
   * @param {string} params.username - Earthdata Login username, required parameter
   * @param {string} params.password - Earthdata Login password, required parameter
-  * @param {string} params.edlEnv - the Earthdata Login environment (['PROD', 'OPS', 'SIT', 'UAT'])
+  * @param {string | undefined} params.edlEnv
+  *   - the Earthdata Login environment (['PROD', 'OPS', 'SIT', 'UAT']),
+  *   - optional, defaults to 'SIT'
   *
   * @example
   *

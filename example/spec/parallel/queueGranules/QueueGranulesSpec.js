@@ -49,8 +49,6 @@ describe('The Queue Granules workflow', () => {
     config = await loadConfig();
     lambdaStep = new LambdaStep();
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
     const s3data = [
@@ -67,9 +65,6 @@ describe('The Queue Granules workflow', () => {
 
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
-
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
     // populate collections, providers and test data
     await Promise.all([

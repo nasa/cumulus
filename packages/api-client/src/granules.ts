@@ -1,6 +1,7 @@
 import pRetry from 'p-retry';
 
 import { ApiGranuleRecord, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { CollectionId } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
@@ -15,7 +16,7 @@ type AssociateExecutionRequest = {
 };
 
 /**
- * GET raw response from /granules/{granuleName}
+ * GET raw response from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -30,29 +31,38 @@ type AssociateExecutionRequest = {
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
+    collectionId,
     query,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       ...(query && { queryStringParameters: query }),
     },
   });
 };
 
 /**
- * GET granule record from /granules/{granuleName}
+ * GET granule record from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -67,6 +77,7 @@ export const getGranuleResponse = async (params: {
 export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranuleRecord> => {
@@ -104,6 +115,7 @@ export const waitForGranule = async (params: {
 
   await pRetry(
     async () => {
+      // TODO update to use collectionId + granuleId
       const apiResult = await getGranuleResponse({ prefix, granuleId, callback });
 
       if (apiResult.statusCode === 500) {
@@ -152,18 +164,33 @@ export const waitForGranule = async (params: {
 export const reingestGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   workflowName?: string | undefined,
   executionArn?: string | undefined,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, workflowName, executionArn, callback = invokeApi } = params;
+  const {
+    prefix,
+    granuleId,
+    collectionId,
+    workflowName,
+    executionArn,
+    callback = invokeApi,
+  } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -192,16 +219,24 @@ export const reingestGranule = async (params: {
 export const removeFromCMR = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
+  const { prefix, granuleId, collectionId, callback = invokeApi } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -227,6 +262,7 @@ export const removeFromCMR = async (params: {
 export const applyWorkflow = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   workflow: string,
   meta?: object,
   callback?: InvokeApiFunction
@@ -234,10 +270,18 @@ export const applyWorkflow = async (params: {
   const {
     prefix,
     granuleId,
+    collectionId,
     workflow,
     meta,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
@@ -247,7 +291,7 @@ export const applyWorkflow = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: `/granules/${granuleId}`,
+      path,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
     },
   });
@@ -270,6 +314,7 @@ export const applyWorkflow = async (params: {
 export const deleteGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   pRetryOptions?: pRetry.Options,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
@@ -277,14 +322,23 @@ export const deleteGranule = async (params: {
     pRetryOptions,
     prefix,
     granuleId,
+    collectionId,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
+
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
     },
     pRetryOptions,
   });
@@ -307,15 +361,24 @@ export const deleteGranule = async (params: {
 export const moveGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   destinations: unknown[],
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
+    collectionId,
     destinations,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
@@ -325,7 +388,7 @@ export const moveGranule = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      path: `/granules/${granuleId}`,
+      path,
       body: JSON.stringify({ action: 'move', destinations }),
     },
   });
@@ -346,13 +409,14 @@ export const moveGranule = async (params: {
 export const removePublishedGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
+  const { prefix, granuleId, collectionId, callback = invokeApi } = params;
 
   // pre-delete: Remove the granule from CMR
-  await removeFromCMR({ prefix, granuleId, callback });
-  return deleteGranule({ prefix, granuleId, callback });
+  await removeFromCMR({ prefix, granuleId, collectionId, callback });
+  return deleteGranule({ prefix, granuleId, collectionId, callback });
 };
 
 /**
@@ -433,16 +497,25 @@ export const createGranule = async (params: {
 export const updateGranule = async (params: {
   prefix: string,
   body: ApiGranuleRecord,
+  granuleId: GranuleId,
+  collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, body, callback = invokeApi } = params;
+  const { prefix, granuleId, collectionId, body, callback = invokeApi } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix,
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${body.granuleId}`,
+      path,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },

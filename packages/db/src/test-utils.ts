@@ -109,6 +109,8 @@ export const fakeProviderRecordFactory = (
   name: `provider${cryptoRandomString({ length: 5 })}`,
   host: 'test-bucket',
   protocol: 's3',
+  created_at: new Date(),
+  updated_at: new Date(),
   ...params,
 });
 

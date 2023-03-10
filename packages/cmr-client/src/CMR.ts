@@ -1,4 +1,3 @@
-// @ts-nocheck
 import get from 'lodash/get';
 import got, { Headers } from 'got';
 import { CMRInternalError } from '@cumulus/errors';

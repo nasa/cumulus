@@ -2,11 +2,8 @@
 
 const fs = require('fs-extra');
 const path = require('path');
-const pMap = require('p-map');
-const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const {
   s3GetObjectTagging,
   s3ObjectExists,
@@ -96,9 +93,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const newCollectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       process.env.system_bucket = config.bucket;
-      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -314,31 +309,6 @@ describe('The S3 Ingest Granules workflow', () => {
     );
     const collectionResult = JSON.parse(collectionResponse.body);
     expect(collectionResult).not.toBeNull();
-  });
-
-  it('results in the files being added to the granule files cache table', async () => {
-    if (beforeAllError) fail(beforeAllError);
-
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-
-    const lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'MoveGranules');
-
-    await pMap(
-      lambdaOutput.payload.granules[0].files,
-      async (file) => {
-        const granuleId = await pRetry(
-          async () => {
-            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
-            return id;
-          },
-          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
-        );
-
-        expect(granuleId).toEqual(lambdaOutput.payload.granules[0].granuleId);
-      },
-      { concurrency: 1 }
-    );
   });
 
   describe('the SyncGranules task', () => {

@@ -289,6 +289,7 @@ const _publishPostgresGranuleUpdateToSns = async ({
 
 /**
  * Update granule record status in PostgreSQL Elasticsearch.
+ * Update granule record status in PostgreSQL and Elasticsearch.
  * Publish SNS event for updated granule.
  *
  * @param {Object}  params
@@ -510,7 +511,6 @@ const _writeGranuleRecords = async (params) => {
   let writePgGranuleResult;
 
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
-
   try {
     await createRejectableTransaction(knex, async (trx) => {
       // Validate API schema using lib method
@@ -669,7 +669,7 @@ const _writeGranule = async ({
 };
 
 /**
-* Method to facilitate parital granule record updates
+* Method to facilitate partial granule record updates
 * @summary In cases where a full API record is not passed, but partial/tangential updates to granule
 *          records are called for, updates to files records are not required and pre-write
 *          calculation in methods like write/update GranulesFromApi result in unneded
@@ -867,6 +867,7 @@ const writeGranuleFromApi = async (
       knexOrTransaction: knex,
     });
 
+    // TODO Fix remove api granule model
     await _writeGranule({
       apiGranuleRecord,
       esClient,

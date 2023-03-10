@@ -39,11 +39,6 @@ variable "enable_point_in_time_tables" {
   description = "DynamoDB table names that should have point in time recovery enabled"
   type        = list(string)
   default = [
-    "CollectionsTable",
-    "ExecutionsTable",
-    "FilesTable",
-    "GranulesTable",
-    "PdrsTable",
     "ProvidersTable",
     "RulesTable",
     "UsersTable"

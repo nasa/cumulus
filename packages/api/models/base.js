@@ -6,6 +6,7 @@ const Ajv = require('ajv');
 const pWaitFor = require('p-wait-for');
 
 const awsServices = require('@cumulus/aws-client/services');
+const { deprecate } = require('@cumulus/common/util');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { inTestMode } = require('@cumulus/common/test-utils');
@@ -86,6 +87,7 @@ async function deleteTable(tableName) {
  */
 class Manager {
   static recordIsValid(item, schema, removeAdditional = false) {
+    deprecate('@cumulus/api/models/base/recordIsValid', 'RDS-Phase-3', '@cumulus/api/lib/schema.js');
     if (!schema) {
       throw new Error('schema is not defined');
     }
