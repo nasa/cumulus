@@ -1,3 +1,6 @@
+---
+id: release
+---
 # Versioning and Releases
 
 ## Versioning
@@ -12,13 +15,13 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 Before releasing a new major version of Cumulus, we should test the deployment upgrade path from the latest release of Cumulus to the upcoming release.
 
-It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
+It is preferable to use the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
 
 You should create an entirely new deployment for this testing to replicate the end user upgrade path. Using an existing test or CI deployment would not be useful because that deployment may already have been deployed with the latest changes and not match the upgrade path for end users.
 
 Pre-release testing steps:
 
-1. Checkout the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo
+1. Checkout the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
 2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `5.0.1`, update the deployment files as follows:
 
     ```text
@@ -172,11 +175,28 @@ Commit and push these changes, if any.
 
 ### 8. Cut new version of Cumulus Documentation
 
-**If this is a backport, do not create a new version of the documentation.** For various reasons, we do not merge backports back to master, other than changelog notes. Documentation changes for backports will not be published to our documentation website.
+Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs
+does not depends on other version.
+If this is a patch version, or a minor version with no significant functionality changes requiring document update, do not create
+a new version of the documentation, update the existing versioned_docs document instead.
+
+Create a new version:
 
 ```bash
 cd website
-npm run version ${release_version}
+npm run docusaurus docs:version ${release_version}
+# please update version in package.json
+git add .
+```
+
+Instructions to rename an existing version:
+
+```bash
+cd website
+git mv versioned_docs/version-<oldversion> versioned_docs/version-${release_version}
+git mv versioned_sidebars/version-<oldversion>-sidebars.json versioned_sidebars/version-${release_version}-sidebars.json
+# please update versions.json with new version
+# please update documents under versioned_docs/version-${release_version}
 git add .
 ```
 
@@ -282,7 +302,13 @@ Make sure to verify the appropriate .zip files are present on Github after the r
   - Check the "This is a pre-release" checkbox
   - Click "Update release"
 
-### 13. Merge base branch back to master
+### 13. Update Cumulus API document
+
+There may be unreleased changes in the [Cumulus API document](https://github.com/nasa/cumulus-api) that are waiting on the Cumulus Core release.
+If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
+the Cumulus Core release.
+
+### 14. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 

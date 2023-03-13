@@ -177,7 +177,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   function_name    = "${var.prefix}-sfEventSqsToDbRecords"
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = local.sf_event_sqs_lambda_timeout
   memory_size      = 1024
 
@@ -227,7 +227,7 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
   function_name    = "${var.prefix}-writeDbRecordsDLQtoS3"
   role             = aws_iam_role.sf_event_sqs_to_db_records_lambda.arn
   handler          = "index.handler"
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = local.sf_event_sqs_lambda_timeout
   memory_size      = 256
 

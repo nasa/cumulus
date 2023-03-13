@@ -19,8 +19,8 @@ import { UpdatedAtRange } from '../types/record';
 const { TableNames } = require('../tables');
 
 export const getGranuleCollectionId = async (
-  knexOrTransaction: Knex | Knex.Transaction,
-  granule: PostgresGranule
+  knexOrTransaction: Knex,
+  granule: { collection_cumulus_id: number }
 ) => {
   const collectionPgModel = new CollectionPgModel();
   const collection = await collectionPgModel.get(
@@ -262,12 +262,12 @@ export const getGranulesByApiPropertiesQuery = (
  *
  * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
  * @param {string} granuleId - Granule ID
- * @returns {Promise<Array<PostgresGranuleRecord>} The returned list of records
+ * @returns {Promise<PostgresGranuleRecord[]>} The returned list of records
  */
 export const getGranulesByGranuleId = async (
   knexOrTransaction: Knex | Knex.Transaction,
   granuleId: string
-): Promise<Array<PostgresGranuleRecord>> => {
+): Promise<PostgresGranuleRecord[]> => {
   const {
     granules: granulesTable,
   } = TableNames;

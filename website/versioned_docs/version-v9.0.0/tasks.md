@@ -1,8 +1,7 @@
 ---
-id: version-v9.0.0-tasks
+id: tasks
 title: Cumulus Tasks
 hide_title: false
-original_id: tasks
 ---
 
 A list of reusable Cumulus tasks. [Add your own.](adding-a-task.md)

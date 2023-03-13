@@ -4,7 +4,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/nasa/cumulus/badge.svg?branch=master)](https://coveralls.io/github/nasa/cumulus?branch=master)
 
 ## About Cumulus
-Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations. 
+Cumulus is an open source cloud-based data ingest, archive, distribution, and management framework developed for NASA's future Earth Science data streams. This repo supports the development, deployment, and testing of Cumulus and supplies useful tips on configuration, workflow management, and operations.
 To learn more about Cumulus and NASA's Earth Observing System Data and Information System (EOSDIS) cloud initiatives go to [More Information](#more-information).
 
 ---
@@ -16,21 +16,21 @@ Below is in-depth guidance to help get you started with your Cumulus development
 ## Contents
 - [Documentation](#📖-documentation)
 - [Development](#🔨-development)
-    - [Installation](#installation)
-        - [Prerequisites](#prerequisites)
-        - [Install Lerna](#install-lerna)
-        - [Install Local Dependencies](#install-local-dependencies)
-    - [Running the Cumulus APIs Locally](#running-the-cumulus-apis-locally)
-    - [Tests](#📝-tests)
-        - [Unit Tests](#unit-tests)
+  - [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Install Lerna](#install-lerna)
+    - [Install Local Dependencies](#install-local-dependencies)
+  - [Running the Cumulus APIs Locally](#running-the-cumulus-apis-locally)
+  - [Tests](#📝-tests)
+    - [Unit Tests](#unit-tests)
             -[LocalStack](#localstack)
-        - [Integration Tests](#integration-tests)
-        - [Running Tests via VS Code Debugger](#running-tests-via-vs-code-debugger)
-    - [Code Coverage And Quality](#🔦-code-coverage-and-quality)
-    - [Adding New Packages](#📦-adding-new-packages)
-    - [Cleaning Up All The Repos](#cleaning-up-all-the-repos)
-    - [Contribution](#contribution)
-    - [Release](#🛒-release)
+    - [Integration Tests](#integration-tests)
+    - [Running Tests via VS Code Debugger](#running-tests-via-vs-code-debugger)
+  - [Code Coverage And Quality](#🔦-code-coverage-and-quality)
+  - [Adding New Packages](#📦-adding-new-packages)
+  - [Cleaning Up All The Repos](#cleaning-up-all-the-repos)
+  - [Contribution](#contribution)
+  - [Release](#🛒-release)
 - [More Information](#more-information)
 
 ---
@@ -39,6 +39,7 @@ Below is in-depth guidance to help get you started with your Cumulus development
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
 - Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
+- Documentation: [How To's](./docs/docs-how-to.md)
 
 # 🔨 Development
 
@@ -61,16 +62,16 @@ with an individual package.
 
 ## Installation
 
-This is for installation for Cumulus development. See the [Cumulus deployment section](https://nasa.github.io/cumulus/docs/deployment/deployment-readme) for instructions on deploying the released Cumulus packages.
+This is for installation for Cumulus development. See the [Cumulus deployment section](https://nasa.github.io/cumulus/docs/deployment) for instructions on deploying the released Cumulus packages.
 
 ### Prerequisites
 
-- [NVM](https://github.com/creationix/nvm) and node version 14.19.1
+- [NVM](https://github.com/creationix/nvm) and node version 16.19.0
 - [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 - Bash
 - [Docker](https://www.docker.com/) (only required for testing)
 - docker-compose (only required for testing `pip install docker-compose`)
-- Python 3.6+
+- Python 3.7
 - [pipenv](https://pypi.org/project/pipenv/)
 
 > You may use `brew` to install the prerequisites. Visit [Homebrew documentation](https://brew.sh/) for guidance.
@@ -86,22 +87,30 @@ nvm use
 
 We use Lerna to manage multiple Cumulus packages in the same repo. You need to install Lerna as a global module first:
 
-    $ npm install -g lerna
+```sh
+npm install -g lerna
+```
 
 ### Install Local Dependencies
 
 We use npm for local package management. Run the following to get your dependencies set up.
 
-    $ npm install
-    $ npm run bootstrap
+```sh
+npm install
+npm run bootstrap
+```
 
 Build all packages:
 
-    $ npm run build
+```sh
+npm run build
+```
 
 Build and watch packages:
 
-    $ npm run watch
+```sh
+npm run watch
+```
 
 To add new packages go to [Adding New Packages](#📦-adding-new-packages) for guidance.
 
@@ -109,11 +118,15 @@ To add new packages go to [Adding New Packages](#📦-adding-new-packages) for g
 
 Start the API:
 
-    $ npm run serve
+```sh
+npm run serve
+```
 
 Or start the distribution API:
 
-    $ npm run serve-dist
+```sh
+npm run serve-dist
+```
 
 See the [API package documentation](packages/api/README.md#running-the-api-locally) for more options.
 
@@ -133,25 +146,94 @@ Localstack is included in the docker-compose file. You only need to run the dock
 
 Turn on the docker containers first:
 
-    $ npm run start-unit-test-stack
+```sh
+npm run start-unit-test-stack
+```
 
 Stop localstack/unit test services:
 
-    $ npm run stop-unit-test-stack
+```sh
+npm run stop-unit-test-stack
+```
 
 #### Run database migrations
 
+```sh
+npm run db:local:migrate
 ```
-$ npm run db:local:migrate
+
+#### Using an AWS-hosted Elasticsearch server
+
+The tests can be run against an Elasticsearch server running in AWS. This is useful if you are using an ARM-equipped Mac and are unable to run the old Intel version of Elasticsearch in Docker. These instructions assume that you have a deployment of Cumulus available, and the deployment name is "EXAMPLE".
+
+##### Pre-Reqs
+
+- The [AWS CLI](https://aws.amazon.com/cli/) is installed
+- The [Session Manager plugin](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html) for the AWS CLI is installed
+- [jq](https://stedolan.github.io/jq/) is installed
+- Your Cumulus deployment specified a `key_name` in `cumulus-tf/terraform.tfvars` that will grant you access to the EC2 instances that are part of that deployment
+- You are able to SSH into one of your EC2 instances (you are connected to a NASA VPN if required)
+
+##### Configure ssh
+
+Add the following to your `~/.ssh/config` file
+
+```text
+Host i-*
+  User ec2-user
+  ProxyCommand sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p'"
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+```
+
+##### Start the ssh tunnel to Elasticsearch
+
+Open an SSH tunnel to Elasticsearch with the following command.
+
+```sh
+./bin/es-tunnel.sh EXAMPLE
+```
+
+At this point you can send requests to <https://localhost:8443> and get responses from your Elasticsearch domain running in AWS. Note that, because you're tunneling TLS-encrypted traffic, the certificates are not going to match. The test code handles this already but, if you're using `curl`, make sure to use the `-k` option to disable strict certificate checks.
+
+```sh
+$ curl -k https://localhost:8443
+{
+  "name" : "ABC123",
+  "cluster_name" : "123:abc-es-vpc",
+  "cluster_uuid" : "abc-Ti6N3IA2ULvpBQ",
+  "version" : {
+    "number" : "5.3.2",
+    "build_hash" : "6bc5aba",
+    "build_date" : "2022-09-02T09:03:07.611Z",
+    "build_snapshot" : false,
+    "lucene_version" : "6.4.2"
+  },
+  "tagline" : "You Know, for Search"
+}
+```
+
+##### Run the tests
+
+With the tunnel configured, you can now run the tests with the following command:
+
+```sh
+env \
+  LOCAL_ES_HOST_PORT=8443 \
+  LOCAL_ES_HOST_PROTOCOL=https \
+  LOCAL_ES_HOST=localhost \
+  LOCALSTACK_HOST=127.0.0.1 \
+npm test
 ```
 
 #### Run tests
 
 Run the test commands next
-```
-    $ export LOCAL_ES_HOST=127.0.0.1
-    $ export LOCALSTACK_HOST=127.0.0.1
-    $ npm test
+
+```sh
+export LOCAL_ES_HOST=127.0.0.1
+export LOCALSTACK_HOST=127.0.0.1
+npm test
 ```
 
 ### Integration Tests
@@ -174,11 +256,15 @@ Make sure to name the package as `@cumulus/package-name`.
 
 ## Running command in all package folders
 
-    $ lerna exec -- rm -rf ./package-lock.json
+```sh
+lerna exec -- rm -rf ./package-lock.json
+```
 
 ## Cleaning Up all the repos
 
-    $ npm run clean
+```sh
+npm run clean
+```
 
 ---
 

@@ -30,7 +30,7 @@ A class to simplify requests to the CMR
 * [CMR](#CMR)
     * [new CMR(params)](#new_CMR_new)
     * [.getCmrPassword()](#CMR+getCmrPassword) ⇒ <code>Promise.&lt;string&gt;</code>
-    * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;string&gt;</code>
+    * [.getToken()](#CMR+getToken) ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
     * [.getWriteHeaders(params)](#CMR+getWriteHeaders) ⇒ <code>Object</code>
     * [.getReadHeaders(params)](#CMR+getReadHeaders) ⇒ <code>Object</code>
     * [.ingestCollection(xml)](#CMR+ingestCollection) ⇒ <code>Promise.&lt;Object&gt;</code>
@@ -87,11 +87,11 @@ Get the CMR password, from the AWS secret if set, else return the password
 **Returns**: <code>Promise.&lt;string&gt;</code> - - the CMR password  
 <a name="CMR+getToken"></a>
 
-### cmrClient.getToken() ⇒ <code>Promise.&lt;string&gt;</code>
+### cmrClient.getToken() ⇒ <code>Promise.&lt;(string\|undefined)&gt;</code>
 The method for getting the token
 
 **Kind**: instance method of [<code>CMR</code>](#CMR)  
-**Returns**: <code>Promise.&lt;string&gt;</code> - the token  
+**Returns**: <code>Promise.&lt;(string\|undefined)&gt;</code> - the token  
 <a name="CMR+getWriteHeaders"></a>
 
 ### cmrClient.getWriteHeaders(params) ⇒ <code>Object</code>

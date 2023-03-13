@@ -4,7 +4,7 @@ resource "aws_lambda_function" "hello_world_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/hello-world/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = lookup(var.lambda_timeouts, "hello_world_task_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "hello_world_task_memory_size", 512)
 

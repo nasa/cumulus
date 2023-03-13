@@ -12,6 +12,7 @@
     "docs-install": "(cd website && npm install)",
     "docs-build": "npm run docs-install && npm run docs-build-tasks && (cd website && npm run build)",
     "docs-build-schema": "./bin/build_db_schema.sh",
+    "docs-clear": "(cd website && npm run clear)",
     "docs-serve": "npm run docs-build && (cd website && npm run start)",
     "eslint": "eslint --ext .js --ext .ts .",
     "remove-locks": "lerna exec 'rm -f package-lock.json'",
@@ -20,7 +21,7 @@
     "lint": "npm run lint-package-json && npm run eslint && lerna run python-lint && npm run lint-md",
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "lint-package-json": "npmPkgJsonLint .",
-    "test": "lerna run --concurrency 1 test",
+    "test": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test",
     "test:ci": "./scripts/run_ci_units.sh",
     "test:coverage": "rm -rf .nyc_output coverage && env NYC_CLEAN=false NYC_SILENT=true lerna run --concurrency 1 test:coverage && nyc report --reporter=text --reporter=html",
     "tsc": "lerna run tsc",
@@ -55,7 +56,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -75,6 +76,7 @@
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
+    "@docusaurus/eslint-plugin": "^2.3.0",
     "@octokit/graphql": "2.1.1",
     "@types/aws-lambda": "^8.10.58",
     "@types/lodash": "^4.14.150",
@@ -100,13 +102,12 @@
     "coveralls": "^3.0.0",
     "create-test-server": "^3.0.1",
     "crypto-random-string": "^3.2.0",
-    "delay": "^4.3.0",
     "eslint": "^7.32.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-config-airbnb-typescript": "^14.0.1",
     "eslint-plugin-eslint-comments": "^3.0.1",
     "eslint-plugin-import": "2.22.1",
-    "eslint-plugin-jsdoc": "^38.1.6",
+    "eslint-plugin-jsdoc": "^40.0.0",
     "eslint-plugin-lodash": "^2.7.0",
     "eslint-plugin-node": "^7.0.1",
     "eslint-plugin-promise": "^4.2.1",

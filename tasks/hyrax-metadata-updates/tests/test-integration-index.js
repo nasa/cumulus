@@ -1,12 +1,12 @@
 'use strict';
 
-const delay = require('delay');
 const pRetry = require('p-retry');
 const nock = require('nock');
 const { promisify } = require('util');
 const test = require('ava');
 const proxyquire = require('proxyquire');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
 const xml2js = require('xml2js');
 
 const xmlParseOptions = {
@@ -29,6 +29,7 @@ const {
 const { isCMRFile } = require('@cumulus/cmrjs');
 const { InvalidArgument, ValidationError } = require('@cumulus/errors');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { sleep } = require('@cumulus/common');
 
 const rewire = require('rewire');
 
@@ -92,7 +93,11 @@ const setupNock = (params) => {
 
   const expectedresponse = [
     {
-      access_token: 'ABCDE',
+      access_token: jwt.sign(
+        { data: 'foobar' },
+        randomId('secret'),
+        { expiresIn: '365d' }
+      ),
       token_type: 'Bearer',
       expiration_date: '1/1/2999',
     },
@@ -475,7 +480,7 @@ test.serial('hyraxMetadataUpdate eventually finds and updates ECHO10 metadata fi
     });
 
     const granulesPromise = hyraxMetadataUpdate(e);
-    await delay(3000).then(promiseS3Upload({
+    await sleep(3000).then(promiseS3Upload({
       params: {
         Bucket: bucket,
         Key: metadataFile.key,

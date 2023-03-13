@@ -8,7 +8,7 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 512
 

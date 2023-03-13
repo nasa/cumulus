@@ -1,8 +1,7 @@
 ---
-id: version-v13.4.0-cnm-workflow
+id: cnm-workflow
 title: CNM Workflow
 hide_title: false
-original_id: cnm-workflow
 ---
 
 This entry documents how to setup a workflow that utilizes the built-in CNM/Kinesis functionality in Cumulus.
@@ -39,7 +38,7 @@ Using the "Create Data Stream" button on the [Kinesis Dashboard](https://console
 
 You should be able to quickly use the "Create Data Stream" button on the [Kinesis Dashboard](https://console.aws.amazon.com/kinesis/home), and setup streams that are similar to the following example:
 
-![Screenshot of AWS console page for creating a Kinesis stream](assets/cnm_create_kinesis_stream.jpg)
+![Screenshot of AWS console page for creating a Kinesis stream](../assets/cnm_create_kinesis_stream.jpg)
 
 Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user. If you are using the `cumulus` top-level module for your deployment this should be set properly.
 
@@ -500,7 +499,7 @@ To test the failure scenario, send a record missing the `product.name` key.
 
 Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the dashboard:
 
-![Screenshot of a successful CNM workflow appearing on the executions page of the Cumulus dashboard](assets/cnm_success_example.png)
+![Screenshot of a successful CNM workflow appearing on the executions page of the Cumulus dashboard](../assets/cnm_success_example.png)
 
 ### Check the test granule has been delivered to S3 staging
 
@@ -615,6 +614,6 @@ When a `kinesis` rule is created, in addition to the `messageConsumer` event map
 
 Cumulus also supports this feature for all outbound messages. To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` Lambda that targets your `response-endpoint`. You can do this in the Lambda management page for `KinesisOutboundEventLogger`. Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
 
-![Screenshot of the AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](assets/KinesisLambdaTriggerConfiguration.png)
+![Screenshot of the AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](../assets/KinesisLambdaTriggerConfiguration.png)
 
 Once this is done, all records sent to the `response-endpoint` will also be logged in CloudWatch. For more on configuring Lambdas to trigger on Kinesis events, please see [creating an event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping).

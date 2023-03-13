@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "13.4.0",
+  "version": "15.0.0",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "files": [
     "*.js",
@@ -43,6 +43,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aws-sdk/types": "^3.58.0",
     "@aws-sdk/client-api-gateway": "^3.58.0",
     "@aws-sdk/client-dynamodb": "^3.58.0",
     "@aws-sdk/client-dynamodb-streams": "^3.58.0",
@@ -51,10 +52,9 @@
     "@aws-sdk/lib-storage": "^3.58.0",
     "@aws-sdk/s3-request-presigner": "^3.58.0",
     "@aws-sdk/signature-v4-crt": "^3.58.0",
-    "@aws-sdk/types": "^3.58.0",
-    "@cumulus/checksum": "13.4.0",
-    "@cumulus/errors": "13.4.0",
-    "@cumulus/logger": "13.4.0",
+    "@cumulus/checksum": "15.0.0",
+    "@cumulus/errors": "15.0.0",
+    "@cumulus/logger": "15.0.0",
     "aws-sdk": "^2.585.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.21",

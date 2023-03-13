@@ -43,10 +43,12 @@ module.exports = {
   ],
   extends: [
     'airbnb-base',
+    'plugin:@docusaurus/recommended',
     'plugin:eslint-comments/recommended',
     'plugin:import/errors',
     'plugin:import/warnings',
     'plugin:import/typescript',
+    'plugin:jsdoc/recommended',
     'plugin:lodash/recommended',
     'plugin:node/recommended',
     'plugin:promise/recommended',
@@ -58,49 +60,31 @@ module.exports = {
     node: true,
     es2020: true,
   },
+  globals: {
+    JSX: true,
+  },
   rules: {
+    'import/no-unresolved': [
+      2,
+      { ignore: ['^@theme', '^@docusaurus', '^@generated'] },
+    ],
     complexity: ['error', 15],
     indent: ['error', 2],
     'object-curly-newline': ['warn', { consistent: true, minProperties: 6 }],
     'require-jsdoc': 'off',
-    'valid-jsdoc': [
-      'warn',
-      {
-        prefer: {
-          arg: 'param',
-          return: 'returns',
-        },
-        preferType: {
-          Boolean: 'boolean',
-          Number: 'number',
-          String: 'string',
-          object: 'Object',
-          array: 'Array',
-          date: 'Date',
-          regexp: 'RegExp',
-          Regexp: 'RegExp',
-          promise: 'Promise',
-        },
-        requireParamDescription: false,
-        requireParamType: true,
-        requireReturn: false,
-        requireReturnDescription: false,
-        requireReturnType: true,
-      },
-    ],
+
     'jsdoc/check-param-names': 'warn',
     'jsdoc/check-tag-names': 'warn',
-    'jsdoc/check-types': 'off',
-    'jsdoc/newline-after-description': 'off',
-    'jsdoc/require-description-complete-sentence': 'off',
-    'jsdoc/require-example': 'off',
-    'jsdoc/require-hyphen-before-param-description': 'off',
-    'jsdoc/require-param': 'off',
+    'jsdoc/newline-after-description': 'warn',
+    'jsdoc/no-undefined-types': 'off', // We'll rely on tsc for these checks
+    'jsdoc/require-hyphen-before-param-description': 'warn',
     'jsdoc/require-param-description': 'off',
     'jsdoc/require-param-name': 'warn',
-    'jsdoc/require-param-type': 'off',
+    'jsdoc/require-param-type': 'warn',
+    'jsdoc/require-param': 'warn',
+    'jsdoc/require-property-description': 'off',
     'jsdoc/require-returns-description': 'off',
-    'jsdoc/require-returns-type': 'off',
+    'jsdoc/require-returns-type': 'warn',
 
     'generator-star-spacing': 'off',
     'import/no-extraneous-dependencies': 'off',
@@ -189,7 +173,13 @@ module.exports = {
         '@typescript-eslint',
       ],
       extends: ['airbnb-typescript/lib/shared'],
+      settings: {
+        jsdoc: {
+          mode: 'typescript',
+        },
+      },
       rules: {
+        '@typescript-eslint/dot-notation': 'off',
         '@typescript-eslint/no-implied-eval': 'off',
         '@typescript-eslint/no-throw-literal': 'off',
         '@typescript-eslint/comma-dangle': [
@@ -209,6 +199,11 @@ module.exports = {
         'lodash/prefer-lodash-typecheck': 'off',
         'node/no-unsupported-features/es-syntax': 'off',
         'node/shebang': 'off',
+
+        'jsdoc/require-jsdoc': 'off',
+        'jsdoc/require-param-type': 'off',
+        'jsdoc/require-property-type': 'off',
+        'jsdoc/require-returns-type': 'off',
       },
       parserOptions: {
         project: './tsconfig.eslint.json',
@@ -251,6 +246,13 @@ module.exports = {
       files: ['packages/db/src/migration-template.ts'],
       rules: {
         '@typescript-eslint/no-unused-vars': 'off',
+      },
+    },
+    {
+      files: ['website/src/pages/*.tsx'],
+      rules: {
+        'no-unused-vars': 'off',
+        'node/no-unsupported-features/es-syntax': 'off',
       },
     },
   ],

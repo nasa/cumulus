@@ -165,15 +165,17 @@ module "cumulus" {
   archive_api_users = [
     "chuang14",
     "ds_jennifertran",
+    "efenollal",
+    "filipgraniczny",
     "jasmine",
     "jennyhliu",
     "jmccoy_uat",
     "kkelly",
     "kovarik",
-    "menno.vandiermen",
     "mobrien84",
     "nnageswa",
     "npauzenga",
+    "vnguyen",
   ]
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port

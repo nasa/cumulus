@@ -89,7 +89,7 @@ test.before(async (t) => {
     FunctionName: randomId('messageConsumer'),
     Role: randomId('role'),
     Handler: 'index.handler',
-    Runtime: 'nodejs14.x',
+    Runtime: 'nodejs16.x',
   }).promise();
   process.env.messageConsumer = messageConsumer.FunctionName;
 
@@ -307,6 +307,26 @@ test.serial('default returns list of rules', async (t) => {
 
   const { results } = response.body;
   t.is(results.length, 1);
+});
+
+test.serial('search returns correct list of rules', async (t) => {
+  const response = await request(app)
+    .get('/rules?page=1&rule.type=onetime&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results } = response.body;
+  t.is(results.length, 1);
+
+  const newResponse = await request(app)
+    .get('/rules?page=1&rule.type=sqs&state=ENABLED')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { results: newResults } = newResponse.body;
+  t.is(newResults.length, 0);
 });
 
 test('GET gets a rule', async (t) => {

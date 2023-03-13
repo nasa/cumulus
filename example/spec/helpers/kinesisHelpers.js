@@ -1,11 +1,11 @@
 'use strict';
 
-const delay = require('delay');
 const pRetry = require('p-retry');
 
 const { receiveSQSMessages } = require('@cumulus/aws-client/SQS');
 const { describeStream } = require('@cumulus/aws-client/Kinesis');
 const { kinesis } = require('@cumulus/aws-client/services');
+const { sleep } = require('@cumulus/common');
 
 const {
   waitForAllTestSf,
@@ -65,7 +65,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
   let stream;
   const displayName = streamName.split('-').pop();
 
-  await delay(initialDelaySecs * 1000);
+  await sleep(initialDelaySecs * 1000);
 
   return await pRetry(
     async () => {
@@ -184,7 +184,7 @@ async function getRecords(shardIterator, records = []) {
   const data = await kinesis().getRecords({ ShardIterator: shardIterator }).promise();
   records.push(...data.Records);
   if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
-    await delay(waitPeriodMs);
+    await sleep(waitPeriodMs);
     return getRecords(data.NextShardIterator, records);
   }
   return records;
