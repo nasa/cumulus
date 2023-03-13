@@ -90,7 +90,6 @@ let publishStub;
 let templateBucket;
 
 test.before(async () => {
-  process.env.RulesTable = randomString();
   process.env.messageConsumer = 'my-messageConsumer';
   process.env.KinesisInboundEventLogger = 'my-ruleInput';
   templateBucket = randomString();
@@ -112,7 +111,6 @@ test.beforeEach((t) => {
   };
   publishStub = sinon.stub(snsClient, 'publish').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
 
-  t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();

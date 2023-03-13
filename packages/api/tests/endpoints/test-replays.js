@@ -34,7 +34,6 @@ const envs = {
   EcsCluster: randomString(),
   FallbackTopicArn: randomString(),
   ManualConsumerLambda: randomString(),
-  RulesTable: randomString(),
   stackName: randomString(),
   system_bucket: randomString(),
   ReplaySqsMessagesLambda: randomString(),
