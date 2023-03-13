@@ -29,7 +29,6 @@ const workflow = randomString();
 const testDbName = randomString(12);
 
 test.before(async (t) => {
-  process.env.RulesTable = `RulesTable_${randomString()}`;
   process.env.stackName = randomString();
   process.env.KinesisInboundEventLogger = randomString();
   process.env.system_bucket = randomString();
