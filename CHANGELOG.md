@@ -12,11 +12,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated bulk operation logic to use collectionId in addition to granuleId to fetch granules.
   - Tasks using the `bulk-operation` Lambda should provide collectionId and granuleId e.g. { granuleId: xxx, collectionId: xxx }
 - **CUMULUS-2856**
-  - Update execution PUT endpoint to no longer respect message write constraints and update all values passed in
+  - Update execution PUT endpoint to no longer respect message write constraints
+    and update all values passed in
+
 
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-3199**
+    - Removed DbIndexer lambda and all associated terraform resources
   - **CUMULUS-2793**
     - Removed Provider Dynamo model and related test code
   - **CUMULUS-2645**
