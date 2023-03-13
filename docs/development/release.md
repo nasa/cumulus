@@ -185,7 +185,7 @@ Create a new version:
 ```bash
 cd website
 npm run docusaurus docs:version ${release_version}
-# update version in package.json
+# please update version in package.json
 git add .
 ```
 
@@ -195,8 +195,8 @@ Instructions to rename an existing version:
 cd website
 git mv versioned_docs/version-<oldversion> versioned_docs/version-${release_version}
 git mv versioned_sidebars/version-<oldversion>-sidebars.json versioned_sidebars/version-${release_version}-sidebars.json
-# update versions.json with new version
-# update documents under versioned_docs/version-${release_version}
+# please update versions.json with new version
+# please update documents under versioned_docs/version-${release_version}
 git add .
 ```
 
