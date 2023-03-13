@@ -2,7 +2,6 @@
 
 'use strict';
 
-const delay = require('delay');
 const replace = require('lodash/replace');
 const orderBy = require('lodash/orderBy');
 const cloneDeep = require('lodash/cloneDeep');
@@ -21,12 +20,14 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   getWorkflowFileKey,
 } = require('@cumulus/common/workflows');
+const { sleep } = require('@cumulus/common');
 const { readJsonFile } = require('@cumulus/common/FileUtils');
 const collectionsApi = require('@cumulus/api-client/collections');
 const providersApi = require('@cumulus/api-client/providers');
 const rulesApi = require('@cumulus/api-client/rules');
 const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
+const { getRequiredEnvVar } = require('@cumulus/common/env.js');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
 const executionsApi = require('./api/executions');
@@ -40,8 +41,8 @@ const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 const { ActivityStep, LambdaStep } = require('./sfnStep');
 const { setProcessEnvironment, readJsonFilesFromDir } = require('./utils');
-const waitPeriodMs = 1000;
 
+const waitPeriodMs = 1000;
 const maxWaitForStartedExecutionSecs = 60 * 5;
 const lambdaStep = new LambdaStep();
 
@@ -550,8 +551,6 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
   // depends on this undocumented side effect
   setProcessEnvironment(stackName, bucketName);
 
-  process.env.RulesTable = `${stackName}-RulesTable`;
-
   await pMap(
     rules,
     (rule) => rulesApi.deleteRule({
@@ -562,6 +561,46 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
   );
 
   return rules.length;
+}
+
+/**
+ * Delete a rule's Kinesis Event Source Mappings
+ *
+ * @param {Object} rule - a Rule record as returned by the Rules api
+ * @param {string} rule.name
+ * @param {Object} rule.rule
+ * @param {string} rule.rule.arn
+ * @param {string} rule.rule.logEventArn
+ * @returns {Promise<unknown[]>} - Event Source Map deletion results
+ */
+async function deleteRuleResources(rule) {
+  const kinesisSourceEvents = [
+    {
+      name: getRequiredEnvVar('messageConsumer'),
+      eventType: 'arn',
+      type: {
+        arn: rule.rule.arn,
+      },
+    },
+    {
+      name: getRequiredEnvVar('KinesisInboundEventLogger'),
+      eventType: 'log_event_arn',
+      type: {
+        log_event_arn: rule.rule.logEventArn,
+      },
+    },
+  ];
+  const deleteEventPromises = kinesisSourceEvents.map(
+    (kinesisEvent) => lambda.deleteEventSourceMapping(
+      kinesisEvent.type[kinesisEvent.eventType]
+    ).catch(
+      (error) => {
+        console.log(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
+        if (error.code !== 'ResourceNotFoundException') throw error;
+      }
+    )
+  );
+  return await Promise.all(deleteEventPromises);
 }
 
 /**
@@ -613,7 +652,7 @@ async function waitForTestExecutionStart({
   );
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitSeconds) {
-    await delay(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs += (waitPeriodMs / 1000);
     const executions = await getExecutions(workflowArn);
 
@@ -675,7 +714,7 @@ async function waitForAllTestSf(
 
   /* eslint-disable no-await-in-loop */
   while (timeWaitedSecs < maxWaitTimeSecs && workflowExecutions.length < numExecutions) {
-    await delay(waitPeriodMs);
+    await sleep(waitPeriodMs);
     timeWaitedSecs = (moment.duration(moment().diff(startTime)).asSeconds());
     const sfExecutions = await getExecutions(workflowArn, 100);
     const executions = sfExecutions.filter(
@@ -750,6 +789,7 @@ module.exports = {
   deleteCollections,
   deleteProviders,
   deleteRules,
+  deleteRuleResources,
   distributionApi,
   EarthdataLogin,
   executionsApi,
@@ -760,8 +800,6 @@ module.exports = {
   getExecutionOutput,
   getExecutions,
   getExecutionInputObject,
-  getLambdaAliases: lambda.getLambdaAliases,
-  getLambdaVersions: lambda.getLambdaVersions,
   getOnlineResources: cmr.getOnlineResources,
   getProviderHost,
   getProviderPort,

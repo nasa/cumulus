@@ -10,10 +10,9 @@ const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const startAsyncOperation = require('../../../lib/startAsyncOperation');
 const { createFakeJwtAuthToken, setAuthorizedOAuthUsers } = require('../../../lib/testUtils');
-
 const models = require('../../../models');
-
 const { app } = require('../../../app');
+const { testBulkPayloadEnvVarsMatchSetEnvVars } = require('../../helpers/bulkTestHelpers');
 
 const { bulkOperations } = require('../../../endpoints/granules');
 const { buildFakeExpressResponse } = require('../utils');
@@ -22,8 +21,6 @@ process.env = {
   ...process.env,
   AccessTokensTable: randomString(),
   backgroundQueueName: randomString(),
-  CollectionsTable: randomString(),
-  GranulesTable: randomString(),
   granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomString(),
   stackName: randomString(),
@@ -81,6 +78,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
         collectionId: 'name___version',
       },
     ],
+    knexDebug: false,
   };
 
   const response = await request(app)
@@ -104,19 +102,17 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     type: 'BULK_GRANULE',
     envVars: {
       ES_HOST: process.env.ES_HOST,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
       METRICS_ES_HOST: process.env.METRICS_ES_HOST,
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
-  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
 });
 
 test.serial('bulkOperations() uses correct caller lambda function name', async (t) => {
@@ -164,6 +160,7 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     workflowName: expectedWorkflowName,
     index: expectedIndex,
     query: expectedQuery,
+    knexDebug: false,
   };
 
   const response = await request(app)
@@ -189,19 +186,17 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     type: 'BULK_GRANULE',
     envVars: {
       ES_HOST: process.env.ES_HOST,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
       invoke: process.env.invoke,
+      KNEX_DEBUG: 'false',
       METRICS_ES_HOST: process.env.METRICS_ES_HOST,
       METRICS_ES_USER: process.env.METRICS_ES_USER,
       METRICS_ES_PASS: process.env.METRICS_ES_PASS,
     },
   });
-  Object.keys(payload.envVars).forEach((envVarKey) => {
-    t.is(payload.envVars[envVarKey], process.env[envVarKey]);
-  });
+  testBulkPayloadEnvVarsMatchSetEnvVars(t, payload);
 });
 
 test.serial('POST /granules/bulk returns 400 when a query is provided with no index', async (t) => {

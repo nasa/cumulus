@@ -29,7 +29,6 @@ const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const testDbName = `${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
-  process.env.GranulesTable = randomId('granule');
   process.env.system_bucket = randomId('bucket');
   process.env = {
     ...process.env,
@@ -132,6 +131,8 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
   const pgGranuleId1 = pgGranule1.granule_id;
   const pgGranuleId2 = pgGranule2.granule_id;
 
+  const removeGranuleFromCmrFunctionMock = () => true;
+
   const apiGranules = await Promise.all(
     granules.map((granule) => translatePostgresGranuleToApiGranule({
       granulePgRecord: granule.newPgGranule,
@@ -144,12 +145,7 @@ test('bulkGranuleDelete does not fail on published granules if payload.forceRemo
       granules: apiGranules,
       forceRemoveFromCmr: true,
     },
-    ({ _, pgGranuleRecord }) => ({
-      pgGranule: {
-        ...pgGranuleRecord,
-        published: false,
-      },
-    })
+    removeGranuleFromCmrFunctionMock
   );
 
   t.deepEqual(
