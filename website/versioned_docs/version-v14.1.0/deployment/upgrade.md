@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-upgrade-readme
+id: upgrade-readme
 title: Upgrading Cumulus
 hide_title: false
-original_id: upgrade-readme
 ---
 
 After the initial deployment, any future updates to the Cumulus deployment from configuration files, Terraform files (`*.tf`), or modules from a new version of Cumulus can be deployed and will update the appropriate portions of the stack as needed.

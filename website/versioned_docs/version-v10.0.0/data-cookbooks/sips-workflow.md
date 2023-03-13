@@ -1,8 +1,7 @@
 ---
-id: version-v10.0.0-sips-workflow
+id: sips-workflow
 title: Science Investigator-led Processing Systems (SIPS)
 hide_title: false
-original_id: sips-workflow
 ---
 
 The Cumulus ingest workflow supports the SIPS workflow. In the following document, we'll discuss what a SIPS workflow is and how to set one up in a Cumulus instance.
@@ -13,14 +12,14 @@ In this document, we assume the user already has a provider endpoint configured 
 
 ### Provider
 
-We need to have a [provider](data-cookbooks/setup.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
+We need to have a [provider](../configuration/data-management-types.md#providers) from whom data can be ingested. Our provider is an S3 provider hosted in the `cumulus-test-internal` bucket.
 
-![Screenshot of Cumulus dashboard screen for configuring an S3 provider](assets/sips-provider.png)
+![Screenshot of Cumulus dashboard screen for configuring an S3 provider](../assets/sips-provider.png)
 
 ### Collection
 
 We need to build a collection. Details on collections can be found
-[here](data-cookbooks/setup.md#collections). The following collection will have
+[here](../configuration/data-management-types.md#collections). The following collection will have
 `MOD09GQ` as a collection name, `006` as a version.
 
 ```json
@@ -61,12 +60,12 @@ We need to build a collection. Details on collections can be found
 
 ### Rule
 
-Finally, let's create a [rule](data-cookbooks/setup.md#rules). In this example
+Finally, let's create a [rule](../configuration/data-management-types.md#rules). In this example
 we're just going to create a `onetime` throw-away rule that will be easy to test
 with. This rule will kick off the `DiscoverAndQueuePdrs` workflow, which is the
 beginning of a Cumulus SIPS workflow:
 
-![Screenshot of a Cumulus rule configuration](assets/add_rule.png)
+![Screenshot of a Cumulus rule configuration](../assets/add_rule.png)
 
 **Note:** A list of configured workflows exists under the "Workflows" in the navigation bar on the Cumulus dashboard. Additionally, one can find a list of executions and their respective status in the "Executions" tab in the navigation bar.
 
@@ -77,7 +76,7 @@ This workflow will discover PDRs and queue them to be processed. Duplicate PDRs 
 1. DiscoverPdrs - [source](https://github.com/nasa/cumulus/tree/master/tasks/discover-pdrs)
 2. QueuePdrs - [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-pdrs)
 
-![Screenshot of execution graph for discover and queue PDRs workflow in the AWS Step Functions console](assets/sips-discover-and-queue-pdrs-execution.png)
+![Screenshot of execution graph for discover and queue PDRs workflow in the AWS Step Functions console](../assets/sips-discover-and-queue-pdrs-execution.png)
 
 _An example workflow module configuration can be viewed in the Cumulus source for the [discover_and_queue_pdrs_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf)._
 
@@ -93,7 +92,7 @@ The lambdas below are included in the `cumulus` terraform module for use in your
 2. QueueGranules - [source](https://github.com/nasa/cumulus/tree/master/tasks/queue-granules)
 3. CheckStatus - [source](https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check)
 
-![Screenshot of execution graph for SIPS Parse PDR workflow in AWS Step Functions console](assets/sips-parse-pdr.png)
+![Screenshot of execution graph for SIPS Parse PDR workflow in AWS Step Functions console](../assets/sips-parse-pdr.png)
 
 _An example workflow module configuration can be viewed in the Cumulus source for the [parse_pdr_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf)._
 
@@ -112,7 +111,7 @@ Additionally this workflow requires a processing step you must provide. The Proc
 
 **Note:** Using the CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
 
-![Screenshot of execution graph for SIPS IngestGranule workflow in AWS Step Functions console](assets/sips-ingest-granule.png)
+![Screenshot of execution graph for SIPS IngestGranule workflow in AWS Step Functions console](../assets/sips-ingest-granule.png)
 
 _An example workflow module configuration can be viewed in the Cumulus source for the [ingest_and_publish_granule_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)._
 

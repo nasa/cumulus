@@ -1,8 +1,7 @@
 ---
-id: version-v9.9.0-task-configuration
+id: task-configuration
 title: Configuration of Tasks
 hide_title: false
-original_id: task-configuration
 ---
 
 The `cumulus` module exposes values for configuration for some of the provided archive and ingest tasks.   Currently the following are available as configurable variables:

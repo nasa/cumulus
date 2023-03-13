@@ -170,13 +170,13 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
 
   Data source that generates and/or distributes data for Cumulus workflows to act upon.
 
-  For more information, see the [Cumulus documentation](./data-cookbooks/setup#providers).
+  For more information, see the [Cumulus documentation](./configuration/data-management-types#providers).
 
 ### Rule
 
   Rules are configurable scheduled events that trigger workflows based on various criteria.
 
-  For more information, see the [Cumulus Rules documentation](./data-cookbooks/setup#rules).
+  For more information, see the [Cumulus Rules documentation](./configuration/data-management-types#rules).
 
 ### S3
 
@@ -217,8 +217,8 @@ For terms/items from Amazon/AWS not mentioned in this glossary, please refer to 
   Terraform is the tool that you will use for deployment and configuration of your Cumulus environment.
 
 * For more information on Terraform and how it works, visit [Introduction to Terraform](https://www.terraform.io/intro/index.html).
-* For steps on how to use Terraform for Cumulus, see [How to Deploy Cumulus](deployment/deployment-readme).
+* For steps on how to use Terraform for Cumulus, see [How to Deploy Cumulus](deployment).
 
 ### Workflows
 
-  [Workflows](workflows/workflows-readme) are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.
+  [Workflows](workflows) are comprised of one or more AWS Lambda Functions and ECS Activities to discover, ingest, process, manage and archive data.

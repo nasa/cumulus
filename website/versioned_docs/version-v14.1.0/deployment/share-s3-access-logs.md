@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-share-s3-access-logs
+id: share-s3-access-logs
 title: Share S3 Access Logs
 hide_title: false
-original_id: share-s3-access-logs
 ---
 
 It is possible through Cumulus to share S3 access logs across multiple S3 packages using the S3 replicator package.
@@ -11,9 +10,9 @@ It is possible through Cumulus to share S3 access logs across multiple S3 packag
 
 The S3 Replicator is a Node.js package that contains a simple Lambda function, associated permissions, and the Terraform instructions to replicate create-object events from one S3 bucket to another.
 
-First ensure that you have enabled [S3 Server Access Logging](../configuration/server_access_logging.md).
+First ensure that you have enabled [S3 Server Access Logging](../configuration/server_access_logging).
 
-Next configure your `config.tfvars` as described in the [`s3-replicator/README.md`](https://github.com/nasa/cumulus/blob/master/tf-modules/s3-replicator/README.md) to correspond to your deployment.  The `source_bucket` and `source_prefix` are determined by how you enabled the [S3 Server Access Logging](../configuration/server_access_logging.md).
+Next configure your `config.tfvars` as described in the [`s3-replicator/README.md`](https://github.com/nasa/cumulus/blob/master/tf-modules/s3-replicator/README.md) to correspond to your deployment.  The `source_bucket` and `source_prefix` are determined by how you enabled the [S3 Server Access Logging](../configuration/server_access_logging).
 
 In order to deploy the `s3-replicator` with cumulus you will need to add the module to your terraform `main.tf` definition as the example below:
 

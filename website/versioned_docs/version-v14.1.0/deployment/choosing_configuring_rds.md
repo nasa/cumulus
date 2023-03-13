@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-choosing_configuring_rds
+id: choosing_configuring_rds
 title: Choosing and Configuration Your RDS Database
 hide_title: false
-original_id: choosing_configuring_rds
 ---
 
 ## Background

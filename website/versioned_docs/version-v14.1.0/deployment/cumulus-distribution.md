@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-cumulus_distribution
+id: cumulus_distribution
 title: Using the Cumulus Distribution API
 hide_title: false
-original_id: cumulus_distribution
 ---
 
 The Cumulus Distribution API is a set of endpoints that can be used to enable AWS Cognito authentication when downloading data from S3.

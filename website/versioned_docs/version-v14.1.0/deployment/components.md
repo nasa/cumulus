@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-components
+id: components
 title: Component-based Cumulus Deployment
 hide_title: false
-original_id: components
 ---
 
 Cumulus is now released in a modular architecture, which will allow users to
@@ -20,7 +19,7 @@ able to make use of the large number of publicly available modules on the [Terra
 * [ECS Service](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus_ecs_service)
 * [Distribution](https://github.com/nasa/cumulus/tree/master/tf-modules/distribution)
 * [Thin Egress App](./thin_egress_app)
-* [Cumulus Distribution App](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus_distribution)
+* [Cumulus Distribution App](./cumulus_distribution)
 * [Workflow](https://github.com/nasa/cumulus/tree/master/tf-modules/workflow)
 
 ## Adding components to your Terraform deployment
