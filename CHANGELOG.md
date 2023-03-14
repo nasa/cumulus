@@ -8,8 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3166**
-  - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
+- **CUMULUS-3165**
+  - Update example/cumulus-tf/orca.tf to use orca v6.0.3
 
 ## [v15.0.0] 2023-03-10
 
@@ -29,8 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3147**
   - Set example/cumulus-tf default async_operation_image_version to 44.
   - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
-- **CUMULUS-3165**
-  - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+- **CUMULUS-3166**
+  - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 
 ### Fixed 
 
