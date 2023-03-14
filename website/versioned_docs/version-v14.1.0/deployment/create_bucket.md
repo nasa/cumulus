@@ -1,8 +1,7 @@
 ---
-id: version-v14.1.0-create_bucket
+id: create_bucket
 title: Creating an S3 Bucket
 hide_title: false
-original_id: create_bucket
 ---
 
 Buckets can be created on the command line with [AWS CLI][cli] or via the web interface on the [AWS console][web].

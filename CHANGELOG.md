@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v15.0.0] 2023-03-10
+
 ### Breaking Changes
 
 - **CUMULUS-3147**
@@ -17,6 +19,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Changed
 
+- **CUMULUS-2997**
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3.
 - **CUMULUS-3147**
   - Set example/cumulus-tf default async_operation_image_version to 44.
   - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
@@ -6882,7 +6886,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v14.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.0...HEAD
+[v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
 [v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
