@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 - **CUMULUS-3203**
   - Removed ACL setting of private on S3.multipartCopyObject() call
-  - Changed ACL setting of private to disabled by default for s3PutObject()
+  - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
 
 ## Fixed
