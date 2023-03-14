@@ -17,6 +17,7 @@ describe('The Lzards Backup Task ', () => {
   let beforeAllFailed = false;
   let granuleId;
   let collection;
+  let config;
   let FunctionName;
   let lzardsApiGetFunctionName;
   let functionConfig;
@@ -33,7 +34,7 @@ describe('The Lzards Backup Task ', () => {
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       ingestBucket = config.buckets.protected.name;
       ingestPath = `${prefix}/lzardsBackupSpec`;
@@ -69,92 +70,162 @@ describe('The Lzards Backup Task ', () => {
 
       console.log(`generated collection: ${JSON.stringify(collection)}`);
 
-      const Payload = JSON.stringify({
-        cma: {
-          ReplaceConfig: {
-            Path: '$.payload',
-            TargetPath: '$.payload',
-          },
-          task_config: {
-            cumulus_message: {
-              outputs: [
-                {
-                  source: '{$.originalPayload}',
-                  destination: '{$.payload}',
-                },
-                {
-                  source: '{$.backupResults}',
-                  destination: '{$.meta.backupStatus}',
-                },
-              ],
-            },
-          },
-          event: {
-            cumulus_meta: {
-              system_bucket: config.bucket,
-            },
-            meta: {
-              buckets: config.buckets,
-              collection,
-              stack: config.stackName,
-            },
-            payload: {
-              granules: [
-                {
-                  granuleId,
-                  dataType: collection.name,
-                  version: collection.version,
-                  provider,
-                  createdAt: tenMinutesAgo,
-                  files: [
-                    {
-                      fileName: 'testGranule.jpg',
-                      bucket: ingestBucket,
-                      key: `${ingestPath}/testGranule.jpg`,
-                      checksumType: 'md5',
-                      checksum: '5799f9560b232baf54337d334179caa0',
-                    },
-                    {
-                      fileName: 'testGranule.dat',
-                      bucket: ingestBucket,
-                      key: `${ingestPath}/testGranule.dat`,
-                      checksumType: 'md5',
-                      checksum: '39a870a194a787550b6b5d1f49629236',
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-        },
-      });
-
-      lzardsBackupOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }).promise(),
-        (functionConfig.Timeout + 10) * 1000
-      );
     } catch (error) {
       beforeAllFailed = true;
       throw error;
     }
   });
 
-  it('succeeds', () => {
-    if (beforeAllFailed) fail('beforeAll() failed');
-    else {
-      expect(lzardsBackupOutput.FunctionError).toBe(undefined);
-    }
+  const createPayloadWithChecksumType = (checksumType, checksum1, checksum2) => {
+    return JSON.stringify({
+      cma: {
+        ReplaceConfig: {
+          Path: '$.payload',
+          TargetPath: '$.payload',
+        },
+        task_config: {
+          cumulus_message: {
+            outputs: [
+              {
+                source: '{$.originalPayload}',
+                destination: '{$.payload}',
+              },
+              {
+                source: '{$.backupResults}',
+                destination: '{$.meta.backupStatus}',
+              },
+            ],
+          },
+        },
+        event: {
+          cumulus_meta: {
+            system_bucket: config.bucket,
+          },
+          meta: {
+            buckets: config.buckets,
+            collection,
+            stack: config.stackName,
+          },
+          payload: {
+            granules: [
+              {
+                granuleId,
+                dataType: collection.name,
+                version: collection.version,
+                provider,
+                createdAt: tenMinutesAgo,
+                files: [
+                  {
+                    fileName: 'testGranule.jpg',
+                    bucket: ingestBucket,
+                    key: `${ingestPath}/testGranule.jpg`,
+                    checksumType: checksumType,
+                    checksum: checksum1,
+                  },
+                  {
+                    fileName: 'testGranule.dat',
+                    bucket: ingestBucket,
+                    key: `${ingestPath}/testGranule.dat`,
+                    checksumType: checksumType,
+                    checksum: checksum2,
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    });
+  }
+
+  describe('With an md5 checksum', () => {
+    beforeAll(async () => {
+      const checksum1 = '5799f9560b232baf54337d334179caa0';
+      const checksum2 = '39a870a194a787550b6b5d1f49629236';
+      const payloadWithMd5Checksum = createPayloadWithChecksumType('md5', checksum1, checksum2);
+
+      lzardsBackupOutput = await pTimeout(
+        lambda().invoke({ FunctionName, Payload: payloadWithMd5Checksum }).promise(),
+        (functionConfig.Timeout + 10) * 1000
+      );
+    });
+    it('succeeds', () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        expect(lzardsBackupOutput.FunctionError).toBe(undefined);
+      }
+    });
+
+    it('has the expected backup information', () => {
+      const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
+      console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
+      expect(backupStatus[0].status).toBe('COMPLETED');
+      expect(backupStatus[0].statusCode).toBe(201);
+      expect(backupStatus[0].granuleId).toBe(granuleId);
+      expect(backupStatus[0].provider).toBe(provider);
+      expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
+      expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+    });
   });
 
-  it('has the expected backup information', () => {
-    const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
-    console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
-    expect(backupStatus[0].status).toBe('COMPLETED');
-    expect(backupStatus[0].statusCode).toBe(201);
-    expect(backupStatus[0].granuleId).toBe(granuleId);
-    expect(backupStatus[0].provider).toBe(provider);
-    expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
-    expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+  describe('With an sha256 checksum', () => {
+    beforeAll(async () => {
+      const checksum1 = '6fafafa6384f939c983d04ad0ffa2dec4ffac22849b3fc7a22f1c6063acc0db3';
+      const checksum2 = '5bb9ddb36633012eb2ec971b0b9fca3ed71878cb7c64252208f4426ec19eeb65';
+      const payloadWithSha256Checksum = createPayloadWithChecksumType('sha256', checksum1, checksum2);
+
+      lzardsBackupOutput = await pTimeout(
+        lambda().invoke({ FunctionName, Payload: payloadWithSha256Checksum }).promise(),
+        (functionConfig.Timeout + 10) * 1000
+      );
+    });
+    it('succeeds', () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        expect(lzardsBackupOutput.FunctionError).toBe(undefined);
+      }
+    });
+
+    it('has the expected backup information', () => {
+      const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
+      console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
+      expect(backupStatus[0].status).toBe('COMPLETED');
+      expect(backupStatus[0].statusCode).toBe(201);
+      expect(backupStatus[0].granuleId).toBe(granuleId);
+      expect(backupStatus[0].provider).toBe(provider);
+      expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
+      expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+    });
+  });
+
+  describe('With an sha512 checksum', () => {
+    beforeAll(async () => {
+      const checksum1 = '386bff951dbf6c7329c9cfccfe65b29f13d9c58e39dd56d65357150ba18124af96506cf4752f70ac14f0513b032bc5ef6953eb0eedb64c55a5641420633ba1a0';
+      const checksum2 = '383502dcb509bbc9f3cad73202397e4f8db08ef6ec09e5dd498fe735d2d0c68b6ea3b27c3bfdd494d1fed7ce9e3786af77d0e126a4faa834ee9e86e998ff19a7';
+      const payloadWithSha512Checksum = createPayloadWithChecksumType('sha512', checksum1, checksum2);
+
+      lzardsBackupOutput = await pTimeout(
+        lambda().invoke({ FunctionName, Payload: payloadWithSha512Checksum }).promise(),
+        (functionConfig.Timeout + 10) * 1000
+      );
+    });
+    it('succeeds', () => {
+      if (beforeAllFailed) fail('beforeAll() failed');
+      else {
+        expect(lzardsBackupOutput.FunctionError).toBe(undefined);
+      }
+    });
+
+    it('has the expected backup information', () => {
+      const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
+      console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
+      expect(backupStatus[0].status).toBe('COMPLETED');
+      expect(backupStatus[0].statusCode).toBe(201);
+      expect(backupStatus[0].granuleId).toBe(granuleId);
+      expect(backupStatus[0].provider).toBe(provider);
+      expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
+      expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+    });
   });
 
   describe('The Lzards API Client', () => {
@@ -191,7 +262,7 @@ describe('The Lzards Backup Task ', () => {
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
-        expect(payload.count).toBe(1);
+        expect(payload.count).toBe(3);
         expect(payload.items[0].metadata.granuleId).toBe(granuleId);
         expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
         expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
@@ -218,7 +289,7 @@ describe('The Lzards Backup Task ', () => {
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
-        expect(payload.count).toBe(1);
+        expect(payload.count).toBe(3);
         expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeGreaterThanOrEqual(thirtyMinutesAgo);
         expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeLessThanOrEqual(twoMinutesAgo);
         expect(payload.items[0].metadata.provider).toBe(provider);

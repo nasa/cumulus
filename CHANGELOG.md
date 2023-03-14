@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-3201**
+  - Add support for sha512 as checksumType for LZARDs backup task.
+
 ## [v15.0.0] 2023-03-10
 
 ### Breaking Changes
@@ -27,16 +32,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3166**
   - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 
-## Fixed 
+## Fixed
 
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
   - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
-
-### Added
-
-- **CUMULUS-3201**
-  - Add support for sha512 as checksumType for LZARDs backup task.
 
 ## [v14.1.0] 2023-02-27
 
@@ -71,8 +71,8 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3193**
   - Add a Python version file
 - **CUMULUS-3121**
-  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods. 
-    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention) 
+  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods.
+    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
     section of the Cumulus documentation in order for more detailed information and an example into how to do this.
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
