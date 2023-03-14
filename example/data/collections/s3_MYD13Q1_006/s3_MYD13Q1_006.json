@@ -11,7 +11,9 @@
     "sampleFileName": "MYD13Q1.A2017025.h21v00.006.2017034065104.hdf",
     "meta": {
         "granuleRecoveryWorkflow": "OrcaRecoveryWorkflow",
-        "excludeFileTypes": [".met"],
+        "orca": {
+            "excludedFileExtensions": [".met"]
+        },
         "s3MultipartChunksizeMb": 16
     },
     "files": [
