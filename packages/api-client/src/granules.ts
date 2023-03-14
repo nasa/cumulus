@@ -17,22 +17,23 @@ type AssociateExecutionRequest = {
 /**
  * GET raw response from /granules/{granuleName}
  *
- * @param {Object} params                       - params
- * @param {string} params.prefix                - the prefix configured for the stack
- * @param {string} params.granuleId             - a granule ID
- * @param {Object} [params.query]               - query to pass the API lambda
- * @param {number[]} params.expectedStatusCodes - the statusCodes which the granule API is expecting
- *                                                for the invokeApi Response, default is 200
- * @param {Function} params.callback            - async function to invoke the api lambda
- *                                                that takes a prefix / user payload.  Defaults
- *                                                to cumulusApiClient.invokeApifunction to invoke
- *                                                the api lambda
- * @returns {Promise<Object>}                   - the granule fetched by the API
+ * @param {Object} params                                - params
+ * @param {string} params.prefix                         - the prefix configured for the stack
+ * @param {string} params.granuleId                      - a granule ID
+ * @param {Object} [params.query]                        - query to pass the API lambda
+ * @param {number[] | number} params.expectedStatusCodes - the statusCodes which the granule API is
+ *                                                         is expecting for the invokeApi Response,
+ *                                                         default is 200
+ * @param {Function} params.callback                     - async function to invoke the api lambda
+ *                                                         that takes a prefix / user payload,
+ *                                                         cumulusApiClient.invokeApifunction
+ *                                                         is the default to invoke the api lambda
+ * @returns {Promise<Object>}                            - the granule fetched by the API
  */
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  expectedStatusCodes?: number[],
+  expectedStatusCodes?: number[] | number,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
