@@ -6,9 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
 - **CUMULUS-3115**
   - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
+- **CUMULUS-3165**
+  - Update example/cumulus-tf/orca.tf to use orca v6.0.3
 
 ## [v15.0.0] 2023-03-10
 
@@ -21,17 +24,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Published new tag [`44` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/44/images/sha256-8d757276714153e4ab8c24a2b7b6b9ffee14cc78b482d9924e7093af88362b04?context=explore).
   - The `async_operation_image` property of `cumulus` module must be updated to pull the ECR image for `cumuluss/async-operation:44`.
 
-## Changed
+### Changed
 
 - **CUMULUS-2997**
-  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3.
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3
 - **CUMULUS-3147**
   - Set example/cumulus-tf default async_operation_image_version to 44.
   - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
 - **CUMULUS-3166**
   - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 
-## Fixed 
+### Fixed 
 
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object

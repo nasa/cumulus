@@ -48,8 +48,8 @@ async function fetchCollectionsConfig(recReportParams) {
   let nextEsItem = await esCollectionsIterator.shift();
   while (nextEsItem) {
     const collectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
-    const excludeFileTypes = get(nextEsItem, 'meta.excludeFileTypes');
-    if (excludeFileTypes) set(collectionsConfig, `${collectionId}.orca.excludeFileTypes`, excludeFileTypes);
+    const excludedFileExtensions = get(nextEsItem, 'meta.orca.excludedFileExtensions');
+    if (excludedFileExtensions) set(collectionsConfig, `${collectionId}.orca.excludedFileExtensions`, excludedFileExtensions);
     nextEsItem = await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
   }
 
@@ -65,8 +65,8 @@ async function fetchCollectionsConfig(recReportParams) {
  * @returns {boolean} - whether the file should be excluded
  */
 function shouldFileBeExcludedFromOrca(collectionsConfig, collectionId, fileName) {
-  const excludeFileTypes = get(collectionsConfig, `${collectionId}.orca.excludeFileTypes`, []);
-  return !!excludeFileTypes.find((type) => fileName.endsWith(type));
+  const excludedFileExtensions = get(collectionsConfig, `${collectionId}.orca.excludedFileExtensions`, []);
+  return !!excludedFileExtensions.find((type) => fileName.endsWith(type));
 }
 
 /**
