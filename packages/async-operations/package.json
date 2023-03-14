@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/async-operations",
-  "version": "14.1.0",
+  "version": "15.0.0",
   "description": "Cumulus Core internal async operations module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -28,17 +28,17 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "14.1.0",
-    "@cumulus/db": "14.1.0",
-    "@cumulus/errors": "14.1.0",
-    "@cumulus/es-client": "14.1.0",
-    "@cumulus/logger": "14.1.0",
-    "@cumulus/types": "14.1.0",
+    "@cumulus/aws-client": "15.0.0",
+    "@cumulus/db": "15.0.0",
+    "@cumulus/errors": "15.0.0",
+    "@cumulus/es-client": "15.0.0",
+    "@cumulus/logger": "15.0.0",
+    "@cumulus/types": "15.0.0",
     "knex": "2.4.1",
     "uuid": "8.3.2"
   },
   "devDependencies": {
-    "@cumulus/common": "14.1.0",
+    "@cumulus/common": "15.0.0",
     "@types/aws-sdk": "2.7.0",
     "@types/uuid": "^8.0.0"
   }

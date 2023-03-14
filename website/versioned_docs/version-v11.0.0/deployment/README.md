@@ -1,8 +1,7 @@
 ---
-id: version-v11.0.0-deployment-readme
+id: deployment-readme
 title: How to Deploy Cumulus
 hide_title: false
-original_id: deployment-readme
 ---
 
 ## Overview
@@ -89,7 +88,7 @@ Terraform v0.13.6
 
 ## Prepare deployment repository
 
- > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](deployment-readme#prepare-aws-configuration)_
+ > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS configuration.](#prepare-aws-configuration)_
 
 Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-deploy) repo and name appropriately for your organization:
 
@@ -191,7 +190,7 @@ Follow the directions on [how to register an application](https://wiki.earthdata
 
 ## Create resources for Terraform state
 
-> _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](deployment-readme#deploy-the-cumulus-instance), as these values should already be configured._
+> _If you're re-deploying an existing Cumulus configuration you should skip to [Deploy the Cumulus instance](#deploy-the-cumulus-instance), as these values should already be configured._
 
 The state of the Terraform deployment is stored in S3. In the following examples, it will be assumed that state is being stored in a bucket called `my-tf-state`. You can also use an existing bucket, if desired.
 
@@ -228,7 +227,7 @@ $ aws dynamodb create-table \
 
 ## Configure the PostgreSQL database
 
-Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](PostgreSQL_database_deployment) utilizing Aurora Serverless. However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
+Cumulus requires a PostgreSQL 10.2 compatible database cluster deployed to AWS.    We suggest utilizing [RDS](https://docs.aws.amazon.com/rds/index.html), and have provided a default [template and RDS cluster module](postgres-database-deployment.md) utilizing Aurora Serverless. However, Core intentionally provides a "bring your own" approach, and any well-planned cluster setup should work, given the following:
 
 - Appropriate testing/evaluation is given to ensure the database capacity will scale and the database deployment will allow access to Cumulus's internal components.   Core provides for security-group oriented permissions management via the `rds_security_group` configuration parameter.
 - The database is configured such that its endpoint is accessible from the VPC and subnets configured for the Core deployment.
@@ -451,7 +450,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Dashboard Requirements
 
-Please note that the requirements are similar to the [Cumulus stack deployment requirements](deployment-readme#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
+Please note that the requirements are similar to the [Cumulus stack deployment requirements](#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the dashboard repository.
 
 - git
 - [node 12.18](https://nodejs.org/en/) (use [nvm](https://github.com/creationix/nvm) to upgrade/downgrade)
@@ -464,7 +463,7 @@ Please note that the requirements are similar to the [Cumulus stack deployment r
 
 **Create S3 bucket for dashboard:**
 
-- Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](deployment-readme#prepare-aws-configuration).
+- Create it, e.g. `<prefix>-dashboard`. Use the command line or console as you did when [preparing AWS configuration](#prepare-aws-configuration).
 - Configure the bucket to host a website:
   - AWS S3 console: Select `<prefix>-dashboard` bucket then, "Properties" -> "Static Website Hosting", point to `index.html`
   - CLI: `aws s3 website s3://<prefix>-dashboard --index-document index.html`
@@ -530,7 +529,7 @@ From the S3 Console:
 - Open the `<prefix>-dashboard` bucket, click 'upload'. Add the contents of the 'dist' subdirectory to the upload. Then select 'Next'. On the permissions window allow the public to view. Select 'Upload'.
 
 You should be able to visit the dashboard website at `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or find the url
-`<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](deployment-readme#configure-and-deploy-the-cumulus-stack) step.
+`<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and login with a user that you configured for access in the [Configure and Deploy the Cumulus Stack](#configure-and-deploy-the-cumulus-stack) step.
 
 ---
 
