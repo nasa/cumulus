@@ -23,7 +23,7 @@ To update to this release (and beyond) users must:
 
 In addition to the above requirements, we suggest users:
 
-- Retain a backup of the primary DynamoDB datastore in case of recovery/integrity concerns exist between the phase-2 primary datastores.
+- Retain a backup of the primary DynamoDB datastore in case of recovery/integrity concerns exist between DynamoDB and PostgreSQL.
 
    This should only be considered if remediation/re-migration from DynamoDB has recently occurred, specifically from the following tickets:
 
