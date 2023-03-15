@@ -69,15 +69,14 @@ describe('The Lzards Backup Task ', () => {
       );
 
       console.log(`generated collection: ${JSON.stringify(collection)}`);
-
     } catch (error) {
       beforeAllFailed = true;
       throw error;
     }
   });
 
-  const createPayloadWithChecksumType = (checksumType, checksum1, checksum2) => {
-    return JSON.stringify({
+  const createPayloadWithChecksumType = (checksumType, checksum1, checksum2) => JSON.stringify(
+    {
       cma: {
         ReplaceConfig: {
           Path: '$.payload',
@@ -135,8 +134,8 @@ describe('The Lzards Backup Task ', () => {
           },
         },
       },
-    });
-  }
+    }
+  );
 
   describe('With an md5 checksum', () => {
     beforeAll(async () => {
