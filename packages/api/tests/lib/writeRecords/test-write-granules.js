@@ -3618,7 +3618,7 @@ test.serial('writeGranuleFromApi() removes preexisting granule file from postgre
   });
   const returnedGranule = await granulePgModel.create(knex, pgGranule, '*');
 
-  const fakeFile = await filePgModel.create(knex, {
+  const [fakeFile] = await filePgModel.create(knex, {
     granule_cumulus_id: returnedGranule[0].cumulus_id,
     bucket: 'fake_bucket',
     key: 'fake_key',
