@@ -48,7 +48,7 @@ const sidebars = {
       link: {
         type: 'generated-index',
         title: 'Cumulus Deployment',
-        descriiption:
+        description:
           'Here we are going to learn about how to deploy Cumulus Core and use approved APIs and databases.',
         keywords: ['deployment', 'TEA', 'Cumulus API', 'RDS', 'Postgres'],
       },
@@ -57,35 +57,45 @@ const sidebars = {
         'deployment/deployment-readme',
         'deployment/create_bucket',
         'deployment/terraform-best-practices',
+        'deployment/components',
         {
           type: 'category',
           label: 'Databases',
           link: {
-            type: 'doc',
-            id: 'deployment/databases/index',
+            type: 'generated-index',
           },
+          collapsed: false,
           items: [
-            'deployment/databases/choosing_configuring_rds',
-            'deployment/databases/postgres_database_deployment',
+            'deployment/choosing_configuring_rds',
+            'deployment/postgres_database_deployment',
           ],
         },
-        'deployment/components',
-        'deployment/share-s3-access-logs',
-        'deployment/cloudwatch-logs-delivery',
-        'deployment/upgrade-readme',
         {
           type: 'category',
           label: 'APIs',
           link: {
-            type: 'doc',
-            id: 'deployment/apis/index',
+            type: 'generated-index',
           },
+          collapsed: false,
           items: [
-            'deployment/apis/thin_egress_app',
-            'deployment/apis/cumulus_distribution',
-            'deployment/apis/api-gateway-logging',
+            'deployment/thin_egress_app',
+            'deployment/cumulus_distribution',
           ],
         },
+        {
+          type: 'category',
+          label: 'Logs',
+          link: {
+            type: 'generated-index',
+          },
+          collapsed: false,
+          items: [
+            'deployment/api-gateway-logging',
+            'deployment/share-s3-access-logs',
+            'deployment/cloudwatch-logs-delivery',
+          ],
+        },
+        'deployment/upgrade-readme',
       ],
     },
     {

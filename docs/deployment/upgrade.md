@@ -10,7 +10,11 @@ After the initial deployment, any future updates to the Cumulus deployment from 
 
 Cumulus uses a global versioning approach, meaning version numbers are consistent across all Terraform modules, and semantic versioning to track major, minor, and patch version (e.g., 1.0.0).
 
-> **IMPORTANT:** By convention, Cumulus minor version releases introduce breaking changes (e.g., 1.13.x -> 1.14.0), so it is critical that you consult the release notes for migration steps.  Carefully read each BREAKING CHANGES and MIGRATION STEPS sections within the `CHANGELOG.md` file, following all steps, starting with the oldest release after your currently installed release, and progressing through them chronologically.
+:::danger important
+
+By convention, Cumulus minor version releases introduce breaking changes (e.g., 1.13.x -> 1.14.0), so it is critical that you consult the release notes for migration steps.  Carefully read each BREAKING CHANGES and MIGRATION STEPS sections within the `CHANGELOG.md` file, following all steps, starting with the oldest release after your currently installed release, and progressing through them chronologically.
+
+:::
 
 To view the released module artifacts for each Cumulus Core version, see the [Cumulus Releases] page.
 
@@ -41,7 +45,11 @@ entry from the `data-persistence` module:
 
 ## Update Data Persistence Resources
 
-**Reminder:** Remember to [initialize Terraform](./README.md#initialize-terraform), if necessary.
+:::note Reminder
+
+Remember to [initialize Terraform](./README.md#initialize-terraform), if necessary.
+
+:::
 
 From the directory of your `data-persistence` deployment module (e.g., `data-persistence-tf`):
 
@@ -53,7 +61,11 @@ $ AWS_REGION=<region> \ # e.g. us-east-1
 
 ## Update Cumulus Resources
 
-**Reminder:** Remember to [initialize Terraform](./README.md#initialize-terraform), if necessary.
+:::note Reminder
+
+Remember to [initialize Terraform](./README.md#initialize-terraform), if necessary.
+
+:::
 
 From the directory of your `cumulus` deployment module (e.g., `cumulus-tf`):
 

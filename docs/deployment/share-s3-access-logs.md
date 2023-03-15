@@ -39,3 +39,10 @@ In the NGAP environment, the ESDIS Metrics team has set up an ELK stack to proce
 Configure the S3 Replicator as described above using the `target_bucket` and `target_prefix` provided by the Metrics team.
 
 The Metrics team has taken care of setting up Logstash to ingest the files that get delivered to their bucket into their Elasticsearch instance.
+
+
+:::info
+
+For a more in-depth overview regarding ESDIS Metrics view the [Cumulus Distribution Metrics](../features/distribution-metrics.md) section.
+
+:::
