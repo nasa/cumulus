@@ -25,7 +25,6 @@ resource "aws_lambda_function" "db_indexer" {
       AsyncOperationsTable       = var.dynamo_tables.async_operations.name
       ProvidersTable             = var.dynamo_tables.providers.name
       ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-      RulesTable                 = var.dynamo_tables.rules.name
       ES_HOST                    = var.elasticsearch_hostname
       stackName                  = var.prefix
       system_bucket              = var.system_bucket
