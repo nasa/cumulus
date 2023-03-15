@@ -6,6 +6,7 @@ resource "aws_sqs_queue" "throttled_queue" {
 
 
 resource "aws_cloudwatch_event_rule" "throttled_queue_watcher" {
+  name                = "${var.prefix}-throttled_queue_watcher"
   schedule_expression = "rate(1 minute)"
 }
 
