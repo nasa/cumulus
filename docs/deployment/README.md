@@ -219,6 +219,7 @@ The state of the Terraform deployment is stored in S3. In the following examples
 ```shell
 aws s3api create-bucket --bucket my-tf-state
 ```
+
 :::tip
 
 In order to help prevent loss of state information, **it is strongly recommended that versioning be enabled on the state bucket**.
@@ -233,9 +234,9 @@ aws s3api put-bucket-versioning \
 
 :::danger important: terraform state
 
-In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide. 
+In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide.
 
-However, unfortunately, if your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources. 
+However, unfortunately, if your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources.
 
 :::
 
@@ -442,6 +443,7 @@ Consider [the sizing of your Cumulus instance](#cumulus-instance-sizing) when co
 If you are deploying from the Cumulus Deployment Template or a configuration based on that repo, the Thin Egress App (TEA) distribution app will be used by default.
 
 #### Configuration Options
+
 Cumulus can be configured to use either TEA or the Cumulus Distribution API. The default selection is the Thin Egress App if you're using the [Deployment Template](https://github.com/nasa/cumulus-template-deploy).
 
 :::note
@@ -478,7 +480,7 @@ distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/D
 distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 ```
 
-:::note 
+:::note
 
 Be sure to copy the redirect URLs because you will need them to update your Earthdata application.
 
@@ -504,7 +506,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Dashboard Requirements
 
-:::note 
+:::note
 
 The requirements are similar to the [Cumulus stack deployment requirements](#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the Dashboard repository.
 

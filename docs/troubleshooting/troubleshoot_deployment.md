@@ -75,8 +75,6 @@ Re-run `terraform apply` and the problem should not recur.
 
 ::::
 
-
-
 ### `ValidationException: You must specify exactly one subnet.` when deploying the data-persistence module
 
 This can happen if you have multiple `subnet_ids` configured for your
@@ -98,7 +96,7 @@ variable for your `data-persistence` module to increase the number of instances:
 
 ### Dashboard Configuration
 
-#### Issues:
+#### Issues
 
 ::::note Not Able To Clear Cache
 
@@ -114,11 +112,11 @@ It's possible to workaround this by editing the file `cumulus-dashboard/node_mod
 
 ### Dashboard Deployment
 
-#### Issues:
+#### Issues
 
 ::::note Earthdata Login Error
 
-The dashboard sends you to an Earthdata Login page that has an error reading **"Invalid request, please verify the client status or redirect_uri before resubmitting"**. 
+The dashboard sends you to an Earthdata Login page that has an error reading **"Invalid request, please verify the client status or redirect_uri before resubmitting"**.
 
 :::tip Check your variables and values
 
@@ -130,7 +128,7 @@ Check to see if you are missing or have forgotten to update one or more of your 
 
 ::::note Caching Issue
 
-There is odd caching behavior associated with the dashboard and Earthdata Login at this point in time that can cause the above error to reappear on the Earthdata Login page loaded by the dashboard even after fixing the cause of the error. 
+There is odd caching behavior associated with the dashboard and Earthdata Login at this point in time that can cause the above error to reappear on the Earthdata Login page loaded by the dashboard even after fixing the cause of the error.
 
 :::tip browser solution
 

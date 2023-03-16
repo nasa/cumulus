@@ -50,7 +50,7 @@ This is a one time operation that must be performed on each AWS account to allow
 
 :::
 
-    ```sh
+```sh
     aws iam create-role \
     --role-name ApiGatewayToCloudWatchLogs \
     [--permissions-boundary <permissionBoundaryArn>] \

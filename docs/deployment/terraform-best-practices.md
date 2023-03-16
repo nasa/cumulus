@@ -84,7 +84,6 @@ one), as well as a _delete marker_ as the current version.
 
 :::
 
-
 ### How to Recover from a Deleted State File
 
 If your state file appears to be deleted, but the containing bucket has bucket

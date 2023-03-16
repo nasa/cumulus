@@ -64,7 +64,7 @@ This document also assumes some basic familiarity with PostgreSQL databases and 
 ## Prepare Deployment Repository
 
 :::tip
- 
+
  If you already are working with an existing repository that has a configured `rds-cluster-tf` deployment for the version of Cumulus you intend to deploy or update, *or*  you need to only configure this module for your repository, skip to [Prepare AWS Configuration](postgres_database_deployment#prepare-aws-configuration).
 
 :::
@@ -88,7 +88,6 @@ We will return to [configuring this repo and using it for deployment below](#con
 ```
 
 You can then [add/commit](https://help.github.com/articles/adding-a-file-to-a-repository-using-the-command-line/) changes as needed.
-
 
 :::caution Update Your Gitignore File
 
@@ -181,7 +180,6 @@ Terraform has been successfully initialized!
 #### Deploy
 
 Run `terraform apply` to deploy the resources.
-
 
 :::caution
 
@@ -382,21 +380,24 @@ The content of each of these secrets are in the form:
 ---
 
 ### Connect to PostgreSQL DB via pgAdmin
+
 If you would like to manage your PostgreSQL database in an GUI tool you can via pgAdmin.
 
 #### Requirements
+
 - Download pgAdmin: [A management tool for PostgreSQL](https://www.pgadmin.org/)
 - Installation of AWS CLI ([installation steps](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
 - Installation of SSM AWS CLI plugin ([installation steps](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html))
 
 #### SSH Setup in AWS Secrets Manager
+
 You will need to navigate to AWS Secrets Manager and retrieve the secret values for your database. The secret name will contain the string  `_db_login`  and your prefix. Click the  "Retrieve secret value" button (![Retrieve secret value](../assets/pgadmin_retrieve_btn.png))to see the secret values.
 
 The value for your secret name can also be retrieved from the `data-persistence-tf` directory with the command `terraform output`.
 
 ![pgAdmin values to retrieve](../assets/pgadmin_retrieve_values.png)
 
-#### Setup ~/.ssh/config 
+#### Setup ~/.ssh/config
 
 Replace HOST value and PORT value with the values retrieved from Secrets Manager.
 
@@ -411,33 +412,35 @@ Host ssm-proxy
   Port 6868
 ```
 
-#### Create a Local Port Forward 
+#### Create a Local Port Forward
 
-1. Create a local port forward to the SSM box port 22, this creates a tunnel from `<local ssh port>` to the SSH port on the SSM host. 
+- Create a local port forward to the SSM box port 22, this creates a tunnel from `<local ssh port>` to the SSH port on the SSM host.
 
 :::caution
 
-`<local ssh port>` should not be `8000`. 
+`<local ssh port>` should not be `8000`.
 
 :::
 
-2. Replace the following command values for `<instance id>` with your instance ID:
+- Replace the following command values for `<instance id>` with your instance ID:
 
 ```shell
 aws ssm start-session --target <instance id> --document-name AWS-StartPortForwardingSession --parameters portNumber=22,localPortNumber=6868
 ```
 
-3. Then, in another terminal tab, enter:
+- Then, in another terminal tab, enter:
+
 ```shell
 ssh ssm-proxy
 ```
 
 #### Create PgAdmin Server
-1. Open pgAdmin and begin creating a new server (in newer versions it may be registering a new server).
+
+- Open pgAdmin and begin creating a new server (in newer versions it may be registering a new server).
 
 ![Creating a pgAdmin server](../assets/pgadmin_create_server.png)
 
-2. In the "Connection" tab, enter the values retrieved from Secrets Manager. Host name/address and Port should be the Hostname and LocalForward number from the ~/.ssh/config file.
+- In the "Connection" tab, enter the values retrieved from Secrets Manager. Host name/address and Port should be the Hostname and LocalForward number from the ~/.ssh/config file.
 
 ![pgAdmin server connection value entries](../assets/pgadmin_server_connection.png)
 
@@ -450,9 +453,10 @@ Maintenance database corresponds to "database".
 You can select "Save Password?" to save your password. Click "Save" when you are finished. You should see your new server in pgAdmin.
 
 #### Query Your Database
-1. In the "Browser" area find your database, navigate to the name, and click on it.
 
-2. Select the "Query Editor" to begin writing queries to your database.
+- In the "Browser" area find your database, navigate to the name, and click on it.
+
+- Select the "Query Editor" to begin writing queries to your database.
 
 ![Using the query editor in pgAdmin](../assets/pgadmin_query_tool.png)
 
@@ -462,4 +466,4 @@ You are all set to manage your queries in pgAdmin!
 
 ### Next Steps
 
-Your database cluster has been created/updated! From here you can continue to add additional user accounts, databases, and other database configurations. 
+Your database cluster has been created/updated! From here you can continue to add additional user accounts, databases, and other database configurations.
