@@ -317,12 +317,12 @@ test.serial('Deleting a collection removes it from all data stores and publishes
   );
 });
 
-test.only('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
+test.serial('Attempting to delete a collection with an associated rule returns a 409 response', async (t) => {
   const {
     testKnex,
     rulePgModel,
   } = t.context;
-  console.log('in test:::::');
+
   const {
     originalPgRecord,
   } = await createCollectionTestRecords(t.context);
@@ -334,21 +334,14 @@ test.only('Attempting to delete a collection with an associated rule returns a 4
     type: 'onetime',
   });
 
-  console.log('rule:::', rule);
-  console.log('stackname:::', process.env.stackName);
-
   // The workflow message template must exist in S3 before the rule can be created
-  const putResponse = await s3().putObject({
+  await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
   });
 
-  console.log('putResponse:::', putResponse);
-
-  const resultRule = await rulePgModel.create(testKnex, rule);
-
-  console.log('resultRule:::', resultRule);
+  await rulePgModel.create(testKnex, rule);
 
   const response = await request(app)
     .delete(`/collections/${originalPgRecord.name}/${originalPgRecord.version}`)
@@ -360,7 +353,7 @@ test.only('Attempting to delete a collection with an associated rule returns a 4
   t.true(response.body.message.includes('Cannot delete collection with associated rules'));
 });
 
-test.only('Attempting to delete a collection with an associated rule does not delete the collection', async (t) => {
+test.serial('Attempting to delete a collection with an associated rule does not delete the collection', async (t) => {
   const {
     collectionPgModel,
     rulePgModel,
