@@ -1,0 +1,15 @@
+---
+id: databases-introduction
+title: Databases
+hide_title: false
+---
+
+import DocCardList from '@theme/DocCardList';
+
+## Cumulus Core Database
+
+Cumulus uses a PostgreSQL database as its primary data store for operational and archive records (e.g. collections, granules, etc). We expect a PostgreSQL database to be provided by the AWS RDS service; however, there are two types of the RDS database which we will explore in the upcoming pages. 
+
+#### Types of Databases
+
+<DocCardList />

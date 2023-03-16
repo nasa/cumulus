@@ -29,21 +29,6 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Overviews',
-      link: {
-        type: 'generated-index',
-      },
-      collapsed: false,
-      items: [
-        'workflows/workflows-readme',
-        'workflows/protocol',
-        'workflows/input_output',
-        'workflows/cumulus-task-message-flow',
-        'workflows/workflow-triggers',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Deployment',
       link: {
         type: 'generated-index',
@@ -62,19 +47,21 @@ const sidebars = {
           type: 'category',
           label: 'Databases',
           link: {
-            type: 'generated-index',
+            type: 'doc',
+            id: 'deployment/databases-introduction',
           },
           collapsed: false,
           items: [
-            'deployment/choosing_configuring_rds',
             'deployment/postgres_database_deployment',
+            'deployment/choosing_configuring_rds',
           ],
         },
         {
           type: 'category',
           label: 'APIs',
           link: {
-            type: 'generated-index',
+            type: 'doc',
+            id: 'deployment/apis-introduction',
           },
           collapsed: false,
           items: [
@@ -133,19 +120,34 @@ const sidebars = {
     },
     {
       type: 'category',
-      label: 'Workflow Tasks',
+      label: 'Workflows',
       link: {
         type: 'generated-index',
       },
       collapsed: false,
       items: [
-        'tasks',
-        'workflow_tasks/discover_granules',
-        'workflow_tasks/files_to_granules',
-        'workflow_tasks/lzards_backup',
-        'workflow_tasks/move_granules',
-        'workflow_tasks/parse_pdr',
-        'workflow_tasks/queue_granules',
+        'workflows/workflows-readme',
+        'workflows/protocol',
+        'workflows/input_output',
+        'workflows/workflow-triggers',
+        {
+          type: 'category',
+          label: 'Workflow Tasks',
+          link: {
+            type: 'generated-index',
+          },
+          collapsed: false,
+          items: [
+            'tasks',
+            'workflows/cumulus-task-message-flow',
+            'workflow_tasks/discover_granules',
+            'workflow_tasks/files_to_granules',
+            'workflow_tasks/move_granules',
+            'workflow_tasks/queue_granules',
+            'workflow_tasks/lzards_backup',
+            'workflow_tasks/parse_pdr',
+          ],
+        },
       ],
     },
     {
@@ -179,7 +181,6 @@ const sidebars = {
         'troubleshooting/troubleshooting-readme',
         'troubleshooting/troubleshooting-deployment',
         'troubleshooting/rerunning-workflow-executions',
-        'troubleshooting/troubleshooting-deployment',
         'troubleshooting/reindex-elasticsearch',
       ],
     },
@@ -277,7 +278,6 @@ const sidebars = {
       },
       collapsed: false,
       items: [
-        'operator-docs/about-operator-docs',
         {
           type: 'category',
           label: 'Configuration',

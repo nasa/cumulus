@@ -25,6 +25,12 @@ The process involves:
 - Creating resources for your Terraform backend
 - Using [Terraform](https://www.terraform.io) to deploy resources to AWS
 
+:::info
+
+Please note that internal and sensitive information is not in this public resource and you may have to visit our [Cumulus wiki](https://wiki.earthdata.nasa.gov/display/CUMULUS/Deployment) for NGAP access steps and other credentials.
+
+:::
+
 ---
 
 ## Requirements
@@ -227,7 +233,9 @@ aws s3api put-bucket-versioning \
 
 :::danger important: terraform state
 
-In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide. However, unfortunately, if your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources. 
+In order to reduce your risk of the corruption or loss of your Terraform state file, or otherwise corrupt your Cumulus deployment, please see the [Terraform Best Practices](terraform-best-practices.md) guide. 
+
+However, unfortunately, if your state information does become lost or corrupt, then deployment (via `terraform apply`) will have unpredictable results, including possible loss of data and loss of deployed resources. 
 
 :::
 
