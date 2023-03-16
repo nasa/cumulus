@@ -26,6 +26,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2997**
   - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3
+- **CUMULUS-3044**
+  - Deployment section:
+    - Consolidate and migrate Cumulus deployment (public facing) content from wiki to Cumulus Docs in GitHub.
+    - Update links to make sure that the user can maintain flow between the wiki and GitHub deployment documentation.
+    - Organize and update sidebar to include categories for similar deployment topics.
 - **CUMULUS-3147**
   - Set example/cumulus-tf default async_operation_image_version to 44.
   - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
