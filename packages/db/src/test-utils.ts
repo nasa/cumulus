@@ -60,7 +60,7 @@ export const fakeRuleRecordFactory = (
   params: Partial<PostgresRule>
 ): PostgresRule => ({
   name: cryptoRandomString({ length: 8 }),
-  workflow: 'Random Workflow',
+  workflow: 'RandomWorkflow',
   type: 'onetime',
   enabled: false,
   created_at: new Date(),
