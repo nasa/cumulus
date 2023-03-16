@@ -223,10 +223,6 @@ terraform init -reconfigure
 terraform destroy
 ```
 
-The next step is to _manually_ **delete the DynamoDB tables** related to your
-deployment. Again, these tables are protected such that they are **not**
-_automatically_ deleted by the `terraform destroy` command. This is a safety
-measure to prevent _accidental_ removal.
 
 However, this does not prevent manual destruction in case you truly do wish to
 remove them. You may do so via either the **AWS Management Console** or the

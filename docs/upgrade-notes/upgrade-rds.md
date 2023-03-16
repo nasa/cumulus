@@ -8,9 +8,6 @@ hide_title: false
 
 This release of Cumulus (9.0.0) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
-While eventually Cumulus will only support using a PostgreSQL-compatible database as its data archive, for now the system will perform **parallel writes** to both DynamoDB and PostgreSQL so that all new data is archived in both datastores.
-
-However, in order to copy all of your previously written data from DynamoDB to PostgreSQL, you will need to run data migration scripts that we have provided and which this document will explain how to use.
 
 ## Upgrade steps
 
@@ -118,7 +115,6 @@ The `cumulus` module will create resources including the following relevant reso
 
 > **Note**: Please read this entire section thoroughly before proceeding to run the second data migration. In particular, pay close attention to the notes about parallelism options in order to achieve desired data migration performance while avoiding database outages and data loss.
 
-Now that Cumulus module is deployed, we can use some newly created resources to migrate granule, execution, and PDR data from DynamoDB to our PostgreSQL database.
 
 This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
 This Lambda starts an asynchronous operation which runs as an ECS task to run the migration.
@@ -157,7 +153,7 @@ Also, each run of these data migration will write a timestamped log of any error
 - `<prefix>-data-migration2-execution-errors-${timestamp}.json`
 - `<prefix>-data-migration2-granulesAndFiles-errors-${timestamp}.json`
 
-> **Please note:** Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
+
 
 #### postgres-migration-async-operation payload parameters
 
@@ -170,14 +166,11 @@ Also, each run of these data migration will write a timestamped log of any error
 | executionMigrationParams.writeConcurrency | number | The maximum number of execution records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 10
 | executionMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
 | granuleMigrationParams | Object | Options for the granules data migration | `{}`
-| granuleMigrationParams.collectionId | string | A collection ID (e.g. `shortname___version`) from granule DynamoDB records. If a `collectionId` is provided, then only granules for that collection will be migrated | none
-| granuleMigrationParams.granuleId | string | A specific granule ID from a DynamoDB record to select for migration. If a `granuleId` and `collectionId` are provided, the `collectionId` will be ignored. | none
 | granuleMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for granules data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
 | granuleMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
 | granuleMigrationParams.writeConcurrency | number | The maximum number of granule records to write concurrently to PostgreSQL. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 10
 | granuleMigrationParams.loggingInterval | number | How many records to migrate before printing a log message on the status of the migration. | 100
 | granuleMigrationParams.migrateAndOverwrite | string | Set to 'true' to set migration to overwrite *existing* granule and file records in the PostgreSQL database (subject to PostgreSQL overwrite constraints).  Cannot be used with `migrateOnlyFiles` | false
-| granuleMigrationParams.migrateOnlyFiles | string | Set to 'true' to migrate only file records for DynamoDB granule records that also exist in the PostgreSQL database (granule records that have not been migrated will report as failed for granule *and* files).  Cannot be used with `migrateAndOverwrite`.| false
 | pdrMigrationParams | Object | Options for the PDRs data migration | `{}`
 | pdrMigrationParams.parallelScanSegments | number | The number of [parallel scan] segments to use for PDRs data migration. The higher this number, the less time it will take to migrate all of your data, but also the more load that will be put on your PostgreSQL database. | 20
 | pdrMigrationParams.parallelScanLimit | number | The maximum number of records to return per each [parallel scan] of a segment. This option was mostly provided for testing and it is not recommended to set a value. | none
@@ -193,7 +186,6 @@ This tool can be run in the following two ways:
 - Through direct Lambda invocation
 - Through API invocation
 
-> **Note:** If the migration validation tool reveals discrepancies between your DynamoDB and PostgreSQL data, you can [re-run the second data migration as described in step 5](#5-run-the-second-data-migration) to correct your data or to add missing data.
 
 #### Direct Lambda invocation
 
@@ -245,7 +237,7 @@ The following optional parameters are used by this tool:
 |---------------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
 | reportBucket  | string | Sets the bucket used for reporting. If this argument is used, a `reportPath` must be set to generate a report.                                                                                    |         |
 | reportPath    | string | Sets the path location for the tool to write a copy of the Lambda payload to S3                                                                                                                   |         |
-| cutoffSeconds | number | Number of seconds prior to this execution to 'cutoff' reconciliation queries. This allows in-progress/other in-flight operations time to complete and propagate to Elasticsearch/Dynamo/postgres. | 3600    |
+| cutoffSeconds | number | Number of seconds prior to this execution to 'cutoff' reconciliation queries. This allows in-progress/other in-flight operations time to complete and propagate to Elasticsearch/postgres. | 3600    |
 | dbConcurrency | number | Sets max number of parallel collections reports the script will run at a time.                                                                                                                    | 20      |
 | dbMaxPool     | number | Sets the maximum number of connections the database pool has available. Modifying this may result in unexpected failures.                                                                         | 20      |
 
