@@ -214,7 +214,11 @@ The configuration file is a simple JSON mapping of the form:
 }
 ```
 
-> ⚠️ **Note**: Cumulus only supports a one-to-one mapping of bucket -> Cumulus Distribution path for 'distribution' buckets. Also, the bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors.
+:::note cumulus bucket mapping
+
+Cumulus only supports a one-to-one mapping of bucket -> Cumulus Distribution path for 'distribution' buckets. Also, the bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors.
+
+:::
 
 ## Switching from the Thin Egress App to Cumulus Distribution
 
@@ -222,4 +226,4 @@ If you have previously deployed the [Thin Egress App (TEA)](../deployment/thin-e
 
 Note, however, that the `cumulus_distribution` module will generate a bucket map cache and overwrite any existing bucket map caches created by TEA.
 
-There will also be downtime while your API gateway is updated.
+There will also be downtime while your API Gateway is updated.

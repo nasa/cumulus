@@ -18,7 +18,7 @@ To that end, Cumulus provides a terraform module
 [`cumulus-rds-tf`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-rds-tf)
 that will deploy an AWS RDS Aurora Serverless PostgreSQL 11 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
 
-We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/tree/master/rds-cluster-tf) on github.
+We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/tree/master/rds-cluster-tf) on GitHub.
 
 Use of this example involves:
 

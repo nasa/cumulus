@@ -34,7 +34,7 @@ const sidebars = {
         type: 'generated-index',
         title: 'Cumulus Deployment',
         description:
-          'Here we are going to learn about how to deploy Cumulus Core and use approved APIs and databases.',
+          'Here you are going to learn about how to deploy Cumulus and to setup approved APIs and databases.',
         keywords: ['deployment', 'TEA', 'Cumulus API', 'RDS', 'Postgres'],
       },
       collapsed: false,

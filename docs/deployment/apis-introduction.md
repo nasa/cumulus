@@ -11,7 +11,7 @@ When deploying from the Cumulus Deployment Template or a configuration based on 
 
 #### Cumulus API Customization Use Cases
 
-Our Cumulus API offers you the flexibility to customize for your DAAC/organization. Below are a list of use cases that may help you with options:
+Our Cumulus API offers you the flexibility to customize for your DAAC/organization. Below is a list of use cases that may help you with options:
 
 - [Cumulus API w/Launchpad Authentication](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication)
 - [Using Cumulus with Private APIs](https://wiki.earthdata.nasa.gov/display/CUMULUS/Using+Cumulus+with+Private+APIs)
