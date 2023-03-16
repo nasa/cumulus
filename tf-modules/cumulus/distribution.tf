@@ -10,6 +10,10 @@ module "distribution" {
 
   cmr_environment                                = var.cmr_environment
   cmr_provider                                   = var.cmr_provider
+
+  default_log_retention_days                     = var.default_log_retention_days
+  cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
+
   deploy_s3_credentials_endpoint                 = var.deploy_distribution_s3_credentials_endpoint
   lambda_processing_role_arn                     = aws_iam_role.lambda_processing.arn
   log_destination_arn                            = var.log_destination_arn

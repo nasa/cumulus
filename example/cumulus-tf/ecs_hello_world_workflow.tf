@@ -23,6 +23,9 @@ module "hello_world_service" {
   cpu                = 400
   memory_reservation = 700
 
+  default_log_retention_days                     = var.default_log_retention_days
+  cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
+
   environment = {
     AWS_DEFAULT_REGION = data.aws_region.current.name
   }

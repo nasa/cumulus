@@ -5,12 +5,6 @@ variable "cluster_arn" {
   type = string
 }
 
-variable "default_log_retention_days" {
-  type = number
-  default = 30
-  description = "default value that user chooses for their log retention periods"
-}
-
 variable "image" {
   description = "Image used to start the container. See https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ContainerDefinition.html#ECS-Type-ContainerDefinition-image"
   type = string
@@ -38,6 +32,12 @@ variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
   default = {}
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 30
+  description = "default value that user chooses for their log retention periods"
 }
 
 variable "command" {

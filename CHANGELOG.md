@@ -71,9 +71,10 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3193**
   - Add a Python version file
 - **CUMULUS-3121**
-  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods. 
-    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention) 
-    section of the Cumulus documentation in order for more detailed information and an example into how to do this.
+  - Added optional variables `default_log_retention_days` and `cloudwatch_log_retention_periods` to
+    `tf-modules/cumulus/variables.tf` for custom configuration of cloudwatch_log_groups' retention periods.
+    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
+    section of the Cumulus documentation for more detailed information.
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
     endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
@@ -132,7 +133,7 @@ update the database cluster to use the new configuration.
   - Fix issue from CUMULUS-3070 where undefined values for status results in
     unexpected insertion failure on PATCH.
 - **CUMULUS-3181**
-  - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
+  - Fixed `sqsMessageConsumer` lambda to correctly retrieve ENABLED sqs rules.
 
 - **CUMULUS-3189**
   - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
