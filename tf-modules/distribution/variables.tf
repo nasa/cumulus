@@ -22,6 +22,18 @@ variable "tea_internal_api_endpoint" {
 
 # Optional
 
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
+  default = {}
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 30
+  description = "default value that user chooses for their log retention periods"
+}
+
 variable "cmr_environment" {
   description = "The CMR environment to access"
   type        = string

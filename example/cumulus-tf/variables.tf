@@ -186,21 +186,21 @@ variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
   default = {
-    cumulus-tf_egress_lambda_log_retention = 15,
-    archive_private_api_log_retention = 35,
-    archive_api_log_retention = 25,
-    archive_async_operation_log_retention = 20,
-    cumulus_distribution_api_log_retention = 20,
-    cumulus_ecs_service_default_log_retention = 20,
-    ingest_queue_workflow_task_log_retention = 20,
-    ingest_sync_granule_task_log_retention = 20,
-    ingest_update_cmr_access_constraints_task_log_retention = 15,
+    cumulus-tf_egress_lambda_log_retention = 7,
+    archive_private_api_log_retention = 30,
+    archive_api_log_retention = 30,
+    archive_async_operation_log_retention = 30,
+    cumulus_distribution_api_log_retention = 7,
+    cumulus_ecs_service_default_log_retention = 7,
+    ingest_queue_workflow_task_log_retention = 7,
+    ingest_sync_granule_task_log_retention = 30,
+    ingest_update_cmr_access_constraints_task_log_retention = 7,
   }
 }
 
 variable "default_log_retention_days" {
   type = number
-  default = 12
+  default = 14
   description = "default cloudwatch log retention periods"
 }
 
