@@ -327,8 +327,6 @@ test.serial('Attempting to delete a collection with an associated rule returns a
     originalPgRecord,
   } = await createCollectionTestRecords(t.context);
 
-  console.log('originalPgRecord::::', originalPgRecord);
-
   const rule = fakeRuleRecordFactory({
     collection_cumulus_id: originalPgRecord.cumulus_id,
     type: 'onetime',
