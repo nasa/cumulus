@@ -25,6 +25,8 @@ module "cumulus_distribution" {
   api_url                  = var.cumulus_distribution_url
   bucket_map_file          = aws_s3_bucket_object.bucket_map_yaml_distribution.id
   bucketname_prefix        = ""
+  default_log_retention_days        = var.default_log_retention_days
+  cloudwatch_log_retention_periods  = var.cloudwatch_log_retention_periods
   cmr_acl_based_credentials = true
   cmr_environment           = var.cmr_environment
   cmr_provider              = var.cmr_provider
