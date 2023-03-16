@@ -322,24 +322,32 @@ test.serial('Attempting to delete a collection with an associated rule returns a
     testKnex,
     rulePgModel,
   } = t.context;
-
+  console.log('in test:::::');
   const {
     originalPgRecord,
   } = await createCollectionTestRecords(t.context);
+
+  console.log('originalPgRecord::::', originalPgRecord);
 
   const rule = fakeRuleRecordFactory({
     collection_cumulus_id: originalPgRecord.cumulus_id,
     type: 'onetime',
   });
 
+  console.log('rule:::', rule);
+
   // The workflow message template must exist in S3 before the rule can be created
-  await s3().putObject({
+  const putResponse = await s3().putObject({
     Bucket: process.env.system_bucket,
     Key: `${process.env.stackName}/workflows/${rule.workflow}.json`,
     Body: JSON.stringify({}),
   });
 
-  await rulePgModel.create(testKnex, rule);
+  console.log('putResponse:::', putResponse);
+
+  const resultRule = await rulePgModel.create(testKnex, rule);
+
+  console.log('resultRule:::', resultRule);
 
   const response = await request(app)
     .delete(`/collections/${originalPgRecord.name}/${originalPgRecord.version}`)
