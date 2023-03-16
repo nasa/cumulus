@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import pRetry from 'p-retry';
 
 import { getExecutionUrlFromArn } from '@cumulus/message/Executions';
-import { randomId  } from '@cumulus/common/test-utils';
+import { randomId } from '@cumulus/common/test-utils';
 
 import { getKnexClient } from './connection';
 import { localStackConnectionEnv } from './config';
