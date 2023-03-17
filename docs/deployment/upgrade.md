@@ -12,7 +12,7 @@ Cumulus uses a global versioning approach, meaning version numbers are consisten
 
 :::danger important
 
-By convention, Cumulus minor version releases introduce breaking changes (e.g., 1.13.x -> 1.14.0), so it is critical that you consult the release notes for migration steps.  Carefully read each BREAKING CHANGES and MIGRATION STEPS sections within the `CHANGELOG.md` file, following all steps, starting with the oldest release after your currently installed release, and progressing through them chronologically.
+By convention, Cumulus minor version releases introduce breaking changes (e.g., 1.13.x -> 1.14.0), so it is critical that you consult the release notes for migration steps.  Carefully read each `BREAKING CHANGES` and `MIGRATION STEPS` sections within the `CHANGELOG.md` file, following all steps, starting with the oldest release after your currently installed release, and progressing through them chronologically.
 
 :::
 
