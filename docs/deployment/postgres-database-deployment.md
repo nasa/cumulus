@@ -385,9 +385,8 @@ If you would like to manage your PostgreSQL database in an GUI tool, you can via
 
 #### Requirements
 
-- Download pgAdmin: [A management tool for PostgreSQL](https://www.pgadmin.org/)
-- Installation of AWS CLI ([installation steps](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
-- Installation of SSM AWS CLI plugin ([installation steps](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html))
+- Install AWS CLI ([installation steps](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html))
+- Install SSM AWS CLI plugin ([installation steps](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html))
 
 #### SSH Setup in AWS Secrets Manager
 
