@@ -185,22 +185,12 @@ variable "buckets" {
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {
-    egressLambda_log_retention = 7,
-    privateApi_log_retention = 30,
-    api_log_retention = 30,
-    asyncOperation_log_retention = 30,
-    ecsServiceDefault_log_retention = 7,
-    queueWorkflowTask_log_retention = 7,
-    syncGranuleTask_log_retention = 30,
-    updateCmrAccessConstraintsTask_log_retention = 7,
-    cnmResponseTask_log_retention = 10,
-  }
+  default = {}
 }
 
 variable "default_log_retention_days" {
   type = number
-  default = 21
+  default = 30
   description = "default cloudwatch log retention periods"
 }
 
