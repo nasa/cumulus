@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2997**
-  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3.
 - **CUMULUS-3044**
   - Deployment section:
     - Consolidate and migrate Cumulus deployment (public facing) content from wiki to Cumulus Docs in GitHub.
