@@ -514,8 +514,6 @@ describe('The S3 Ingest Granules workflow', () => {
         ...expectedSyncGranulePayload,
         granules: [updatedGranule],
       };
-      console.log('\n LAMBDA output', lambdaOutput.payload);
-      console.log('\n EXPECTED LAMBDA output', updatedPayload);
       expect(lambdaOutput.payload).toEqual(updatedPayload);
     });
 
