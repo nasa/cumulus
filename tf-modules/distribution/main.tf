@@ -163,6 +163,12 @@ resource "aws_lambda_function" "s3_credentials" {
   tags = var.tags
 }
 
+resource "aws_cloudwatch_log_group" "s3_credentials" {
+  name              = "/aws/lambda/${aws_lambda_function.s3_credentials[0].function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3Credentials_log_retention", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 data "aws_region" "current" {}
 
 resource "aws_lambda_permission" "lambda_permission" {

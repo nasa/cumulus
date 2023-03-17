@@ -100,7 +100,7 @@ resource "aws_lambda_function" "publish_executions" {
 
 resource "aws_cloudwatch_log_group" "publish_executions_logs" {
   name              = "/aws/lambda/${var.prefix}-publishExecutions"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_publish_executions_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "publishExecutions_log_retention", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -210,7 +210,7 @@ resource "aws_lambda_function" "publish_granules" {
 
 resource "aws_cloudwatch_log_group" "publish_granules_logs" {
   name              = "/aws/lambda/${aws_lambda_function.publish_granules.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_publish_granule_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "publishGranules_log_retention", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -315,7 +315,7 @@ resource "aws_lambda_function" "publish_pdrs" {
 
 resource "aws_cloudwatch_log_group" "publish_pdrs_logs" {
   name              = "/aws/lambda/${aws_lambda_function.publish_pdrs.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_publish_pdrs_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "publishPdrs_log_retention", var.default_log_retention_days)
   tags              = var.tags
 }
 

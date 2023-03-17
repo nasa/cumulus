@@ -29,6 +29,11 @@ resource "aws_lambda_function" "index_from_database" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "index_from_database" {
+  name = "/aws/lambda/${aws_lambda_function.index_from_database.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "indexFromDataBase_log_retention", var.default_log_retention_days)
+  tags = var.tags
+}
 
 resource "aws_iam_role" "index_from_database" {
   name                 = "${var.prefix}-index_from_database"

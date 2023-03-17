@@ -216,6 +216,12 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   tags = var.tags
 }
 
+resource "aws_cloudwatch_log_group" "sf_event_sqs_to_db_records" {
+  name              = "/aws/lambda/${aws_lambda_function.sf_event_sqs_to_db_records.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_sf_event_sqs_to_db_records_log_retention", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_event_source_mapping" "db_records_dlq_to_s3_mapping" {
   event_source_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
   function_name    = aws_lambda_function.write_db_dlq_records_to_s3.arn
@@ -252,3 +258,8 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
   tags = var.tags
 }
 
+resource "aws_cloudwatch_log_group" "write_db_dlq_records_to_s3" {
+  name              = "/aws/lambda/${aws_lambda_function.write_db_dlq_records_to_s3.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "writeDbDlqRecordsToS3_log_retention", var.default_log_retention_days)
+  tags              = var.tags
+}

@@ -38,3 +38,9 @@ data "aws_lambda_invocation" "custom_bootstrap" {
       replacementTrigger = timestamp()
     })
 }
+
+resource "aws_cloudwatch_log_group" "custom_bootstrap" {
+  name = "/aws/lambda/${aws_lambda_function.custom_bootstrap.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "customBootstrap_log_retention", var.default_log_retention_days)
+  tags = var.tags
+}

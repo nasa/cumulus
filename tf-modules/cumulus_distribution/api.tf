@@ -34,12 +34,6 @@ resource "aws_secretsmanager_secret_version" "api_oauth_client_password" {
   secret_string = var.oauth_client_password
 }
 
-resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cumulus_distribution_api_log_retention", var.default_log_retention_days)
-  tags              = var.tags
-}
-
 resource "aws_lambda_function" "api" {
   function_name    = "${var.prefix}-DistributionApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/distribution/lambda.zip"
@@ -61,6 +55,12 @@ resource "aws_lambda_function" "api" {
       security_group_ids = local.lambda_security_group_ids
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "distributionApi_log_retention", var.default_log_retention_days)
+  tags              = var.tags
 }
 
 data "aws_iam_policy_document" "private_api_policy_document" {

@@ -49,6 +49,12 @@ resource "aws_iam_role_policy" "start_async_operation" {
   policy = data.aws_iam_policy_document.start_async_operation.json
 }
 
+resource "aws_cloudwatch_log_group" "start_async_operation" {
+  name              = "/aws/lambda/${aws_lambda_function.start_async_operation.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "startAsyncOperation_log_retention", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 data "aws_iam_policy_document" "start_async_operation" {
   statement {
     actions   = ["ecs:RunTask"]

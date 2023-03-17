@@ -112,18 +112,6 @@ resource "aws_secretsmanager_secret_version" "api_config" {
   secret_string = jsonencode(local.api_secret_env_variables)
 }
 
-resource "aws_cloudwatch_log_group" "private_api" {
-  name              = "/aws/lambda/${aws_lambda_function.private_api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_private_api_log_retention", var.default_log_retention_days)
-  tags              = var.tags
-}
-
-resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_api_log_retention", var.default_log_retention_days)
-  tags              = var.tags
-}
-
 resource "aws_secretsmanager_secret" "api_cmr_password" {
   name_prefix = "${var.prefix}-api-cmr-password"
   description = "CMR password for the Cumulus API's ${var.prefix} deployment"
@@ -205,6 +193,18 @@ resource "aws_lambda_function" "api" {
       security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "private_api" {
+  name              = "/aws/lambda/${aws_lambda_function.private_api.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "privateApi_log_retention", var.default_log_retention_days)
+  tags              = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "api" {
+  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "api_log_retention", var.default_log_retention_days)
+  tags              = var.tags
 }
 
 data "aws_iam_policy_document" "private_api_policy_document" {

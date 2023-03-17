@@ -32,3 +32,9 @@ resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
 
   tags = var.tags
 }
+
+resource "aws_cloudwatch_log_group" "update_granules_cmr_metadata_file_links_task" {
+  name = "/aws/lambda/${aws_lambda_function.update_granules_cmr_metadata_file_links_task.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "updateGranulesCmrMetadataFileLinksTask_log_retention", var.default_log_retention_days)
+  tags = var.tags
+}

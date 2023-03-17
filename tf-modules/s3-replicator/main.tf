@@ -57,6 +57,12 @@ resource "aws_lambda_function" "s3_replicator" {
   tags = var.tags
 }
 
+resource "aws_cloudwatch_log_group" "s3_replicator" {
+  name              = "/aws/lambda/${aws_lambda_function.s3_replicator.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3Replicator_log_retention", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_permission" "s3_replicator_permission" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.s3_replicator.arn
