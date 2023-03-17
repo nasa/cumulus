@@ -12,7 +12,7 @@ The S3 Replicator is a Node.js package that contains a simple Lambda function, a
 
 First, ensure that you have enabled [S3 Server Access Logging](../configuration/server_access_logging).
 
-Next, configure your `config.tfvars` as described in the [`s3-replicator/README.md`](https://github.com/nasa/cumulus/blob/master/tf-modules/s3-replicator/README.md) to correspond to your deployment.  The `source_bucket` and `source_prefix` are determined by how you enabled the [S3 Server Access Logging](../configuration/server_access_logging).
+Next, configure your `terraform.tfvars` as described in the [`s3-replicator/README.md`](https://github.com/nasa/cumulus/blob/master/tf-modules/s3-replicator/README.md) to correspond to your deployment.  The `source_bucket` and `source_prefix` are determined by how you enabled the [S3 Server Access Logging](../configuration/server_access_logging).
 
 In order to deploy the `s3-replicator` with Cumulus you will need to add the module to your terraform `main.tf` definition as the example below:
 
