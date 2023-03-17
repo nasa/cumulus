@@ -381,7 +381,7 @@ The content of each of these secrets are in the form:
 
 ### Connect to PostgreSQL DB via pgAdmin
 
-If you would like to manage your PostgreSQL database in an GUI tool you can via pgAdmin.
+If you would like to manage your PostgreSQL database in an GUI tool, you can via pgAdmin.
 
 #### Requirements
 
