@@ -120,7 +120,7 @@ The dashboard sends you to an Earthdata Login page that has an error reading **"
 
 :::tip Check your variables and values
 
-Check to see if you are missing or have forgotten to update one or more of your EARTHDATA_CLIENT_ID, EARTHDATA_CLIENT_PASSWORD environment variables (from your app/.env file) and re-deploy Cumulus, or you haven't placed the correct values in them, or you've forgotten to add both the "redirect" and "token" URL to the Earthdata Application.
+Check to see if you are missing or have forgotten to update one or more of your `EARTHDATA_CLIENT_ID`, `EARTHDATA_CLIENT_PASSWORD` environment variables (from your app/.env file) and re-deploy Cumulus, or you haven't placed the correct values in them, or you've forgotten to add both the "redirect" and "token" URL to the Earthdata Application.
 
 :::
 
