@@ -515,6 +515,7 @@ const _writeGranuleRecords = async (params) => {
    * @type { { status: string, pgGranule: PostgresGranuleRecord } | undefined }
    */
   let writePgGranuleResult;
+  let limitedUpdateApiGranuleRecord;
 
   log.info('About to write granule record %j to PostgreSQL', postgresGranuleRecord);
   log.info('About to write granule record %j to DynamoDB', apiGranuleRecord);
@@ -540,7 +541,7 @@ const _writeGranuleRecords = async (params) => {
         // The only values allowed to be updated in the PG granule write under these conditions are
         // currently status, timestamp, updated_at, and created_at, and the associated execution
         // as part of the write chain
-        const limitedUpdateApiGranuleRecord = await translatePostgresGranuleToApiGranule({
+        limitedUpdateApiGranuleRecord = await translatePostgresGranuleToApiGranule({
           granulePgRecord: pgGranule,
           knexOrTransaction: trx,
         });
@@ -579,9 +580,10 @@ const _writeGranuleRecords = async (params) => {
       `Completed write operation to PostgreSQL for granule %j. Record cumulus_id in PostgreSQL: ${writePgGranuleResult.pgGranule.cumulus_id}.`,
       postgresGranuleRecord
     );
+    // TODO: need to log either limitedUpdateApiGranuleRecord || apiGranuleRecord
     log.info(
       'Completed write operation to DynamoDb for granule %j',
-      apiGranuleRecord
+      limitedUpdateApiGranuleRecord || apiGranuleRecord
     );
     return writePgGranuleResult;
   } catch (thrownError) {
