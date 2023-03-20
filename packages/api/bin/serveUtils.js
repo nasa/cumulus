@@ -23,6 +23,7 @@ const {
 } = require('@cumulus/db');
 const { log } = require('console');
 const models = require('../models');
+const { createRuleTrigger } = require('../lib/rulesHelpers');
 const { fakeGranuleFactoryV2 } = require('../lib/testUtils');
 const { getESClientAndIndex } = require('./local-test-defaults');
 const {
@@ -131,15 +132,13 @@ async function addRules(rules) {
     },
   });
 
-  const ruleModel = new models.Rule();
   const es = await getESClientAndIndex();
   const rulePgModel = new RulePgModel();
   return await Promise.all(
     rules.map(async (r) => {
-      const ruleWithTrigger = await ruleModel.createRuleTrigger(r);
-      const dynamoRecord = await ruleModel.create(ruleWithTrigger);
-      await indexer.indexRule(es.client, dynamoRecord, es.index);
-      const dbRecord = await translateApiRuleToPostgresRule(dynamoRecord, knex);
+      const ruleRecord = await createRuleTrigger(r);
+      await indexer.indexRule(es.client, ruleRecord, es.index);
+      const dbRecord = await translateApiRuleToPostgresRule(ruleRecord, knex);
       await rulePgModel.create(knex, dbRecord);
     })
   );

@@ -21,8 +21,6 @@ process.env = {
   ...process.env,
   AccessTokensTable: randomString(),
   backgroundQueueName: randomString(),
-  CollectionsTable: randomString(),
-  GranulesTable: randomString(),
   granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomString(),
   stackName: randomString(),
@@ -104,7 +102,6 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     type: 'BULK_GRANULE',
     envVars: {
       ES_HOST: process.env.ES_HOST,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
@@ -189,7 +186,6 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     type: 'BULK_GRANULE',
     envVars: {
       ES_HOST: process.env.ES_HOST,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,

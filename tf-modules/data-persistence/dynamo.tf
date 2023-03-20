@@ -3,11 +3,7 @@ locals {
   table_names = {
     access_tokens_table          = "${var.prefix}-AccessTokensTable"
     async_operations_table       = "${var.prefix}-AsyncOperationsTable"
-    collections_table            = "${var.prefix}-CollectionsTable"
-    granules_table               = "${var.prefix}-GranulesTable"
-    providers_table              = "${var.prefix}-ProvidersTable"
     reconciliation_reports_table = "${var.prefix}-ReconciliationReportsTable"
-    rules_table                  = "${var.prefix}-RulesTable"
     semaphores_table             = "${var.prefix}-SemaphoresTable"
   }
 }
@@ -63,94 +59,6 @@ resource "aws_dynamodb_table" "async_operations_table" {
   tags = var.tags
 }
 
-resource "aws_dynamodb_table" "collections_table" {
-  name             = "${var.prefix}-CollectionsTable"
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "name"
-  range_key        = "version"
-
-  attribute {
-    name = "name"
-    type = "S"
-  }
-
-  attribute {
-    name = "version"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.collections_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_dynamodb_table" "granules_table" {
-  name             = local.table_names.granules_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "granuleId"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "granuleId"
-    type = "S"
-  }
-
-  attribute {
-    name = "collectionId"
-    type = "S"
-  }
-
-  global_secondary_index {
-    name            = "collectionId-granuleId-index"
-    hash_key        = "collectionId"
-    range_key       = "granuleId"
-    projection_type = "ALL"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.granules_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_dynamodb_table" "providers_table" {
-  name             = local.table_names.providers_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "id"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "id"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.providers_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
 resource "aws_dynamodb_table" "reconciliation_reports_table" {
   name             = local.table_names.reconciliation_reports_table
   billing_mode     = "PAY_PER_REQUEST"
@@ -165,30 +73,6 @@ resource "aws_dynamodb_table" "reconciliation_reports_table" {
 
   point_in_time_recovery {
     enabled = contains(local.enable_point_in_time_table_names, local.table_names.reconciliation_reports_table)
-  }
-
-  lifecycle {
-    prevent_destroy = true
-    ignore_changes = [ name ]
-  }
-
-  tags = var.tags
-}
-
-resource "aws_dynamodb_table" "rules_table" {
-  name             = local.table_names.rules_table
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "name"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
-
-  attribute {
-    name = "name"
-    type = "S"
-  }
-
-  point_in_time_recovery {
-    enabled = contains(local.enable_point_in_time_table_names, local.table_names.rules_table)
   }
 
   lifecycle {

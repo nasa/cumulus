@@ -22,12 +22,8 @@ resource "aws_lambda_function" "db_indexer" {
     variables = {
       CMR_ENVIRONMENT            = var.cmr_environment
       CMR_HOST                   = var.cmr_custom_host
-      CollectionsTable           = var.dynamo_tables.collections.name
       AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-      GranulesTable              = var.dynamo_tables.granules.name
-      ProvidersTable             = var.dynamo_tables.providers.name
       ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-      RulesTable                 = var.dynamo_tables.rules.name
       ES_HOST                    = var.elasticsearch_hostname
       stackName                  = var.prefix
       system_bucket              = var.system_bucket

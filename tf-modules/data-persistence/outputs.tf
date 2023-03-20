@@ -8,21 +8,9 @@ output "dynamo_tables" {
       name = aws_dynamodb_table.async_operations_table.name
       arn  = aws_dynamodb_table.async_operations_table.arn
     }
-    granules = {
-      name = aws_dynamodb_table.granules_table.name
-      arn  = aws_dynamodb_table.granules_table.arn
-    }
-    providers = {
-      name = aws_dynamodb_table.providers_table.name
-      arn  = aws_dynamodb_table.providers_table.arn
-    }
     reconciliation_reports = {
       name = aws_dynamodb_table.reconciliation_reports_table.name
       arn  = aws_dynamodb_table.reconciliation_reports_table.arn
-    }
-    rules = {
-      name = aws_dynamodb_table.rules_table.name
-      arn  = aws_dynamodb_table.rules_table.arn
     }
     semaphores = {
       name = aws_dynamodb_table.semaphores_table.name
