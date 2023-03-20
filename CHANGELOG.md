@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-3201**
+  - Added support for sha512 as checksumType for LZARDs backup task.
+
 ### Changed
 
 - **CUMULUS-3165**
@@ -25,14 +30,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2997**
-  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3.
+- **CUMULUS-3044**
+  - Deployment section:
+    - Consolidate and migrate Cumulus deployment (public facing) content from wiki to Cumulus Docs in GitHub.
+    - Update links to make sure that the user can maintain flow between the wiki and GitHub deployment documentation.
+    - Organize and update sidebar to include categories for similar deployment topics.
 - **CUMULUS-3147**
   - Set example/cumulus-tf default async_operation_image_version to 44.
   - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
 - **CUMULUS-3166**
   - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 
-### Fixed 
+### Fixed
 
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
@@ -71,8 +81,8 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3193**
   - Add a Python version file
 - **CUMULUS-3121**
-  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods. 
-    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention) 
+  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods.
+    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
     section of the Cumulus documentation in order for more detailed information and an example into how to do this.
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
