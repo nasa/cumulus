@@ -8,7 +8,6 @@ const {
 } = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const models = require('../models');
 
 /**
  * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
@@ -37,7 +36,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
   const metadata = await cmr.getGranuleMetadata(granule.cmr_link);
 
   // Use granule UR to delete from CMR
-  await cmr.deleteGranule(metadata.title, collectionId);
+  await cmr.deleteGranule(metadata.title);
 };
 
 /**
@@ -49,19 +48,16 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
  * @param {PostgresCollectionRecord} [params.pgCollection] - A Postgres Collection record
  * @param {GranulePgModel} [params.granulePgModel=new GranulePgModel()]
  *  - Instance of granules model for PostgreSQL
- * @param {models.Granule} [params.granuleDynamoModel=new models.Granule()]
- *  - Instance of granules model for DynamoDB
  * @param {RemoveGranuleFromCmrFn} [params.removeGranuleFromCmrFunction]
  *  - passed in function used for test mocking
- * @returns {Promise<{dynamoGranule: boolean, pgGranule: unknown}>}
- *  - Updated dynamo and postgres granule
+ * @returns {Promise<{pgGranule: unknown}>}
+ *  - Updated postgres granule
  */
 const unpublishGranule = async ({
   knex,
   pgGranuleRecord,
   pgCollection,
   granulePgModel = new GranulePgModel(),
-  granuleDynamoModel = new models.Granule(),
   removeGranuleFromCmrFunction = _removeGranuleFromCmr,
 }) => {
   /** @type {string} */
@@ -75,47 +71,25 @@ const unpublishGranule = async ({
   // If we cannot find a Postgres Collection or Postgres Granule,
   // don't update the Postgres Granule, continue to update the Dynamo granule
   const pgGranuleCumulusId = pgGranuleRecord.cumulus_id;
-  let dynamoGranuleDeleted = false;
-  try {
-    return await createRejectableTransaction(knex, async (trx) => {
-      const [pgGranule] = await granulePgModel.update(
-        trx,
-        {
-          cumulus_id: pgGranuleCumulusId,
-        },
-        {
-          published: false,
-          // using `undefined` would result in Knex ignoring this binding
-          // for the update. also, `undefined` is not a valid SQL value, it
-          // should be `null` instead
-          cmr_link: trx.raw('DEFAULT'),
-        },
-        ['*']
-      );
-      const dynamoGranule = await granuleDynamoModel.update(
-        { granuleId: pgGranuleRecord.granule_id },
-        { published: false },
-        ['cmrLink']
-      );
-      dynamoGranuleDeleted = true;
-      await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId);
-      return { dynamoGranule, pgGranule };
-    });
-  } catch (error) {
-    if (dynamoGranuleDeleted) {
-      const updateParams = {
-        published: pgGranuleRecord.published,
-      };
-      if (pgGranuleRecord.cmr_link) {
-        updateParams.cmrLink = pgGranuleRecord.cmr_link;
-      }
-      await granuleDynamoModel.update(
-        { granuleId: pgGranuleRecord.granule_id },
-        updateParams
-      );
-    }
-    throw error;
-  }
+  return await createRejectableTransaction(knex, async (trx) => {
+    const [pgGranule] = await granulePgModel.update(
+      trx,
+      {
+        cumulus_id: pgGranuleCumulusId,
+      },
+      {
+        published: false,
+        // using `undefined` would result in Knex ignoring this binding
+        // for the update. also, `undefined` is not a valid SQL value, it
+        // should be `null` instead
+        cmr_link: trx.raw('DEFAULT'),
+      },
+      ['*']
+    );
+
+    await removeGranuleFromCmrFunction(pgGranuleRecord, collectionId);
+    return { pgGranule };
+  });
 };
 
 module.exports = {

@@ -15,6 +15,7 @@ import { GranulesExecutionsPgModel } from '../models/granules-executions';
 import { PostgresGranule, PostgresGranuleRecord } from '../types/granule';
 import { GranuleWithProviderAndCollectionInfo } from '../types/query';
 import { UpdatedAtRange } from '../types/record';
+const { deprecate } = require('@cumulus/common/util');
 
 const { TableNames } = require('../tables');
 
@@ -130,6 +131,12 @@ export const getUniqueGranuleByGranuleId = async (
   granuleId: string,
   granulePgModel = new GranulePgModel()
 ): Promise<PostgresGranuleRecord> => {
+  deprecate(
+    '@cumulus/db/getUniqueGranuleByGranuleId',
+    'RDS-Phase-3',
+    '@cumulus/db/getGranuleByUniqueColumns'
+  );
+
   const logger = new Logger({ sender: '@cumulus/api/granules' });
 
   const PgGranuleRecords = await granulePgModel.search(knexOrTransaction, {
@@ -145,6 +152,27 @@ export const getUniqueGranuleByGranuleId = async (
 
   return PgGranuleRecords[0];
 };
+
+/**
+ * Get one Granule for a granule_id and collection_cumulus_id
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {string} granuleId - a granule.granule_id
+ * @param {number} collectionCumulusId - a granule.collection_cumulus_id
+ * @param {GranulePgModel} granulePgModel - Granule PG model class instance
+ * @returns {Promise<PostgresGranuleRecord>}
+ */
+export const getGranuleByUniqueColumns = (
+  knexOrTransaction: Knex | Knex.Transaction,
+  granuleId: string,
+  collectionCumulusId: number,
+  granulePgModel = new GranulePgModel()
+): Promise<PostgresGranuleRecord> =>
+  granulePgModel.get(
+    knexOrTransaction,
+    { granule_id: granuleId, collection_cumulus_id: collectionCumulusId }
+  );
 
 /**
  * Get cumulus IDs for all executions associated to a set of granules
@@ -255,6 +283,57 @@ export const getGranulesByApiPropertiesQuery = (
     .groupBy(`${granulesTable}.cumulus_id`)
     .groupBy(`${collectionsTable}.cumulus_id`)
     .groupBy(`${providersTable}.cumulus_id`);
+};
+
+/**
+ * Get Postgres Granule and Collection objects for a granuleId + collectionId
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction -
+ *  DB client or transaction
+ * @param {Object} [collectionPgModel] - Collection PG model class instance
+ * @param {Object} [granulePgModel] - Granule PG model class instance
+ * @param {String} granuleId - primary ID for granule record
+ * @param {String} collectionId - collection ID in 'name___version' format
+ * @returns {Promise<object>} an object containing the Postgres Granule,
+ * Postgres Collection, and an optional "Not Found" error message
+ */
+export const getGranuleAndCollection = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionPgModel = new CollectionPgModel(),
+  granulePgModel = new GranulePgModel(),
+  granuleId: string,
+  collectionId: string
+): Promise<object> => {
+  let pgGranule;
+  let pgCollection;
+  let notFoundError;
+
+  try {
+    pgCollection = await collectionPgModel.get(
+      knexOrTransaction, deconstructCollectionId(collectionId)
+    );
+
+    pgGranule = await granulePgModel.get(
+      knexOrTransaction,
+      { granule_id: granuleId, collection_cumulus_id: pgCollection.cumulus_id }
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      if (collectionId && pgCollection === undefined) {
+        notFoundError = `No collection found for granuleId ${granuleId} with collectionId ${collectionId}`;
+      } else {
+        notFoundError = 'Granule not found';
+      }
+    } else {
+      throw error;
+    }
+  }
+
+  return {
+    pgGranule,
+    pgCollection,
+    notFoundError,
+  };
 };
 
 /**

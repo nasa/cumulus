@@ -361,9 +361,6 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  process.env.CollectionsTable = randomId('collectionTable');
-  process.env.GranulesTable = randomId('granulesTable');
-  process.env.FilesTable = randomId('filesTable');
   process.env.ReconciliationReportsTable = randomId('reconciliationTable');
 
   t.context.bucketsToCleanup = [];
@@ -374,8 +371,6 @@ test.beforeEach(async (t) => {
   await awsServices.s3().createBucket({ Bucket: t.context.systemBucket })
     .then(() => t.context.bucketsToCleanup.push(t.context.systemBucket));
 
-  await new models.Collection().createTable();
-  await new models.Granule().createTable();
   await new models.ReconciliationReport().createTable();
 
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
@@ -404,8 +399,6 @@ test.afterEach.always(async (t) => {
   await Promise.all(
     flatten([
       t.context.bucketsToCleanup.map(recursivelyDeleteS3Bucket),
-      new models.Collection().deleteTable(),
-      new models.Granule().deleteTable(),
       new models.ReconciliationReport().deleteTable(),
     ])
   );
@@ -2072,12 +2065,9 @@ test.serial('Internal Reconciliation report JSON is formatted', async (t) => {
   await Promise.all(
     matchingColls.map((collection) => indexer.indexCollection(esClient, collection, esAlias))
   );
-  await new models.Collection().create(matchingColls);
   await Promise.all(
     matchingGrans.map((gran) => indexer.indexGranule(esClient, gran, esAlias))
   );
-
-  await new models.Granule().create(matchingGrans);
 
   const event = {
     systemBucket: t.context.systemBucket,

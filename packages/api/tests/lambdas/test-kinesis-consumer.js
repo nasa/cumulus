@@ -1,6 +1,5 @@
 'use strict';
 
-const get = require('lodash/get');
 const sinon = require('sinon');
 const test = require('ava');
 const proxyquire = require('proxyquire');
@@ -8,8 +7,7 @@ const proxyquire = require('proxyquire');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
-
-const Rule = require('../../models/rules');
+const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
 const sandbox = sinon.createSandbox();
 const queueMessageStub = sandbox.stub().resolves(true);
@@ -89,26 +87,14 @@ function testCallback(err, object) {
 }
 
 let publishStub;
-let ruleModel;
 let templateBucket;
 
 test.before(async () => {
-  process.env.RulesTable = randomString();
   process.env.messageConsumer = 'my-messageConsumer';
   process.env.KinesisInboundEventLogger = 'my-ruleInput';
-  ruleModel = new Rule();
-  await ruleModel.createTable();
-
   templateBucket = randomString();
-  const workflow = randomString();
-  const stateMachineArn = randomString();
   const messageTemplateKey = `${randomString()}/template.json`;
-
   const messageTemplate = {};
-  const workflowDefinition = {
-    name: workflow,
-    arn: stateMachineArn,
-  };
 
   await s3().createBucket({ Bucket: templateBucket });
   await s3().putObject({
@@ -116,30 +102,20 @@ test.before(async () => {
     Key: messageTemplateKey,
     Body: JSON.stringify(messageTemplate),
   });
-
-  sandbox.stub(Rule, 'buildPayload').callsFake((item) => Promise.resolve({
-    template: messageTemplate,
-    provider: item.provider,
-    collection: item.collection,
-    meta: get(item, 'meta', {}),
-    payload: get(item, 'payload', {}),
-    definition: workflowDefinition,
-  }));
 });
 
-test.beforeEach(async (t) => {
+test.beforeEach((t) => {
   t.context.publishResponse = {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
   };
   publishStub = sinon.stub(snsClient, 'publish').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
 
-  t.context.tableName = process.env.RulesTable;
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
   process.env.messageConsumer = randomString();
 
-  t.context.createdRule = await ruleModel.create(kinesisRule);
+  t.context.createdRule = fakeRuleFactoryV2(kinesisRule);
   fetchEnabledRulesStub.callsFake(() => Promise.resolve([t.context.createdRule]));
 });
 
@@ -151,7 +127,6 @@ test.afterEach.always(() => {
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(templateBucket);
   sandbox.restore();
-  await ruleModel.deleteTable();
 });
 
 // handler tests

@@ -14,7 +14,6 @@ resource "aws_lambda_function" "bulk_operation" {
       createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis
       ES_HOST                      = var.elasticsearch_hostname
       granule_sns_topic_arn        = aws_sns_topic.report_granules_topic.arn
-      GranulesTable                = var.dynamo_tables.granules.name
       idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
       invoke                       = var.schedule_sf_function_arn
       METRICS_ES_HOST              = var.metrics_es_host

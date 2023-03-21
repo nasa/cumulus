@@ -3,14 +3,13 @@
 const test = require('ava');
 const { v4: uuidv4 } = require('uuid');
 const cryptoRandomString = require('crypto-random-string');
-const DynamoDb = require('@cumulus/aws-client/DynamoDb');
-const awsServices = require('@cumulus/aws-client/services');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
   generateLocalTestDb,
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  translatePostgresAsyncOperationToApiAsyncOperation,
   migrationDir,
 } = require('@cumulus/db');
 const {
@@ -27,36 +26,12 @@ const { updateAsyncOperation } = require('../index');
 const testDbName = `async_operation_model_test_db_${cryptoRandomString({ length: 10 })}`;
 
 test.before(async (t) => {
-  t.context.dynamoTableName = cryptoRandomString({ length: 10 });
-
-  const tableHash = { name: 'id', type: 'S' };
-  await DynamoDb.createAndWaitForDynamoDbTable({
-    TableName: t.context.dynamoTableName,
-    AttributeDefinitions: [{
-      AttributeName: tableHash.name,
-      AttributeType: tableHash.type,
-    }],
-    KeySchema: [{
-      AttributeName: tableHash.name,
-      KeyType: 'HASH',
-    }],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5,
-    },
-  });
-
   process.env = { ...process.env, ...localStackConnectionEnv, PG_DATABASE: testDbName };
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
-
-  const dynamodbDocClient = awsServices.dynamodbDocClient({
-    marshallOptions: { convertEmptyValues: true },
-  });
-  t.context.dynamodbDocClient = dynamodbDocClient;
 
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
@@ -81,11 +56,6 @@ test.beforeEach(async (t) => {
   t.context.testAsyncOperationPgRecord = translateApiAsyncOperationToPostgresAsyncOperation(
     t.context.testAsyncOperation
   );
-
-  await t.context.dynamodbDocClient.put({
-    TableName: t.context.dynamoTableName,
-    Item: t.context.testAsyncOperation,
-  });
   await indexAsyncOperation(
     t.context.esClient,
     t.context.testAsyncOperation,
@@ -98,9 +68,6 @@ test.beforeEach(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await DynamoDb.deleteAndWaitForDynamoDbTableNotExists({
-    TableName: t.context.dynamoTableName,
-  });
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -117,7 +84,6 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
     status,
     output,
     envOverride: {
-      asyncOperationsTable: t.context.dynamoTableName,
       asyncOperationId: t.context.asyncOperationId,
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
@@ -132,26 +98,14 @@ test('updateAsyncOperation updates databases as expected', async (t) => {
         id: t.context.asyncOperationId,
       }
     );
-  const dynamoResponse = await DynamoDb.get({
-    tableName: t.context.dynamoTableName,
-    item: { id: t.context.asyncOperationId },
-    client: t.context.dynamodbDocClient,
-    getParams: { ConsistentRead: true },
-  });
 
-  t.is(result.$metadata.httpStatusCode, 200);
+  t.like(result, translatePostgresAsyncOperationToApiAsyncOperation(asyncOperationPgRecord));
   t.like(asyncOperationPgRecord, {
     ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,
     status,
     output,
     updated_at: new Date(Number(updateTime)),
-  });
-  t.deepEqual(dynamoResponse, {
-    ...t.context.testAsyncOperation,
-    status,
-    output: JSON.stringify(output),
-    updatedAt: Number(updateTime),
   });
 
   const asyncOpEsRecord = await t.context.esAsyncOperationsClient.get(
@@ -175,7 +129,6 @@ test('updateAsyncOperation updates records correctly when output is undefined', 
     status,
     output,
     envOverride: {
-      asyncOperationsTable: t.context.dynamoTableName,
       asyncOperationId: t.context.asyncOperationId,
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
@@ -190,25 +143,14 @@ test('updateAsyncOperation updates records correctly when output is undefined', 
         id: t.context.asyncOperationId,
       }
     );
-  const dynamoResponse = await DynamoDb.get({
-    tableName: t.context.dynamoTableName,
-    item: { id: t.context.asyncOperationId },
-    client: t.context.dynamodbDocClient,
-    getParams: { ConsistentRead: true },
-  });
 
-  t.is(result.$metadata.httpStatusCode, 200);
+  t.like(result, translatePostgresAsyncOperationToApiAsyncOperation(asyncOperationPgRecord));
   t.like(asyncOperationPgRecord, {
     ...t.context.testAsyncOperationPgRecord,
     id: t.context.asyncOperationId,
     status,
     output: null,
     updated_at: new Date(Number(updateTime)),
-  });
-  t.deepEqual(dynamoResponse, {
-    ...t.context.testAsyncOperation,
-    status,
-    updatedAt: Number(updateTime),
   });
 });
 
@@ -221,7 +163,6 @@ test('updateAsyncOperation updates databases with correct timestamps', async (t)
     status,
     output,
     envOverride: {
-      asyncOperationsTable: t.context.dynamoTableName,
       asyncOperationId: t.context.asyncOperationId,
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
@@ -236,18 +177,10 @@ test('updateAsyncOperation updates databases with correct timestamps', async (t)
         id: t.context.asyncOperationId,
       }
     );
-  const dynamoResponse = await DynamoDb.get({
-    tableName: t.context.dynamoTableName,
-    item: { id: t.context.asyncOperationId },
-    client: t.context.dynamodbDocClient,
-    getParams: { ConsistentRead: true },
-  });
-
-  t.is(asyncOperationPgRecord.updated_at.getTime(), dynamoResponse.updatedAt);
-  t.is(asyncOperationPgRecord.created_at.getTime(), dynamoResponse.createdAt);
+  t.is(asyncOperationPgRecord.updated_at.getTime().toString(), updateTime);
 });
 
-test('updateAsyncOperation does not update DynamoDB/PostgreSQL if write to Elasticsearch fails', async (t) => {
+test('updateAsyncOperation does not update PostgreSQL if write to Elasticsearch fails', async (t) => {
   const status = 'SUCCEEDED';
   const output = { foo: cryptoRandomString({ length: 5 }) };
   const updateTime = (Number(Date.now())).toString();
@@ -263,7 +196,6 @@ test('updateAsyncOperation does not update DynamoDB/PostgreSQL if write to Elast
       status,
       output,
       envOverride: {
-        asyncOperationsTable: t.context.dynamoTableName,
         asyncOperationId: t.context.asyncOperationId,
         ...localStackConnectionEnv,
         PG_DATABASE: testDbName,
@@ -274,14 +206,6 @@ test('updateAsyncOperation does not update DynamoDB/PostgreSQL if write to Elast
     { message: 'ES fail' }
   );
 
-  const dynamoResponse = await DynamoDb.get({
-    tableName: t.context.dynamoTableName,
-    item: { id: t.context.asyncOperationId },
-    client: t.context.dynamodbDocClient,
-    getParams: { ConsistentRead: true },
-  });
-  t.deepEqual(dynamoResponse, t.context.testAsyncOperation);
-
   const asyncOperationPgRecord = await t.context.asyncOperationPgModel
     .get(
       t.context.testKnex,
@@ -301,61 +225,7 @@ test('updateAsyncOperation does not update DynamoDB/PostgreSQL if write to Elast
   });
 });
 
-test('updateAsyncOperation does not update PostgreSQL/Elasticsearch if write to DynamoDB fails', async (t) => {
-  const status = 'SUCCEEDED';
-  const output = { foo: cryptoRandomString({ length: 5 }) };
-  const updateTime = (Number(Date.now())).toString();
-
-  const fakeDynamoClient = {
-    updateItem: () => {
-      throw new Error('Dynamo fail');
-    },
-  };
-
-  await t.throwsAsync(
-    updateAsyncOperation({
-      status,
-      output,
-      envOverride: {
-        asyncOperationsTable: t.context.dynamoTableName,
-        asyncOperationId: t.context.asyncOperationId,
-        ...localStackConnectionEnv,
-        PG_DATABASE: testDbName,
-        updateTime,
-      },
-      dynamoDbClient: fakeDynamoClient,
-    }),
-    { message: 'Dynamo fail' }
-  );
-
-  const dynamoResponse = await DynamoDb.get({
-    tableName: t.context.dynamoTableName,
-    item: { id: t.context.asyncOperationId },
-    client: t.context.dynamodbDocClient,
-    getParams: { ConsistentRead: true },
-  });
-  t.deepEqual(dynamoResponse, t.context.testAsyncOperation);
-
-  const asyncOperationPgRecord = await t.context.asyncOperationPgModel
-    .get(
-      t.context.testKnex,
-      {
-        id: t.context.asyncOperationId,
-      }
-    );
-  t.like(asyncOperationPgRecord, t.context.testAsyncOperationPgRecord);
-
-  const asyncOpEsRecord = await t.context.esAsyncOperationsClient.get(
-    t.context.testAsyncOperation.id
-  );
-  t.deepEqual(asyncOpEsRecord, {
-    ...t.context.testAsyncOperation,
-    _id: asyncOpEsRecord._id,
-    timestamp: asyncOpEsRecord.timestamp,
-  });
-});
-
-test('updateAsyncOperation does not update DynamoDB/Elasticsearch if write to PostgreSQL fails', async (t) => {
+test('updateAsyncOperation does not update Elasticsearch if write to PostgreSQL fails', async (t) => {
   const status = 'SUCCEEDED';
   const output = { foo: cryptoRandomString({ length: 5 }) };
   const updateTime = (Number(Date.now())).toString();
@@ -371,7 +241,6 @@ test('updateAsyncOperation does not update DynamoDB/Elasticsearch if write to Po
       status,
       output,
       envOverride: {
-        asyncOperationsTable: t.context.dynamoTableName,
         asyncOperationId: t.context.asyncOperationId,
         ...localStackConnectionEnv,
         PG_DATABASE: testDbName,
@@ -381,14 +250,6 @@ test('updateAsyncOperation does not update DynamoDB/Elasticsearch if write to Po
     }),
     { message: 'PG fail' }
   );
-
-  const dynamoResponse = await DynamoDb.get({
-    tableName: t.context.dynamoTableName,
-    item: { id: t.context.asyncOperationId },
-    client: t.context.dynamodbDocClient,
-    getParams: { ConsistentRead: true },
-  });
-  t.deepEqual(dynamoResponse, t.context.testAsyncOperation);
 
   const asyncOperationPgRecord = await t.context.asyncOperationPgModel
     .get(
