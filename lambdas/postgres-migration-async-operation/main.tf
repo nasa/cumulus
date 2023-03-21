@@ -42,3 +42,9 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
     }
   }
 }
+
+resource "aws_cloudwatch_log_group" "postgres-migration-async-operation" {
+  name              = "/aws/lambda/${aws_lambda_function.postgres-migration-async-operation.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "postgresMigrationAsyncOperation_log_retention", var.default_log_retention_days)
+  tags              = var.tags
+}
