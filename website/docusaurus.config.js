@@ -49,7 +49,7 @@ module.exports = {
       },
     },
     navbar: {
-      hideOnScroll: true,
+      hideOnScroll: false,
       style: 'primary',
       title: 'Cumulus Documentation',
       logo: {
@@ -107,7 +107,7 @@ module.exports = {
           href: 'https://github.com/nasa/cumulus',
           position: 'right',
           className: 'header-github-link',
-          'aria-label': 'GitHub repository',
+          'aria-label': 'Cumulus Core GitHub Repository',
         },
       ],
     },
