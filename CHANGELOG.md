@@ -94,6 +94,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
   - **CUMULUS-3008**
     - Remove DynamoDB Collections table
+  - **CUMULUS-2798**
+    - Removed AsyncOperations model
+  - **CUMULUS-3009**
+    - Removed Dynamo PDRs table
 
 ### Added
 
@@ -197,23 +201,6 @@ update the database cluster to use the new configuration.
     implementation is deprecated** and users should move all existing usage of
     `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
 
-### Added
-
-- **CUMULUS-3193**
-  - Add a Python version file
-- **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
-- **CUMULUS-3071**
-  - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
-    endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
-    behavior (complete overwrite) in a future release.   **The existing PUT
-    implementation is deprecated** and users should move all existing usage of
-    `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
-
-### Removed
-
-- Removed a few tests that were disabled 3-4 years ago
-
 ### Fixed
 
 - **CUMULUS-3033**
@@ -308,13 +295,6 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3193**
   - Update eslint config to better support typing
 - Improve linting of TS files
-
-### Removed
-
-- **CUMULUS-2798**
-  - Removed AsyncOperations model
-- **CUMULUS-3009**
-  - Removed Dynamo PDRs table
 
 ## [v14.0.0] 2022-12-08
 
