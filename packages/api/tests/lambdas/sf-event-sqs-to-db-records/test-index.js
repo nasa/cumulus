@@ -164,7 +164,6 @@ test.before(async (t) => {
   t.context.pdrPgModel = new PdrPgModel();
   t.context.providerPgModel = new ProviderPgModel();
 
-  process.env.ExecutionsTable = randomString();
   fixture = await loadFixture('execution-running-event.json');
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
