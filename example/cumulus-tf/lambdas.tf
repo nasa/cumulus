@@ -19,7 +19,7 @@ resource "aws_lambda_function" "async_operation_fail" {
 
 resource "aws_cloudwatch_log_group" "async_operation_fail" {
   name              = "/aws/lambda/${aws_lambda_function.async_operation_fail.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "asyncOperationFail_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AsyncOperationFail", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -44,7 +44,7 @@ resource "aws_lambda_function" "async_operation_success" {
 
 resource "aws_cloudwatch_log_group" "async_operation_success" {
   name              = "/aws/lambda/${aws_lambda_function.async_operation_success.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "asyncOperationSuccess_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AsyncOperationSuccess", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -76,7 +76,7 @@ resource "aws_lambda_function" "sns_s3_executions_test" {
 
 resource "aws_cloudwatch_log_group" "sns_s3_executions_test" {
   name              = "/aws/lambda/${aws_lambda_function.sns_s3_executions_test.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "snsS3ExecutionsTest_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3ExecutionsTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -108,7 +108,7 @@ resource "aws_lambda_function" "sns_s3_granules_test" {
 
 resource "aws_cloudwatch_log_group" "sns_s3_granules_test" {
   name              = "/aws/lambda/${aws_lambda_function.sns_s3_granules_test.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "snsS3GranulesTest_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3GranulesTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -140,7 +140,7 @@ resource "aws_lambda_function" "sns_s3_pdrs_test" {
 
 resource "aws_cloudwatch_log_group" "sns_s3_pdrs_test" {
   name              = "/aws/lambda/${aws_lambda_function.sns_s3_pdrs_test.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "snsS3PdrsTest_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3PdrsTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -172,7 +172,7 @@ resource "aws_lambda_function" "sns_s3_collections_test" {
 
 resource "aws_cloudwatch_log_group" "sns_s3_collections_test" {
   name              = "/aws/lambda/${aws_lambda_function.sns_s3_collections_test.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "snsS3CollectionsTest_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3CollectionsTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -204,7 +204,7 @@ resource "aws_lambda_function" "ftpPopulateTestLambda" {
 
 resource "aws_cloudwatch_log_group" "ftpPopulateTestLambda" {
   name              = "/aws/lambda/${aws_lambda_function.ftpPopulateTestLambda.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ftpPopulateTestLambda_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "populateTestLambda", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -254,6 +254,6 @@ resource "aws_lambda_function" "lzards_api_client_test" {
 
 resource "aws_cloudwatch_log_group" "lzards_api_client_test" {
   name              = "/aws/lambda/${aws_lambda_function.lzards_api_client_test.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "lzardsApiClientTest_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "LzardsApiClientTest", var.default_log_retention_days)
   tags              = var.tags
 }

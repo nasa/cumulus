@@ -21,6 +21,8 @@ module "tea_map_cache" {
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
   deploy_to_ngap             = var.deploy_to_ngap
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {
@@ -165,7 +167,7 @@ resource "aws_lambda_function" "s3_credentials" {
 
 resource "aws_cloudwatch_log_group" "s3_credentials" {
   name              = "/aws/lambda/${aws_lambda_function.s3_credentials[0].function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3Credentials_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3-Credentials-endpoint", var.default_log_retention_days)
   tags              = var.tags
 }
 

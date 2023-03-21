@@ -48,6 +48,6 @@ resource "aws_lambda_function" "postgres_migration_count_tool" {
 
 resource "aws_cloudwatch_log_group" "postgres_migration_count_tool" {
   name              = "/aws/lambda/${aws_lambda_function.postgres_migration_count_tool.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "postgresMigrationCountTool_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "postgres-migration-count-tool", var.default_log_retention_days)
   tags              = var.tags
 }

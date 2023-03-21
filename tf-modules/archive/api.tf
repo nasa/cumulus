@@ -197,13 +197,13 @@ resource "aws_lambda_function" "api" {
 
 resource "aws_cloudwatch_log_group" "private_api" {
   name              = "/aws/lambda/${aws_lambda_function.private_api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "privateApi_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "PrivateApiLambda", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "api_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ApiEndpoints", var.default_log_retention_days)
   tags              = var.tags
 }
 

@@ -21,6 +21,6 @@ resource "aws_lambda_function" "s3_acccess_test" {
 
 resource "aws_cloudwatch_log_group" "s3_acccess_test" {
   name              = "/aws/lambda/${aws_lambda_function.s3_acccess_test.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3AccessTest_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3AccessTest", var.default_log_retention_days)
   tags              = var.tags
 }

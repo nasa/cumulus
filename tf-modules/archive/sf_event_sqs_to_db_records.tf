@@ -260,6 +260,6 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
 
 resource "aws_cloudwatch_log_group" "write_db_dlq_records_to_s3" {
   name              = "/aws/lambda/${aws_lambda_function.write_db_dlq_records_to_s3.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "writeDbDlqRecordsToS3_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "writeDbRecordsDLQtoS3", var.default_log_retention_days)
   tags              = var.tags
 }

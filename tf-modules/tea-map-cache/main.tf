@@ -50,6 +50,6 @@ resource "aws_lambda_function" "tea_cache" {
 
 resource "aws_cloudwatch_log_group" "tea_cache" {
   name              = "/aws/lambda/${aws_lambda_function.tea_cache.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "teaCache_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "TeaCache", var.default_log_retention_days)
   tags              = var.tags
 }

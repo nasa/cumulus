@@ -51,7 +51,7 @@ resource "aws_iam_role_policy" "start_async_operation" {
 
 resource "aws_cloudwatch_log_group" "start_async_operation" {
   name              = "/aws/lambda/${aws_lambda_function.start_async_operation.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "startAsyncOperation_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "StartAsyncOperation", var.default_log_retention_days)
   tags              = var.tags
 }
 

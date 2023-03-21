@@ -17,4 +17,6 @@ module "sqs_message_remover_lambda" {
   # is this necessary or should we move towards least privileges
   # for the lambda?
   lambda_processing_role_arn = var.lambda_processing_role_arn
+  cloudwatch_log_retention_periods =var.cloudwatch_log_retention_periods
+  default_log_retention_days = var.default_log_retention_days
 }

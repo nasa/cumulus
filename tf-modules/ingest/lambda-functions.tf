@@ -41,7 +41,7 @@ resource "aws_lambda_function" "fallback_consumer" {
 
 resource "aws_cloudwatch_log_group" "fallback_consumer" {
   name              = "/aws/lambda/${aws_lambda_function.fallback_consumer.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "fallbackConsumer_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "fallbackConsumer", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -74,7 +74,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
 
 resource "aws_cloudwatch_log_group" "kinesis_inbound_event_logger" {
   name              = "/aws/lambda/${aws_lambda_function.kinesis_inbound_event_logger.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "kinesisInboundEventLogger_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "KinesisInboundEventLogger", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -107,7 +107,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
 
 resource "aws_cloudwatch_log_group" "kinesis_outbound_event_logger" {
   name              = "/aws/lambda/${aws_lambda_function.kinesis_outbound_event_logger.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "kinesisOutboundEventLogger_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "KinesisOutboundEventLogger", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -146,7 +146,7 @@ resource "aws_lambda_function" "manual_consumer" {
 
 resource "aws_cloudwatch_log_group" "manual_consumer" {
   name              = "/aws/lambda/${aws_lambda_function.manual_consumer.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "manualConsumer_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "manualConsumer", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -185,7 +185,7 @@ resource "aws_lambda_function" "message_consumer" {
 
 resource "aws_cloudwatch_log_group" "message_consumer" {
   name              = "/aws/lambda/${aws_lambda_function.message_consumer.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "messageConsumer_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "messageConsumer", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -225,7 +225,7 @@ resource "aws_lambda_function" "schedule_sf" {
 
 resource "aws_cloudwatch_log_group" "schedule_sf" {
   name              = "/aws/lambda/${aws_lambda_function.schedule_sf.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "scheduleSf_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ScheduleSf", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -259,7 +259,7 @@ resource "aws_lambda_function" "sf_semaphore_down" {
 
 resource "aws_cloudwatch_log_group" "sf_semaphore_down" {
   name              = "/aws/lambda/${aws_lambda_function.sf_semaphore_down.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sfSemaphoreDown_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sfSemaphoreDown", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -298,7 +298,7 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
 
 resource "aws_cloudwatch_log_group" "sf_sqs_report_task" {
   name              = "/aws/lambda/${aws_lambda_function.sf_sqs_report_task.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sfSqsReportTask_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SfSqsReport", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -331,7 +331,7 @@ resource "aws_lambda_function" "sqs2sf" {
 
 resource "aws_cloudwatch_log_group" "sqs2sf" {
   name              = "/aws/lambda/${aws_lambda_function.sqs2sf.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqs2sf_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqs2sf", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -367,7 +367,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
 # currently resulting in a "resourceAlreadyExists" exception
 # resource "aws_cloudwatch_log_group" "sqs2sfThrottle" {
 #  name              = "/aws/lambda/${aws_lambda_function.sqs2sfThrottle.function_name}"
-#  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqs2sfThrottle_log_retention", var.default_log_retention_days)
+#  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqs2sfThrottle", var.default_log_retention_days)
 #  tags              = var.tags
 # }
 
@@ -406,6 +406,6 @@ resource "aws_lambda_function" "sqs_message_consumer" {
 # currently resulting in a "resourceAlreadyExists" exception
 # resource "aws_cloudwatch_log_group" "sqs_message_consumer" {
 #  name              = "/aws/lambda/${aws_lambda_function.sqs_message_consumer.function_name}"
-#  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqsMessageConsumer_log_retention", var.default_log_retention_days)
+#  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqsMessageConsumer", var.default_log_retention_days)
 #  tags              = var.tags
 # }

@@ -66,6 +66,6 @@ resource "aws_lambda_permission" "daily_execution_payload_cleanup" {
 
 resource "aws_cloudwatch_log_group" "clean_executions" {
   name = "/aws/lambda/${aws_lambda_function.clean_executions.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cleanExecutions_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cleanExecutions", var.default_log_retention_days)
   tags = var.tags
 }

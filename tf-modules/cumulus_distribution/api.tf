@@ -59,7 +59,7 @@ resource "aws_lambda_function" "api" {
 
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "distributionApi_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "DistributionApiEndpoints", var.default_log_retention_days)
   tags              = var.tags
 }
 

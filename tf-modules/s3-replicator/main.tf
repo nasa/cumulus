@@ -59,7 +59,7 @@ resource "aws_lambda_function" "s3_replicator" {
 
 resource "aws_cloudwatch_log_group" "s3_replicator" {
   name              = "/aws/lambda/${aws_lambda_function.s3_replicator.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3Replicator_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3-replicator", var.default_log_retention_days)
   tags              = var.tags
 }
 

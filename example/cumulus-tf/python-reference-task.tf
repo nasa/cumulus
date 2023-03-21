@@ -30,6 +30,6 @@ resource "aws_lambda_function" "python_reference_task" {
 
 resource "aws_cloudwatch_log_group" "python_reference_task" {
   name              = "/aws/lambda/${aws_lambda_function.python_reference_task.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "pythonReferenceTask_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "PythonReferenceTask", var.default_log_retention_days)
   tags              = var.tags
 }

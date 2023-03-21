@@ -68,6 +68,6 @@ resource "aws_lambda_event_source_mapping" "reconciliation_reports_table_db_inde
 
 resource "aws_cloudwatch_log_group" "db_indexer" {
   name = "/aws/lambda/${aws_lambda_function.db_indexer.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "dbIndexer_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "dbIndexer", var.default_log_retention_days)
   tags = var.tags
 }

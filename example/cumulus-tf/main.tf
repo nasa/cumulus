@@ -288,6 +288,7 @@ module "s3_access_test_lambda" {
   providers = {
     aws = aws.usw2
   }
-
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
   tags = local.tags
 }

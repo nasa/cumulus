@@ -26,6 +26,6 @@ resource "aws_lambda_function" "sqs_message_remover" {
 
 resource "aws_cloudwatch_log_group" "sqs_message_remover" {
   name              = "/aws/lambda/${aws_lambda_function.sqs_message_remover.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqsMessageRemover_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqsMessageRemover", var.default_log_retention_days)
   tags              = var.tags
 }

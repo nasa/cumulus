@@ -164,6 +164,6 @@ resource "aws_lambda_function" "execute_migrations" {
 
 resource "aws_cloudwatch_log_group" "execute_migrations" {
   name = "/aws/lambda/${aws_lambda_function.execute_migrations.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "executeMigrations_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "executeMigrations", var.default_log_retention_days)
   tags = var.tags
 }
