@@ -3,6 +3,7 @@ resource "aws_sns_topic" "report_executions_topic" {
   name = "${var.prefix}-report-executions-topic"
   tags = var.tags
 }
+
 # Report granules
 resource "aws_sns_topic" "report_granules_topic" {
   name = "${var.prefix}-report-granules-topic"
