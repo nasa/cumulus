@@ -48,8 +48,6 @@ module "thin_egress_app" {
   vpc_subnet_ids                = local.subnet_ids
   log_api_gateway_to_cloudwatch = var.log_api_gateway_to_cloudwatch
   tags                          = local.tags
-  default_log_retention_days    = var.default_log_retention_days
-  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }
 
 resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscription_filter" {

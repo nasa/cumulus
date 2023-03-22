@@ -167,7 +167,7 @@ resource "aws_lambda_function" "s3_credentials" {
 
 resource "aws_cloudwatch_log_group" "s3_credentials" {
   name              = "/aws/lambda/${aws_lambda_function.s3_credentials[0].function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3-Credentials-endpoint", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3-credentials-endpoint", var.default_log_retention_days)
   tags              = var.tags
 }
 

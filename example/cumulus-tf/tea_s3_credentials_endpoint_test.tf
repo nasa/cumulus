@@ -28,4 +28,6 @@ module "tea_s3_credentials_endpoint_test" {
   vpc_id                                         = local.vpc_id
 
   tags = local.tags
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }

@@ -36,6 +36,8 @@ module "provision_database" {
   rds_user_password                      = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
   dbRecreation                           = true
+  default_log_retention_days             = var.default_log_retention_days
+  cloudwatch_log_retention_periods       = var.cloudwatch_log_retention_periods
 }
 
 module "data_persistence" {
@@ -52,4 +54,6 @@ module "data_persistence" {
   rds_user_access_secret_arn     = module.provision_database.database_credentials_secret_arn
   permissions_boundary_arn       = var.permissions_boundary_arn
   tags = merge(var.tags, { Deployment = var.prefix })
+  default_log_retention_days   = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }

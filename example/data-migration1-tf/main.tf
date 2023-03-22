@@ -39,4 +39,6 @@ module "data_migration1" {
   provider_kms_key_id = var.provider_kms_key_id
 
   tags = merge(var.tags, { Deployment = var.prefix })
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }
