@@ -155,7 +155,6 @@ export const revokeEDLToken = async (
  * @param {string} edlEnv - the environment of the Earthdata Login (ex. 'SIT')
  * @returns {Promise <string | undefined>} - the JSON Web Token string or undefined
  */
-<<<<<<< HEAD
 export const getEDLToken = async (
   username: string,
   password: string,
@@ -164,35 +163,6 @@ export const getEDLToken = async (
   let token = await retrieveEDLToken(username, password, edlEnv);
   if (token === undefined) {
     token = await createEDLToken(username, password, edlEnv);
-=======
-export class EarthdataLogin {
-  username: string;
-  password: string;
-  edlEnv?: string;
-
-  /**
-  * The constructor for the EarthdataLogin class
-  *
-  * @param {string} params.username - Earthdata Login username, required parameter
-  * @param {string} params.password - Earthdata Login password, required parameter
-  * @param {string | undefined} params.edlEnv
-  *   - the Earthdata Login environment (['PROD', 'OPS', 'SIT', 'UAT']),
-  *   - optional, defaults to 'SIT'
-  *
-  * @example
-  *
-  * {
-  *  "username": "janedoe",
-  *  "password": "password",
-  *  "edlEnv": "UAT"
-  * }
-  */
-
-  constructor(params: EarthdataLoginParams) {
-    this.username = params.username;
-    this.password = params.password;
-    this.edlEnv = params.edlEnv;
->>>>>>> feature/rds-phase-3
   }
   return token;
 };
