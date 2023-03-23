@@ -9,19 +9,25 @@
             "path": "cumulus-test-data/pdrs",
             "size": 1098034,
             "type": "data",
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf"
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf",
+            "checksum": "178775c163ca6ec7e8452d9f55eac57003dc75b25eaefee06d48fe524ee0f01a",
+            "checksumType": "sha256"
           },
           {
             "path": "cumulus-test-data/pdrs",
             "size": 21708,
             "type": "metadata",
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met"
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606.hdf.met",
+            "checksumType": "sha512",
+            "checksum": "4407587d657d1d4c5369e9b45a42871e51d834787279203696b0f6abdde8745865d3f5358afef7b83793abce0329166c30f9725b58ea334cf5ce299a9e138923"
           },
           {
             "path": "cumulus-test-data/pdrs",
             "size": 9728,
             "type": "browse",
-            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg"
+            "name": "MOD09GQ.A2016358.h13v04.006.2016360104606_ndvi.jpg",
+            "checksum": "011c36e0adefd0d93ee2bfdc794a2a89",
+            "checksumType": "md5"
           }
         ]
       }
