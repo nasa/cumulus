@@ -364,13 +364,6 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   tags = var.tags
 }
 
-# currently resulting in a "resourceAlreadyExists" exception
-#resource "aws_cloudwatch_log_group" "sqs2sfThrottle" {
-#  name              = "/aws/lambda/${aws_lambda_function.sqs2sfThrottle.function_name}"
-#  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqs2sfThrottle", var.default_log_retention_days)
-#  tags              = var.tags
-#}
-
 resource "aws_lambda_function" "sqs_message_consumer" {
   function_name    = "${var.prefix}-sqsMessageConsumer"
   filename         = "${path.module}/../../packages/api/dist/sqsMessageConsumer/lambda.zip"
@@ -402,10 +395,3 @@ resource "aws_lambda_function" "sqs_message_consumer" {
     }
   }
 }
-
-# currently resulting in a "resourceAlreadyExists" exception
-#resource "aws_cloudwatch_log_group" "sqs_message_consumer" {
-#  name              = "/aws/lambda/${aws_lambda_function.sqs_message_consumer.function_name}"
-#  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqsMessageConsumer", var.default_log_retention_days)
-#  tags              = var.tags
-#}
