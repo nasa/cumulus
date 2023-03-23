@@ -71,8 +71,7 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3193**
   - Add a Python version file
 - **CUMULUS-3121**
-  - Added optional variables `default_log_retention_days` and `cloudwatch_log_retention_periods` to
-    `tf-modules/cumulus/variables.tf` for custom configuration of cloudwatch_log_groups' retention periods.
+  - Added optional variables `default_log_retention_days` and `cloudwatch_log_retention_periods` to cumulus modules with lambdas and tasks for custom configuration of cloudwatch_log_groups' retention periods.
     Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
     section of the Cumulus documentation for more detailed information.
 - **CUMULUS-3071**

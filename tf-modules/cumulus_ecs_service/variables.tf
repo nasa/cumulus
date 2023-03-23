@@ -30,7 +30,7 @@ variable "alarms" {
 
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
-  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
+  description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
   default = {}
 }
 

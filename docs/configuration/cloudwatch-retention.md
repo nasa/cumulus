@@ -35,44 +35,20 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 
 ## Terraform
 
-The `cumulus` module exposes values for configuration of log retention for
-cloudwatch log groups (in days). A configurable map of `cloudwatch_log_retention_periods` currently supports the following variables:
-
-- cumulus-tf_egress_lambda_log_retention
-- archive_private_api_log_retention
-- archive_api_log_retention
-- archive_async_operation_log_retention
-- archive_granule_files_cache_updater_log_retention
-- archive_publish_executions_log_retention
-- archive_publish_granule_log_retention
-- archive_publish_pdrs_log_retention
-- archive_replay_sqs_messages_log_retention
-- cumulus_distribution_api_log_retention
-- cumulus_ecs_service_default_log_retention
-- ingest_discover_pdrs_task_log_retention
-- ingest_hyrax_metadata_updates_task_log_retention
-- ingest_parse_pdr_task_log_retention
-- ingest_post_to_cmr_task_log_retention
-- ingest_queue_pdrs_task_log_retention
-- ingest_queue_workflow_task_log_retention
-- ingest_sync_granule_task_log_retention
-- ingest_update_cmr_access_constraints_task_log_retention
-
-In order to configure this value for the cloudwatch log group, the variable for the retention period for the respective group should be in the form of:
-
-```hcl
-<cumulus_module>_<cloudwatch_log_group>_log_retention: <log_retention>
-  type = number
-```
-
-An example, in the case of configuring the retention period for the `parse_pdr_task` `aws_cloudwatch_log_group`:
+The retention period (in days) of cloudwatch log groups for lambdas and tasks can be set
+during deployment using the `cloudwatch_log_retention_periods` terraform map variable. In order to
+configure these values for respective cloudwatch log groups, declare the function's or task's name
+(which will the cloudwatch log group's name after the respective prefix) within the map. Using the `DiscoverGranules` lambda and the `PythonReferenceTask`, an example would be:
 
 ### Example
 
 ```tf
 cloudwatch_log_retention_periods = {
-  ingest_parse_pdr_task_log_retention = 365
+  DiscoverGranules = 365,
+  PythonReferenceTask = 90,
 }
 ```
 
 Additionally, the variable `default_log_retention_days` can be configured separately during deployment in order to set the default log retention for the cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
+
+These values can be configured while deploying `cumulus-tf`, `data-persistence-tf` and `data-migration1-tf`.

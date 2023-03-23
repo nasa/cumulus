@@ -55,12 +55,6 @@ resource "aws_lambda_function" "cumulus_test_cleanup" {
   tags = var.tags
 }
 
-resource "aws_cloudwatch_log_group" "cumulus_test_cleanup" {
-  name              = "/aws/lambda/${aws_lambda_function.cumulus_test_cleanup.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cumulus-test-cleanup", var.default_log_retention_days)
-  tags              = var.tags
-}
-
 resource "aws_cloudwatch_event_rule" "cumulus_test_cleanup" {
   name                = "cumulus_test_cleanup"
   schedule_expression = "cron(0 1 * * ? *)"

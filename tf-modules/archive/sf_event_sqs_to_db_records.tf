@@ -218,7 +218,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
 
 resource "aws_cloudwatch_log_group" "sf_event_sqs_to_db_records" {
   name              = "/aws/lambda/${aws_lambda_function.sf_event_sqs_to_db_records.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_sf_event_sqs_to_db_records_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sfEventSqsToDbRecords", var.default_log_retention_days)
   tags              = var.tags
 }
 

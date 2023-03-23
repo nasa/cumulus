@@ -185,13 +185,23 @@ variable "buckets" {
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  default = {
+    data-migration2 = 7,
+    DiscoverGranules = 7,           # ingest module
+    granuleFilesCacheUpdater = 7,   # archive module
+    ProvisionPostgresDatabase = 7,  # cumulus-rds-tf module
+    DistributionApiEndpoints = 7,   # cumulus_distribution module
+    EcsLogs = 7,                    # cumulus_ecs_service module
+    s3-credentials-endpoint = 7,    # distribution module
+    PrivateApiLambda = 7,           # archive module
+    TeaCache = 7,                   # tea-map-cache module 
+  }
 }
 
 variable "default_log_retention_days" {
   type = number
   default = 30
-  description = "default cloudwatch log retention periods"
+  description = "default value that user chooses for their log retention periods"
 }
 
 variable "cmr_search_client_config" {

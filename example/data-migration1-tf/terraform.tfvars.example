@@ -12,3 +12,13 @@ data_persistence_remote_state_config = {
   key    = "PREFIX/data-persistence/terraform.tfstate"
   region = "us-east-1"
 }
+
+# Optional, uncomment if needed, these variables are for configuring the cloudwatch log group's retention periods
+# for data-migration1 lambdas or tasks, the numerical value must included in: 
+# [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1827 3653] (representing days) for both of the below variables
+
+# cloudwatch_log_retention_periods = {
+#   <lambda function or task name> = 365 
+# }
+#
+# default_log_retention_days = 30
