@@ -1,9 +1,9 @@
 'use strict';
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
-const {buildUploaderClient} = require('./uploader');
 const path = require('path');
 const fs = require('fs');
+const { buildUploaderClient } = require('./uploader');
 
 /**
  * Return Input payload
@@ -19,15 +19,15 @@ async function sendPAN(event) {
   const uploadPath = path.join(remoteDir, panName);
 
   // TODO - replace with PAN generation
-  const localPath = '/tmp/test.pan'
-  fs.writeFile(localPath, 'Hello world!', err => {
+  const localPath = '/tmp/test.pan';
+  fs.writeFile(localPath, 'Hello world!', (err) => {
     if (err) {
       console.error(err);
     }
   });
 
   const providerClient = buildUploaderClient(provider);
-  await providerClient.upload({localPath, uploadPath})
+  await providerClient.upload({ localPath, uploadPath });
 
   return event;
 }
