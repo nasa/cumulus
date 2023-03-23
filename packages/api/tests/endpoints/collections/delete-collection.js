@@ -42,7 +42,6 @@ const assertions = require('../../../lib/assertions');
 const { del } = require('../../../endpoints/collections');
 
 process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();

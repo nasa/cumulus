@@ -3,6 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
+const fs = require('fs-extra');
 
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -18,7 +19,13 @@ const {
 } = require('@cumulus/db');
 
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
-const { deleteRuleResources } = require('../../../lib/rulesHelpers');
+const {
+  checkForSnsSubscriptions,
+  createRuleTrigger,
+  deleteRuleResources,
+  deleteOldEventSourceMappings,
+} = require('../../../lib/rulesHelpers');
+const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
 const listRulesStub = sinon.stub();
 
@@ -31,12 +38,10 @@ const rulesHelpers = proxyquire('../../../lib/rulesHelpers', {
   },
 });
 
-let workflow;
 const testDbName = randomString(12);
 
-process.env.messageConsumer = randomString();
-process.env.KinesisInboundEventLogger = randomString();
-const eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
+let workflow;
+let eventLambdas;
 
 const createEventSourceMapping = async (rule) => {
   // create event source mapping
@@ -64,6 +69,7 @@ test.before(async (t) => {
   workflow = randomString();
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
+  process.env.KinesisInboundEventLogger = randomString();
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
   const workflowfile = `${process.env.stackName}/workflows/${workflow}.json`;
   const templateFile = `${process.env.stackName}/workflow_template.json`;
@@ -79,6 +85,20 @@ test.before(async (t) => {
       Body: '{}',
     }),
   ]);
+
+  const lambda = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+    },
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'index.handler',
+    Runtime: 'nodejs14.x',
+  }).promise();
+  process.env.messageConsumer = lambda.FunctionName;
+  process.env.messageConsumerArn = lambda.FunctionArn;
+
+  eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
 
   process.env = {
     ...process.env,
@@ -779,8 +799,8 @@ test.serial('deleteRuleResources does not delete event source mappings if they e
 
   const firstPgRule = await translateApiRuleToPostgresRuleRaw(kinesisRule, testKnex);
   const secondPgRule = await translateApiRuleToPostgresRuleRaw(secondKinesisRule, testKnex);
-  await rulePgModel.create(testKnex, firstPgRule);
-  await rulePgModel.create(testKnex, secondPgRule);
+  const [newFirstPgRule] = await rulePgModel.create(testKnex, firstPgRule);
+  const [newSecondPgRule] = await rulePgModel.create(testKnex, secondPgRule);
 
   const kinesisEventMappings = await getKinesisEventMappings();
 
@@ -802,7 +822,7 @@ test.serial('deleteRuleResources does not delete event source mappings if they e
   thirdKinesisRule.rule.logEventArn = kinesisRule.rule.logEventArn;
 
   const thirdPgRule = await translateApiRuleToPostgresRuleRaw(thirdKinesisRule, testKnex);
-  await rulePgModel.create(testKnex, thirdPgRule);
+  const [newThirdPgRule] = await rulePgModel.create(testKnex, thirdPgRule);
   const kinesisEventMappings3 = await getKinesisEventMappings();
 
   const consumerEventMappings3 = kinesisEventMappings3[0].EventSourceMappings;
@@ -810,4 +830,139 @@ test.serial('deleteRuleResources does not delete event source mappings if they e
   // Check for same event source mapping
   t.deepEqual(consumerEventMappings, consumerEventMappings3);
   t.deepEqual(logEventMappings, logEventMappings3);
+
+  t.teardown(async () => {
+    await deleteRuleResources(testKnex, kinesisRule);
+    await rulePgModel.delete(testKnex, newFirstPgRule);
+    await deleteRuleResources(testKnex, secondKinesisRule);
+    await rulePgModel.delete(testKnex, newSecondPgRule);
+    await deleteRuleResources(testKnex, thirdKinesisRule);
+    await rulePgModel.delete(testKnex, newThirdPgRule);
+  });
+});
+
+test.serial('deleteOldEventSourceMappings() removes SNS source mappings and permissions', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+
+  // create rule trigger and rule
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    provider: null,
+    collection: null,
+    state: 'ENABLED',
+  });
+
+  const ruleWithTrigger = await createRuleTrigger(snsRule);
+  const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+  const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
+
+  const { subExists } = await checkForSnsSubscriptions(ruleWithTrigger);
+  t.true(subExists);
+
+  const { Policy } = await awsServices.lambda().getPolicy({
+    FunctionName: process.env.messageConsumer,
+  }).promise();
+  const { Statement } = JSON.parse(Policy);
+  t.true(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(ruleWithTrigger)));
+
+  await deleteOldEventSourceMappings(testKnex, ruleWithTrigger);
+
+  const { subExists: subExists2 } = await checkForSnsSubscriptions(ruleWithTrigger);
+  t.false(subExists2);
+
+  await t.throwsAsync(
+    awsServices.lambda().getPolicy({
+      FunctionName: process.env.messageConsumer,
+    }).promise(),
+    { code: 'ResourceNotFoundException' }
+  );
+  t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
+});
+
+test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const kinesisArn = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`;
+
+  const params = {
+    rule: {
+      arn: kinesisArn,
+      type: 'kinesis',
+      value: kinesisArn,
+    },
+    state: 'ENABLED',
+    provider: null,
+    collection: null,
+    workflow,
+  };
+  const kinesisRule = fakeRuleFactoryV2(params);
+
+  // create rule trigger and rule
+  kinesisRule.rule.value = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1')}`;
+  const ruleWithTrigger = await createRuleTrigger(kinesisRule);
+  const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+  await rulePgModel.create(testKnex, pgRule);
+
+  const rule = await rulePgModel.get(testKnex, { name: kinesisRule.name });
+  t.teardown(() => rulePgModel.delete(testKnex, rule));
+
+  const [
+    consumerEventMappingsBefore,
+    logEventMappingsBefore,
+  ] = await getKinesisEventMappings();
+  t.is(consumerEventMappingsBefore.EventSourceMappings.length, 1);
+  t.is(logEventMappingsBefore.EventSourceMappings.length, 1);
+
+  await deleteOldEventSourceMappings(testKnex, ruleWithTrigger);
+
+  const [
+    consumerEventMappingsAfter,
+    logEventMappingsAfter,
+  ] = await getKinesisEventMappings();
+  t.is(consumerEventMappingsAfter.EventSourceMappings.length, 0);
+  t.is(logEventMappingsAfter.EventSourceMappings.length, 0);
+});
+
+test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s subscription', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    provider: null,
+    collection: null,
+    state: 'ENABLED',
+  });
+
+  const ruleWithTrigger = await createRuleTrigger(snsRule);
+  const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+  const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
+
+  const response = await checkForSnsSubscriptions(ruleWithTrigger);
+
+  t.is(response.subExists, true);
+  // Subscription ARN will be different from but include the Topic ARN
+  t.true(response.existingSubscriptionArn.includes(topic1.TopicArn));
+
+  t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
