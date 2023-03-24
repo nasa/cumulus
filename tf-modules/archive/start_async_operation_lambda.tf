@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "start_async_operation" {
+  depends_on       = [aws_cloudwatch_log_group.start_async_operation]
   function_name    = "${var.prefix}-StartAsyncOperation"
   filename         = "${path.module}/../../packages/api/dist/startAsyncOperation/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/startAsyncOperation/lambda.zip")
@@ -50,7 +51,7 @@ resource "aws_iam_role_policy" "start_async_operation" {
 }
 
 resource "aws_cloudwatch_log_group" "start_async_operation" {
-  name              = "/aws/lambda/${aws_lambda_function.start_async_operation.function_name}"
+  name              = "/aws/lambda/${var.prefix}-StartAsyncOperation"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "StartAsyncOperation", var.default_log_retention_days)
   tags              = var.tags
 }

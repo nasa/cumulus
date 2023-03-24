@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "async_operation_fail" {
+  depends_on       = [aws_cloudwatch_log_group.async_operation_fail]
   function_name    = "${var.prefix}-AsyncOperationFail"
   filename         = "${path.module}/../lambdas/asyncOperations/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/asyncOperations/lambda.zip")
@@ -18,12 +19,13 @@ resource "aws_lambda_function" "async_operation_fail" {
 }
 
 resource "aws_cloudwatch_log_group" "async_operation_fail" {
-  name              = "/aws/lambda/${aws_lambda_function.async_operation_fail.function_name}"
+  name              = "/aws/lambda/${var.prefix}-AsyncOperationFail"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AsyncOperationFail", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "async_operation_success" {
+  depends_on       = [aws_cloudwatch_log_group.async_operation_success]
   function_name    = "${var.prefix}-AsyncOperationSuccess"
   filename         = "${path.module}/../lambdas/asyncOperations/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/asyncOperations/lambda.zip")
@@ -43,12 +45,13 @@ resource "aws_lambda_function" "async_operation_success" {
 }
 
 resource "aws_cloudwatch_log_group" "async_operation_success" {
-  name              = "/aws/lambda/${aws_lambda_function.async_operation_success.function_name}"
+  name              = "/aws/lambda/${var.prefix}-AsyncOPerationSuccess"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AsyncOperationSuccess", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "sns_s3_executions_test" {
+  depends_on       = [aws_cloudwatch_log_group.sns_s3_executions_test]
   function_name    = "${var.prefix}-SnsS3ExecutionsTest"
   filename         = "${path.module}/../lambdas/snsS3Test/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
@@ -75,12 +78,13 @@ resource "aws_lambda_function" "sns_s3_executions_test" {
 }
 
 resource "aws_cloudwatch_log_group" "sns_s3_executions_test" {
-  name              = "/aws/lambda/${aws_lambda_function.sns_s3_executions_test.function_name}"
+  name              = "/aws/lambda/${var.prefix}-SnsS3ExecutionsTest"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3ExecutionsTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "sns_s3_granules_test" {
+  depends_on       = [aws_cloudwatch_log_group.sns_s3_granules_test]
   function_name    = "${var.prefix}-SnsS3GranulesTest"
   filename         = "${path.module}/../lambdas/snsS3Test/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
@@ -107,12 +111,13 @@ resource "aws_lambda_function" "sns_s3_granules_test" {
 }
 
 resource "aws_cloudwatch_log_group" "sns_s3_granules_test" {
-  name              = "/aws/lambda/${aws_lambda_function.sns_s3_granules_test.function_name}"
+  name              = "/aws/lambda/${var.prefix}-SnsS3GranulesTest"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3GranulesTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "sns_s3_pdrs_test" {
+  depends_on       = [aws_cloudwatch_log_group.sns_s3_pdrs_test]
   function_name    = "${var.prefix}-SnsS3PdrsTest"
   filename         = "${path.module}/../lambdas/snsS3Test/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
@@ -139,12 +144,13 @@ resource "aws_lambda_function" "sns_s3_pdrs_test" {
 }
 
 resource "aws_cloudwatch_log_group" "sns_s3_pdrs_test" {
-  name              = "/aws/lambda/${aws_lambda_function.sns_s3_pdrs_test.function_name}"
+  name              = "/aws/lambda/${var.prefix}-SnsS3PdrsTest"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3PdrsTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "sns_s3_collections_test" {
+  depends_on       = [aws_cloudwatch_log_group.sns_s3_collections_test]
   function_name    = "${var.prefix}-SnsS3CollectionsTest"
   filename         = "${path.module}/../lambdas/snsS3Test/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/snsS3Test/lambda.zip")
@@ -171,12 +177,13 @@ resource "aws_lambda_function" "sns_s3_collections_test" {
 }
 
 resource "aws_cloudwatch_log_group" "sns_s3_collections_test" {
-  name              = "/aws/lambda/${aws_lambda_function.sns_s3_collections_test.function_name}"
+  name              = "/aws/lambda/${var.prefix}-SnsS3CollectionsTest"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SnsS3CollectionsTest", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_lambda_function" "ftpPopulateTestLambda" {
+  depends_on       = [aws_cloudwatch_log_group.ftpPopulateTestLambda]
   function_name    = "${var.prefix}-populateTestLambda"
   filename         = "${path.module}/../lambdas/ftpPopulateTestLambda/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/ftpPopulateTestLambda/dist/lambda.zip")
@@ -203,7 +210,7 @@ resource "aws_lambda_function" "ftpPopulateTestLambda" {
 }
 
 resource "aws_cloudwatch_log_group" "ftpPopulateTestLambda" {
-  name              = "/aws/lambda/${aws_lambda_function.ftpPopulateTestLambda.function_name}"
+  name              = "/aws/lambda/${var.prefix}-populateTestLambda"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "populateTestLambda", var.default_log_retention_days)
   tags              = var.tags
 }
@@ -221,6 +228,7 @@ resource "aws_secretsmanager_secret_version" "lzards_api_client_test_launchpad_p
 }
 
 resource "aws_lambda_function" "lzards_api_client_test" {
+  depends_on       = [aws_cloudwatch_log_group.lzards_api_client_test]
   function_name    = "${var.prefix}-LzardsApiClientTest"
   filename         = "${path.module}/../lambdas/lzardsClientTest/dist/webpack/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/lzardsClientTest/dist/webpack/lambda.zip")
@@ -253,7 +261,7 @@ resource "aws_lambda_function" "lzards_api_client_test" {
 }
 
 resource "aws_cloudwatch_log_group" "lzards_api_client_test" {
-  name              = "/aws/lambda/${aws_lambda_function.lzards_api_client_test.function_name}"
+  name              = "/aws/lambda/${var.prefix}-LzardsApiClientTest"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "LzardsApiClientTest", var.default_log_retention_days)
   tags              = var.tags
 }

@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "sync_granule_task" {
+  depends_on       = [aws_cloudwatch_log_group.sync_granule_task]
   function_name    = "${var.prefix}-SyncGranule"
   filename         = "${path.module}/../../tasks/sync-granule/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/sync-granule/dist/lambda.zip")
@@ -32,7 +33,7 @@ resource "aws_lambda_function" "sync_granule_task" {
 }
 
 resource "aws_cloudwatch_log_group" "sync_granule_task" {
-  name = "/aws/lambda/${aws_lambda_function.sync_granule_task.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "syncGranule", var.default_log_retention_days)
+  name = "/aws/lambda/${var.prefix}-SyncGranule"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SyncGranule", var.default_log_retention_days)
   tags = var.tags
 }

@@ -3,6 +3,7 @@ locals {
   all_bucket_names    = [for k, v in var.buckets : v.name]
 }
 resource "aws_lambda_function" "postgres_migration_count_tool" {
+  depends_on       = [aws_cloudwatch_log_group.postgres_migration_count_tool]
   function_name    = "${var.prefix}-postgres-migration-count-tool"
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
@@ -47,7 +48,7 @@ resource "aws_lambda_function" "postgres_migration_count_tool" {
 }
 
 resource "aws_cloudwatch_log_group" "postgres_migration_count_tool" {
-  name              = "/aws/lambda/${aws_lambda_function.postgres_migration_count_tool.function_name}"
+  name              = "/aws/lambda/${var.prefix}-postgres-migration-count-tool"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "postgres-migration-count-tool", var.default_log_retention_days)
   tags              = var.tags
 }

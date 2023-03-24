@@ -21,6 +21,7 @@ resource "aws_vpc_endpoint" "config" {
 }
 
 resource "aws_lambda_function" "tea_cache" {
+  depends_on       = [aws_cloudwatch_log_group.tea_cache]
   function_name    = "${var.prefix}-TeaCache"
   description      = "Bootstrap lambda to write tea cache file"
   filename         = "${path.module}/../../packages/tea-map-cache/dist/lambda.zip"
@@ -49,7 +50,7 @@ resource "aws_lambda_function" "tea_cache" {
 }
 
 resource "aws_cloudwatch_log_group" "tea_cache" {
-  name              = "/aws/lambda/${aws_lambda_function.tea_cache.function_name}"
+  name              = "/aws/lambda/${var.prefix}-TeaCache"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "TeaCache", var.default_log_retention_days)
   tags              = var.tags
 }

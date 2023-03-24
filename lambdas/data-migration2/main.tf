@@ -77,6 +77,7 @@ resource "aws_security_group" "data_migration2" {
 }
 
 resource "aws_lambda_function" "data_migration2" {
+  depends_on       = [aws_cloudwatch_log_group.data_migration2]
   function_name    = "${var.prefix}-data-migration2"
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
@@ -117,7 +118,7 @@ resource "aws_lambda_function" "data_migration2" {
 }
 
 resource "aws_cloudwatch_log_group" "data_migration2" {
-  name              = "/aws/lambda/${aws_lambda_function.data_migration2.function_name}"
+  name              = "/aws/lambda/${var.prefix}-data-migration2"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "data-migration2", var.default_log_retention_days)
   tags              = var.tags
 }

@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "files_to_granules_task" {
+  depends_on       = [aws_cloudwatch_log_group.files_to_granules_task]
   function_name    = "${var.prefix}-FilesToGranules"
   filename         = "${path.module}/../../tasks/files-to-granules/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/files-to-granules/dist/lambda.zip")
@@ -31,7 +32,7 @@ resource "aws_lambda_function" "files_to_granules_task" {
 }
 
 resource "aws_cloudwatch_log_group" "files_to_granules_task" {
-  name              = "/aws/lambda/${aws_lambda_function.files_to_granules_task.function_name}"
+  name              = "/aws/lambda/${var.prefix}-FilesToGranules"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "filesToGranules", var.default_log_retention_days)
   tags              = var.tags
 }

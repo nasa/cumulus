@@ -131,6 +131,7 @@ resource "aws_security_group" "s3_credentials_lambda" {
 resource "aws_lambda_function" "s3_credentials" {
   count = var.deploy_s3_credentials_endpoint ? 1 : 0
 
+  depends_on       = [aws_cloudwatch_log_group.s3_credentials]
   function_name    = "${var.prefix}-s3-credentials-endpoint"
   filename         = local.lambda_source_file
   source_code_hash = filebase64sha256(local.lambda_source_file)
@@ -166,7 +167,7 @@ resource "aws_lambda_function" "s3_credentials" {
 }
 
 resource "aws_cloudwatch_log_group" "s3_credentials" {
-  name              = "/aws/lambda/${aws_lambda_function.s3_credentials[0].function_name}"
+  name              = "/aws/lambda/${var.prefix}-s3-credentials-endpoint"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3-credentials-endpoint", var.default_log_retention_days)
   tags              = var.tags
 }

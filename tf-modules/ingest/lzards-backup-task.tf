@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "lzards_backup_task" {
+  depends_on       = [aws_cloudwatch_log_group.lzards_backup_task]
   count            = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   function_name    = "${var.prefix}-LzardsBackup"
   filename         = "${path.module}/../../tasks/lzards-backup/dist/webpack/lambda.zip"
@@ -121,7 +122,7 @@ resource "aws_iam_role_policy" "lzards_processing_role_get_secrets" {
 
 resource "aws_cloudwatch_log_group" "lzards_backup_task" {
   count             = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
-  name              = "/aws/lambda/${aws_lambda_function.lzards_backup_task[0].function_name}"
+  name              = "/aws/lambda/${var.prefix}-LzardsBackup"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "LzardsBackup", var.default_log_retention_days)
   tags              = var.tags
 }

@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "sqs_message_remover" {
+  depends_on       = [aws_cloudwatch_log_group.sqs_message_remover]
   function_name    = "${var.prefix}-sqsMessageRemover"
   filename         = "${path.module}/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
@@ -25,7 +26,7 @@ resource "aws_lambda_function" "sqs_message_remover" {
 }
 
 resource "aws_cloudwatch_log_group" "sqs_message_remover" {
-  name              = "/aws/lambda/${aws_lambda_function.sqs_message_remover.function_name}"
+  name              = "/aws/lambda/${var.prefix}-sqsMessageRemover"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqsMessageRemover", var.default_log_retention_days)
   tags              = var.tags
 }

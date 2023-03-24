@@ -35,6 +35,7 @@ resource "aws_secretsmanager_secret_version" "api_oauth_client_password" {
 }
 
 resource "aws_lambda_function" "api" {
+  depends_on       = [aws_cloudwatch_log_group.api]
   function_name    = "${var.prefix}-DistributionApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/distribution/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/distribution/lambda.zip")
@@ -58,7 +59,7 @@ resource "aws_lambda_function" "api" {
 }
 
 resource "aws_cloudwatch_log_group" "api" {
-  name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
+  name              = "/aws/lambda/${var.prefix}-DistributionApiEndpoints"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "DistributionApiEndpoints", var.default_log_retention_days)
   tags              = var.tags
 }

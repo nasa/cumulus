@@ -33,6 +33,7 @@ resource "aws_security_group" "s3_replicator_lambda" {
 }
 
 resource "aws_lambda_function" "s3_replicator" {
+  depends_on    = [aws_cloudwatch_log_group.s3_replicator]
   filename      = data.archive_file.replicator_package.output_path
   function_name = "${var.prefix}-s3-replicator"
   role          = aws_iam_role.replicator_lambda_role.arn
@@ -58,7 +59,7 @@ resource "aws_lambda_function" "s3_replicator" {
 }
 
 resource "aws_cloudwatch_log_group" "s3_replicator" {
-  name              = "/aws/lambda/${aws_lambda_function.s3_replicator.function_name}"
+  name              = "/aws/lambda/${var.prefix}-s3-replicator"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3-replicator", var.default_log_retention_days)
   tags              = var.tags
 }
