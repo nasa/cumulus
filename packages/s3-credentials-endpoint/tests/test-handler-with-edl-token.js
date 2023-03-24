@@ -20,9 +20,6 @@ const s3credentials = proxyquire(
     },
   }
 );
-const { handler } = proxyquire('..', {
-  '@cumulus/api/endpoints/s3credentials': s3credentials,
-});
 
 test.before((t) => {
   t.context.callerClientId = 'caller-client-id';
@@ -77,6 +74,13 @@ test.before((t) => {
   nock.enableNetConnect('localhost:80');
 });
 
+test.beforeEach((t) => {
+  const { handler } = proxyquire('..', {
+    '@cumulus/api/endpoints/s3credentials': s3credentials,
+  });
+  t.context.handler = handler;
+});
+
 test('GET /s3credentials with a valid EDL token and client id returns credentials', async (t) => {
   const event = {
     httpMethod: 'GET',
@@ -87,7 +91,7 @@ test('GET /s3credentials with a valid EDL token and client id returns credential
     },
   };
 
-  const response = await handler(event);
+  const response = await t.context.handler(event);
 
   t.is(response.statusCode, 200);
 
@@ -107,7 +111,7 @@ test('GET /s3credentials returns a 403 response for an invalid EDL token', async
     },
   };
 
-  const response = await handler(event);
+  const response = await t.context.handler(event);
 
   t.is(response.statusCode, 403);
 });
@@ -141,7 +145,7 @@ test('GET /s3credentials forwards the X-Request-Id header to Earthdata Login', a
     )
     .reply(200, {});
 
-  await handler(event);
+  await t.context.handler(event);
 
   t.true(nockScope.isDone());
 });

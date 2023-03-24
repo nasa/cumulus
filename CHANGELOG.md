@@ -141,6 +141,19 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3121**
   - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 
+### Added
+
+- **CUMULUS-3193**
+  - Add a Python version file
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+- **CUMULUS-3071**
+  - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
+    endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
+    behavior (complete overwrite) in a future release.   **The existing PUT
+    implementation is deprecated** and users should move all existing usage of
+    `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
+
 ### Removed
 
 - Removed a few tests that were disabled 3-4 years ago
@@ -149,20 +162,6 @@ update the database cluster to use the new configuration.
 
 - **CUMULUS-3033**
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
-- **CUMULUS-3070**
-  - Remove granules dynamoDb model logic that sets default publish value on record
-    validation
-  - Update API granule write logic to not set default publish value on record
-    updates to avoid overwrite (PATCH behavior)
-  - Update API granule write logic to publish to false on record
-    creation if not specified
-  - Update message granule write logic to set default publish value on record
-    creation update.
-  - Update granule write logic to set published to default value of `false` if
-    `null` is explicitly set with intention to delete the value.
-  - Removed dataType/version from api granule schema
-  - Added `@cumulus/api/endpoints/granules` unit to cover duration overwrite
-    logic for PUT/PATCH endpoint.
 - **CUMULUS-3072**
   - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
     a value for `files` as `[]` to elasticsearch instead of undefined in cases
@@ -172,6 +171,9 @@ update the database cluster to use the new configuration.
    mutable (e.g. in a `running` state) from a framework message write *and*
    files was not previously defined will write `[]` instead of leaving the value
    undefined.
+
+- The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
+- The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
 - **CUMULUS-3117**
   - Update `@cumulus/es-client/indexer.js` to properly handle framework write
     constraints for queued granules.    Queued writes will now be properly
@@ -185,7 +187,7 @@ update the database cluster to use the new configuration.
     PostgreSQL 11 upgrade exposed dependency on database results in the API return
   - Update unit test container to utilize PostgreSQL 11.13 container
 - **CUMULUS-3149**
-  - Updates the api `/graunles/bulkDelete` endpoint to take the
+  - Updates the api `/granules/bulkDelete` endpoint to take the
     following configuration keys for the bulkDelete:
     - concurrency - Number of concurrent bulk deletions to process at a time.
             Defaults to 10, increasing this value may improve throughput at the cost
@@ -204,11 +206,17 @@ update the database cluster to use the new configuration.
     unexpected insertion failure on PATCH.
 - **CUMULUS-3181**
   - Fixed `sqsMessageRemover` lambda to correctly retrieve ENABLED sqs rules.
-- The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
-- The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
+
 - **CUMULUS-3189**
   - Upgraded `cumulus-process` and `cumulus-message-adapter-python` versions to
     support pip 23.0
+- **CUMULUS-3196**
+  - Moved `createServer` initialization outside the `s3-credentials-endpoint` lambda
+    handler to reduce file descriptor usage
+- README shell snippets better support copying
+- **CUMULUS-3111**
+  - Fix issue where if granule update dropped due to write constraints for writeGranuleFromMessage, still possible for granule files to be written
+  - Fix issue where if granule update is limited to status and timestamp values due to write constraints for writeGranuleFromMessage, Dynamo or ES granules could be out of sync with PG
 
 ### Changed
 
@@ -220,13 +228,11 @@ update the database cluster to use the new configuration.
   - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
-  - Update Getting Started sections with current content
+  - Update Getting Started sections with current content 
+- **CUMULUS-3046**
+  - Update 'Deployment' public docs
+  - Apply grammar, link fixes, and continuity/taxonomy standards
 - **CUMULUS-3071**
-  - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
-    endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
-    behavior (complete overwrite) in a future release.   **The existing PUT
-    implementation is deprecated** and users should move all existing usage of
-    `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
   - Updated `@cumulus/api-client` packages to use `PATCH` protocol for existing
     granule `PUT` calls, this change should not require user updates for
     `api-client` users.
@@ -239,12 +245,13 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3097**
   - Changed `@cumulus/cmr-client` package's token from Echo-Token to Earthdata Login (EDL) token in updateToken method
   - Updated CMR header and token tests to reflect the Earthdata Login changes
-- **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3144**
   - Increased the memory of API lambda to 1280MB
 - **CUMULUS-3140**
   - Update release note to include cumulus-api release
+- **CUMULUS-3193**
+  - Update eslint config to better support typing
+- Improve linting of TS files
 
 ### Removed
 

@@ -62,9 +62,7 @@ resource "aws_sns_topic" "report_executions_topic" {
   tags = var.tags
 }
 
-
 # Report granules
-
 resource "aws_iam_role" "publish_granules_lambda_role" {
   name                 = "${var.prefix}-PublishGranulesLambda"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
@@ -80,7 +78,6 @@ resource "aws_sqs_queue" "publish_granules_dead_letter_queue" {
   visibility_timeout_seconds = 60
   tags                       = var.tags
 }
-
 resource "aws_lambda_function" "publish_granules" {
   filename         = "${path.module}/../../packages/api/dist/publishGranules/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/publishGranules/lambda.zip")
