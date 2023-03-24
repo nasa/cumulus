@@ -32,9 +32,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@cumulus/api": "14.1.0",
     "@cumulus/aws-client": "14.1.0",
     "@cumulus/common": "14.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/ingest": "14.1.0"
+    "@cumulus/ingest": "14.1.0",
+    "got": "12.6.0"
   }
 }
