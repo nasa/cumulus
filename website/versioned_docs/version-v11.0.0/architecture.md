@@ -1,8 +1,7 @@
 ---
-id: version-v11.0.0-architecture
+id: architecture
 title: Architecture
 hide_title: false
-original_id: architecture
 ---
 
 ## Architecture
@@ -69,5 +68,5 @@ The [data persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/da
 
 Other modules are provided as artifacts on the [release](https://github.com/nasa/cumulus/releases) page for use in users configuring their own deployment and contain extracted subcomponents of the [cumulus](#cumulus) module.  For more on these components see the [components documentation](deployment/components).
 
-For more on the specific structure, examples of use and how to deploy and more, please see the [deployment](deployment/deployment-readme) docs as well as the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
+For more on the specific structure, examples of use and how to deploy and more, please see the [deployment](deployment) docs as well as the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
 .

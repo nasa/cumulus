@@ -1,15 +1,14 @@
 ---
-id: version-v13.4.0-dead_letter_archive
+id: dead_letter_archive
 title: Cumulus Dead Letter Archive
 hide_title: false
-original_id: dead_letter_archive
 ---
 
 This documentation explains the Cumulus dead letter archive and associated functionality.
 
 ## DB Records DLQ Archive
 
-The Cumulus system contains a number of [dead letter queues](./lambda_dead_letter_queue). Perhaps the most important system lambda function supported by a DLQ is the `sfEventSqsToDbRecords` lambda function which parses Cumulus messages from workflow executions to generate and write database records to the Cumulus database.
+The Cumulus system contains a number of [dead letter queues](./lambda_dead_letter_queue.md). Perhaps the most important system lambda function supported by a DLQ is the `sfEventSqsToDbRecords` lambda function which parses Cumulus messages from workflow executions to generate and write database records to the Cumulus database.
 
 As of Cumulus v9+, the dead letter queue for this lambda (named `sfEventSqsToDbRecordsDeadLetterQueue`) has been updated with a consumer lambda that will automatically write any incoming records to the S3 system bucket, under the path `<stackName>/dead-letter-archive/sqs/`. This will allow integrators and operators engaged in debugging missing records to inspect any Cumulus messages which failed to process and did not result in the successful creation of database records.
 
