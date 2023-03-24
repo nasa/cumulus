@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/db');
 
 const { deconstructCollectionId } = require('./utils');
-const { Rule } = require('../models');
+const rulesHelpers = require('./rulesHelpers');
 const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules');
 
 /**
@@ -47,7 +47,7 @@ async function reingestGranule({
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
 
-  const lambdaPayload = await Rule.buildPayload({
+  const lambdaPayload = await rulesHelpers.buildPayload({
     workflow: originalMessage.meta.workflow_name,
     meta: originalMessage.meta,
     cumulus_meta: {
@@ -94,7 +94,7 @@ async function applyWorkflow({
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
 
-  const lambdaPayload = await Rule.buildPayload({
+  const lambdaPayload = await rulesHelpers.buildPayload({
     workflow,
     payload: {
       granules: [apiGranule],

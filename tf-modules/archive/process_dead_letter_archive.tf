@@ -1,81 +1,8 @@
-data "aws_iam_policy_document" "process_dead_letter_archive_policy" {
-  statement {
-    actions = ["dynamodb:UpdateItem"]
-    resources = [
-      var.dynamo_tables.granules.arn,
-      var.dynamo_tables.pdrs.arn
-    ]
-  }
-
-  statement {
-    actions = [
-      "states:DescribeExecution",
-      "states:GetExecutionHistory"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions   = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject"
-    ]
-    resources = ["arn:aws:s3:::${var.system_bucket}/*"]
-  }
-
-  statement {
-    actions   = [
-      "s3:ListBucket"
-    ]
-    resources = ["arn:aws:s3:::${var.system_bucket}"]
-  }
-
-  statement {
-    actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    actions = [
-      "s3:GetObject*",
-    ]
-    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
-  }
-
-  statement {
-    actions = [
-      "secretsmanager:GetSecretValue"
-    ]
-    resources = [var.rds_user_access_secret_arn]
-  }
-}
-
 resource "aws_iam_role" "process_dead_letter_archive_role" {
   name                 = "${var.prefix}_process_dead_letter_archive_role"
   assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
   permissions_boundary = var.permissions_boundary_arn
   tags                 = var.tags
-}
-
-resource "aws_iam_role_policy" "process_dead_letter_archive_role_policy" {
-  name   = "${var.prefix}_process_dead_letter_archive_lambda_role_policy"
-  role   = aws_iam_role.process_dead_letter_archive_role.id
-  policy = data.aws_iam_policy_document.process_dead_letter_archive_policy.json
 }
 
 resource "aws_lambda_function" "process_dead_letter_archive" {
@@ -95,10 +22,8 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
       createTimeoutMillis            = var.rds_connection_timing_configuration.createTimeoutMillis
       databaseCredentialSecretArn    = var.rds_user_access_secret_arn
       execution_sns_topic_arn        = aws_sns_topic.report_executions_topic.arn
-      GranulesTable                  = var.dynamo_tables.granules.name
       granule_sns_topic_arn          = aws_sns_topic.report_granules_topic.arn
       idleTimeoutMillis              = var.rds_connection_timing_configuration.idleTimeoutMillis
-      PdrsTable                      = var.dynamo_tables.pdrs.name
       pdr_sns_topic_arn              = aws_sns_topic.report_pdrs_topic.arn
       reapIntervalMillis             = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                      = var.prefix

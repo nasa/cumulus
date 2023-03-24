@@ -27,6 +27,7 @@ const providersApi = require('@cumulus/api-client/providers');
 const rulesApi = require('@cumulus/api-client/rules');
 const asyncOperationsApi = require('@cumulus/api-client/asyncOperations');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
+const { getRequiredEnvVar } = require('@cumulus/common/env.js');
 
 const { addCollections, addCustomUrlPathToCollectionFiles, buildCollection } = require('./Collections.js');
 const executionsApi = require('./api/executions');
@@ -40,8 +41,8 @@ const lambda = require('./lambda');
 const waitForDeployment = require('./lambdas/waitForDeployment');
 const { ActivityStep, LambdaStep } = require('./sfnStep');
 const { setProcessEnvironment, readJsonFilesFromDir } = require('./utils');
-const waitPeriodMs = 1000;
 
+const waitPeriodMs = 1000;
 const maxWaitForStartedExecutionSecs = 60 * 5;
 const lambdaStep = new LambdaStep();
 
@@ -550,8 +551,6 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
   // depends on this undocumented side effect
   setProcessEnvironment(stackName, bucketName);
 
-  process.env.RulesTable = `${stackName}-RulesTable`;
-
   await pMap(
     rules,
     (rule) => rulesApi.deleteRule({
@@ -562,6 +561,46 @@ async function deleteRules(stackName, bucketName, rules, postfix) {
   );
 
   return rules.length;
+}
+
+/**
+ * Delete a rule's Kinesis Event Source Mappings
+ *
+ * @param {Object} rule - a Rule record as returned by the Rules api
+ * @param {string} rule.name
+ * @param {Object} rule.rule
+ * @param {string} rule.rule.arn
+ * @param {string} rule.rule.logEventArn
+ * @returns {Promise<unknown[]>} - Event Source Map deletion results
+ */
+async function deleteRuleResources(rule) {
+  const kinesisSourceEvents = [
+    {
+      name: getRequiredEnvVar('messageConsumer'),
+      eventType: 'arn',
+      type: {
+        arn: rule.rule.arn,
+      },
+    },
+    {
+      name: getRequiredEnvVar('KinesisInboundEventLogger'),
+      eventType: 'log_event_arn',
+      type: {
+        log_event_arn: rule.rule.logEventArn,
+      },
+    },
+  ];
+  const deleteEventPromises = kinesisSourceEvents.map(
+    (kinesisEvent) => lambda.deleteEventSourceMapping(
+      kinesisEvent.type[kinesisEvent.eventType]
+    ).catch(
+      (error) => {
+        console.log(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
+        if (error.code !== 'ResourceNotFoundException') throw error;
+      }
+    )
+  );
+  return await Promise.all(deleteEventPromises);
 }
 
 /**
@@ -750,6 +789,7 @@ module.exports = {
   deleteCollections,
   deleteProviders,
   deleteRules,
+  deleteRuleResources,
   distributionApi,
   EarthdataLogin,
   executionsApi,
