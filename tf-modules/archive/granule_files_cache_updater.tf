@@ -56,6 +56,7 @@ resource "aws_iam_role_policy" "granule_files_cache_updater_lambda_role_policy" 
 }
 
 resource "aws_lambda_function" "granule_files_cache_updater" {
+  depends_on       = [aws_cloudwatch_log_group.granule_files_cache_updater_logs]
   filename         = "${path.module}/../../packages/api/dist/granuleFilesCacheUpdater/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/granuleFilesCacheUpdater/lambda.zip")
   function_name    = "${var.prefix}-granuleFilesCacheUpdater"
@@ -85,7 +86,7 @@ resource "aws_lambda_function" "granule_files_cache_updater" {
 }
 
 resource "aws_cloudwatch_log_group" "granule_files_cache_updater_logs" {
-  name              = "/aws/lambda/${aws_lambda_function.granule_files_cache_updater.function_name}"
+  name              = "/aws/lambda/${var.prefix}-granuleFilesCacheUpdater"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "granuleFilesCacheUpdater", var.default_log_retention_days)
   tags              = var.tags
 }

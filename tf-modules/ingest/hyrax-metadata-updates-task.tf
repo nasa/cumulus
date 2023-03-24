@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "hyrax_metadata_updates_task" {
+  depends_on       = [aws_cloudwatch_log_group.hyrax_metadata_updates_task]
   function_name    = "${var.prefix}-HyraxMetadataUpdates"
   filename         = "${path.module}/../../tasks/hyrax-metadata-updates/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/hyrax-metadata-updates/dist/lambda.zip")
@@ -34,8 +35,8 @@ resource "aws_lambda_function" "hyrax_metadata_updates_task" {
 }
 
 resource "aws_cloudwatch_log_group" "hyrax_metadata_updates_task" {
-  name              = "/aws/lambda/${aws_lambda_function.hyrax_metadata_updates_task.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "hyraxMetadataUpdates", var.default_log_retention_days)
+  name              = "/aws/lambda/${var.prefix}-HyraxMetadataUpdates"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "HyraxMetadataUpdates", var.default_log_retention_days)
   tags              = var.tags
 }
 

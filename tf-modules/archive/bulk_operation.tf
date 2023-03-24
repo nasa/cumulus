@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "bulk_operation" {
+  depends_on       = [aws_cloudwatch_log_group.bulk_operation]
   function_name    = "${var.prefix}-bulkOperation"
   filename         = "${path.module}/../../packages/api/dist/bulkOperation/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bulkOperation/lambda.zip")
@@ -40,7 +41,7 @@ resource "aws_lambda_function" "bulk_operation" {
 }
 
 resource "aws_cloudwatch_log_group" "bulk_operation" {
-  name = "/aws/lambda/${aws_lambda_function.bulk_operation.function_name}"
+  name = "/aws/lambda/${var.prefix}-bulkOperation"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "bulkOperation", var.default_log_retention_days)
   tags = var.tags
 }

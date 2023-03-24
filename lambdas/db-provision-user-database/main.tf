@@ -8,6 +8,7 @@ terraform {
 }
 
 resource "aws_lambda_function" "provision_database" {
+  depends_on       = [aws_cloudwatch_log_group.ProvisionPostgresDatabase]
   function_name    = "${var.prefix}-ProvisionPostgresDatabase"
   description      = "Bootstrap lambda that adds user/database to RDS database"
   filename         = "${path.module}/dist/webpack/lambda.zip"
@@ -128,7 +129,7 @@ data "aws_lambda_invocation" "provision_database" {
 }
 
 resource "aws_cloudwatch_log_group" "provision_database" {
-  name              = "/aws/lambda/${aws_lambda_function.provision_database.function_name}"
+  name              = "/aws/lambda/${var.prefix}-ProvisionPostgresDatabase"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ProvisionPostgresDatabase", var.default_log_retention_days)
   tags              = var.tags
 }

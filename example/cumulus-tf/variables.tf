@@ -194,13 +194,14 @@ variable "cloudwatch_log_retention_periods" {
     EcsLogs = 7,                    # cumulus_ecs_service module
     s3-credentials-endpoint = 7,    # distribution module
     PrivateApiLambda = 7,           # archive module
+    HelloWorld = 7,
     TeaCache = 7,                   # tea-map-cache module 
   }
 }
 
 variable "default_log_retention_days" {
   type = number
-  default = 30
+  default = 14
   description = "default value that user chooses for their log retention periods"
 }
 

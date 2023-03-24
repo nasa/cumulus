@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
+  depends_on       = [aws_cloudwatch_log_group.UpdateGranulesCmrMetadataFileLinks]
   function_name    = "${var.prefix}-UpdateGranulesCmrMetadataFileLinks"
   filename         = "${path.module}/../../tasks/update-granules-cmr-metadata-file-links/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/update-granules-cmr-metadata-file-links/dist/lambda.zip")
@@ -34,7 +35,7 @@ resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
 }
 
 resource "aws_cloudwatch_log_group" "update_granules_cmr_metadata_file_links_task" {
-  name = "/aws/lambda/${aws_lambda_function.update_granules_cmr_metadata_file_links_task.function_name}"
+  name = "/aws/lambda/${var.prefix}-UpdateGranulesCmrMetadataFileLinks"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "UpdateGranulesCmrMetadataFileLinks", var.default_log_retention_days)
   tags = var.tags
 }

@@ -20,7 +20,7 @@ resource aws_s3_bucket_object "cnm_response_lambda_zip" {
 }
 
 resource "aws_lambda_function" "cnm_response_task" {
-  depends_on       = [aws_s3_bucket_object.cnm_response_lambda_zip]
+  depends_on       = [aws_s3_bucket_object.cnm_response_lambda_zip, aws_cloudwatch_log_group.cnm_response_task]
   function_name    = "${var.prefix}-CnmResponse"
   s3_bucket        = var.system_bucket
   s3_key           = aws_s3_bucket_object.cnm_response_lambda_zip.id
@@ -52,7 +52,7 @@ resource "aws_lambda_function" "cnm_response_task" {
 }
 
 resource "aws_cloudwatch_log_group" "cnm_response_task" {
-  name              = "/aws/lambda/${aws_lambda_function.cnm_response_task.function_name}"
+  name              = "/aws/lambda/${var.prefix}-CnmResponse"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "CnmResponse", var.default_log_retention_days)
   tags              = var.tags
 }

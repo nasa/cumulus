@@ -80,6 +80,7 @@ resource "aws_iam_role_policy" "process_dead_letter_archive_role_policy" {
 }
 
 resource "aws_lambda_function" "process_dead_letter_archive" {
+  depends_on       = [aws_cloudwatch_log_group.process_dead_letter_archive]
   filename         = "${path.module}/../../packages/api/dist/processDeadLetterArchive/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/processDeadLetterArchive/lambda.zip")
   function_name    = "${var.prefix}-processDeadLetterArchive"
@@ -125,7 +126,7 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
 }
 
 resource "aws_cloudwatch_log_group" "process_dead_letter_archive" {
-  name = "/aws/lambda/${aws_lambda_function.process_dead_letter_archive.function_name}"
+  name = "/aws/lambda/${var.prefix}-processDeadLetterArchive"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "processDeadLetterArchive", var.default_log_retention_days)
   tags = var.tags
 }

@@ -35,20 +35,50 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 
 ## Terraform
 
-The retention period (in days) of cloudwatch log groups for lambdas and tasks can be set
+There are optional variables that can be set during deployment of cumulus modules to configure
+the retention period (in days) of cloudwatch log groups for lambdas and tasks. By setting the below 
+variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated
+with the new retention value. The variable are currently supported in these modules:
+
+- `cumulus`
+- `ingest` 
+- `archive` 
+- `data-migration`
+- `distribution`
+- `postgres-migration-async-operation`
+- `postgres-migration-count-tool`
+- `cumulus-distribution` 
+- `hello_world_service`
+- `python_test_ingest_processing_service`
+- `python_processing_service`
+- `provision_database`
+- `data_persistence`
+- `db_migration`
+- `sqs_message_remover_lambda` 
+- `tea_map_cache`
+
+The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 14 days.
+For example, if a user would like their log_groups of one module to have a retention period of one year,
+deploy the respective modules including:
+
+### Example
+
+```tf
+default_log_retention_periods = 365
+```
+
+The retention period (in days) of cloudwatch log groups for specific lambdas and tasks can be set
 during deployment using the `cloudwatch_log_retention_periods` terraform map variable. In order to
 configure these values for respective cloudwatch log groups, declare the function's or task's name
-(which will the cloudwatch log group's name after the respective prefix) within the map. Using the `DiscoverGranules` lambda and the `PythonReferenceTask`, an example would be:
+(which will the cloudwatch log group's name after the respective prefix) within the map. Using the `DiscoverGranules` task and the `CustomBootstrap` lambda, an example would be:
 
 ### Example
 
 ```tf
 cloudwatch_log_retention_periods = {
   DiscoverGranules = 365,
-  PythonReferenceTask = 90,
+  CustomBootStrap = 90,
 }
 ```
 
-Additionally, the variable `default_log_retention_days` can be configured separately during deployment in order to set the default log retention for the cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
-
-These values can be configured while deploying `cumulus-tf`, `data-persistence-tf` and `data-migration1-tf`.
+The retention periods must be a number included in this list: [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1827 3653] (representing days), according to AWS CloudWatch terraform retention configuration.

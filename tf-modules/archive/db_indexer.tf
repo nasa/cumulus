@@ -7,6 +7,7 @@ resource "aws_sqs_queue" "db_indexer_dead_letter_queue" {
 }
 
 resource "aws_lambda_function" "db_indexer" {
+  depends_on       = [aws_cloudwatch_log_group.db_indexer]
   function_name    = "${var.prefix}-dbIndexer"
   filename         = "${path.module}/../../packages/api/dist/dbIndexer/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/dbIndexer/lambda.zip")
@@ -67,7 +68,7 @@ resource "aws_lambda_event_source_mapping" "reconciliation_reports_table_db_inde
 }
 
 resource "aws_cloudwatch_log_group" "db_indexer" {
-  name = "/aws/lambda/${aws_lambda_function.db_indexer.function_name}"
+  name = "/aws/lambda/${var.prefix}-dbIndexer"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "dbIndexer", var.default_log_retention_days)
   tags = var.tags
 }
