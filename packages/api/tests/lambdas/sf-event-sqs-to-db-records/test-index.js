@@ -9,7 +9,6 @@ const uuidv4 = require('uuid/v4');
 const proxyquire = require('proxyquire');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { randomString } = require('@cumulus/common/test-utils');
 const {
   sns,
   sqs,
