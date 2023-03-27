@@ -38,26 +38,18 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 There are optional variables that can be set during deployment of cumulus modules to configure
 the retention period (in days) of cloudwatch log groups for lambdas and tasks. By setting the below 
 variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated
-with the new retention value. The variable are currently supported in these modules:
+with the new retention value. These variables are supported in all `cumulus` modules:
 
-- `cumulus`
-- `ingest` 
-- `archive` 
-- `data-migration`
-- `distribution`
-- `postgres-migration-async-operation`
-- `postgres-migration-count-tool`
-- `cumulus-distribution` 
-- `hello_world_service`
-- `python_test_ingest_processing_service`
-- `python_processing_service`
-- `provision_database`
-- `data_persistence`
-- `db_migration`
-- `sqs_message_remover_lambda` 
-- `tea_map_cache`
+```tf
+module "cumulus" {
+  # ... other variables
 
-The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 14 days.
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+}
+```
+
+The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
 For example, if a user would like their log_groups of one module to have a retention period of one year,
 deploy the respective modules including:
 
@@ -76,10 +68,10 @@ configure these values for respective cloudwatch log groups, declare the functio
 
 ```tf
 cloudwatch_log_retention_periods = {
+  PythonReferenceTask = 90,
   DiscoverGranules = 365,
   CustomBootStrap = 90,
 }
 ```
 
-The retention periods must be a number included in this list: [0 1 3 5 7 14 30 60 90 120 150 180 365 400 545 731 1827 3653] (representing days), according to AWS CloudWatch terraform retention configuration.
-
+The retention periods are the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
