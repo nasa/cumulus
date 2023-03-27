@@ -11,6 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3201**
   - Added support for sha512 as checksumType for LZARDs backup task.
 
+- **CUMULUS-3220**
+  - Added a send-pan-task that uploads a PAN response file to a specified path for a provider using HTTP/HTTPS protocol.
+
 ### Changed
 
 - **CUMULUS-3165**
