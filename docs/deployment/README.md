@@ -506,7 +506,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Dashboard Requirements
 
-:::note
+:::info what you will need
 
 The requirements are similar to the [Cumulus stack deployment requirements](#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the Dashboard repository.
 
@@ -601,7 +601,11 @@ You should be able to visit the Dashboard website at `http://<prefix>-dashboard.
 
 The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and designed for testing and cost savings. The default settings are likely not suitable for production workloads. Sizing is highly individual and dependent on expected load and archive size.
 
-> Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
+:::tip aws cost calculator
+
+Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
+
+:::
 
 ### Elasticsearch
 
@@ -613,7 +617,11 @@ In addition to size you'll want to consider the [number of nodes](https://docs.a
 
 Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf#L16) in `elasticsearch_config` and the [cumulus module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf#L541) in `es_index_shards`.
 
-> If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
+:::caution reindex after changes
+
+If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
+
+:::
 
 ### EC2 Instances and Autoscaling Groups
 

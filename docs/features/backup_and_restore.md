@@ -14,11 +14,11 @@ logs and Step Function executions in the AWS console will be irrecoverable.
 
 ## Postgres Database
 
-### Please note
+:::note
 
-* Cumulus supports a "bring your own" Postgres instance approach, however
-  our reference implementation utilizes a serverless Aurora/RDS database - as
-  such this reference provides AWS RDS Aurora Serverless backup options.
+Cumulus supports a "bring your own" Postgres instance approach; however, our reference implementation utilizes a serverless Aurora RDS database - as such this reference provides AWS RDS Aurora Serverless backup options.
+
+:::
 
 ### Backup and Restore
 

@@ -52,7 +52,11 @@ hide_title: false
 ---
 ```
 
-**Note:** To have the new page show up in a sidebar the designated `id` must be added to a sidebar in the `website/sidebars.js` file. Docusaurus has an in depth explanation of sidebars [here](https://docusaurus.io/docs/en/navigation).
+:::note 
+
+To have the new page show up in a sidebar the designated `id` must be added to a sidebar in the `website/sidebars.js` file. Docusaurus has an in depth explanation of sidebars [here](https://docusaurus.io/docs/en/navigation).
+
+:::
 
 #### Versioning Docs
 

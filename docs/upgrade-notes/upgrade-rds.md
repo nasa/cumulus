@@ -20,7 +20,11 @@ Follow the steps outlined below in precisely this order to upgrade your deployme
 
 Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided in addition to the existing DynamoDB/ElasticSearch backend with the eventual goal of utilizing the PostgreSQL database as the primary data store for Cumulus.
 
-> **NOTE**: Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
+:::note
+
+Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
+
+:::
 
 Refer to the docs on [how to deploy a new RDS cluster](./../deployment/postgres-database-deployment.md).
 
@@ -116,7 +120,11 @@ The `cumulus` module will create resources including the following relevant reso
 
 ### 5. Run the second data migration
 
-> **Note**: Please read this entire section thoroughly before proceeding to run the second data migration. In particular, pay close attention to the notes about parallelism options in order to achieve desired data migration performance while avoiding database outages and data loss.
+:::caution
+
+Please read this entire section thoroughly before proceeding to run the second data migration. In particular, pay close attention to the notes about parallelism options in order to achieve desired data migration performance while avoiding database outages and data loss.
+
+:::
 
 Now that Cumulus module is deployed, we can use some newly created resources to migrate granule, execution, and PDR data from DynamoDB to our PostgreSQL database.
 
@@ -157,7 +165,11 @@ Also, each run of these data migration will write a timestamped log of any error
 - `<prefix>-data-migration2-execution-errors-${timestamp}.json`
 - `<prefix>-data-migration2-granulesAndFiles-errors-${timestamp}.json`
 
-> **Please note:** Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
+:::note
+
+Since this data migration is copying **all of your execution, granule, and PDR data from DynamoDB to PostgreSQL**, it can take multiple hours (or even days) to run, depending on how much data you have and how much parallelism you configure the migration to use. In general, the more parallelism you configure the migration to use, the faster it will go, **but the higher load it will put on your PostgreSQL database. Excessive database load can cause database outages and result in data loss.** Thus, the parallelism settings for the migration are intentionally set by default to conservative values but are configurable.
+
+:::
 
 #### postgres-migration-async-operation payload parameters
 
@@ -193,7 +205,11 @@ This tool can be run in the following two ways:
 - Through direct Lambda invocation
 - Through API invocation
 
-> **Note:** If the migration validation tool reveals discrepancies between your DynamoDB and PostgreSQL data, you can [re-run the second data migration as described in step 5](#5-run-the-second-data-migration) to correct your data or to add missing data.
+:::tip
+
+If the migration validation tool reveals discrepancies between your DynamoDB and PostgreSQL data, you can [re-run the second data migration as described in step 5](#5-run-the-second-data-migration) to correct your data or to add missing data.
+
+:::
 
 #### Direct Lambda invocation
 
@@ -216,7 +232,11 @@ where
 - `OUTFILE` is the filepath to store the output from the Lambda.
 - `PREFIX` is your Cumulus deployment prefix.
 
-> **NOTE**: This will invoke the Lambda synchronously. Depending on your data holdings, the execution time of this Lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation as described below.**
+:::note
+
+This will invoke the Lambda synchronously. Depending on your data holdings, the execution time of this Lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation as described below.**
+
+:::
 
 #### API invocation
 

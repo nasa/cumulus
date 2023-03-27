@@ -12,7 +12,11 @@ hide_title: false
 
 1. Delete Granule
 
-> **Note**: Granules published to CMR will need to be removed from CMR via the dashboard prior to deletion
+:::note
+
+Granules published to CMR will need to be removed from CMR via the dashboard prior to deletion.
+
+:::
 
 2. Ingest Granule via Ingest Rule
 
@@ -39,7 +43,11 @@ hide_title: false
 * Go to the `Granules` page.
 * Use the `Bulk Delete` button to bulk delete selected granules or select via a Kibana query
 
-> **Note**: You can optionally force deletion from CMR
+:::tip 
+
+You can optionally force deletion from CMR
+
+:::
 
 2. Ingest Granules via Ingest Rule
 

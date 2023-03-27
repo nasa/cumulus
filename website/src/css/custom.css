@@ -76,3 +76,8 @@
 {
   --docsearch-footer-background: #1D1D1D;
 }
+
+
+.theme-back-to-top-button {
+  background-color: #2276AC !important;
+}

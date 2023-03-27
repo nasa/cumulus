@@ -4,9 +4,18 @@ title: Writing logs for ESDIS Metrics
 hide_title: false
 ---
 
-> **Note:** This feature is only available for Cumulus deployments in NGAP environments.
->
-> **Prerequisite:** You must [configure your Cumulus deployment to deliver your logs to the correct shared logs destination for ESDIS metrics](../deployment/cloudwatch-logs-delivery).
+:::info
+
+This feature is only available for Cumulus deployments in NGAP environments.
+
+:::
+
+
+:::caution prerequisite
+
+You must [configure your Cumulus deployment to deliver your logs to the correct shared logs destination for ESDIS metrics](../deployment/cloudwatch-logs-delivery).
+
+:::
 
 Log messages delivered to the ESDIS metrics logs destination conforming to an expected format will be automatically ingested and parsed to enable helpful searching/filtering of your logs via the ESDIS metrics Kibana dashboard.
 

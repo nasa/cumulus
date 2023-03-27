@@ -14,7 +14,11 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
 ### Using a Kibana query
 
-> Note: You **[must have configured your dashboard build with a KIBANAROOT environment variable](https://github.com/nasa/cumulus-dashboard#configuration)** in order for the Kibana link to render in the bulk granules modal
+:::caution
+
+You **[must have configured your dashboard build with a KIBANAROOT environment variable](https://github.com/nasa/cumulus-dashboard#configuration)** in order for the Kibana link to render in the bulk granules modal.
+
+:::
 
 1. From the Granules dashboard page, click on the "Run Bulk Granules" button, then select what type of action you would like to perform
     - Note: the rest of the process is the same regardless of what type of bulk action you perform
