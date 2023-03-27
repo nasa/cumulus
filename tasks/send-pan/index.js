@@ -16,7 +16,7 @@ async function sendPAN(event) {
   const config = event.config;
   const provider = config.provider;
   const remoteDir = config.remoteDir;
-  const panName = config.pdrName.replace(/pdr/ig, 'pan');
+  const panName = config.pdrName.replace(/\.pdr/ig, '.pan');
   const uploadPath = path.join(remoteDir, panName);
 
   const pan = pdrs.generatePAN();

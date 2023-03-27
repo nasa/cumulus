@@ -22,7 +22,6 @@ test('Test upload called from Send Pan Task', async (t) => {
 
   const url = `http://${event.config.provider.host}`;
   const remotePath = `${event.config.remoteDir}${event.config.pdrName.replace('.pdr', '.pan')}`;
-
   nock(url).post(remotePath).reply(200);
 
   await SendPan.sendPAN(event);
