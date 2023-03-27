@@ -203,15 +203,14 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
   try {
     response = await granules.getGranuleResponse({
       prefix: process.env.STACKNAME,
-      expectedStatusCodes: ['skip', 'error'].includes(duplicateHandling) ? [200, 404] : 200,
+      expectedStatusCodes: [200, 404],
       granuleId,
     });
   } catch (error) {
     const responseError = error;
-    if (responseError.statusCode === 404) {
-      return granuleId;
+    if (responseError.statusCode !== 404) {
+      throw new Error(`Unexpected error from Private API lambda: ${responseError.message}`);
     }
-    throw new Error(`Unexpected error from Private API lambda: ${responseError.message}`);
   }
 
   if (response.statusCode === 200) {
