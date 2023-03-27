@@ -22,7 +22,13 @@ test('Test upload called from Send Pan Task', async (t) => {
 
   const url = `http://${event.config.provider.host}`;
   const remotePath = `${event.config.remoteDir}${event.config.pdrName.replace('.pdr', '.pan')}`;
-  nock(url).post(remotePath).reply(200);
+  // Message should look like this:
+  // MESSAGE_TYPE = "SHORTPAN";
+  // DISPOSITION = "SUCCESSFUL";
+  // TIME_STAMP = 2023-03-27T18:10:56.402Z;
+  nock(url).post(remotePath,
+    /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "SUCCESSFUL";\nTIME_STAMP = [\d]{4}-[\d]{2}-[\d]{2}T[\d]{2}:[\d]{2}:[\d]{2}.[\d]{3}Z;\n/
+    ).reply(200);
 
   await SendPan.sendPAN(event);
   t.true(nock.isDone());
