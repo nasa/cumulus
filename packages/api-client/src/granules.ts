@@ -46,14 +46,14 @@ export const getGranuleResponse = async (params: {
   } = params;
 
   return await callback({
-    prefix: prefix,
+    prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/granules/${granuleId}`,
       ...(query && { queryStringParameters: query }),
     },
-    expectedStatusCodes: expectedStatusCodes,
+    expectedStatusCodes,
   });
 };
 
