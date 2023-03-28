@@ -374,6 +374,12 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   tags = var.tags
 }
 
+resource "aws_cloudwatch_log_group" "sqs2sfThrottle" {
+  name              = "/aws/lambda/${var.prefix}-sqs2sfThrottle"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqs2sfThrottle", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "sqs_message_consumer" {
   depends_on       = [aws_cloudwatch_log_group.sqs_message_consumer]
   function_name    = "${var.prefix}-sqsMessageConsumer"
@@ -405,4 +411,10 @@ resource "aws_lambda_function" "sqs_message_consumer" {
       ]
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "sqs_message_consumer" {
+  name              = "/aws/lambda/${var.prefix}-sqsMessageConsumer"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqsMessageConsumer", var.default_log_retention_days)
+  tags              = var.tags
 }
