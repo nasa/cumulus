@@ -36,7 +36,7 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 ## Terraform
 
 There are optional variables that can be set during deployment of cumulus modules to configure
-the retention period (in days) of cloudwatch log groups for lambdas and tasks. By setting the below 
+the retention period (in days) of cloudwatch log groups for lambdas and tasks. By setting the below
 variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated
 with the new retention value. These variables are supported in all `cumulus` modules:
 
