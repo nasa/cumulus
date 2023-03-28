@@ -221,6 +221,10 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
     return false;
   }
 
+  if (response.statusCode === 404) {
+    return granuleId;
+  }
+
   throw new Error(`Unexpected return from Private API lambda: ${JSON.stringify(response)}`);
 };
 
