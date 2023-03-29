@@ -62,11 +62,10 @@ const fakeGranulesModule = {
       });
     }
 
-    throw new CumulusApiClientError(
-      'API error',
-      404,
-      'Not Found'
-    );
+    return Promise.resolve({
+      statusCode: 404,
+      body: '{"Granule Not Found"}',
+    });
   },
 };
 
