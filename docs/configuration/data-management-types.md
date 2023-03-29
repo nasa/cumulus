@@ -283,7 +283,7 @@ The `rule - value` entry depends on the type of run:
 
 For more details regarding the field definitions and required information go to [Data Cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 
-:::note state field conditional 
+:::note state field conditional
 
 If the state field is left blank, it defaults to `false`.
 

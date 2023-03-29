@@ -20,7 +20,7 @@ This example will give step-by-step instructions on updating a bucket's lifecycl
 
 ### Command Line
 
-:::caution 
+:::caution
 
 Please ensure you have the AWS CLI installed and configured for access prior to attempting this example.
 

@@ -43,7 +43,7 @@ Granules published to CMR will need to be removed from CMR via the dashboard pri
 * Go to the `Granules` page.
 * Use the `Bulk Delete` button to bulk delete selected granules or select via a Kibana query
 
-:::tip 
+:::tip
 
 You can optionally force deletion from CMR.
 

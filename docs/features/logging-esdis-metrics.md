@@ -10,7 +10,6 @@ This feature is only available for Cumulus deployments in NGAP environments.
 
 :::
 
-
 :::caution prerequisite
 
 You must [configure your Cumulus deployment to deliver your logs to the correct shared logs destination for ESDIS metrics](../deployment/cloudwatch-logs-delivery).

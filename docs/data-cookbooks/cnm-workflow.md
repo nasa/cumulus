@@ -309,7 +309,7 @@ For the purpose of this example, the easiest way to accomplish this is using the
 
 Construct a JSON file containing an object that matches the values that have been previously setup. This JSON object should be a valid [Cloud Notification Mechanism](https://github.com/podaac/cloud-notification-message-schema#cumulus-sns-schema) message.
 
-:::note 
+:::note
 
 This example is somewhat contrived, as the downstream tasks don't care about most of these fields. A 'real' data ingest workflow would.
 
@@ -353,7 +353,7 @@ Using the JSON file you created, push it to the Kinesis notification stream:
 aws kinesis put-record --stream-name YOUR_KINESIS_NOTIFICATION_STREAM_NAME_HERE --partition-key 1 --data file:///path/to/file.json
 ```
 
-:::note 
+:::note
 
 The above command uses the stream name, _not_ the ARN.
 

@@ -11,7 +11,7 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ## Pre-release testing
 
-:::note 
+:::note
 
 This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`).
 
@@ -125,7 +125,7 @@ Lerna will handle updating the packages and all of the dependent package version
 
 #### 2B. Verify Lerna
 
-:::note 
+:::note
 
 Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
 Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
@@ -222,7 +222,7 @@ Commit and push these changes.
     - `SKIP_AUDIT`: `true`
 
     :::warning important
-    
+
     Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
 
     :::
@@ -275,7 +275,7 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 - ::::note Manage the branch
 
   :::warning Deselect Enable Branch
-    
+
     Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
 
   :::
@@ -325,12 +325,12 @@ Make sure to verify the appropriate .zip files are present on Github after the r
 
 :::info Optional
 
-  The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_
-  the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
-  - Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
-  - Click the "Edit release" button (pencil icon)
-  - Check the "This is a pre-release" checkbox
-  - Click "Update release"
+The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_ the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
+
+- Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
+- Click the "Edit release" button (pencil icon)
+- Check the "This is a pre-release" checkbox
+- Click "Update release"
 
 :::
 

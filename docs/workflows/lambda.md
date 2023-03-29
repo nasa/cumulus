@@ -38,7 +38,7 @@ resource "aws_lambda_function" "myfunction" {
 }
 ```
 
-:::note configuration example 
+:::note configuration example
 
 This example contains the minimum set of required configuration.
 
