@@ -36,7 +36,7 @@ module.exports = {
         },
         blog: {},
         theme: {
-          customCss: './src/css/custom.css',
+          customCss: [require.resolve('./src/css/custom.css')],
         },
       },
     ],
@@ -116,5 +116,6 @@ module.exports = {
       apiKey: process.env.DOCSEARCH_API_KEY || 'fakeApiKey',
       indexName: process.env.DOCSEARCH_INDEX_NAME || 'fakeIndexName',
     },
+
   },
 };
