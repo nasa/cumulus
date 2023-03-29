@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3115**
+  - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
+    after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3223**
   - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
   - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
