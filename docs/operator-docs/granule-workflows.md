@@ -45,7 +45,7 @@ Granules published to CMR will need to be removed from CMR via the dashboard pri
 
 :::tip 
 
-You can optionally force deletion from CMR
+You can optionally force deletion from CMR.
 
 :::
 

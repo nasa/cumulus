@@ -92,7 +92,11 @@ Terraform v0.13.6
 
 ## Prepare Deployment Repository
 
- > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS Configuration.](#prepare-aws-configuration)_
+:::info existing configured repo
+
+ If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS Configuration.](#prepare-aws-configuration).
+
+:::
 
 Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-deploy) repo and name appropriately for your organization:
 
@@ -330,9 +334,17 @@ Fill in the appropriate values in `terraform.tfvars`. See the [`data-persistence
 
 Consider [the size of your Elasticsearch cluster](#elasticsearch) when configuring `data-persistence`.
 
-**Reminder:** _Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus Dashboard will not work without Elasticsearch._
+:::tip
 
-**Reminder:** _If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already._
+Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus Dashboard will not work without Elasticsearch.
+
+:::
+
+:::note reminder
+
+If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already.
+
+:::
 
 #### Initialize Terraform
 

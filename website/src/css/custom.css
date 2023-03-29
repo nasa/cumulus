@@ -8,6 +8,16 @@
   --ifm-color-primary-darkest: #164d70;
 }
 
+[data-theme="dark"] {
+  --ifm-background-color: #0d1116 !important;
+  --ifm-background-surface-color: #1d1d1d !important;
+  --ifm-highlight-text: #ebf7ff;
+  --ifm-link-color: #52bdff;
+  --ifm-menu-color-active: #52bdff;
+}
+
+/* Links and Buttons */
+
 .theme-back-to-top-button {
   background-color: #2276ac !important;
 }
@@ -30,14 +40,6 @@
     no-repeat;
 }
 
-[data-theme="dark"] {
-  --ifm-background-color: #0d1116 !important;
-  --ifm-background-surface-color: #1d1d1d !important;
-  --ifm-highlight-text: #ebf7ff;
-  --ifm-link-color: #52bdff;
-  --ifm-menu-color-active: #52bdff;
-}
-
 [data-theme="dark"] .alert--info {
   --ifm-alert-border-color: #2491d8;
   --ifm-alert-background-color: rgba(200, 227, 244, 0.05);
@@ -58,14 +60,59 @@
   --ifm-color-primary: #52bdff;
 }
 
+/* DocSearch Dropdown */
+
 [data-theme="dark"] .DocSearch, .DocSearch-Help {
   --docsearch-muted-color: #f6f6f6;
 }
+
+[data-theme="light"] .DocSearch, .DocSearch-Help {
+  --docsearch-muted-color: #2276ac;
+}
+
+[data-theme="light"] .DocSearch-Button .DocSearch-Search-Icon {
+  --docsearch-text-color: #2276ac;
+}
+
+[data-theme="light"] .DocSearch-Button {
+  --docsearch-searchbox-background: #f9f9f9;
+}
+
+
 
 [data-theme="dark"] .DocSearch-Modal {
   --docsearch-modal-background: #121212;
 }
 
+[data-theme="dark"] .DocSearch-Input {
+  --docsearch-text-color: rgba(246,246,246,1.0);
+  --docsearch-muted-color: rgba(255,255,255,.65);
+}
+
+[data-theme="light"] .DocSearch-Input {
+  --docsearch-text-color: rgba(34,118,172,1.0);
+  --docsearch-muted-color: rgba(0,0,0,.45);
+}
+
+[data-theme="dark"] .DocSearch-Commands-Key {
+  --docsearch-key-gradient: linear-gradient(-26.5deg,#2788c6,#2276ac);
+}
+
+[data-theme="dark"] .DocSearch-Button-Key {
+  --docsearch-key-gradient: linear-gradient(-26.5deg,#2788c6,#2276ac);
+}
+
 [data-theme="dark"] .DocSearch-Footer {
   --docsearch-footer-background: #1d1d1d;
+}
+
+/* Codeblock */
+
+.token.comment {
+  color: rgba(145,152,192,1.0) !important;
+}
+
+[data-theme="dark"] code {
+  background-color: #222534;
+  color: rgba(219,225,236,1.0);
 }

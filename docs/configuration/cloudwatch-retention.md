@@ -19,7 +19,11 @@ For example, if we wanted to set log retention to 30 days on our `KinesisInbound
 aws logs put-retention-policy --log-group-name "/aws/lambda/KinesisInboundLogger" --retention-in-days 30
 ```
 
-**Note:** The aws-cli log command that we're using is explained in detail [here](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
+:::note more about the aws-cli log command
+
+The aws-cli log command that we're using is explained in detail [here](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
+
+:::
 
 ## AWS Management Console
 
