@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+- **CUMULUS-3209**
+  - Apply brand color with high contrast settings for both (light and dark) themes.
+  - Cumulus logo can be seen when scrolling down.
+  - "Back to Top" button matches the brand color for both themes.
+  - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
 
 ## [v15.0.0] 2023-03-10
 
