@@ -34,7 +34,7 @@ Workflows can optionally report granule metadata to [CMR](<https://earthdata.nas
 
 #### Data persistence
 
-Cumulus entity state data is stored in a set of [PostgreSQL](https://www.postgresql.org/) compatible database, and is exported to an Elasticsearch instance for non-authoritative querying/state data for the API and other applications that require more complex queries. 
+Cumulus entity state data is stored in a [PostgreSQL](https://www.postgresql.org/) compatible database, and is exported to an Elasticsearch instance for non-authoritative querying/state data for the API and other applications that require more complex queries. 
 
 #### Data discovery
 
