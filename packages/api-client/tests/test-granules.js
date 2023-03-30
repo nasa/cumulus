@@ -19,6 +19,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
     },
+    expectedStatusCodes: undefined,
   };
 
   const callback = (configObject) => {
@@ -37,6 +38,35 @@ test('getGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
+test('getGranule calls the callback with the expected status codes', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}`,
+    },
+    expectedStatusCodes: [404, 200],
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+        expectedStatusCodes: [404, 200],
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    expectedStatusCodes: [404, 200],
+  }));
+});
+
 test('getGranule calls the callback with the expected object when there is query param', async (t) => {
   const query = { getRecoveryStatus: true };
   const expected = {
@@ -47,6 +77,7 @@ test('getGranule calls the callback with the expected object when there is query
       path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       queryStringParameters: query,
     },
+    expectedStatusCodes: undefined,
   };
 
   const callback = (configObject) => {
