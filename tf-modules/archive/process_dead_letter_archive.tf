@@ -33,5 +33,16 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
     }
   }
 
+  dynamic "vpc_config" {
+    for_each = length(var.lambda_subnet_ids) == 0 ? [] : [1]
+    content {
+      subnet_ids = var.lambda_subnet_ids
+      security_group_ids = compact([
+        aws_security_group.no_ingress_all_egress[0].id,
+        var.rds_security_group
+      ])
+    }
+  }
+
   tags = var.tags
 }
