@@ -52,6 +52,10 @@
 
 [data-theme="dark"] .menu__link--active:not(.menu__link--sublist) {
   --ifm-menu-color-background-active: #252525;
+}
+
+[data-theme="dark"] .menu__link--active:not(.menu__link--sublist),
+[data-theme="light"] .menu__link--active:not(.menu__link--sublist) {
   border-left: 2px solid;
   --ifm-menu-border-color: #52bdff;
 }
@@ -62,11 +66,13 @@
 
 /* DocSearch Dropdown */
 
-[data-theme="dark"] .DocSearch, .DocSearch-Help {
+[data-theme="dark"] .DocSearch,
+.DocSearch-Help {
   --docsearch-muted-color: #f6f6f6;
 }
 
-[data-theme="light"] .DocSearch, .DocSearch-Help {
+[data-theme="light"] .DocSearch,
+.DocSearch-Help {
   --docsearch-muted-color: #2276ac;
 }
 
@@ -78,28 +84,26 @@
   --docsearch-searchbox-background: #f9f9f9;
 }
 
-
-
 [data-theme="dark"] .DocSearch-Modal {
   --docsearch-modal-background: #121212;
 }
 
 [data-theme="dark"] .DocSearch-Input {
-  --docsearch-text-color: rgba(246,246,246,1.0);
-  --docsearch-muted-color: rgba(255,255,255,.65);
+  --docsearch-text-color: rgba(246, 246, 246, 1);
+  --docsearch-muted-color: rgba(255, 255, 255, 0.65);
 }
 
 [data-theme="light"] .DocSearch-Input {
-  --docsearch-text-color: rgba(34,118,172,1.0);
-  --docsearch-muted-color: rgba(0,0,0,.45);
+  --docsearch-text-color: rgba(34, 118, 172, 1);
+  --docsearch-muted-color: rgba(0, 0, 0, 0.45);
 }
 
 [data-theme="dark"] .DocSearch-Commands-Key {
-  --docsearch-key-gradient: linear-gradient(-26.5deg,#2788c6,#2276ac);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, #2788c6, #2276ac);
 }
 
 [data-theme="dark"] .DocSearch-Button-Key {
-  --docsearch-key-gradient: linear-gradient(-26.5deg,#2788c6,#2276ac);
+  --docsearch-key-gradient: linear-gradient(-26.5deg, #2788c6, #2276ac);
 }
 
 [data-theme="dark"] .DocSearch-Footer {
@@ -109,10 +113,10 @@
 /* Codeblock */
 
 .token.comment {
-  color: rgba(145,152,192,1.0) !important;
+  color: rgba(145, 152, 192, 1) !important;
 }
 
 [data-theme="dark"] code {
   background-color: #222534;
-  color: rgba(219,225,236,1.0);
+  color: rgba(219, 225, 236, 1);
 }
