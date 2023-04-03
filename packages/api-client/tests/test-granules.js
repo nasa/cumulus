@@ -102,6 +102,7 @@ test('getGranule calls the callback with the expected object when there is query
 test('getGranule accepts an optional collectionId', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
+    expectedStatusCodes: [404, 200],
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
@@ -124,6 +125,7 @@ test('getGranule accepts an optional collectionId', async (t) => {
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     collectionId: t.context.collectionId,
+    expectedStatusCodes: [404, 200],
   }));
 });
 
