@@ -4,7 +4,6 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
   value = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-    ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
   })
 }
@@ -16,7 +15,6 @@ locals {
   dynamo_table_namestring   = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
     AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-    ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
   })
   api_env_variables = {
