@@ -81,7 +81,7 @@ See the full schema here: [LZARDS backup input schema](https://github.com/nasa/c
 
 Each granule *must* have a [`dataType` and `version`] OR `collectionId` to associate it with a Cumulus collection.
 
-In addition to the task schema requirements, any granule files that are to be backed up *must* have a `checksumType` (md5 | sha256) with a value for `checksum` as LZARDS requires a checksum value.
+In addition to the task schema requirements, any granule files that are to be backed up *must* have a `checksumType` (md5 | sha256 | sha512) with a value for `checksum` as LZARDS requires a checksum value.
 
 For a granule file to be backed up, the following should be added to the Collection file configuration for that filetype:
 

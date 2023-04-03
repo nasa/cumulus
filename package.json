@@ -12,6 +12,7 @@
     "docs-install": "(cd website && npm install)",
     "docs-build": "npm run docs-install && npm run docs-build-tasks && (cd website && npm run build)",
     "docs-build-schema": "./bin/build_db_schema.sh",
+    "docs-clear": "(cd website && npm run clear)",
     "docs-serve": "npm run docs-build && (cd website && npm run start)",
     "eslint": "eslint --ext .js --ext .ts .",
     "remove-locks": "lerna exec 'rm -f package-lock.json'",
@@ -75,6 +76,7 @@
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
+    "@docusaurus/eslint-plugin": "^2.3.0",
     "@octokit/graphql": "2.1.1",
     "@types/aws-lambda": "^8.10.58",
     "@types/lodash": "^4.14.150",

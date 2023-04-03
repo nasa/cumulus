@@ -1,18 +1,24 @@
 {
   "name": "@cumulus/website",
-  "version": "14.1.0",
+  "version": "15.0.0",
   "description": "The Cumulus website",
   "license": "Apache-2.0",
   "scripts": {
-    "examples": "docusaurus-examples",
-    "start": "docusaurus-start",
-    "build": "docusaurus-build",
-    "write-translations": "docusaurus-write-translations",
-    "version": "docusaurus-version",
-    "rename-version": "docusaurus-rename-version"
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
+    "write-translations": "docusaurus write-translations",
+    "write-heading-ids": "docusaurus write-heading-ids",
+    "clean": "git clean -d -x -e node_modules -f"
   },
   "devDependencies": {
-    "docusaurus": "^1.4.0"
+    "@docusaurus/core": "^2.3.0",
+    "@docusaurus/preset-classic": "^2.3.0",
+    "react": "^17.0.2"
   },
   "private": true
 }

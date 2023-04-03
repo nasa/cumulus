@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### MIGRATION notes
+
+#### API Endpoint Versioning
+
+As part of the work on CUMULUS-3072, we have added a required header for the
+granule PUT/PATCH endpoints -- to ensure that older clients/utilities do not
+unexpectedly make destructive use of those endpoints, a validation check of a
+header value against supported versions has been implemented.
+
+Moving forward, if a breaking change is made to an existing endpoint that
+requires user updates, as part of that update we will set the current version of
+the core API and require a header that confirms the client is compatible with
+the version required or greater.
+
+In this instance, the granule PUT/PATCH
+endpoints will require a `Cumulus-API-Version` value of at least `2`.
+
+```bash
+ curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
+ --header 'Cumulus-API-Version': '2'\
+ --header 'Authorization: Bearer ReplaceWithToken'\
+ --data ...
+```
+
+Users/clients that do not make use of these endpoints will not be impacted.
+   
+### Added
+- **CUMULUS-3072**
+  - Added `replaceGranule` to `@cumulus/api-client/granules` to add usage of the
+    updated RESTful PUT logic
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+- **CUMULUS-3201**
+  - Added support for sha512 as checksumType for LZARDs backup task.
+
+### Changed
+- **CUMULUS-3115**
+  - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
+    after receiving a 404 Not Found Response Error from the `cumulus-api`.
+- **CUMULUS-3165**
+  - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+
+## [v15.0.0] 2023-03-10
+
 ### Breaking Changes
 
 - **CUMULUS-3147**
@@ -15,15 +59,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Published new tag [`44` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/44/images/sha256-8d757276714153e4ab8c24a2b7b6b9ffee14cc78b482d9924e7093af88362b04?context=explore).
   - The `async_operation_image` property of `cumulus` module must be updated to pull the ECR image for `cumuluss/async-operation:44`.
 
-## Changed
+### Changed
 
+- **CUMULUS-2997**
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3.
+- **CUMULUS-3044**
+  - Deployment section:
+    - Consolidate and migrate Cumulus deployment (public facing) content from wiki to Cumulus Docs in GitHub.
+    - Update links to make sure that the user can maintain flow between the wiki and GitHub deployment documentation.
+    - Organize and update sidebar to include categories for similar deployment topics.
 - **CUMULUS-3147**
   - Set example/cumulus-tf default async_operation_image_version to 44.
   - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
 - **CUMULUS-3166**
   - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 
-## Fixed 
+### Fixed
 
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
@@ -59,45 +110,14 @@ When you apply this update, the original PostgreSQL v10 parameter group will be
 removed, and recreated using PG11 defaults/configured terraform values and
 update the database cluster to use the new configuration.
 
-#### API Endpoint Versioning
-
-As part of the work on CUMULUS-3072, we have added a required header for the
-granule PUT/PATCH endpoints -- to ensure that older clients/utilities do not
-unexpectedly make destructive use of those endpoints, a validation check of a
-header value against supported versions has been implemented.
-
-Moving forward, if a breaking change is made to an existing endpoint that
-requires user updates, as part of that update we will set the current version of
-the core API and require a header that confirms the client is compatible with
-the version required or greater.
-
-In this instance, the granule PUT/PATCH
-endpoints will require a `Cumulus-API-Version` value of at least `2`.
-
-```bash
- curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
- --header 'Cumulus-API-Version': '2'\
- --header 'Authorization: Bearer ReplaceWithToken'\
- --data ...
-```
-
-Users/clients that do not make use of these endpoints will not be impacted.
-
-### Added
-
-- **CUMULUS-3072**
-  - Added `replaceGranule` to `@cumulus/api-client/granules` to add usage of the
-    updated RESTful PUT logic
-- **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
-
-
 ### Added
 
 - **CUMULUS-3193**
   - Add a Python version file
 - **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods.
+    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
+    section of the Cumulus documentation in order for more detailed information and an example into how to do this.
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
     endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
@@ -113,15 +133,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 - **CUMULUS-3033**
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
-- **CUMULUS-3072**
-  - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
-    a value for `files` as `[]` to elasticsearch instead of undefined in cases
-    where `[]` is specified in the new granule.
-  - Fixed issue introduced in CUMULUS-3070 where DynamoDB granules with a value
-   `files` as `[]` when the granule does *not* have the files value set as
-   mutable (e.g. in a `running` state) from a framework message write *and*
-   files was not previously defined will write `[]` instead of leaving the value
-   undefined.
 
 - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
 - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
@@ -6929,7 +6940,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v14.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.0...HEAD
+[v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
 [v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
