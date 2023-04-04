@@ -45,7 +45,7 @@ resource "aws_lambda_function" "async_operation_success" {
 }
 
 resource "aws_cloudwatch_log_group" "async_operation_success" {
-  name              = "/aws/lambda/${var.prefix}-AsyncOPerationSuccess"
+  name              = "/aws/lambda/${var.prefix}-AsyncOperationSuccess"
   retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AsyncOperationSuccess", var.default_log_retention_days)
   tags              = var.tags
 }
