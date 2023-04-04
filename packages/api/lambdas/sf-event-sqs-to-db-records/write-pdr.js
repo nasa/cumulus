@@ -1,6 +1,5 @@
 'use strict';
 
-const pRetry = require('p-retry');
 const {
   createRejectableTransaction,
   PdrPgModel,
@@ -28,8 +27,6 @@ const {
 } = require('@cumulus/message/workflows');
 const Logger = require('@cumulus/logger');
 const { publishPdrSnsMessage } = require('../../lib/publishSnsMessageUtils');
-
-const Pdr = require('../../models/pdrs');
 
 const logger = new Logger({ sender: '@cumulus/sfEventSqsToDbRecords/write-pdr' });
 
@@ -94,10 +91,9 @@ const writePdrViaTransaction = async ({
   return pdr;
 };
 
-const writePdrToDynamoAndEs = async (params) => {
+const writePdrToEs = async (params) => {
   const {
     cumulusMessage,
-    pdrModel,
     updatedAt = Date.now(),
     esClient = await Search.es(),
   } = params;
@@ -105,25 +101,11 @@ const writePdrToDynamoAndEs = async (params) => {
   if (!pdrApiRecord) {
     return;
   }
-  try {
-    await pdrModel.storePdr(pdrApiRecord, cumulusMessage);
-    await upsertPdr({
-      esClient,
-      updates: pdrApiRecord,
-      index: process.env.ES_INDEX,
-    });
-  } catch (error) {
-    logger.info(`Writes to DynamoDB/Elasticsearch failed, rolling back all writes for PDR ${pdrApiRecord.pdrName}`);
-    // On error, delete the Dynamo record to ensure that all systems
-    // stay in sync
-    await pRetry(
-      async () => await pdrModel.delete({ pdrName: pdrApiRecord.pdrName }),
-      {
-        retries: 3,
-      }
-    );
-    throw error;
-  }
+  await upsertPdr({
+    esClient,
+    updates: pdrApiRecord,
+    index: process.env.ES_INDEX,
+  });
 };
 
 const writePdr = async ({
@@ -132,7 +114,6 @@ const writePdr = async ({
   providerCumulusId,
   executionCumulusId,
   knex,
-  pdrModel = new Pdr(),
   updatedAt = Date.now(),
   esClient,
 }) => {
@@ -156,9 +137,8 @@ const writePdr = async ({
       executionCumulusId,
       updatedAt,
     });
-    await writePdrToDynamoAndEs({
+    await writePdrToEs({
       cumulusMessage,
-      pdrModel,
       updatedAt,
       esClient,
     });
@@ -173,5 +153,5 @@ module.exports = {
   generatePdrRecord,
   writePdrViaTransaction,
   writePdr,
-  writePdrToDynamoAndEs,
+  writePdrToEs,
 };

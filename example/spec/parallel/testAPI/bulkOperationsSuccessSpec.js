@@ -26,6 +26,7 @@ const {
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   createTimestampedTestId,
@@ -167,7 +168,7 @@ describe('POST /granules/bulk', () => {
         postBulkGranulesResponse = await granules.bulkGranules({
           prefix,
           body: {
-            ids: [granuleId],
+            granules: [{ granuleId, collectionId: constructCollectionId(collection.name, collection.version) }],
             workflowName: 'HelloWorldWorkflow',
             queueUrl: scheduleQueueUrl,
           },

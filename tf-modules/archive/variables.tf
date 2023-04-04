@@ -128,14 +128,6 @@ variable "permissions_boundary_arn" {
   type = string
 }
 
-variable "postgres_migration_count_tool_function_arn" {
-  type = string
-}
-
-variable "postgres_migration_async_operation_function_arn" {
-  type = string
-}
-
 variable "prefix" {
   type = string
 }

@@ -23,8 +23,6 @@ const {
 const assertions = require('../../../lib/assertions');
 
 process.env.AccessTokensTable = randomId('accessTokensTable');
-process.env.CollectionsTable = randomId('collectionsTable');
-process.env.GranulesTable = randomId('granulesTable');
 process.env.stackName = randomId('stackName');
 process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('tokenSecret');
@@ -37,8 +35,6 @@ let esClient;
 
 let jwtAuthToken;
 let accessTokenModel;
-let collectionModel;
-let granuleModel;
 
 test.before(async () => {
   const esAlias = randomId('esAlias');
@@ -49,12 +45,6 @@ test.before(async () => {
     alias: esAlias,
   });
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
-
-  collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
-  await collectionModel.createTable();
-
-  granuleModel = new models.Granule({ tableName: process.env.GranulesTable });
-  await granuleModel.createTable();
 
   const username = randomId('username');
   await setAuthorizedOAuthUsers([username]);
@@ -100,8 +90,6 @@ test.before(async () => {
 
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
-  await collectionModel.deleteTable();
-  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await esClient.indices.delete({ index: esIndex });
 });

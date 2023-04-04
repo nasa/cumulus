@@ -4,6 +4,116 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased Phase 3
+
+### Breaking Changes
+
+- **CUMULUS-2688**
+  - Updated bulk operation logic to use collectionId in addition to granuleId to fetch granules.
+  - Tasks using the `bulk-operation` Lambda should provide collectionId and granuleId e.g. { granuleId: xxx, collectionId: xxx }
+- **CUMULUS-2856**
+  - Update execution PUT endpoint to no longer respect message write constraints and update all values passed in
+
+### Changed
+
+- **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2793**
+    - Removed Provider Dynamo model and related test code
+  - **CUMULUS-2645**
+    - Removed dynamo structural migrations and related code from `@cumulus/api`
+    - Removed unused index functionality for all tables other than
+      `ReconciliationReportsTable` from `dbIndexer` lambda
+    - Removed `executeMigrations` lambda
+    - Removed `granuleFilesCacheUpdater` lambda
+    - Removed dynamo files table from `data-persistence` module.  *This table and
+      all of its data will be removed on deployment*.
+  - **CUMULUS-2398**
+    - Remove all dynamoDB updates for `@cumulus/api/ecs/async-operation/*`
+    - Updates all api endpoints with updated signature for
+      `asyncOperationsStart` calls
+    - Remove all dynamoDB models calls from async-operations api endpoints
+  - **CUMULUS-2795**
+    - Removed API executions model
+  - **CUMULUS-2796**
+    - Remove API Pdrs model and all related test code
+  - **CUMULUS-2801**
+    - Move `getFilesExistingAtLocation`from api granules model to api/lib, update granules put
+      endpoint to remove model references
+  - **CUMULUS-2804**
+    - Updates api/lib/granule-delete.deleteGranuleAndFiles:
+      - Updates dynamoGranule -> apiGranule in the signature and throughout the dependent code
+      - Updates logic to make apiGranule optional, but pgGranule required, and
+        all lookups use postgres instead of ES/implied apiGranule values
+      - Updates logic to make pgGranule optional - in this case the logic removes the entry from ES only
+    - Removes all dynamo model logic from api/endpoints/granules
+    - Removes dynamo write logic from api/lib/writeRecords.*
+    - Removes dynamo write logic from api/lib/ingest.*
+    - Removes all granule model calls from api/lambdas/bulk-operations and any dependencies
+    - Removes dynamo model calls from api/lib/granule-remove-from-cmr.unpublishGranule
+    - Removes Post Deployment execution check from sf-event-sqs-to-db-records
+    - Moves describeGranuleExecution from api granule model to api/lib/executions.js
+  - **CUMULUS-2806**
+    - Remove DynamoDB logic from executions `POST` endpoint
+    - Remove DynamoDB logic from sf-event-sqs-to-db-records lambda execution writes.
+    - Remove DynamoDB logic from executions `PUT` endpoint
+  - **CUMULUS-2808**
+    - Remove DynamoDB logic from executions `DELETE` endpoint
+  - **CUMULUS-2809**
+    - Remove DynamoDB logic from providers `PUT` endpoint
+    - Updates DB models asyncOperation, provider and rule to return all fields on upsert.
+  - **CUMULUS-2810**
+    - Removes addition of DynamoDB record from API endpoint POST /provider/<name>
+  - **CUMULUS-2811**
+    - Removes deletion of DynamoDB record from API endpoint DELETE /provider/<name>
+  - **CUMULUS-2817**
+    - Removes deletion of DynamoDB record from API endpoint DELETE /collection/<name>/<version>
+  - **CUMULUS-2814**
+    - Remove DynamoDB logic from rules `DELETE` endpoint
+    - Move event resources deletion logic from `rulesModel` to `rulesHelper`
+  - **CUMULUS-2815**
+    - Remove update of DynamoDB record from API endpoint PUT /collections/<name>/<version>
+    - Move File Config and Core Config validation logic for Postgres Collections from `api/models/collections.js` to `api/lib/utils.js`
+  - **CUMULUS-2813**
+    - Removes creation and deletion of DynamoDB record from API endpoint POST /rules/
+  - **CUMULUS-2816**
+    - Removes addition of DynamoDB record from API endpoint POST /collections
+  - **CUMULUS-2794**
+    - Remove API Collections model and all related test code
+    - Remove lambdas/postgres-migration-count-tool, api/endpoints/migrationCounts and api-client/migrationCounts
+    - Remove lambdas/data-migration1 tool
+    - Remove lambdas/data-migration2 and lambdas/postgres-migration-async-operation
+  - **CUMULUS-2792**
+    - Remove API Granule model and all related test code
+    - Remove granule-csv endpoint
+  - **CUMULUS-2797**
+    - Remove API Rules model and all related test code
+    - Move rule helper functions to separate rulesHelpers file
+  - **CUMULUS-2821**
+    - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
+  - **CUMULUS-2856**
+    - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
+  - **CUMULUS-3008**
+    - Remove DynamoDB Collections table
+  - **CUMULUS-2798**
+    - Removed AsyncOperations model
+  - **CUMULUS-3009**
+    - Removed Dynamo PDRs table
+
+### Added
+
+- **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-2813**
+    - Added function `create` in the `db` model for Rules
+      to return an array of objects containing all columns of the created record.
+  - **CUMULUS-2812**
+    - Remove DynamoDB logic from rules `PUT` endpoint
+    - Move event resources logic from `rulesModel` to `rulesHelper`
+  - **CUMULUS-2820**
+    - Remove deletion of DynamoDB record from API endpoint DELETE /pdr/<pdrName>
+  - **CUMULUS-2688**
+    - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
+    - Add new endpoints to update and delete granules by collectionId as well as granuleId
+
 ## Unreleased
 
 ### Added
@@ -92,10 +202,6 @@ update the database cluster to use the new configuration.
     behavior (complete overwrite) in a future release.   **The existing PUT
     implementation is deprecated** and users should move all existing usage of
     `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
-
-### Removed
-
-- Removed a few tests that were disabled 3-4 years ago
 
 ### Fixed
 

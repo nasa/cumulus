@@ -35,19 +35,20 @@ async function verifyJwtAuthorization(requestJwtToken) {
   return accessToken;
 }
 
+// TODO no tests for this
 function validateBulkGranulesRequest(req, res, next) {
   const payload = req.body;
 
-  if (!payload.ids && !payload.query) {
-    return res.boom.badRequest('One of ids or query is required');
+  if (!payload.granules && !payload.query) {
+    return res.boom.badRequest('One of granules or query is required');
   }
 
-  if (payload.ids && !Array.isArray(payload.ids)) {
-    return res.boom.badRequest(`ids should be an array of values, received ${payload.ids}`);
+  if (payload.granules && !Array.isArray(payload.granules)) {
+    return res.boom.badRequest(`granules should be an array of values, received ${payload.granules}`);
   }
 
-  if (!payload.query && payload.ids && payload.ids.length === 0) {
-    return res.boom.badRequest('no values provided for ids');
+  if (!payload.query && payload.granules && payload.granules.length === 0) {
+    return res.boom.badRequest('no values provided for granules');
   }
 
   if (payload.query

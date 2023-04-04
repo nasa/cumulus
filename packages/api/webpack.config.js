@@ -30,8 +30,6 @@ module.exports = {
     createReconciliationReport: './lambdas/create-reconciliation-report.js',
     dbIndexer: './lambdas/db-indexer.js',
     distribution: './app/distribution.js',
-    executeMigrations: './lambdas/executeMigrations.js',
-    granuleFilesCacheUpdater: './lambdas/granuleFilesCacheUpdater.js',
     indexFromDatabase: './lambdas/index-from-database.js',
     manualConsumer: './lambdas/manual-consumer.js',
     messageConsumer: './lambdas/message-consumer.js',
