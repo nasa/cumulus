@@ -55,7 +55,7 @@ working with Terraform, the following links should bring you up to speed:
 - [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
 - [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
-For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#install-terraform).
+For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](../deployment/README.md#install-terraform).
 
 #### Aurora/RDS
 
