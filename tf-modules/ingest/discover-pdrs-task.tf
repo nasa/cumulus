@@ -1,5 +1,5 @@
 resource "aws_lambda_function" "discover_pdrs_task" {
-  depends_on       = [aws_cloudwatch_log_group.discover_granules_task]
+  depends_on       = [aws_cloudwatch_log_group.discover_pdrs_task]
   function_name    = "${var.prefix}-DiscoverPdrs"
   filename         = "${path.module}/../../tasks/discover-pdrs/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/discover-pdrs/dist/lambda.zip")
