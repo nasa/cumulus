@@ -98,7 +98,6 @@ describe('The Ingest Load Test', () => {
     stackName = config.stackName;
     bucket = config.bucket;
     process.env.system_bucket = config.bucket;
-    process.env.ExecutionsTable = `${stackName}-ExecutionsTable`;
     let workflowCount = 0;
 
     const testId = createTimestampedTestId(stackName, 'IngestGranuleSuccess');

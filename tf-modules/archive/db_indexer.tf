@@ -12,7 +12,7 @@ resource "aws_lambda_function" "db_indexer" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/dbIndexer/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 320
   dead_letter_config {

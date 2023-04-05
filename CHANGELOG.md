@@ -94,6 +94,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
   - **CUMULUS-3008**
     - Remove DynamoDB Collections table
+  - **CUMULUS-2798**
+    - Removed AsyncOperations model
+  - **CUMULUS-3009**
+    - Removed Dynamo PDRs table
 
 ### Added
 
@@ -110,12 +114,60 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
     - Add new endpoints to update and delete granules by collectionId as well as granuleId
 
+
 ### Removed
 
 - **CUMULUS-2994**
   - Delete code/lambdas that publish DynamoDB stream events to SNS
 
+
 ## Unreleased
+
+### Added
+
+- **CUMULUS-3201**
+  - Added support for sha512 as checksumType for LZARDs backup task.
+
+### Changed
+- **CUMULUS-3115**
+  - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
+    after receiving a 404 Not Found Response Error from the `cumulus-api`.
+- **CUMULUS-3165**
+  - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+
+## [v15.0.0] 2023-03-10
+
+### Breaking Changes
+
+- **CUMULUS-3147**
+  - The minimum supported version for all published Cumulus Core npm packages is now Node 16.19.0
+  - Tasks using the `cumuluss/cumulus-ecs-task` Docker image must be updated to `cumuluss/cumulus-ecs-task:1.9.0.` which is built with node:16.19.0-alpine.  This can be done by updating the `image` property of any tasks defined using the `cumulus_ecs_service` Terraform module.
+  - Updated Dockerfile of async operation docker image to build from node:16.19.0-buster
+  - Published new tag [`44` of `cumuluss/async-operation` to Docker Hub](https://hub.docker.com/layers/cumuluss/async-operation/44/images/sha256-8d757276714153e4ab8c24a2b7b6b9ffee14cc78b482d9924e7093af88362b04?context=explore).
+  - The `async_operation_image` property of `cumulus` module must be updated to pull the ECR image for `cumuluss/async-operation:44`.
+
+### Changed
+
+- **CUMULUS-2997**
+  - Migrate Cumulus Docs to Docusaurus v2 and DocSearch v3.
+- **CUMULUS-3044**
+  - Deployment section:
+    - Consolidate and migrate Cumulus deployment (public facing) content from wiki to Cumulus Docs in GitHub.
+    - Update links to make sure that the user can maintain flow between the wiki and GitHub deployment documentation.
+    - Organize and update sidebar to include categories for similar deployment topics.
+- **CUMULUS-3147**
+  - Set example/cumulus-tf default async_operation_image_version to 44.
+  - Set example/cumulus-tf default ecs_task_image_version to 1.9.0.
+- **CUMULUS-3166**
+  - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
+
+### Fixed
+
+- **CUMULUS-3187**
+  - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
+  - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
+
+## [v14.1.0] 2023-02-27
 
 ### MIGRATION notes
 
@@ -143,25 +195,20 @@ When you apply this update, the original PostgreSQL v10 parameter group will be
 removed, and recreated using PG11 defaults/configured terraform values and
 update the database cluster to use the new configuration.
 
-- **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
-
 ### Added
 
 - **CUMULUS-3193**
   - Add a Python version file
 - **CUMULUS-3121**
-  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
+  - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods.
+    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
+    section of the Cumulus documentation in order for more detailed information and an example into how to do this.
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
     endpoint.    In future releases the `PUT` endpoint will be replaced with valid PUT logic
     behavior (complete overwrite) in a future release.   **The existing PUT
     implementation is deprecated** and users should move all existing usage of
     `PUT` to `PATCH` before upgrading to a release with `CUMULUS-3072`.
-
-### Removed
-
-- Removed a few tests that were disabled 3-4 years ago
 
 ### Fixed
 
@@ -233,7 +280,7 @@ update the database cluster to use the new configuration.
   - Upgraded the python package dependencies of the example lambdas
 - **CUMULUS-3043**
   - Organize & link Getting Started public docs for better user guidance
-  - Update Getting Started sections with current content 
+  - Update Getting Started sections with current content
 - **CUMULUS-3046**
   - Update 'Deployment' public docs
   - Apply grammar, link fixes, and continuity/taxonomy standards
@@ -6974,7 +7021,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v14.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.0...HEAD
+[v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
+[v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
 [v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
 [v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2

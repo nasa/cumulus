@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:45"
+  default = "cumuluss/async-operation:44"
 }
 
 variable "cloudwatch_log_retention_periods" {

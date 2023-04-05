@@ -11,7 +11,7 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
   function_name    = "${var.prefix}-processDeadLetterArchive"
   role             = aws_iam_role.process_dead_letter_archive_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 512
 

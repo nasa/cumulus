@@ -130,15 +130,15 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('copies files configured to glacier', async () => {
-      const excludeFileTypes = get(lambdaOutput, 'meta.collection.meta.excludeFileTypes', []);
-      expect(excludeFileTypes.length).toBe(1);
+      const excludedFileExtensions = get(lambdaOutput, 'meta.collection.meta.orca.excludedFileExtensions', []);
+      expect(excludedFileExtensions.length).toBe(1);
       filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
       expect(filesCopiedToGlacier.length).toBe(3);
 
       // copiedToGlacier contains a list of the file s3uri in primary buckets
       const copiedOver = await Promise.all(
         filesCopiedToGlacier.map((s3uri) => {
-          expect(excludeFileTypes.filter((type) => s3uri.endsWith(type)).length).toBe(0);
+          expect(excludedFileExtensions.filter((type) => s3uri.endsWith(type)).length).toBe(0);
           return s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key });
         })
       );
