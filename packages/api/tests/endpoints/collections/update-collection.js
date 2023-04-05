@@ -17,7 +17,7 @@ const {
   generateLocalTestDb,
   localStackConnectionEnv,
   migrationDir,
-  translateApiCollectionToPostgresCollection,
+  translatePostgresCollectionToApiCollection,
   fakeCollectionRecordFactory,
 } = require('@cumulus/db');
 const {
@@ -28,13 +28,17 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const {
+  InvalidRegexError,
+  UnmatchedRegexError,
+} = require('@cumulus/errors');
 
-const models = require('../../../models');
+const { AccessToken } = require('../../../models');
 const {
   createFakeJwtAuthToken,
-  fakeCollectionFactory,
   setAuthorizedOAuthUsers,
   createCollectionTestRecords,
+  fakeCollectionFactory,
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
 const { put } = require('../../../endpoints/collections');
@@ -42,8 +46,6 @@ const { put } = require('../../../endpoints/collections');
 const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.RulesTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -77,16 +79,10 @@ test.before(async (t) => {
   );
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
-
-  const rulesModel = new models.Rule({ tableName: process.env.RulesTable });
-  await rulesModel.createTable();
-  t.context.collectionModel = new models.Collection({ tableName: process.env.CollectionsTable });
-  await t.context.collectionModel.createTable();
-
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
-  accessTokenModel = new models.AccessToken();
+  accessTokenModel = new AccessToken();
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
@@ -126,7 +122,6 @@ test.afterEach(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await t.context.collectionModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await cleanupTestIndex(t.context);
   await destroyLocalTestDb({
@@ -187,22 +182,17 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await t.context.collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
-
   const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
     name: originalCollection.name,
     version: originalCollection.version,
   });
 
-  t.like(actualCollection, {
-    ...originalCollection,
-    duplicateHandling: 'error',
-    process: undefined,
-    createdAt: originalCollection.createdAt,
-    updatedAt: actualCollection.updatedAt,
+  t.deepEqual(actualPgCollection, {
+    ...originalPgRecord,
+    duplicate_handling: 'error',
+    process: null,
+    created_at: originalPgRecord.created_at,
+    updated_at: actualPgCollection.updated_at,
   });
 
   const updatedEsRecord = await t.context.esCollectionClient.get(
@@ -215,18 +205,10 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
       duplicateHandling: 'error',
       process: undefined,
       createdAt: originalCollection.createdAt,
-      updatedAt: actualCollection.updatedAt,
+      updatedAt: actualPgCollection.updated_at.getTime(),
       timestamp: updatedEsRecord.timestamp,
     }
   );
-
-  t.deepEqual(actualPgCollection, {
-    ...originalPgRecord,
-    duplicate_handling: 'error',
-    process: null,
-    created_at: originalPgRecord.created_at,
-    updated_at: actualPgCollection.updated_at,
-  });
 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
@@ -237,7 +219,7 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
 
   const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
   t.is(message.event, 'Update');
-  t.deepEqual(message.record, actualCollection);
+  t.deepEqual(message.record, translatePostgresCollectionToApiCollection(actualPgCollection));
 });
 
 test.serial('PUT replaces an existing collection and correctly removes fields', async (t) => {
@@ -275,22 +257,9 @@ test.serial('PUT replaces an existing collection and correctly removes fields', 
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await t.context.collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
-
   const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
     name: originalCollection.name,
     version: originalCollection.version,
-  });
-
-  t.like(actualCollection, {
-    ...originalCollection,
-    duplicateHandling: 'error',
-    process: undefined,
-    createdAt: originalCollection.createdAt,
-    updatedAt: actualCollection.updatedAt,
   });
 
   t.deepEqual(actualPgCollection, {
@@ -302,7 +271,7 @@ test.serial('PUT replaces an existing collection and correctly removes fields', 
   });
 });
 
-test.serial('PUT replaces an existing collection in Dynamo and PG with correct timestamps', async (t) => {
+test.serial('PUT replaces an existing collection in PG with correct timestamps', async (t) => {
   const knex = t.context.testKnex;
   const { originalCollection } = await createCollectionTestRecords(
     t.context,
@@ -327,11 +296,6 @@ test.serial('PUT replaces an existing collection in Dynamo and PG with correct t
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await t.context.collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
-
   const actualPgCollection = await t.context.collectionPgModel.get(knex, {
     name: originalCollection.name,
     version: originalCollection.version,
@@ -344,12 +308,7 @@ test.serial('PUT replaces an existing collection in Dynamo and PG with correct t
   // Endpoint logic will set an updated timestamp and ignore the value from the request
   // body, so value on actual records should be different (greater) than the value
   // sent in the request body
-  t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
   // createdAt timestamp from original record should have been preserved
-  t.is(actualCollection.createdAt, originalCollection.createdAt);
-  // PG and Dynamo records have the same timestamps
-  t.is(actualPgCollection.created_at.getTime(), actualCollection.createdAt);
-  t.is(actualPgCollection.updated_at.getTime(), actualCollection.updatedAt);
   t.is(actualPgCollection.created_at.getTime(), updatedEsRecord.createdAt);
   t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
@@ -379,11 +338,6 @@ test.serial('PUT replaces an existing collection in all data stores with correct
     .send(updatedCollection)
     .expect(200);
 
-  const actualCollection = await t.context.collectionModel.get({
-    name: originalCollection.name,
-    version: originalCollection.version,
-  });
-
   const actualPgCollection = await t.context.collectionPgModel.get(t.context.testKnex, {
     name: originalCollection.name,
     version: originalCollection.version,
@@ -396,75 +350,21 @@ test.serial('PUT replaces an existing collection in all data stores with correct
   // Endpoint logic will set an updated timestamp and ignore the value from the request
   // body, so value on actual records should be different (greater) than the value
   // sent in the request body
-  t.true(actualCollection.updatedAt > updatedCollection.updatedAt);
+  t.true(actualPgCollection.updated_at.getTime() > updatedCollection.updatedAt);
   // createdAt timestamp from original record should have been preserved
-  t.is(actualCollection.createdAt, originalCollection.createdAt);
-  // PG and Dynamo records have the same timestamps
-  t.is(actualPgCollection.created_at.getTime(), actualCollection.createdAt);
-  t.is(actualPgCollection.updated_at.getTime(), actualCollection.updatedAt);
+  t.is(actualPgCollection.created_at.getTime(), originalCollection.createdAt);
+  // PG and ES records have the same timestamps
   t.is(actualPgCollection.created_at.getTime(), updatedEsRecord.createdAt);
   t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
 });
 
-test.serial('PUT creates a new record in Dynamo if one does not exist and sends an SNS message', async (t) => {
-  const { testKnex, collectionPgModel, collectionModel, QueueUrl } = t.context;
-  const originalCollection = fakeCollectionFactory({
-    duplicateHandling: 'replace',
-    process: randomString(),
-  });
-  const originalPgCollection = await translateApiCollectionToPostgresCollection(originalCollection);
-  await collectionPgModel.create(testKnex, originalPgCollection);
-
-  const updatedCollection = {
-    ...originalCollection,
-    duplicateHandling: 'error',
-  };
-
-  delete updatedCollection.process;
-
-  await request(app)
+test.serial('PUT returns 404 for non-existent collection', async (t) => {
+  const originalCollection = fakeCollectionFactory();
+  const response = await request(app)
     .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(updatedCollection)
-    .expect(200);
-
-  const fetchedDynamoRecord = await collectionModel.get({
-    name: updatedCollection.name,
-    version: updatedCollection.version,
-  });
-
-  const fetchedDbRecord = await collectionPgModel.get(testKnex, {
-    name: originalCollection.name, version: originalCollection.version,
-  });
-
-  t.is(fetchedDbRecord.name, originalCollection.name);
-  t.is(fetchedDbRecord.version, originalCollection.version);
-  t.is(fetchedDbRecord.duplicate_handling, 'error');
-  // eslint-disable-next-line unicorn/no-null
-  t.is(fetchedDbRecord.process, null);
-  t.is(fetchedDbRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedDbRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-
-  t.is(Messages.length, 1);
-
-  const message = JSON.parse(JSON.parse(Messages[0].Body).Message);
-  t.is(message.event, 'Update');
-  t.deepEqual(message.record, fetchedDynamoRecord);
-});
-
-test.serial('PUT returns 404 for non-existent collection', async (t) => {
-  const name = randomString();
-  const version = randomString();
-  const response = await request(app)
-    .put(`/collections/${name}/${version}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send({ name, version })
+    .send(originalCollection)
     .expect(404);
   const { message, record } = response.body;
 
@@ -472,111 +372,35 @@ test.serial('PUT returns 404 for non-existent collection', async (t) => {
   t.falsy(record);
 });
 
-test.serial('PUT returns 400 for name mismatch between params and payload',
-  async (t) => {
-    const name = randomString();
-    const version = randomString();
-    const response = await request(app)
-      .put(`/collections/${name}/${version}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({ name: randomString(), version })
-      .expect(400);
-    const { message, record } = response.body;
+test.serial('PUT returns 400 for name mismatch between params and payload', async (t) => {
+  const originalCollection = fakeCollectionFactory();
+  const response = await request(app)
+    .put(`/collections/${randomString()}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalCollection)
+    .expect(400);
+  const { message, record } = response.body;
 
-    t.truthy(message);
-    t.falsy(record);
-  });
-
-test.serial('PUT returns 400 for version mismatch between params and payload',
-  async (t) => {
-    const name = randomString();
-    const version = randomString();
-    const response = await request(app)
-      .put(`/collections/${name}/${version}`)
-      .set('Accept', 'application/json')
-      .set('Authorization', `Bearer ${jwtAuthToken}`)
-      .send({ name, version: randomString() })
-      .expect(400);
-    const { message, record } = response.body;
-
-    t.truthy(message);
-    t.falsy(record);
-  });
-
-test.serial('put() does not write to PostgreSQL/Elasticsearch or publish SNS message if writing to Dynamo fails', async (t) => {
-  const { testKnex } = t.context;
-  const {
-    originalCollection,
-    originalPgRecord,
-    originalEsRecord,
-  } = await createCollectionTestRecords(
-    t.context,
-    {
-      duplicateHandling: 'error',
-    }
-  );
-
-  const fakeCollectionsModel = {
-    get: () => Promise.resolve(originalCollection),
-    create: () => {
-      throw new Error('something bad');
-    },
-  };
-
-  const updatedCollection = {
-    ...originalCollection,
-    duplicateHandling: 'replace',
-  };
-
-  const expressRequest = {
-    params: {
-      name: originalCollection.name,
-      version: originalCollection.version,
-    },
-    body: updatedCollection,
-    testContext: {
-      knex: testKnex,
-      collectionsModel: fakeCollectionsModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    put(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.deepEqual(
-    await t.context.collectionModel.get({
-      name: updatedCollection.name,
-      version: updatedCollection.version,
-    }),
-    originalCollection
-  );
-  t.deepEqual(
-    await t.context.collectionPgModel.get(t.context.testKnex, {
-      name: updatedCollection.name,
-      version: updatedCollection.version,
-    }),
-    originalPgRecord
-  );
-  t.deepEqual(
-    await t.context.esCollectionClient.get(
-      constructCollectionId(originalCollection.name, originalCollection.version)
-    ),
-    originalEsRecord
-  );
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-
-  t.is(Messages, undefined);
+  t.truthy(message);
+  t.falsy(record);
 });
 
-test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message if writing to PostgreSQL fails', async (t) => {
+test.serial('PUT returns 400 for version mismatch between params and payload', async (t) => {
+  const originalCollection = fakeCollectionFactory();
+  const response = await request(app)
+    .put(`/collections/${originalCollection.name}/${randomString()}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalCollection)
+    .expect(400);
+  const { message, record } = response.body;
+
+  t.truthy(message);
+  t.falsy(record);
+});
+
+test.serial('PUT does not write to Elasticsearch or publish SNS message if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalCollection,
@@ -590,8 +414,8 @@ test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message
   );
 
   const fakeCollectionPgModel = {
-    upsert: () => Promise.reject(new Error('something bad')),
     get: () => Promise.resolve(fakeCollectionRecordFactory()),
+    upsert: () => Promise.reject(new Error('something bad')),
   };
 
   const updatedCollection = {
@@ -617,14 +441,6 @@ test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message
     put(expressRequest, response),
     { message: 'something bad' }
   );
-
-  t.deepEqual(
-    await t.context.collectionModel.get({
-      name: updatedCollection.name,
-      version: updatedCollection.version,
-    }),
-    originalCollection
-  );
   t.deepEqual(
     await t.context.collectionPgModel.get(t.context.testKnex, {
       name: updatedCollection.name,
@@ -646,78 +462,7 @@ test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message
   t.is(Messages, undefined);
 });
 
-test.serial('put() does not write to Dynamo/Elasticsearch or publish SNS message if writing to PostgreSQL fails and no Dynamo record existed previously', async (t) => {
-  const { testKnex, collectionModel } = t.context;
-  const {
-    originalCollection,
-    originalPgRecord,
-    originalEsRecord,
-  } = await createCollectionTestRecords(
-    t.context,
-    {
-      duplicateHandling: 'error',
-    }
-  );
-
-  await collectionModel.delete(originalCollection);
-
-  const fakeCollectionPgModel = {
-    upsert: () => Promise.reject(new Error('something bad')),
-    get: () => Promise.resolve(fakeCollectionRecordFactory()),
-  };
-
-  const updatedCollection = {
-    ...originalCollection,
-    duplicateHandling: 'replace',
-  };
-
-  const expressRequest = {
-    params: {
-      name: originalCollection.name,
-      version: originalCollection.version,
-    },
-    body: updatedCollection,
-    testContext: {
-      knex: testKnex,
-      collectionPgModel: fakeCollectionPgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    put(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  await t.throwsAsync(() =>
-    t.context.collectionModel.get({
-      name: updatedCollection.name,
-      version: updatedCollection.version,
-    }),
-  { name: 'RecordDoesNotExist' });
-  t.deepEqual(
-    await t.context.collectionPgModel.get(t.context.testKnex, {
-      name: updatedCollection.name,
-      version: updatedCollection.version,
-    }),
-    originalPgRecord
-  );
-  t.deepEqual(
-    await t.context.esCollectionClient.get(
-      constructCollectionId(originalCollection.name, originalCollection.version)
-    ),
-    originalEsRecord
-  );
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl: t.context.QueueUrl,
-    WaitTimeSeconds: 10,
-  }).promise();
-
-  t.is(Messages, undefined);
-});
-
-test.serial('put() does not write to Dynamo/PostgreSQL or publish SNS message if writing to Elasticsearch fails', async (t) => {
+test.serial('PUT does not write to PostgreSQL or publish SNS message if writing to Elasticsearch fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalCollection,
@@ -757,14 +502,6 @@ test.serial('put() does not write to Dynamo/PostgreSQL or publish SNS message if
     put(expressRequest, response),
     { message: 'something bad' }
   );
-
-  t.deepEqual(
-    await t.context.collectionModel.get({
-      name: updatedCollection.name,
-      version: updatedCollection.version,
-    }),
-    originalCollection
-  );
   t.deepEqual(
     await t.context.collectionPgModel.get(t.context.testKnex, {
       name: updatedCollection.name,
@@ -784,4 +521,236 @@ test.serial('put() does not write to Dynamo/PostgreSQL or publish SNS message if
   }).promise();
 
   t.is(Messages, undefined);
+});
+
+test.serial('PUT throws InvalidRegexError for invalid granuleIdExtraction', async (t) => {
+  const updateCollection = fakeCollectionFactory({ granuleIdExtraction: '*' });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: InvalidRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for non-matching granuleIdExtraction', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    granuleIdExtraction: '(1234)',
+    sampleFileName: 'abcd',
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for granuleIdExtraction with no matching group', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    granuleIdExtraction: '1234',
+    sampleFileName: '1234',
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for invalid granuleId regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({ granuleId: '*' });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: InvalidRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for non-matching granuleId regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    granuleIdExtraction: '(1234)',
+    sampleFileName: '1234',
+    granuleId: 'abcd',
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for invalid file.regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '*',
+      sampleFileName: 'filename',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: InvalidRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for non-matching file.regex', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^1234$',
+      sampleFileName: 'filename',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    { instanceOf: UnmatchedRegexError }
+  );
+});
+
+test.serial('PUT throws UnmatchedRegexError for unmatched file.checksumFor', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+      checksumFor: '^1234$',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    {
+      instanceOf: UnmatchedRegexError,
+      message: 'checksumFor \'^1234$\' does not match any file regex',
+    }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for file.checksumFor matching multiple files', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+    },
+    {
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename2',
+    },
+    {
+      bucket: 'bucket',
+      regex: '^file.*$',
+      sampleFileName: 'filename3',
+      checksumFor: '^.*$',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    {
+      instanceOf: InvalidRegexError,
+      message: 'checksumFor \'^.*$\' matches multiple file regexes',
+    }
+  );
+});
+
+test.serial('PUT throws InvalidRegexError for file.checksumFor matching its own file', async (t) => {
+  const updateCollection = fakeCollectionFactory({
+    files: [{
+      bucket: 'bucket',
+      regex: '^.*$',
+      sampleFileName: 'filename',
+      checksumFor: '^.*$',
+    }],
+  });
+  const validateRequest = {
+    params: {
+      name: updateCollection.name,
+      version: updateCollection.version,
+    },
+    body: updateCollection,
+  };
+  const response = buildFakeExpressResponse();
+
+  await t.throwsAsync(
+    put(validateRequest, response),
+    {
+      instanceOf: InvalidRegexError,
+      message: 'checksumFor \'^.*$\' cannot be used to validate itself',
+    }
+  );
 });

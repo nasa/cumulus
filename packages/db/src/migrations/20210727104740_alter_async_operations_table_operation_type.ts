@@ -24,7 +24,6 @@ export const up = async (knex: Knex): Promise<void> => {
     'Dead-Letter Processing',
     'Kinesis Replay',
     'Reconciliation Report',
-    'Migration Count Report',
     'Data Migration',
     'SQS Replay',
   ]));
@@ -40,7 +39,6 @@ export const down = async (knex: Knex): Promise<void> => {
       'Dead-Letter Processing',
       'Kinesis Replay',
       'Reconciliation Report',
-      'Migration Count Report',
       'Data Migration',
     ])
   );

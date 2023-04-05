@@ -8,7 +8,7 @@ const cryptoRandomString = require('crypto-random-string');
 const uuidv4 = require('uuid/v4');
 const proxyquire = require('proxyquire');
 
-const { randomString } = require('@cumulus/common/test-utils');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   sns,
   sqs,
@@ -25,7 +25,6 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const {
-  MissingRequiredEnvVarError,
   UnmetRequirementsError,
 } = require('@cumulus/errors');
 const {
@@ -38,20 +37,26 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
-
-const Execution = require('../../../models/executions');
-const Granule = require('../../../models/granules');
-const Pdr = require('../../../models/pdrs');
+const {
+  getMessageExecutionParentArn,
+} = require('@cumulus/message/Executions');
+const {
+  writeRecords,
+} = require('../../../lambdas/sf-event-sqs-to-db-records');
 
 const {
   handler,
-  writeRecords,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: (queue, message) => Promise.resolve([queue, message]),
   },
-  '@cumulus/aws-client/StepFunctions': {
-    describeExecution: () => Promise.resolve({}),
+  '@cumulus/message/Executions': {
+    getMessageExecutionParentArn: (cumulusMessage) => {
+      if (cumulusMessage.fail === true) {
+        throw new Error('Intentional failure: test case');
+      }
+      return getMessageExecutionParentArn(cumulusMessage);
+    },
   },
 });
 
@@ -121,6 +126,13 @@ test.before(async (t) => {
     PG_DATABASE: t.context.testDbName,
   };
 
+  t.context.testOverrides = {
+    stepFunctionUtils: {
+      ...StepFunctions,
+      describeExecution: () => Promise.resolve({}),
+    },
+  };
+
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.testKnex = knex;
   t.context.testKnexAdmin = knexAdmin;
@@ -150,31 +162,6 @@ test.before(async (t) => {
   t.context.granulePgModel = new GranulePgModel();
   t.context.pdrPgModel = new PdrPgModel();
   t.context.providerPgModel = new ProviderPgModel();
-
-  process.env.ExecutionsTable = randomString();
-  process.env.GranulesTable = randomString();
-  process.env.PdrsTable = randomString();
-
-  const executionModel = new Execution();
-  await executionModel.createTable();
-  t.context.executionModel = executionModel;
-
-  const fakeFileUtils = {
-    buildDatabaseFiles: (params) => Promise.resolve(params.files),
-  };
-  const fakeStepFunctionUtils = {
-    describeExecution: () => Promise.resolve({}),
-  };
-  const granuleModel = new Granule({
-    fileUtils: fakeFileUtils,
-    stepFunctionUtils: fakeStepFunctionUtils,
-  });
-  await granuleModel.createTable();
-  t.context.granuleModel = granuleModel;
-
-  const pdrModel = new Pdr();
-  await pdrModel.createTable();
-  t.context.pdrModel = pdrModel;
 
   fixture = await loadFixture('execution-running-event.json');
 
@@ -283,15 +270,9 @@ test.beforeEach(async (t) => {
 
 test.after.always(async (t) => {
   const {
-    executionModel,
-    pdrModel,
     PdrsTopicArn,
-    granuleModel,
     ExecutionsTopicArn,
   } = t.context;
-  await executionModel.deleteTable();
-  await pdrModel.deleteTable();
-  await granuleModel.deleteTable();
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -300,22 +281,6 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
   await sns().deleteTopic({ TopicArn: ExecutionsTopicArn }).promise();
   await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
-});
-
-test.serial('writeRecords() throws error if RDS_DEPLOYMENT_CUMULUS_VERSION env var is missing', async (t) => {
-  delete process.env.RDS_DEPLOYMENT_CUMULUS_VERSION;
-  const {
-    cumulusMessage,
-    testKnex,
-  } = t.context;
-
-  await t.throwsAsync(
-    writeRecords({
-      cumulusMessage,
-      knex: testKnex,
-    }),
-    { instanceOf: MissingRequiredEnvVarError }
-  );
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {
@@ -340,13 +305,11 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   const {
     collectionCumulusId,
     cumulusMessage,
-    executionModel,
-    granuleModel,
-    pdrModel,
     testKnex,
     executionArn,
     pdrName,
     granuleId,
+    testOverrides,
   } = t.context;
 
   delete cumulusMessage.meta.status;
@@ -354,12 +317,8 @@ test('writeRecords() does not write granules/PDR if writeExecution() throws gene
   await t.throwsAsync(writeRecords({
     cumulusMessage,
     knex: testKnex,
-    granuleModel,
+    testOverrides,
   }));
-
-  t.false(await executionModel.exists({ arn: executionArn }));
-  t.false(await pdrModel.exists({ pdrName }));
-  t.false(await granuleModel.exists({ granuleId }));
 
   t.false(
     await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
@@ -379,20 +338,14 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
   const {
     collectionCumulusId,
     cumulusMessage,
-    executionModel,
-    granuleModel,
-    pdrModel,
     testKnex,
     executionArn,
     pdrName,
     granuleId,
+    testOverrides,
   } = t.context;
 
-  await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
-
-  t.true(await executionModel.exists({ arn: executionArn }));
-  t.true(await granuleModel.exists({ granuleId }));
-  t.true(await pdrModel.exists({ pdrName }));
+  await writeRecords({ cumulusMessage, knex: testKnex, testOverrides });
 
   t.true(
     await t.context.executionPgModel.exists(t.context.testKnex, { arn: executionArn })
@@ -409,19 +362,12 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
 });
 
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
-  // make execution write throw an error
-  const fakeExecutionModel = {
-    storeExecution: () => {
-      throw new Error('execution Dynamo error');
-    },
-  };
-
   const {
     handlerResponse,
     sqsEvent,
   } = await runHandler({
     ...t.context,
-    executionModel: fakeExecutionModel,
+    cumulusMessage: { fail: true },
   });
 
   t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
@@ -431,11 +377,10 @@ test.serial('writeRecords() discards an out of order message that is older than 
   const {
     collectionCumulusId,
     cumulusMessage,
-    granuleModel,
-    pdrModel,
     testKnex,
     pdrName,
     granuleId,
+    testOverrides,
   } = t.context;
 
   const pdrPgModel = new PdrPgModel();
@@ -446,14 +391,11 @@ test.serial('writeRecords() discards an out of order message that is older than 
 
   cumulusMessage.payload.granules[0].createdAt = timestamp;
   cumulusMessage.cumulus_meta.workflow_start_time = timestamp;
-  await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
+  await writeRecords({ cumulusMessage, knex: testKnex, testOverrides });
 
   cumulusMessage.payload.granules[0].createdAt = olderTimestamp;
   cumulusMessage.cumulus_meta.workflow_start_time = olderTimestamp;
-  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }));
-
-  t.is(timestamp, (await granuleModel.get({ granuleId })).createdAt);
-  t.is(timestamp, (await pdrModel.get({ pdrName })).createdAt);
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, testOverrides }));
 
   t.deepEqual(
     new Date(timestamp),
@@ -472,13 +414,11 @@ test.serial('writeRecords() discards an out of order message that has an older s
   const {
     collectionCumulusId,
     cumulusMessage,
-    executionModel,
-    granuleModel,
-    pdrModel,
     testKnex,
     executionArn,
     pdrName,
     granuleId,
+    testOverrides,
   } = t.context;
 
   const executionPgModel = new ExecutionPgModel();
@@ -486,14 +426,10 @@ test.serial('writeRecords() discards an out of order message that has an older s
   const granulePgModel = new GranulePgModel();
 
   cumulusMessage.meta.status = 'completed';
-  await writeRecords({ cumulusMessage, knex: testKnex, granuleModel });
+  await writeRecords({ cumulusMessage, knex: testKnex, testOverrides });
 
   cumulusMessage.meta.status = 'running';
-  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, granuleModel }));
-
-  t.is('completed', (await executionModel.get({ arn: executionArn })).status);
-  t.is('completed', (await granuleModel.get({ granuleId })).status);
-  t.is('completed', (await pdrModel.get({ pdrName })).status);
+  await t.notThrowsAsync(writeRecords({ cumulusMessage, knex: testKnex, testOverrides }));
 
   t.is('completed', (await executionPgModel.get(testKnex, { arn: executionArn })).status);
   t.is('completed', (await granulePgModel.get(

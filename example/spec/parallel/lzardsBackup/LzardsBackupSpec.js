@@ -17,6 +17,7 @@ describe('The Lzards Backup Task ', () => {
   let beforeAllFailed = false;
   let granuleId;
   let collection;
+  let config;
   let FunctionName;
   let lzardsApiGetFunctionName;
   let functionConfig;
@@ -33,12 +34,16 @@ describe('The Lzards Backup Task ', () => {
 
   beforeAll(async () => {
     try {
-      const config = await loadConfig();
+      config = await loadConfig();
       prefix = config.stackName;
       ingestBucket = config.buckets.protected.name;
       ingestPath = `${prefix}/lzardsBackupSpec`;
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule2.dat`, path.join(__dirname, 'test_data', 'testGranule2.dat'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule2.jpg`, path.join(__dirname, 'test_data', 'testGranule2.jpg'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule3.dat`, path.join(__dirname, 'test_data', 'testGranule3.dat'));
+      await putFile(ingestBucket, `${ingestPath}/testGranule3.jpg`, path.join(__dirname, 'test_data', 'testGranule3.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
       lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
       functionConfig = await lambda().getFunctionConfiguration({
@@ -67,72 +72,102 @@ describe('The Lzards Backup Task ', () => {
         }
       );
 
-      console.log(`generated collection: ${JSON.stringify(collection)}`);
-
-      const Payload = JSON.stringify({
-        cma: {
-          ReplaceConfig: {
-            Path: '$.payload',
-            TargetPath: '$.payload',
-          },
-          task_config: {
-            cumulus_message: {
-              outputs: [
-                {
-                  source: '{$.originalPayload}',
-                  destination: '{$.payload}',
-                },
-                {
-                  source: '{$.backupResults}',
-                  destination: '{$.meta.backupStatus}',
-                },
-              ],
+      const Payload = JSON.stringify(
+        {
+          cma: {
+            ReplaceConfig: {
+              Path: '$.payload',
+              TargetPath: '$.payload',
+            },
+            task_config: {
+              cumulus_message: {
+                outputs: [
+                  {
+                    source: '{$.originalPayload}',
+                    destination: '{$.payload}',
+                  },
+                  {
+                    source: '{$.backupResults}',
+                    destination: '{$.meta.backupStatus}',
+                  },
+                ],
+              },
+            },
+            event: {
+              cumulus_meta: {
+                system_bucket: config.bucket,
+              },
+              meta: {
+                buckets: config.buckets,
+                collection,
+                stack: config.stackName,
+              },
+              payload: {
+                granules: [
+                  {
+                    granuleId,
+                    dataType: collection.name,
+                    version: collection.version,
+                    provider,
+                    createdAt: tenMinutesAgo,
+                    files: [
+                      {
+                        fileName: 'testGranule.jpg',
+                        bucket: ingestBucket,
+                        key: `${ingestPath}/testGranule.jpg`,
+                        checksumType: 'md5',
+                        checksum: '5799f9560b232baf54337d334179caa0',
+                      },
+                      {
+                        fileName: 'testGranule.dat',
+                        bucket: ingestBucket,
+                        key: `${ingestPath}/testGranule.dat`,
+                        checksumType: 'md5',
+                        checksum: '39a870a194a787550b6b5d1f49629236',
+                      },
+                      {
+                        fileName: 'testGranule2.jpg',
+                        bucket: ingestBucket,
+                        key: `${ingestPath}/testGranule2.jpg`,
+                        checksumType: 'sha256',
+                        checksum: 'cf27948e5b84c8b3254162a77193ae02e4971da6313ddffaf075c45d7ca03fce',
+                      },
+                      {
+                        fileName: 'testGranule2.dat',
+                        bucket: ingestBucket,
+                        key: `${ingestPath}/testGranule2.dat`,
+                        checksumType: 'sha256',
+                        checksum: 'cf27948e5b84c8b3254162a77193ae02e4971da6313ddffaf075c45d7ca03fce',
+                      },
+                      {
+                        fileName: 'testGranule3.jpg',
+                        bucket: ingestBucket,
+                        key: `${ingestPath}/testGranule3.jpg`,
+                        checksumType: 'sha512',
+                        checksum: 'ceabc00b6c6d0b58c8dfa8e398808e217e893b01e4bf617e043d18d8680275285ad8dcd2aff88916d49a115ad76f8af5966f75cef481ab4764355254655fac2b',
+                      },
+                      {
+                        fileName: 'testGranule3.dat',
+                        bucket: ingestBucket,
+                        key: `${ingestPath}/testGranule3.dat`,
+                        checksumType: 'sha512',
+                        checksum: 'ceabc00b6c6d0b58c8dfa8e398808e217e893b01e4bf617e043d18d8680275285ad8dcd2aff88916d49a115ad76f8af5966f75cef481ab4764355254655fac2b',
+                      },
+                    ],
+                  },
+                ],
+              },
             },
           },
-          event: {
-            cumulus_meta: {
-              system_bucket: config.bucket,
-            },
-            meta: {
-              buckets: config.buckets,
-              collection,
-              stack: config.stackName,
-            },
-            payload: {
-              granules: [
-                {
-                  granuleId,
-                  dataType: collection.name,
-                  version: collection.version,
-                  provider,
-                  createdAt: tenMinutesAgo,
-                  files: [
-                    {
-                      fileName: 'testGranule.jpg',
-                      bucket: ingestBucket,
-                      key: `${ingestPath}/testGranule.jpg`,
-                      checksumType: 'md5',
-                      checksum: '5799f9560b232baf54337d334179caa0',
-                    },
-                    {
-                      fileName: 'testGranule.dat',
-                      bucket: ingestBucket,
-                      key: `${ingestPath}/testGranule.dat`,
-                      checksumType: 'md5',
-                      checksum: '39a870a194a787550b6b5d1f49629236',
-                    },
-                  ],
-                },
-              ],
-            },
-          },
-        },
-      });
+        }
+      );
 
       lzardsBackupOutput = await pTimeout(
         lambda().invoke({ FunctionName, Payload }).promise(),
         (functionConfig.Timeout + 10) * 1000
       );
+
+      console.log(`generated collection: ${JSON.stringify(collection)}`);
     } catch (error) {
       beforeAllFailed = true;
       throw error;
@@ -191,7 +226,7 @@ describe('The Lzards Backup Task ', () => {
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
-        expect(payload.count).toBe(1);
+        expect(payload.count).toBe(3);
         expect(payload.items[0].metadata.granuleId).toBe(granuleId);
         expect(payload.items[0].metadata.collection).toBe(`${collection.name}___${collection.version}`);
         expect(payload.items[0].metadata.createdAt).toBe(tenMinutesAgo);
@@ -218,7 +253,7 @@ describe('The Lzards Backup Task ', () => {
         const payload = JSON.parse(lzardsApiGetOutput.Payload);
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
-        expect(payload.count).toBe(1);
+        expect(payload.count).toBe(3);
         expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeGreaterThanOrEqual(thirtyMinutesAgo);
         expect(new Date(payload.items[0].metadata.createdAt).getTime()).toBeLessThanOrEqual(twoMinutesAgo);
         expect(payload.items[0].metadata.provider).toBe(provider);

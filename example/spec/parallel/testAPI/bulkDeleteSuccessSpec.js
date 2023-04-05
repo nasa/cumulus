@@ -26,7 +26,7 @@ const {
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
-
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   createTimestampedTestId,
   createTestSuffix,
@@ -162,7 +162,7 @@ describe('POST /granules/bulkDelete', () => {
           {
             prefix,
             body: {
-              ids: [granuleId],
+              granules: [{ granuleId, collectionId: constructCollectionId(collection.name, collection.version) }],
               // required to force removal of granules from CMR before deletion
               forceRemoveFromCmr: true,
             },

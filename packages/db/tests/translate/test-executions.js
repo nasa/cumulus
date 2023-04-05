@@ -3,8 +3,10 @@ const cryptoRandomString = require('crypto-random-string');
 
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { ValidationError } = require('@cumulus/errors');
 const {
   translateApiExecutionToPostgresExecution,
+  translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } = require('../../dist/translate/executions');
 
@@ -179,4 +181,126 @@ test('translateApiExecutionToPostgresExecution converts API execution to Postgre
     result,
     expectedPostgresExecution
   );
+});
+
+test('translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres, preserving null values', async (t) => {
+  const apiExecution = {
+    arn: 'arn:aws:lambda:us-east-1:1234:1234',
+    name: `${cryptoRandomString({ length: 10 })}execution`,
+    status: 'running',
+    asyncOperationId: null,
+    collectionId: null,
+    cumulusVersion: null,
+    createdAt: null,
+    duration: null,
+    execution: null,
+    error: null,
+    finalPayload: null,
+    originalPayload: null,
+    parentArn: null,
+    tasks: null,
+    timestamp: null,
+    type: null,
+    updatedAt: null,
+  };
+
+  const expectedPostgresExecution = {
+    arn: apiExecution.arn,
+    status: apiExecution.status,
+    async_operation_cumulus_id: null,
+    collection_cumulus_id: null,
+    created_at: null,
+    cumulus_version: null,
+    duration: null,
+    error: null,
+    final_payload: null,
+    original_payload: null,
+    parent_cumulus_id: null,
+    tasks: null,
+    timestamp: null,
+    updated_at: null,
+    url: null,
+    workflow_name: null,
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {};
+  const fakeAsyncOperationPgModel = {};
+  const fakeExecutionPgModel = {};
+
+  const result = await translateApiExecutionToPostgresExecutionWithoutNilsRemoved(
+    apiExecution,
+    fakeDbClient,
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  );
+
+  t.deepEqual(
+    result,
+    expectedPostgresExecution
+  );
+});
+
+test('translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres throws on inappropriate nullification of arn', async (t) => {
+  const apiExecution = {
+    arn: null,
+    name: `${cryptoRandomString({ length: 10 })}execution`,
+    status: 'running',
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {};
+  const fakeAsyncOperationPgModel = {};
+  const fakeExecutionPgModel = {};
+
+  await t.throwsAsync(translateApiExecutionToPostgresExecutionWithoutNilsRemoved(
+    apiExecution,
+    fakeDbClient,
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  ), { instanceOf: ValidationError });
+});
+
+test('translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres throws on inappropriate nullification of name', async (t) => {
+  const apiExecution = {
+    arn: 'arn:aws:lambda:us-east-1:1234:1234',
+    name: null,
+    status: 'running',
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {};
+  const fakeAsyncOperationPgModel = {};
+  const fakeExecutionPgModel = {};
+
+  await t.throwsAsync(translateApiExecutionToPostgresExecutionWithoutNilsRemoved(
+    apiExecution,
+    fakeDbClient,
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  ), { instanceOf: ValidationError });
+});
+
+test('translateApiExecutionToPostgresExecutionWithoutNilsRemoved converts API execution to Postgres throws on inappropriate nullification of status', async (t) => {
+  const apiExecution = {
+    arn: 'arn:aws:lambda:us-east-1:1234:1234',
+    name: `${cryptoRandomString({ length: 10 })}execution`,
+    status: null,
+  };
+
+  const fakeDbClient = {};
+  const fakeCollectionPgModel = {};
+  const fakeAsyncOperationPgModel = {};
+  const fakeExecutionPgModel = {};
+
+  await t.throwsAsync(translateApiExecutionToPostgresExecutionWithoutNilsRemoved(
+    apiExecution,
+    fakeDbClient,
+    fakeCollectionPgModel,
+    fakeAsyncOperationPgModel,
+    fakeExecutionPgModel
+  ), { instanceOf: ValidationError });
 });
