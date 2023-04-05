@@ -71,6 +71,7 @@ echo "terraform {
 ../terraform init \
   -input=false
 
+../terraform force-unlock dfdb7828-64a4-8e8e-db39-ea5117fdeaa2
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
