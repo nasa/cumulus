@@ -14,7 +14,7 @@ that versioning is enabled on the S3 bucket used for persisting your
 deployment's Terraform state file.
 
 To enable bucket versioning, either use the AWS CLI command given in
-[Configuring the Cumulus deployment][configuring], or the AWS Management Console, as follows:
+[Configuring the Cumulus deployment](../deployment/README.md#create-resources-for-terraform-state), or the AWS Management Console, as follows:
 
 1. Go to the S3 service
 2. Go to the bucket used for storing Terraform state files

@@ -28,20 +28,16 @@ const {
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, Collection, Execution, Granule } = require('../../models');
+const { AccessToken } = require('../../models');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,
-  fakeCollectionFactory,
   setAuthorizedOAuthUsers,
   fakeGranuleFactoryV2,
   fakeExecutionFactoryV2,
 } = require('../../lib/testUtils');
 
 process.env.AccessTokensTable = randomString();
-process.env.ExecutionsTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 // import the express app after setting the env variables
@@ -184,9 +180,6 @@ const executionExistsMock = (arn) => {
 
 let jwtAuthToken;
 let accessTokenModel;
-let collectionModel;
-let granuleModel;
-let executionModel;
 let mockedSF;
 let mockedSFExecution;
 let collectionPgModel;
@@ -249,19 +242,6 @@ test.before(async (t) => {
   );
   const expiredExecutionPgRecordId = createdExpiredExecutionRecord.cumulus_id;
 
-  // create fake Collections table
-  collectionModel = new Collection();
-  await collectionModel.createTable();
-
-  // create fake Granules table
-  granuleModel = new Granule();
-  await granuleModel.createTable();
-
-  // create fake Executions table
-  executionModel = new Execution();
-  await executionModel.createTable();
-  await executionModel.create(fakeExecution);
-
   process.env = {
     ...process.env,
     ...localStackConnectionEnv,
@@ -276,17 +256,9 @@ test.before(async (t) => {
   collectionPgModel = new CollectionPgModel();
   granulePgModel = new GranulePgModel();
 
-  t.context.testCollection = fakeCollectionFactory({
-    name: collectionName,
-    version: collectionVersion,
-    duplicateHandling: 'error',
-  });
-  const dynamoCollection = await collectionModel.create(
-    t.context.testCollection
-  );
   t.context.collectionId = constructCollectionId(
-    dynamoCollection.name,
-    dynamoCollection.version
+    collectionName,
+    collectionVersion
   );
 
   const fakePgCollection = fakeCollectionRecordFactory({
@@ -315,9 +287,6 @@ test.before(async (t) => {
     fakeGranuleFactoryV2({ granuleId: granuleId1, status: 'completed', collectionId: t.context.collectionId }),
     fakeGranuleFactoryV2({ granuleId: granuleId2, status: 'failed', collectionId: t.context.collectionId }),
   ];
-
-  await granuleModel.create(t.context.fakeGranules[0]);
-  await granuleModel.create(t.context.fakeGranules[1]);
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -361,10 +330,6 @@ test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
   mockedSF.restore();
   mockedSFExecution.restore();
-  await executionModel.deleteTable();
-  await collectionModel.deleteTable();
-  await granuleModel.deleteTable();
-
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,

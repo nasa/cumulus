@@ -24,9 +24,10 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
 
   async upsert(
     knexOrTrx: Knex | Knex.Transaction,
-    execution: PostgresExecution
+    execution: PostgresExecution,
+    writeConstraints: boolean = true
   ) {
-    if (execution.status === 'running') {
+    if (writeConstraints && execution.status === 'running') {
       return await knexOrTrx(this.tableName)
         .insert(execution)
         .onConflict('arn')

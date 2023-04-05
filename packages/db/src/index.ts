@@ -90,6 +90,7 @@ export {
 } from './translate/rules';
 export {
   translateApiExecutionToPostgresExecution,
+  translateApiExecutionToPostgresExecutionWithoutNilsRemoved,
   translatePostgresExecutionToApiExecution,
 } from './translate/executions';
 export {
@@ -125,9 +126,11 @@ export {
   getApiGranuleExecutionCumulusIds,
   getGranuleCollectionId,
   getUniqueGranuleByGranuleId,
+  getGranuleByUniqueColumns,
   upsertGranuleWithExecutionJoinRecord,
   getGranulesByApiPropertiesQuery,
   getGranulesByGranuleId,
+  getGranuleAndCollection,
 } from './lib/granule';
 
 export {

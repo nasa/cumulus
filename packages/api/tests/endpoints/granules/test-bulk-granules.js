@@ -21,8 +21,6 @@ process.env = {
   ...process.env,
   AccessTokensTable: randomString(),
   backgroundQueueName: randomString(),
-  CollectionsTable: randomString(),
-  GranulesTable: randomString(),
   granule_sns_topic_arn: randomString(),
   TOKEN_SECRET: randomString(),
   stackName: randomString(),
@@ -70,12 +68,16 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
-  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
-    ids: expectedIds,
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     knexDebug: false,
   };
 
@@ -100,7 +102,6 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     type: 'BULK_GRANULE',
     envVars: {
       ES_HOST: process.env.ES_HOST,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
@@ -118,12 +119,16 @@ test.serial('bulkOperations() uses correct caller lambda function name', async (
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
-  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
-    ids: expectedIds,
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
   };
 
   const functionName = randomId('lambda');
@@ -181,7 +186,6 @@ test.serial('POST /granules/bulk starts an async-operation with the correct payl
     type: 'BULK_GRANULE',
     envVars: {
       ES_HOST: process.env.ES_HOST,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       system_bucket: process.env.system_bucket,
       stackName: process.env.stackName,
@@ -217,7 +221,7 @@ test.serial('POST /granules/bulk returns 400 when a query is provided with no in
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulk returns 400 when no IDs or query is provided', async (t) => {
+test.serial('POST /granules/bulk returns 400 when no granules or query are provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -234,12 +238,12 @@ test.serial('POST /granules/bulk returns 400 when no IDs or query is provided', 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of ids or query is required/);
+    .expect(400, /One of granules or query is required/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulk returns 400 when IDs is not an array', async (t) => {
+test.serial('POST /granules/bulk returns 400 when granules is not an array', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -249,7 +253,7 @@ test.serial('POST /granules/bulk returns 400 when IDs is not an array', async (t
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
-    ids: 'bad-value',
+    granules: 'bad-value',
   };
 
   await request(app)
@@ -257,12 +261,12 @@ test.serial('POST /granules/bulk returns 400 when IDs is not an array', async (t
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /ids should be an array of values/);
+    .expect(400, /granules should be an array of values/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulk returns 400 when IDs is an empty array', async (t) => {
+test.serial('POST /granules/bulk returns 400 when granules is an empty array', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const expectedQueueName = 'backgroundProcessing';
   const expectedWorkflowName = 'HelloWorldWorkflow';
@@ -272,7 +276,7 @@ test.serial('POST /granules/bulk returns 400 when IDs is an empty array', async 
     queueName: expectedQueueName,
     workflowName: expectedWorkflowName,
     index: expectedIndex,
-    ids: [],
+    granules: [],
   };
 
   await request(app)
@@ -280,7 +284,7 @@ test.serial('POST /granules/bulk returns 400 when IDs is an empty array', async 
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /no values provided for ids/);
+    .expect(400, /no values provided for granules/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -345,7 +349,11 @@ test.serial('POST /granules/bulk returns 500 if invoking StartAsyncOperation lam
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
       workflowName: 'workflowName',
-      ids: [1, 2, 3],
+      granules: [
+        { granuleId: 1, collectionId: 1 },
+        { granuleId: 2, collectionId: 1 },
+        { granuleId: 3, collectionId: 1 },
+      ],
     });
   t.is(response.status, 500);
 });
