@@ -10,45 +10,44 @@ const {
 } = require('@cumulus/db');
 
 const { deconstructCollectionId } = require('./utils');
-const { Granule, Rule } = require('../models');
+const rulesHelpers = require('./rulesHelpers');
 const { updateGranuleStatusToQueued } = require('./writeRecords/write-granules');
 
 /**
    * start the re-ingest of a given granule object
    *
    * @param {Object} params
-   * @param {Object} params.granule - the granule object
+   * @param {Object} params.apiGranule - the granule object
    * @param {Object} params.queueUrl - SQS queue URL to use for sending messages
    * @param {string} [params.asyncOperationId] - specify asyncOperationId origin
-   * @param {Granule} [params.granuleModel] - API Granule model (optional, for testing)
    * @param {GranulePgModel} [params.granulePgModel] - Postgres Granule model
    * (optional, for testing)
+   * @param {updateGranuleStatusToQueuedMethod} [params.updateGranuleStatusToQueuedMethod]
+   *   - method to update granules to queue (optional, for testing)
    * @returns {Promise<undefined>} - undefined
    */
 async function reingestGranule({
-  granule,
+  apiGranule,
   queueUrl,
   asyncOperationId = undefined,
-  granuleModel = new Granule(),
   granulePgModel = new GranulePgModel(),
   updateGranuleStatusToQueuedMethod = updateGranuleStatusToQueued,
 }) {
   const knex = await getKnexClient();
   await updateGranuleStatusToQueuedMethod({
-    granule,
+    apiGranule,
     knex,
     granulePgModel,
-    granuleModel,
   });
 
-  const executionArn = path.basename(granule.execution);
+  const executionArn = path.basename(apiGranule.execution);
 
   const executionDescription = await StepFunctions.describeExecution({ executionArn });
   const originalMessage = JSON.parse(executionDescription.input);
 
-  const { name, version } = deconstructCollectionId(granule.collectionId);
+  const { name, version } = deconstructCollectionId(apiGranule.collectionId);
 
-  const lambdaPayload = await Rule.buildPayload({
+  const lambdaPayload = await rulesHelpers.buildPayload({
     workflow: originalMessage.meta.workflow_name,
     meta: originalMessage.meta,
     cumulus_meta: {
@@ -58,7 +57,7 @@ async function reingestGranule({
       },
     },
     payload: originalMessage.payload,
-    provider: granule.provider,
+    provider: apiGranule.provider,
     collection: {
       name,
       version,
@@ -74,7 +73,7 @@ async function reingestGranule({
    * apply a workflow to a given granule object
    *
    * @param {Object} params
-   * @param {Object} params.granule - the granule object
+   * @param {Object} params.apiGranule - the API granule object
    * @param {string} params.workflow - the workflow name
    * @param {Object} [params.meta] - optional meta object to insert in workflow message
    * @param {string} [params.queueUrl] - URL for SQS queue to use for scheduling workflows
@@ -83,7 +82,7 @@ async function reingestGranule({
    * @returns {Promise<undefined>} undefined
    */
 async function applyWorkflow({
-  granule,
+  apiGranule,
   workflow,
   meta = undefined,
   queueUrl = undefined,
@@ -93,14 +92,14 @@ async function applyWorkflow({
     throw new TypeError('applyWorkflow requires a `workflow` parameter');
   }
 
-  const { name, version } = deconstructCollectionId(granule.collectionId);
+  const { name, version } = deconstructCollectionId(apiGranule.collectionId);
 
-  const lambdaPayload = await Rule.buildPayload({
+  const lambdaPayload = await rulesHelpers.buildPayload({
     workflow,
     payload: {
-      granules: [granule],
+      granules: [apiGranule],
     },
-    provider: granule.provider,
+    provider: apiGranule.provider,
     collection: {
       name,
       version,

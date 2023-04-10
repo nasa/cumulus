@@ -31,11 +31,12 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('upsertExecution writes new "running" execution', async (t) => {
+test.serial('upsertExecution writes new "running" execution with null fields omitted', async (t) => {
   const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
+    randomKey: null,
   };
   testRecord.status = 'running';
   await indexer.upsertExecution({
@@ -44,15 +45,17 @@ test.serial('upsertExecution writes new "running" execution', async (t) => {
     index: esIndex,
   });
 
+  delete testRecord.randomKey;
   const record = await esExecutionsClient.get(testRecord.arn);
   t.like(record, testRecord);
 });
 
-test.serial('upsertExecution writes new "completed" execution', async (t) => {
+test.serial('upsertExecution writes new "completed" execution with null fields omitted', async (t) => {
   const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
     arn: randomString(),
+    randomKey: null,
   };
   testRecord.status = 'completed';
   await indexer.upsertExecution({
@@ -61,6 +64,7 @@ test.serial('upsertExecution writes new "completed" execution', async (t) => {
     index: esIndex,
   });
 
+  delete testRecord.randomKey;
   const record = await esExecutionsClient.get(testRecord.arn);
   t.like(record, testRecord);
 });
@@ -334,4 +338,111 @@ test('upsertExecution handles version conflict on parallel updates', async (t) =
   });
   const updatedRecord = await esExecutionsClient.get(testRecord.arn);
   t.like(updatedRecord, recordUpdates);
+});
+
+test.serial('upsertExecution throws ValidateError on overwrite with invalid nullable keys', async (t) => {
+  const { esIndex, esClient } = t.context;
+
+  const execution = {
+    arn: randomString(),
+    status: 'running',
+    collectionId: 'collection1',
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates: execution,
+    index: esIndex,
+  });
+
+  await Promise.all(indexer.executionInvalidNullFields.map(async (field) => {
+    const updateExecution = {
+      ...execution,
+    };
+    updateExecution[field] = null;
+    console.log(`Running ${field} test`);
+    await t.throwsAsync(indexer.upsertExecution({
+      esClient,
+      updates: updateExecution,
+      index: esIndex,
+    }), { name: 'ValidationError' });
+  }));
+});
+
+test.serial('upsertExecution updated "completed" record to "running" record if writeConstraints is false', async (t) => {
+  const { esIndex, esClient, esExecutionsClient } = t.context;
+
+  const updatedAt = Date.now();
+
+  const testRecord = {
+    arn: randomString(),
+    updatedAt: updatedAt - 1000,
+    status: 'completed',
+    finalPayload: { final: 'payload' },
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates: testRecord,
+    index: esIndex,
+  });
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.is(record.status, 'completed');
+
+  const updates = {
+    ...testRecord,
+    status: 'running',
+    originalPayload: { original: 'payload' },
+    finalPayload: null,
+    updatedAt,
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+
+  delete updates.finalPayload;
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, updates);
+});
+
+test.serial('upsertExecution updates record with expected nullified values if writeConstraints is false', async (t) => {
+  const { esIndex, esClient, esExecutionsClient } = t.context;
+
+  const updatedAt = Date.now();
+
+  const testRecord = {
+    arn: randomString(),
+    updatedAt,
+    status: 'completed',
+    finalPayload: { final: 'payload' },
+    originalPayload: { original: 'payload' },
+    tasks: { task: 'fake_task' },
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates: testRecord,
+    index: esIndex,
+  }, false);
+
+  const record = await esExecutionsClient.get(testRecord.arn);
+  t.like(record, testRecord);
+
+  const updates = {
+    ...testRecord,
+    status: 'running',
+    originalPayload: null,
+    finalPayload: null,
+  };
+  await indexer.upsertExecution({
+    esClient,
+    updates,
+    index: esIndex,
+  }, false);
+
+  delete updates.finalPayload;
+  delete updates.originalPayload;
+  delete updates.tasks;
+  const updatedRecord = await esExecutionsClient.get(testRecord.arn);
+  t.like(updatedRecord, updates);
 });

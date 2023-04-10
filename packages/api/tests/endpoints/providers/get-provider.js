@@ -28,12 +28,10 @@ const {
 } = require('../../../lib/testUtils');
 const assertions = require('../../../lib/assertions');
 
-process.env.ProvidersTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
 
-let providerModel;
 const esIndex = randomString();
 let esClient;
 
@@ -51,9 +49,6 @@ test.before(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-
-  providerModel = new models.Provider();
-  await providerModel.createTable();
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -87,7 +82,6 @@ test.beforeEach(async (t) => {
 
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await providerModel.deleteTable();
   await accessTokenModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
