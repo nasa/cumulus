@@ -152,6 +152,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added support for sha512 as checksumType for LZARDs backup task.
 
 ### Changed
+- **CUMULUS-3106**
+  - Updated localstack version to 1.4.0 and removed 'skip' from all skipped tests
 - **CUMULUS-3115**
   - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
