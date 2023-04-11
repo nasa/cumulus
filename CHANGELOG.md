@@ -141,7 +141,7 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 ```
 
 Users/clients that do not make use of these endpoints will not be impacted.
-   
+
 ### Added
 - **CUMULUS-3072**
   - Added `replaceGranule` to `@cumulus/api-client/granules` to add usage of the
@@ -303,6 +303,7 @@ update the database cluster to use the new configuration.
       endpoint.
   - /granule PUT and PATCH endpoints now require a header with values `{
     version: 2 }`
+  - PUT endpoint will now only support /:collectionId/:granuleId formatted queries
   - Cumulus API version updated to `2`
 
 ### Changed
