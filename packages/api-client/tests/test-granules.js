@@ -446,6 +446,7 @@ test('createGranule calls the callback with the expected object', async (t) => {
 test('replaceGranule calls the callback with the expected object', async (t) => {
   const body = {
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     any: 'object',
     status: t.context.status,
   };
@@ -454,7 +455,7 @@ test('replaceGranule calls the callback with the expected object', async (t) => 
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },

@@ -303,7 +303,10 @@ update the database cluster to use the new configuration.
       endpoint.
   - /granule PUT and PATCH endpoints now require a header with values `{
     version: 2 }`
-  - PUT endpoint will now only support /:collectionId/:granuleId formatted queries
+  - PUT endpoint will now only support /:collectionId/:granuleId formatted
+    queries
+  - `@cumulus/api-client.replaceGranule now utilizes body.collectionId to
+    utilize the correct API PUT endpoint
   - Cumulus API version updated to `2`
 
 ### Changed
