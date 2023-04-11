@@ -292,6 +292,25 @@ const patchGranule = async (req, res) => {
 };
 
 /**
+ * Helper to check granule and collection IDs in queryparams
+ * against the payload body.
+ *
+ * @param {Object} body - update body payload
+ * @param {Object} req - express request object
+ * @returns {boolean} true if the body matches the query params
+ */
+function _granulePayloadMatchesQueryParams(body, req) {
+  if (
+    body.granuleId === req.params.granuleName
+    && body.collectionId === req.params.collectionId
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Replace a single granule
  * @param {Object} req - express request object
  * @param {Object} res - express response object
@@ -299,28 +318,33 @@ const patchGranule = async (req, res) => {
  */
 async function put(req, res) {
   let body = req.body;
-  if (req.body.granuleId === req.params.granuleName) {
-    // Nullify fields not passed in - we want to remove anything not specified by the user
-    const nullifiedGranuleTemplate = Object.keys(schemas.granule.properties).reduce((acc, cur) => {
-      acc[cur] = null;
-      return acc;
-    }, {});
-    delete nullifiedGranuleTemplate.execution; // Execution cannot be deleted
-    body = ({
-      ...nullifiedGranuleTemplate,
-      ...body,
-    });
-
-    if (body.execution === null) {
-      throw new Error('Execution cannot be deleted via the granule interface, only added');
-    }
-    req.body = body;
-    //Then patch new granule with nulls applied
-    return await patchGranule(req, res);
+  if (!body.collectionId) {
+    body.collectionId = req.params.collectionId;
   }
-  return res.boom.badRequest(
-    `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
-  );
+  if (!_granulePayloadMatchesQueryParams(body, req)) {
+    return res.boom.badRequest(`inputs :granuleName and :collectionId (${req.params.granuleName} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`);
+  }
+  // Nullify fields not passed in - we want to remove anything not specified by the user
+  const nullifiedGranuleTemplate = Object.keys(
+    schemas.granule.properties
+  ).reduce((acc, cur) => {
+    acc[cur] = null;
+    return acc;
+  }, {});
+  delete nullifiedGranuleTemplate.execution; // Execution cannot be deleted
+  body = {
+    ...nullifiedGranuleTemplate,
+    ...body,
+  };
+
+  if (body.execution === null) {
+    throw new Error(
+      'Execution cannot be deleted via the granule interface, only added'
+    );
+  }
+  req.body = body;
+  //Then patch new granule with nulls applied
+  return await patchGranule(req, res);
 }
 
 const _handleUpdateAction = async (
@@ -498,25 +522,6 @@ async function patchByGranuleId(req, res) {
   });
 
   return await _handleUpdateAction(req, res, pgGranule, pgCollection);
-}
-
-/**
- * Helper to check granule and collection IDs in queryparams
- * against the payload body.
- *
- * @param {Object} body - update body payload
- * @param {Object} req - express request object
- * @returns {boolean} true if the body matches the query params
- */
-function _granulePayloadMatchesQueryParams(body, req) {
-  if (
-    body.granuleId === req.params.granuleName
-    && body.collectionId === req.params.collectionId
-  ) {
-    return true;
-  }
-
-  return false;
 }
 
 /**
@@ -1071,12 +1076,10 @@ router.get('/:collectionId/:granuleName', get);
 router.get('/', list);
 router.post('/:granuleName/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', requireApiVersion(2), put);
 router.patch('/:granuleName', requireApiVersion(2), patchByGranuleId);
-// TODO implement put collection differences
-//router.put('/:collectionId/:granuleName', requireApiVersion(2), put);
-// Until PUT is implemented, use PATCH handler
 router.patch('/:collectionId/:granuleName', requireApiVersion(2), patch);
+router.put('/:collectionId/:granuleName', requireApiVersion(2), put);
+
 
 router.post(
   '/bulk',
