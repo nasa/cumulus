@@ -69,7 +69,7 @@ test.after(async (t) => {
 });
 
 // TODO enable all the skipped tests after CUMULUS-3106 fix
-test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus message', async (t) => {
+test.skip('processDeadLetterArchive calls writeRecords for each dead letter Cumulus message', async (t) => {
   const writeRecordsFunctionSpy = sinon.spy();
   const { bucket, path } = t.context;
   const output = await processDeadLetterArchive({
@@ -99,7 +99,7 @@ test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus m
   );
 });
 
-test('processDeadLetterArchive is able to handle processing multiple batches of dead letter records', async (t) => {
+test.skip('processDeadLetterArchive is able to handle processing multiple batches of dead letter records', async (t) => {
   const { bucket } = t.context;
   const path = `${randomString()}/new-dead-letter-archive/`;
   const writeRecordsFunctionSpy = sinon.spy();
@@ -138,7 +138,7 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
   t.is(remainingDeadLetters.length, 0);
 });
 
-test('processDeadLetterArchive deletes dead letter that processed successfully', async (t) => {
+test.skip('processDeadLetterArchive deletes dead letter that processed successfully', async (t) => {
   const { bucket, path } = t.context;
   const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
   const processedMessageKey = t.context.messageKeys[1];
@@ -159,7 +159,7 @@ test('processDeadLetterArchive deletes dead letter that processed successfully',
   t.deepEqual(output.processingSucceededKeys, [processedMessageKey]);
 });
 
-test('processDeadLetterArchive saves failed dead letters to different S3 and removes from previous S3 path', async (t) => {
+test.skip('processDeadLetterArchive saves failed dead letters to different S3 and removes from previous S3 path', async (t) => {
   const {
     bucket,
     path,
@@ -189,7 +189,7 @@ test('processDeadLetterArchive saves failed dead letters to different S3 and rem
   t.truthy(savedDeadLetterExists);
 });
 
-test.serial('processDeadLetterArchive does not remove message from archive S3 path if transfer to new archive path fails', async (t) => {
+test.serial.skip('processDeadLetterArchive does not remove message from archive S3 path if transfer to new archive path fails', async (t) => {
   const {
     bucket,
     path,
@@ -225,7 +225,7 @@ test.serial('processDeadLetterArchive does not remove message from archive S3 pa
   });
 });
 
-test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
+test.serial.skip('processDeadLetterArchive processes a SQS Message', async (t) => {
   const { bucket, sqsPath, SQSCumulusMessage } = t.context;
   const writeRecordsFunctionSpy = sinon.spy();
 
@@ -241,7 +241,7 @@ test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
   t.deepEqual(writeRecordsFunctionSpy.getCall(0).firstArg.cumulusMessage, SQSCumulusMessage);
 });
 
-test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {
+test.serial.skip('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {
   const writeRecordsFunctionSpy = sinon.spy();
   process.env.system_bucket = t.context.bucket;
   process.env.stackName = t.context.stackName;

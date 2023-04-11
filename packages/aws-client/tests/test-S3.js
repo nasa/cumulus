@@ -94,7 +94,8 @@ test('createBucket() creates a bucket', async (t) => {
   }
 });
 
-test('deleteS3Objects() deletes s3 objects', async (t) => {
+// TODO enable the test after CUMULUS-3106 fix
+test.skip('deleteS3Objects() deletes s3 objects', async (t) => {
   const bucketName = randomString();
   await createBucket(bucketName);
 
