@@ -33,7 +33,6 @@ resource "aws_security_group" "s3_replicator_lambda" {
 }
 
 resource "aws_lambda_function" "s3_replicator" {
-  depends_on    = [aws_cloudwatch_log_group.s3_replicator]
   filename      = data.archive_file.replicator_package.output_path
   function_name = "${var.prefix}-s3-replicator"
   role          = aws_iam_role.replicator_lambda_role.arn
