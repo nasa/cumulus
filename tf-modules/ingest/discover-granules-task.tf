@@ -1,6 +1,6 @@
 
 resource "aws_lambda_function" "discover_granules_task" {
-  # depends_on       = [aws_cloudwatch_log_group.discover_granules_task]
+  depends_on       = [aws_cloudwatch_log_group.discover_granules_task]
   function_name    = "${var.prefix}-DiscoverGranules"
   filename         = "${path.module}/../../tasks/discover-granules/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/discover-granules/dist/lambda.zip")
