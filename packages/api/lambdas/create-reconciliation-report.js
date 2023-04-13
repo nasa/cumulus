@@ -216,7 +216,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
       if (nextS3Uri < nextPgFileUri) {
         // Found an item that is only in S3 and not in PostgreSQL
         if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
-        s3ObjectsQueue.shift();
+        await s3ObjectsQueue.shift();
       } else if (nextS3Uri > nextPgFileUri) {
         // Found an item that is only in PostgreSQL and not in S3
         const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
@@ -230,8 +230,8 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
         if (linkFilesAndGranules) {
           okCountByGranule[nextPgItem.granule_id] += 1;
         }
-        s3ObjectsQueue.shift();
-        pgFileSearchClient.shift();
+        await s3ObjectsQueue.shift();
+        await pgFileSearchClient.shift();
       }
 
       // eslint-disable-next-line no-await-in-loop
@@ -242,6 +242,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     }
 
     // Add any remaining S3 items to the report
+    log.info('Adding remaining S3 items to the report');
     if (!oneWayBucketReport) {
       while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
         const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
@@ -250,6 +251,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     }
 
     // Add any remaining PostgreSQL items to the report
+    log.info('Adding remaining PostgreSQL items to the report');
     while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
       const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
       onlyInDb.push({
