@@ -116,6 +116,11 @@
     "xml2js": "0.5",
     "zod": "^3.20.2"
   },
+  "overrides": {
+    "saml2-js": {
+      "xml2js": "0.5.0"
+    }
+  },
   "devDependencies": {
     "@cumulus/test-data": "15.0.0"
   }
