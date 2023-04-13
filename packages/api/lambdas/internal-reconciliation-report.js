@@ -114,7 +114,7 @@ async function internalRecReportForCollections(recReportParams) {
       } else {
         withConflicts.push({ es: nextEsItem, db: nextDbItem });
       }
-      esCollectionsIterator.shift();
+      await esCollectionsIterator.shift();
       dbCollectionItems.shift();
     }
 
