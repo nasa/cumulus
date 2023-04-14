@@ -3566,7 +3566,6 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
   console.log('foobar');
   const {
     apiGranule,
-    esRecord,
     newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
