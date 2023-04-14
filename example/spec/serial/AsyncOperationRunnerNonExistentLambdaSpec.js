@@ -13,7 +13,6 @@ const { loadConfig } = require('../helpers/testUtils');
 describe('The AsyncOperation task runner running a non-existent lambda function', () => {
   let asyncOperation;
   let asyncOperationId;
-  let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
   let beforeAllFailed = false;
   let cluster;
@@ -23,8 +22,6 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
   beforeAll(async () => {
     try {
       config = await loadConfig();
-
-      asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
 
       // Find the ARN of the cluster
       cluster = await getClusterArn(config.stackName);
@@ -58,7 +55,6 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
         id: asyncOperationId,
         payloadBucket: config.bucket,
         payloadKey,
-        dynamoTableName: asyncOperationsTableName,
       });
 
       const taskArn = runTaskResponse.tasks[0].taskArn;

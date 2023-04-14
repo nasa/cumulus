@@ -8,7 +8,6 @@ const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const { loadGranules, granuleFactory } = require('@cumulus/es-client/tests/helpers/helpers');
 
 process.env.AccessTokensTable = randomId('token');
-process.env.AsyncOperationsTable = randomId('async');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('system-bucket');
 process.env.TOKEN_SECRET = randomId('secret');
