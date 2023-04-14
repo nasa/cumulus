@@ -20,9 +20,9 @@ const {
   destroyLocalTestDb,
   AsyncOperationPgModel,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  translatePostgresAsyncOperationToApiAsyncOperation,
   migrationDir,
 } = require('@cumulus/db');
-const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const assertions = require('../../../lib/assertions');
 const { fakeAsyncOperationFactory } = require('../../../lib/testUtils');
@@ -34,12 +34,10 @@ const {
 } = require('../../../lib/testUtils');
 const {
   AccessToken,
-  AsyncOperation: AsyncOperationModel,
 } = require('../../../models');
 
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
-process.env.AsyncOperationsTable = randomString();
 process.env.AccessTokensTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
@@ -71,14 +69,6 @@ test.before(async (t) => {
 
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
-  // Create AsyncOperations table
-  t.context.asyncOperationModel = new AsyncOperationModel({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-  await t.context.asyncOperationModel.createTable();
-
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
 
@@ -92,7 +82,6 @@ test.before(async (t) => {
 });
 
 test.after.always(async (t) => {
-  await t.context.asyncOperationModel.deleteTable().catch(noop);
   await t.context.accessTokenModel.deleteTable().catch(noop);
   await cleanupTestIndex(t.context);
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
@@ -113,10 +102,6 @@ test('POST without an Authorization header returns an Authorization Missing resp
     .expect(401);
 
   assertions.isAuthorizationMissingResponse(t, response);
-  await t.throwsAsync(
-    () => t.context.asyncOperationModel.get({ id: asyncOperation1.id }),
-    { instanceOf: RecordDoesNotExist }
-  );
 });
 
 test('POST with an invalid access token returns an unauthorized response', async (t) => {
@@ -130,10 +115,6 @@ test('POST with an invalid access token returns an unauthorized response', async
     .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
-  await t.throwsAsync(
-    () => t.context.asyncOperationModel.get({ id: asyncOperation.id }),
-    { instanceOf: RecordDoesNotExist }
-  );
 });
 
 test('POST creates a new async operation in all data stores', async (t) => {
@@ -177,8 +158,8 @@ test('POST creates a new async operation in all data stores', async (t) => {
   t.like(esRecord, record);
 });
 
-test('POST creates a new async operation in DynamoDB/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
-  const { asyncOperationModel, asyncOperationPgModel, jwtAuthToken } = t.context;
+test('POST creates a new async operation in PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+  const { asyncOperationPgModel, jwtAuthToken } = t.context;
   const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
   });
@@ -191,10 +172,6 @@ test('POST creates a new async operation in DynamoDB/PostgreSQL/Elasticsearch wi
     .expect(200);
   const { record } = response.body;
 
-  const fetchedRecord = await asyncOperationModel.get({
-    id: asyncOperation.id,
-  });
-
   const pgRecord = await asyncOperationPgModel.search(
     t.context.testKnex,
     { id: asyncOperation.id }
@@ -202,8 +179,10 @@ test('POST creates a new async operation in DynamoDB/PostgreSQL/Elasticsearch wi
 
   const [asyncOperationPgRecord] = pgRecord;
 
-  t.true(fetchedRecord.createdAt > asyncOperation.createdAt);
-  t.true(fetchedRecord.updatedAt > asyncOperation.updatedAt);
+  const apiRecord = translatePostgresAsyncOperationToApiAsyncOperation(asyncOperationPgRecord);
+
+  t.true(apiRecord.createdAt > asyncOperation.createdAt);
+  t.true(apiRecord.updatedAt > asyncOperation.updatedAt);
 
   const esRecord = await t.context.esAsyncOperationsClient.get(asyncOperation.id);
 
@@ -232,7 +211,7 @@ test('POST returns a 409 error if the async operation already exists in PostgreS
 
 test.serial('POST returns a 500 response if record creation throws unexpected error', async (t) => {
   const { jwtAuthToken } = t.context;
-  const stub = sinon.stub(AsyncOperationModel.prototype, 'create')
+  const stub = sinon.stub(AsyncOperationPgModel.prototype, 'create')
     .callsFake(() => {
       throw new Error('unexpected error');
     });
@@ -291,89 +270,10 @@ test('POST returns a 400 response if invalid JSON provided', async (t) => {
   t.is(error.message, 'Async Operations require an ID');
 });
 
-test('post() does not write to PostgreSQL/Elasticsearch if writing to DynamoDB fails', async (t) => {
-  const { testKnex } = t.context;
+test('post() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
   const asyncOperation = fakeAsyncOperationFactory({
     output: JSON.stringify({ age: 59 }),
   });
-
-  const fakeAsyncOperationPgModel = {
-    create: () => Promise.resolve(true),
-    exists: () => Promise.resolve(false),
-  };
-
-  const fakeAsyncOperationModel = {
-    create: () => {
-      throw new Error('something bad');
-    },
-    exists: () => Promise.resolve(false),
-    delete: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    body: asyncOperation,
-    testContext: {
-      knex: testKnex,
-      asyncOperationModel: fakeAsyncOperationModel,
-      asyncOperationPgModel: fakeAsyncOperationPgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
-
-  t.false(await t.context.esAsyncOperationsClient.exists(
-    asyncOperation.id
-  ));
-  t.false(
-    await t.context.asyncOperationPgModel.exists(t.context.testKnex, {
-      id: asyncOperation.id,
-    })
-  );
-});
-
-test('post() does not write to DynamoDB/Elasticsearch if writing to PostgreSQL fails', async (t) => {
-  const asyncOperation = fakeAsyncOperationFactory({
-    output: JSON.stringify({ age: 59 }),
-  });
-
-  const fakeAsyncOperationPgModel = {
-    exists: () => Promise.resolve(false),
-    create: () => Promise.reject(new Error('something bad')),
-  };
-
-  const expressRequest = {
-    body: asyncOperation,
-    testContext: {
-      asyncOperationPgModel: fakeAsyncOperationPgModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await post(expressRequest, response);
-
-  t.true(response.boom.badImplementation.calledWithMatch('something bad'));
-
-  t.false(await t.context.esAsyncOperationsClient.exists(
-    asyncOperation.id
-  ));
-  t.false(await t.context.asyncOperationModel.exists({ id: asyncOperation.id }));
-});
-
-test('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch fails', async (t) => {
-  const asyncOperation = fakeAsyncOperationFactory({
-    output: JSON.stringify({ age: 59 }),
-  });
-
-  const fakeAsyncOperationPgModel = {
-    create: () => Promise.resolve(true),
-    exists: () => Promise.resolve(false),
-  };
-
   const fakeEsClient = {
     index: () => Promise.reject(new Error('something bad')),
   };
@@ -381,7 +281,6 @@ test('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch f
   const expressRequest = {
     body: asyncOperation,
     testContext: {
-      asyncOperationPgModel: fakeAsyncOperationPgModel,
       esClient: fakeEsClient,
     },
   };
@@ -392,7 +291,6 @@ test('post() does not write to DynamoDB/PostgreSQL if writing to Elasticsearch f
 
   t.true(response.boom.badImplementation.calledWithMatch('something bad'));
 
-  t.false(await t.context.asyncOperationModel.exists({ id: asyncOperation.id }));
   t.false(
     await t.context.asyncOperationPgModel.exists(t.context.testKnex, {
       id: asyncOperation.id,

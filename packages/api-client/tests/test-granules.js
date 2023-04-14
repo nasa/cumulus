@@ -7,6 +7,7 @@ const granulesApi = require('../granules');
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
+  t.context.collectionId = 'fakeName___fakeVersion';
   t.context.status = 'queued';
 });
 
@@ -18,6 +19,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
     },
+    expectedStatusCodes: undefined,
   };
 
   const callback = (configObject) => {
@@ -36,16 +38,15 @@ test('getGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
-test('getGranule calls the callback with the expected object when there is query param', async (t) => {
-  const query = { getRecoveryStatus: true };
+test('getGranule calls the callback with the expected status codes', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
-      queryStringParameters: query,
     },
+    expectedStatusCodes: [404, 200],
   };
 
   const callback = (configObject) => {
@@ -53,6 +54,7 @@ test('getGranule calls the callback with the expected object when there is query
     return Promise.resolve({
       body: JSON.stringify({
         granuleId: t.context.granuleId,
+        expectedStatusCodes: [404, 200],
       }),
     });
   };
@@ -61,7 +63,69 @@ test('getGranule calls the callback with the expected object when there is query
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    expectedStatusCodes: [404, 200],
+  }));
+});
+
+test('getGranule calls the callback with the expected object when there is query param', async (t) => {
+  const query = { getRecoveryStatus: true };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      queryStringParameters: query,
+    },
+    expectedStatusCodes: undefined,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+        collectionId: t.context.collectionId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     query,
+  }));
+});
+
+test('getGranule accepts an optional collectionId', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    expectedStatusCodes: [404, 200],
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+        collectionId: t.context.collectionId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
+    expectedStatusCodes: [404, 200],
   }));
 });
 
@@ -384,7 +448,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
@@ -398,6 +462,8 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.updateGranule({
     callback,
     prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     body,
   }));
 });

@@ -147,7 +147,6 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
 
-
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the
 ## current ref from the current branch

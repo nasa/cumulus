@@ -1,9 +1,0 @@
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "lib": ["ES2021", "DOM"],
-    "target": "ES2021",
-    "outDir": "dist/lambda"
-  },
-  "include": ["src"]
-}

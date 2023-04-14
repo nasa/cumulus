@@ -1,5 +1,6 @@
 'use strict';
 
+const fs = require('fs-extra');
 const test = require('ava');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
@@ -7,10 +8,23 @@ const proxyquire = require('proxyquire');
 const awsServices = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
+const {
+  generateLocalTestDb,
+  destroyLocalTestDb,
+  CollectionPgModel,
+  ProviderPgModel,
+  RulePgModel,
+  migrationDir,
+  fakeProviderRecordFactory,
+  fakeCollectionRecordFactory,
+  translateApiRuleToPostgresRuleRaw,
+} = require('@cumulus/db');
 
-const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
+const { fakeRuleFactoryV2, fakeCollectionFactory } = require('../../lib/testUtils');
+const { buildPayload } = require('../../lib/rulesHelpers');
 
 const listRulesStub = sinon.stub();
+const testDbName = randomString(12);
 
 const rulesHelpers = proxyquire('../../lib/rulesHelpers', {
   '@cumulus/api-client/rules': {
@@ -23,7 +37,14 @@ const rulesHelpers = proxyquire('../../lib/rulesHelpers', {
 
 let workflow;
 
-test.before(async () => {
+[
+  'stackName',
+  'system_bucket',
+  'messageConsumer',
+  // eslint-disable-next-line no-return-assign
+].forEach((varName) => process.env[varName] = randomString());
+
+test.before(async (t) => {
   workflow = randomString();
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
@@ -42,16 +63,40 @@ test.before(async () => {
       Body: '{}',
     }),
   ]);
+
+  const messageConsumer = await awsServices.lambda().createFunction({
+    Code: {
+      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+    },
+    FunctionName: randomId('messageConsumer'),
+    Role: randomId('role'),
+    Handler: 'index.handler',
+    Runtime: 'nodejs14.x',
+  }).promise();
+  process.env.messageConsumer = messageConsumer.FunctionName;
+
+  const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
+  t.context.testKnex = knex;
+  t.context.testKnexAdmin = knexAdmin;
+
+  t.context.rulePgModel = new RulePgModel();
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.providerPgModel = new ProviderPgModel();
 });
 
 test.afterEach(() => {
   listRulesStub.reset();
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   delete process.env.system_bucket;
   delete process.env.stackName;
+  await destroyLocalTestDb({
+    knex: t.context.testKnex,
+    knexAdmin: t.context.testKnexAdmin,
+    testDbName,
+  });
 });
 
 test.serial('fetchRules invokes API to fetch rules', async (t) => {
@@ -347,4 +392,203 @@ test('rulesHelpers.lookupCollectionInEvent returns collection for CNM case', (t)
 
 test('rulesHelpers.lookupCollectionInEvent returns empty object for empty case', (t) => {
   t.deepEqual(rulesHelpers.lookupCollectionInEvent({}), {});
+});
+
+test('filterRulesbyCollection rule that matches a collection', (t) => {
+  const collectionName = randomId();
+  const collectionVersion = 'v1';
+  const collection = fakeCollectionFactory({
+    name: collectionName,
+    version: collectionVersion,
+  });
+  const rule = fakeRuleFactoryV2({
+    collection: {
+      name: collectionName,
+      version: collectionVersion,
+    },
+  });
+  const rules = [
+    rule,
+    fakeRuleFactoryV2(),
+    fakeRuleFactoryV2(),
+  ];
+  const [filteredRule] = rulesHelpers.filterRulesbyCollection(rules, collection);
+  t.is(filteredRule, rule);
+});
+
+test('buildPayload does not build payload for rule when workflow does not exist', async (t) => {
+  const rule = fakeRuleFactoryV2();
+  await t.throwsAsync(rulesHelpers.buildPayload(rule, {}, '1'));
+});
+
+test('buildPayload correctly builds payload for rule with a workflow', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    state: 'ENABLED',
+  });
+  t.deepEqual(await buildPayload(rule),
+    {
+      asyncOperationId: undefined,
+      collection: {
+        name: rule.collection.name,
+        version: rule.collection.version,
+      },
+      cumulus_meta: {},
+      definition: {},
+      executionNamePrefix: undefined,
+      meta: {},
+      payload: {},
+      provider: rule.provider,
+      queueUrl: undefined,
+      template: {},
+    });
+});
+
+test('isEventSourceMappingShared returns true for a rule that shares an event source with another rule', async (t) => {
+  const {
+    collectionPgModel,
+    providerPgModel,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const testPgProvider = fakeProviderRecordFactory();
+  await providerPgModel.create(
+    testKnex,
+    testPgProvider,
+    '*'
+  );
+
+  const testPgCollection1 = fakeCollectionRecordFactory({
+    name: randomId(),
+    version: 'v1',
+  });
+  const testPgCollection2 = fakeCollectionRecordFactory({
+    name: randomId(),
+    version: 'v2',
+  });
+  await Promise.all([
+    collectionPgModel.create(
+      testKnex,
+      testPgCollection1,
+      '*'
+    ),
+    collectionPgModel.create(
+      testKnex,
+      testPgCollection2,
+      '*'
+    ),
+  ]);
+  const { TopicArn } = await awsServices.sns().createTopic({
+    Name: randomId('topic'),
+  }).promise();
+
+  const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
+    name: randomId('rule1'),
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
+    workflow,
+    state: 'ENABLED',
+    collection: {
+      name: testPgCollection1.name,
+      version: testPgCollection1.version,
+    },
+    provider: testPgProvider.name,
+  }));
+  const ruleWithTrigger2 = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
+    name: randomId('rule2'),
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
+    workflow,
+    state: 'ENABLED',
+    collection: {
+      name: testPgCollection2.name,
+      version: testPgCollection2.version,
+    },
+    provider: testPgProvider.name,
+  }));
+  const translatedRule1 = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+  const translatedRule2 = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger2, testKnex);
+  await rulePgModel.create(testKnex, translatedRule1);
+  await rulePgModel.create(testKnex, translatedRule2);
+
+  t.is(ruleWithTrigger.rule.arn, ruleWithTrigger2.rule.arn);
+  t.true(await rulesHelpers.isEventSourceMappingShared(testKnex, ruleWithTrigger));
+});
+
+test('isEventSourceMappingShared returns false for a rule that shares no event sources with other rules', async (t) => {
+  const {
+    collectionPgModel,
+    providerPgModel,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const testPgProvider = fakeProviderRecordFactory();
+  await providerPgModel.create(
+    testKnex,
+    testPgProvider,
+    '*'
+  );
+
+  const testPgCollection1 = fakeCollectionRecordFactory({
+    name: randomId(),
+    version: 'v1',
+  });
+  const testPgCollection2 = fakeCollectionRecordFactory({
+    name: randomId(),
+    version: 'v2',
+  });
+  await Promise.all([
+    collectionPgModel.create(
+      testKnex,
+      testPgCollection1,
+      '*'
+    ),
+    collectionPgModel.create(
+      testKnex,
+      testPgCollection2,
+      '*'
+    ),
+  ]);
+  const { TopicArn } = await awsServices.sns().createTopic({
+    Name: randomId('topic'),
+  }).promise();
+
+  const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
+    name: randomId('rule1'),
+    rule: {
+      type: 'onetime',
+    },
+    workflow,
+    state: 'ENABLED',
+    collection: {
+      name: testPgCollection1.name,
+      version: testPgCollection1.version,
+    },
+    provider: testPgProvider.name,
+  }));
+  const ruleWithTrigger2 = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
+    name: randomId('rule2'),
+    rule: {
+      type: 'sns',
+      value: TopicArn,
+    },
+    workflow,
+    state: 'ENABLED',
+    collection: {
+      name: testPgCollection2.name,
+      version: testPgCollection2.version,
+    },
+    provider: testPgProvider.name,
+  }));
+  const translatedRule1 = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+  const translatedRule2 = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger2, testKnex);
+  await rulePgModel.create(testKnex, translatedRule1);
+  await rulePgModel.create(testKnex, translatedRule2);
+
+  t.false(ruleWithTrigger.rule.arn === ruleWithTrigger2.rule.arn);
+  t.false(await rulesHelpers.isEventSourceMappingShared(testKnex, ruleWithTrigger));
 });
