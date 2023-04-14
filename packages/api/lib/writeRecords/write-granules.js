@@ -812,7 +812,7 @@ const writeGranuleFromApi = async (
     });
     // Throw for invalid nullish value
     if (isNull(execution)) {
-      throw new Error('Granule execution cannot be null, granules can only be assigned to an existing execution via the API object or POST /:granuleName/executions');
+      throw new Error('Granule execution cannot be null, granules can only be assigned to an existing execution via the API object or POST /:granuleId/executions');
     }
 
     const granule = {

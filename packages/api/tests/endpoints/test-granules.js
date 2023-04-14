@@ -462,7 +462,7 @@ test.serial('CUMULUS-911 GET without pathParameters and without an Authorization
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 GET with pathParameters.granuleId set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/granules/asdf')
     .set('Accept', 'application/json')
@@ -471,7 +471,7 @@ test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('CUMULUS-911 .patch with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 .patch with pathParameters.granuleId set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .patch('/granules/asdf')
     .set('Accept', 'application/json')
@@ -480,7 +480,7 @@ test.serial('CUMULUS-911 .patch with pathParameters.granuleName set and without 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('CUMULUS-911 DELETE with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 DELETE with pathParameters.granuleId set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .delete('/granules/asdf')
     .set('Accept', 'application/json')
@@ -513,7 +513,7 @@ test.serial('CUMULUS-912 GET without pathParameters and with an unauthorized use
   assertions.isUnauthorizedUserResponse(t, response);
 });
 
-test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an invalid access token returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-912 GET with pathParameters.granuleId set and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .get('/granules/asdf')
     .set('Accept', 'application/json')
@@ -523,9 +523,9 @@ test.serial('CUMULUS-912 GET with pathParameters.granuleName set and with an inv
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.todo('CUMULUS-912 GET with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response');
+test.todo('CUMULUS-912 GET with pathParameters.granuleId set and with an unauthorized user returns an unauthorized response');
 
-test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an invalid access token returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-912 PUT with pathParameters.granuleId set and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
     .patch('/granules/asdf')
     .set('Accept', 'application/json')
@@ -535,9 +535,9 @@ test.serial('CUMULUS-912 PUT with pathParameters.granuleName set and with an inv
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.todo('CUMULUS-912 PUT with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response');
+test.todo('CUMULUS-912 PUT with pathParameters.granuleId set and with an unauthorized user returns an unauthorized response');
 
-test.serial('CUMULUS-912 DELETE with pathParameters.granuleName set and with an unauthorized user returns an unauthorized response', async (t) => {
+test.serial('CUMULUS-912 DELETE with pathParameters.granuleId set and with an unauthorized user returns an unauthorized response', async (t) => {
   const accessTokenRecord = fakeAccessTokenFactory();
   await accessTokenModel.create(accessTokenRecord);
   const jwtToken = createJwtToken(accessTokenRecord);
@@ -683,7 +683,7 @@ test.serial('PATCH without a body, fails to update granule.', async (t) => {
   const { message } = response.body;
   t.is(
     message,
-    `inputs :granuleName and :collectionId (${t.context.fakePGGranules[0].granule_id} and ${t.context.collectionId}) must match body's granuleId and collectionId (undefined and undefined)`
+    `inputs :granuleId and :collectionId (${t.context.fakePGGranules[0].granule_id} and ${t.context.collectionId}) must match body's granuleId and collectionId (undefined and undefined)`
   );
 });
 
@@ -1115,7 +1115,7 @@ test.serial('DELETE fails to delete a granule that has multiple entries in Elast
 
   const expressRequest = {
     params: {
-      granuleName: newGranule.granuleId,
+      granuleId: newGranule.granuleId,
       collectionId: newCollectionId,
     },
     testContext: {
@@ -1790,7 +1790,7 @@ test.serial('PATCH with action move returns failure if one granule file exists',
   const expressRequest = {
     params: {
       collectionId,
-      granuleName: granule.granule_id,
+      granuleId: granule.granule_id,
     },
     body,
     testContext: {
@@ -1830,7 +1830,7 @@ test.serial('PATCH with action move returns failure if more than one granule fil
   const expressRequest = {
     params: {
       collectionId,
-      granuleName: granule.granule_id,
+      granuleId: granule.granule_id,
     },
     body,
     testContext: {
@@ -2747,7 +2747,7 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
   delete updatedGranule.createdAt;
   const expressRequest = {
     params: {
-      granuleName: updatedGranule.granuleId,
+      granuleId: updatedGranule.granuleId,
     },
     body: updatedGranule,
     testContext: {
@@ -2788,7 +2788,7 @@ test.serial("patch() sets a default createdAt value for new granule if it's not 
   delete updatedGranule.createdAt;
   const expressRequest = {
     params: {
-      granuleName: updatedGranule.granuleId,
+      granuleId: updatedGranule.granuleId,
     },
     body: updatedGranule,
     testContext: {
@@ -2849,7 +2849,7 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
   const expressRequest = {
     params: {
       collectionId: t.context.collectionId,
-      granuleName: apiGranule.granuleId,
+      granuleId: apiGranule.granuleId,
     },
     body: updatedGranule,
     testContext: {
@@ -2920,7 +2920,7 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
   const expressRequest = {
     params: {
       collectionId: t.context.collectionId,
-      granuleName: apiGranule.granuleId,
+      granuleId: apiGranule.granuleId,
     },
     body: updatedGranule,
     testContext: {
@@ -3131,14 +3131,14 @@ test.serial('PATCH returns an updated granule with associated execution', async 
   t.is(executionPgRecord[0].url, modifiedGranule.execution);
 });
 
-test.serial('PATCH returns bad request when the path param granuleName does not match the json granuleId', async (t) => {
+test.serial('PATCH returns bad request when the path param granuleId does not match the json granuleId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
-  const granuleName = `granuleName_${cryptoRandomString({ length: 10 })}`;
+  const granuleId = `granuleId_${cryptoRandomString({ length: 10 })}`;
 
   const { body } = await request(app)
-    .patch(`/granules/${newGranule.collectionId}/${granuleName}`)
+    .patch(`/granules/${newGranule.collectionId}/${granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -3148,7 +3148,7 @@ test.serial('PATCH returns bad request when the path param granuleName does not 
   t.is(body.error, 'Bad Request');
   t.is(
     body.message,
-    `inputs :granuleName and :collectionId (${granuleName} and ${newGranule.collectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`
+    `inputs :granuleId and :collectionId (${granuleId} and ${newGranule.collectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`
   );
 });
 
@@ -3170,7 +3170,7 @@ test.serial('PATCH returns bad request when the path param collectionId does not
   t.is(body.error, 'Bad Request');
   t.is(
     body.message,
-    `inputs :granuleName and :collectionId (${newGranule.granuleId} and ${fakeCollectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`
+    `inputs :granuleId and :collectionId (${newGranule.granuleId} and ${fakeCollectionId}) must match body's granuleId and collectionId (${newGranule.granuleId} and ${newGranule.collectionId})`
   );
 });
 
@@ -3328,14 +3328,14 @@ test.serial('associateExecution (POST) returns bad request if fields are missing
   );
 });
 
-test.serial('associateExecution (POST) returns bad request when the path param granuleName does not match the granuleId in payload', async (t) => {
+test.serial('associateExecution (POST) returns bad request when the path param granuleId does not match the granuleId in payload', async (t) => {
   const granuleIdInPath = randomId('granuleIdInPath');
-  const granuleIdInRquest = randomId('granuleIdInRquest');
+  const granuleIdInRequest = randomId('granuleIdInRequest');
 
   const requestPayload = {
     collectionId: t.context.collectionId,
     executionArn: t.context.executionArn,
-    granuleId: granuleIdInRquest,
+    granuleId: granuleIdInRequest,
   };
   const response = await request(app)
     .post(`/granules/${granuleIdInPath}/executions`)
@@ -3347,7 +3347,7 @@ test.serial('associateExecution (POST) returns bad request when the path param g
   t.is(response.body.error, 'Bad Request');
   t.is(
     response.body.message,
-    `Expected granuleId to be ${granuleIdInPath} but found ${granuleIdInRquest} in payload`
+    `Expected granuleId to be ${granuleIdInPath} but found ${granuleIdInRequest} in payload`
   );
 });
 

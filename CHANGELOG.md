@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3282**
+  - Updated internal granule endpoint parameters from :granuleName to :granuleId
+    for maintenance/consistency reasons
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
   - **CUMULUS-2793**
     - Removed Provider Dynamo model and related test code
@@ -112,7 +115,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Remove deletion of DynamoDB record from API endpoint DELETE /pdr/<pdrName>
   - **CUMULUS-2688**
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
-    - Add new endpoints to update and delete granules by collectionId as well as granuleId
+    - Add new endpoints to update and delete granules by collectionId as well as
+      granuleId
 
 ## Unreleased
 
