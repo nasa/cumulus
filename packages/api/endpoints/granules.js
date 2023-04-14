@@ -321,7 +321,7 @@ async function put(req, res) {
   if (!body.collectionId) {
     body.collectionId = req.params.collectionId;
   }
-  if (!body.granuleName) {
+  if (!body.granuleId) {
     body.granuleId = req.params.granuleName;
   }
   if (!_granulePayloadMatchesQueryParams(body, req)) {
