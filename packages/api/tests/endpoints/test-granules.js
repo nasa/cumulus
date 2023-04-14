@@ -3690,9 +3690,10 @@ test.serial('PUT creates a new granule in all data stores', async (t) => {
 
 test.serial('PUT utilizes the collectionId from the URI if one is not provided', async (t) => {
   const {
-    collectionId,
     collectionCumulusId,
+    collectionId,
     createGranuleId,
+    esGranulesClient,
     knex,
   } = t.context;
 
@@ -3703,13 +3704,13 @@ test.serial('PUT utilizes the collectionId from the URI if one is not provided',
   };
 
   await request(app)
-    .put(`/granules/${t.context.collectionId}/${granuleId}`)
+    .put(`/granules/${collectionId}/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(newGranule)
     .expect(201); // 201 should be expected for *create*
 
-  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+  const actualPgGranule = await granulePgModel.get(knex, {
     collection_cumulus_id: collectionCumulusId,
     granule_id: granuleId,
   });
@@ -3717,11 +3718,60 @@ test.serial('PUT utilizes the collectionId from the URI if one is not provided',
     knexOrTransaction: knex,
     granulePgRecord: actualPgGranule,
   });
-  const updatedEsRecord = await t.context.esGranulesClient.get(granuleId);
+  const updatedEsRecord = await esGranulesClient.get(granuleId);
 
   const expectedGranule = {
     ...newGranule,
     collectionId,
+    createdAt: translatedActualPgGranule.createdAt,
+    error: {}, // This is a default value for no execution
+    published: false, // This is a default value
+    timestamp: translatedActualPgGranule.timestamp,
+    updatedAt: translatedActualPgGranule.updatedAt,
+  };
+  // Files is always returned as '[]' via translator
+  t.deepEqual(
+    { ...translatedActualPgGranule },
+    { ...expectedGranule, files: [] }
+  );
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+test.serial('PUT utilizes the granuleId from the URI if one is not provided', async (t) => {
+  const {
+    collectionId,
+    collectionCumulusId,
+    createGranuleId,
+    knex,
+    esGranulesClient,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    collectionId,
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/granules/${collectionId}/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(201); // 201 should be expected for *create*
+
+  const actualPgGranule = await granulePgModel.get(knex, {
+    collection_cumulus_id: collectionCumulusId,
+    granule_id: granuleId,
+  });
+  const translatedActualPgGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: actualPgGranule,
+  });
+  const updatedEsRecord = await esGranulesClient.get(granuleId);
+
+  const expectedGranule = {
+    ...newGranule,
+    granuleId,
     createdAt: translatedActualPgGranule.createdAt,
     error: {}, // This is a default value for no execution
     published: false, // This is a default value

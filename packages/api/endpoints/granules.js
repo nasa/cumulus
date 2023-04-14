@@ -321,6 +321,9 @@ async function put(req, res) {
   if (!body.collectionId) {
     body.collectionId = req.params.collectionId;
   }
+  if (!body.granuleName) {
+    body.granuleId = req.params.granuleName;
+  }
   if (!_granulePayloadMatchesQueryParams(body, req)) {
     return res.boom.badRequest(`inputs :granuleName and :collectionId (${req.params.granuleName} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`);
   }
@@ -1079,7 +1082,6 @@ router.post('/', create);
 router.patch('/:granuleName', requireApiVersion(2), patchByGranuleId);
 router.patch('/:collectionId/:granuleName', requireApiVersion(2), patch);
 router.put('/:collectionId/:granuleName', requireApiVersion(2), put);
-
 
 router.post(
   '/bulk',
