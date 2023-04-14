@@ -75,3 +75,16 @@ cloudwatch_log_retention_periods = {
 ```
 
 The retention periods are the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
+
+There are multiple log groups that have been added with a terraform definition in release v15.0.0+ for the purpose of allowing users the ability to configure the retention of all their log groups' maintained by Cumulu. Upon deployment of `data-persistence-tf` and `cumulus-tf`, due to these changes, the following error may occur:
+
+```bash
+Error: Creating CloudWatch Log Group failed: ResourceAlreadyExistsException: The specified log group already exists:  The CloudWatch Log Group '/aws/lambda/exampleUser-KinesisInboundEventLogger' already exists.
+```
+
+In this case, the cloudwatch log groups will need to be imported into the terraform state. In the `/cumulus/example/data-persistence-tf` and `/cumulus/example/cumulus-tf`
+directories, a script `cloudwatch-import.sh` is provided for this purpose. While running the script, if `Error: Resource already managed by Terraform` is encountered, simply comment out the line correlating to the script and re-run. In order to run the script the user must switch to the ZShell (`zsh`) and type this command in the console:
+
+```bash
+zsh cloudwatch-import.sh
+```

@@ -55,4 +55,4 @@ terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.pdr_statu
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.queue_granules_task "/aws/lambda/$prefix-QueueGranules"
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.update_granules_cmr_metadata_file_links_task "/aws/lambda/$prefix-UpdateGranulesCmrMetadataFileLinks"
 terraform import module.tea_s3_credentials_endpoint_test.module.tea_map_cache.aws_cloudwatch_log_group.tea_cache "/aws/lambda/$prefix-TeaCache"
-terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.discover_granules_task "/aws/lambda/$prefix-DiscoverPdrs"
+terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.discover_granules_task "/aws/lambda/$prefix-DiscoverGranules"
