@@ -3595,7 +3595,6 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
     },
   });
 
-  console.log(esRecord);
   const newGranule = {
     granuleId: apiGranule.granuleId,
     collectionId: apiGranule.collectionId,
