@@ -1,1 +1,1 @@
-prefix = "moduy-ci-tf"
+prefix = "moduy-ci-tf1"
