@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-3201**
+  - Added support for sha512 as checksumType for LZARDs backup task.
+
 ### Changed
 
 - **CUMULUS-3165**
@@ -37,7 +42,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3166**
   - Updated example/cumulus-tf/thin_egress_app.tf to use tea 1.3.2
 
-### Fixed 
+### Fixed
 
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
