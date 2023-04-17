@@ -35,44 +35,58 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 
 ## Terraform
 
-The `cumulus` module exposes values for configuration of log retention for
-cloudwatch log groups (in days). A configurable map of `cloudwatch_log_retention_periods` currently supports the following variables:
+There are optional variables that can be set during deployment of cumulus modules to configure
+the retention period (in days) of cloudwatch log groups for lambdas and tasks. By setting the below
+variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated
+with the new retention value. These variables are supported in all `cumulus` modules:
 
-- cumulus-tf_egress_lambda_log_retention
-- archive_private_api_log_retention
-- archive_api_log_retention
-- archive_async_operation_log_retention
-- archive_granule_files_cache_updater_log_retention
-- archive_publish_executions_log_retention
-- archive_publish_granule_log_retention
-- archive_publish_pdrs_log_retention
-- archive_replay_sqs_messages_log_retention
-- cumulus_distribution_api_log_retention
-- cumulus_ecs_service_default_log_retention
-- ingest_discover_pdrs_task_log_retention
-- ingest_hyrax_metadata_updates_task_log_retention
-- ingest_parse_pdr_task_log_retention
-- ingest_post_to_cmr_task_log_retention
-- ingest_queue_pdrs_task_log_retention
-- ingest_queue_workflow_task_log_retention
-- ingest_sync_granule_task_log_retention
-- ingest_update_cmr_access_constraints_task_log_retention
+```tf
+module "cumulus" {
+  # ... other variables
 
-In order to configure this value for the cloudwatch log group, the variable for the retention period for the respective group should be in the form of:
-
-```hcl
-<cumulus_module>_<cloudwatch_log_group>_log_retention: <log_retention>
-  type = number
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+}
 ```
 
-An example, in the case of configuring the retention period for the `parse_pdr_task` `aws_cloudwatch_log_group`:
+The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
+For example, if a user would like their log_groups of one module to have a retention period of one year,
+deploy the respective modules including:
+
+### Example
+
+```tf
+default_log_retention_periods = 365
+```
+
+The retention period (in days) of cloudwatch log groups for specific lambdas and tasks can be set
+during deployment using the `cloudwatch_log_retention_periods` terraform map variable. In order to
+configure these values for respective cloudwatch log groups, declare the function's or task's name
+(which will the cloudwatch log group's name after the respective prefix) within the map. Using the `DiscoverGranules` task and the `CustomBootstrap` lambda, an example would be:
 
 ### Example
 
 ```tf
 cloudwatch_log_retention_periods = {
-  ingest_parse_pdr_task_log_retention = 365
+  PythonReferenceTask = 90,
+  DiscoverGranules = 365,
+  CustomBootStrap = 90,
 }
 ```
 
-Additionally, the variable `default_log_retention_days` can be configured separately during deployment in order to set the default log retention for the cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
+The retention periods are the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
+
+There are multiple log groups that have been added with a terraform definition in release v15.0.0+ for the purpose of allowing users the ability to configure the retention of all their log groups' maintained by Cumulu. Upon deployment of `data-persistence-tf` and `cumulus-tf`, due to these changes, the following error may occur:
+
+```bash
+Error: Creating CloudWatch Log Group failed: ResourceAlreadyExistsException: The specified log group already exists:  The CloudWatch Log Group '/aws/lambda/exampleUser-KinesisInboundEventLogger' already exists.
+```
+
+In this case, the cloudwatch log groups will need to be imported into the terraform state. In the `/cumulus/example/data-persistence-tf` and `/cumulus/example/cumulus-tf`
+directories, a script `cloudwatch-import.sh` is provided for this purpose. While running the script, if `Error: Resource already managed by Terraform` is encountered, simply comment out the line correlating to the script and re-run. In order to run the script the user must switch to the ZShell (`zsh`) and type this command in the console:
+
+```bash
+zsh cloudwatch-import.sh
+```
+
+More information is available about the cloudwatch import script [here](../upgrade-notes/import-cloudwatch-logs.md)

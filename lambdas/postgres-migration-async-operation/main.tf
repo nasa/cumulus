@@ -3,6 +3,7 @@ locals {
   all_bucket_names = [for k, v in var.buckets : v.name]
 }
 resource "aws_lambda_function" "postgres-migration-async-operation" {
+  depends_on       = [aws_cloudwatch_log_group.postgres-migration-async-operation]
   function_name    = "${var.prefix}-postgres-migration-async-operation"
   role             = aws_iam_role.postgres_migration_async_operation_role.arn
   filename         = local.lambda_path
@@ -41,4 +42,10 @@ resource "aws_lambda_function" "postgres-migration-async-operation" {
       ])
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "postgres-migration-async-operation" {
+  name              = "/aws/lambda/${var.prefix}-postgres-migration-async-operation"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "postgres-migration-async-operation", var.default_log_retention_days)
+  tags              = var.tags
 }

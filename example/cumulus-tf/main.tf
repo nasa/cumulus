@@ -183,6 +183,8 @@ module "cumulus" {
   api_gateway_stage           = var.api_gateway_stage
   archive_api_reserved_concurrency = var.api_reserved_concurrency
 
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
   elasticsearch_client_config = var.elasticsearch_client_config
 
   # Thin Egress App settings. Uncomment to use TEA.
@@ -287,4 +289,6 @@ module "s3_access_test_lambda" {
   }
 
   tags = local.tags
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }

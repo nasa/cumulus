@@ -11,3 +11,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "Optional retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
+  default = {}
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 14
+  description = "Optional default value that user chooses for their log retention periods"
+}

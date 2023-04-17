@@ -17,4 +17,7 @@ module "data_migration2" {
   system_bucket = var.system_bucket
 
   tags = var.tags
+  
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }

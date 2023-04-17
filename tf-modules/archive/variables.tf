@@ -10,12 +10,6 @@ variable "background_queue_url" {
   type = string
 }
 
-variable "cloudwatch_log_retention_periods" {
-  type = map(number)
-  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
-  default = {}
-}
-
 variable "cmr_client_id" {
   type = string
 }
@@ -44,12 +38,6 @@ variable "rds_security_group" {
 
 variable "rds_user_access_secret_arn" {
   type = string
-}
-
-variable "default_log_retention_days" {
-  type = number
-  default = 30
-  description = "default value that user chooses for their log retention periods"
 }
 
 variable "deploy_to_ngap" {
@@ -178,6 +166,19 @@ variable "api_port" {
 variable "api_reserved_concurrency" {
   type = number
   default = 8
+}
+
+
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
+  default = {}
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 30
+  description = "default value that user chooses for their log retention periods"
 }
 
 variable "api_url" {

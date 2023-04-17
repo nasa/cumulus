@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "fake_processing_task" {
+  depends_on       = [aws_cloudwatch_log_group.fake_processing_task]
   function_name    = "${var.prefix}-FakeProcessing"
   filename         = "${path.module}/../../tasks/test-processing/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/test-processing/dist/lambda.zip")
@@ -28,4 +29,10 @@ resource "aws_lambda_function" "fake_processing_task" {
   }
 
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "fake_processing_task" {
+  name              = "/aws/lambda/${var.prefix}-FakeProcessing"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "FakeProcessing", var.default_log_retention_days)
+  tags              = var.tags
 }

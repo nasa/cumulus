@@ -1,11 +1,5 @@
 # Required
 
-variable "cloudwatch_log_retention_periods" {
-  type = map(number)
-  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
-  default = {}
-}
-
 variable "cmr_client_id" {
   type = string
 }
@@ -54,12 +48,6 @@ variable "csdap_client_password" {
 variable "csdap_host_url" {
   type        = string
   description = "The csdap host url"
-}
-
-variable "default_log_retention_days" {
-  type = number
-  default = 30
-  description = "default value that user chooses for their log retention periods"
 }
 
 variable "launchpad_api" {
@@ -192,6 +180,29 @@ variable "api_reserved_concurrency" {
 variable "buckets" {
   type    = map(object({ name = string, type = string }))
   default = {}
+}
+
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
+  default = {
+    data-migration2 = 7,
+    DiscoverGranules = 7,           # ingest module
+    granuleFilesCacheUpdater = 7,   # archive module
+    ProvisionPostgresDatabase = 7,  # cumulus-rds-tf module
+    DistributionApiEndpoints = 7,   # cumulus_distribution module
+    EcsLogs = 7,                    # cumulus_ecs_service module
+    s3-credentials-endpoint = 7,    # distribution module
+    PrivateApiLambda = 7,           # archive module
+    HelloWorld = 7,
+    TeaCache = 7,                   # tea-map-cache module 
+  }
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 14
+  description = "default value that user chooses for their log retention periods"
 }
 
 variable "cmr_search_client_config" {

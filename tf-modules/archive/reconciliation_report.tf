@@ -1,6 +1,7 @@
 # CreateReconciliationReport
 
 resource "aws_lambda_function" "create_reconciliation_report" {
+  depends_on       = [aws_cloudwatch_log_group.create_reconciliation_report]
   function_name    = "${var.prefix}-CreateReconciliationReport"
   filename         = "${path.module}/../../packages/api/dist/createReconciliationReport/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/createReconciliationReport/lambda.zip")
@@ -45,4 +46,10 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       security_group_ids = concat(local.lambda_security_group_ids, [var.rds_security_group])
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "create_reconciliation_report" {
+  name = "/aws/lambda/${var.prefix}-CreateReconciliationReport"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "CreateReconciliationReport", var.default_log_retention_days)
+  tags = var.tags
 }

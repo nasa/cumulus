@@ -6,6 +6,7 @@ locals {
 }
 
 resource "aws_lambda_function" "fallback_consumer" {
+  depends_on       = [aws_cloudwatch_log_group.fallback_consumer]
   function_name    = "${var.prefix}-fallbackConsumer"
   filename         = "${path.module}/../../packages/api/dist/messageConsumer/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/messageConsumer/lambda.zip")
@@ -39,7 +40,14 @@ resource "aws_lambda_function" "fallback_consumer" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "fallback_consumer" {
+  name              = "/aws/lambda/${var.prefix}-fallbackConsumer"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "fallbackConsumer", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "kinesis_inbound_event_logger" {
+  depends_on       = [aws_cloudwatch_log_group.kinesis_inbound_event_logger]
   function_name    = "${var.prefix}-KinesisInboundEventLogger"
   filename         = "${path.module}/../../packages/api/dist/payloadLogger/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/payloadLogger/lambda.zip")
@@ -66,7 +74,14 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "kinesis_inbound_event_logger" {
+  name              = "/aws/lambda/${var.prefix}-KinesisInboundEventLogger"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "KinesisInboundEventLogger", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "kinesis_outbound_event_logger" {
+  depends_on       = [aws_cloudwatch_log_group.kinesis_outbound_event_logger]
   function_name    = "${var.prefix}-KinesisOutboundEventLogger"
   filename         = "${path.module}/../../packages/api/dist/payloadLogger/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/payloadLogger/lambda.zip")
@@ -93,7 +108,14 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "kinesis_outbound_event_logger" {
+  name              = "/aws/lambda/${var.prefix}-KinesisOutboundEventLogger"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "KinesisOutboundEventLogger", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "manual_consumer" {
+  depends_on       = [aws_cloudwatch_log_group.manual_consumer]
   function_name    = "${var.prefix}-manualConsumer"
   filename         = "${path.module}/../../packages/api/dist/manualConsumer/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/manualConsumer/lambda.zip")
@@ -126,7 +148,14 @@ resource "aws_lambda_function" "manual_consumer" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "manual_consumer" {
+  name              = "/aws/lambda/${var.prefix}-manualConsumer"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "manualConsumer", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "message_consumer" {
+  depends_on       = [aws_cloudwatch_log_group.message_consumer]
   function_name    = "${var.prefix}-messageConsumer"
   filename         = "${path.module}/../../packages/api/dist/messageConsumer/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/messageConsumer/lambda.zip")
@@ -159,7 +188,14 @@ resource "aws_lambda_function" "message_consumer" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "message_consumer" {
+  name              = "/aws/lambda/${var.prefix}-messageConsumer"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "messageConsumer", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "schedule_sf" {
+  depends_on       = [aws_cloudwatch_log_group.schedule_sf]
   function_name    = "${var.prefix}-ScheduleSF"
   description      = "This lambda function is invoked by scheduled rules created via cumulus API"
   filename         = "${path.module}/../../packages/api/dist/sfScheduler/lambda.zip"
@@ -193,7 +229,14 @@ resource "aws_lambda_function" "schedule_sf" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "schedule_sf" {
+  name              = "/aws/lambda/${var.prefix}-ScheduleSF"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ScheduleSf", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "sf_semaphore_down" {
+  depends_on       = [aws_cloudwatch_log_group.sf_semaphore_down]
   function_name    = "${var.prefix}-sfSemaphoreDown"
   filename         = "${path.module}/../../packages/api/dist/sfSemaphoreDown/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfSemaphoreDown/lambda.zip")
@@ -221,7 +264,14 @@ resource "aws_lambda_function" "sf_semaphore_down" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "sf_semaphore_down" {
+  name              = "/aws/lambda/${var.prefix}-sfSemaphoreDown"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sfSemaphoreDown", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "sf_sqs_report_task" {
+  depends_on       = [aws_cloudwatch_log_group.sf_sqs_report_task]
   function_name    = "${var.prefix}-SfSqsReport"
   filename         = "${path.module}/../../tasks/sf-sqs-report/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/sf-sqs-report/dist/lambda.zip")
@@ -254,7 +304,14 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "sf_sqs_report_task" {
+  name              = "/aws/lambda/${var.prefix}-SfSqsReport"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "SfSqsReport", var.default_log_retention_days)
+  tags              = var.tags
+}
+
 resource "aws_lambda_function" "sqs2sf" {
+  depends_on       = [aws_cloudwatch_log_group.sqs2sf]
   function_name    = "${var.prefix}-sqs2sf"
   filename         = "${path.module}/../../packages/api/dist/sfStarter/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/sfStarter/lambda.zip")
@@ -279,6 +336,12 @@ resource "aws_lambda_function" "sqs2sf" {
       ]
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "sqs2sf" {
+  name              = "/aws/lambda/${var.prefix}-sqs2sf"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "sqs2sf", var.default_log_retention_days)
+  tags              = var.tags
 }
 
 resource "aws_lambda_function" "sqs2sfThrottle" {

@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "pdr_status_check_task" {
+  depends_on       = [aws_cloudwatch_log_group.pdr_status_check_task]
   function_name    = "${var.prefix}-PdrStatusCheck"
   filename         = "${path.module}/../../tasks/pdr-status-check/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/pdr-status-check/dist/lambda.zip")
@@ -28,4 +29,10 @@ resource "aws_lambda_function" "pdr_status_check_task" {
   }
 
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "pdr_status_check_task" {
+  name              = "/aws/lambda/${var.prefix}-PdrStatusCheck"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "PdrStatusCheck", var.default_log_retention_days)
+  tags              = var.tags
 }

@@ -129,6 +129,7 @@ resource "aws_iam_role_policy" "migration_processing" {
 }
 
 resource "aws_lambda_function" "execute_migrations" {
+  depends_on       = [aws_cloudwatch_log_group.execute_migrations]
   function_name    = "${var.prefix}-executeMigrations"
   filename         = "${path.module}/../../packages/api/dist/executeMigrations/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/executeMigrations/lambda.zip")
@@ -160,4 +161,10 @@ resource "aws_lambda_function" "execute_migrations" {
       security_group_ids = local.lambda_security_group_ids
     }
   }
+}
+
+resource "aws_cloudwatch_log_group" "execute_migrations" {
+  name = "/aws/lambda/${var.prefix}-executeMigrations"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "executeMigrations", var.default_log_retention_days)
+  tags = var.tags
 }

@@ -1,6 +1,7 @@
 output "add_missing_file_checksums_task" {
   value = {
     task_arn           = aws_lambda_function.add_missing_file_checksums_task.arn
+    task_log_group     = aws_cloudwatch_log_group.add_missing_file_checksums_task.name
     last_modified_date = aws_lambda_function.add_missing_file_checksums_task.last_modified
   }
 }
@@ -8,6 +9,7 @@ output "add_missing_file_checksums_task" {
 output "discover_granules_task" {
   value = {
     task_arn           = aws_lambda_function.discover_granules_task.arn
+    task_log_group     = aws_cloudwatch_log_group.discover_granules_task.name
     last_modified_date = aws_lambda_function.discover_granules_task.last_modified
   }
 }
@@ -23,6 +25,7 @@ output "discover_pdrs_task" {
 output "fake_processing_task" {
   value = {
     task_arn           = aws_lambda_function.fake_processing_task.arn
+    task_log_group     = aws_cloudwatch_log_group.fake_processing_task.name
     last_modified_date = aws_lambda_function.fake_processing_task.last_modified
   }
 }
@@ -30,6 +33,7 @@ output "fake_processing_task" {
 output "files_to_granules_task" {
   value = {
     task_arn           = aws_lambda_function.files_to_granules_task.arn
+    task_log_group     = aws_cloudwatch_log_group.files_to_granules_task.name
     last_modified_date = aws_lambda_function.files_to_granules_task.last_modified
   }
 }
@@ -37,6 +41,7 @@ output "files_to_granules_task" {
 output "hello_world_task" {
   value = {
     task_arn           = aws_lambda_function.hello_world_task.arn
+    task_log_group     = aws_cloudwatch_log_group.hello_world_task.name
     last_modified_date = aws_lambda_function.hello_world_task.last_modified
   }
 }
@@ -61,6 +66,7 @@ output "lzards_backup_task" {
   value = (length(aws_lambda_function.lzards_backup_task) > 0 ?
   ({
       task_arn = aws_lambda_function.lzards_backup_task[0].arn
+      task_log_group     = aws_cloudwatch_log_group.lzards_backup_task[0].name
       last_modified_date = aws_lambda_function.lzards_backup_task[0].last_modified
   }) :
   { task_arn = ""})
@@ -77,6 +83,7 @@ output "message_consumer_lambda_function_arn" {
 output "move_granules_task" {
   value = {
     task_arn           = aws_lambda_function.move_granules_task.arn
+    task_log_group     = aws_cloudwatch_log_group.move_granules_task.name
     last_modified_date = aws_lambda_function.move_granules_task.last_modified
   }
 }
@@ -92,6 +99,7 @@ output "parse_pdr_task" {
 output "pdr_status_check_task" {
   value = {
     task_arn           = aws_lambda_function.pdr_status_check_task.arn
+    task_log_group     = aws_cloudwatch_log_group.pdr_status_check_task.name
     last_modified_date = aws_lambda_function.pdr_status_check_task.last_modified
   }
 }
@@ -107,6 +115,7 @@ output "post_to_cmr_task" {
 output "queue_granules_task" {
   value = {
     task_arn           = aws_lambda_function.queue_granules_task.arn
+    task_log_group     = aws_cloudwatch_log_group.queue_granules_task.name
     last_modified_date = aws_lambda_function.queue_granules_task.last_modified
   }
 }
@@ -134,6 +143,7 @@ output "schedule_sf_lambda_function_arn" {
 output "sf_sqs_report_task" {
   value = {
     task_arn           = aws_lambda_function.sf_sqs_report_task.arn
+    task_log_group     = aws_cloudwatch_log_group.sf_sqs_report_task.name
     last_modified_date = aws_lambda_function.sf_sqs_report_task.last_modified
   }
 }
@@ -185,6 +195,7 @@ output "start_sf_queue_url" {
 output "update_granules_cmr_metadata_file_links_task" {
   value = {
     task_arn           = aws_lambda_function.update_granules_cmr_metadata_file_links_task.arn
+    task_log_group     = aws_cloudwatch_log_group.update_granules_cmr_metadata_file_links_task.name
     last_modified_date = aws_lambda_function.update_granules_cmr_metadata_file_links_task.last_modified
   }
 }

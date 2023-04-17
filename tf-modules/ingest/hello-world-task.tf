@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "hello_world_task" {
+  depends_on       = [aws_cloudwatch_log_group.hello_world_task]
   function_name    = "${var.prefix}-HelloWorld"
   filename         = "${path.module}/../../tasks/hello-world/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/hello-world/dist/lambda.zip")
@@ -28,4 +29,10 @@ resource "aws_lambda_function" "hello_world_task" {
   }
 
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "hello_world_task" {
+  name              = "/aws/lambda/${var.prefix}-HelloWorld"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "HelloWorld", var.default_log_retention_days)
+  tags              = var.tags
 }

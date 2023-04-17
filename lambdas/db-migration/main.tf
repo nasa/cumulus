@@ -64,6 +64,7 @@ resource "aws_security_group" "db_migration" {
 }
 
 resource "aws_lambda_function" "db_migration" {
+  depends_on       = [aws_cloudwatch_log_group.db_migration]
   function_name    = "${var.prefix}-postgres-db-migration"
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
@@ -99,4 +100,10 @@ data "aws_lambda_invocation" "db_migration" {
   input = jsonencode({
     replacementTrigger = timestamp()
   })
+}
+
+resource "aws_cloudwatch_log_group" "db_migration" {
+  name              = "/aws/lambda/${var.prefix}-postgres-db-migration"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "postgres-db-migration", var.default_log_retention_days)
+  tags              = var.tags
 }

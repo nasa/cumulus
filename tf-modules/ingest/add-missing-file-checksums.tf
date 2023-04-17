@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "add_missing_file_checksums_task" {
+  depends_on       = [aws_cloudwatch_log_group.add_missing_file_checksums_task]
   function_name    = "${var.prefix}-AddMissingFileChecksums"
   filename         = "${path.module}/../../tasks/add-missing-file-checksums/dist/webpack/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/add-missing-file-checksums/dist/webpack/lambda.zip")
@@ -27,4 +28,10 @@ resource "aws_lambda_function" "add_missing_file_checksums_task" {
   }
 
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "add_missing_file_checksums_task" {
+  name              = "/aws/lambda/${var.prefix}-AddMissingFileChecksums"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "AddMissingFileChecksums", var.default_log_retention_days)
+  tags              = var.tags
 }

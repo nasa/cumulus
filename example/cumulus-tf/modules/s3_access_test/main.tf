@@ -8,6 +8,7 @@ terraform {
 }
 
 resource "aws_lambda_function" "s3_acccess_test" {
+  depends_on       = [aws_cloudwatch_log_group.s3_acccess_test]
   function_name    = "${var.prefix}-s3AccessTest"
   description      = "Lambda for integration testing direct S3 access"
   filename         = "${path.module}/../../../lambdas/s3AccessTest/lambda.zip"
@@ -17,4 +18,10 @@ resource "aws_lambda_function" "s3_acccess_test" {
   runtime          = "nodejs16.x"
 
   tags = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "s3_acccess_test" {
+  name              = "/aws/lambda/${aws_lambda_function.s3_acccess_test.function_name}"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "s3AccessTest", var.default_log_retention_days)
+  tags              = var.tags
 }

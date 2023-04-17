@@ -100,3 +100,15 @@ variable "db_migration_lambda_timeout" {
   type = number
   default = 900
 }
+
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
+  default = {}
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 30
+  description = "default value that user chooses for their log retention periods"
+}

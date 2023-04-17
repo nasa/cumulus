@@ -8,6 +8,7 @@ resource "aws_sqs_queue" "clean_executions_dead_letter_queue" {
 }
 
 resource "aws_lambda_function" "clean_executions" {
+  depends_on       = [aws_cloudwatch_log_group.clean_executions]
   function_name    = "${var.prefix}-cleanExecutions"
   filename         = "${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/cleanExecutions/lambda.zip")
@@ -62,4 +63,10 @@ resource "aws_lambda_permission" "daily_execution_payload_cleanup" {
   function_name = aws_lambda_function.clean_executions.arn
   principal     = "events.amazonaws.com"
   source_arn    = aws_cloudwatch_event_rule.daily_execution_payload_cleanup.arn
+}
+
+resource "aws_cloudwatch_log_group" "clean_executions" {
+  name = "/aws/lambda/${var.prefix}-cleanExecutions"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cleanExecutions", var.default_log_retention_days)
+  tags = var.tags
 }

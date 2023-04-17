@@ -12,3 +12,11 @@ data_persistence_remote_state_config = {
   key    = "PREFIX/data-persistence/terraform.tfstate"
   region = "us-east-1"
 }
+
+# Optional, uncomment if needed, these variables are for configuring the cloudwatch log group's retention periods
+
+# cloudwatch_log_retention_periods = {
+#   <lambda function or task name> = 365 
+# }
+#
+# default_log_retention_days = 30

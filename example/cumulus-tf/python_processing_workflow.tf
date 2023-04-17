@@ -26,6 +26,10 @@ module "python_test_ingest_processing_service" {
     AWS_DEFAULT_REGION = data.aws_region.current.name
     ACTIVITY_ARN = aws_sfn_activity.ecs_task_python_test_ingest_processing_service.id
   }
+
+  default_log_retention_days                     = var.default_log_retention_days
+  cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
+
   command = [
     "/usr/local/bin/python",
     "process_activity.py"

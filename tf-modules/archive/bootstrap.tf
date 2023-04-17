@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "custom_bootstrap" {
+  depends_on       = [aws_cloudwatch_log_group.custom_bootstrap]
   function_name    = "${var.prefix}-CustomBootstrap"
   filename         = "${path.module}/../../packages/api/dist/bootstrap/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bootstrap/lambda.zip")
@@ -37,4 +38,10 @@ data "aws_lambda_invocation" "custom_bootstrap" {
       removeAliasConflict = var.elasticsearch_remove_index_alias_conflict
       replacementTrigger = timestamp()
     })
+}
+
+resource "aws_cloudwatch_log_group" "custom_bootstrap" {
+  name = "/aws/lambda/${var.prefix}-CustomBootstrap"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "CustomBootstrap", var.default_log_retention_days)
+  tags = var.tags
 }
