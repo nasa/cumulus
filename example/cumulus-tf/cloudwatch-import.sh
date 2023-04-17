@@ -1,23 +1,15 @@
-# SCRIPT FOR IMPORTING CLOUDWATCH LOG GROUPS TO TERRAFORM STATE (CUMULUS TF)
+# SCRIPT FOR IMPORTING CLOUDWATCH LOG GROUPS TO TERRAFORM STATE (CUMULUS TF), The module names may be different depending on the user
+# check 'terraform state list' or 'terraform plan' in order to find out the module name for the respective log group and fix the script as needed.
+# Additionally, all of the groups below may not apply to your deployment, please comment out log groups that are not causing 'ResourceAlreadyExistsException' or are
+# not applicable to you.
 #!/bin/zsh
 set -e
 
+echo "Importing Cloudwatch log groups for cumulus-tf, please open the script and change or comment out any import commands respective to your deployment \n"
 echo -n "Enter the prefix used for your terraform deployment and press [ENTER]:"
 read prefix
-terraform init
+terraform init --reconfigure
 
-terraform import aws_cloudwatch_log_group.cnm_response_task "/aws/lambda/$prefix-CnmResponse"
-terraform import aws_cloudwatch_log_group.cnm_to_cma_task: "/aws/lambda/$prefix-CnmToCma"
-terraform import aws_cloudwatch_log_group.async_operation_fail "/aws/lambda/$prefix-AsyncOperationFail"
-terraform import aws_cloudwatch_log_group.async_operation_success "/aws/lambda/$prefix-AsyncOperationSuccess"
-terraform import aws_cloudwatch_log_group.sns_s3_executions_test "/aws/lambda/$prefix-SnsS3ExecutionsTest"
-terraform import aws_cloudwatch_log_group.sns_s3_granules_test "/aws/lambda/$prefix-SnsS3GranulesTest"
-terraform import aws_cloudwatch_log_group.sns_s3_pdrs_test: "/aws/lambda/$prefix-SnsS3PdrsTest"
-terraform import aws_cloudwatch_log_group.sns_s3_collections_test "/aws/lambda/$prefix-SnsS3CollectionsTest"
-terraform import aws_cloudwatch_log_group.ftpPopulateTestLambda "/aws/lambda/$prefix-populateTestLambda"
-terraform import aws_cloudwatch_log_group.lzards_api_client_test "/aws/lambda/$prefix-LzardsApiClientTest"
-terraform import module.s3_access_test_lambda.aws_cloudwatch_log_group.s3_acccess_test "/aws/lambda/$prefix-s3AccessTest"
-terraform import aws_cloudwatch_log_group.python_reference_task "/aws/lambda/$prefix-PythonReferenceTask"
 terraform import module.cumulus.module.data_migration2.aws_cloudwatch_log_group.data_migration2 "/aws/lambda/$prefix-data-migration2"
 terraform import module.cumulus.module.postgres_migration_async_operation.aws_cloudwatch_log_group.postgres-migration-async-operation "/aws/lambda/$prefix-postgres-migration-async-operation"
 terraform import module.cumulus.module.postgres_migration_count_tool.aws_cloudwatch_log_group.postgres_migration_count_tool "/aws/lambda/$prefix-postgres-migration-count-tool"
@@ -35,7 +27,6 @@ terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.create_r
 terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.sf_event_sqs_to_db_records "/aws/lambda/$prefix-sfEventSqsToDbRecords"
 terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.write_db_dlq_records_to_s3 "/aws/lambda/$prefix-writeDbRecordsDLQtoS3"
 terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.start_async_operation "/aws/lambda/$prefix-StartAsyncOperation"
-terraform import module.tea_s3_credentials_endpoint_test.aws_cloudwatch_log_group.s3_credentials "/aws/lambda/$prefix-s3-credentials-endpoint"
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.add_missing_file_checksums_task "/aws/lambda/$prefix-AddMissingFileChecksums"
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.fake_processing_task "/aws/lambda/$prefix-FakeProcessing"
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.files_to_granules_task "/aws/lambda/$prefix-FilesToGranules"
@@ -54,5 +45,28 @@ terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.move_gran
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.pdr_status_check_task "/aws/lambda/$prefix-PdrStatusCheck"
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.queue_granules_task "/aws/lambda/$prefix-QueueGranules"
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.update_granules_cmr_metadata_file_links_task "/aws/lambda/$prefix-UpdateGranulesCmrMetadataFileLinks"
-terraform import module.tea_s3_credentials_endpoint_test.module.tea_map_cache.aws_cloudwatch_log_group.tea_cache "/aws/lambda/$prefix-TeaCache"
 terraform import module.cumulus.module.ingest.aws_cloudwatch_log_group.discover_granules_task "/aws/lambda/$prefix-DiscoverGranules"
+
+echo "Successfully imported Cumulus log groups"
+
+echo "Now importing s3 and TEA log groups"
+
+terraform import module.s3_access_test_lambda.aws_cloudwatch_log_group.s3_acccess_test "/aws/lambda/$prefix-s3AccessTest"
+terraform import module.tea_s3_credentials_endpoint_test.aws_cloudwatch_log_group.s3_credentials "/aws/lambda/$prefix-s3-credentials-endpoint"
+terraform import module.tea_s3_credentials_endpoint_test.module.tea_map_cache.aws_cloudwatch_log_group.tea_cache "/aws/lambda/$prefix-TeaCache"
+
+echo "Successfully imported s3 and TEA log groups"
+
+echo "Now importing non-Cumulus maintained log groups, the module names may be different based on the user. Please check 'terraform plan' if unsure about the module definition before the following query"
+
+terraform import aws_cloudwatch_log_group.cnm_response_task "/aws/lambda/$prefix-CnmResponse"
+terraform import aws_cloudwatch_log_group.cnm_to_cma_task: "/aws/lambda/$prefix-CnmToCma"
+terraform import aws_cloudwatch_log_group.async_operation_fail "/aws/lambda/$prefix-AsyncOperationFail"
+terraform import aws_cloudwatch_log_group.async_operation_success "/aws/lambda/$prefix-AsyncOperationSuccess"
+terraform import aws_cloudwatch_log_group.sns_s3_executions_test "/aws/lambda/$prefix-SnsS3ExecutionsTest"
+terraform import aws_cloudwatch_log_group.sns_s3_granules_test "/aws/lambda/$prefix-SnsS3GranulesTest"
+terraform import aws_cloudwatch_log_group.sns_s3_pdrs_test: "/aws/lambda/$prefix-SnsS3PdrsTest"
+terraform import aws_cloudwatch_log_group.sns_s3_collections_test "/aws/lambda/$prefix-SnsS3CollectionsTest"
+terraform import aws_cloudwatch_log_group.ftpPopulateTestLambda "/aws/lambda/$prefix-populateTestLambda"
+terraform import aws_cloudwatch_log_group.lzards_api_client_test "/aws/lambda/$prefix-LzardsApiClientTest"
+terraform import aws_cloudwatch_log_group.python_reference_task "/aws/lambda/$prefix-PythonReferenceTask"
