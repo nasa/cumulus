@@ -122,6 +122,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added support for sha512 as checksumType for LZARDs backup task.
 
 ### Changed
+
+- **CUMULUS-3279**
+  - Updated core dependencies on `xml2js` to `v0.5.0`
+  - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
+    `v0.5.0`
+  - Added audit-ci CVE override until July 1 to allow for Core package releases
 - **CUMULUS-3106**
   - Updated localstack version to 1.4.0 and removed 'skip' from all skipped tests
 - **CUMULUS-3115**

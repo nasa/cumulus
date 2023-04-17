@@ -1,6 +1,17 @@
 {
-    "high": true,
-    "pass-enoaudit": true,
-    "retry-count": 20,
-    "allowlist": ["knex", "jsonwebtoken", "cacheable-request", "http-cache-semantics"]
+  "high": true,
+  "pass-enoaudit": true,
+  "retry-count": 20,
+  "allowlist": [
+    {
+      "GHSA-776f-qx25-q3cc": {
+        "active": true,
+        "expiry": "1 July 2023 11:00"
+      }
+    },
+    "knex",
+    "jsonwebtoken",
+    "cacheable-request",
+    "http-cache-semantics"
+  ]
 }
