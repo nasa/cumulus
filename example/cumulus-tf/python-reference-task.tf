@@ -1,5 +1,4 @@
 resource "aws_lambda_function" "python_reference_task" {
-  depends_on       = [aws_cloudwatch_log_group.python_reference_task]
   function_name    = "${var.prefix}-PythonReferenceTask"
   filename         = "${path.module}/../lambdas/python-reference-task/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../lambdas/python-reference-task/dist/lambda.zip")

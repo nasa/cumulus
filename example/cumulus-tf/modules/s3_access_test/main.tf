@@ -8,7 +8,6 @@ terraform {
 }
 
 resource "aws_lambda_function" "s3_acccess_test" {
-  depends_on       = [aws_cloudwatch_log_group.s3_acccess_test]
   function_name    = "${var.prefix}-s3AccessTest"
   description      = "Lambda for integration testing direct S3 access"
   filename         = "${path.module}/../../../lambdas/s3AccessTest/lambda.zip"
