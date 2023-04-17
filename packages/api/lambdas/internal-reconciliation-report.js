@@ -34,6 +34,8 @@ const {
   initialReportHeader,
   compareEsGranuleAndApiGranule,
 } = require('../lib/reconciliationReport');
+const { errorify } = require('../lib/utils');
+
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
 /**
@@ -114,7 +116,7 @@ async function internalRecReportForCollections(recReportParams) {
       } else {
         withConflicts.push({ es: nextEsItem, db: nextDbItem });
       }
-      await esCollectionsIterator.shift();
+      await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
       dbCollectionItems.shift();
     }
 
@@ -407,28 +409,34 @@ async function createInternalReconciliationReport(recReportParams) {
     granules: cloneDeep(initialReportFormat),
   };
 
-  await s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+  try {
+    await s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
 
-  const [collectionsReport, granulesReport] = await Promise.all([
-    internalRecReportForCollections(recReportParams),
-    internalRecReportForGranules(recReportParams),
-  ]);
-  report = Object.assign(report, { collections: collectionsReport, granules: granulesReport });
+    const [collectionsReport, granulesReport] = await Promise.all([
+      internalRecReportForCollections(recReportParams),
+      internalRecReportForGranules(recReportParams),
+    ]);
+    report = Object.assign(report, { collections: collectionsReport, granules: granulesReport });
 
-  // Create the full report
-  report.createEndTime = moment.utc().toISOString();
-  report.status = 'SUCCESS';
+    // Create the full report
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'SUCCESS';
 
-  // Write the full report to S3
-  return s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+    // Write the full report to S3
+    return s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
+  } catch (error) {
+    log.error('Error caught in createInternalReconciliationReport');
+    log.error(errorify(error));
+    throw error;
+  }
 }
 
 module.exports = {

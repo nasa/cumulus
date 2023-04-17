@@ -319,10 +319,10 @@ async function orcaReconciliationReportForGranules(recReportParams) {
     throw error;
   }
 
-  const reportSummery = Object.entries(granulesReport)
+  const reportSummary = Object.entries(granulesReport)
     .map(([key, value]) => `${key} ${Array.isArray(value) ? value.length : value}`);
 
-  log.info(`returning orcaReconciliationReportForGranules report: ${reportSummery.join(', ')}`);
+  log.info(`returning orcaReconciliationReportForGranules report: ${reportSummary.join(', ')}`);
   return granulesReport;
 }
 
@@ -345,6 +345,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
  */
 async function createOrcaBackupReconciliationReport(recReportParams) {
   log.info(`createOrcaBackupReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
+  let granulesReport;
   const {
     reportKey,
     systemBucket,
@@ -375,7 +376,13 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     Body: JSON.stringify(report, undefined, 2),
   });
 
-  const granulesReport = await orcaReconciliationReportForGranules(recReportParams);
+  try {
+    granulesReport = await orcaReconciliationReportForGranules(recReportParams);
+  } catch (error) {
+    log.error('Error caught in createOrcaBackupReconciliationReport');
+    log.error(errorify(error));
+    throw error;
+  }
 
   // Create the full report
   report.granules = granulesReport;

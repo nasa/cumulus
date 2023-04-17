@@ -205,6 +205,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
       s3ObjectsQueue.peek(),
       pgFileSearchClient.peek(),
     ]);
+
     while (nextS3Object && nextPgItem) {
       const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
       const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
@@ -216,7 +217,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
       if (nextS3Uri < nextPgFileUri) {
         // Found an item that is only in S3 and not in PostgreSQL
         if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
-        await s3ObjectsQueue.shift();
+        await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
       } else if (nextS3Uri > nextPgFileUri) {
         // Found an item that is only in PostgreSQL and not in S3
         const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
@@ -230,8 +231,8 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
         if (linkFilesAndGranules) {
           okCountByGranule[nextPgItem.granule_id] += 1;
         }
-        await s3ObjectsQueue.shift();
-        await pgFileSearchClient.shift();
+        await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+        await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
       }
 
       // eslint-disable-next-line no-await-in-loop
@@ -717,54 +718,58 @@ async function createReconciliationReport(recReportParams) {
     filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
   };
 
-  await s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+  try {
+    await s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
 
-  // Internal consistency check S3 vs Cumulus DBs
-  // --------------------------------------------
-  if (location !== 'CMR') {
-    // Create a report for each bucket
+    // Internal consistency check S3 vs Cumulus DBs
+    // --------------------------------------------
+    if (location !== 'CMR') {
+      // Create a report for each bucket
 
-    const promisedBucketReports = dataBuckets.map(
-      (bucket) => createReconciliationReportForBucket(bucket, recReportParams, knex)
-    );
-
-    const bucketReports = await Promise.all(promisedBucketReports);
-    log.info('bucketReports (S3 vs database) completed');
-
-    bucketReports.forEach((bucketReport) => {
-      report.filesInCumulus.okCount += bucketReport.okCount;
-      report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
-      report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
-        bucketReport.onlyInDb
+      const promisedBucketReports = dataBuckets.map(
+        (bucket) => createReconciliationReportForBucket(bucket, recReportParams, knex)
       );
 
-      if (linkingFilesToGranules(recReportParams.reportType)) {
-        Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
-          const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
-          const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+      const bucketReports = await Promise.all(promisedBucketReports);
+      log.info('bucketReports (S3 vs database) completed');
 
-          report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
-            + bucketGranuleCount;
-        });
-      } else {
-        delete report.filesInCumulus.okCountByGranule;
-      }
-    });
+      bucketReports.forEach((bucketReport) => {
+        report.filesInCumulus.okCount += bucketReport.okCount;
+        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3); // eslint-disable-line max-len
+        report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
+          bucketReport.onlyInDb
+        );
+
+        if (linkingFilesToGranules(recReportParams.reportType)) {
+          Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
+            const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
+            const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+
+            report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
+              + bucketGranuleCount;
+          });
+        } else {
+          delete report.filesInCumulus.okCountByGranule;
+        }
+      });
+    }
+
+    // compare the CUMULUS holdings with the holdings in CMR
+    // -----------------------------------------------------
+    if (location !== 'S3') {
+      const cumulusCmrReport = await reconciliationReportForCumulusCMR({
+        bucketsConfig, distributionBucketMap, recReportParams,
+      });
+      report = Object.assign(report, cumulusCmrReport);
+    }
+  } catch (error) {
+    log.error(`Error caught in createReconciliationReport for reportKey ${reportKey}`);
+    throw error;
   }
-
-  // compare the CUMULUS holdings with the holdings in CMR
-  // -----------------------------------------------------
-  if (location !== 'S3') {
-    const cumulusCmrReport = await reconciliationReportForCumulusCMR({
-      bucketsConfig, distributionBucketMap, recReportParams,
-    });
-    report = Object.assign(report, cumulusCmrReport);
-  }
-
   log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
   // Create the full report
   report.createEndTime = moment.utc().toISOString();
@@ -841,6 +846,7 @@ async function processRequest(params) {
       },
     };
     await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    throw error;
   }
 
   return reconciliationReportModel.get({ name: reportRecord.name });

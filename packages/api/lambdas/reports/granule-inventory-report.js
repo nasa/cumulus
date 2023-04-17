@@ -11,6 +11,8 @@ const {
   translatePostgresGranuleResultToApiGranule,
 } = require('@cumulus/db');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
+
+const { errorify } = require('../lib/utils');
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
@@ -68,29 +70,35 @@ async function createGranuleInventoryReport(recReportParams) {
     },
   });
 
-  while (nextGranule) {
-    // eslint-disable-next-line no-await-in-loop
-    const apiGranule = await translatePostgresGranuleResultToApiGranule(
-      recReportParams.knex,
-      nextGranule
-    );
-    readable.push({
-      granuleUr: apiGranule.granuleId,
-      collectionId: apiGranule.collectionId,
-      createdAt: new Date(apiGranule.createdAt).toISOString(),
-      startDateTime: apiGranule.beginningDateTime || '',
-      endDateTime: apiGranule.endingDateTime || '',
-      status: apiGranule.status,
-      updatedAt: new Date(apiGranule.updatedAt).toISOString(),
-      published: apiGranule.published,
-      provider: apiGranule.provider,
-    });
-    await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
-    nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
-  }
-  readable.push(null);
+  try {
+    while (nextGranule) {
+      // eslint-disable-next-line no-await-in-loop
+      const apiGranule = await translatePostgresGranuleResultToApiGranule(
+        recReportParams.knex,
+        nextGranule
+      );
+      readable.push({
+        granuleUr: apiGranule.granuleId,
+        collectionId: apiGranule.collectionId,
+        createdAt: new Date(apiGranule.createdAt).toISOString(),
+        startDateTime: apiGranule.beginningDateTime || '',
+        endDateTime: apiGranule.endingDateTime || '',
+        status: apiGranule.status,
+        updatedAt: new Date(apiGranule.updatedAt).toISOString(),
+        published: apiGranule.published,
+        provider: apiGranule.provider,
+      });
+      await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
+      nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
+    }
+    readable.push(null);
 
-  return promisedObject;
+    return promisedObject;
+  } catch (error) {
+    log.error('Error caught in createGranuleInventoryReport');
+    log.error(errorify(error));
+    throw error;
+  }
 }
 
 exports.createGranuleInventoryReport = createGranuleInventoryReport;
