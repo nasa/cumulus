@@ -10,9 +10,11 @@ const {
 } = require('@cumulus/common/test-utils');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
+  CollectionPgModel,
+  ExecutionPgModel,
   FilePgModel,
   GranulePgModel,
-  CollectionPgModel,
+  GranulesExecutionsPgModel,
   translateApiGranuleToPostgresGranule,
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
@@ -37,11 +39,12 @@ const {
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
 /**
- * Helper for creating a granule, a parent collection,
+ * Helper for creating a granule, a parent collection, postgres execution record
  * and files belonging to that granule (in S3 and Postgres)
  *
  * @param {Object} params
  * @param {Knex} params.dbClient - Knex client
+ * @param {number} params.executionCumulusId - executionId for execution record to link
  * @param {number} params.collectionId - collectionId for the granule's parent collection
  * @param {number} params.collectionCumulusId - cumulus_id for the granule's parent collection
  * @param {boolean} params.published - if the granule should be marked published to CMR
@@ -49,11 +52,10 @@ const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/met
  */
 async function createGranuleAndFiles({
   collectionCumulusId,
+  executionCumulusId,
   collectionId,
   dbClient,
   esClient,
-  executionPgRecord,
-  granulesExecutionsPgModel,
   granuleParams = { published: false },
 }) {
   const s3Buckets = {
@@ -168,12 +170,28 @@ async function createGranuleAndFiles({
     })
   );
 
-  if (executionPgRecord && granulesExecutionsPgModel) {
-    await granulesExecutionsPgModel.create(dbClient, {
-      granule_cumulus_id: pgGranule.cumulus_id,
-      execution_cumulus_id: executionPgRecord.cumulus_id,
-    });
+  // Create execution record if executionCumulusId not set
+  if (!executionCumulusId) {
+    const executionPgModel = new ExecutionPgModel();
+    const [pgExecution] = await executionPgModel.create(
+      dbClient,
+      {
+        url: newGranule.execution,
+        arn: newGranule.execution.split('/').pop(),
+        status: 'completed',
+      }
+    );
+    executionCumulusId = pgExecution.cumulus_id;
   }
+  // Link existing Postgres execution to granule
+  const granulesExecutionsModel = new GranulesExecutionsPgModel();
+  await granulesExecutionsModel.create(
+    dbClient,
+    {
+      granule_cumulus_id: pgGranule.cumulus_id,
+      execution_cumulus_id: executionCumulusId,
+    }
+  );
 
   const apiGranule = await translatePostgresGranuleToApiGranule({
     knexOrTransaction: dbClient,
