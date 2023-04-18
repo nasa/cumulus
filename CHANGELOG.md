@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-3199**
+    - Removed DbIndexer lambda and all associated terraform resources
   - **CUMULUS-2793**
     - Removed Provider Dynamo model and related test code
   - **CUMULUS-2645**
