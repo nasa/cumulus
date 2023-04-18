@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
+  - **CUMULUS-3199**
+    - Removed DbIndexer lambda and all associated terraform resources
   - **CUMULUS-2793**
     - Removed Provider Dynamo model and related test code
   - **CUMULUS-2645**
@@ -113,6 +115,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2688**
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
     - Add new endpoints to update and delete granules by collectionId as well as granuleId
+
+
+### Removed
+
+- **CUMULUS-2994**
+  - Delete code/lambdas that publish DynamoDB stream events to SNS
+
 
 ## Unreleased
 
@@ -351,6 +360,16 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3193**
   - Update eslint config to better support typing
 - Improve linting of TS files
+
+### Removed
+
+- **CUMULUS-2798**
+  - Removed AsyncOperations model
+
+### Removed
+
+- **CUMULUS-3009**
+  - Removed Dynamo PDRs table
 
 ## [v14.0.0] 2022-12-08
 
