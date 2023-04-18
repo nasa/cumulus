@@ -22,8 +22,10 @@ const Logger = require('@cumulus/logger');
 
 const { Search } = require('@cumulus/es-client/search');
 const { deleteAsyncOperation } = require('@cumulus/es-client/indexer');
-const { AsyncOperation: AsyncOperationModel } = require('../models');
 const { isBadRequestError } = require('../lib/errors');
+
+const { recordIsValid } = require('../lib/schema');
+const asyncSchema = require('../lib/schemas').asyncOperation;
 
 const logger = new Logger({ sender: '@cumulus/api/asyncOperations' });
 
@@ -70,11 +72,6 @@ async function getAsyncOperation(req, res) {
  */
 async function del(req, res) {
   const {
-    asyncOperationModel = new AsyncOperationModel({
-      stackName: process.env.stackName,
-      systemBucket: process.env.system_bucket,
-      tableName: process.env.AsyncOperationsTable,
-    }),
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -91,7 +88,6 @@ async function del(req, res) {
     return res.boom.badRequest('id parameter is missing');
   }
 
-  let existingApiAsyncOperation;
   try {
     await asyncOperationPgModel.get(knex, { id });
   } catch (error) {
@@ -106,34 +102,15 @@ async function del(req, res) {
     }
   }
 
-  try {
-    // Get DynamoDB async operation to recreate in case of deletion failure
-    existingApiAsyncOperation = await asyncOperationModel.get({ id });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await asyncOperationPgModel.delete(trx, { id });
-      await asyncOperationModel.delete({ id });
-      await deleteAsyncOperation({
-        esClient,
-        id,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
+  await createRejectableTransaction(knex, async (trx) => {
+    await asyncOperationPgModel.delete(trx, { id });
+    await deleteAsyncOperation({
+      esClient,
+      id,
+      index: process.env.ES_INDEX,
+      ignore: [404],
     });
-  } catch (error) {
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (existingApiAsyncOperation) {
-      await asyncOperationModel.create(existingApiAsyncOperation);
-    }
-    throw error;
-  }
+  });
 
   return res.send({ message: 'Record deleted' });
 }
@@ -147,11 +124,6 @@ async function del(req, res) {
  */
 async function post(req, res) {
   const {
-    asyncOperationModel = new AsyncOperationModel({
-      stackName: process.env.stackName,
-      systemBucket: process.env.system_bucket,
-      tableName: process.env.AsyncOperationsTable,
-    }),
     asyncOperationPgModel = new AsyncOperationPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -166,28 +138,22 @@ async function post(req, res) {
     if (!apiAsyncOperation.id) {
       throw new ValidationError('Async Operations require an ID');
     }
+    recordIsValid(apiAsyncOperation, asyncSchema, false);
     if (await asyncOperationPgModel.exists(knex, { id: apiAsyncOperation.id })) {
       return res.boom.conflict(`A record already exists for async operation ID ${apiAsyncOperation.id}`);
     }
     const dbRecord = translateApiAsyncOperationToPostgresAsyncOperation(apiAsyncOperation);
-    let dynamoDbRecord;
-
-    try {
-      logger.debug(`Attempting to create async operation ${dbRecord.id}`);
-      await createRejectableTransaction(knex, async (trx) => {
-        await asyncOperationPgModel.create(trx, dbRecord);
-        dynamoDbRecord = await asyncOperationModel.create(apiAsyncOperation);
-        await indexAsyncOperation(esClient, dynamoDbRecord, process.env.ES_INDEX);
-      });
-    } catch (innerError) {
-      // Clean up DynamoDB async operation record in case of any failure
-      await asyncOperationModel.delete({ id: apiAsyncOperation.id });
-      throw innerError;
-    }
-    logger.info(`Successfully created async operation ${dbRecord.id}:`);
+    logger.debug(`Attempting to create async operation ${dbRecord.id}`);
+    let apiDbRecord;
+    await createRejectableTransaction(knex, async (trx) => {
+      const pgRecord = await asyncOperationPgModel.create(trx, dbRecord, ['*']);
+      apiDbRecord = await translatePostgresAsyncOperationToApiAsyncOperation(pgRecord[0]);
+      await indexAsyncOperation(esClient, apiDbRecord, process.env.ES_INDEX);
+    });
+    logger.info(`Successfully created async operation ${apiDbRecord.id}:`);
     return res.send({
       message: 'Record saved',
-      record: dynamoDbRecord,
+      record: apiDbRecord,
     });
   } catch (error) {
     if (isBadRequestError(error)) {

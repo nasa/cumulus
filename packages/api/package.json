@@ -110,11 +110,17 @@
     "saml2-js": "^4.0.0",
     "semver": "^7.3.2",
     "split2": "^2.2.0",
+    "superagent-defaults": "0.1.14",
     "tough-cookie": "~4.0.0",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1",
-    "xml2js": "^0.4.22",
+    "xml2js": "0.5.0",
     "zod": "^3.20.2"
+  },
+  "overrides": {
+    "saml2-js": {
+      "xml2js": "0.5.0"
+    }
   },
   "devDependencies": {
     "@cumulus/test-data": "15.0.0"

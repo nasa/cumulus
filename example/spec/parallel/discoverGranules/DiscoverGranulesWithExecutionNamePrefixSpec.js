@@ -52,8 +52,6 @@ describe('The DiscoverGranules workflow', () => {
     process.env.stackName = stackName;
     process.env.system_bucket = bucket;
 
-    process.env.ProvidersTable = `${stackName}-ProvidersTable`;
-
     const testId = createTimestampedTestId(stackName, 'DiscoverGranulesWithExecutionNamePrefix');
 
     // Create the provider

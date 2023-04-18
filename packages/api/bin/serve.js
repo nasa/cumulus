@@ -81,8 +81,6 @@ async function populateBucket(bucket, stackName) {
 }
 
 async function setTableEnvVariables(stackName) {
-  process.env.FilesTable = `${stackName}-FilesTable`;
-
   const tableModels = Object
     .keys(models)
     .filter((tableModel) => tableModel !== 'Manager');
@@ -428,21 +426,15 @@ async function eraseDynamoTables(stackName, systemBucket) {
   process.env.stackName = stackName;
 
   // Remove all data from tables
-  const providerModel = new models.Provider();
-  const collectionModel = new models.Collection();
   const rulesModel = new models.Rule();
   const executionModel = new models.Execution();
   const granulesModel = new models.Granule();
-  const pdrsModel = new models.Pdr();
 
   try {
     await rulesModel.deleteRules();
     await Promise.allSettled([
-      collectionModel.deleteCollections(),
-      providerModel.deleteProviders(),
       executionModel.deleteExecutions(),
       granulesModel.deleteGranules(),
-      pdrsModel.deletePdrs(),
     ]);
   } catch (error) {
     console.log(error);

@@ -132,6 +132,9 @@ export const setLzardsChecksumQueryType = (
   if (file.checksumType === 'sha256') {
     return { expectedSha256Hash: file.checksum };
   }
+  if (file.checksumType === 'sha512') {
+    return { expectedSha512Hash: file.checksum };
+  }
   log.error(`${granuleId}: File ${buildS3Uri(file.bucket, file.key)} did not have a checksum or supported checksumType defined`);
   throw new ChecksumError(`${granuleId}: File ${buildS3Uri(file.bucket, file.key)} did not have a checksum or checksumType defined`);
 };
