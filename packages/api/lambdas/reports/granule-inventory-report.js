@@ -12,7 +12,7 @@ const {
 } = require('@cumulus/db');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 
-const { errorify } = require('../lib/utils');
+const { errorify } = require('../../lib/utils');
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**

@@ -1,5 +1,6 @@
 'use strict';
 
+const pRetry = require('p-retry');
 const cloneDeep = require('lodash/cloneDeep');
 const keyBy = require('lodash/keyBy');
 const pickBy = require('lodash/pickBy');
@@ -664,6 +665,21 @@ async function reconciliationReportForCumulusCMR(params) {
 }
 
 /**
+ * Write reconciliation report to S3
+ * @param {Object} report       - report to upload
+ * @param {string} systemBucket - system bucket
+ * @param {string} reportKey    - report key
+ * @returns {Promise<null>}
+ */
+async function _uploadReportToS3(report, systemBucket, reportKey) {
+  return s3().putObject({
+    Bucket: systemBucket,
+    Key: reportKey,
+    Body: JSON.stringify(report, undefined, 2),
+  });
+}
+
+/**
  * Create a Reconciliation report and save it to S3
  *
  * @param {Object} recReportParams - params
@@ -719,11 +735,7 @@ async function createReconciliationReport(recReportParams) {
   };
 
   try {
-    await s3().putObject({
-      Bucket: systemBucket,
-      Key: reportKey,
-      Body: JSON.stringify(report, undefined, 2),
-    });
+    await _uploadReportToS3(report, systemBucket, reportKey)
 
     // Internal consistency check S3 vs Cumulus DBs
     // --------------------------------------------
@@ -768,6 +780,14 @@ async function createReconciliationReport(recReportParams) {
     }
   } catch (error) {
     log.error(`Error caught in createReconciliationReport for reportKey ${reportKey}`);
+    log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
+    // Create the full report
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'Failed';
+    report.error = error;
+
+    // Write the full report to S3
+    await _uploadReportToS3(report, systemBucket, reportKey)
     throw error;
   }
   log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
@@ -776,11 +796,7 @@ async function createReconciliationReport(recReportParams) {
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  return s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+  return _uploadReportToS3(report, systemBucket, reportKey)
 }
 
 /**
@@ -788,11 +804,23 @@ async function createReconciliationReport(recReportParams) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
+ * @param {string} params.reportType - the type of reconciliation report
+ * @param {string} params.reportName - the name of the report
+ * @param {Object} params.pRetryOptions - Optional pRetryOptions
+ * @param {Knex} params.knex - Optional Instance of a Knex client for testing
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
   log.info(`processing reconciliation report request with params: ${JSON.stringify(params)}`);
-  const { reportType, reportName, systemBucket, stackName } = params;
+  const env = params.env ? params.env : process.env;
+  const {
+    reportType,
+    reportName,
+    systemBucket,
+    stackName,
+    pRetryOptions = {},
+    knex = await getKnexClient(env),
+  } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
     || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
@@ -810,44 +838,56 @@ async function processRequest(params) {
   await reconciliationReportModel.create(reportRecord);
   log.info(`Report added to database as pending: ${JSON.stringify(reportRecord)}.`);
 
-  const env = params.env ? params.env : process.env;
-  const knex = await getKnexClient(env);
   const concurrency = env.CONCURRENCY || 3;
 
-  try {
-    const recReportParams = {
-      ...params,
-      createStartTime,
-      reportKey,
-      reportType,
-      knex,
-      concurrency,
-    };
-    log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
-    if (reportType === 'Internal') {
-      await createInternalReconciliationReport(recReportParams);
-    } else if (reportType === 'Granule Inventory') {
-      await createGranuleInventoryReport(recReportParams);
-    } else if (reportType === 'ORCA Backup') {
-      await createOrcaBackupReconciliationReport(recReportParams);
-    } else {
-      // reportType is in ['Inventory', 'Granule Not Found']
-      await createReconciliationReport(recReportParams);
-    }
-    await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-  } catch (error) {
-    log.error(`Error creating ${reportType} report ${reportRecordName}`, error);
-    log.error(errorify(error));
-    const updates = {
-      status: 'Failed',
-      error: {
-        Error: error.message,
-        Cause: errorify(error),
+  await pRetry(
+    async () => {
+      try {
+        const recReportParams = {
+          ...params,
+          createStartTime,
+          reportKey,
+          reportType,
+          knex,
+          concurrency,
+        };
+        log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
+        if (reportType === 'Internal') {
+          await createInternalReconciliationReport(recReportParams);
+        } else if (reportType === 'Granule Inventory') {
+          await createGranuleInventoryReport(recReportParams);
+        } else if (reportType === 'ORCA Backup') {
+          await createOrcaBackupReconciliationReport(recReportParams);
+        } else {
+          // reportType is in ['Inventory', 'Granule Not Found']
+          await createReconciliationReport(recReportParams);
+        }
+        await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+      } catch (error) {
+        if (error.message.includes('Connection terminated unexpectedly')) {
+          log.error(`Error caught in createReconciliationReport for reportKey ${reportKey}. Retrying...`);
+          throw error;
+        }
+        log.error(`Error creating ${reportType} report ${reportRecordName}. ${error}`);
+        const updates = {
+          status: 'Failed',
+          error: {
+            Error: error.message,
+            Cause: errorify(error),
+          },
+        };
+        await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+        throw new pRetry.AbortError(error);
+      }
+    },
+    {
+      retries: 3,
+      onFailedAttempt: (e) => {
+        log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
       },
-    };
-    await reconciliationReportModel.update({ name: reportRecord.name }, updates);
-    throw error;
-  }
+      ...pRetryOptions,
+    }
+  );
 
   return reconciliationReportModel.get({ name: reportRecord.name });
 }

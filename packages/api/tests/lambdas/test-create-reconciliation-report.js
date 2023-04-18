@@ -11,7 +11,6 @@ const sample = require('lodash/sample');
 const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
 const test = require('ava');
-
 const { CMR } = require('@cumulus/cmr-client');
 const {
   buildS3Uri,
@@ -186,8 +185,6 @@ async function fetchCompletedReport(reportRecord) {
 }
 
 async function fetchCompletedReportString(reportRecord) {
-  // const { Bucket, Key } = parseS3Uri(reportRecord.location);
-  // return await getJsonS3Object(Bucket, Key);
   return await awsServices.s3()
     .getObject(parseS3Uri(reportRecord.location))
     .then((response) => getObjectStreamContents(response.Body));
@@ -1843,20 +1840,23 @@ test.serial('When report creation fails, reconciliation report status is set to 
     t.context.systemBucket,
     t.context.stackName
   );
-
   // create an error case
   CMR.prototype.searchConcept.restore();
   const cmrSearchStub = sinon.stub(CMR.prototype, 'searchConcept');
   cmrSearchStub.withArgs('collections').throws(new Error('test error'));
 
+  const reportName = randomId('reportName');
   const event = {
+    reportName,
     systemBucket: t.context.systemBucket,
     stackName: t.context.stackName,
   };
 
-  const reportRecord = await handler(event);
-  t.is(reportRecord.status, 'Failed');
-  t.truthy(reportRecord.error);
+  await t.throwsAsync(handler(event));
+  const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
+  const report = await getJsonS3Object(t.context.systemBucket, reportKey);
+  t.is(report.status, 'Failed');
+  t.truthy(report.error);
 });
 
 test.serial('A valid internal reconciliation report is generated when ES and DB are in sync', async (t) => {
@@ -2150,4 +2150,57 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
 
   t.true(!unformattedReportString.includes('\n')); // validate unformatted report is on a single line
   t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
+});
+
+test.serial('When there is a connection termination error, it retries', async (t) => {
+  const {
+    knex,
+  } = t.context;
+  const dataBuckets = [randomId('bucket')];
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  const knexStub = sinon.stub(knex, 'queryBuilder').callsFake(() => {
+    return {
+      peek: sinon.stub().returns(),
+      select: sinon.stub().throws(
+        new Error('Connection terminated unexpectedly', 'PROTOCOL_CONNECTION_LOST'),
+      ),
+      modify: sinon.stub().returns({}),
+      where: sinon.stub().returns({}),
+      orderBy: sinon.stub().returns({}),
+    };
+  });
+  t.teardown(() => knexStub.restore());
+
+  const reportName = randomId('reportName');
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Inventory',
+    reportName,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+    knex: knexStub,
+  };
+
+  await t.throwsAsync(
+    handler(event),
+    { message: 'Connection terminated unexpectedly' }
+  );
+  t.is(knexStub.callCount, 4);
+  sinon.assert.callCount(knexStub, 4);
+
+  const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
+  const report = await getJsonS3Object(t.context.systemBucket, reportKey);
+  t.is(report.status, 'Failed');
+  t.is(report.reportType, 'Inventory');
 });
