@@ -22,7 +22,6 @@ resource "aws_lambda_function" "clean_executions" {
   }
   environment {
     variables = {
-      ExecutionsTable = var.dynamo_tables.executions.name
       stackName       = var.prefix
 
       completeExecutionPayloadTimeoutDisable = var.complete_execution_payload_timeout_disable

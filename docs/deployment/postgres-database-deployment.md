@@ -55,7 +55,7 @@ working with Terraform, the following links should bring you up to speed:
 - [Getting Started with Terraform and AWS](https://learn.hashicorp.com/terraform/?track=getting-started#getting-started)
 - [Terraform Configuration Language](https://www.terraform.io/docs/configuration/index.html)
 
-For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](https://nasa.github.io/cumulus/docs/deployment/#install-terraform)
+For Cumulus specific instructions on installation of Terraform, refer to the main [Cumulus Installation Documentation](../deployment/README.md#install-terraform).
 
 #### Aurora/RDS
 
@@ -403,10 +403,10 @@ Replace HOST value and PORT value with the values retrieved from Secrets Manager
 The LocalForward number 9202 can be any unused LocalForward number in your SSH config:
 
 ```shell
-Host ssm-proxy 
-  Hostname 127.0.0.1 
+Host ssm-proxy
+  Hostname 127.0.0.1
   User ec2-user
-  LocalForward 9202 [HOST value]:[PORT value] 
+  LocalForward 9202 [HOST value]:[PORT value]
   IdentityFile ~/.ssh/id_rsa
   Port 6868
 ```

@@ -64,3 +64,7 @@ export const isOneOf = curry(
   (collection: unknown[], val: unknown) => collection.includes(val),
   2
 );
+
+export const returnNullOrUndefinedOrDate = (
+  dateVal: string | number | null | undefined
+) => (isNil(dateVal) ? dateVal : new Date(dateVal));

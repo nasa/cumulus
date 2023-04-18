@@ -1,4 +1,6 @@
 const { newestExecutionArnFromGranuleIdWorkflowName } = require('@cumulus/db');
+const StepFunctions = require('@cumulus/aws-client/StepFunctions');
+
 const Logger = require('@cumulus/logger');
 
 const log = new Logger({ sender: '@cumulus/api/lib/executions' });
@@ -43,4 +45,16 @@ const chooseTargetExecution = async ({
   }
 };
 
-module.exports = { chooseTargetExecution };
+async function describeGranuleExecution(executionArn, stepFunctionUtils = StepFunctions) {
+  let executionDescription;
+  try {
+    executionDescription = await stepFunctionUtils.describeExecution({
+      executionArn,
+    });
+  } catch (error) {
+    log.error(`Could not describe execution ${executionArn}`, error);
+  }
+  return executionDescription;
+}
+
+module.exports = { chooseTargetExecution, describeGranuleExecution };

@@ -98,7 +98,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
     // delete rule
-    console.log(`\nDeleting ${ruleOverride.name}`);
+    console.log(`\nDeleting rule ${ruleOverride.name}`);
     const rules = await readJsonFilesFromDir(ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
