@@ -268,9 +268,9 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
     throw error;
   }
   log.info(`createReconciliationReportForBucket ${Bucket} returning `
-           + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
-           + `onlyInDb: ${onlyInDb.length}, `
-           + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
+    + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
+    + `onlyInDb: ${onlyInDb.length}, `
+    + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
   return {
     okCount,
     onlyInS3,
@@ -382,7 +382,7 @@ async function reconciliationReportForGranuleFiles(params) {
     const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
       // only check URL types for downloading granule files and related data (such as documents)
       if (cmrGetDataTypes.includes(relatedUrl.Type)
-          || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
+        || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
         const urlFileName = relatedUrl.URL.split('/').pop();
 
         // filename in both Cumulus and CMR
@@ -437,7 +437,7 @@ async function reconciliationReportForGranuleFiles(params) {
     Object.keys(granuleFiles).forEach((fileName) => {
       // private file only in database, it's ok
       if (bucketsConfig.key(granuleFiles[fileName].bucket)
-          && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
+        && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
         okCount += 1;
       } else {
         let uri = granuleFiles[fileName].source;
@@ -592,11 +592,11 @@ async function reconciliationReportForGranules(params) {
     throw error;
   }
   log.info(`returning reconciliationReportForGranules(${collectionId}) granulesReport: `
-           + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
-           + `onlyInCmr: ${granulesReport.onlyInCmr.length}`);
+    + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
+    + `onlyInCmr: ${granulesReport.onlyInCmr.length}`);
   log.info(`returning reconciliationReportForGranules(${collectionId}) filesReport: `
-           + `okCount: ${filesReport.okCount}, onlyInCumulus: ${filesReport.onlyInCumulus.length}, `
-           + `onlyInCmr: ${filesReport.onlyInCmr.length}`);
+    + `okCount: ${filesReport.okCount}, onlyInCumulus: ${filesReport.onlyInCumulus.length}, `
+    + `onlyInCmr: ${filesReport.onlyInCmr.length}`);
   return {
     granulesReport,
     filesReport,
@@ -637,7 +637,7 @@ async function reconciliationReportForCumulusCMR(params) {
   );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
   log.info('reconciliationReportForCumulusCMR: All Granule and Granule Files Reports completed. '
-            + `${JSON.stringify(recReportParams)}`);
+    + `${JSON.stringify(recReportParams)}`);
 
   const granulesInCumulusCmr = {};
   const filesInCumulusCmr = {};
@@ -671,7 +671,7 @@ async function reconciliationReportForCumulusCMR(params) {
  * @param {string} reportKey    - report key
  * @returns {Promise<null>}
  */
-async function _uploadReportToS3(report, systemBucket, reportKey) {
+function _uploadReportToS3(report, systemBucket, reportKey) {
   return s3().putObject({
     Bucket: systemBucket,
     Key: reportKey,
@@ -735,7 +735,7 @@ async function createReconciliationReport(recReportParams) {
   };
 
   try {
-    await _uploadReportToS3(report, systemBucket, reportKey)
+    await _uploadReportToS3(report, systemBucket, reportKey);
 
     // Internal consistency check S3 vs Cumulus DBs
     // --------------------------------------------
@@ -787,7 +787,7 @@ async function createReconciliationReport(recReportParams) {
     report.error = error;
 
     // Write the full report to S3
-    await _uploadReportToS3(report, systemBucket, reportKey)
+    await _uploadReportToS3(report, systemBucket, reportKey);
     throw error;
   }
   log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
@@ -796,7 +796,7 @@ async function createReconciliationReport(recReportParams) {
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  return _uploadReportToS3(report, systemBucket, reportKey)
+  return _uploadReportToS3(report, systemBucket, reportKey);
 }
 
 /**

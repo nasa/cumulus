@@ -2168,17 +2168,15 @@ test.serial('When there is a connection termination error, it retries', async (t
     t.context.stackName
   );
 
-  const knexStub = sinon.stub(knex, 'queryBuilder').callsFake(() => {
-    return {
-      peek: sinon.stub().returns(),
-      select: sinon.stub().throws(
-        new Error('Connection terminated unexpectedly', 'PROTOCOL_CONNECTION_LOST'),
-      ),
-      modify: sinon.stub().returns({}),
-      where: sinon.stub().returns({}),
-      orderBy: sinon.stub().returns({}),
-    };
-  });
+  const knexStub = sinon.stub(knex, 'select').callsFake(
+    // eslint-disable-next-line arrow-body-style
+    () => {
+      return {
+        select: sinon.stub().throws(new Error('Connection terminated unexpectedly', 'PROTOCOL_CONNECTION_LOST')),
+      };
+    }
+  );
+
   t.teardown(() => knexStub.restore());
 
   const reportName = randomId('reportName');
