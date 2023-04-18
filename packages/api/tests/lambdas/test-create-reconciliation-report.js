@@ -12,6 +12,7 @@ const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
 const test = require('ava');
 const { CMR } = require('@cumulus/cmr-client');
+const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -2152,7 +2153,7 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
   t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
 });
 
-test.serial('When there is a connection termination error, it retries', async (t) => {
+test.serial('When there is a connection termination error for an inventory report, it retries', async (t) => {
   const {
     knex,
   } = t.context;
@@ -2201,4 +2202,131 @@ test.serial('When there is a connection termination error, it retries', async (t
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
   t.is(report.reportType, 'Inventory');
+});
+
+test.serial('When there is an error for an ORCA backup report, it retries', async (t) => {
+  const {
+    knex,
+  } = t.context;
+  const dataBuckets = [randomId('bucket')];
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
+  searchOrcaStub.throws(new Error('ORCA error'));
+
+  const reportName = randomId('reportName');
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'ORCA Backup',
+    reportName,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+
+  await t.throwsAsync(
+    handler(event),
+    { message: 'ORCA error' }
+  );
+
+  const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
+  const report = await getJsonS3Object(t.context.systemBucket, reportKey);
+  t.is(report.status, 'Failed');
+  t.is(report.reportType, 'ORCA Backup');
+});
+
+test.serial('When there is an error when generating the Granule Inventory report, it throws', async (t) => {
+  const {
+    knex,
+  } = t.context;
+  const dataBuckets = [randomId('bucket')];
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  const knexStub = sinon.stub(knex, 'select').callsFake(
+    // eslint-disable-next-line arrow-body-style
+    () => {
+      return {
+        select: sinon.stub().throws(new Error('Knex error')),
+      };
+    }
+  );
+
+  t.teardown(() => knexStub.restore());
+
+  const reportName = randomId('reportName');
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Granule Inventory',
+    reportName,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+    knex: knexStub,
+  };
+
+  await t.throwsAsync(
+    handler(event),
+    { message: 'Knex error' }
+  );
+});
+
+test.serial('When there is an error generating an internal report, it throws', async (t) => {
+  const {
+    knex,
+  } = t.context;
+  const dataBuckets = [randomId('bucket')];
+  await Promise.all(dataBuckets.map((bucket) =>
+    createBucket(bucket)
+      .then(() => t.context.bucketsToCleanup.push(bucket))));
+
+  // Write the buckets config to S3
+  await storeBucketsConfigToS3(
+    dataBuckets,
+    t.context.systemBucket,
+    t.context.stackName
+  );
+
+  const esEmptyStub = sinon.stub(ESSearchQueue.prototype, 'empty').throws(new Error('ES error'));
+
+  t.teardown(() => {
+    esEmptyStub.restore();
+  });
+
+  const reportName = randomId('reportName');
+  const event = {
+    systemBucket: t.context.systemBucket,
+    stackName: t.context.stackName,
+    reportType: 'Internal',
+    reportName,
+    startTimestamp: moment.utc().subtract(1, 'hour').format(),
+    endTimestamp: moment.utc().add(1, 'hour').format(),
+  };
+
+  await t.throwsAsync(
+    handler(event),
+    { message: 'ES error' }
+  );
+
+  const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
+  const report = await getJsonS3Object(t.context.systemBucket, reportKey);
+  t.is(report.status, 'Failed');
+  t.is(report.reportType, 'Internal');
 });

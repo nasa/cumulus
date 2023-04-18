@@ -13,7 +13,6 @@ const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { errorify } = require('../../lib/utils');
 const {
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParamsWithCreatedAtRange,
@@ -314,8 +313,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
       granulesReport.orcaCount += 1;
     }
   } catch (error) {
-    log.error('Error caught in orcaReconciliationReportForGranules');
-    log.error(errorify(error));
+    log.error(`Error caught in orcaReconciliationReportForGranules: ${error}`);
     throw error;
   }
 
@@ -379,8 +377,19 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
   try {
     granulesReport = await orcaReconciliationReportForGranules(recReportParams);
   } catch (error) {
-    log.error('Error caught in createOrcaBackupReconciliationReport');
-    log.error(errorify(error));
+    log.error(`Error caught in createOrcaBackupReconciliationReport: ${error}`);
+
+    // Create the full report
+    report.granules = granulesReport;
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'Failed';
+
+    // Write the full report to S3
+    await s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
     throw error;
   }
 

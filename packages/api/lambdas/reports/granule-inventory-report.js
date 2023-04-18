@@ -12,7 +12,6 @@ const {
 } = require('@cumulus/db');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
 
-const { errorify } = require('../../lib/utils');
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
@@ -95,8 +94,7 @@ async function createGranuleInventoryReport(recReportParams) {
 
     return promisedObject;
   } catch (error) {
-    log.error('Error caught in createGranuleInventoryReport');
-    log.error(errorify(error));
+    log.error(`Error caught in createGranuleInventoryReport ${error}`);
     throw error;
   }
 }

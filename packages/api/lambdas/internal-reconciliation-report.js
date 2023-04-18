@@ -435,6 +435,17 @@ async function createInternalReconciliationReport(recReportParams) {
   } catch (error) {
     log.error('Error caught in createInternalReconciliationReport');
     log.error(errorify(error));
+
+    // Create the full report
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'Failed';
+
+    // Write the full report to S3
+    await s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
     throw error;
   }
 }
