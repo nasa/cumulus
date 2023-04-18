@@ -1,3 +1,5 @@
+// @ts-check
+
 const get = require('lodash/get');
 
 const log = require('@cumulus/common/log');
@@ -9,6 +11,11 @@ const { verifyJwtToken } = require('./token');
 const { isAuthorizedOAuthUser } = require('../app/auth');
 
 /**
+ * @typedef { import("express").Request } Request
+ * @typedef { import("express").Response } Response
+ */
+
+/**
  * Verify the validity and access of JWT for request authorization.
  *
  * @param {string} requestJwtToken - The JWT token used for request authorization
@@ -16,7 +23,7 @@ const { isAuthorizedOAuthUser } = require('../app/auth');
  * @throws {TokenExpiredError} - thown if the JWT is expired
  * @throws {TokenUnauthorizedUserError} - thrown if the user is not authorized
  *
- * @returns {string} accessToken - The access token from the OAuth provider
+ * @returns {Promise<string>} accessToken - The access token from the OAuth provider
  */
 async function verifyJwtAuthorization(requestJwtToken) {
   let accessToken;
@@ -35,8 +42,19 @@ async function verifyJwtAuthorization(requestJwtToken) {
   return accessToken;
 }
 
-// TODO no tests for this
+/**
+* Validate request has header matching expected minimum version
+* @param {Request} req - express Request object
+* @param {number} minVersion - Minimum API version to allow
+* @returns {boolean}
+*/
+function isMinVersionApi(req, minVersion) {
+  const requestVersion = Number(req.headers['cumulus-api-version']);
+  return Number.isFinite(requestVersion) && minVersion <= requestVersion;
+}
+
 function validateBulkGranulesRequest(req, res, next) {
+  // TODO no tests for this
   const payload = req.body;
 
   if (!payload.granules && !payload.query) {
@@ -112,8 +130,9 @@ function getFunctionNameFromRequestContext(req) {
 }
 
 module.exports = {
+  getFunctionNameFromRequestContext,
+  isMinVersionApi,
   validateBulkGranulesRequest,
   validateGranuleExecutionRequest,
   verifyJwtAuthorization,
-  getFunctionNameFromRequestContext,
 };
