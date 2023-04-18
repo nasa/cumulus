@@ -2205,9 +2205,6 @@ test.serial('When there is a connection termination error for an inventory repor
 });
 
 test.serial('When there is an error for an ORCA backup report, it retries', async (t) => {
-  const {
-    knex,
-  } = t.context;
   const dataBuckets = [randomId('bucket')];
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -2289,9 +2286,6 @@ test.serial('When there is an error when generating the Granule Inventory report
 });
 
 test.serial('When there is an error generating an internal report, it throws', async (t) => {
-  const {
-    knex,
-  } = t.context;
   const dataBuckets = [randomId('bucket')];
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
