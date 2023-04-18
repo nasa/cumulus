@@ -8,7 +8,6 @@ hide_title: false
 
 This release of Cumulus (9.0.0) integrates with RDS and creates a new PostgreSQL database for archiving Cumulus data (e.g. granules, files, executions).
 
-
 ## Upgrade steps
 
 Follow the steps outlined below in precisely this order to upgrade your deployment and run the data migrations.
@@ -115,7 +114,6 @@ The `cumulus` module will create resources including the following relevant reso
 
 > **Note**: Please read this entire section thoroughly before proceeding to run the second data migration. In particular, pay close attention to the notes about parallelism options in order to achieve desired data migration performance while avoiding database outages and data loss.
 
-
 This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
 This Lambda starts an asynchronous operation which runs as an ECS task to run the migration.
 
@@ -153,7 +151,6 @@ Also, each run of these data migration will write a timestamped log of any error
 - `<prefix>-data-migration2-execution-errors-${timestamp}.json`
 - `<prefix>-data-migration2-granulesAndFiles-errors-${timestamp}.json`
 
-
 #### postgres-migration-async-operation payload parameters
 
 | Variable | Type | Description | Default |
@@ -184,7 +181,6 @@ This tool can be run in the following two ways:
 
 - Through direct Lambda invocation
 - Through API invocation
-
 
 #### Direct Lambda invocation
 

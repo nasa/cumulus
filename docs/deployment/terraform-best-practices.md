@@ -245,7 +245,6 @@ terraform init -reconfigure
 terraform destroy
 ```
 
-
 However, this does not prevent manual destruction in case you truly do wish to
 remove them. You may do so via either the **AWS Management Console** or the
 **AWS CLI**. As an additional precaution, you may want to create a backup for
