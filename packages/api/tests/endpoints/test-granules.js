@@ -1,7 +1,6 @@
 'use strict';
 
 const fs = require('fs');
-const request = require('supertest');
 const path = require('path');
 const sinon = require('sinon');
 const test = require('ava');
@@ -60,11 +59,15 @@ const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { create, del, put, patch, patchGranule } = require('../../endpoints/granules');
+const { create, del, patch, patchGranule } = require('../../endpoints/granules');
 const { sortFilesByKey } = require('../helpers/sort');
 const assertions = require('../../lib/assertions');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
 const models = require('../../models');
+
+const { request } = require('../helpers/request');
+
+const { version } = require('../../lib/version');
 
 // Dynamo mock data factories
 const {
@@ -280,9 +283,10 @@ test.before(async (t) => {
 });
 
 test.beforeEach(async (t) => {
-  const granuleId1 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
-  const granuleId2 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
-  const granuleId3 = `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  t.context.createGranuleId = () => `${cryptoRandomString({ length: 7 })}.${cryptoRandomString({ length: 20 })}.hdf`;
+  const granuleId1 = t.context.createGranuleId();
+  const granuleId2 = t.context.createGranuleId();
+  const granuleId3 = t.context.createGranuleId();
 
   // create fake Postgres granule records
   t.context.fakePGGranules = [
@@ -419,7 +423,6 @@ test.serial('default lists and paginates correctly with search_after', async (t)
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
-
   // default paginates correctly with search_after
   const firstResponse = await request(app)
     .get('/granules?limit=1')
@@ -467,7 +470,7 @@ test.serial('CUMULUS-911 GET with pathParameters.granuleName set and without an 
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('CUMULUS-911 PATCH with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
+test.serial('CUMULUS-911 .patch with pathParameters.granuleName set and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .patch('/granules/asdf')
     .set('Accept', 'application/json')
@@ -683,9 +686,9 @@ test.serial('PATCH without a body, fails to update granule.', async (t) => {
   );
 });
 
-// FUTURE: This test should be removed when deprecated putByGranuleId
+// FUTURE: This test should be removed when deprecated patchByGranuleId
 //  is removed.
-test.serial('PUT does not require a collectionId.', async (t) => {
+test.serial('PATCH does not require a collectionId.', async (t) => {
   const fakeDescribeExecutionResult = {
     input: JSON.stringify({
       meta: {
@@ -717,9 +720,9 @@ test.serial('PUT does not require a collectionId.', async (t) => {
   t.true(body.warning.includes('overwritten'));
 });
 
-test.serial('PUT returns a 404 if the collection is not found.', async (t) => {
+test.serial('PATCH returns a 404 if the collection is not found.', async (t) => {
   const response = await request(app)
-    .put(`/granules/unknown___unknown/${t.context.fakePGGranules[2].granule_id}`)
+    .patch(`/granules/unknown___unknown/${t.context.fakePGGranules[2].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -733,9 +736,9 @@ test.serial('PUT returns a 404 if the collection is not found.', async (t) => {
   );
 });
 
-test.serial('PUT returns a 404 if the granule is not found.', async (t) => {
+test.serial('PATCH returns a 404 if the granule is not found.', async (t) => {
   const response = await request(app)
-    .put(`/granules/${t.context.collectionId}/unknownGranuleId`)
+    .patch(`/granules/${t.context.collectionId}/unknownGranuleId`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -747,7 +750,7 @@ test.serial('PUT returns a 404 if the granule is not found.', async (t) => {
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('PUT reingests a granule', async (t) => {
+test.serial('PATCH reingests a granule', async (t) => {
   const fakeDescribeExecutionResult = {
     input: JSON.stringify({
       meta: {
@@ -767,7 +770,7 @@ test.serial('PUT reingests a granule', async (t) => {
   });
   t.teardown(() => stub.restore());
   const response = await request(app)
-    .put(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
+    .patch(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ action: 'reingest' })
@@ -786,7 +789,7 @@ test.serial('PUT reingests a granule', async (t) => {
 });
 
 // This needs to be serial because it is stubbing aws.sfn's responses
-test.serial('PUT applies an in-place workflow to an existing granule', async (t) => {
+test.serial('PATCH applies an in-place workflow to an existing granule', async (t) => {
   const fakeSFResponse = {
     execution: {
       input: JSON.stringify({
@@ -840,7 +843,7 @@ test.serial('PUT applies an in-place workflow to an existing granule', async (t)
   t.is(updatedPgGranule.status, 'queued');
 });
 
-test.serial('PUT removes a granule from CMR', async (t) => {
+test.serial('PATCH removes a granule from CMR', async (t) => {
   const { s3Buckets, newPgGranule } = await createGranuleAndFiles({
     dbClient: t.context.knex,
     esClient: t.context.esClient,
@@ -880,7 +883,7 @@ test.serial('PUT removes a granule from CMR', async (t) => {
   t.teardown(() => deleteS3Buckets([s3Buckets.protected.name, s3Buckets.public.name]));
 });
 
-test.serial('PUT removes a granule from CMR with launchpad authentication', async (t) => {
+test.serial('PATCH removes a granule from CMR with launchpad authentication', async (t) => {
   process.env.cmr_oauth_provider = 'launchpad';
   const launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken').callsFake(() => randomString());
 
@@ -2048,12 +2051,18 @@ test.serial('create (POST) throws conflict error if a granule with same granuleI
   t.is(errorText.message, `A granule already exists for granuleId: ${newGranule.granuleId}`);
 });
 
-test.serial('PATCH replaces an existing granule in all data stores', async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
+test.serial('PATCH updates an existing granule in all data stores', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+    testExecutionCumulusId,
+  } = t.context;
   const timestamp = Date.now();
   const { newPgGranule, esRecord } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2119,19 +2128,21 @@ test.serial('PATCH replaces an existing granule in all data stores', async (t) =
   });
 });
 
-test.serial('PATCH executes successfully with no non-required-field-updates (testing "inert" update/undefined fields)', async (t) => {
+test.serial('PATCH executes successfully with no non-required-field-updates (testing "insert" update/undefined fields)', async (t) => {
   const {
     esClient,
+    executionPgRecord,
     executionUrl,
     knex,
   } = t.context;
   const timestamp = Date.now();
   const {
-    newPgGranule,
     esRecord,
+    newPgGranule,
   } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: executionPgRecord.cumulus_id,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2172,19 +2183,24 @@ test.serial('PATCH executes successfully with no non-required-field-updates (tes
   });
 });
 
-test.serial('PUT does not update non-current-timestamp undefined fields for existing granules in all datastores', async (t) => {
+test.serial('PATCH does not update non-current-timestamp undefined fields for existing granules in all datastores', async (t) => {
   const {
     esClient,
     knex,
     executionPgRecord,
     esGranulesClient,
+    testExecutionCumulusId,
   } = t.context;
 
   const originalUpdateTimestamp = Date.now();
 
-  const { newPgGranule, esRecord } = await createGranuleAndFiles({
+  const {
+    esRecord,
+    newPgGranule,
+  } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       beginningDateTime: '2022-01-18T14:40:00.000Z',
       cmrLink: 'example.com',
@@ -2220,7 +2236,7 @@ test.serial('PUT does not update non-current-timestamp undefined fields for exis
   };
 
   await request(app)
-    .put(`/granules/${updatedGranule.granuleId}`)
+    .patch(`/granules/${updatedGranule.granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2256,7 +2272,7 @@ test.serial('PUT does not update non-current-timestamp undefined fields for exis
   });
 });
 
-test.serial('PUT nullifies expected fields for existing granules in all datastores', async (t) => {
+test.serial('PATCH nullifies expected fields for existing granules in all datastores', async (t) => {
   const {
     collectionName,
     collectionVersion,
@@ -2264,6 +2280,7 @@ test.serial('PUT nullifies expected fields for existing granules in all datastor
     knex,
     executionPgRecord,
     esGranulesClient,
+    testExecutionCumulusId,
   } = t.context;
 
   const originalUpdateTimestamp = Date.now();
@@ -2273,6 +2290,7 @@ test.serial('PUT nullifies expected fields for existing granules in all datastor
   const { newPgGranule } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       beginningDateTime: '2022-01-18T14:40:00.000Z',
       cmrLink: 'example.com',
@@ -2325,7 +2343,7 @@ test.serial('PUT nullifies expected fields for existing granules in all datastor
   };
 
   await request(app)
-    .put(`/granules/${newPgGranule.granule_id}`)
+    .patch(`/granules/${newPgGranule.granule_id}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updatedGranule)
@@ -2535,10 +2553,18 @@ test.serial('PATCH sets a default value of false for `published` if one is not s
 });
 
 test.serial('PATCH replaces an existing granule in all data stores with correct timestamps', async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
-  const { newPgGranule } = await createGranuleAndFiles({
+  const {
+    esClient,
+    executionUrl,
+    knex,
+    testExecutionCumulusId,
+  } = t.context;
+  const {
+    newPgGranule,
+  } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -2578,10 +2604,16 @@ test.serial('PATCH replaces an existing granule in all data stores with correct 
 });
 
 test.serial('PATCH replaces an existing granule in all datastores with a granule that violates message-path write constraints, ignoring message write constraints and field selection', async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
+  const {
+    esClient,
+    executionUrl,
+    knex,
+    testExecutionCumulusId,
+  } = t.context;
   const { newPgGranule, apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'completed',
       createdAt: Date.now(),
@@ -2626,10 +2658,19 @@ test.serial('PATCH replaces an existing granule in all datastores with a granule
 });
 
 test.serial('PATCH publishes an SNS message after a successful granule update', async (t) => {
-  const { collectionCumulusId, esClient, executionUrl, knex } = t.context;
-  const { newPgGranule } = await createGranuleAndFiles({
+  const {
+    collectionCumulusId,
+    esClient,
+    executionUrl,
+    knex,
+    testExecutionCumulusId,
+  } = t.context;
+  const {
+    newPgGranule,
+  } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       createdAt: Date.now(),
@@ -2679,11 +2720,17 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
 });
 
 test.serial("create() sets a default createdAt value for passed granule if it's not set by the user", async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
+  const {
+    esClient,
+    executionUrl,
+    knex,
+    testExecutionCumulusId,
+  } = t.context;
 
   const { apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2713,12 +2760,18 @@ test.serial("create() sets a default createdAt value for passed granule if it's 
   t.truthy(createGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial("patchGranule() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
+test.serial("patch() sets a default createdAt value for new granule if it's not set by the user", async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+    testExecutionCumulusId,
+  } = t.context;
 
   const { apiGranule } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       status: 'running',
       execution: executionUrl,
@@ -2748,9 +2801,17 @@ test.serial("patchGranule() sets a default createdAt value for new granule if it
   t.truthy(updateGranuleFromApiMethodStub.getCalls()[0].args[0].createdAt);
 });
 
-test.serial('PATCH does not write to Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
-  const { newPgGranule, esRecord } = await createGranuleAndFiles({
+test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to PostgreSQL fails', async (t) => {
+  const {
+    esClient,
+    executionUrl,
+    knex,
+    testExecutionCumulusId,
+  } = t.context;
+  const {
+    newPgGranule,
+    esRecord,
+  } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
     granuleParams: {
@@ -2758,6 +2819,7 @@ test.serial('PATCH does not write to Elasticsearch/SNS if writing to PostgreSQL 
       execution: executionUrl,
       collectionId: t.context.collectionId,
     },
+    executionCumulusId: testExecutionCumulusId,
   });
 
   const fakeGranulePgModel = {
@@ -2826,10 +2888,11 @@ test.serial('PATCH does not write to Elasticsearch/SNS if writing to PostgreSQL 
 });
 
 test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
+  const { esClient, executionUrl, knex, testExecutionCumulusId } = t.context;
   const { newPgGranule, esRecord } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
+    executionCumulusId: testExecutionCumulusId,
     granuleParams: {
       collectionId: t.context.collectionId,
       status: 'running',
@@ -3088,7 +3151,7 @@ test.serial('PATCH returns bad request when the path param granuleName does not 
   );
 });
 
-test.serial('PUT returns bad request when the path param collectionId does not match the json collectionId', async (t) => {
+test.serial('PATCH returns bad request when the path param collectionId does not match the json collectionId', async (t) => {
   const newGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
@@ -3096,7 +3159,7 @@ test.serial('PUT returns bad request when the path param collectionId does not m
   const fakeCollectionId = `collection___${cryptoRandomString({ length: 6 })}`;
 
   const { body } = await request(app)
-    .put(`/granules/${fakeCollectionId}/${newGranule.granuleId}`)
+    .patch(`/granules/${fakeCollectionId}/${newGranule.granuleId}`)
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .set('Accept', 'application/json')
     .send(newGranule)
@@ -3110,7 +3173,7 @@ test.serial('PUT returns bad request when the path param collectionId does not m
   );
 });
 
-test.serial('PUT can set running granule status to queued', async (t) => {
+test.serial('PATCH can set running granule status to queued', async (t) => {
   const granuleId = cryptoRandomString({ length: 6 });
   const runningGranule = fakeGranuleRecordFactory({
     granule_id: granuleId,
@@ -3171,7 +3234,7 @@ test.serial('PUT will not set completed status to queued when queued created at 
   const { fakePGGranules, knex, collectionCumulusId } = t.context;
   const granuleId = fakePGGranules[0].granule_id;
   const response = await request(app)
-    .put(`/granules/${granuleId}`)
+    .put(`/granules/${t.context.collectionId}/${granuleId}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({
@@ -3492,39 +3555,377 @@ test.serial('associateExecution (POST) returns Not Found if collectionId in payl
   );
 });
 
-test.serial('PUT throws not implemented error', async (t) => {
-  const { esClient, executionUrl, knex } = t.context;
-  const { newDynamoGranule } = await createGranuleAndFiles({
+test.serial('PUT replaces an existing granule in all data stores, removing existing fields if not specified', async (t) => {
+  const {
+    esClient,
+    executionPgRecord,
+    executionUrl,
+    knex,
+  } = t.context;
+  console.log('foobar');
+  const {
+    apiGranule,
+    newPgGranule,
+  } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
-    granuleParams: { status: 'running', execution: executionUrl },
+    executionCumulusId: executionPgRecord.cumulus_id,
+    granuleParams: {
+      beginningDateTime: new Date().toISOString(),
+      cmrLink: 'example.com',
+      createdAt: Date.now(),
+      duration: 1000,
+      endingDateTime: new Date().toISOString(),
+      error: { errorKey: 'errorValue' },
+      execution: executionUrl,
+      lastUpdateDateTime: new Date().toISOString(),
+      processingEndDateTime: new Date().toISOString(),
+      processingStartDateTime: new Date().toISOString(),
+      productionDateTime: new Date().toISOString(),
+      productVolume: '1000',
+      published: true,
+      queryFields: { queryFieldsKey: 'queryFieldsValue' },
+      status: 'completed',
+      timestamp: 1,
+      timeToArchive: 1000,
+      timeToPreprocess: 1000,
+      updatedAt: Date.now(),
+    },
   });
 
-  const fakeEsClient = {
-    update: () => {
-      throw new Error('something bad');
-    },
-    delete: () => Promise.resolve(),
-  };
-
-  const updatedGranule = {
-    ...newDynamoGranule,
+  const newGranule = {
+    granuleId: apiGranule.granuleId,
+    collectionId: apiGranule.collectionId,
     status: 'completed',
   };
 
-  const expressRequest = {
-    params: {
-      granuleName: updatedGranule.granuleId,
-    },
-    body: updatedGranule,
-    testContext: {
-      knex,
-      esClient: fakeEsClient,
-    },
+  await request(app)
+    .put(`/granules/${apiGranule.collectionId}/${apiGranule.granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(200); // 200 should be expected for *update*
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    cumulus_id: newPgGranule.cumulus_id,
+  });
+  const translatedActualPgGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: actualPgGranule,
+  });
+
+  const expectedGranule = {
+    ...newGranule,
+    error: {}, // This is a default value for no execution
+    published: false, // This is a default value
+    execution: apiGranule.execution, // This should not have changed
+    status: 'completed',
+    timestamp: translatedActualPgGranule.timestamp,
+    updatedAt: translatedActualPgGranule.updatedAt,
+    createdAt: translatedActualPgGranule.createdAt,
   };
-  const response = buildFakeExpressResponse();
 
-  put(expressRequest, response);
+  const updatedEsRecord = await t.context.esGranulesClient.get(
+    apiGranule.granuleId
+  );
 
-  t.true(response.boom.badRequest.calledWithMatch('put method not implemented'));
+  // Files is always returned as '[]' by translator if none exist
+  t.deepEqual(
+    { ...translatedActualPgGranule },
+    { ...expectedGranule, files: [] }
+  );
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+test.serial('PUT creates a new granule in all data stores', async (t) => {
+  const {
+    collectionId,
+    collectionCumulusId,
+    createGranuleId,
+    knex,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    granuleId,
+    collectionId,
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/granules/${t.context.collectionId}/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(201); // 201 should be expected for *create*
+
+  const actualPgGranule = await t.context.granulePgModel.get(t.context.knex, {
+    collection_cumulus_id: collectionCumulusId,
+    granule_id: granuleId,
+  });
+  const translatedActualPgGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: actualPgGranule,
+  });
+  const updatedEsRecord = await t.context.esGranulesClient.get(granuleId);
+
+  const expectedGranule = {
+    ...newGranule,
+    error: {}, // This is a default value for no execution
+    published: false, // This is a default value
+    timestamp: translatedActualPgGranule.timestamp,
+    updatedAt: translatedActualPgGranule.updatedAt,
+    createdAt: translatedActualPgGranule.createdAt,
+  };
+
+  // Files is always returned as '[]' via translator
+  t.deepEqual(
+    { ...translatedActualPgGranule },
+    { ...expectedGranule, files: [] }
+  );
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+test.serial('PUT utilizes the collectionId from the URI if one is not provided', async (t) => {
+  const {
+    collectionCumulusId,
+    collectionId,
+    createGranuleId,
+    esGranulesClient,
+    knex,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    granuleId,
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/granules/${collectionId}/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(201); // 201 should be expected for *create*
+
+  const actualPgGranule = await granulePgModel.get(knex, {
+    collection_cumulus_id: collectionCumulusId,
+    granule_id: granuleId,
+  });
+  const translatedActualPgGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: actualPgGranule,
+  });
+  const updatedEsRecord = await esGranulesClient.get(granuleId);
+
+  const expectedGranule = {
+    ...newGranule,
+    collectionId,
+    createdAt: translatedActualPgGranule.createdAt,
+    error: {}, // This is a default value for no execution
+    published: false, // This is a default value
+    timestamp: translatedActualPgGranule.timestamp,
+    updatedAt: translatedActualPgGranule.updatedAt,
+  };
+  // Files is always returned as '[]' via translator
+  t.deepEqual(
+    { ...translatedActualPgGranule },
+    { ...expectedGranule, files: [] }
+  );
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+test.serial('PUT utilizes the granuleId from the URI if one is not provided', async (t) => {
+  const {
+    collectionId,
+    collectionCumulusId,
+    createGranuleId,
+    knex,
+    esGranulesClient,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    collectionId,
+    status: 'completed',
+  };
+
+  await request(app)
+    .put(`/granules/${collectionId}/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(201); // 201 should be expected for *create*
+
+  const actualPgGranule = await granulePgModel.get(knex, {
+    collection_cumulus_id: collectionCumulusId,
+    granule_id: granuleId,
+  });
+  const translatedActualPgGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: knex,
+    granulePgRecord: actualPgGranule,
+  });
+  const updatedEsRecord = await esGranulesClient.get(granuleId);
+
+  const expectedGranule = {
+    ...newGranule,
+    granuleId,
+    createdAt: translatedActualPgGranule.createdAt,
+    error: {}, // This is a default value for no execution
+    published: false, // This is a default value
+    timestamp: translatedActualPgGranule.timestamp,
+    updatedAt: translatedActualPgGranule.updatedAt,
+  };
+  // Files is always returned as '[]' via translator
+  t.deepEqual(
+    { ...translatedActualPgGranule },
+    { ...expectedGranule, files: [] }
+  );
+  t.deepEqual(updatedEsRecord, { ...expectedGranule, _id: updatedEsRecord._id });
+});
+
+test.serial('PUT throws if URI collection does not match provided object collectionId', async (t) => {
+  const {
+    createGranuleId,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    granuleId,
+    status: 'completed',
+    collectionId: 'fakeCollectionId',
+  };
+
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(400);
+
+  t.regex(response.body.message, /must match body's granuleId and collectionId/);
+});
+
+test.serial('PUT throws if URI granuleId does not match provided object granuleId', async (t) => {
+  const {
+    createGranuleId,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    granuleId,
+    status: 'completed',
+    collectionId: 'fakeCollectionId',
+  };
+
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/fakeGranuleId`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule)
+    .expect(400);
+
+  t.regex(response.body.message, /must match body's granuleId and collectionId/);
+});
+
+test.serial('PUT returns 404 if collection is not part of URI', async (t) => {
+  const {
+    createGranuleId,
+  } = t.context;
+
+  const granuleId = createGranuleId();
+  const newGranule = {
+    granuleId,
+    status: 'completed',
+    collectionId: 'fakeCollectionId',
+  };
+
+  const response = await request(app)
+    .put(`/granules/${granuleId}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newGranule);
+
+  t.is(response.statusCode, 404);
+});
+
+test.serial('default paginates correctly with search_after', async (t) => {
+  const response = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 1);
+  t.is(meta.page, 1);
+  t.truthy(meta.searchContext);
+
+  const newResponse = await request(app)
+    .get(`/granules?limit=1&page=2&searchContext=${meta.searchContext}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+  t.truthy(newMeta.searchContext);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+  t.not(meta.searchContext === newMeta.searchContext);
+});
+
+test.serial('PUT returns 400 for version value less than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/${granuleId}`)
+    .set('Cumulus-API-Version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
+});
+
+test.serial('PATCH returns 400 for version value less than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .patch(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
+});
+
+test.serial('PUT returns 201 (granule creation) for version value greater than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .put(`/granules/${t.context.collectionId}/${granuleId}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(201);
+  t.is(response.status, 201);
+});
+
+test.serial('PATCH returns 201 (granule creation) for version value greater than the configured value', async (t) => {
+  const granuleId = t.context.createGranuleId();
+  const response = await request(app)
+    .patch(`/granules/${granuleId}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ granuleId, collectionId: t.context.collectionId, status: 'completed' })
+    .expect(201);
+  t.is(response.status, 201);
 });
