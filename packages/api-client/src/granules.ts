@@ -199,6 +199,7 @@ export const reingestGranule = async (params: {
       path,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({
         action: 'reingest',
@@ -245,6 +246,7 @@ export const removeFromCMR = async (params: {
       path,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({ action: 'removeFromCmr' }),
     },
@@ -296,6 +298,7 @@ export const applyWorkflow = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
@@ -393,6 +396,7 @@ export const moveGranule = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path,
       body: JSON.stringify({ action: 'move', destinations }),
@@ -488,6 +492,42 @@ export const createGranule = async (params: {
 };
 
 /**
+ * Update/create granule in cumulus via PUT request.  Existing values will
+ * be removed if not specified and in some cases replaced with defaults.
+ * Granule execution association history will be retained.
+ * PUT /granules/{collectionId}/{granuleId}
+ * @param {Object} params             - params
+ * @param {Object} [params.body]      - granule to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const replaceGranule = async (params: {
+  prefix: string,
+  body: ApiGranuleRecord,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${body.collectionId}/${body.granuleId}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
+      },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: [200, 201],
+  });
+};
+
+/**
  * Update granule in cumulus via PATCH request.  Existing values will
  * not be overwritten if not specified, null values will be removed and in
  * some cases replaced with defaults.
@@ -522,7 +562,7 @@ export const updateGranule = async (params: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
     expectedStatusCodes: [200, 201],

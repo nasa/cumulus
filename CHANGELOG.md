@@ -118,12 +118,48 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Added
+### MIGRATION notes
 
+#### API Endpoint Versioning
+
+As part of the work on CUMULUS-3072, we have added a required header for the
+granule PUT/PATCH endpoints -- to ensure that older clients/utilities do not
+unexpectedly make destructive use of those endpoints, a validation check of a
+header value against supported versions has been implemented.
+
+Moving forward, if a breaking change is made to an existing endpoint that
+requires user updates, as part of that update we will set the current version of
+the core API and require a header that confirms the client is compatible with
+the version required or greater.
+
+In this instance, the granule PUT/PATCH
+endpoints will require a `Cumulus-API-Version` value of at least `2`.
+
+```bash
+ curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
+ --header 'Cumulus-API-Version': '2'\
+ --header 'Authorization: Bearer ReplaceWithToken'\
+ --data ...
+```
+
+Users/clients that do not make use of these endpoints will not be impacted.
+
+### Added
+- **CUMULUS-3072**
+  - Added `replaceGranule` to `@cumulus/api-client/granules` to add usage of the
+    updated RESTful PUT logic
+- **CUMULUS-3121**
+  - Added a map of variables for the cloud_watch_log retention_in_days for the various cloudwatch_log_groups, as opposed to keeping them hardcoded at 30 days. Can be configured by adding the <module>_<cloudwatch_log_group_name>_log_retention value in days to the cloudwatch_log_retention_groups map variable
 - **CUMULUS-3201**
   - Added support for sha512 as checksumType for LZARDs backup task.
 
 ### Changed
+
+- **CUMULUS-3279**
+  - Updated core dependencies on `xml2js` to `v0.5.0`
+  - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
+    `v0.5.0`
+  - Added audit-ci CVE override until July 1 to allow for Core package releases
 - **CUMULUS-3106**
   - Updated localstack version to 1.4.0 and removed 'skip' from all skipped tests
 - **CUMULUS-3115**
@@ -168,6 +204,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### MIGRATION notes
 
+#### PostgreSQL compatibility update
+
 From this release forward Core will be tested against PostgreSQL 11   Existing
 release compatibility testing was done for release 11.1.8/14.0.0+.   Users
 should migrate their datastores to Aurora PostgreSQL 11.13+ compatible data stores
@@ -211,15 +249,6 @@ update the database cluster to use the new configuration.
 
 - **CUMULUS-3033**
   - Fixed `granuleEsQuery` to properly terminate if `body.hit.total.value` is 0.
-- **CUMULUS-3072**
-  - Fixed issue introduced in CUMULUS-3070 where new granules incorrectly write
-    a value for `files` as `[]` to elasticsearch instead of undefined in cases
-    where `[]` is specified in the new granule.
-  - Fixed issue introduced in CUMULUS-3070 where DynamoDB granules with a value
-   `files` as `[]` when the granule does *not* have the files value set as
-   mutable (e.g. in a `running` state) from a framework message write *and*
-   files was not previously defined will write `[]` instead of leaving the value
-   undefined.
 
 - The `getLambdaAliases` function has been removed from the `@cumulus/integration-tests` package
 - The `getLambdaVersions` function has been removed from the `@cumulus/integration-tests` package
@@ -266,6 +295,29 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3111**
   - Fix issue where if granule update dropped due to write constraints for writeGranuleFromMessage, still possible for granule files to be written
   - Fix issue where if granule update is limited to status and timestamp values due to write constraints for writeGranuleFromMessage, Dynamo or ES granules could be out of sync with PG
+
+### Breaking Changes
+
+- **CUMULUS-3072**
+  - Removed original PUT granule endpoint logic (in favor of utilizing new PATCH
+    endpoint introduced in CUMULUS-3071)
+  - Updated PUT granule endpoint to expected RESTful behavior:
+    - PUT will now overwrite all non-provided fields as either non-defined or
+      defaults, removing existing related database records (e.g. files,
+      granule-execution linkages ) as appropriate.
+    - PUT will continue to overwrite fields that are provided in the payload,
+      excepting collectionId and granuleId which cannot be modified.
+    - PUT will create a new granule record if one does not already exist
+    - Like PATCH, the execution field is additive only - executions, once
+      associated with a granule record cannot be unassociated via the granule
+      endpoint.
+  - /granule PUT and PATCH endpoints now require a header with values `{
+    version: 2 }`
+  - PUT endpoint will now only support /:collectionId/:granuleId formatted
+    queries
+  - `@cumulus/api-client.replaceGranule now utilizes body.collectionId to
+    utilize the correct API PUT endpoint
+  - Cumulus API version updated to `2`
 
 ### Changed
 
