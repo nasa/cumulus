@@ -19,6 +19,7 @@ const {
 const {
   verifyJwtAuthorization,
   getFunctionNameFromRequestContext,
+  isMinVersionApi,
 } = require('../../lib/request');
 const {
   fakeAccessTokenFactory,
@@ -38,6 +39,34 @@ test.before(async () => {
 
 test.after.always(async () => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket).catch(noop);
+});
+
+test('isMinVersionApi returns true if req.headers.version is equal to the minVersion', (t) => {
+  const reqObject = { headers: { 'cumulus-api-version': '2' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.true(isMinVersionApi(reqObject, minVersion));
+});
+
+test('isMinVersionApi returns false if req.headers.version is less than the minVersion', (t) => {
+  const reqObject = { headers: { 'cumulus-api-version': '1' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.false(isMinVersionApi(reqObject, minVersion));
+});
+
+test('isMinVersionApi returns false if req.headers.version is greater than the minVersion', (t) => {
+  const reqObject = { headers: { 'cumulus-api-version': '50' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.true(isMinVersionApi(reqObject, minVersion));
+});
+
+test('isMinVersionApi returns false if req.headers.version is NaN', (t) => {
+  const reqObject = { headers: { 'cumulus-api-version': 'foobar' } };
+  const minVersion = 2;
+  isMinVersionApi(reqObject, minVersion);
+  t.false(isMinVersionApi(reqObject, minVersion));
 });
 
 test('verifyJwtAuthorization() throws JsonWebTokenError for non-JWT token', async (t) => {
