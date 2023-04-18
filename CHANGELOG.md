@@ -116,6 +116,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
     - Add new endpoints to update and delete granules by collectionId as well as granuleId
 
+
+### Removed
+
+- **CUMULUS-2994**
+  - Delete code/lambdas that publish DynamoDB stream events to SNS
+
+
 ## Unreleased
 
 ### MIGRATION notes
@@ -353,6 +360,16 @@ update the database cluster to use the new configuration.
 - **CUMULUS-3193**
   - Update eslint config to better support typing
 - Improve linting of TS files
+
+### Removed
+
+- **CUMULUS-2798**
+  - Removed AsyncOperations model
+
+### Removed
+
+- **CUMULUS-3009**
+  - Removed Dynamo PDRs table
 
 ## [v14.0.0] 2022-12-08
 
