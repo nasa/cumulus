@@ -88,3 +88,5 @@ directories, a script `cloudwatch-import.sh` is provided for this purpose. While
 ```bash
 zsh cloudwatch-import.sh
 ```
+
+More information is available about the cloudwatch import script [here](../upgrade-notes/import-cloudwatch-logs.md)
