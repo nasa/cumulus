@@ -100,6 +100,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Removed AsyncOperations model
   - **CUMULUS-3009**
     - Removed Dynamo PDRs table
+  - **CUMULUS-3226**
+    - Removed Dynamo Async Operations table
 
 ### Added
 
