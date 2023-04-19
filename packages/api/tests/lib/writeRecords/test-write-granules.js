@@ -513,6 +513,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has no gran
     knex,
     executionCumulusId,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
   const cumulusMessage = {};
   const actual = await writeGranulesFromMessage({
@@ -520,6 +521,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has no gran
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
   t.is(actual, undefined);
 });
@@ -529,6 +531,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
     knex,
     executionCumulusId,
     providerCumulusId,
+    stepFunctionUtils,
   } = t.context;
   const cumulusMessage = { granules: [] };
   const actual = await writeGranulesFromMessage({
@@ -536,6 +539,7 @@ test.serial('writeGranulesFromMessage() returns undefined if message has empty g
     executionCumulusId,
     providerCumulusId,
     knex,
+    testOverrides: { stepFunctionUtils },
   });
   t.is(actual, undefined);
 });

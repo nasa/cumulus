@@ -7,7 +7,7 @@ const {
   waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
-const { waitForListGranulesResult } = require('@cumulus/integration-tests/Granules');
+const { waitForListGranulesResult, getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const {
@@ -15,6 +15,7 @@ const {
   createGranule,
   deleteGranule,
   getGranule,
+  replaceGranule,
   updateGranule,
 } = require('@cumulus/api-client/granules');
 const {
@@ -47,6 +48,7 @@ describe('The Granules API', () => {
   let modifiedGranule;
   let invalidModifiedGranule;
   let prefix;
+  let putReplaceGranule;
   let randomGranuleRecord;
   let updatedGranuleFromApi;
 
@@ -83,6 +85,14 @@ describe('The Granules API', () => {
         Body: 'testfile',
       });
 
+      putReplaceGranule = removeNilProperties(fakeGranuleFactoryV2({
+        collectionId: collectionId,
+        published: false,
+        execution: undefined,
+        files: [granuleFile],
+        status: 'completed',
+      }));
+
       randomGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
         collectionId,
         published: false,
@@ -103,6 +113,8 @@ describe('The Granules API', () => {
     await deleteExecution({ prefix, executionArn: executionRecord.arn });
     await deleteGranule({ prefix, granuleId: granule1.granuleId });
     await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId });
+    await deleteGranule({ prefix, granuleId: putReplaceGranule.granuleId });
+
     await deleteCollection({
       prefix,
       collectionName: collection1.name,
@@ -380,6 +392,45 @@ describe('The Granules API', () => {
         expect(apiError.message).toContain('Modifying collectionId for a granule is not allowed');
         expect(apiError.message).toContain(granuleWithDiffCollection.granuleId);
       }
+    });
+
+    it('replaces a granule, removing all applicable fields not provided', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+      const createResponse = await createGranule({
+        prefix,
+        body: putReplaceGranule,
+      });
+      expect(createResponse.statusCode).toBe(200);
+
+      const replacementGranule = {
+        granuleId: putReplaceGranule.granuleId,
+        collectionId,
+        status: 'failed',
+      };
+      const replaceResponse = await replaceGranule({
+        prefix,
+        body: replacementGranule,
+      });
+      expect(replaceResponse.statusCode).toBe(200);
+      const searchResults = await getGranuleWithStatus({
+        prefix,
+        granuleId: replacementGranule.granuleId,
+        status: 'failed',
+      });
+
+      const replacementGranuleWithDefaultsFilled = {
+        ...replacementGranule,
+        files: [],
+        error: {},
+        published: false,
+        timestamp: searchResults.timestamp,
+        updatedAt: searchResults.updatedAt,
+        createdAt: searchResults.createdAt,
+      };
+
+      expect(searchResults).toEqual(replacementGranuleWithDefaultsFilled);
     });
   });
 });

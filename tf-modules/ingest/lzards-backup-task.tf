@@ -5,7 +5,7 @@ resource "aws_lambda_function" "lzards_backup_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/lzards-backup/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = lookup(var.lambda_timeouts, "lzards_backup_task_timeout", 900)
   memory_size      = lookup(var.lambda_memory_sizes, "lzards_backup_task_memory_size", 512)
 

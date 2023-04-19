@@ -39,6 +39,7 @@ Below is in-depth guidance to help get you started with your Cumulus development
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
 - Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
+- Documentation: [How To's](./docs/docs-how-to.md)
 
 # 🔨 Development
 
@@ -61,11 +62,11 @@ with an individual package.
 
 ## Installation
 
-This is for installation for Cumulus development. See the [Cumulus deployment section](https://nasa.github.io/cumulus/docs/deployment/deployment-readme) for instructions on deploying the released Cumulus packages.
+This is for installation for Cumulus development. See the [Cumulus deployment section](https://nasa.github.io/cumulus/docs/deployment) for instructions on deploying the released Cumulus packages.
 
 ### Prerequisites
 
-- [NVM](https://github.com/creationix/nvm) and node version 14.19.1
+- [NVM](https://github.com/creationix/nvm) and node version 16.19.0
 - [AWS CLI](http://docs.aws.amazon.com/cli/latest/userguide/installing.html)
 - Bash
 - [Docker](https://www.docker.com/) (only required for testing)

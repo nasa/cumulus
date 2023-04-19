@@ -1,11 +1,11 @@
 {
   "name": "@cumulus/test-async-operations",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "description": "AsyncOperations Test Lambda",
   "main": "index.js",
   "private": true,
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "scripts": {
     "package": "rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js",

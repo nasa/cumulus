@@ -1,6 +1,6 @@
 ---
 id: workflows-readme
-title: Workflows
+title: Workflows Overview
 hide_title: false
 ---
 
@@ -54,7 +54,7 @@ The Ingest Workflow Architecture is defined by two entity types, [Workflows](#wo
 
 Workflows and tasks are configured as Terraform resources, which are triggered via configured `rules` within Cumulus.
 
-![Diagram showing the Step Function execution path through workflow tasks for a collection ingest](assets/ingest_diagram.png)
+![Diagram showing the Step Function execution path through workflow tasks for a collection ingest](../assets/ingest_diagram.png)
 
 See the [Example GIBS Ingest Architecture](#example-gibs-ingest-architecture) showing how workflows and tasks are used to define the GIBS Ingest Architecture.
 
@@ -175,10 +175,10 @@ This shows the GIBS Ingest Architecture as an example of the use of the Ingest W
 
 #### GIBS Ingest Workflows
 
-![Diagram showing the AWS Step Function execution path for a GIBS ingest workflow](assets/ingest_diagram_gibs.png)
+![Diagram showing the AWS Step Function execution path for a GIBS ingest workflow](../assets/ingest_diagram_gibs.png)
 
 #### GIBS Ingest Granules Workflow
 
 This shows a visualization of an execution of the ingets granules workflow in step functions. The steps highlighted in green are the ones that executed and completed successfully.
 
-![Diagram showing the AWS Step Function execution path for a GIBS ingest granules workflow](assets/gibs_ingest_granules_workflow.png)
+![Diagram showing the AWS Step Function execution path for a GIBS ingest granules workflow](../assets/gibs_ingest_granules_workflow.png)

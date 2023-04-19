@@ -1,12 +1,12 @@
 {
   "name": "@cumulus/distribution-utils",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "description": "Cumulus Distribution utilities",
   "keywords": [
     "CUMULUS"
   ],
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,9 +33,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "14.0.0",
-    "@cumulus/common": "14.0.0",
-    "@cumulus/errors": "14.0.0",
+    "@cumulus/aws-client": "15.0.0",
+    "@cumulus/common": "15.0.0",
+    "@cumulus/errors": "15.0.0",
     "url-join": "^1.1.0"
   },
   "devDependencies": {

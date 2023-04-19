@@ -525,6 +525,53 @@ test.serial('postRequestToLzards creates the expected query with SHA256 checksum
   }]);
 });
 
+test.serial('postRequestToLzards creates the expected query with SHA512 checksum', async (t) => {
+  const accessUrl = 'fakeUrl';
+  const authToken = 'fakeToken';
+  const collection = 'fakeCollectionString';
+  const file = { bucket: 'fakeBucket', key: 'fakeKey', checksumType: 'sha512', checksum: 'fakeChecksum' };
+  const granuleId = 'fakeGranuleId';
+  const lzardsApi = 'fakeApi';
+  const lzardsProviderName = 'fakeProvider';
+  const provider = 'fakeProvider';
+  const now = new Date().getTime();
+  const tenMinutesAgo = now - (1000 * 60 * 10);
+  const createdAt = tenMinutesAgo;
+
+  process.env.lzards_provider = lzardsProviderName;
+  process.env.lzards_api = lzardsApi;
+
+  await index.postRequestToLzards({
+    accessUrl,
+    authToken,
+    collection,
+    file,
+    granuleId,
+    provider,
+    createdAt,
+    lzardsApi,
+    lzardsProviderName,
+  });
+
+  t.deepEqual(gotPostStub.getCalls()[0].args, [lzardsApi, {
+    json: {
+      provider: lzardsProviderName,
+      objectUrl: accessUrl,
+      expectedSha512Hash: file.checksum,
+      metadata: {
+        filename: `s3://${file.bucket}/${file.key}`,
+        collection,
+        granuleId,
+        provider,
+        createdAt,
+      },
+    },
+    headers: {
+      Authorization: `Bearer ${authToken}`,
+    },
+  }]);
+});
+
 test.serial('postRequestToLzards throws if lzardsApiUrl is not set', async (t) => {
   const accessUrl = 'fakeUrl';
   const authToken = 'fakeToken';

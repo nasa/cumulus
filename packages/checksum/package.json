@@ -1,9 +1,9 @@
 {
   "name": "@cumulus/checksum",
-  "version": "14.0.0",
+  "version": "15.0.0",
   "description": "Cumulus checksum utilities",
   "engines": {
-    "node": ">=14.19.1"
+    "node": ">=16.19.0"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

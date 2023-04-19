@@ -1,9 +1,19 @@
+// @ts-check
+
 'use strict';
 
 const bodyParser = require('body-parser');
 const has = require('lodash/has');
 const { EcsStartTaskError } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
+
+const {
+  isMinVersionApi,
+} = require('../lib/request');
+
+/**
+* @typedef {import('express').RequestHandler} RequestHandler
+*/
 
 const logger = new Logger({ sender: '@cumulus/api' });
 
@@ -39,6 +49,21 @@ const handleBodyParserError = (res, error) => {
   }
 };
 
+/**
+* @param {number} minVersion - Minimum supported version
+* @returns {RequestHandler} - Request Handler
+*/
+const requireApiVersion = (minVersion) => (req, res, next) => {
+  if (!isMinVersionApi(req, minVersion)) {
+    return res
+      .status(400)
+      .send({
+        error: `This API endpoint requires 'Cumulus-API-Version' header to be an integer set to at least ${minVersion}.  Please ensure your request is compatible with that version of the API and update your request accordingly`,
+      });
+  }
+  return next();
+};
+
 const jsonBodyParser = (req, res, next) => {
   const nextWithErrorHandling = (error) => {
     if (error) {
@@ -51,7 +76,6 @@ const jsonBodyParser = (req, res, next) => {
       next();
     }
   };
-
   // Setting limit to 6 MB which is the AWS lambda limit https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-limits.html
   bodyParser.json({ limit: '6mb' })(req, res, nextWithErrorHandling);
 };
@@ -60,4 +84,5 @@ module.exports = {
   asyncOperationEndpointErrorHandler,
   defaultErrorHandler,
   jsonBodyParser,
+  requireApiVersion,
 };
