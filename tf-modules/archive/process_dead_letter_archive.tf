@@ -1,10 +1,3 @@
-resource "aws_iam_role" "process_dead_letter_archive_role" {
-  name                 = "${var.prefix}_process_dead_letter_archive_role"
-  assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
-  permissions_boundary = var.permissions_boundary_arn
-  tags                 = var.tags
-}
-
 resource "aws_lambda_function" "process_dead_letter_archive" {
   filename         = "${path.module}/../../packages/api/dist/processDeadLetterArchive/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/processDeadLetterArchive/lambda.zip")
