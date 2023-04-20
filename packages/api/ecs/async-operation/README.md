@@ -12,7 +12,6 @@ The Docker container expects a number of environment variables to be set:
 * lambdaName - the name of the lambda function to be executed
 * payloadUrl - an S3 URL containing the event to be passed to the lambda
   function
-* asyncOperationsTable - the name of the AsyncOperations DynamoDB table (used for parallel writes, this will be removed in a future release)
 * asyncOperationId - the ID of the AsyncOperation record
 
 The built image is deployed to

@@ -25,7 +25,6 @@ process.env = {
   TOKEN_SECRET: randomString(),
   stackName: randomString(),
   system_bucket: randomString(),
-  AsyncOperationsTable: randomString(),
   AsyncOperationTaskDefinition: randomString(),
   EcsCluster: randomString(),
   BulkOperationLambda: randomString(),
