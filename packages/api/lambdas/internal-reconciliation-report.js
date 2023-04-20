@@ -10,6 +10,7 @@ const union = require('lodash/union');
 const omit = require('lodash/omit');
 const moment = require('moment');
 const pMap = require('p-map');
+const pRetry = require('p-retry');
 
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -63,80 +64,99 @@ async function internalRecReportForCollections(recReportParams) {
   const collectionPgModel = new CollectionPgModel();
   const knex = await getKnexClient();
 
-  // get collections from database and sort them, since the scan result is not ordered
-  const [updatedAtRangeParams, dbSearchParams] = convertToDBCollectionSearchObject(recReportParams);
+  return await pRetry(
+    async () => {
+      try {
+        // get collections from database and sort them, since the scan result is not ordered
+        const [updatedAtRangeParams, dbSearchParams] = convertToDBCollectionSearchObject(recReportParams);
 
-  const dbCollectionsSearched = await collectionPgModel.searchWithUpdatedAtRange(
-    knex,
-    dbSearchParams,
-    updatedAtRangeParams
-  );
+        const dbCollectionsSearched = await collectionPgModel.searchWithUpdatedAtRange(
+          knex,
+          dbSearchParams,
+          updatedAtRangeParams
+        );
 
-  // TODO - improve this sort
-  const dbCollectionItems = sortBy(
-    filterDBCollections(dbCollectionsSearched, recReportParams),
-    ['name', 'version']
-  );
+        // TODO - improve this sort
+        const dbCollectionItems = sortBy(
+          filterDBCollections(dbCollectionsSearched, recReportParams),
+          ['name', 'version']
+        );
 
-  let okCount = 0;
-  const withConflicts = [];
-  let onlyInEs = [];
-  let onlyInDb = [];
+        let okCount = 0;
+        const withConflicts = [];
+        let onlyInEs = [];
+        let onlyInDb = [];
 
-  const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
-  let nextEsItem = await esCollectionsIterator.peek();
-  let nextDbItem = dbCollectionItems.length !== 0
-    ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-    : undefined;
+        const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
+        let nextEsItem = await esCollectionsIterator.peek();
+        let nextDbItem = dbCollectionItems.length !== 0
+          ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+          : undefined;
 
-  while (nextEsItem && nextDbItem) {
-    const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
-    const dbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
+        while (nextEsItem && nextDbItem) {
+          const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
+          const dbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
 
-    if (esCollectionId < dbCollectionId) {
-      // Found an item that is only in ES and not in DB
-      onlyInEs.push(esCollectionId);
-      await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
-    } else if (esCollectionId > dbCollectionId) {
-      // Found an item that is only in DB and not in ES
-      onlyInDb.push(dbCollectionId);
-      dbCollectionItems.shift();
-    } else {
-      // Found an item that is in both ES and DB
-      if (
-        isEqual(
-          omit(nextEsItem, fieldsIgnored),
-          omit(
-            nextDbItem,
-            fieldsIgnored
-          )
-        )
-      ) {
-        okCount += 1;
-      } else {
-        withConflicts.push({ es: nextEsItem, db: nextDbItem });
+          if (esCollectionId < dbCollectionId) {
+            // Found an item that is only in ES and not in DB
+            onlyInEs.push(esCollectionId);
+            await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+          } else if (esCollectionId > dbCollectionId) {
+            // Found an item that is only in DB and not in ES
+            onlyInDb.push(dbCollectionId);
+            dbCollectionItems.shift();
+          } else {
+            // Found an item that is in both ES and DB
+            if (
+              isEqual(
+                omit(nextEsItem, fieldsIgnored),
+                omit(
+                  nextDbItem,
+                  fieldsIgnored
+                )
+              )
+            ) {
+              okCount += 1;
+            } else {
+              withConflicts.push({ es: nextEsItem, db: nextDbItem });
+            }
+            await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+            dbCollectionItems.shift();
+          }
+
+          nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
+          nextDbItem = dbCollectionItems.length !== 0
+            ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+            : undefined;
+        }
+
+        // Add any remaining ES items to the report
+        onlyInEs = onlyInEs.concat(
+          (await esCollectionsIterator.empty())
+            .map((item) => constructCollectionId(item.name, item.version))
+        );
+
+        // Add any remaining DB items to the report
+        onlyInDb = onlyInDb
+          .concat(dbCollectionItems.map((item) => constructCollectionId(item.name, item.version)));
+
+        return { okCount, withConflicts, onlyInEs, onlyInDb };
+      } catch (error) {
+        if (error.message.includes('Connection terminated unexpectedly')) {
+          log.error(`Error caught in internalRecReportForCollections. ${error}. Retrying...`);
+          throw error;
+        }
+        log.error(`Error caught in internalRecReportForCollections. ${error}`);
+        throw new pRetry.AbortError(error);
       }
-      await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
-      dbCollectionItems.shift();
+    },
+    {
+      retries: 3,
+      onFailedAttempt: (e) => {
+        log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
+      },
     }
-
-    nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
-    nextDbItem = dbCollectionItems.length !== 0
-      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-      : undefined;
-  }
-
-  // Add any remaining ES items to the report
-  onlyInEs = onlyInEs.concat(
-    (await esCollectionsIterator.empty())
-      .map((item) => constructCollectionId(item.name, item.version))
   );
-
-  // Add any remaining DB items to the report
-  onlyInDb = onlyInDb
-    .concat(dbCollectionItems.map((item) => constructCollectionId(item.name, item.version)));
-
-  return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
 
 /**
@@ -195,8 +215,29 @@ async function getCollectionsForGranules(recReportParams) {
   const {
     granuleIds,
   } = recReportParams;
+  let dbCollectionIds = [];
 
-  const dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
+  await pRetry(
+    async () => {
+      try {
+        dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
+      } catch (error) {
+        if (error.message.includes('Connection terminated unexpectedly')) {
+          log.error(`Error caught in getCollectionsForGranules. Retrying...`);
+          throw error;
+        }
+        log.error(`Error caught in getCollectionsForGranules. ${error}`);
+        throw new pRetry.AbortError(error);
+      }
+    },
+    {
+      retries: 3,
+      onFailedAttempt: (e) => {
+        log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
+      },
+      ...pRetryOptions,
+    }
+  );
 
   const esGranulesIterator = new ESSearchQueue(
     { granuleId__in: granuleIds.join(','), sort_key: ['collectionId'], fields: ['collectionId'] }, 'granule', process.env.ES_INDEX
@@ -433,9 +474,7 @@ async function createInternalReconciliationReport(recReportParams) {
       Body: JSON.stringify(report, undefined, 2),
     });
   } catch (error) {
-    log.error('Error caught in createInternalReconciliationReport');
-    log.error(errorify(error));
-
+    log.error(`Error caught in createInternalReconciliationReport. ${error}`);
     // Create the full report
     report.createEndTime = moment.utc().toISOString();
     report.status = 'Failed';

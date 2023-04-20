@@ -183,100 +183,115 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const oneWayBucketReport = isOneWayBucketReport(recReportParams);
   if (oneWayBucketReport) log.debug('Creating one way report, reconciliation report will not report objects only in S3');
 
-  const query = getFilesAndGranuleInfoQuery({
-    knex: recReportParams.knex,
-    searchParams: { bucket: Bucket },
-    sortColumns: ['key'],
-    granuleColumns: ['granule_id'],
-    collectionIds: recReportParams.collectionIds,
-    providers: recReportParams.providers,
-    granuleIds: recReportParams.granuleIds,
-  });
-
-  const pgFileSearchClient = new QuerySearchClient(query, 100);
-
-  log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
-  let okCount = 0;
-  const onlyInS3 = [];
-  const onlyInDb = [];
-  const okCountByGranule = {};
-  try {
-    log.info('Comparing PostgreSQL to S3');
-    let [nextS3Object, nextPgItem] = await Promise.all([
-      s3ObjectsQueue.peek(),
-      pgFileSearchClient.peek(),
-    ]);
-
-    while (nextS3Object && nextPgItem) {
-      const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-      const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
-
-      if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
-        okCountByGranule[nextPgItem.granule_id] = 0;
-      }
-
-      if (nextS3Uri < nextPgFileUri) {
-        // Found an item that is only in S3 and not in PostgreSQL
-        if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
-        await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-      } else if (nextS3Uri > nextPgFileUri) {
-        // Found an item that is only in PostgreSQL and not in S3
-        const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
-        onlyInDb.push({
-          uri: buildS3Uri(Bucket, pgItem.key),
-          granuleId: pgItem.granule_id,
-        });
-      } else {
-        // Found an item that is in both S3 and PostgreSQL
-        okCount += 1;
-        if (linkFilesAndGranules) {
-          okCountByGranule[nextPgItem.granule_id] += 1;
-        }
-        await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-        await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      [nextS3Object, nextPgItem] = await Promise.all([
-        s3ObjectsQueue.peek(),
-        pgFileSearchClient.peek(),
-      ]);
-    }
-
-    // Add any remaining S3 items to the report
-    log.info('Adding remaining S3 items to the report');
-    if (!oneWayBucketReport) {
-      while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
-        const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-        onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
-      }
-    }
-
-    // Add any remaining PostgreSQL items to the report
-    log.info('Adding remaining PostgreSQL items to the report');
-    while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
-      const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
-      onlyInDb.push({
-        uri: buildS3Uri(Bucket, pgItem.key),
-        granuleId: pgItem.granule_id,
+  return await pRetry(
+    async () => {
+      const query = getFilesAndGranuleInfoQuery({
+        knex: recReportParams.knex,
+        searchParams: { bucket: Bucket },
+        sortColumns: ['key'],
+        granuleColumns: ['granule_id'],
+        collectionIds: recReportParams.collectionIds,
+        providers: recReportParams.providers,
+        granuleIds: recReportParams.granuleIds,
       });
+
+      const pgFileSearchClient = new QuerySearchClient(query, 100);
+
+      let okCount = 0;
+      const onlyInS3 = [];
+      const onlyInDb = [];
+      const okCountByGranule = {};
+
+      log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
+      try {
+        log.info('Comparing PostgreSQL to S3');
+        let [nextS3Object, nextPgItem] = await Promise.all([
+          s3ObjectsQueue.peek(),
+          pgFileSearchClient.peek(),
+        ]);
+
+        while (nextS3Object && nextPgItem) {
+          const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
+          const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
+
+          if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
+            okCountByGranule[nextPgItem.granule_id] = 0;
+          }
+
+          if (nextS3Uri < nextPgFileUri) {
+            // Found an item that is only in S3 and not in PostgreSQL
+            if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
+            await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+          } else if (nextS3Uri > nextPgFileUri) {
+            // Found an item that is only in PostgreSQL and not in S3
+            const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
+            onlyInDb.push({
+              uri: buildS3Uri(Bucket, pgItem.key),
+              granuleId: pgItem.granule_id,
+            });
+          } else {
+            // Found an item that is in both S3 and PostgreSQL
+            okCount += 1;
+            if (linkFilesAndGranules) {
+              okCountByGranule[nextPgItem.granule_id] += 1;
+            }
+            await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+            await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
+          }
+
+          // eslint-disable-next-line no-await-in-loop
+          [nextS3Object, nextPgItem] = await Promise.all([
+            s3ObjectsQueue.peek(),
+            pgFileSearchClient.peek(),
+          ]);
+        }
+
+        // Add any remaining S3 items to the report
+        log.info('Adding remaining S3 items to the report');
+        if (!oneWayBucketReport) {
+          while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
+            const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+            onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+          }
+        }
+
+        // Add any remaining PostgreSQL items to the report
+        log.info('Adding remaining PostgreSQL items to the report');
+        while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
+          const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
+          onlyInDb.push({
+            uri: buildS3Uri(Bucket, pgItem.key),
+            granuleId: pgItem.granule_id,
+          });
+        }
+        log.info('Compare PostgreSQL to S3 completed');
+      } catch (error) {
+        if (error.message.includes('Connection terminated unexpectedly')) {
+          log.error(`Error caught in createReconciliationReportForBucket for reportKey ${reportKey}. ${error}. Retrying...`);
+          throw error;
+        }
+        log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}. ${error}`);
+        throw new pRetry.AbortError(error);
+      }
+
+      log.info(`createReconciliationReportForBucket ${Bucket} returning `
+        + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
+        + `onlyInDb: ${onlyInDb.length}, `
+        + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
+      return {
+        okCount,
+        onlyInS3,
+        onlyInDb,
+        okCountByGranule,
+      };
+    },
+    {
+      retries: 3,
+      onFailedAttempt: (e) => {
+        log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
+      },
     }
-    log.info('Compare PostgreSQL to S3 completed');
-  } catch (error) {
-    log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}`);
-    log.error(errorify(error));
-    throw error;
-  }
-  log.info(`createReconciliationReportForBucket ${Bucket} returning `
-    + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
-    + `onlyInDb: ${onlyInDb.length}, `
-    + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
-  return {
-    okCount,
-    onlyInS3,
-    onlyInDb,
-    okCountByGranule,
-  };
+  );
 }
 
 /**
@@ -779,7 +794,7 @@ async function createReconciliationReport(recReportParams) {
       report = Object.assign(report, cumulusCmrReport);
     }
   } catch (error) {
-    log.error(`Error caught in createReconciliationReport for reportKey ${reportKey}`);
+    log.error(`Error caught in createReconciliationReport for reportKey ${reportKey}. Error ${error}`);
     log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
     // Create the full report
     report.createEndTime = moment.utc().toISOString();
@@ -818,7 +833,6 @@ async function processRequest(params) {
     reportName,
     systemBucket,
     stackName,
-    pRetryOptions = {},
     knex = await getKnexClient(env),
   } = params;
   const createStartTime = moment.utc();
@@ -840,54 +854,39 @@ async function processRequest(params) {
 
   const concurrency = env.CONCURRENCY || 3;
 
-  await pRetry(
-    async () => {
-      try {
-        const recReportParams = {
-          ...params,
-          createStartTime,
-          reportKey,
-          reportType,
-          knex,
-          concurrency,
-        };
-        log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
-        if (reportType === 'Internal') {
-          await createInternalReconciliationReport(recReportParams);
-        } else if (reportType === 'Granule Inventory') {
-          await createGranuleInventoryReport(recReportParams);
-        } else if (reportType === 'ORCA Backup') {
-          await createOrcaBackupReconciliationReport(recReportParams);
-        } else {
-          // reportType is in ['Inventory', 'Granule Not Found']
-          await createReconciliationReport(recReportParams);
-        }
-        await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
-      } catch (error) {
-        if (error.message.includes('Connection terminated unexpectedly')) {
-          log.error(`Error caught in createReconciliationReport for reportKey ${reportKey}. Retrying...`);
-          throw error;
-        }
-        log.error(`Error creating ${reportType} report ${reportRecordName}. ${error}`);
-        const updates = {
-          status: 'Failed',
-          error: {
-            Error: error.message,
-            Cause: errorify(error),
-          },
-        };
-        await reconciliationReportModel.update({ name: reportRecord.name }, updates);
-        throw new pRetry.AbortError(error);
-      }
-    },
-    {
-      retries: 3,
-      onFailedAttempt: (e) => {
-        log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
-      },
-      ...pRetryOptions,
+  try {
+    const recReportParams = {
+      ...params,
+      createStartTime,
+      reportKey,
+      reportType,
+      knex,
+      concurrency,
+    };
+    log.info(`Beginning ${reportType} report with params: ${JSON.stringify(recReportParams)}`);
+    if (reportType === 'Internal') {
+      await createInternalReconciliationReport(recReportParams);
+    } else if (reportType === 'Granule Inventory') {
+      await createGranuleInventoryReport(recReportParams);
+    } else if (reportType === 'ORCA Backup') {
+      await createOrcaBackupReconciliationReport(recReportParams);
+    } else {
+      // reportType is in ['Inventory', 'Granule Not Found']
+      await createReconciliationReport(recReportParams);
     }
-  );
+    await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+  } catch (error) {
+    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. Error: ${error}`);
+    const updates = {
+      status: 'Failed',
+      error: {
+        Error: error.message,
+        Cause: errorify(error),
+      },
+    };
+    await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    throw error;
+  }
 
   return reconciliationReportModel.get({ name: reportRecord.name });
 }

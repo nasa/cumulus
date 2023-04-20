@@ -2219,6 +2219,7 @@ test.serial('When there is an error for an ORCA backup report, it retries', asyn
 
   const searchOrcaStub = sinon.stub(ORCASearchCatalogQueue.prototype, 'searchOrca');
   searchOrcaStub.throws(new Error('ORCA error'));
+  t.teardown(() => searchOrcaStub.restore());
 
   const reportName = randomId('reportName');
   const event = {

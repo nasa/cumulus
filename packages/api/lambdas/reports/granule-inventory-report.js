@@ -1,8 +1,10 @@
 'use strict';
 
-const { Transform } = require('json2csv');
+const pRetry = require('p-retry');
 const noop = require('lodash/noop');
 const Stream = require('stream');
+const { Transform } = require('json2csv');
+
 const Logger = require('@cumulus/logger');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const {
@@ -69,34 +71,48 @@ async function createGranuleInventoryReport(recReportParams) {
     },
   });
 
-  try {
-    while (nextGranule) {
-      // eslint-disable-next-line no-await-in-loop
-      const apiGranule = await translatePostgresGranuleResultToApiGranule(
-        recReportParams.knex,
-        nextGranule
-      );
-      readable.push({
-        granuleUr: apiGranule.granuleId,
-        collectionId: apiGranule.collectionId,
-        createdAt: new Date(apiGranule.createdAt).toISOString(),
-        startDateTime: apiGranule.beginningDateTime || '',
-        endDateTime: apiGranule.endingDateTime || '',
-        status: apiGranule.status,
-        updatedAt: new Date(apiGranule.updatedAt).toISOString(),
-        published: apiGranule.published,
-        provider: apiGranule.provider,
-      });
-      await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
-      nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
-    }
-    readable.push(null);
+  return await pRetry(
+    async () => {
+      try {
+        while (nextGranule) {
+          // eslint-disable-next-line no-await-in-loop
+          const apiGranule = await translatePostgresGranuleResultToApiGranule(
+            recReportParams.knex,
+            nextGranule
+          );
+          readable.push({
+            granuleUr: apiGranule.granuleId,
+            collectionId: apiGranule.collectionId,
+            createdAt: new Date(apiGranule.createdAt).toISOString(),
+            startDateTime: apiGranule.beginningDateTime || '',
+            endDateTime: apiGranule.endingDateTime || '',
+            status: apiGranule.status,
+            updatedAt: new Date(apiGranule.updatedAt).toISOString(),
+            published: apiGranule.published,
+            provider: apiGranule.provider,
+          });
+          await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
+          nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
+        }
+        readable.push(null);
 
-    return promisedObject;
-  } catch (error) {
-    log.error(`Error caught in createGranuleInventoryReport ${error}`);
-    throw error;
-  }
+        return promisedObject;
+      } catch (error) {
+        if (error.message.includes('Connection terminated unexpectedly')) {
+          log.error(`Error caught in createGranuleInventoryReport. ${error}. Retrying...`);
+          throw error;
+        }
+        log.error(`Error caught in createGranuleInventoryReport. ${error}`);
+        throw new pRetry.AbortError(error);
+      }
+    },
+    {
+      retries: 3,
+      onFailedAttempt: (e) => {
+        log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
+      },
+    }
+  );
 }
 
 exports.createGranuleInventoryReport = createGranuleInventoryReport;
