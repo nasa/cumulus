@@ -14,6 +14,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `v0.5.0`
   - Added audit-ci CVE override until July 1 to allow for Core package releases
 
+## Fixed
+
+- **CUMULUS-3285**
+  - Updated `api/lib/distribution.js isAuthBearTokenRequest` to handle non-Bearer authorization header
+
 ## [v15.0.0] 2023-03-10
 
 ### Breaking Changes
