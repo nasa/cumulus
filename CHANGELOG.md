@@ -181,6 +181,11 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
 
+## Fixed
+
+- **CUMULUS-3285**
+  - Updated `api/lib/distribution.js isAuthBearTokenRequest` to handle non-Bearer authorization header
+
 ## [v15.0.0] 2023-03-10
 
 ### Breaking Changes
