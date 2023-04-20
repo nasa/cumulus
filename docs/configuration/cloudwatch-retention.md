@@ -35,44 +35,51 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 
 ## Terraform
 
-The `cumulus` module exposes values for configuration of log retention for
-cloudwatch log groups (in days). A configurable map of `cloudwatch_log_retention_periods` currently supports the following variables:
+There are optional variables that can be set during deployment of cumulus modules to configure
+the retention period (in days) of cloudwatch log groups for lambdas and tasks. By setting the below
+variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated
+with the new retention value. The following values are supported correlating to their lambda/task name,
+(i.e. "/aws/lambda/prefix-DiscoverPdrs" would have the retention variable "DiscoverPdrs" )
 
-- cumulus-tf_egress_lambda_log_retention
-- archive_private_api_log_retention
-- archive_api_log_retention
-- archive_async_operation_log_retention
-- archive_granule_files_cache_updater_log_retention
-- archive_publish_executions_log_retention
-- archive_publish_granule_log_retention
-- archive_publish_pdrs_log_retention
-- archive_replay_sqs_messages_log_retention
-- cumulus_distribution_api_log_retention
-- cumulus_ecs_service_default_log_retention
-- ingest_discover_pdrs_task_log_retention
-- ingest_hyrax_metadata_updates_task_log_retention
-- ingest_parse_pdr_task_log_retention
-- ingest_post_to_cmr_task_log_retention
-- ingest_queue_pdrs_task_log_retention
-- ingest_queue_workflow_task_log_retention
-- ingest_sync_granule_task_log_retention
-- ingest_update_cmr_access_constraints_task_log_retention
+- EgressLambda
+- AsyncOperationEcsLogs
+- granuleFilesUpdaterCache
+- publishExecutions
+- publishGranules
+- publishPdrs
+- replaySqsMessages
+- DiscoverPdrs
+- HyraxMetadataUpdates
+- ParsePdr
+- PostToCmr
+- QueuePdrs
+- QueueWorkflow
+- SyncGranule
+- UpdateCmrAccessConstraints
+- DistributionApiEndpoints
+- PrivateApiLambda
+- ApiEndpoints
+- <local.fullname>-EcsLogs
 
-In order to configure this value for the cloudwatch log group, the variable for the retention period for the respective group should be in the form of:
+The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
+For example, if a user would like their log_groups of one module to have a retention period of one year,
+deploy the respective modules including:
 
-```hcl
-<cumulus_module>_<cloudwatch_log_group>_log_retention: <log_retention>
-  type = number
+### Example
+
+```tf
+default_log_retention_periods = 365
 ```
 
-An example, in the case of configuring the retention period for the `parse_pdr_task` `aws_cloudwatch_log_group`:
+The retention period (in days) of cloudwatch log groups for specific lambdas and tasks can be set
+during deployment using the `cloudwatch_log_retention_periods` terraform map variable. In order to
+configure these values for respective cloudwatch log groups, uncomment the `cloudwatch_log_retention_periods` variable and add the retention values listed above corresponding to the group's retention you want to change.
 
 ### Example
 
 ```tf
 cloudwatch_log_retention_periods = {
-  ingest_parse_pdr_task_log_retention = 365
+  ParsePdrs = 365
 }
 ```
-
-Additionally, the variable `default_log_retention_days` can be configured separately during deployment in order to set the default log retention for the cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
+The retention periods are the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
