@@ -111,7 +111,7 @@ test('PATCH request with reingest action queues granule and calls the reingestGr
     {
       body,
       params: {
-        granuleName: granuleId,
+        granuleId,
         collectionId,
       },
       testContext: {
