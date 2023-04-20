@@ -16,7 +16,7 @@ type AssociateExecutionRequest = {
 };
 
 /**
- * GET raw response from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
+ * GET raw response from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params                                - params
  * @param {string} params.prefix                         - the prefix configured for the stack
@@ -68,7 +68,7 @@ export const getGranuleResponse = async (params: {
 };
 
 /**
- * GET granule record from /granules/{granuleName} or /granules/{collectionId}/{granuleName}
+ * GET granule record from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack

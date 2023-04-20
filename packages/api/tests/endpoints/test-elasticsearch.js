@@ -32,7 +32,6 @@ const {
 const esIndex = randomId('esindex');
 
 process.env.AccessTokensTable = randomString();
-process.env.AsyncOperationsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
