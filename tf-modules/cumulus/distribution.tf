@@ -29,4 +29,7 @@ module "distribution" {
   deploy_to_ngap                                 = var.deploy_to_ngap
 
   tags = var.tags
+
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }
