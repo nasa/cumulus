@@ -35,7 +35,6 @@ const {
   initialReportHeader,
   compareEsGranuleAndApiGranule,
 } = require('../lib/reconciliationReport');
-const { errorify } = require('../lib/utils');
 
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
@@ -62,13 +61,16 @@ async function internalRecReportForCollections(recReportParams) {
   );
 
   const collectionPgModel = new CollectionPgModel();
-  const knex = await getKnexClient();
+  const knex = recReportParams.knex || await getKnexClient();
 
   return await pRetry(
     async () => {
       try {
         // get collections from database and sort them, since the scan result is not ordered
-        const [updatedAtRangeParams, dbSearchParams] = convertToDBCollectionSearchObject(recReportParams);
+        const [
+          updatedAtRangeParams,
+          dbSearchParams,
+        ] = convertToDBCollectionSearchObject(recReportParams);
 
         const dbCollectionsSearched = await collectionPgModel.searchWithUpdatedAtRange(
           knex,
@@ -223,10 +225,10 @@ async function getCollectionsForGranules(recReportParams) {
         dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
       } catch (error) {
         if (error.message.includes('Connection terminated unexpectedly')) {
-          log.error(`Error caught in getCollectionsForGranules. Retrying...`);
+          log.error(`Error caught in getCollectionsForGranules. Error: ${error}. Retrying...`);
           throw error;
         }
-        log.error(`Error caught in getCollectionsForGranules. ${error}`);
+        log.error(`Error caught in getCollectionsForGranules. Error ${error}`);
         throw new pRetry.AbortError(error);
       }
     },
@@ -235,7 +237,6 @@ async function getCollectionsForGranules(recReportParams) {
       onFailedAttempt: (e) => {
         log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
       },
-      ...pRetryOptions,
     }
   );
 

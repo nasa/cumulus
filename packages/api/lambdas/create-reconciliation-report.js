@@ -267,7 +267,7 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
         log.info('Compare PostgreSQL to S3 completed');
       } catch (error) {
         if (error.message.includes('Connection terminated unexpectedly')) {
-          log.error(`Error caught in createReconciliationReportForBucket for reportKey ${reportKey}. ${error}. Retrying...`);
+          log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}. ${error}. Retrying...`);
           throw error;
         }
         log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}. ${error}`);

@@ -43,36 +43,35 @@ async function createGranuleInventoryReport(recReportParams) {
   const { reportKey, systemBucket } = recReportParams;
   const searchParams = convertToDBGranuleSearchParams(recReportParams);
 
-  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
-    recReportParams.knex,
-    searchParams,
-    ['collectionName', 'collectionVersion', 'granule_id']
-  );
-  const pgGranulesSearchClient = new QuerySearchClient(
-    granulesSearchQuery,
-    100 // arbitrary limit on how items are fetched at once
-  );
-
-  let nextGranule = await pgGranulesSearchClient.peek();
-
-  const readable = new Stream.Readable({ objectMode: true });
-  const pass = new Stream.PassThrough();
-  readable._read = noop;
-  const transformOpts = { objectMode: true };
-
-  const json2csv = new Transform({ fields }, transformOpts);
-  readable.pipe(json2csv).pipe(pass);
-
-  const promisedObject = promiseS3Upload({
-    params: {
-      Bucket: systemBucket,
-      Key: reportKey,
-      Body: pass,
-    },
-  });
-
   return await pRetry(
     async () => {
+      const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+        recReportParams.knex,
+        searchParams,
+        ['collectionName', 'collectionVersion', 'granule_id']
+      );
+      const pgGranulesSearchClient = new QuerySearchClient(
+        granulesSearchQuery,
+        100 // arbitrary limit on how items are fetched at once
+      );
+
+      let nextGranule = await pgGranulesSearchClient.peek();
+
+      const readable = new Stream.Readable({ objectMode: true });
+      const pass = new Stream.PassThrough();
+      readable._read = noop;
+      const transformOpts = { objectMode: true };
+
+      const json2csv = new Transform({ fields }, transformOpts);
+      readable.pipe(json2csv).pipe(pass);
+
+      const promisedObject = promiseS3Upload({
+        params: {
+          Bucket: systemBucket,
+          Key: reportKey,
+          Body: pass,
+        },
+      });
       try {
         while (nextGranule) {
           // eslint-disable-next-line no-await-in-loop

@@ -12,7 +12,6 @@ const sinon = require('sinon');
 const sortBy = require('lodash/sortBy');
 const test = require('ava');
 const { CMR } = require('@cumulus/cmr-client');
-const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const {
   buildS3Uri,
   parseS3Uri,
@@ -2204,7 +2203,7 @@ test.serial('When there is a connection termination error for an inventory repor
   t.is(report.reportType, 'Inventory');
 });
 
-test.serial('When there is an error for an ORCA backup report, it retries', async (t) => {
+test.serial('When there is an error for an ORCA backup report, it throws', async (t) => {
   const dataBuckets = [randomId('bucket')];
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -2242,7 +2241,7 @@ test.serial('When there is an error for an ORCA backup report, it retries', asyn
   t.is(report.reportType, 'ORCA Backup');
 });
 
-test.serial('When there is an error when generating the Granule Inventory report, it throws', async (t) => {
+test.serial('When there is an error when generating the Granule Inventory report, it retries', async (t) => {
   const {
     knex,
   } = t.context;
@@ -2262,7 +2261,7 @@ test.serial('When there is an error when generating the Granule Inventory report
     // eslint-disable-next-line arrow-body-style
     () => {
       return {
-        select: sinon.stub().throws(new Error('Knex error')),
+        select: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
       };
     }
   );
@@ -2282,11 +2281,16 @@ test.serial('When there is an error when generating the Granule Inventory report
 
   await t.throwsAsync(
     handler(event),
-    { message: 'Knex error' }
+    { message: 'Connection terminated unexpectedly' }
   );
+  t.is(knexStub.callCount, 4);
+  sinon.assert.callCount(knexStub, 4);
 });
 
-test.serial('When there is an error generating an internal report, it throws', async (t) => {
+test.serial('When there is an error generating an internal report, it retries', async (t) => {
+  const {
+    knex,
+  } = t.context;
   const dataBuckets = [randomId('bucket')];
   await Promise.all(dataBuckets.map((bucket) =>
     createBucket(bucket)
@@ -2299,11 +2303,17 @@ test.serial('When there is an error generating an internal report, it throws', a
     t.context.stackName
   );
 
-  const esEmptyStub = sinon.stub(ESSearchQueue.prototype, 'empty').throws(new Error('ES error'));
+  const knexStub = sinon.stub(knex, 'transaction').callsFake(
+    // eslint-disable-next-line arrow-body-style
+    () => {
+      return {
+        select: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
+        where: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
+      };
+    }
+  );
 
-  t.teardown(() => {
-    esEmptyStub.restore();
-  });
+  t.teardown(() => knexStub.restore());
 
   const reportName = randomId('reportName');
   const event = {
@@ -2313,15 +2323,19 @@ test.serial('When there is an error generating an internal report, it throws', a
     reportName,
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
+    knex: knexStub,
   };
 
   await t.throwsAsync(
     handler(event),
-    { message: 'ES error' }
+    { message: 'Connection terminated unexpectedly' }
   );
 
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
+
+  t.is(knexStub.callCount, 4);
+  sinon.assert.callCount(knexStub, 4);
   t.is(report.status, 'Failed');
   t.is(report.reportType, 'Internal');
 });
