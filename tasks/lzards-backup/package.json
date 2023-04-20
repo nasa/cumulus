@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/lzards-backup",
-  "version": "15.0.1",
+  "version": "15.1.0",
   "description": "Run LZARDS backup",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -42,20 +42,20 @@
     }
   },
   "dependencies": {
-    "@cumulus/api-client": "15.0.1",
-    "@cumulus/aws-client": "15.0.1",
-    "@cumulus/common": "15.0.1",
+    "@cumulus/api-client": "15.1.0",
+    "@cumulus/aws-client": "15.1.0",
+    "@cumulus/common": "15.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/db": "15.0.1",
-    "@cumulus/distribution-utils": "15.0.1",
-    "@cumulus/launchpad-auth": "15.0.1",
-    "@cumulus/logger": "15.0.1",
-    "@cumulus/lzards-api-client": "15.0.1",
-    "@cumulus/message": "15.0.1",
+    "@cumulus/db": "15.1.0",
+    "@cumulus/distribution-utils": "15.1.0",
+    "@cumulus/launchpad-auth": "15.1.0",
+    "@cumulus/logger": "15.1.0",
+    "@cumulus/lzards-api-client": "15.1.0",
+    "@cumulus/message": "15.1.0",
     "got": "^11.8.5"
   },
   "devDependencies": {
-    "@cumulus/schemas": "15.0.1",
-    "@cumulus/types": "15.0.1"
+    "@cumulus/schemas": "15.1.0",
+    "@cumulus/types": "15.1.0"
   }
 }

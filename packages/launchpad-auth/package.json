@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/launchpad-auth",
-  "version": "15.0.1",
+  "version": "15.1.0",
   "description": "Utilities for authentication with Launchpad",
   "keywords": [
     "CUMULUS",
@@ -37,8 +37,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.1",
-    "@cumulus/logger": "15.0.1",
+    "@cumulus/aws-client": "15.1.0",
+    "@cumulus/logger": "15.1.0",
     "got": "^11.8.5",
     "lodash": "^4.17.21",
     "uuid": "^3.2.1"
