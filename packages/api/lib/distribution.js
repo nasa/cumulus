@@ -119,7 +119,7 @@ function isAuthBearTokenRequest(req) {
   const authHeader = req.headers.authorization;
   if (authHeader) {
     const match = authHeader.match(BEARER_TOKEN_REGEX);
-    if (match.length >= 2) return true;
+    if (match && match.length >= 2) return true;
   }
   return false;
 }

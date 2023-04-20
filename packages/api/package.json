@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "15.0.0",
+  "version": "15.0.1",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -52,26 +52,26 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "15.0.0",
-    "@cumulus/async-operations": "15.0.0",
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/cmr-client": "15.0.0",
-    "@cumulus/cmrjs": "15.0.0",
-    "@cumulus/collection-config-store": "15.0.0",
-    "@cumulus/common": "15.0.0",
-    "@cumulus/db": "15.0.0",
-    "@cumulus/distribution-utils": "15.0.0",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/es-client": "15.0.0",
-    "@cumulus/ingest": "15.0.0",
-    "@cumulus/launchpad-auth": "15.0.0",
-    "@cumulus/logger": "15.0.0",
-    "@cumulus/message": "15.0.0",
-    "@cumulus/oauth-client": "15.0.0",
-    "@cumulus/object-store": "15.0.0",
-    "@cumulus/pvl": "15.0.0",
-    "@cumulus/sftp-client": "15.0.0",
-    "@cumulus/types": "15.0.0",
+    "@cumulus/api-client": "15.0.1",
+    "@cumulus/async-operations": "15.0.1",
+    "@cumulus/aws-client": "15.0.1",
+    "@cumulus/cmr-client": "15.0.1",
+    "@cumulus/cmrjs": "15.0.1",
+    "@cumulus/collection-config-store": "15.0.1",
+    "@cumulus/common": "15.0.1",
+    "@cumulus/db": "15.0.1",
+    "@cumulus/distribution-utils": "15.0.1",
+    "@cumulus/errors": "15.0.1",
+    "@cumulus/es-client": "15.0.1",
+    "@cumulus/ingest": "15.0.1",
+    "@cumulus/launchpad-auth": "15.0.1",
+    "@cumulus/logger": "15.0.1",
+    "@cumulus/message": "15.0.1",
+    "@cumulus/oauth-client": "15.0.1",
+    "@cumulus/object-store": "15.0.1",
+    "@cumulus/pvl": "15.0.1",
+    "@cumulus/sftp-client": "15.0.1",
+    "@cumulus/types": "15.0.1",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
@@ -113,10 +113,15 @@
     "tough-cookie": "~4.0.0",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1",
-    "xml2js": "^0.4.22",
+    "xml2js": "0.5.0",
     "zod": "^3.20.2"
   },
+  "overrides": {
+    "saml2-js": {
+      "xml2js": "0.5.0"
+    }
+  },
   "devDependencies": {
-    "@cumulus/test-data": "15.0.0"
+    "@cumulus/test-data": "15.0.1"
   }
 }
