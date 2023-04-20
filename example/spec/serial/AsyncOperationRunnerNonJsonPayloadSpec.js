@@ -17,7 +17,6 @@ const { loadConfig } = require('../helpers/testUtils');
 describe('The AsyncOperation task runner with a non-JSON payload', () => {
   let asyncOperation;
   let asyncOperationId;
-  let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
   let beforeAllFailed = false;
   let cluster;
@@ -30,7 +29,6 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
     try {
       config = await loadConfig();
 
-      asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
       successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
 
       // Find the ARN of the cluster
@@ -67,7 +65,6 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         id: asyncOperationId,
         payloadBucket: config.bucket,
         payloadKey,
-        dynamoTableName: asyncOperationsTableName,
       });
 
       const failures = get(runTaskResponse, 'failures', []);

@@ -8,11 +8,6 @@ resource "aws_iam_role" "ecs_cluster_instance" {
 
 data "aws_iam_policy_document" "ecs_cluster_instance_policy" {
   statement {
-    actions   = ["dynamodb:UpdateItem"]
-    resources = [var.dynamo_tables.async_operations.arn]
-  }
-
-  statement {
     actions = [
       "autoscaling:CompleteLifecycleAction",
       "autoscaling:DescribeAutoScalingInstances",
