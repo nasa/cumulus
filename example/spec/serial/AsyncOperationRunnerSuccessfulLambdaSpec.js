@@ -16,7 +16,6 @@ const { loadConfig } = require('../helpers/testUtils');
 describe('The AsyncOperation task runner executing a successful lambda function', () => {
   let asyncOperation;
   let asyncOperationId;
-  let asyncOperationsTableName;
   let asyncOperationTaskDefinition;
   let beforeAllError = false;
   let cluster;
@@ -29,7 +28,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
     try {
       config = await loadConfig();
 
-      asyncOperationsTableName = `${config.stackName}-AsyncOperationsTable`;
       successFunctionName = `${config.stackName}-AsyncOperationSuccess`;
 
       // Find the ARN of the cluster
@@ -67,7 +65,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         id: asyncOperationId,
         payloadBucket: config.bucket,
         payloadKey,
-        dynamoTableName: asyncOperationsTableName,
       });
 
       const failures = get(runTaskResponse, 'failures', []);

@@ -26,7 +26,6 @@ process.env = {
   TOKEN_SECRET: randomId('tokenSecret'),
   stackName: randomId('stackName'),
   system_bucket: randomId('bucket'),
-  AsyncOperationsTable: randomId('AsyncOperationsTable'),
   AsyncOperationTaskDefinition: randomId('taskDefinition'),
   EcsCluster: randomId('EcsCluster'),
   BulkOperationLambda: randomId('BulkOperationLambda'),
