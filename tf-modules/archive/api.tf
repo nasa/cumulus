@@ -156,7 +156,7 @@ resource "aws_s3_bucket_object" "authorized_oauth_users" {
 }
 
 resource "aws_lambda_function" "private_api" {
-  depends_on       = [aws_s3_bucket_object.authorized_oauth_users, aws_cloudwatch_log_group.private_api]
+  depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
 
   function_name    = "${var.prefix}-PrivateApiLambda"
   filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"
@@ -181,7 +181,7 @@ resource "aws_lambda_function" "private_api" {
 }
 
 resource "aws_lambda_function" "api" {
-  depends_on       = [aws_s3_bucket_object.authorized_oauth_users, aws_cloudwatch_log_group.api]
+  depends_on       = [aws_s3_bucket_object.authorized_oauth_users]
 
   function_name    = "${var.prefix}-ApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/app/lambda.zip"

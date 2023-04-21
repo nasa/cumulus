@@ -36,10 +36,29 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 ## Terraform
 
 There are optional variables that can be set during deployment of cumulus modules to configure
-the retention period (in days) of cloudwatch log groups for lambdas and tasks. By setting the below
-variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated
-with the new retention value. The following values are supported correlating to their lambda/task name,
-(i.e. "/aws/lambda/prefix-DiscoverPdrs" would have the retention variable "DiscoverPdrs" )
+the retention period (in days) of cloudwatch log groups for lambdas and tasks which the Cumulus module supports:
+
+```tf
+module "cumulus" {
+  # ... other variables
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+}
+```
+
+By setting the below variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated with the new retention value.
+
+The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups managed by Cumulus in case a custom value isn't used. The log groups will use this value for their retention, and if this value is not set either, the retention will default to 30 days. For example, if a user would like their log_groups of the Cumulus module to have a retention period of one year, deploy the respective modules including:
+
+### Example
+
+```tf
+default_log_retention_periods = 365
+```
+
+The retention period (in days) of cloudwatch log groups for specific lambdas and tasks can be set
+during deployment using the `cloudwatch_log_retention_periods` terraform map variable. In order to
+configure these values for respective cloudwatch log groups, uncomment the `cloudwatch_log_retention_periods` variable and add the retention values listed below corresponding to the group's retention you want to change. The following values are supported correlating to their lambda/task name, (i.e. "/aws/lambda/prefix-DiscoverPdrs" would have the retention variable "DiscoverPdrs" )
 
 - EgressLambda
 - AsyncOperationEcsLogs
@@ -60,20 +79,6 @@ with the new retention value. The following values are supported correlating to 
 - PrivateApiLambda
 - ApiEndpoints
 - <local.fullname>-EcsLogs
-
-The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups in case a custom value isn't used. The log groups will use this value for their retention value, and if this value is not set either, the retention will default to 30 days.
-For example, if a user would like their log_groups of one module to have a retention period of one year,
-deploy the respective modules including:
-
-### Example
-
-```tf
-default_log_retention_periods = 365
-```
-
-The retention period (in days) of cloudwatch log groups for specific lambdas and tasks can be set
-during deployment using the `cloudwatch_log_retention_periods` terraform map variable. In order to
-configure these values for respective cloudwatch log groups, uncomment the `cloudwatch_log_retention_periods` variable and add the retention values listed above corresponding to the group's retention you want to change.
 
 ### Example
 

@@ -122,7 +122,9 @@ variable "vpc_id" {
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {}
+  default = {
+    DistributionApiEndpoints = 14
+  }
 }
 
 variable "default_log_retention_days" {

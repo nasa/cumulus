@@ -41,7 +41,6 @@ resource "aws_cloudwatch_log_group" "api" {
 }
 
 resource "aws_lambda_function" "api" {
-  depends_on       = [aws_cloudwatch_log_group.api]
   function_name    = "${var.prefix}-DistributionApiEndpoints"
   filename         = "${path.module}/../../packages/api/dist/distribution/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/distribution/lambda.zip")
