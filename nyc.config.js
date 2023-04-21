@@ -8,4 +8,9 @@ module.exports = {
   silent: process.env.NYC_SILENT === 'true',
   'cache-dir': path.join(__dirname, 'node_modules', '.cache', 'nyc'),
   'temp-dir': path.join(__dirname, '.nyc_output'),
+  // 'check-coverage': true,
+  lines: 75,
+  functions: 69,
+  branches: 70,
+  statements: 75
 };
