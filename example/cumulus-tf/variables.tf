@@ -434,24 +434,24 @@ variable "cloudwatch_log_retention_periods" {
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
   default = {
     thin-egress-app-EgressLambda = 7
+    ApiEndpoints = 7
     AsyncOperationEcsLogs = 7
-    granuleFilesUpdaterCache = 7
-    publishExecutions = 7
-    publishGranules = 7
-    publishPdrs = 7
-    replaySqsMessages = 7
     DiscoverPdrs = 7
+    DistributionApiEndpoints = 7
+    EcsLogs = 7
+    granuleFilesCacheUpdater = 7
     HyraxMetadataUpdates = 7
     ParsePdr = 7
     PostToCmr = 7
+    PrivateApiLambda = 7
+    publishExecutions = 7
+    publishGranules = 7
+    publishPdrs = 7
     QueuePdrs = 7
     QueueWorkflow = 7
+    replaySqsMessages = 7
     SyncGranule = 7
     UpdateCmrAccessConstraints = 7
-    DistributionApiEndpoints = 7
-    PrivateApiLambda = 7
-    ApiEndpoints = 7
-    EcsLogs = 7
   }
 }
 
