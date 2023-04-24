@@ -38,7 +38,7 @@ Changing the log retention policy in the AWS Management Console is a fairly simp
 Cumulus modules create cloudwatch log groups and manage log retention for a subset of lambdas and tasks. These log groups have a default log retention time, but, there are two optional variables which can be set to change the default retention period for all or specific Cumulus managed cloudwatch log groups through deployment. For cloudwatch log groups which are not managed by Cumulus modules, the retention period is indefinite or `Never Expire` by AWS, cloudwatch log configurations for all Cumulus lambdas and tasks will be added in a future release.
 
 There are optional variables that can be set during deployment of cumulus modules to configure
-the retention period (in days) of cloudwatch log groups for lambdas and tasks which the Cumulus, Cumulus Distribution, Cumulus ECS Service, Ingest, Archive, and Distribution modules supports:
+the retention period (in days) of cloudwatch log groups for lambdas and tasks which the `cumulus`, `cumulus_distribution`, and `cumulus_ecs_service` modules supports (using the `cumulus` module as an example):
 
 ```tf
 module "cumulus" {
@@ -80,7 +80,7 @@ configure these values for respective cloudwatch log groups, uncomment the `clou
 - DistributionApiEndpoints
 - PrivateApiLambda
 - ApiEndpoints
-- <local.fullname>-EcsLogs
+- EcsLogs
 
 ### Example
 
