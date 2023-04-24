@@ -88,4 +88,5 @@ cloudwatch_log_retention_periods = {
   ParsePdrs = 365
 }
 ```
+
 The retention periods are the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).

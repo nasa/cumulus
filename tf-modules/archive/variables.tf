@@ -376,9 +376,7 @@ variable "es_index_shards" {
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {
-    AsyncOperationEcsLogs = 30
-  }
+  default = {}
 }
 
 variable "default_log_retention_days" {
