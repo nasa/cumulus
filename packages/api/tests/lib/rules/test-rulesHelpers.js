@@ -23,7 +23,6 @@ const {
   checkForSnsSubscriptions,
   createRuleTrigger,
   deleteRuleResources,
-  deleteOldEventSourceMappings,
 } = require('../../../lib/rulesHelpers');
 const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
@@ -841,7 +840,7 @@ test.serial('deleteRuleResources does not delete event source mappings if they e
   });
 });
 
-test.serial('deleteOldEventSourceMappings() removes SNS source mappings and permissions', async (t) => {
+test.serial('deleteRuleResources() removes SNS source mappings and permissions', async (t) => {
   const {
     rulePgModel,
     testKnex,
@@ -874,7 +873,7 @@ test.serial('deleteOldEventSourceMappings() removes SNS source mappings and perm
   const { Statement } = JSON.parse(Policy);
   t.true(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(ruleWithTrigger)));
 
-  await deleteOldEventSourceMappings(testKnex, ruleWithTrigger);
+  await deleteRuleResources(testKnex, ruleWithTrigger);
 
   const { subExists: subExists2 } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.false(subExists2);
@@ -888,7 +887,7 @@ test.serial('deleteOldEventSourceMappings() removes SNS source mappings and perm
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
 
-test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', async (t) => {
+test.serial('deleteRuleResources() removes kinesis source mappings', async (t) => {
   const {
     rulePgModel,
     testKnex,
@@ -925,7 +924,7 @@ test.serial('deleteOldEventSourceMappings() removes kinesis source mappings', as
   t.is(consumerEventMappingsBefore.EventSourceMappings.length, 1);
   t.is(logEventMappingsBefore.EventSourceMappings.length, 1);
 
-  await deleteOldEventSourceMappings(testKnex, ruleWithTrigger);
+  await deleteRuleResources(testKnex, ruleWithTrigger);
 
   const [
     consumerEventMappingsAfter,

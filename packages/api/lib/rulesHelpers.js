@@ -302,7 +302,7 @@ async function deleteRuleResources(knex, rule) {
     break;
   }
   case 'sns': {
-    if (rule.state === 'ENABLED') {
+    if (rule.rule.arn) {
       await deleteSnsTrigger(knex, rule);
     }
     break;
@@ -698,37 +698,12 @@ async function createRuleTrigger(ruleItem) {
   return newRuleItem;
 }
 
-/**
- * Removes SNS triggers or Kineses events from a rule
- *
- * @param {knex} knex - Knex DB Client
- * @param {RuleRecord} apiRule - API-formatted Rule object
- *
- * @returns {Promise} - Returns response from deletion function
- */
-async function deleteOldEventSourceMappings(knex, apiRule) {
-  switch (apiRule.rule.type) {
-  case 'kinesis':
-    await deleteKinesisEventSources(knex, apiRule);
-    break;
-  case 'sns': {
-    if (apiRule.rule.arn) {
-      await deleteSnsTrigger(knex, apiRule);
-    }
-    break;
-  }
-  default:
-    break;
-  }
-}
-
 module.exports = {
   buildPayload,
   checkForSnsSubscriptions,
   createRuleTrigger,
   deleteKinesisEventSource,
   deleteKinesisEventSources,
-  deleteOldEventSourceMappings,
   deleteRuleResources,
   deleteSnsTrigger,
   fetchAllRules,

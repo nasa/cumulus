@@ -168,9 +168,9 @@ async function put(req, res) {
       translatedRule = await translatePostgresRuleToApiRule(pgRule, knex);
       await indexRule(esClient, translatedRule, process.env.ES_INDEX);
     });
-
-    await deleteOldEventSourceMappings(knex, oldApiRule);
-
+    if (['kinesis', 'sns'].includes(oldApiRule.rule.type)) {
+      await deleteRuleResources(knex, oldApiRule);
+    }
     return res.send(translatedRule);
   } catch (error) {
     log.error('Unexpected error when updating rule:', error);
