@@ -62,7 +62,6 @@ The retention period (in days) of cloudwatch log groups for specific lambdas and
 during deployment using the `cloudwatch_log_retention_periods` terraform map variable. In order to
 configure these values for respective cloudwatch log groups, uncomment the `cloudwatch_log_retention_periods` variable and add the retention values listed below corresponding to the group's retention you want to change. The following values are supported correlating to their lambda/task name, (i.e. "/aws/lambda/prefix-DiscoverPdrs" would have the retention variable "DiscoverPdrs" )
 
-- EgressLambda
 - AsyncOperationEcsLogs
 - granuleFilesUpdaterCache
 - publishExecutions
