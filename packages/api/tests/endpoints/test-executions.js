@@ -69,7 +69,6 @@ const fakeExecutions = [];
 let jwtAuthToken;
 let accessTokenModel;
 process.env.AccessTokensTable = randomId('token');
-process.env.AsyncOperationsTable = randomId('asyncOperation');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');

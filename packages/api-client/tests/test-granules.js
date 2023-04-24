@@ -212,6 +212,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
       path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({
         action: 'reingest',
@@ -241,8 +242,11 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
       path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
-      body: JSON.stringify({ action: 'removeFromCmr' }),
+      body: JSON.stringify({
+        action: 'removeFromCmr',
+      }),
     },
   };
 
@@ -267,6 +271,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
@@ -318,6 +323,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
@@ -437,6 +443,36 @@ test('createGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
+test('replaceGranule calls the callback with the expected object', async (t) => {
+  const body = {
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
+    any: 'object',
+    status: t.context.status,
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: [200, 201],
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.replaceGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    body,
+  }));
+});
+
 test('updateGranule calls the callback with the expected object', async (t) => {
   const body = {
     granuleId: t.context.granuleId,
@@ -449,7 +485,7 @@ test('updateGranule calls the callback with the expected object', async (t) => {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
       path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
     expectedStatusCodes: [200, 201],

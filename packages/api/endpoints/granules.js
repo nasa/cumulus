@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const { z } = require('zod');
@@ -41,7 +43,10 @@ const {
   updateGranuleStatusToQueued,
   writeGranuleRecordAndPublishSns,
 } = require('../lib/writeRecords/write-granules');
-const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
+const {
+  asyncOperationEndpointErrorHandler,
+  requireApiVersion,
+} = require('../app/middleware');
 const { errorify } = require('../lib/utils');
 const { moveGranule, getFilesExistingAtLocation } = require('../lib/granules');
 const { reingestGranule, applyWorkflow } = require('../lib/ingest');
@@ -55,6 +60,8 @@ const {
   getFunctionNameFromRequestContext,
 } = require('../lib/request');
 
+const schemas = require('../lib/schemas.js');
+
 /**
  * @typedef {import('express').Request} Request
  * @typedef {import('express').Response} Response
@@ -66,7 +73,7 @@ const log = new Logger({ sender: '@cumulus/api/granules' });
 /**
  * 200/201 helper method for .put update/create messages
  * @param {boolean} isNewRecord - Boolean variable representing if the granule is a new record
- * @param {boolean} granule   - API Granule being written
+ * @param {Object} granule   - API Granule being written
  * @param {Object} res        - express response object
  * @returns {Promise<Object>} Promise resolving to an express response object
  */
@@ -117,7 +124,7 @@ async function list(req, res) {
  *
  * @param {Object} incomingApiGranule - granule record to set defaults for
  * @param {boolean} isNewRecord - boolean to set
- * @returns {Promise<Object>} Promise resolving to returned/updated granule
+ * @returns {Object} updated granule
  */
 const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
   if (isNewRecord === false) return incomingApiGranule;
@@ -199,6 +206,150 @@ const create = async (req, res) => {
     message: `Successfully wrote granule with Granule Id: ${granule.granuleId}, Collection Id: ${granule.collectionId}`,
   });
 };
+
+/**
+ * Update existing granule *or* create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+const patchGranule = async (req, res) => {
+  const {
+    granulePgModel = new GranulePgModel(),
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+    updateGranuleFromApiMethod = updateGranuleFromApi,
+  } = req.testContext || {};
+  let apiGranule = req.body || {};
+  let pgCollection;
+
+  if (!apiGranule.collectionId) {
+    res.boom.badRequest('Granule update must include a valid CollectionId');
+  }
+
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(apiGranule.collectionId)
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      log.error(
+        `granule collectionId ${apiGranule.collectionId} does not exist, cannot update granule`
+      );
+      res.boom.badRequest(
+        `granule collectionId ${apiGranule.collectionId} invalid`
+      );
+    } else {
+      throw error;
+    }
+  }
+
+  // TODO: CUMULUS-3017 - Remove this unique collectionId condition
+  // Check if granuleId exists across another collection
+  const granulesByGranuleId = await getGranulesByGranuleId(
+    knex,
+    apiGranule.granuleId
+  );
+  const granuleExistsAcrossCollection = granulesByGranuleId.some(
+    (g) => g.collection_cumulus_id !== pgCollection.cumulus_id
+  );
+  if (granuleExistsAcrossCollection) {
+    log.error(
+      'Could not update or write granule, collectionId is not modifiable.'
+    );
+    return res.boom.conflict(
+      `Modifying collectionId for a granule is not allowed. Write for granuleId: ${apiGranule.granuleId} failed.`
+    );
+  }
+
+  let isNewRecord = false;
+  try {
+    await granulePgModel.get(knex, {
+      granule_id: apiGranule.granuleId,
+      collection_cumulus_id: pgCollection.cumulus_id,
+    }); // TODO this should do a select count, not a full record get
+  } catch (error) {
+    // Set status to `201 - Created` if record did not originally exist
+    if (error instanceof RecordDoesNotExist) {
+      isNewRecord = true;
+    } else {
+      return res.boom.badRequest(errorify(error));
+    }
+  }
+
+  try {
+    if (isNewRecord) {
+      apiGranule = _setNewGranuleDefaults(apiGranule, isNewRecord);
+    }
+    await updateGranuleFromApiMethod(apiGranule, knex, esClient);
+  } catch (error) {
+    log.error('failed to update granule', error);
+    return res.boom.badRequest(errorify(error));
+  }
+  return _returnPatchGranuleStatus(isNewRecord, apiGranule, res);
+};
+
+/**
+ * Helper to check granule and collection IDs in queryparams
+ * against the payload body.
+ *
+ * @param {Object} body - update body payload
+ * @param {Object} req - express request object
+ * @returns {boolean} true if the body matches the query params
+ */
+function _granulePayloadMatchesQueryParams(body, req) {
+  if (
+    body.granuleId === req.params.granuleId
+    && body.collectionId === req.params.collectionId
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Replace a single granule
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object
+ */
+async function put(req, res) {
+  let body = req.body;
+  if (!body.collectionId) {
+    body.collectionId = req.params.collectionId;
+  }
+  if (!body.granuleId) {
+    body.granuleId = req.params.granuleId;
+  }
+  if (!_granulePayloadMatchesQueryParams(body, req)) {
+    return res.boom.badRequest(`inputs :granuleId and :collectionId (${req.params.granuleId} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`);
+  }
+  // Nullify fields not passed in - we want to remove anything not specified by the user
+  const nullifiedGranuleTemplate = Object.keys(
+    schemas.granule.properties
+  ).reduce((acc, cur) => {
+    acc[cur] = null;
+    return acc;
+  }, {});
+  delete nullifiedGranuleTemplate.execution; // Execution cannot be deleted
+  body = {
+    ...nullifiedGranuleTemplate,
+    ...body,
+  };
+
+  if (body.execution === null) {
+    throw new Error(
+      'Execution cannot be deleted via the granule interface, only added'
+    );
+  }
+  req.body = body;
+  //Then patch new granule with nulls applied
+  return await patchGranule(req, res);
+}
 
 const _handleUpdateAction = async (
   req,
@@ -336,95 +487,6 @@ const _handleUpdateAction = async (
 };
 
 /**
- * Update existing granule
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} promise of an express response object.
- */
-const patchGranule = async (req, res) => {
-  const {
-    granulePgModel = new GranulePgModel(),
-    collectionPgModel = new CollectionPgModel(),
-    knex = await getKnexClient(),
-    esClient = await Search.es(),
-    updateGranuleFromApiMethod = updateGranuleFromApi,
-  } = req.testContext || {};
-  let apiGranule = req.body || {};
-  let pgCollection;
-
-  if (!apiGranule.collectionId) {
-    res.boom.badRequest('Granule update must include a valid CollectionId');
-  }
-
-  try {
-    pgCollection = await collectionPgModel.get(
-      knex,
-      deconstructCollectionId(apiGranule.collectionId)
-    );
-  } catch (error) {
-    if (error instanceof RecordDoesNotExist) {
-      log.error(
-        `granule collectionId ${apiGranule.collectionId} does not exist, cannot update granule`
-      );
-      res.boom.badRequest(
-        `granule collectionId ${apiGranule.collectionId} invalid`
-      );
-    } else {
-      throw error;
-    }
-  }
-
-  // TODO: CUMULUS-3017 - Remove this unique collectionId condition
-  // Check if granuleId exists across another collection
-  const granulesByGranuleId = await getGranulesByGranuleId(
-    knex,
-    apiGranule.granuleId
-  );
-  const granuleExistsAcrossCollection = granulesByGranuleId.some(
-    (g) => g.collection_cumulus_id !== pgCollection.cumulus_id
-  );
-  if (granuleExistsAcrossCollection) {
-    log.error(
-      'Could not update or write granule, collectionId is not modifiable.'
-    );
-    return res.boom.conflict(
-      `Modifying collectionId for a granule is not allowed. Write for granuleId: ${apiGranule.granuleId} failed.`
-    );
-  }
-
-  let isNewRecord = false;
-  try {
-    await granulePgModel.get(knex, {
-      granule_id: apiGranule.granuleId,
-      collection_cumulus_id: pgCollection.cumulus_id,
-    }); // TODO this should do a select count, not a full record get
-  } catch (error) {
-    // Set status to `201 - Created` if record did not originally exist
-    if (error instanceof RecordDoesNotExist) {
-      isNewRecord = true;
-    } else {
-      return res.boom.badRequest(errorify(error));
-    }
-  }
-
-  try {
-    if (isNewRecord) {
-      apiGranule = _setNewGranuleDefaults(apiGranule, isNewRecord);
-    }
-    await updateGranuleFromApiMethod(apiGranule, knex, esClient);
-  } catch (error) {
-    log.error('failed to update granule', error);
-    return res.boom.badRequest(errorify(error));
-  }
-  return _returnPatchGranuleStatus(isNewRecord, apiGranule, res);
-};
-
-function put(req, res) {
-  return res.boom.badRequest('put method not implemented');
-}
-
-/**
  * Update a single granule by granuleId only.
  * Supported Actions: reingest, move, applyWorkflow, RemoveFromCMR.
  * If no action is included on the request, the body is assumed to be an
@@ -444,17 +506,17 @@ async function patchByGranuleId(req, res) {
   const action = body.action;
 
   if (!action) {
-    if (req.body.granuleId === req.params.granuleName) {
+    if (req.body.granuleId === req.params.granuleId) {
       return patchGranule(req, res);
     }
     return res.boom.badRequest(
-      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+      `input :granuleId (${req.params.granuleId}) must match body's granuleId (${req.body.granuleId})`
     );
   }
 
   const pgGranule = await getUniqueGranuleByGranuleId(
     knex,
-    req.params.granuleName,
+    req.params.granuleId,
     granulePgModel
   );
 
@@ -464,25 +526,6 @@ async function patchByGranuleId(req, res) {
   });
 
   return await _handleUpdateAction(req, res, pgGranule, pgCollection);
-}
-
-/**
- * Helper to check granule and collection IDs in queryparams
- * against the payload body.
- *
- * @param {Object} body - update body payload
- * @param {Object} req - express request object
- * @returns {boolean} true if the body matches the query params
- */
-function _granulePayloadMatchesQueryParams(body, req) {
-  if (
-    body.granuleId === req.params.granuleName
-    && body.collectionId === req.params.collectionId
-  ) {
-    return true;
-  }
-
-  return false;
 }
 
 /**
@@ -510,7 +553,7 @@ async function patch(req, res) {
       return patchGranule(req, res);
     }
     return res.boom.badRequest(
-      `inputs :granuleName and :collectionId (${req.params.granuleName} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
+      `inputs :granuleId and :collectionId (${req.params.granuleId} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
     );
   }
 
@@ -519,7 +562,7 @@ async function patch(req, res) {
       knex,
       collectionPgModel,
       granulePgModel,
-      req.params.granuleName,
+      req.params.granuleId,
       req.params.collectionId
     );
 
@@ -538,7 +581,7 @@ async function patch(req, res) {
  * @returns {Promise<Object>} promise of an express response object
  */
 const associateExecution = async (req, res) => {
-  const granuleName = req.params.granuleName;
+  const granuleName = req.params.granuleId;
 
   const { collectionId, granuleId, executionArn } = req.body || {};
   if (!granuleId || !collectionId || !executionArn) {
@@ -650,7 +693,7 @@ async function delByGranuleId(req, res) {
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
   log.info(`granules.del ${granuleId}`);
 
   let pgGranule;
@@ -708,7 +751,7 @@ async function del(req, res) {
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
   const collectionId = req.params.collectionId;
 
   log.info(
@@ -779,7 +822,7 @@ async function get(req, res) {
     granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
   const collectionId = req.params.collectionId;
 
   let granule;
@@ -834,7 +877,7 @@ async function get(req, res) {
 async function getByGranuleId(req, res) {
   const { knex = await getKnexClient() } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
 
   let granule;
 
@@ -1032,15 +1075,14 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.get('/:granuleName', getByGranuleId);
-router.get('/:collectionId/:granuleName', get);
+router.get('/:granuleId', getByGranuleId);
+router.get('/:collectionId/:granuleId', get);
 router.get('/', list);
-router.post('/:granuleName/executions', associateExecution);
+router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
-router.put('/:granuleName', patchByGranuleId); // Until PUT is implemented, use PATCH handler
-router.put('/:collectionId/:granuleName', patch); // Until PUT is implemented, use PATCH handler
-router.patch('/:granuleName', patchByGranuleId);
-router.patch('/:collectionId/:granuleName', patch);
+router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
+router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
+router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
 router.post(
   '/bulk',
@@ -1060,8 +1102,8 @@ router.post(
   bulkReingest,
   asyncOperationEndpointErrorHandler
 );
-router.delete('/:granuleName', delByGranuleId);
-router.delete('/:collectionId/:granuleName', del);
+router.delete('/:granuleId', delByGranuleId);
+router.delete('/:collectionId/:granuleId', del);
 
 module.exports = {
   bulkDelete,
