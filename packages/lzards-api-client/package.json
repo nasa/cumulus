@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/lzards-api-client",
-  "version": "15.0.0",
+  "version": "15.0.1",
   "description": "A Node.js client to NASA's Level Zero and Repositories Data Store (LZARDS) API.",
   "engines": {
     "node": ">=16.19.0"
@@ -33,11 +33,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/common": "15.0.0",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/launchpad-auth": "15.0.0",
-    "@cumulus/logger": "15.0.0",
+    "@cumulus/aws-client": "15.0.1",
+    "@cumulus/common": "15.0.1",
+    "@cumulus/errors": "15.0.1",
+    "@cumulus/launchpad-auth": "15.0.1",
+    "@cumulus/logger": "15.0.1",
     "got": "^11.8.5",
     "lodash": "^4.17.21"
   }
