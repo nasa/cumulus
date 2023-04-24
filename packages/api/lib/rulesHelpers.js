@@ -56,10 +56,6 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
   return rules;
 }
 
-async function fetchAllRules() {
-  return await fetchRules({});
-}
-
 async function fetchEnabledRules() {
   return await fetchRules({ queryParams: { state: 'ENABLED' } });
 }
