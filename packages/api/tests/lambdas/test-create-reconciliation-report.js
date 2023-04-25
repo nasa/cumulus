@@ -2251,16 +2251,9 @@ test.serial('When there is an error when generating the Granule Inventory report
     t.context.stackName
   );
 
-  const knexStub = sinon.stub(knex, 'select').callsFake(
-    // eslint-disable-next-line arrow-body-style
-    () => {
-      return {
-        select: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
-      };
-    }
-  );
+  const queryBuilderStub = sinon.stub(QuerySearchClient.prototype, 'fetchRecords').throws(new Error('Connection terminated unexpectedly', 'PROTOCOL_CONNECTION_LOST'));
 
-  t.teardown(() => knexStub.restore());
+  t.teardown(() => queryBuilderStub.restore());
 
   const reportName = randomId('reportName');
   const event = {
@@ -2270,15 +2263,15 @@ test.serial('When there is an error when generating the Granule Inventory report
     reportName,
     startTimestamp: moment.utc().subtract(1, 'hour').format(),
     endTimestamp: moment.utc().add(1, 'hour').format(),
-    knex: knexStub,
+    knex,
   };
 
   await t.throwsAsync(
     handler(event),
     { message: 'Connection terminated unexpectedly' }
   );
-  t.is(knexStub.callCount, 4);
-  sinon.assert.callCount(knexStub, 4);
+  t.is(queryBuilderStub.callCount, 4);
+  sinon.assert.callCount(queryBuilderStub, 4);
 });
 
 test.serial('When there is an error generating an internal report, it retries', async (t) => {
