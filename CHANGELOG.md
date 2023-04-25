@@ -6,8 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+
 - **CUMULUS-3243**
  - Updated granule delete logic to delete granule which is not in DynamoDB
+ - Updated granule unpublish logic to handle granule which is not in DynamoDB and/or CMR
 
 ## [v15.0.1] 2023-04-20
 

@@ -604,3 +604,59 @@ test.serial('deleteGranuleAndFiles() does not require a PostgreSQL granule', asy
     s3Buckets.public.name,
   ]));
 });
+
+test.serial('deleteGranuleAndFiles() does not require a DynamoDB granule', async (t) => {
+  const {
+    newPgGranule,
+    files,
+    s3Buckets,
+  } = await createGranuleAndFiles({
+    dbClient: t.context.knex,
+    collectionId: t.context.collectionId,
+    collectionCumulusId: t.context.collectionCumulusId,
+    granuleParams: { published: false },
+    esClient: t.context.esClient,
+  });
+
+  await granuleModel.delete({ granuleId: newPgGranule.granule_id });
+
+  const details = await deleteGranuleAndFiles({
+    knex: t.context.knex,
+    pgGranule: newPgGranule,
+    esClient: t.context.esClient,
+  });
+
+  t.truthy(details.deletionTime);
+  t.like(details, {
+    collection: t.context.collectionId,
+    deletedGranuleId: newPgGranule.granule_id,
+  });
+  t.is(details.deletedFiles.length, files.length);
+
+  t.false(await granulePgModel.exists(
+    t.context.knex,
+    {
+      granule_id: newPgGranule.granule_id,
+      collection_cumulus_id: newPgGranule.collection_cumulus_id,
+    }
+  ));
+  t.false(
+    await t.context.esGranulesClient.exists(
+      newPgGranule.granule_id,
+      t.context.collectionId
+    )
+  );
+
+  // Verify files were deleted from S3 and Postgres
+  await Promise.all(
+    files.map(async (file) => {
+      t.false(await s3ObjectExists({ Bucket: file.bucket, Key: file.key }));
+      t.false(await filePgModel.exists(t.context.knex, { bucket: file.bucket, key: file.key }));
+    })
+  );
+
+  t.teardown(() => deleteS3Buckets([
+    s3Buckets.protected.name,
+    s3Buckets.public.name,
+  ]));
+});
