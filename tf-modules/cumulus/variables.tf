@@ -608,5 +608,5 @@ variable "cloudwatch_log_retention_periods" {
 variable "default_log_retention_days" {
   type = number
   description = "default value that user chooses for their log retention periods"
-  default = 30
+  default = 14
 }
