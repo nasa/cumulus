@@ -50,14 +50,24 @@ module "cumulus" {
 
 By setting the below variables in `terraform.tfvars` and deploying, the cloudwatch log groups will be instantiated or updated with the new retention value.
 
-The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups managed by Cumulus in case a custom value isn't used. The log groups will use this value for their retention, and if this value is not set either, the retention will default to 30 days. For example, if a user would like their log_groups of the Cumulus module to have a retention period of one year, deploy the respective modules including:
-
 ### default_log_retention_periods
 
 #### Example
 
 ```tf
 default_log_retention_periods = 365
+```
+
+The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups managed by Cumulus in case a custom value isn't used. The log groups will use this value for their retention, and if this value is not set either, the retention will default to 30 days. For example, if a user would like their log groups of the Cumulus module to have a retention period of one year, deploy the respective modules with the variable in the example above.
+
+### cloudwatch_log_retention_periods
+
+#### Example
+
+```tf
+cloudwatch_log_retention_periods = {
+  ParsePdrs = 365
+}
 ```
 
 The retention period (in days) of cloudwatch log groups for specific lambdas and tasks can be set
@@ -82,15 +92,5 @@ configure these values for respective cloudwatch log groups, uncomment the `clou
 - replaySqsMessages
 - SyncGranule
 - UpdateCmrAccessConstraints
-
-### cloudwatch_log_retention_periods
-
-#### Example
-
-```tf
-cloudwatch_log_retention_periods = {
-  ParsePdrs = 365
-}
-```
 
 The retention periods are the number of days you'd like to retain the logs in the specified log group for. There is a list of possible values available in the [aws logs documentation](https://docs.aws.amazon.com/cli/latest/reference/logs/put-retention-policy.html).
