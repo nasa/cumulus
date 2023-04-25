@@ -10,7 +10,8 @@ data "aws_ecr_repository" "cumulus_test_ingest_process" {
 
 module "python_test_ingest_processing_service" {
   source = "../../tf-modules/cumulus_ecs_service"
-
+  default_log_retention_days                     = var.default_log_retention_days
+  cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
   prefix = var.prefix
   name   = "PythonTestIngestProcess"
   tags   = local.tags
@@ -40,8 +41,6 @@ module "python_test_python_processing_workflow" {
   workflow_config = module.cumulus.workflow_config
   system_bucket   = var.system_bucket
   tags            = local.tags
-  default_log_retention_days                     = var.default_log_retention_days
-  cloudwatch_log_retention_periods               = var.cloudwatch_log_retention_periods
 
   state_machine_definition = templatefile(
     "${path.module}/python_processing_workflow.asl.json",
