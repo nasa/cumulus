@@ -177,9 +177,7 @@ variable "vpc_id" {
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "Optional retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {
-    EgressLambda = 14
-  }
+  default = {}
 }
 
 variable "default_log_retention_days" {

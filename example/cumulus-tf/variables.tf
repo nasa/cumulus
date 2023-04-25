@@ -446,7 +446,6 @@ variable "cloudwatch_log_retention_periods" {
     PrivateApiLambda = 7
     publishExecutions = 7
     publishGranules = 7
-    publishPdrs = 7
     QueuePdrs = 7
     QueueWorkflow = 7
     replaySqsMessages = 7
