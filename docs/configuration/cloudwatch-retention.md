@@ -85,6 +85,12 @@ configure these values for respective cloudwatch log groups, uncomment the `clou
 - SyncGranule
 - UpdateCmrAccessConstraints
 
+:::note
+
+`EcsLogs` is used for all cumulus_ecs_service tasks cloudwatch log groups
+
+:::
+
 #### Example
 
 ```tf

@@ -16,7 +16,7 @@ data "aws_region" "current" {}
 
 resource "aws_cloudwatch_log_group" "default" {
   name              = "${local.full_name}EcsLogs"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "${local.full_name}EcsLogs", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "EcsLogs", var.default_log_retention_days)
   tags              = var.tags
 }
 
