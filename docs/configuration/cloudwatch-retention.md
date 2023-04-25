@@ -52,7 +52,7 @@ By setting the below variables in `terraform.tfvars` and deploying, the cloudwat
 
 ### default_log_retention_periods
 
-The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups managed by Cumulus in case a custom value isn't used. The log groups will use this value for their retention, and if this value is not set either, the retention will default to 14 days. For example, if a user would like their log groups of the Cumulus module to have a retention period of one year, deploy the respective modules with the variable in the example below.
+The variable `default_log_retention_days` can be configured in order to set the default log retention for all cloudwatch log groups managed by Cumulus in case a custom value isn't used. The log groups will use this value for their retention, and if this value is not set either, the retention will default to 30 days. For example, if a user would like their log groups of the Cumulus module to have a retention period of one year, deploy the respective modules with the variable in the example below.
 
 #### Example
 
