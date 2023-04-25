@@ -36,7 +36,7 @@ resource "aws_secretsmanager_secret_version" "api_oauth_client_password" {
 
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cumulus_distribution_api_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "DistributionApiEndpoints", var.default_log_retention_days)
   tags              = var.tags
 }
 
