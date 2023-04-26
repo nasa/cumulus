@@ -32,6 +32,7 @@ resource "aws_ecs_task_definition" "default" {
       mountPoints       = [for k, v in var.volumes : { sourceVolume = v.name, containerPath = v.container_path }]
       privileged        = var.privileged
       environment       = [for k, v in var.environment : { name = k, value = v }]
+      healthCheck       = var.health_check
       image             = var.image
       memoryReservation = var.memory_reservation
       command           = var.command
