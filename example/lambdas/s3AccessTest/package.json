@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/test-s3-access",
-  "version": "15.0.1",
+  "version": "15.0.2",
   "description": "S3 Access Test Lambda",
   "main": "index.js",
   "private": true,
