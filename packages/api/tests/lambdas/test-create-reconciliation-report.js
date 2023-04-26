@@ -2189,7 +2189,6 @@ test.serial('When there is a connection termination error for an inventory repor
     { message: 'Connection terminated unexpectedly' }
   );
   t.is(queryBuilderStub.callCount, 4);
-  sinon.assert.callCount(queryBuilderStub, 4);
 
   const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
@@ -2271,7 +2270,6 @@ test.serial('When there is an error when generating the Granule Inventory report
     { message: 'Connection terminated unexpectedly' }
   );
   t.is(queryBuilderStub.callCount, 4);
-  sinon.assert.callCount(queryBuilderStub, 4);
 });
 
 test.serial('When there is an error generating an internal report, it retries', async (t) => {
@@ -2322,7 +2320,6 @@ test.serial('When there is an error generating an internal report, it retries', 
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
 
   t.is(knexStub.callCount, 4);
-  sinon.assert.callCount(knexStub, 4);
   t.is(report.status, 'Failed');
   t.is(report.reportType, 'Internal');
 });

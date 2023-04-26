@@ -259,3 +259,21 @@ test('QuerySearchClient pages through multiple sets of results', async (t) => {
   t.is(queryLimitSpy.getCall(2).args[0], 1);
   t.is(queryLimitSpy.getCall(3).args[0], 1);
 });
+
+test.serial.only('QuerySearchClient.peek() retries if fetchRecords fails with connection terminated error', async (t) => {
+  const queryBuilderStub = {
+    offset: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
+  };
+  t.teardown(() => sinon.restore());
+
+  const fileSearchClient = new QuerySearchClient(
+    queryBuilderStub,
+    1
+  );
+
+  await t.throwsAsync(
+    fileSearchClient.peek(),
+    { message: 'Connection terminated unexpectedly' }
+  );
+  t.is(queryBuilderStub.offset.callCount, 4);
+});

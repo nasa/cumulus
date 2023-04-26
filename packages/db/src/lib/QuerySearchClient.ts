@@ -32,12 +32,31 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    * @throws
    */
   private async fetchRecords() {
-    this.records = await (
-      this.query
-        .offset(this.offset)
-        .limit(this.limit)
+    return await pRetry(
+      async () => {
+        try {
+          this.records = await (
+            this.query
+              .offset(this.offset)
+              .limit(this.limit)
+          );
+          this.offset += this.limit;
+        } catch (error) {
+          if (error.message.includes('Connection terminated unexpectedly')) {
+            log.error(`Error caught in QuerySearchClient.fetchRecords(). ${error}. Retrying...`);
+            throw error;
+          }
+          log.error(`Error caught in QuerySearchClient.fetchRecords(). ${error}`);
+          throw new pRetry.AbortError(error);
+        }
+      },
+      {
+        retries: 3,
+        onFailedAttempt: (e) => {
+          log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
+        },
+      }
     );
-    this.offset += this.limit;
   }
 
   /**
@@ -48,27 +67,8 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    * @returns {Promise<RecordType>} - record from PostgreSQL table
    */
   async peek() {
-    return await pRetry(
-      async () => {
-        try {
-          if (this.records.length === 0) await this.fetchRecords();
-          return this.records[0];
-        } catch (error) {
-          if (error.message.includes('Connection terminated unexpectedly')) {
-            log.error(`Error caught in QuerySearchClient.peek(). ${error}. Retrying...`);
-            throw error;
-          }
-          log.error(`Error caught in QuerySearchClient.peek(). ${error}`);
-          throw new pRetry.AbortError(error);
-        }
-      },
-      {
-        retries: 3,
-        onFailedAttempt: (e) => {
-          log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
-        },
-      }
-    );
+    if (this.records.length === 0) await this.fetchRecords();
+    return this.records[0];
   }
 
   /**
@@ -77,27 +77,8 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    * @returns {Promise<RecordType>} - record from PostgreSQL table
    */
   async shift() {
-    return await pRetry(
-      async () => {
-        try {
-          if (this.records.length === 0) await this.fetchRecords();
-          return this.records.shift();
-        } catch (error) {
-          if (error.message.includes('Connection terminated unexpectedly')) {
-            log.error(`Error caught in QuerySearchClient.shift(). ${error}. Retrying...`);
-            throw error;
-          }
-          log.error(`Error caught in QuerySearchClient.shift(). ${error}`);
-          throw new pRetry.AbortError(error);
-        }
-      },
-      {
-        retries: 3,
-        onFailedAttempt: (e) => {
-          log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
-        },
-      }
-    );
+    if (this.records.length === 0) await this.fetchRecords();
+    return this.records.shift();
   }
 }
 
