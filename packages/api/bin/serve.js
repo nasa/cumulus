@@ -41,23 +41,6 @@ const {
 
 const workflowList = testUtils.getWorkflowList();
 
-async function createTable(Model, tableName) {
-  try {
-    const model = new Model({
-      tableName,
-      stackName: process.env.stackName,
-      systemBucket: process.env.system_bucket,
-    });
-    await model.createTable();
-  } catch (error) {
-    if (error && error.message && error.message === 'Cannot create preexisting table') {
-      console.log(`${tableName} is already created`);
-    } else {
-      throw error;
-    }
-  }
-}
-
 async function populateBucket(bucket, stackName) {
   // upload workflow files
   const workflowPromises = workflowList.map((obj) => promiseS3Upload({
@@ -110,24 +93,6 @@ async function setTableEnvVariables(stackName) {
     tableModels,
     TableNames,
   };
-}
-
-// check if the tables and Elasticsearch indices exist
-// if not create them
-async function checkOrCreateTables(stackName) {
-  const tables = await setTableEnvVariables(stackName);
-  const limit = pLimit(1);
-
-  let i = -1;
-  const promises = tables.tableModels.map((t) => limit(() => {
-    i += 1;
-    console.log(tables.TableNames[i]);
-    return createTable(
-      models[t],
-      tables.TableNames[i]
-    );
-  }));
-  await Promise.all(promises);
 }
 
 async function prepareServices(stackName, bucket) {
@@ -318,20 +283,11 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     process.env.stackName = stackName;
 
     checkEnvVariablesAreSet(requiredEnvVars);
-
-    // create tables if not already created
-    await pRetry(
-      async () => await checkOrCreateTables(stackName),
-      {
-        onFailedAttempt: (error) => console.log(
-          `Failed to Create Tables. Localstack may not be ready, will retry ${error.attemptsLeft} more times.`
-        ),
-      }
-    );
-
+    console.log('line 286');
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     if (reseed) {
+      console.log('in reseed');
       await createDBRecords(stackName, user);
     }
   } else {
