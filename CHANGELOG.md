@@ -6,7 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v15.1.0] 2023-04-20
+## [v15.0.2] 2023-04-20
+
+### Fixed
+
+- **CUMULUS-3120**
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods
+  - Updated cloudwatch retention documentation to reflect the bugfix changes
+
 ## [v15.0.1] 2023-04-20
 
 ### Changed
