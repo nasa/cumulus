@@ -97,6 +97,7 @@
     "babel-loader": "^8.2.2",
     "babel-plugin-source-map-support": "^2.1.1",
     "babel-preset-env": "^1.7.0",
+    "base-64": "^0.1.0",
     "cookie-parser": "^1.4.5",
     "copy-webpack-plugin": "^6.0.3",
     "coveralls": "^3.0.0",

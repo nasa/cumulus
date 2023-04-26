@@ -186,6 +186,21 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
 
+## [v15.0.1] 2023-04-20
+
+### Changed
+
+- **CUMULUS-3279**
+  - Updated core dependencies on `xml2js` to `v0.5.0`
+  - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
+    `v0.5.0`
+  - Added audit-ci CVE override until July 1 to allow for Core package releases
+
+## Fixed
+
+- **CUMULUS-3285**
+  - Updated `api/lib/distribution.js isAuthBearTokenRequest` to handle non-Bearer authorization header
+
 ## [v15.0.0] 2023-03-10
 
 ### Breaking Changes
@@ -7088,7 +7103,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.1...HEAD
+[v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
 [v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
