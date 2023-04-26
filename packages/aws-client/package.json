@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/aws-client",
-  "version": "15.0.1",
+  "version": "15.1.0",
   "description": "Utilities for working with AWS",
   "keywords": [
     "GIBS",
@@ -52,9 +52,9 @@
     "@aws-sdk/s3-request-presigner": "^3.58.0",
     "@aws-sdk/signature-v4-crt": "^3.58.0",
     "@aws-sdk/types": "^3.58.0",
-    "@cumulus/checksum": "15.0.1",
-    "@cumulus/errors": "15.0.1",
-    "@cumulus/logger": "15.0.1",
+    "@cumulus/checksum": "15.1.0",
+    "@cumulus/errors": "15.1.0",
+    "@cumulus/logger": "15.1.0",
     "aws-sdk": "^2.585.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.21",
