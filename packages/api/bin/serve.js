@@ -283,11 +283,9 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     process.env.stackName = stackName;
 
     checkEnvVariablesAreSet(requiredEnvVars);
-    console.log('line 286');
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     if (reseed) {
-      console.log('in reseed');
       await createDBRecords(stackName, user);
     }
   } else {
