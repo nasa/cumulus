@@ -190,6 +190,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods
   - Updated cloudwatch retention documentation to reflect the bugfix changes
 
+
 ## [v15.0.1] 2023-04-20
 
 ### Changed
