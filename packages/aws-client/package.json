@@ -52,7 +52,6 @@
     "@aws-sdk/lib-storage": "^3.58.0",
     "@aws-sdk/s3-request-presigner": "^3.58.0",
     "@aws-sdk/signature-v4-crt": "^3.58.0",
-    "@aws-sdk/types": "^3.58.0",
     "@cumulus/checksum": "15.0.0",
     "@cumulus/errors": "15.0.0",
     "@cumulus/logger": "15.0.0",

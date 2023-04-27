@@ -131,14 +131,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-<<<<<<< HEAD
-### Fixed
-
-- **CUMULUS-3120**
-  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
-  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods
-  - Updated cloudwatch retention documentation to reflect the bugfix changes
-=======
 ### MIGRATION notes
 
 #### API Endpoint Versioning
@@ -188,9 +180,17 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
->>>>>>> master
 
-## [v15.0.0] 2023-04-20
+## [v15.0.2] 2023-04-26
+
+### Fixed
+
+- **CUMULUS-3120**
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods
+  - Updated cloudwatch retention documentation to reflect the bugfix changes
+
+## [v15.0.1] 2023-04-20
 
 ### Changed
 
@@ -7107,8 +7107,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.0...HEAD
-[v15.0.0]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.2...HEAD
+[v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
+[v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
 [v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
 [v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
