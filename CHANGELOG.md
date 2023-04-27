@@ -194,6 +194,16 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+- **CUMULUS-3024**
+  - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
+    `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
+
+### Removed
+
+- **CUMULUS-3204**
+  - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
+  - Removed deleteOldEventSourceMappings from @cumulus/api/lib/rulesHelpers and
+    refactored endpoint logic to use `deleteKinesisEventSources` instead.
 
 ## [v15.0.1] 2023-04-20
 
