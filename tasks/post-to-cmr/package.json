@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/post-to-cmr",
-<<<<<<< HEAD
   "version": "15.0.0",
-=======
-  "version": "15.0.0",
->>>>>>> master
   "description": "Post a given granule to CMR",
   "main": "index.js",
   "directories": {
@@ -37,7 +33,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/aws-client": "15.0.0",
     "@cumulus/cmrjs": "15.0.0",
     "@cumulus/common": "15.0.0",
@@ -49,18 +44,5 @@
   "devDependencies": {
     "@cumulus/cmr-client": "15.0.0",
     "@cumulus/schemas": "15.0.0"
-=======
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/cmrjs": "15.0.0",
-    "@cumulus/common": "15.0.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/launchpad-auth": "15.0.0",
-    "lodash": "^4.17.21"
-  },
-  "devDependencies": {
-    "@cumulus/cmr-client": "15.0.0",
-    "@cumulus/schemas": "15.0.0"
->>>>>>> master
   }
 }

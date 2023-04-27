@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/distribution-utils",
-<<<<<<< HEAD
   "version": "15.0.0",
-=======
-  "version": "15.0.0",
->>>>>>> master
   "description": "Cumulus Distribution utilities",
   "keywords": [
     "CUMULUS"
@@ -37,15 +33,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/aws-client": "15.0.0",
     "@cumulus/common": "15.0.0",
     "@cumulus/errors": "15.0.0",
-=======
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/common": "15.0.0",
-    "@cumulus/errors": "15.0.0",
->>>>>>> master
     "url-join": "^1.1.0"
   },
   "devDependencies": {

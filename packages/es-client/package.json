@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/es-client",
-<<<<<<< HEAD
   "version": "15.0.0",
-=======
-  "version": "15.0.0",
->>>>>>> master
   "description": "Utilities for working with Elasticsearch",
   "keywords": [
     "CUMULUS",
@@ -34,17 +30,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/common": "15.0.0",
     "@cumulus/errors": "15.0.0",
     "@cumulus/logger": "15.0.0",
     "@cumulus/message": "15.0.0",
-=======
-    "@cumulus/common": "15.0.0",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/logger": "15.0.0",
-    "@cumulus/message": "15.0.0",
->>>>>>> master
     "@elastic/elasticsearch": "^5.6.20",
     "aws-elasticsearch-connector": "8.2.0",
     "aws-sdk": "^2.585.0",
@@ -53,13 +42,8 @@
     "p-limit": "^1.2.0"
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@cumulus/aws-client": "15.0.0",
     "@cumulus/test-data": "15.0.0",
-=======
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/test-data": "15.0.0",
->>>>>>> master
     "p-each-series": "^2.1.0"
   }
 }

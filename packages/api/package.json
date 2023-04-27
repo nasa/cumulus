@@ -1,10 +1,6 @@
 {
   "name": "@cumulus/api",
-<<<<<<< HEAD
   "version": "15.0.0",
-=======
-  "version": "15.0.0",
->>>>>>> master
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -56,7 +52,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-<<<<<<< HEAD
     "@cumulus/api-client": "15.0.0",
     "@cumulus/async-operations": "15.0.0",
     "@cumulus/aws-client": "15.0.0",
@@ -77,28 +72,6 @@
     "@cumulus/pvl": "15.0.0",
     "@cumulus/sftp-client": "15.0.0",
     "@cumulus/types": "15.0.0",
-=======
-    "@cumulus/api-client": "15.0.0",
-    "@cumulus/async-operations": "15.0.0",
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/cmr-client": "15.0.0",
-    "@cumulus/cmrjs": "15.0.0",
-    "@cumulus/collection-config-store": "15.0.0",
-    "@cumulus/common": "15.0.0",
-    "@cumulus/db": "15.0.0",
-    "@cumulus/distribution-utils": "15.0.0",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/es-client": "15.0.0",
-    "@cumulus/ingest": "15.0.0",
-    "@cumulus/launchpad-auth": "15.0.0",
-    "@cumulus/logger": "15.0.0",
-    "@cumulus/message": "15.0.0",
-    "@cumulus/oauth-client": "15.0.0",
-    "@cumulus/object-store": "15.0.0",
-    "@cumulus/pvl": "15.0.0",
-    "@cumulus/sftp-client": "15.0.0",
-    "@cumulus/types": "15.0.0",
->>>>>>> master
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
@@ -150,10 +123,6 @@
     }
   },
   "devDependencies": {
-<<<<<<< HEAD
     "@cumulus/test-data": "15.0.0"
-=======
-    "@cumulus/test-data": "15.0.0"
->>>>>>> master
   }
 }
