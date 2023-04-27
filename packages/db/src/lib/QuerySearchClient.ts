@@ -4,7 +4,7 @@ import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 
-const log = new Logger({ sender: '@db/QuerySearchClient' });
+const log = new Logger({ sender: '@cumulus/db/QuerySearchClient' });
 /**
  * Class to handle fetching results for an arbitrary PostgreSQL query and
  * paging through them.

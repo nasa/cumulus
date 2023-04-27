@@ -1,4 +1,7 @@
 import { Knex } from 'knex';
+import pRetry from 'p-retry';
+
+import Logger from '@cumulus/logger';
 
 import { TableNames } from '../tables';
 
@@ -17,9 +20,30 @@ export const getCollectionsByGranuleIds = async (
     collections: collectionsTable,
     granules: granulesTable,
   } = TableNames;
-  return await knex(collectionsTable)
+  const log = new Logger({ sender: '@cumulus/db/models/collection' });
+  const query = knex(collectionsTable)
     .select(`${collectionsTable}.*`)
     .innerJoin(granulesTable, `${collectionsTable}.cumulus_id`, `${granulesTable}.collection_cumulus_id`)
     .whereIn(`${granulesTable}.granule_id`, granuleIds)
     .groupBy(`${collectionsTable}.cumulus_id`);
+  return await pRetry(
+    async () => {
+      try {
+        return await query;
+      } catch (error) {
+        if (error.message.includes('Connection terminated unexpectedly')) {
+          log.error(`Error caught in getCollectionsByGranuleIds. ${error}. Retrying...`);
+          throw error;
+        }
+        log.error(`Error caught in getCollectionsByGranuleIds. ${error}`);
+        throw new pRetry.AbortError(error);
+      }
+    },
+    {
+      retries: 3,
+      onFailedAttempt: (e) => {
+        log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
+      },
+    }
+  );
 };

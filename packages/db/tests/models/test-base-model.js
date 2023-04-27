@@ -1,7 +1,10 @@
+'use strict';
+
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const flatten = require('lodash/flatten');
 const sortBy = require('lodash/sortBy');
+const sinon = require('sinon');
 const times = require('lodash/times');
 
 const { RecordDoesNotExist } = require('@cumulus/errors');
@@ -636,6 +639,41 @@ test('BasePgModel.searchWithUpdatedAtRange() returns a filtered array of records
     removeNilProperties(searchResponse[0]),
     searchRecord
   );
+});
+
+test.serial('BasePgModel.searchWithUpdatedAtRange() retries with connection terminated unexpectedly error', async (t) => {
+  const {
+    knex,
+    basePgModel,
+  } = t.context;
+
+  const nowDateValue = new Date().valueOf();
+  const info = cryptoRandomString({ length: 5 });
+
+  const knexStub = sinon.stub(knex, 'transaction').callsFake(
+    // eslint-disable-next-line arrow-body-style
+    () => {
+      return {
+        select: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
+        where: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
+      };
+    }
+  );
+
+  t.teardown(() => knexStub.restore());
+
+  await t.throwsAsync(
+    basePgModel.searchWithUpdatedAtRange(
+      knexStub,
+      { info },
+      { updatedAtFrom: new Date(nowDateValue - 1) }
+    ),
+    {
+      message: 'Connection terminated unexpectedly',
+    }
+  );
+
+  t.is(knexStub.callCount, 4);
 });
 
 test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (t) => {

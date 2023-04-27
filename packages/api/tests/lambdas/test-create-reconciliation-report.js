@@ -39,7 +39,6 @@ const {
   ExecutionPgModel,
   fakeExecutionRecordFactory,
   upsertGranuleWithExecutionJoinRecord,
-  QuerySearchClient,
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -2153,49 +2152,6 @@ test.serial('Inventory reconciliation report JSON is formatted', async (t) => {
   t.is(formattedReport, JSON.stringify(unformattedReportObj, undefined, 2));
 });
 
-test.serial('When there is a connection termination error for an inventory report, it retries', async (t) => {
-  const {
-    knex,
-  } = t.context;
-  const dataBuckets = [randomId('bucket')];
-  await Promise.all(dataBuckets.map((bucket) =>
-    createBucket(bucket)
-      .then(() => t.context.bucketsToCleanup.push(bucket))));
-
-  // Write the buckets config to S3
-  await storeBucketsConfigToS3(
-    dataBuckets,
-    t.context.systemBucket,
-    t.context.stackName
-  );
-
-  const queryBuilderStub = sinon.stub(QuerySearchClient.prototype, 'fetchRecords').throws(new Error('Connection terminated unexpectedly', 'PROTOCOL_CONNECTION_LOST'));
-
-  t.teardown(() => queryBuilderStub.restore());
-
-  const reportName = randomId('reportName');
-  const event = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'Inventory',
-    reportName,
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-    knex,
-  };
-
-  await t.throwsAsync(
-    handler(event),
-    { message: 'Connection terminated unexpectedly' }
-  );
-  t.is(queryBuilderStub.callCount, 4);
-
-  const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
-  const report = await getJsonS3Object(t.context.systemBucket, reportKey);
-  t.is(report.status, 'Failed');
-  t.is(report.reportType, 'Inventory');
-});
-
 test.serial('When there is an error for an ORCA backup report, it throws', async (t) => {
   const dataBuckets = [randomId('bucket')];
   await Promise.all(dataBuckets.map((bucket) =>
@@ -2232,94 +2188,4 @@ test.serial('When there is an error for an ORCA backup report, it throws', async
   const report = await getJsonS3Object(t.context.systemBucket, reportKey);
   t.is(report.status, 'Failed');
   t.is(report.reportType, 'ORCA Backup');
-});
-
-test.serial('When there is an error when generating the Granule Inventory report, it retries', async (t) => {
-  const {
-    knex,
-  } = t.context;
-  const dataBuckets = [randomId('bucket')];
-  await Promise.all(dataBuckets.map((bucket) =>
-    createBucket(bucket)
-      .then(() => t.context.bucketsToCleanup.push(bucket))));
-
-  // Write the buckets config to S3
-  await storeBucketsConfigToS3(
-    dataBuckets,
-    t.context.systemBucket,
-    t.context.stackName
-  );
-
-  const queryBuilderStub = sinon.stub(QuerySearchClient.prototype, 'fetchRecords').throws(new Error('Connection terminated unexpectedly', 'PROTOCOL_CONNECTION_LOST'));
-
-  t.teardown(() => queryBuilderStub.restore());
-
-  const reportName = randomId('reportName');
-  const event = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'Granule Inventory',
-    reportName,
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-    knex,
-  };
-
-  await t.throwsAsync(
-    handler(event),
-    { message: 'Connection terminated unexpectedly' }
-  );
-  t.is(queryBuilderStub.callCount, 4);
-});
-
-test.serial('When there is an error generating an internal report, it retries', async (t) => {
-  const {
-    knex,
-  } = t.context;
-  const dataBuckets = [randomId('bucket')];
-  await Promise.all(dataBuckets.map((bucket) =>
-    createBucket(bucket)
-      .then(() => t.context.bucketsToCleanup.push(bucket))));
-
-  // Write the buckets config to S3
-  await storeBucketsConfigToS3(
-    dataBuckets,
-    t.context.systemBucket,
-    t.context.stackName
-  );
-
-  const knexStub = sinon.stub(knex, 'transaction').callsFake(
-    // eslint-disable-next-line arrow-body-style
-    () => {
-      return {
-        select: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
-        where: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
-      };
-    }
-  );
-
-  t.teardown(() => knexStub.restore());
-
-  const reportName = randomId('reportName');
-  const event = {
-    systemBucket: t.context.systemBucket,
-    stackName: t.context.stackName,
-    reportType: 'Internal',
-    reportName,
-    startTimestamp: moment.utc().subtract(1, 'hour').format(),
-    endTimestamp: moment.utc().add(1, 'hour').format(),
-    knex: knexStub,
-  };
-
-  await t.throwsAsync(
-    handler(event),
-    { message: 'Connection terminated unexpectedly' }
-  );
-
-  const reportKey = `${t.context.stackName}/reconciliation-reports/${reportName}.json`;
-  const report = await getJsonS3Object(t.context.systemBucket, reportKey);
-
-  t.is(knexStub.callCount, 4);
-  t.is(report.status, 'Failed');
-  t.is(report.reportType, 'Internal');
 });

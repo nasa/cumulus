@@ -1,6 +1,5 @@
 'use strict';
 
-const pRetry = require('p-retry');
 const noop = require('lodash/noop');
 const Stream = require('stream');
 const { Transform } = require('json2csv');
@@ -41,36 +40,36 @@ async function createGranuleInventoryReport(recReportParams) {
   ];
 
   const { reportKey, systemBucket } = recReportParams;
-  const searchParams = convertToDBGranuleSearchParams(recReportParams);
-
-  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
-    recReportParams.knex,
-    searchParams,
-    ['collectionName', 'collectionVersion', 'granule_id']
-  );
-  const pgGranulesSearchClient = new QuerySearchClient(
-    granulesSearchQuery,
-    100 // arbitrary limit on how items are fetched at once
-  );
-
-  let nextGranule = await pgGranulesSearchClient.peek();
-
-  const readable = new Stream.Readable({ objectMode: true });
-  const pass = new Stream.PassThrough();
-  readable._read = noop;
-  const transformOpts = { objectMode: true };
-
-  const json2csv = new Transform({ fields }, transformOpts);
-  readable.pipe(json2csv).pipe(pass);
-
-  const promisedObject = promiseS3Upload({
-    params: {
-      Bucket: systemBucket,
-      Key: reportKey,
-      Body: pass,
-    },
-  });
   try {
+    const searchParams = convertToDBGranuleSearchParams(recReportParams);
+
+    const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+      recReportParams.knex,
+      searchParams,
+      ['collectionName', 'collectionVersion', 'granule_id']
+    );
+    const pgGranulesSearchClient = new QuerySearchClient(
+      granulesSearchQuery,
+      100 // arbitrary limit on how items are fetched at once
+    );
+
+    let nextGranule = await pgGranulesSearchClient.peek();
+
+    const readable = new Stream.Readable({ objectMode: true });
+    const pass = new Stream.PassThrough();
+    readable._read = noop;
+    const transformOpts = { objectMode: true };
+
+    const json2csv = new Transform({ fields }, transformOpts);
+    readable.pipe(json2csv).pipe(pass);
+
+    const promisedObject = promiseS3Upload({
+      params: {
+        Bucket: systemBucket,
+        Key: reportKey,
+        Body: pass,
+      },
+    });
     while (nextGranule) {
       // eslint-disable-next-line no-await-in-loop
       const apiGranule = await translatePostgresGranuleResultToApiGranule(
@@ -95,12 +94,8 @@ async function createGranuleInventoryReport(recReportParams) {
 
     return promisedObject;
   } catch (error) {
-    if (error.message.includes('Connection terminated unexpectedly')) {
-      log.error(`Error caught in createGranuleInventoryReport. ${error}. Retrying...`);
-      throw error;
-    }
     log.error(`Error caught in createGranuleInventoryReport. ${error}`);
-    throw new pRetry.AbortError(error);
+    throw error;
   }
 }
 

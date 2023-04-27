@@ -171,6 +171,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3215**
   - Create reconciliation reports will properly throw errors and set the async
     operation status correctly to failed if there is an error.
+  - Knex calls relating to reconciliation reports will retry if there is a
+    connection terminated unexpectedly error
 
 ## [v15.0.0] 2023-03-10
 

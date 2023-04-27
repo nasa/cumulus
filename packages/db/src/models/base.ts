@@ -1,5 +1,7 @@
 import { Knex } from 'knex';
+import pRetry from 'p-retry';
 
+import Logger from '@cumulus/logger';
 import { RecordDoesNotExist } from '@cumulus/errors';
 
 import { UpdatedAtRange } from '../types/record';
@@ -27,18 +29,37 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     params: Partial<RecordType>,
     updatedAtParams: UpdatedAtRange
   ): Promise<RecordType[]> {
-    const records: Array<RecordType> = await knexOrTransaction(
-      this.tableName
-    ).where((builder) => {
-      builder.where(params);
-      if (updatedAtParams.updatedAtFrom || updatedAtParams.updatedAtTo) {
-        builder.whereBetween('updated_at', [
-          updatedAtParams?.updatedAtFrom ?? new Date(0),
-          updatedAtParams?.updatedAtTo ?? new Date(),
-        ]);
+    const log = new Logger({ sender: '@cumulus/db/models/base' });
+    return await pRetry(
+      async () => {
+        try {
+          const records: Array<RecordType> =
+          await knexOrTransaction(this.tableName).where((builder) => {
+            builder.where(params);
+            if (updatedAtParams.updatedAtFrom || updatedAtParams.updatedAtTo) {
+              builder.whereBetween('updated_at', [
+                updatedAtParams?.updatedAtFrom ?? new Date(0),
+                updatedAtParams?.updatedAtTo ?? new Date(),
+              ]);
+            }
+          });
+          return records;
+        } catch (error) {
+          if (error.message.includes('Connection terminated unexpectedly')) {
+            log.error(`Error caught in searchWithUpdatedAtRange. ${error}. Retrying...`);
+            throw error;
+          }
+          log.error(`Error caught in searchWithUpdatedAtRange. ${error}`);
+          throw new pRetry.AbortError(error);
+        }
+      },
+      {
+        retries: 3,
+        onFailedAttempt: (e) => {
+          log.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
+        },
       }
-    });
-    return records;
+    );
   }
 
   async count(

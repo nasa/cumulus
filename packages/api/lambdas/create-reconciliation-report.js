@@ -806,7 +806,6 @@ async function createReconciliationReport(recReportParams) {
  * @param {string} params.stackName - the name of the CUMULUS stack
  * @param {string} params.reportType - the type of reconciliation report
  * @param {string} params.reportName - the name of the report
- * @param {Object} params.pRetryOptions - Optional pRetryOptions
  * @param {Knex} params.knex - Optional Instance of a Knex client for testing
  * @returns {Object} report record saved to the database
  */
