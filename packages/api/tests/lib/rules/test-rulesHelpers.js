@@ -714,57 +714,6 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
   });
 });
 
-test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
-  const { testKnex } = t.context;
-  const sandbox = sinon.createSandbox();
-  sandbox.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-  const snsStub = sinon.stub(awsServices, 'sns')
-    .returns({
-      listSubscriptionsByTopic: () => ({
-        promise: () => Promise.resolve({
-          Subscriptions: [{
-            Endpoint: process.env.messageConsumer,
-            SubscriptionArn: randomString(),
-          }],
-        }),
-      }),
-      unsubscribe: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-  const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-  const snsTopicArn = randomString();
-  const params = {
-    rule: {
-      arn: randomString(),
-      type: 'sns',
-      value: snsTopicArn,
-    },
-    state: 'ENABLED',
-  };
-  const snsRule = fakeRuleFactoryV2(params);
-
-  await rulesHelpers.deleteSnsTrigger(testKnex, snsRule);
-  t.true(unsubscribeSpy.called);
-  t.true(unsubscribeSpy.calledWith({
-    SubscriptionArn: snsRule.rule.arn,
-  }));
-
-  t.teardown(() => {
-    sandbox.restore();
-    snsStub.restore();
-    unsubscribeSpy.restore();
-  });
-});
-
 test.serial('deleteRuleResources correctly deletes resources for scheduled rule', async (t) => {
   const { testKnex } = t.context;
   const params = {
