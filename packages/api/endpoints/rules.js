@@ -18,7 +18,6 @@ const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 const { isBadRequestError } = require('../lib/errors');
 const {
   createRuleTrigger,
-  deleteOldEventSourceMappings,
   deleteRuleResources,
   invokeRerun,
   updateRuleTrigger,

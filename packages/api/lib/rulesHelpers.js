@@ -1,3 +1,4 @@
+//@ts-check
 'use strict';
 
 const get = require('lodash/get');
@@ -194,7 +195,7 @@ async function isEventSourceMappingShared(knex, rule, eventType) {
  * @param {Knex}    knex      - DB client
  * @param {RuleRecord} rule   - the rule item
  * @param {string}  eventType - kinesisSourceEvent type ['arn', 'log_event_arn']
- * @param {string}  id        - event source id
+ * @param {{log_event_arn?: string, arn?: string}} id        - event source id
  * @returns {Promise} the response from event source delete
  */
 async function deleteKinesisEventSource(knex, rule, eventType, id) {
@@ -209,13 +210,20 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
   return undefined;
 }
 
+// @typedef { typeof deleteKinesisEventSource } deleteKinesisEventSource
+
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
+ *
  * @param {Knex} knex       - DB client
  * @param {RuleRecord} rule - the rule item
+ * @param {{deleteKinesisEventSourceMethod: deleteKinesisEventSource}} testContext -
  * @returns {Promise<Array>} array of responses from the event source deletion
  */
-async function deleteKinesisEventSources(knex, rule) {
+async function deleteKinesisEventSources(knex, rule, testContext = {
+  deleteKinesisEventSourceMethod: deleteKinesisEventSource,
+}) {
+  const deleteKinesisEventSourceMethod = testContext.deleteKinesisEventSourceMethod;
   const kinesisSourceEvents = [
     {
       name: process.env.messageConsumer,
@@ -233,7 +241,7 @@ async function deleteKinesisEventSources(knex, rule) {
     },
   ];
   const deleteEventPromises = kinesisSourceEvents.map(
-    (lambda) => deleteKinesisEventSource(knex, rule, lambda.eventType, lambda.type).catch(
+    (lambda) => deleteKinesisEventSourceMethod(knex, rule, lambda.eventType, lambda.type).catch(
       (error) => {
         log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
         if (error.code !== 'ResourceNotFoundException') throw error;
@@ -359,7 +367,7 @@ async function validateAndUpdateSqsRule(rule) {
    * Add an event source to a target lambda function
    *
    * @param {RuleRecord} item   - The rule item
-   * @param {string}  lambda - The name of the target lambda
+   * @param {{ name: string | undefined}}  lambda - The name of the target lambda
    * @returns {Promise}
    */
 async function addKinesisEventSource(item, lambda) {
@@ -395,7 +403,7 @@ async function addKinesisEventSource(item, lambda) {
 /**
  * Add event sources for all mappings in the kinesisSourceEvents
  * @param {RuleRecord} rule - The rule item
- * @returns {Object}     - Returns arn and logEventArn
+ * @returns {Promise<Object>}     - Returns arn and logEventArn
  */
 async function addKinesisEventSources(rule) {
   const kinesisSourceEvents = [
@@ -702,7 +710,6 @@ module.exports = {
   deleteKinesisEventSources,
   deleteRuleResources,
   deleteSnsTrigger,
-  fetchAllRules,
   fetchEnabledRules,
   fetchRules,
   filterRulesbyCollection,
