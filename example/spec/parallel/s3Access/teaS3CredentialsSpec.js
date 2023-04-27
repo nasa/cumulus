@@ -2,6 +2,7 @@
 
 const { URL } = require('url');
 const { STS } = require('aws-sdk');
+const base64 = require('base-64');
 
 const { models: { AccessToken } } = require('@cumulus/api');
 const {
@@ -26,6 +27,18 @@ describe('When accessing s3credentials endpoint', () => {
   describe('an unauthenticated request', () => {
     it('redirects to Earthdata login for requests on /s3credentials endpoint.', async () => {
       const response = await invokeS3CredentialsLambda('/s3credentials');
+      const authorizeUrl = new URL(response.headers.location);
+      expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
+      expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
+      expect(authorizeUrl.pathname).toEqual('/oauth/authorize');
+    });
+  });
+
+  describe('with basic authorization header', () => {
+    it('redirects to Earthdata login for requests on /s3credentials endpoint.', async () => {
+      const auth = base64.encode(`${process.env.EARTHDATA_USERNAME}:${process.env.EARTHDATA_PASSWORD}`);
+      const headers = { authorization: `Basic ${auth}` };
+      const response = await invokeS3CredentialsLambda('/s3credentials', headers);
       const authorizeUrl = new URL(response.headers.location);
       expect(authorizeUrl.origin).toEqual(process.env.EARTHDATA_BASE_URL);
       expect(authorizeUrl.searchParams.get('state')).toEqual('/s3credentials');
