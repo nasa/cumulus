@@ -1,6 +1,10 @@
 {
   "name": "@cumulus/db",
-  "version": "15.0.1",
+<<<<<<< HEAD
+  "version": "15.0.0",
+=======
+  "version": "15.0.0",
+>>>>>>> master
   "description": "Utilities for working with the Cumulus DB",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -29,12 +33,21 @@
     "node": ">=16.19.0"
   },
   "dependencies": {
-    "@cumulus/aws-client": "15.0.1",
-    "@cumulus/common": "15.0.1",
-    "@cumulus/errors": "15.0.1",
-    "@cumulus/logger": "15.0.1",
-    "@cumulus/message": "15.0.1",
-    "@cumulus/types": "15.0.1",
+<<<<<<< HEAD
+    "@cumulus/aws-client": "15.0.0",
+    "@cumulus/common": "15.0.0",
+    "@cumulus/errors": "15.0.0",
+    "@cumulus/logger": "15.0.0",
+    "@cumulus/message": "15.0.0",
+    "@cumulus/types": "15.0.0",
+=======
+    "@cumulus/aws-client": "15.0.0",
+    "@cumulus/common": "15.0.0",
+    "@cumulus/errors": "15.0.0",
+    "@cumulus/logger": "15.0.0",
+    "@cumulus/message": "15.0.0",
+    "@cumulus/types": "15.0.0",
+>>>>>>> master
     "crypto-random-string": "^3.2.0",
     "is-valid-hostname": "1.0.2",
     "knex": "2.4.1",

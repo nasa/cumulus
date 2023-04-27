@@ -23,7 +23,6 @@ describe('The Python Reference workflow', () => {
 
   beforeAll(async () => {
     config = await loadConfig();
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
 
     workflowExecution = await buildAndExecuteWorkflow(
       config.stackName,

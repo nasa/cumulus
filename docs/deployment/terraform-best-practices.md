@@ -27,7 +27,7 @@ To enable bucket versioning, either use the AWS CLI command given in
 
 If your state file appears to be corrupted, or in some invalid state, and the
 containing bucket has bucket versioning enabled, you may be able to recover by
-[restoring a previous version] of the state file. There are two primary
+[restoring a previous version][restore] of the state file. There are two primary
 approaches, but the AWS documentation does not provide specific instructions
 for either one:
 
@@ -72,13 +72,17 @@ of the state file:
 
 At this point, the previous version is now the latest version.
 
-> ⚠️ **Note:** When attempting to delete the latest (corrupt) version of the file,
+:::caution
+
+When attempting to delete the latest (corrupt) version of the file,
 you must _explicitly_ choose the **latest version**. Otherwise, if you simply
 choose the file when versions are hidden, deleting it will insert a
 _delete marker_ as the latest version of the file. This means that all prior
 versions still exist, but the file _appears_ to be deleted. When you **Show**
 the versions, you will see all of the previous versions (including the corrupt
 one), as well as a _delete marker_ as the current version.
+
+:::
 
 ### How to Recover from a Deleted State File
 
@@ -174,14 +178,22 @@ Afterwards, remove the `policy.json` file.
 your Terraform state file does not correctly represent the state of your
 deployment resources. Specifically, this means:
 
+:::danger DO NOT's
+
 - **DO NOT** change deployment resources via the AWS Management Console
 - **DO NOT** change deployment resources via the AWS CLI
 - **DO NOT** change deployment resources via any of the AWS SDKs
+
+:::
+
+:::tip DO's
 
 Instead, **DO** change deployment resources **only** via changes to your
 Terraform files (along with subsequent Terraform commands), except where
 specifically instructed otherwise (such as in the instructions for destroying
 a deployment).
+
+:::
 
 ### Avoid Changing Connectivity Resources
 
@@ -199,7 +211,7 @@ resources, there are a number of things you can attempt to reconcile the
 differences. However, given that each Cumulus deployment is unique, we can
 provide only general guidance:
 
-- Consider restoring a previous version of your state file, as described
+- Consider [restoring a previous version][restore] of your state file, as described
   in the earlier section about recovering from a corrupted state file
 - If resources exist, but are not listed in your state file, consider using
   `terraform import` (see <https://www.terraform.io/docs/import/index.html>)
@@ -219,8 +231,12 @@ Starting from the root of your deployment repository workspace, perform the
 following commands to first **destroy the resources for your `cumulus` module**
 deployment.
 
-> ⚠️ **Note:** If you are using Terraform workspaces, be sure to select the relevant
+:::note
+
+If you are using Terraform workspaces, be sure to select the relevant
 workspace first.
+
+:::
 
 ```bash
 tfenv use 0.13.6
@@ -228,11 +244,6 @@ cd cumulus-tf
 terraform init -reconfigure
 terraform destroy
 ```
-
-The next step is to _manually_ **delete the DynamoDB tables** related to your
-deployment. Again, these tables are protected such that they are **not**
-_automatically_ deleted by the `terraform destroy` command. This is a safety
-measure to prevent _accidental_ removal.
 
 However, this does not prevent manual destruction in case you truly do wish to
 remove them. You may do so via either the **AWS Management Console** or the
@@ -268,5 +279,5 @@ aws resourcegroupstaggingapi get-resources \
 Ideally, the output should be an empty list, but if it is not, then you may
 need to manually delete the listed resources.
 
-Configuring the Cumulus deployment: [link](README.md#deploy-the-cumulus-instance)
-Restoring a previous version: [link](https://docs.aws.amazon.com/AmazonS3/latest/dev/RestoringPreviousVersions.html)
+[configuring]: ../deployment/README.md#create-resources-for-terraform-state "Configuring the Cumulus deployment"
+[restore]: https://docs.aws.amazon.com/AmazonS3/latest/dev/RestoringPreviousVersions.html "Restoring a previous version"

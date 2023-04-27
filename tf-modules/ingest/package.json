@@ -1,6 +1,10 @@
 {
   "name": "@cumulus/ingest-module",
-  "version": "15.0.1",
+<<<<<<< HEAD
+  "version": "15.0.0",
+=======
+  "version": "15.0.0",
+>>>>>>> master
   "description": "Terraform module for data ingest related functionality",
   "engines": {
     "node": ">=16.19.0"

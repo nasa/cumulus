@@ -1,6 +1,10 @@
 {
   "name": "@cumulus/test-data",
-  "version": "15.0.1",
+<<<<<<< HEAD
+  "version": "15.0.0",
+=======
+  "version": "15.0.0",
+>>>>>>> master
   "description": "Includes the test data for various packages",
   "keywords": [
     "GIBS",

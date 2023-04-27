@@ -26,11 +26,14 @@ kk2-tf:
 jtran-tf:
   bucket: jtran-internal
 
-vkn-ci-tf:
-  bucket: vkn-ci-tf-internal
-
 vkn-tf:
   bucket: vkn-tf-internal
 
+vkn-ci-tf:
+  bucket: vkn-ci-tf-internal
+
 np:
   bucket: npauzenga-internal
+
+nnaga-tf:
+  bucket: nnaga-internal

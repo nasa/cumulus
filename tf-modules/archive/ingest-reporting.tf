@@ -1,4 +1,5 @@
 # Report executions
+<<<<<<< HEAD
 
 resource "aws_iam_role" "publish_executions_lambda_role" {
   name                 = "${var.prefix}-PublishExecutionsLambda"
@@ -104,13 +105,15 @@ resource "aws_cloudwatch_log_group" "publish_executions_logs" {
   tags              = var.tags
 }
 
+=======
+>>>>>>> master
 resource "aws_sns_topic" "report_executions_topic" {
   name = "${var.prefix}-report-executions-topic"
   tags = var.tags
 }
 
-
 # Report granules
+<<<<<<< HEAD
 
 resource "aws_iam_role" "publish_granules_lambda_role" {
   name                 = "${var.prefix}-PublishGranulesLambda"
@@ -215,12 +218,15 @@ resource "aws_cloudwatch_log_group" "publish_granules_logs" {
   tags              = var.tags
 }
 
+=======
+>>>>>>> master
 resource "aws_sns_topic" "report_granules_topic" {
   name = "${var.prefix}-report-granules-topic"
   tags = var.tags
 }
 
 # Report PDRs
+<<<<<<< HEAD
 
 resource "aws_iam_role" "publish_pdrs_lambda_role" {
   name                 = "${var.prefix}-PublishPdrsLambda"
@@ -321,88 +327,15 @@ resource "aws_cloudwatch_log_group" "publish_pdrs_logs" {
   tags              = var.tags
 }
 
+=======
+>>>>>>> master
 resource "aws_sns_topic" "report_pdrs_topic" {
   name = "${var.prefix}-report-pdrs-topic"
   tags = var.tags
 }
 
-data "aws_dynamodb_table" "pdrs" {
-  name = var.dynamo_tables.pdrs.name
-}
-
-resource "aws_lambda_event_source_mapping" "publish_pdrs" {
-  event_source_arn  = data.aws_dynamodb_table.pdrs.stream_arn
-  function_name     = aws_lambda_function.publish_pdrs.arn
-  starting_position = "TRIM_HORIZON"
-  batch_size        = 10
-}
-
 # Report collections
-
-resource "aws_iam_role" "publish_collections_lambda_role" {
-  name                 = "${var.prefix}-PublishCollectionsLambda"
-  assume_role_policy   = data.aws_iam_policy_document.lambda_assume_role_policy.json
-  permissions_boundary = var.permissions_boundary_arn
-
-  tags = var.tags
-}
-
-data "aws_iam_policy_document" "publish_collections_policy_document" {
-  statement {
-    actions   = ["sns:Publish"]
-    resources = [aws_sns_topic.report_collections_topic.arn]
-  }
-  statement {
-    actions = [
-      "ec2:CreateNetworkInterface",
-      "ec2:DescribeNetworkInterfaces",
-      "ec2:DeleteNetworkInterface"
-    ]
-    resources = ["*"]
-  }
-  statement {
-    actions = [
-      "logs:CreateLogGroup",
-      "logs:CreateLogStream",
-      "logs:DescribeLogStreams",
-      "logs:PutLogEvents"
-    ]
-    resources = ["*"]
-  }
-  statement {
-    actions = ["sqs:SendMessage"]
-    resources = [aws_sqs_queue.publish_collections_dead_letter_queue.arn]
-  }
-  statement {
-    actions = [
-      "dynamodb:GetRecords",
-      "dynamodb:GetShardIterator",
-      "dynamodb:DescribeStream",
-      "dynamodb:ListStreams"
-    ]
-    resources = ["${var.dynamo_tables.collections.arn}/stream/*"]
-  }
-}
-
-resource "aws_iam_role_policy" "publish_collections_lambda_role_policy" {
-  name   = "${var.prefix}_publish_collections_lambda_role_policy"
-  role   = aws_iam_role.publish_collections_lambda_role.id
-  policy = data.aws_iam_policy_document.publish_collections_policy_document.json
-}
-
-resource "aws_sqs_queue" "publish_collections_dead_letter_queue" {
-  name                       = "${var.prefix}-publishCollectionsDeadLetterQueue"
-  receive_wait_time_seconds  = 20
-  message_retention_seconds  = 1209600
-  visibility_timeout_seconds = 60
-  tags                       = var.tags
-}
-
 resource "aws_sns_topic" "report_collections_topic" {
   name = "${var.prefix}-report-collections-topic"
   tags = var.tags
-}
-
-data "aws_dynamodb_table" "collections" {
-  name = var.dynamo_tables.collections.name
 }

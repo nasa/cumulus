@@ -32,7 +32,6 @@ const {
 const esIndex = randomId('esindex');
 
 process.env.AccessTokensTable = randomString();
-process.env.AsyncOperationsTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
@@ -43,7 +42,6 @@ const { indexFromDatabase } = require('../../endpoints/elasticsearch');
 
 let jwtAuthToken;
 let accessTokenModel;
-let asyncOperationsModel;
 let esClient;
 
 /**
@@ -97,13 +95,6 @@ test.before(async (t) => {
   accessTokenModel = new models.AccessToken();
   await accessTokenModel.createTable();
 
-  asyncOperationsModel = new models.AsyncOperation({
-    stackName: process.env.stackName,
-    systemBucket: process.env.system_bucket,
-    tableName: process.env.AsyncOperationsTable,
-  });
-  await asyncOperationsModel.createTable();
-
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
   t.context.esAlias = randomString();
@@ -126,7 +117,6 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await asyncOperationsModel.deleteTable();
   await esClient.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.testKnex,

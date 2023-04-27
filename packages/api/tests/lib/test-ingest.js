@@ -4,6 +4,7 @@ const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const { sns } = require('@cumulus/aws-client/services');
+const { createBucket } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
@@ -24,9 +25,7 @@ const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
 } = require('../../lib/testUtils');
-
-const { Granule, Rule } = require('../../models');
-
+const rulesHelpers = require('../../lib/rulesHelpers');
 const {
   reingestGranule,
   applyWorkflow,
@@ -42,6 +41,11 @@ FakeEsClient.prototype.search = esSearchStub;
 
 let fakeExecution;
 let testCumulusMessage;
+[
+  'system_bucket',
+  'stackName',
+  // eslint-disable-next-line no-return-assign
+].forEach((varName) => process.env[varName] = randomString());
 
 test.before(async (t) => {
   process.env = {
@@ -49,6 +53,7 @@ test.before(async (t) => {
     ...localStackConnectionEnv,
     PG_DATABASE: testDbName,
   };
+  await createBucket(process.env.system_bucket);
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
@@ -58,9 +63,6 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-
-  process.env.GranulesTable = randomString();
-  await new Granule().createTable();
 
   const { TopicArn } = await sns().createTopic({ Name: randomString() }).promise();
   t.context.granules_sns_topic_arn = TopicArn;
@@ -147,20 +149,19 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   const {
     collectionId,
   } = t.context;
-  const buildPayloadSpy = sinon.stub(Rule, 'buildPayload');
-
-  const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
   const queueUrl = 'testqueueUrl';
 
-  const granule = fakeGranuleFactoryV2({
+  const apiGranule = fakeGranuleFactoryV2({
     collectionId,
   });
-  const dynamoGranule = await granuleModel.create(granule);
+
+  const buildPayloadSpy = sinon.stub(rulesHelpers, 'buildPayload').resolves();
+
   await granulePgModel.create(
     t.context.knex,
     await translateApiGranuleToPostgresGranule({
-      dynamoRecord: dynamoGranule,
+      dynamoRecord: apiGranule,
       knexOrTransaction: t.context.knex,
     })
   );
@@ -168,9 +169,8 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
   t.teardown(() => buildPayloadSpy.restore());
 
   await reingestGranule({
-    granule,
+    apiGranule,
     queueUrl,
-    granuleModel,
     granulePgModel,
   });
   // Rule.buildPayload has its own unit tests to ensure the queue name
@@ -180,18 +180,18 @@ test.serial('reingestGranule pushes a message with the correct queueUrl', async 
 
   const updatedPgGranule = await getUniqueGranuleByGranuleId(
     t.context.knex,
-    granule.granuleId
+    apiGranule.granuleId
   );
   t.is(updatedPgGranule.status, 'queued');
 });
 
 test.serial('applyWorkflow throws error if workflow argument is missing', async (t) => {
-  const granule = {
+  const apiGranule = {
     granuleId: randomString(),
   };
 
   await t.throwsAsync(
-    applyWorkflow(granule),
+    applyWorkflow(apiGranule),
     {
       instanceOf: TypeError,
     }
@@ -199,20 +199,20 @@ test.serial('applyWorkflow throws error if workflow argument is missing', async 
 });
 
 test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
-  const granule = fakeGranuleFactoryV2({
+  const apiGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
   const workflow = randomString();
   const lambdaPayload = {
     payload: {
-      granules: [granule],
+      granules: [apiGranule],
     },
   };
 
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves(lambdaPayload);
+  const buildPayloadStub = sinon.stub(rulesHelpers, 'buildPayload').resolves(lambdaPayload);
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
-  await applyWorkflow({ granule, workflow });
+  await applyWorkflow({ apiGranule, workflow });
 
   try {
     t.true(lambdaInvokeStub.called);
@@ -224,29 +224,27 @@ test.serial('applyWorkflow invokes Lambda to schedule workflow', async (t) => {
 });
 
 test.serial('applyWorkflow uses custom queueUrl, if provided', async (t) => {
-  const granuleModel = new Granule();
   const granulePgModel = new GranulePgModel();
 
-  const granule = fakeGranuleFactoryV2({
+  const apiGranule = fakeGranuleFactoryV2({
     collectionId: t.context.collectionId,
   });
   const workflow = randomString();
   const queueUrl = randomString();
 
-  const dynamoGranule = await granuleModel.create(granule);
   await granulePgModel.create(
     t.context.knex,
     await translateApiGranuleToPostgresGranule({
-      dynamoRecord: dynamoGranule,
+      dynamoRecord: apiGranule,
       knexOrTransaction: t.context.knex,
     })
   );
 
-  const buildPayloadStub = sinon.stub(Rule, 'buildPayload').resolves();
+  const buildPayloadStub = sinon.stub(rulesHelpers, 'buildPayload').resolves();
   const lambdaInvokeStub = sinon.stub(Lambda, 'invoke').resolves();
 
   try {
-    await applyWorkflow({ granule, workflow, queueUrl });
+    await applyWorkflow({ apiGranule, workflow, queueUrl });
 
     t.true(buildPayloadStub.called);
     t.like(buildPayloadStub.args[0][0], {

@@ -30,7 +30,6 @@ const { bulkDelete } = require('../../../endpoints/granules');
 const { buildFakeExpressResponse } = require('../utils');
 
 test.before(async () => {
-  process.env.AsyncOperationsTable = randomString();
   process.env.AsyncOperationTaskDefinition = randomString();
   process.env.BulkOperationLambda = randomString();
   process.env.EcsCluster = randomString();
@@ -38,7 +37,6 @@ test.before(async () => {
   process.env.system_bucket = randomString();
   process.env.TOKEN_SECRET = randomString();
   process.env.AccessTokensTable = randomString();
-  process.env.GranulesTable = randomString();
   process.env.granule_sns_topic_arn = randomString();
   process.env.METRICS_ES_HOST = randomString();
   process.env.METRICS_ES_USER = randomString();
@@ -78,12 +76,16 @@ test.after.always(async () => {
   await accessTokenModel.deleteTable();
 });
 
-test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and list of IDs', async (t) => {
+test.serial('POST /granules/bulkDelete starts an async-operation with the correct payload and list of granules', async (t) => {
   const { asyncOperationStartStub } = t.context;
-  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
-    ids: expectedIds,
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     forceRemoveFromCmr: true,
   };
 
@@ -119,7 +121,6 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_password_secret_name: process.env.cmr_password_secret_name,
       cmr_provider: process.env.cmr_provider,
       cmr_username: process.env.cmr_username,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
@@ -140,10 +141,14 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
 
 test.serial('bulkDelete() uses correct caller lambda function name', async (t) => {
   const { asyncOperationStartStub } = t.context;
-  const expectedIds = ['MOD09GQ.A8592978.nofTNT.006.4914003503063'];
 
   const body = {
-    ids: expectedIds,
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     forceRemoveFromCmr: true,
   };
 
@@ -206,7 +211,6 @@ test.serial('POST /granules/bulkDelete starts an async-operation with the correc
       cmr_password_secret_name: process.env.cmr_password_secret_name,
       cmr_provider: process.env.cmr_provider,
       cmr_username: process.env.cmr_username,
-      GranulesTable: process.env.GranulesTable,
       granule_sns_topic_arn: process.env.granule_sns_topic_arn,
       KNEX_DEBUG: 'false',
       launchpad_api: process.env.launchpad_api,
@@ -243,7 +247,7 @@ test.serial('POST /granules/bulkDelete returns a 400 when a query is provided wi
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkDelete returns 400 when no IDs or Query is provided', async (t) => {
+test.serial('POST /granules/bulkDelete returns 400 when no granules or Query is provided', async (t) => {
   const { asyncOperationStartStub } = t.context;
 
   const body = {};
@@ -252,39 +256,39 @@ test.serial('POST /granules/bulkDelete returns 400 when no IDs or Query is provi
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /One of ids or query is required/);
+    .expect(400, /One of granules or query is required/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkDelete returns 400 when IDs are not an array', async (t) => {
+test.serial('POST /granules/bulkDelete returns 400 when granules are not an array', async (t) => {
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    ids: 'bad-value',
+    granules: 'bad-value',
   };
   await request(app)
     .post('/granules/bulkDelete')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /ids should be an array of values/);
+    .expect(400, /granules should be an array of values/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
 
-test.serial('POST /granules/bulkDelete returns 400 when IDs is an empty array of values', async (t) => {
+test.serial('POST /granules/bulkDelete returns 400 when granules is an empty array of values', async (t) => {
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    ids: [],
+    granules: [],
   };
   await request(app)
     .post('/granules/bulkDelete')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(body)
-    .expect(400, /no values provided for ids/);
+    .expect(400, /no values provided for granules/);
 
   t.true(asyncOperationStartStub.notCalled);
 });
@@ -315,7 +319,12 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
   const { asyncOperationStartStub } = t.context;
 
   const body = {
-    ids: ['granule-1'],
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     forceRemoveFromCmr: 'true',
   };
 
@@ -332,7 +341,12 @@ test.serial('POST /granules/bulkDelete returns a 400 when forceRemoveFromCmr is 
 test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is not an integer', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const body = {
-    ids: ['granule-1'],
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     maxDbConnections: 'one hundred',
   };
 
@@ -349,7 +363,12 @@ test.serial('POST /granules/bulkDelete returns a 400 when maxDbConnections is no
 test.serial('POST /granules/bulkDelete returns a 400 when concurrency is not an integer', async (t) => {
   const { asyncOperationStartStub } = t.context;
   const body = {
-    ids: ['granule-1'],
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
     concurrency: 'one hundred',
   };
 
@@ -379,7 +398,12 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking St
   );
 
   const body = {
-    ids: [randomString()],
+    granules: [
+      {
+        granuleId: 'MOD09GQ.A8592978.nofTNT.006.4914003503063',
+        collectionId: 'name___version',
+      },
+    ],
   };
 
   const response = await request(app)
@@ -390,11 +414,9 @@ test.serial('request to /granules/bulkDelete endpoint returns 500 if invoking St
   t.is(response.status, 500);
 });
 
-test.serial('POST /granules/bulkDelete starts an async-operation with a large list of IDs as input', async (t) => {
-  const expectedIds = generateListOfGranules();
-
+test.serial('POST /granules/bulkDelete starts an async-operation with a large list of granules as input', async (t) => {
   const body = {
-    ids: expectedIds,
+    granules: generateListOfGranules(),
     forceRemoveFromCmr: true,
   };
 

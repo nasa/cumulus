@@ -19,9 +19,6 @@ resource "aws_lambda_function" "fallback_consumer" {
   }
   environment {
     variables = {
-      CollectionsTable = var.dynamo_tables.collections.name
-      ProvidersTable   = var.dynamo_tables.providers.name
-      RulesTable       = var.dynamo_tables.rules.name
       stackName        = var.prefix
       system_bucket    = var.system_bucket
     }
@@ -105,9 +102,6 @@ resource "aws_lambda_function" "manual_consumer" {
   environment {
     variables = {
       stackName                = var.prefix
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
-      RulesTable               = var.dynamo_tables.rules.name
       system_bucket            = var.system_bucket
       FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
@@ -138,9 +132,6 @@ resource "aws_lambda_function" "message_consumer" {
   environment {
     variables = {
       stackName                = var.prefix
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
-      RulesTable               = var.dynamo_tables.rules.name
       system_bucket            = var.system_bucket
       FallbackTopicArn         = aws_sns_topic.kinesis_fallback.arn
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
@@ -174,8 +165,6 @@ resource "aws_lambda_function" "schedule_sf" {
   }
   environment {
     variables = {
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
       stackName                = var.prefix
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
@@ -237,7 +226,6 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
     variables = {
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
       stackName                   = var.prefix
-      ExecutionsTable             = var.dynamo_tables.executions.name
       reporting_queue_url         = var.sf_event_sqs_to_db_records_sqs_queue_url
     }
   }
@@ -322,9 +310,6 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   environment {
     variables = {
       stackName                = var.prefix
-      CollectionsTable         = var.dynamo_tables.collections.name
-      ProvidersTable           = var.dynamo_tables.providers.name
-      RulesTable               = var.dynamo_tables.rules.name
       system_bucket            = var.system_bucket
       defaultSchedulerQueueUrl = local.defaultSchedulerQueueUrl
     }
