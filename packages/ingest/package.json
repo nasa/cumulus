@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/ingest",
-  "version": "15.0.1",
+  "version": "15.0.2",
   "description": "Ingest utilities",
   "engines": {
     "node": ">=16.19.0"
@@ -38,13 +38,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.1",
-    "@cumulus/common": "15.0.1",
-    "@cumulus/db": "15.0.1",
-    "@cumulus/errors": "15.0.1",
-    "@cumulus/logger": "15.0.1",
-    "@cumulus/message": "15.0.1",
-    "@cumulus/sftp-client": "15.0.1",
+    "@cumulus/aws-client": "15.0.2",
+    "@cumulus/common": "15.0.2",
+    "@cumulus/db": "15.0.2",
+    "@cumulus/errors": "15.0.2",
+    "@cumulus/logger": "15.0.2",
+    "@cumulus/message": "15.0.2",
+    "@cumulus/sftp-client": "15.0.2",
     "aws-sdk": "^2.585.0",
     "cksum": "^1.3.0",
     "encodeurl": "^1.0.2",
@@ -60,9 +60,9 @@
     "tough-cookie": "~4.0.0"
   },
   "devDependencies": {
-    "@cumulus/checksum": "15.0.1",
-    "@cumulus/cmrjs": "15.0.1",
-    "@cumulus/test-data": "15.0.1",
-    "@cumulus/types": "15.0.1"
+    "@cumulus/checksum": "15.0.2",
+    "@cumulus/cmrjs": "15.0.2",
+    "@cumulus/test-data": "15.0.2",
+    "@cumulus/types": "15.0.2"
   }
 }
