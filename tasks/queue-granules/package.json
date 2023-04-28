@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-granules",
-  "version": "15.0.2",
+  "version": "15.0.3",
   "description": "Add discovered granules to the queue",
   "main": "index.js",
   "directories": {
@@ -31,13 +31,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "15.0.2",
-    "@cumulus/aws-client": "15.0.2",
-    "@cumulus/collection-config-store": "15.0.2",
-    "@cumulus/common": "15.0.2",
+    "@cumulus/api-client": "15.0.3",
+    "@cumulus/aws-client": "15.0.3",
+    "@cumulus/collection-config-store": "15.0.3",
+    "@cumulus/common": "15.0.3",
     "@cumulus/cumulus-message-adapter-js": "2.0.4",
-    "@cumulus/ingest": "15.0.2",
-    "@cumulus/message": "15.0.2",
+    "@cumulus/ingest": "15.0.3",
+    "@cumulus/message": "15.0.3",
     "lodash": "^4.17.21",
     "p-map": "^4.0.0"
   }

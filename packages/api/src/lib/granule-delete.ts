@@ -126,11 +126,13 @@ const deleteGranuleAndFiles = async (params: {
         await granulePgModel.delete(trx, {
           cumulus_id: pgGranule.cumulus_id,
         });
-        await granuleModelClient.delete(dynamoGranule);
+        if (dynamoGranule) {
+          await granuleModelClient.delete(dynamoGranule);
+        }
         await deleteGranule({
           esClient,
-          granuleId: dynamoGranule.granuleId,
-          collectionId: dynamoGranule.collectionId,
+          granuleId: pgGranule.granule_id,
+          collectionId: granuleToPublishToSns.collectionId,
           index: process.env.ES_INDEX,
           ignore: [404],
         });
@@ -145,7 +147,7 @@ const deleteGranuleAndFiles = async (params: {
         deletedFiles: files,
       };
     } catch (error) {
-      logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(dynamoGranule.files)}: ${JSON.stringify(error)}`);
+      logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${JSON.stringify(error)}`);
       // Delete is idempotent, so there may not be a DynamoDB
       // record to recreate
       if (dynamoGranule) {
