@@ -302,7 +302,7 @@ const patchGranule = async (req, res) => {
  */
 function _granulePayloadMatchesQueryParams(body, req) {
   if (
-    body.granuleId === req.params.granuleName
+    body.granuleId === req.params.granuleId
     && body.collectionId === req.params.collectionId
   ) {
     return true;
@@ -323,10 +323,10 @@ async function put(req, res) {
     body.collectionId = req.params.collectionId;
   }
   if (!body.granuleId) {
-    body.granuleId = req.params.granuleName;
+    body.granuleId = req.params.granuleId;
   }
   if (!_granulePayloadMatchesQueryParams(body, req)) {
-    return res.boom.badRequest(`inputs :granuleName and :collectionId (${req.params.granuleName} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`);
+    return res.boom.badRequest(`inputs :granuleId and :collectionId (${req.params.granuleId} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`);
   }
   // Nullify fields not passed in - we want to remove anything not specified by the user
   const nullifiedGranuleTemplate = Object.keys(
@@ -506,17 +506,17 @@ async function patchByGranuleId(req, res) {
   const action = body.action;
 
   if (!action) {
-    if (req.body.granuleId === req.params.granuleName) {
+    if (req.body.granuleId === req.params.granuleId) {
       return patchGranule(req, res);
     }
     return res.boom.badRequest(
-      `input :granuleName (${req.params.granuleName}) must match body's granuleId (${req.body.granuleId})`
+      `input :granuleId (${req.params.granuleId}) must match body's granuleId (${req.body.granuleId})`
     );
   }
 
   const pgGranule = await getUniqueGranuleByGranuleId(
     knex,
-    req.params.granuleName,
+    req.params.granuleId,
     granulePgModel
   );
 
@@ -553,7 +553,7 @@ async function patch(req, res) {
       return patchGranule(req, res);
     }
     return res.boom.badRequest(
-      `inputs :granuleName and :collectionId (${req.params.granuleName} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
+      `inputs :granuleId and :collectionId (${req.params.granuleId} and ${req.params.collectionId}) must match body's granuleId and collectionId (${req.body.granuleId} and ${req.body.collectionId})`
     );
   }
 
@@ -562,7 +562,7 @@ async function patch(req, res) {
       knex,
       collectionPgModel,
       granulePgModel,
-      req.params.granuleName,
+      req.params.granuleId,
       req.params.collectionId
     );
 
@@ -581,7 +581,7 @@ async function patch(req, res) {
  * @returns {Promise<Object>} promise of an express response object
  */
 const associateExecution = async (req, res) => {
-  const granuleName = req.params.granuleName;
+  const granuleName = req.params.granuleId;
 
   const { collectionId, granuleId, executionArn } = req.body || {};
   if (!granuleId || !collectionId || !executionArn) {
@@ -693,7 +693,7 @@ async function delByGranuleId(req, res) {
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
   log.info(`granules.del ${granuleId}`);
 
   let pgGranule;
@@ -751,7 +751,7 @@ async function del(req, res) {
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
   const collectionId = req.params.collectionId;
 
   log.info(
@@ -822,7 +822,7 @@ async function get(req, res) {
     granulePgModel = new GranulePgModel(),
   } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
   const collectionId = req.params.collectionId;
 
   let granule;
@@ -877,7 +877,7 @@ async function get(req, res) {
 async function getByGranuleId(req, res) {
   const { knex = await getKnexClient() } = req.testContext || {};
   const { getRecoveryStatus } = req.query;
-  const granuleId = req.params.granuleName;
+  const granuleId = req.params.granuleId;
 
   let granule;
 
@@ -1075,14 +1075,14 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
-router.get('/:granuleName', getByGranuleId);
-router.get('/:collectionId/:granuleName', get);
+router.get('/:granuleId', getByGranuleId);
+router.get('/:collectionId/:granuleId', get);
 router.get('/', list);
-router.post('/:granuleName/executions', associateExecution);
+router.post('/:granuleId/executions', associateExecution);
 router.post('/', create);
-router.patch('/:granuleName', requireApiVersion(2), patchByGranuleId);
-router.patch('/:collectionId/:granuleName', requireApiVersion(2), patch);
-router.put('/:collectionId/:granuleName', requireApiVersion(2), put);
+router.patch('/:granuleId', requireApiVersion(2), patchByGranuleId);
+router.patch('/:collectionId/:granuleId', requireApiVersion(2), patch);
+router.put('/:collectionId/:granuleId', requireApiVersion(2), put);
 
 router.post(
   '/bulk',
@@ -1102,8 +1102,8 @@ router.post(
   bulkReingest,
   asyncOperationEndpointErrorHandler
 );
-router.delete('/:granuleName', delByGranuleId);
-router.delete('/:collectionId/:granuleName', del);
+router.delete('/:granuleId', delByGranuleId);
+router.delete('/:collectionId/:granuleId', del);
 
 module.exports = {
   bulkDelete,

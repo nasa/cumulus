@@ -30,7 +30,6 @@ const { bulkDelete } = require('../../../endpoints/granules');
 const { buildFakeExpressResponse } = require('../utils');
 
 test.before(async () => {
-  process.env.AsyncOperationsTable = randomString();
   process.env.AsyncOperationTaskDefinition = randomString();
   process.env.BulkOperationLambda = randomString();
   process.env.EcsCluster = randomString();

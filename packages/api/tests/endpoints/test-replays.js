@@ -30,7 +30,6 @@ let jwtAuthToken;
 const envs = {
   TOKEN_SECRET: randomString(),
   AccessTokensTable: randomString(),
-  AsyncOperationsTable: randomString(),
   EcsCluster: randomString(),
   FallbackTopicArn: randomString(),
   ManualConsumerLambda: randomString(),
