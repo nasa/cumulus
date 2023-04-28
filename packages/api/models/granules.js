@@ -13,6 +13,7 @@ const {
   DeletePublishedGranule,
   ValidationError,
 } = require('@cumulus/errors');
+const { RecordDoesNotExist } = require('@cumulus/errors');
 const {
   generateMoveFileParams,
 } = require('@cumulus/ingest/granule');
@@ -481,6 +482,19 @@ class Granule extends Manager {
       logger.error(`Could not describe execution ${executionArn}`, error);
     }
     return executionDescription;
+  }
+
+  async update(itemKeys, updates = {}, fieldsToDelete = []) {
+    let granule;
+    try {
+      granule = await super.update(itemKeys, updates, fieldsToDelete);
+    } catch (error) {
+      if (!(error instanceof RecordDoesNotExist)) {
+        throw error;
+      }
+      logger.info(`Granule record ${JSON.stringify(itemKeys)} does not exist.`);
+    }
+    return granule;
   }
 }
 
