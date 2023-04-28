@@ -199,6 +199,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Cumulus logo can be seen when scrolling down.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
+  - Add updated arch diagram for both themes.
 
 ## [v15.0.1] 2023-04-20
 
