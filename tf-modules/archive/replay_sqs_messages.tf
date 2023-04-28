@@ -51,6 +51,7 @@ resource "aws_iam_role_policy" "replay_sqs_messages_role_policy" {
 }
 
 resource "aws_lambda_function" "replay_sqs_messages" {
+  depends_on       = [aws_cloudwatch_log_group.replay_sqs_messages]
   filename         = "${path.module}/../../packages/api/dist/replaySqsMessages/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/replaySqsMessages/lambda.zip")
   function_name    = "${var.prefix}-replaySqsMessages"
@@ -82,7 +83,7 @@ resource "aws_lambda_function" "replay_sqs_messages" {
 }
 
 resource "aws_cloudwatch_log_group" "replay_sqs_messages" {
-  name = "/aws/lambda/${aws_lambda_function.replay_sqs_messages.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_replay_sqs_messages_log_retention", var.default_log_retention_days)
+  name = "/aws/lambda/${var.prefix}-replaySqsMessages"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "replaySqsMessages", var.default_log_retention_days)
   tags = var.tags
 }
