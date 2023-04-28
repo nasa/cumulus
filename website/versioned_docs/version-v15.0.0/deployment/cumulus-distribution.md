@@ -6,12 +6,6 @@ hide_title: false
 
 The Cumulus Distribution API is a set of endpoints that can be used to enable AWS Cognito authentication when downloading data from S3.
 
-:::tip
-
-If you need to access our quick reference materials while setting up or continuing to manage your API access go to the [Cumulus Distribution API Docs](https://nasa.github.io/cumulus-distribution-api/).
-
-:::
-
 ## Configuring a Cumulus Distribution Deployment
 
 The Cumulus Distribution API is included in the main [Cumulus](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus_distribution) repo. It is available as part of the `terraform-aws-cumulus.zip` archive in the [latest release](https://github.com/nasa/cumulus/releases).
@@ -127,11 +121,7 @@ To determine your EC2 instance ID for your Cumulus deployment, run the follow co
 aws --profile <profile> ec2 describe-instances --filters Name=tag:Deployment,Values=<prefix> Name=instance-state-name,Values=running --query "Reservations[0].Instances[].InstanceId" --output text
 ```
 
-:::caution Connect to NASA VPN
-
-Before proceeding with the remaining steps, make sure you are connected to the NASA VPN.
-
-:::
+> ⚠️ **IMPORTANT**: Before proceeding with the remaining steps, make sure you're connected to the NASA VPN.
 
 Use the value output from the command above in place of `<id>` in the following command, which will start an SSM session:
 
@@ -214,11 +204,7 @@ The configuration file is a simple JSON mapping of the form:
 }
 ```
 
-:::note cumulus bucket mapping
-
-Cumulus only supports a one-to-one mapping of bucket -> Cumulus Distribution path for 'distribution' buckets. Also, the bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors.
-
-:::
+> ⚠️ **Note**: Cumulus only supports a one-to-one mapping of bucket -> Cumulus Distribution path for 'distribution' buckets. Also, the bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors.
 
 ## Switching from the Thin Egress App to Cumulus Distribution
 
@@ -226,4 +212,4 @@ If you have previously deployed the [Thin Egress App (TEA)](../deployment/thin-e
 
 Note, however, that the `cumulus_distribution` module will generate a bucket map cache and overwrite any existing bucket map caches created by TEA.
 
-There will also be downtime while your API Gateway is updated.
+There will also be downtime while your API gateway is updated.

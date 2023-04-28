@@ -1,10 +1,10 @@
 ---
 id: rerunning-workflow-executions
-title: Rerunning workflow executions
+title: Re-running workflow executions
 hide_title: false
 ---
 
-To rerun a Cumulus workflow execution from the AWS console:
+To re-run a Cumulus workflow execution from the AWS console:
 
 1. Visit the page for an individual workflow execution
 2. Click the "New execution" button at the top right of the screen

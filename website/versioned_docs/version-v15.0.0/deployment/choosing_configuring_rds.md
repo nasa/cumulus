@@ -1,6 +1,6 @@
 ---
 id: choosing_configuring_rds
-title: "RDS: Choosing and Configuring Your Database Type"
+title: Choosing and Configuration Your RDS Database
 hide_title: false
 ---
 
@@ -72,15 +72,3 @@ the cluster minimum and maximum capacity, and more as seen in the [supported var
 
 Unfortunately, Terraform currently doesn't allow specifying the autoscaling timeout itself, so
 that value will have to be manually configured in the AWS console or CLI.
-
-## Optional: Manage RDS Database with pgAdmin
-
-### Setup SSM Port Forwarding
-
-:::note
-
-In order to perform this action you will need to deploy it within a VPC and have the credentials to access via NGAP protocols.
-
-:::
-
-For a walkthrough guide on how to utilize AWS's Session Manager for port forwarding to access the Cumulus RDS database go to the [Accessing Cumulus RDS database via SSM Port Forwarding](https://wiki.earthdata.nasa.gov/display/CUMULUS/Accessing+Cumulus+RDS+database+via+SSM+Port+Forwarding) article.

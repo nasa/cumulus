@@ -1,6 +1,6 @@
 ---
 id: workflows-readme
-title: Workflows Overview
+title: Workflows
 hide_title: false
 ---
 
