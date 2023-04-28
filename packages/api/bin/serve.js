@@ -1,7 +1,5 @@
 'use strict';
 
-const pLimit = require('p-limit');
-const pRetry = require('p-retry');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3, sns, systemsManager } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
