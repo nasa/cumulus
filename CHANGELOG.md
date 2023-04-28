@@ -195,6 +195,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
 
+## [v15.0.2] 2023-04-28
+
 ### Fixed
 
 - **CUMULUS-3120**
