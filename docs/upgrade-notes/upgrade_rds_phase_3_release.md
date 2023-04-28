@@ -14,7 +14,7 @@ To update to this release (and beyond) users must:
 
 - Have deployed a release of at least version 11.0.0 (preferably at least the latest supported minor version in the 11.1.x release series), having successfully completed the transition to using PostgreSQL as the primary datastore in release 11
 - Completed evaluation of the primary datastore for data irregularities that might be resolved by re-migration of data from the DynamoDB datastores.
-- Review the CHANGELOG for any migration instructions/changes between this release and the release you're upgrading from.
+- Review the CHANGELOG for any migration instructions/changes between (and including) this release and the release you're upgrading from.
   **Complete migration instructions from the previous release series should be included in release notes/CHANGELOG for this release**, this document notes migration instructions specifically for release 16.0.0+, and is not all-inclusive if upgrading from multiple prior release versions.
 - Configure your deployment terraform environment to utilize the new release, noting all migration instructions.
 - The PostgreSQL database cluster should be updated to the supported version (Aurora Postgres 11.13+ compatible)
@@ -25,7 +25,7 @@ In addition to the above requirements, we suggest users:
 
 - Retain a backup of the primary DynamoDB datastore in case of recovery/integrity concerns exist between DynamoDB and PostgreSQL.
 
-   This should only be considered if remediation/re-migration from DynamoDB has recently occurred, specifically from the following tickets:
+   This should only be considered if remediation/re-migration from DynamoDB has recently occurred, specifically due to the issues reported in the following tickets:
 
   - CUMULUS-3019
   - CUMULUS-3024
