@@ -110,14 +110,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
-  - **CUMULUS-3008**
-    - Remove DynamoDB Collections table
-  - **CUMULUS-2798**
-    - Removed AsyncOperations model
-  - **CUMULUS-3009**
-    - Removed Dynamo PDRs table
-  - **CUMULUS-3226**
-    - Removed Dynamo Async Operations table
 
 #### Added
 
@@ -203,10 +195,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 9f230a027c (CUMULUS-3121/3120 (#3360))
 ## [v15.0.2] 2023-04-28
 
 ### Fixed
@@ -216,12 +204,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
   to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods
   - Updated cloudwatch retention documentation to reflect the bugfix changes
 
-
-<<<<<<< HEAD
-=======
->>>>>>> 7783e5b3f91cee55d4ff0629ecf1d18e06ecd27e
-=======
->>>>>>> 9f230a027c (CUMULUS-3121/3120 (#3360))
 ## [v15.0.1] 2023-04-20
 
 ### Changed
