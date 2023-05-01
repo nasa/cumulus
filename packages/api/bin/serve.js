@@ -61,38 +61,6 @@ async function populateBucket(bucket, stackName) {
   await Promise.all([...workflowPromises, templatePromise]);
 }
 
-async function setTableEnvVariables(stackName) {
-  const tableModels = Object
-    .keys(models)
-    .filter((tableModel) => tableModel !== 'Manager');
-
-  // generate table names
-  const tableMapKeys = tableModels
-    .map((tableModel) => `${tableModel}sTable`);
-
-  // set table env variables
-  const tableNamesMap = {};
-  const TableNames = tableMapKeys.map((tableNameKey) => {
-    const tableName = `${stackName}-${tableNameKey}`;
-    tableNamesMap[tableNameKey] = tableName;
-    process.env[tableNameKey] = tableName;
-    return process.env[tableNameKey];
-  });
-
-  const dynamoTableNamesParameterName = `${stackName}-dynamo-tables`;
-  process.env.dynamoTableNamesParameterName = dynamoTableNamesParameterName;
-  await systemsManager().putParameter({
-    Name: dynamoTableNamesParameterName,
-    Value: JSON.stringify(tableNamesMap),
-    Overwrite: true,
-  }).promise();
-
-  return {
-    tableModels,
-    TableNames,
-  };
-}
-
 async function prepareServices(stackName, bucket) {
   setLocalEsVariables(stackName);
   console.log(process.env.ES_HOST);
@@ -160,7 +128,7 @@ async function initializeLocalElasticsearch(stackName) {
 }
 
 /**
- * Fill dynamo, postgres and elastic with fake records for testing.
+ * Fill Postgres annd Elasticsearch with fake records for testing.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {string} user - username
  * @param {Object} knexOverride - Used to override knex object for testing
@@ -251,7 +219,7 @@ async function createDBRecords(stackName, user, knexOverride) {
  * @param {string} user - A username to add as an authorized user for the API.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {bool} reseed - boolean to control whether to load new data into
- *                        dynamo and elastic search.
+ *                        Postgres and Elasticsearch.
  */
 async function serveApi(user, stackName = localStackName, reseed = true) {
   const port = process.env.PORT || 5001;
@@ -288,7 +256,6 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     }
   } else {
     checkEnvVariablesAreSet(requiredEnvVars);
-    await setTableEnvVariables(process.env.stackName);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -323,15 +290,11 @@ async function serveDistributionApi(stackName = localStackName, done) {
 
     checkEnvVariablesAreSet(requiredEnvVars);
 
-    // create tables if not already created
-    await checkOrCreateTables(stackName);
-
     await prepareServices(stackName, process.env.system_bucket);
     await populateBucket(process.env.system_bucket, stackName);
     await createDBRecords(stackName);
   } else {
     checkEnvVariablesAreSet(requiredEnvVars);
-    await setTableEnvVariables(stackName);
   }
 
   console.log(`Starting server on port ${port}`);
@@ -368,42 +331,14 @@ async function erasePostgresTables(knex) {
 }
 
 /**
- * erase all dynamoDB tables
- * @param {string} stackName - stack name (generally 'localrun')
- * @param {string} systemBucket - system bucket (generally 'localbucket')
- */
-async function eraseDynamoTables(stackName, systemBucket) {
-  setTableEnvVariables(stackName);
-  process.env.system_bucket = systemBucket;
-  process.env.stackName = stackName;
-
-  // Remove all data from tables
-  const rulesModel = new models.Rule();
-  const executionModel = new models.Execution();
-  const granulesModel = new models.Granule();
-
-  try {
-    await rulesModel.deleteRules();
-    await Promise.allSettled([
-      executionModel.deleteExecutions(),
-      granulesModel.deleteGranules(),
-    ]);
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-/**
- * Erases DynamoDB tables and resets Elasticsearch
+ * Resets Elasticsearch
  *
  * @param {string} stackName - defaults to local stack, 'localrun'
  * @param {string} systemBucket - defaults to 'localbucket'
  */
-async function eraseDataStack(
-  stackName = localStackName,
-  systemBucket = localSystemBucket
+function eraseDataStack(
+  stackName = localStackName
 ) {
-  await eraseDynamoTables(stackName, systemBucket);
   return initializeLocalElasticsearch(stackName);
 }
 
@@ -418,12 +353,10 @@ async function eraseDataStack(
 async function resetTables(
   user = localUserName,
   stackName = localStackName,
-  systemBucket = localSystemBucket,
   runIt = false
 ) {
   if (inTestMode() || runIt) {
     const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
-    await eraseDynamoTables(stackName, systemBucket);
     await erasePostgresTables(knex);
     await createDBRecords(stackName, user, knex);
   }

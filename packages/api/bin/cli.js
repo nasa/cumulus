@@ -72,7 +72,7 @@ program
   .option('--stack-name <stackName>', 'Name of stack', 'localrun')
   .option('--system-bucket <systemBucket>', 'Name of systemBucket', 'localbucket')
   .option('--run-it', 'Override check for TestMode and run commands.')
-  .description('Resets dynamodb tables for testing')
+  .description('Resets Postgres tables for testing')
   .action((cmd) => {
     resetTables(cmd.username, cmd.stackName, cmd.systemBucket, cmd.runIt)
       .catch(console.error);
