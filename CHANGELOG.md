@@ -209,7 +209,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 - **CUMULUS-3120**
   - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
-  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods
+  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
   - Updated cloudwatch retention documentation to reflect the bugfix changes
 
 ## [v15.0.1] 2023-04-20
