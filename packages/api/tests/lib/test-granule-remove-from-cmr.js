@@ -114,14 +114,6 @@ test('unpublishGranule() removing a granule from CMR succeeds if the granule is 
   await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
 
   t.like(
-    await t.context.granulesModel.get({ granuleId: originalPgGranule.granule_id }),
-    {
-      published: false,
-      cmrLink: undefined,
-    }
-  );
-
-  t.like(
     await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
     {
       published: false,
