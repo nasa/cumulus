@@ -199,6 +199,16 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
 
+## [v15.0.2] 2023-04-28
+
+### Fixed
+
+- **CUMULUS-3120**
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods
+  - Updated cloudwatch retention documentation to reflect the bugfix changes
+
+
 ## [v15.0.1] 2023-04-20
 
 ### Changed
@@ -7116,7 +7126,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.2...HEAD
+[v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
 [v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
