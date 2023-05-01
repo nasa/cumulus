@@ -159,6 +159,8 @@ module "cumulus" {
   es_index_shards                           = var.es_index_shards
 
   dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
   # Archive API settings
   token_secret = var.token_secret

@@ -69,11 +69,11 @@ csdap_host_url = "csdap host url"
 deploy_cumulus_distribution = true
 
 # Optional, uncomment if needed, these variables are for configuring the cloudwatch log group's retention periods
+# default_log_retention_days = 30
 # cloudwatch_log_retention_periods = {
-#   <module>_<cloudwatch_log_group_name>_log_retention = 365
+#   <lambda function or task name> = 365
 # }
 #
-# default_log_retention_days = 30
 
 # Optional. Uncomment if using Cumulus Distribution.
 # toggle this after deployed to put the correct port in. (and hosts and config)
