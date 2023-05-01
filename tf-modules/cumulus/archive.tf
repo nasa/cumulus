@@ -14,6 +14,9 @@ module "archive" {
   async_operation_image = var.async_operation_image
   ecs_cluster_name      = aws_ecs_cluster.default.name
 
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+
   elasticsearch_client_config               = var.elasticsearch_client_config
   elasticsearch_domain_arn                  = var.elasticsearch_domain_arn
   elasticsearch_hostname                    = var.elasticsearch_hostname
