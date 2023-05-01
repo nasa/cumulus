@@ -40,63 +40,58 @@ async function createGranuleInventoryReport(recReportParams) {
   ];
 
   const { reportKey, systemBucket } = recReportParams;
-  try {
-    const searchParams = convertToDBGranuleSearchParams(recReportParams);
+  const searchParams = convertToDBGranuleSearchParams(recReportParams);
 
-    const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+  const granulesSearchQuery = getGranulesByApiPropertiesQuery(
+    recReportParams.knex,
+    searchParams,
+    ['collectionName', 'collectionVersion', 'granule_id']
+  );
+  const pgGranulesSearchClient = new QuerySearchClient(
+    granulesSearchQuery,
+    100 // arbitrary limit on how items are fetched at once
+  );
+
+  let nextGranule = await pgGranulesSearchClient.peek();
+
+  const readable = new Stream.Readable({ objectMode: true });
+  const pass = new Stream.PassThrough();
+  readable._read = noop;
+  const transformOpts = { objectMode: true };
+
+  const json2csv = new Transform({ fields }, transformOpts);
+  readable.pipe(json2csv).pipe(pass);
+
+  const promisedObject = promiseS3Upload({
+    params: {
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: pass,
+    },
+  });
+  while (nextGranule) {
+    // eslint-disable-next-line no-await-in-loop
+    const apiGranule = await translatePostgresGranuleResultToApiGranule(
       recReportParams.knex,
-      searchParams,
-      ['collectionName', 'collectionVersion', 'granule_id']
+      nextGranule
     );
-    const pgGranulesSearchClient = new QuerySearchClient(
-      granulesSearchQuery,
-      100 // arbitrary limit on how items are fetched at once
-    );
-
-    let nextGranule = await pgGranulesSearchClient.peek();
-
-    const readable = new Stream.Readable({ objectMode: true });
-    const pass = new Stream.PassThrough();
-    readable._read = noop;
-    const transformOpts = { objectMode: true };
-
-    const json2csv = new Transform({ fields }, transformOpts);
-    readable.pipe(json2csv).pipe(pass);
-
-    const promisedObject = promiseS3Upload({
-      params: {
-        Bucket: systemBucket,
-        Key: reportKey,
-        Body: pass,
-      },
+    readable.push({
+      granuleUr: apiGranule.granuleId,
+      collectionId: apiGranule.collectionId,
+      createdAt: new Date(apiGranule.createdAt).toISOString(),
+      startDateTime: apiGranule.beginningDateTime || '',
+      endDateTime: apiGranule.endingDateTime || '',
+      status: apiGranule.status,
+      updatedAt: new Date(apiGranule.updatedAt).toISOString(),
+      published: apiGranule.published,
+      provider: apiGranule.provider,
     });
-    while (nextGranule) {
-      // eslint-disable-next-line no-await-in-loop
-      const apiGranule = await translatePostgresGranuleResultToApiGranule(
-        recReportParams.knex,
-        nextGranule
-      );
-      readable.push({
-        granuleUr: apiGranule.granuleId,
-        collectionId: apiGranule.collectionId,
-        createdAt: new Date(apiGranule.createdAt).toISOString(),
-        startDateTime: apiGranule.beginningDateTime || '',
-        endDateTime: apiGranule.endingDateTime || '',
-        status: apiGranule.status,
-        updatedAt: new Date(apiGranule.updatedAt).toISOString(),
-        published: apiGranule.published,
-        provider: apiGranule.provider,
-      });
-      await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
-      nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
-    }
-    readable.push(null);
-
-    return promisedObject;
-  } catch (error) {
-    log.error(`Error caught in createGranuleInventoryReport. ${error}`);
-    throw error;
+    await pgGranulesSearchClient.shift(); // eslint-disable-line no-await-in-loop
+    nextGranule = await pgGranulesSearchClient.peek(); // eslint-disable-line no-await-in-loop
   }
+  readable.push(null);
+
+  return promisedObject;
 }
 
 exports.createGranuleInventoryReport = createGranuleInventoryReport;

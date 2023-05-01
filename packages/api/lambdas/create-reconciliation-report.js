@@ -200,72 +200,67 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
   const okCountByGranule = {};
 
   log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
-  try {
-    log.info('Comparing PostgreSQL to S3');
-    let [nextS3Object, nextPgItem] = await Promise.all([
-      s3ObjectsQueue.peek(),
-      pgFileSearchClient.peek(),
-    ]);
+  log.info('Comparing PostgreSQL to S3');
+  let [nextS3Object, nextPgItem] = await Promise.all([
+    s3ObjectsQueue.peek(),
+    pgFileSearchClient.peek(),
+  ]);
 
-    while (nextS3Object && nextPgItem) {
-      const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-      const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
+  while (nextS3Object && nextPgItem) {
+    const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
+    const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
 
-      if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
-        okCountByGranule[nextPgItem.granule_id] = 0;
-      }
-
-      if (nextS3Uri < nextPgFileUri) {
-        // Found an item that is only in S3 and not in PostgreSQL
-        if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
-        await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-      } else if (nextS3Uri > nextPgFileUri) {
-        // Found an item that is only in PostgreSQL and not in S3
-        const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
-        onlyInDb.push({
-          uri: buildS3Uri(Bucket, pgItem.key),
-          granuleId: pgItem.granule_id,
-        });
-      } else {
-        // Found an item that is in both S3 and PostgreSQL
-        okCount += 1;
-        if (linkFilesAndGranules) {
-          okCountByGranule[nextPgItem.granule_id] += 1;
-        }
-        await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-        await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
-      }
-
-      // eslint-disable-next-line no-await-in-loop
-      [nextS3Object, nextPgItem] = await Promise.all([
-        s3ObjectsQueue.peek(),
-        pgFileSearchClient.peek(),
-      ]);
+    if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
+      okCountByGranule[nextPgItem.granule_id] = 0;
     }
 
-    // Add any remaining S3 items to the report
-    log.info('Adding remaining S3 items to the report');
-    if (!oneWayBucketReport) {
-      while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
-        const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-        onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
-      }
-    }
-
-    // Add any remaining PostgreSQL items to the report
-    log.info('Adding remaining PostgreSQL items to the report');
-    while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
-      const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
+    if (nextS3Uri < nextPgFileUri) {
+      // Found an item that is only in S3 and not in PostgreSQL
+      if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
+      await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+    } else if (nextS3Uri > nextPgFileUri) {
+      // Found an item that is only in PostgreSQL and not in S3
+      const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDb.push({
         uri: buildS3Uri(Bucket, pgItem.key),
         granuleId: pgItem.granule_id,
       });
+    } else {
+      // Found an item that is in both S3 and PostgreSQL
+      okCount += 1;
+      if (linkFilesAndGranules) {
+        okCountByGranule[nextPgItem.granule_id] += 1;
+      }
+      await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+      await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
     }
-    log.info('Compare PostgreSQL to S3 completed');
-  } catch (error) {
-    log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}. ${error}`);
-    throw error;
+
+    // eslint-disable-next-line no-await-in-loop
+    [nextS3Object, nextPgItem] = await Promise.all([
+      s3ObjectsQueue.peek(),
+      pgFileSearchClient.peek(),
+    ]);
   }
+
+  // Add any remaining S3 items to the report
+  log.info('Adding remaining S3 items to the report');
+  if (!oneWayBucketReport) {
+    while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
+      const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+      onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+    }
+  }
+
+  // Add any remaining PostgreSQL items to the report
+  log.info('Adding remaining PostgreSQL items to the report');
+  while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
+    const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
+    onlyInDb.push({
+      uri: buildS3Uri(Bucket, pgItem.key),
+      granuleId: pgItem.granule_id,
+    });
+  }
+  log.info('Compare PostgreSQL to S3 completed');
 
   log.info(`createReconciliationReportForBucket ${Bucket} returning `
     + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `

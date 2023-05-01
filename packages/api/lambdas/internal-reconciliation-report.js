@@ -62,88 +62,83 @@ async function internalRecReportForCollections(recReportParams) {
   const collectionPgModel = new CollectionPgModel();
   const knex = recReportParams.knex || await getKnexClient();
 
-  try {
-    // get collections from database and sort them, since the scan result is not ordered
-    const [
-      updatedAtRangeParams,
-      dbSearchParams,
-    ] = convertToDBCollectionSearchObject(recReportParams);
+  // get collections from database and sort them, since the scan result is not ordered
+  const [
+    updatedAtRangeParams,
+    dbSearchParams,
+  ] = convertToDBCollectionSearchObject(recReportParams);
 
-    const dbCollectionsSearched = await collectionPgModel.searchWithUpdatedAtRange(
-      knex,
-      dbSearchParams,
-      updatedAtRangeParams
-    );
+  const dbCollectionsSearched = await collectionPgModel.searchWithUpdatedAtRange(
+    knex,
+    dbSearchParams,
+    updatedAtRangeParams
+  );
 
-    // TODO - improve this sort
-    const dbCollectionItems = sortBy(
-      filterDBCollections(dbCollectionsSearched, recReportParams),
-      ['name', 'version']
-    );
+  // TODO - improve this sort
+  const dbCollectionItems = sortBy(
+    filterDBCollections(dbCollectionsSearched, recReportParams),
+    ['name', 'version']
+  );
 
-    let okCount = 0;
-    const withConflicts = [];
-    let onlyInEs = [];
-    let onlyInDb = [];
+  let okCount = 0;
+  const withConflicts = [];
+  let onlyInEs = [];
+  let onlyInDb = [];
 
-    const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
-    let nextEsItem = await esCollectionsIterator.peek();
-    let nextDbItem = dbCollectionItems.length !== 0
-      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-      : undefined;
+  const fieldsIgnored = ['timestamp', 'updatedAt', 'createdAt'];
+  let nextEsItem = await esCollectionsIterator.peek();
+  let nextDbItem = dbCollectionItems.length !== 0
+    ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+    : undefined;
 
-    while (nextEsItem && nextDbItem) {
-      const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
-      const dbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
+  while (nextEsItem && nextDbItem) {
+    const esCollectionId = constructCollectionId(nextEsItem.name, nextEsItem.version);
+    const dbCollectionId = constructCollectionId(nextDbItem.name, nextDbItem.version);
 
-      if (esCollectionId < dbCollectionId) {
-        // Found an item that is only in ES and not in DB
-        onlyInEs.push(esCollectionId);
-        await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
-      } else if (esCollectionId > dbCollectionId) {
-        // Found an item that is only in DB and not in ES
-        onlyInDb.push(dbCollectionId);
-        dbCollectionItems.shift();
-      } else {
-        // Found an item that is in both ES and DB
-        if (
-          isEqual(
-            omit(nextEsItem, fieldsIgnored),
-            omit(
-              nextDbItem,
-              fieldsIgnored
-            )
+    if (esCollectionId < dbCollectionId) {
+      // Found an item that is only in ES and not in DB
+      onlyInEs.push(esCollectionId);
+      await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+    } else if (esCollectionId > dbCollectionId) {
+      // Found an item that is only in DB and not in ES
+      onlyInDb.push(dbCollectionId);
+      dbCollectionItems.shift();
+    } else {
+      // Found an item that is in both ES and DB
+      if (
+        isEqual(
+          omit(nextEsItem, fieldsIgnored),
+          omit(
+            nextDbItem,
+            fieldsIgnored
           )
-        ) {
-          okCount += 1;
-        } else {
-          withConflicts.push({ es: nextEsItem, db: nextDbItem });
-        }
-        await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
-        dbCollectionItems.shift();
+        )
+      ) {
+        okCount += 1;
+      } else {
+        withConflicts.push({ es: nextEsItem, db: nextDbItem });
       }
-
-      nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
-      nextDbItem = dbCollectionItems.length !== 0
-        ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
-        : undefined;
+      await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
+      dbCollectionItems.shift();
     }
 
-    // Add any remaining ES items to the report
-    onlyInEs = onlyInEs.concat(
-      (await esCollectionsIterator.empty())
-        .map((item) => constructCollectionId(item.name, item.version))
-    );
-
-    // Add any remaining DB items to the report
-    onlyInDb = onlyInDb
-      .concat(dbCollectionItems.map((item) => constructCollectionId(item.name, item.version)));
-
-    return { okCount, withConflicts, onlyInEs, onlyInDb };
-  } catch (error) {
-    log.error(`Error caught in internalRecReportForCollections. ${error}`);
-    throw error;
+    nextEsItem = await esCollectionsIterator.peek(); // eslint-disable-line no-await-in-loop
+    nextDbItem = dbCollectionItems.length !== 0
+      ? translatePostgresCollectionToApiCollection(dbCollectionItems[0])
+      : undefined;
   }
+
+  // Add any remaining ES items to the report
+  onlyInEs = onlyInEs.concat(
+    (await esCollectionsIterator.empty())
+      .map((item) => constructCollectionId(item.name, item.version))
+  );
+
+  // Add any remaining DB items to the report
+  onlyInDb = onlyInDb
+    .concat(dbCollectionItems.map((item) => constructCollectionId(item.name, item.version)));
+
+  return { okCount, withConflicts, onlyInEs, onlyInDb };
 }
 
 /**
