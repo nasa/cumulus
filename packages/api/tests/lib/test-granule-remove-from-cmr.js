@@ -103,20 +103,40 @@ test.after.always(async (t) => {
   });
 });
 
-test('unpublishGranule() removing a granule from CMR fails if the granule is not in CMR', async (t) => {
+test('unpublishGranule() removing a granule from CMR succeeds if the granule is not published to CMR', async (t) => {
   const {
     originalPgGranule,
     pgGranuleCumulusId,
-    collectionId,
   } = await createGranuleInPG(t, {
     published: false,
     cmrLink: undefined,
   });
-  try {
-    await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
-  } catch (error) {
-    t.is(error.message, `Granule ${originalPgGranule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
-  }
+  await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
+    {
+      published: false,
+      cmr_link: null,
+    }
+  );
+});
+
+test.serial('unpublishGranule() removing a granule from CMR succeeds if the granule is not in CMR', async (t) => {
+  const {
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInPG(t, {
+    published: true,
+    cmrLink: 'example.com',
+  });
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves(undefined);
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+  });
+
+  await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
 
   t.like(
     await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
