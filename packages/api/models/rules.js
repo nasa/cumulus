@@ -273,7 +273,7 @@ class Rule extends Manager {
     let newRuleItem = cloneDeep(ruleItem);
 
     // the default state is 'ENABLED'
-    if (!ruleItem.state) {
+    if (!ruleItem.state && ruleItem.state !== 'DISABLED') {
       newRuleItem.state = 'ENABLED';
     }
 
@@ -283,7 +283,9 @@ class Rule extends Manager {
     const payload = await Rule.buildPayload(newRuleItem);
     switch (newRuleItem.rule.type) {
     case 'onetime': {
-      await invoke(process.env.invoke, payload);
+      if (newRuleItem.state === 'ENABLED') {
+        await invoke(process.env.invoke, payload);
+      }
       break;
     }
     case 'scheduled': {

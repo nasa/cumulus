@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+- **CUMULUS-2985**
+  - Changed `onetime` rules with a `disabled` state to not execute immediately and updated docs to reflect this change
 
 ## [v15.0.0] 2023-03-10
 
