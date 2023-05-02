@@ -992,6 +992,39 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
 
+test.serial('deleteRuleResources() does not throw if a rule is passed in without a valid SNS subscription', async (t) => {
+  const {
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
+
+  // create rule trigger and rule
+  const snsRule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    provider: null,
+    collection: null,
+    state: 'ENABLED',
+  });
+
+  const ruleWithTrigger = await createRuleTrigger(snsRule);
+  const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+  const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
+
+  const origSnsCheck = await checkForSnsSubscriptions(ruleWithTrigger);
+  t.true(origSnsCheck.subExists);
+
+  await awsServices.sns().unsubscribe({ SubscriptionArn: ruleWithTrigger.rule.arn }).promise();
+  const snsCheck = await checkForSnsSubscriptions(ruleWithTrigger);
+  t.false(snsCheck.subExists);
+  await t.notThrowsAsync(deleteRuleResources(testKnex, ruleWithTrigger));
+});
+
 test.serial('deleteRuleResources() removes kinesis source mappings', async (t) => {
   const {
     rulePgModel,
