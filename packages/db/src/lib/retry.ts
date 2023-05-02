@@ -3,10 +3,10 @@
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 
-type PromiseReturnType<T> = T extends (method: any) => infer R ? Promise<R> : never;
+type PromiseReturnType<T> = T extends (method: Function) => infer R ? Promise<R> : never;
 
 export const RetryOnDbConnectionTerminateError = async <T>(
-  method: any,
+  method: Function,
   retryConfig?: pRetry.Options,
   log?: Logger): Promise<PromiseReturnType<T>> => {
   const logger = log || new Logger({ sender: '@cumulus/db/retry' });
@@ -24,11 +24,11 @@ export const RetryOnDbConnectionTerminateError = async <T>(
       }
     },
     {
-      ...retryConfig,
       retries: 3,
       onFailedAttempt: (e) => {
         logger.error(`Error ${e.message}. Attempt ${e.attemptNumber} failed.`);
       },
+      ...retryConfig,
     }
   );
 };
