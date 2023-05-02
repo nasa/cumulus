@@ -170,6 +170,9 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed `granuleFilesCacheUpdater` lambda
   - Removed dynamo files table from `data-persistence` module.  *This table and
     all of its data will be removed on deployment*.
+- **CUMULUS-3290**
+  - Removed Dynamo references from local API serve.js script
+  - Updated .python-version to include patch version
 
 ### Added
 - **CUMULUS-3072**
@@ -208,7 +211,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 ### Fixed
 
 - **CUMULUS-3120**
-  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods`
   to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
   - Updated cloudwatch retention documentation to reflect the bugfix changes
 
