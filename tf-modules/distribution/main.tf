@@ -21,6 +21,8 @@ module "tea_map_cache" {
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
   deploy_to_ngap             = var.deploy_to_ngap
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {

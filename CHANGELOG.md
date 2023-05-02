@@ -197,13 +197,36 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3024**
   - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
     `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
-
-### Removed
+- **CUMULUS-3209**
+  - Apply brand color with high contrast settings for both (light and dark) themes.
+  - Cumulus logo can be seen when scrolling down.
+  - "Back to Top" button matches the brand color for both themes.
+  - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
+  - Add updated arch diagram for both themes.
+  
+  ### Removed
 
 - **CUMULUS-3204**
   - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
   - Removed deleteOldEventSourceMappings from @cumulus/api/lib/rulesHelpers and
     refactored endpoint logic to use `deleteKinesisEventSources` instead.
+
+## [v15.0.3] 2023-04-28
+
+### Fixed
+
+- **CUMULUS-3243**
+  - Updated granule delete logic to delete granule which is not in DynamoDB
+  - Updated granule unpublish logic to handle granule which is not in DynamoDB and/or CMR
+
+## [v15.0.2] 2023-04-25
+
+### Fixed
+
+- **CUMULUS-3120**
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
+  - Updated cloudwatch retention documentation to reflect the bugfix changes
 
 ## [v15.0.1] 2023-04-20
 
@@ -7122,7 +7145,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.3...HEAD
+[v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
+[v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
 [v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
