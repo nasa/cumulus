@@ -654,15 +654,14 @@ test.serial('BasePgModel.searchWithUpdatedAtRange() retries with connection term
     // eslint-disable-next-line arrow-body-style
     () => {
       return {
-        select: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
-        where: sinon.stub().throws(new Error('Connection terminated unexpectedly')),
+        where: sinon.stub().rejects(new Error('Connection terminated unexpectedly')),
       };
     }
   );
 
   t.teardown(() => knexStub.restore());
 
-  await t.throwsAsync(
+  const error = await t.throwsAsync(
     basePgModel.searchWithUpdatedAtRange(
       knexStub,
       { info },
@@ -672,8 +671,9 @@ test.serial('BasePgModel.searchWithUpdatedAtRange() retries with connection term
       message: 'Connection terminated unexpectedly',
     }
   );
+  console.log(error);
 
-  t.is(knexStub.callCount, 4);
+  t.is(error.attemptNumber, 4);
 });
 
 test.serial('BasePgModel.paginateByCumulusId() returns paginatedValues', async (t) => {
