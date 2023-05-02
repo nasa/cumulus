@@ -1,12 +1,13 @@
 'use strict';
 
+import { Knex } from 'knex';
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 
 type PromiseReturnType<T> = T extends (method: Function) => infer R ? Promise<R> : never;
 
 export const RetryOnDbConnectionTerminateError = async <T>(
-  method: Function,
+  method: Function | Knex.QueryBuilder,
   retryConfig?: pRetry.Options,
   log?: Logger): Promise<PromiseReturnType<T>> => {
   const logger = log || new Logger({ sender: '@cumulus/db/retry' });
