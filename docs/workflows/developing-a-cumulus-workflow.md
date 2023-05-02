@@ -43,7 +43,11 @@ JSON
 
 In the above example, you would add your `state_machine_definition` using the [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html), using [tasks you've developed](developing-workflow-tasks) and [Cumulus core tasks](../tasks) that are made available as part of the `cumulus` terraform module.
 
-**Please note**: Cumulus follows the convention of tagging resources with the `prefix` variable `{ Deployment = var.prefix }` that you pass to the `cumulus` module.   For resources defined outside of Core, it's recommended that you adopt this convention as it makes resources and/or deployment recovery scenarios much easier to manage.
+:::note
+
+Cumulus follows the convention of tagging resources with the `prefix` variable `{ Deployment = var.prefix }` that you pass to the `cumulus` module.   For resources defined outside of Core, it's recommended that you adopt this convention as it makes resources and/or deployment recovery scenarios much easier to manage.
+
+:::
 
 ## Examples
 
