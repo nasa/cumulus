@@ -195,7 +195,15 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
 
-## [v15.0.2] 2023-04-28
+## [v15.0.3] 2023-04-28
+
+### Fixed
+
+- **CUMULUS-3243**
+  - Updated granule delete logic to delete granule which is not in DynamoDB
+  - Updated granule unpublish logic to handle granule which is not in DynamoDB and/or CMR
+
+## [v15.0.2] 2023-04-25
 
 ### Fixed
 
@@ -7121,8 +7129,9 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.2...HEAD
-[v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.2
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.3...HEAD
+[v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
+[v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
 [v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
