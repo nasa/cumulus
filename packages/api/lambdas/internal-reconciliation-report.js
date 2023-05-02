@@ -198,12 +198,10 @@ async function getCollectionsForGranules(recReportParams) {
     granuleIds,
   } = recReportParams;
   let dbCollectionIds = [];
-  try {
-    dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
-  } catch (error) {
-    log.error(`Error caught in getCollectionsForGranules. Error ${error}`);
-    throw error;
-  }
+  log.info('Getting collection IDs by Granule IDs');
+  dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
+
+  log.info('Completed getting collection IDs');
 
   const esGranulesIterator = new ESSearchQueue(
     { granuleId__in: granuleIds.join(','), sort_key: ['collectionId'], fields: ['collectionId'] }, 'granule', process.env.ES_INDEX
