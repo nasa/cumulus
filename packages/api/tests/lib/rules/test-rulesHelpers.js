@@ -994,7 +994,6 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
 
 test.serial('deleteRuleResources() does not throw if a rule is passed in without a valid SNS subscription', async (t) => {
   const {
-    rulePgModel,
     testKnex,
   } = t.context;
 
@@ -1013,9 +1012,6 @@ test.serial('deleteRuleResources() does not throw if a rule is passed in without
   });
 
   const ruleWithTrigger = await createRuleTrigger(snsRule);
-  const pgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
-  const [newPgRule] = await rulePgModel.create(testKnex, pgRule);
-
   const origSnsCheck = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(origSnsCheck.subExists);
 
