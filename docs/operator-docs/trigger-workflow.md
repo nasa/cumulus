@@ -10,7 +10,7 @@ To trigger a workflow, you need to [create a rule](../configuration/data-managem
 
 To trigger a [HelloWorld workflow](../data-cookbooks/hello-world) that does not need to discover or archive data, you just need to [create a rule](../configuration/data-management-types#create-a-rule).
 
-You can leave the provider and collection blank and do not need any additional metadata. If you create a `onetime` rule with an `ENABLED` state, the workflow execution will start momentarily and you can view its status on the Executions page.
+You can leave the provider and collection blank and do not need any additional metadata. If you create a `onetime` rule, the workflow execution will start momentarily and you can view its status on the Executions page unless it was created with a `DISABLED` state.
 
 ## Trigger an Ingest Workflow
 
@@ -95,4 +95,4 @@ In the rule meta, set the `provider_path` to `test-data`, so the `test-data` fol
 
 ![Screenshot of adding a Discover Granules rule](../assets/cd_add_discover_rule_form.png)
 
-A `onetime` rule with an `ENABLED` state will run your workflow on-demand and you can view it on the dashboard Executions page. The Cumulus Discover Granules workflow will trigger an ingest workflow and your ingested granules will be visible on the dashboard Granules page.
+A `onetime` rule will run your workflow on-demand and you can view it on the dashboard Executions page unless it has a `DISABLED` state. In order to run a workflow with a `onetime` `DISABLED` rule, please change the rule state to `ENABLED` and re-run. The Cumulus Discover Granules workflow will trigger an ingest workflow and your ingested granules will be visible on the dashboard Granules page.
