@@ -67,7 +67,11 @@ beginning of a Cumulus SIPS workflow:
 
 ![Screenshot of a Cumulus rule configuration](../assets/add_rule.png)
 
-**Note:** A list of configured workflows exists under the "Workflows" in the navigation bar on the Cumulus dashboard. Additionally, one can find a list of executions and their respective status in the "Executions" tab in the navigation bar.
+:::note
+
+A list of configured workflows exists under the "Workflows" in the navigation bar on the Cumulus dashboard. Additionally, one can find a list of executions and their respective status in the "Executions" tab in the navigation bar.
+
+:::
 
 ## DiscoverAndQueuePdrs Workflow
 
@@ -80,7 +84,11 @@ This workflow will discover PDRs and queue them to be processed. Duplicate PDRs 
 
 _An example workflow module configuration can be viewed in the Cumulus source for the [discover_and_queue_pdrs_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf)._
 
-_**Please note:** To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential._
+:::note
+
+To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential.
+
+:::
 
 ## ParsePdr Workflow
 
@@ -96,7 +104,11 @@ The lambdas below are included in the `cumulus` terraform module for use in your
 
 _An example workflow module configuration can be viewed in the Cumulus source for the [parse_pdr_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf)._
 
-_**Please note:** To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential._
+:::note
+
+To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential.
+
+:::
 
 ## IngestGranule Workflow
 
@@ -109,13 +121,21 @@ The lambdas below are included in the `cumulus` terraform module for use in your
 
 Additionally this workflow requires a processing step you must provide. The ProcessingStep step in the workflow picture below is an example of a custom processing step.
 
-**Note:** Using the CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
+:::tip
+
+Using the CmrStep is not required and can be left out of the processing trajectory if desired (for example, in testing situations).
+
+:::
 
 ![Screenshot of execution graph for SIPS IngestGranule workflow in AWS Step Functions console](../assets/sips-ingest-granule.png)
 
 _An example workflow module configuration can be viewed in the Cumulus source for the [ingest_and_publish_granule_workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.tf)._
 
-_**Please note:** To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential._
+:::note
+
+To use this example workflow module as a template for a new workflow in your deployment the `source` key for the workflow module would need to point to a release of the cumulus-workflow (terraform-aws-cumulus-workflow.zip) module on our [release](https://github.com/nasa/cumulus/releases) page, as all of the provided Cumulus workflows are internally self-referential.
+
+:::
 
 ## Summary
 
