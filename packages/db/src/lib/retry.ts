@@ -4,7 +4,9 @@ import { Knex } from 'knex';
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 
-type PromiseReturnType<T> = T extends (method: Promise<any> | Knex.QueryBuilder) => infer R ? Promise<R> : never;
+type PromiseReturnType<T> = T extends (
+  method: Promise<any> | Knex.QueryBuilder
+) => infer R ? Promise<R> : never;
 
 export const RetryOnDbConnectionTerminateError = async <T>(
   method: Promise<any> | Knex.QueryBuilder,
