@@ -17,7 +17,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
     },
     expectedStatusCodes: undefined,
   };
@@ -45,7 +45,7 @@ test('getGranule calls the callback with the expected status codes', async (t) =
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
     },
     expectedStatusCodes: [404, 200],
   };
