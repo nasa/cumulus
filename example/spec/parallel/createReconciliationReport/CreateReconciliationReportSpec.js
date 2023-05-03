@@ -391,7 +391,7 @@ describe('When there are granule differences and granule reconciliation is run',
       granuleBeforeUpdate = await getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
-        collectionId
+        collectionId,
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
@@ -405,8 +405,8 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
-        getGranule({ prefix: config.stackName, granuleId: dbGranuleId, collectionId}),
-        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId, collectionId}),
+        getGranule({ prefix: config.stackName, granuleId: dbGranuleId, collectionId }),
+        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId, collectionId }),
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([

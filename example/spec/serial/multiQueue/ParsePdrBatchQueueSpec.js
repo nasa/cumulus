@@ -266,7 +266,7 @@ describe('Parsing a PDR with multiple data types and node names', () => {
       else {
         const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
           getGranule,
-          { prefix: stackName, granuleId, collectionId },
+          { prefix: stackName, granuleId },
           'completed'
         )));
         granules.forEach((g) => {

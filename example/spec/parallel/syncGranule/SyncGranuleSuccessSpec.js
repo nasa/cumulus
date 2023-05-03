@@ -290,7 +290,7 @@ describe('The Sync Granules workflow', () => {
       granule = await getGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
-        collectionId: constructCollectionId(collection.name, collection.version)
+        collectionId: constructCollectionId(collection.name, collection.version),
       });
 
       oldUpdatedAt = granule.updatedAt;

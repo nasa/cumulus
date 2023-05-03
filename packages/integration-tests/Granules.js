@@ -23,7 +23,7 @@ class GranuleNotFoundError extends Error {
 
 const getGranule = async (params) => {
   const response = await granulesApi.getGranuleResponse(
-    pick(params, ['prefix', 'granuleId', 'callback','collectionId'])
+    pick(params, ['prefix', 'granuleId', 'callback', 'collectionId'])
   );
 
   if (response.status === 404) throw new GranuleNotFoundError(params.granuleId);
@@ -54,7 +54,7 @@ const getGranuleWithStatus = async (params = {}) =>
       const updatedAt = params.updatedAt || 0;
 
       try {
-        granule = await getGranule(pick(params, ['prefix', 'granuleId', 'callback','collectionId']));
+        granule = await getGranule(pick(params, ['prefix', 'granuleId', 'callback', 'collectionId']));
       } catch (error) {
         throw new pRetry.AbortError(error);
       }

@@ -200,7 +200,7 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
       inputPayload.granules.map(async (granule) => {
         const record = await waitForApiStatus(
           getGranule,
-          { prefix: config.stackName, granuleId: granule.granuleId , collectionId: granule.collectionId},
+          { prefix: config.stackName, granuleId: granule.granuleId, collectionId: granule.collectionId },
           'completed'
         );
 

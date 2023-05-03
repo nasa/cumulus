@@ -218,6 +218,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
   it('results in the new granule being ingested', async () => {
     if (beforeAllError) fail(beforeAllError);
     else {
+      const collectionId = constructCollectionId(collection.name, collection.version);
       const granule = await waitForApiStatus(
         getGranule,
         { prefix, granuleId: newGranuleId, collectionId },
@@ -232,7 +233,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
     else {
       const granule = await waitForApiStatus(
         getGranule,
-        { prefix, granuleId: queuedGranuleId, collectionId: constructCollectionId(collection.name, collection.version)},
+        { prefix, granuleId: queuedGranuleId, collectionId: constructCollectionId(collection.name, collection.version) },
         'queued'
       );
       expect(granule).toBeDefined();

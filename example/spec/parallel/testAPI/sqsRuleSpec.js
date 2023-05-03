@@ -248,12 +248,15 @@ describe('The SQS rule', () => {
       beforeAll(async () => {
         if (beforeAllFailed) return;
         try {
+          const testId = createTimestampedTestId(config.stackName, 'procWorkflow');
+          const testSuffix = createTestSuffix(testId);
+          const collection = { name: `MOD09GQ${testSuffix}`, version: '001' };
           record = await waitForApiStatus(
             getGranule,
             {
               prefix: config.stackName,
               granuleId,
-              collectionId: constructCollectionId(collection.name, collection.version)
+              collectionId: constructCollectionId(collection.name, collection.version),
             },
             'completed'
           );

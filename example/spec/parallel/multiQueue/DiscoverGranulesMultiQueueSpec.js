@@ -208,10 +208,10 @@ describe('The DiscoverGranules workflow', () => {
 
   it('granules become available in the Cumulus API', async () => {
     if (beforeAllError) fail(beforeAllError);
-    else {//may need the construct constructionId method here
+    else { //may need the construct constructionId method here
       const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
         getGranule,
-        { prefix: stackName, granuleId, },
+        { prefix: stackName, granuleId },
         'completed'
       )));
       granules.forEach((g) => {
