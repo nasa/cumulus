@@ -290,6 +290,7 @@ describe('The Sync Granules workflow', () => {
       granule = await getGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
+        collectionId: constructCollectionId(collection.name, collection.version)
       });
 
       oldUpdatedAt = granule.updatedAt;
@@ -344,6 +345,7 @@ describe('The Sync Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId: inputPayload.granules[0].collectionId,
         },
         'completed'
       );
@@ -351,6 +353,8 @@ describe('The Sync Granules workflow', () => {
       const updatedGranule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: inputPayload.granules[0].collectionId,
+
       });
       expect(updatedGranule.status).toEqual('completed');
       expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);

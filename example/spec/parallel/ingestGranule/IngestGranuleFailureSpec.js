@@ -223,6 +223,7 @@ describe('The Ingest Granule failure workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId: inputPayload.granules[0].collectionId,
         },
         'failed'
       );
@@ -230,6 +231,7 @@ describe('The Ingest Granule failure workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: inputPayload.granules[0].collectionId,
       });
 
       expect(granule.status).toBe('failed');

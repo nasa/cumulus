@@ -366,7 +366,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           getGranule,
           {
             prefix: testConfig.stackName,
-            granuleId,
+            granuleId, //may need to add collectionId here
           },
           {
             status: 'completed',
@@ -459,7 +459,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             getGranule,
             {
               prefix: testConfig.stackName,
-              granuleId,
+              granuleId, //may need to add collectionId here
             },
             {
               status: 'failed',

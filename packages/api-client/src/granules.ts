@@ -16,11 +16,12 @@ type AssociateExecutionRequest = {
 };
 
 /**
- * GET raw response from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
+ * GET raw response from /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params                                - params
  * @param {string} params.prefix                         - the prefix configured for the stack
  * @param {string} params.granuleId                      - a granule ID
+ * @param {string} params.collectionId                   - a collection ID
  * @param {Object} [params.query]                        - query to pass the API lambda
  * @param {number[] | number} params.expectedStatusCodes - the statusCodes which the granule API is
  *                                                         is expecting for the invokeApi Response,
@@ -34,7 +35,7 @@ type AssociateExecutionRequest = {
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionId?: CollectionId,
+  collectionId: CollectionId,
   expectedStatusCodes?: number[] | number,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
@@ -49,11 +50,6 @@ export const getGranuleResponse = async (params: {
   } = params;
 
   let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
 
   return await callback({
     prefix,
@@ -73,6 +69,7 @@ export const getGranuleResponse = async (params: {
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
  * @param {string} params.granuleId   - a granule ID
+ * @param {string} params.collectionId   - a collection ID
  * @param {Object} [params.query]     - query to pass the API lambda
  * @param {Function} params.callback  - async function to invoke the api lambda
  *                                      that takes a prefix / user payload.  Defaults
@@ -83,7 +80,7 @@ export const getGranuleResponse = async (params: {
 export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionId?: CollectionId,
+  collectionId: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranuleRecord> => {
@@ -94,17 +91,19 @@ export const getGranule = async (params: {
 /**
  * Wait for a granule to be present in the database (using pRetry)
  *
- * @param {Object} params             - params
- * @param {string} params.granuleId   - granuleId to wait for
- * @param {number} params.retries     - number of times to retry
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
+ * @param {Object} params               - params
+ * @param {string} params.granuleId     - granuleId to wait for
+ * @param {string} params.collectionId  - collectionId to wait for
+ * @param {number} params.retries       - number of times to retry
+ * @param {Function} params.callback    - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApifunction to invoke the
+ *                                       api lambda
  */
 export const waitForGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId: CollectionId,
   status?: GranuleStatus,
   retries?: number,
   pRetryOptions?: pRetry.Options,
@@ -113,6 +112,7 @@ export const waitForGranule = async (params: {
   const {
     prefix,
     granuleId,
+    collectionId,
     status,
     retries = 10,
     pRetryOptions = {},
@@ -122,7 +122,7 @@ export const waitForGranule = async (params: {
   await pRetry(
     async () => {
       // TODO update to use collectionId + granuleId
-      const apiResult = await getGranuleResponse({ prefix, granuleId, callback });
+      const apiResult = await getGranuleResponse({ prefix, granuleId, collectionId, callback });
 
       if (apiResult.statusCode === 500) {
         throw new pRetry.AbortError('API misconfigured/down/etc, failing test');

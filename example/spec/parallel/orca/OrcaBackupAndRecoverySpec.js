@@ -100,6 +100,7 @@ describe('The S3 Ingest Granules workflow', () => {
       {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: inputPayload.granules[0].collectionId,
       },
       'completed'
     );
@@ -191,11 +192,12 @@ describe('The S3 Ingest Granules workflow', () => {
       const output = JSON.parse(asyncOperation.output);
       expect(output).toEqual([granuleId]);
 
-      await waitForApiStatus(
+      await waitForApiStatus( //may need the construct collectionId method here
         getGranule,
         {
           prefix: config.stackName,
           granuleId,
+          
         },
         'completed'
       );
@@ -266,9 +268,10 @@ describe('The S3 Ingest Granules workflow', () => {
     });
 
     it('returns granule information with recovery status', async () => {
-      const granule = await getGranule({
+      const granule = await getGranule({ //may need the construct collectionId method here
         prefix: config.stackName,
         granuleId,
+        // collectionId,
         query: { getRecoveryStatus: true },
       });
       expect(granule.granuleId).toEqual(granuleId);

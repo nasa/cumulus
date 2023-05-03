@@ -353,6 +353,8 @@ describe('The S3 Ingest Granules workflow', () => {
       {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+      collectionId: inputPayload.granules[0].collectionId,
+
       },
       ['running', 'completed']
     );
@@ -360,6 +362,8 @@ describe('The S3 Ingest Granules workflow', () => {
     const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId: inputPayload.granules[0].collectionId,
+
     });
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
@@ -505,6 +509,8 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+      collectionId: inputPayload.granules[0].collectionId,
+
         },
         ['completed']
       );
@@ -512,6 +518,8 @@ describe('The S3 Ingest Granules workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+      collectionId: lambdaOutput.meta.input_granules[0].collectionId,
+
       });
 
       expect(granule.granuleId).toEqual(lambdaOutput.meta.input_granules[0].granuleId);
@@ -750,6 +758,8 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+      collectionId: inputPayload.granules[0].collectionId,
+
         },
         'completed'
       );
@@ -863,6 +873,8 @@ describe('The S3 Ingest Granules workflow', () => {
           granule = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId: inputPayload.granules[0].collectionId,
+            
           });
           cmrLink = granule.cmrLink;
         } catch (error) {
@@ -1004,6 +1016,7 @@ describe('The S3 Ingest Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: reingestGranuleId,
+              collectionId: granule.collectionId
             },
             'completed'
           );
@@ -1011,6 +1024,8 @@ describe('The S3 Ingest Granules workflow', () => {
           const updatedGranule = await getGranule({
             prefix: config.stackName,
             granuleId: reingestGranuleId,
+            collectionId: granule.collectionId
+
           });
 
           expect(updatedGranule.status).toEqual('completed');
@@ -1131,6 +1146,7 @@ describe('The S3 Ingest Granules workflow', () => {
           {
             prefix: config.stackName,
             granuleId: granule.granuleId,
+            collectionId: granule.collectionId
           },
           'completed'
         );
@@ -1138,6 +1154,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const updatedGranuleRecord = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId: inputPayload.granules[0].collectionId,
         });
         const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCMRFile);
 
@@ -1194,6 +1211,8 @@ describe('The S3 Ingest Granules workflow', () => {
           const granRecord = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+          collectionId: inputPayload.granules[0].collectionId,
+            
           });
 
           console.log('Granule Record*****:', granRecord);
@@ -1250,6 +1269,8 @@ describe('The S3 Ingest Granules workflow', () => {
           await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+          collectionId: inputPayload.granules[0].collectionId,
+
           });
         } catch (error) {
           granuleResponseError = error;

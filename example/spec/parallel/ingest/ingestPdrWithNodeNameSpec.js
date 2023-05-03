@@ -406,6 +406,7 @@ describe('Ingesting from PDR', () => {
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
+                  collectionId: g.collectionId
                 },
                 'completed'
               );

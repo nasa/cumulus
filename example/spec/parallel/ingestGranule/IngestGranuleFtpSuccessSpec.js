@@ -80,6 +80,7 @@ describe('The FTP Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId: inputPayload.granules[0].collectionId,
         },
         'completed'
       );

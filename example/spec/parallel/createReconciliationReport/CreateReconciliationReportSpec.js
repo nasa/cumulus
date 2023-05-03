@@ -137,7 +137,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
         granuleId,
         dataType: newCollection.name,
         version: newCollection.version,
-        files: [
+        files: [ //may need to add collectionId...need to determine what is will be
           {
             name: granFilename,
             path: sourcePath,
@@ -158,6 +158,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     {
       prefix,
       granuleId: inputPayload.granules[0].granuleId,
+      // collectionId: inputPayload.granules[0].collectionId,
     },
     'completed'
   );
@@ -202,7 +203,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     getGranule,
     {
       prefix: config.stackName,
-      granuleId: inputPayload.granules[0].granuleId,
+      granuleId: inputPayload.granules[0].granuleId, // needs collectionId
     },
     'completed'
   );
@@ -390,6 +391,7 @@ describe('When there are granule differences and granule reconciliation is run',
       granuleBeforeUpdate = await getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
+        collectionId
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
@@ -403,8 +405,8 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
-        getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
-        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+        getGranule({ prefix: config.stackName, granuleId: dbGranuleId, collectionId}),
+        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId, collectionId}),
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([

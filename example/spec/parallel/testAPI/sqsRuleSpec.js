@@ -253,6 +253,7 @@ describe('The SQS rule', () => {
             {
               prefix: config.stackName,
               granuleId,
+              collectionId: constructCollectionId(collection.name, collection.version)
             },
             'completed'
           );

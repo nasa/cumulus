@@ -232,7 +232,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
             getGranule,
             {
               prefix: config.stackName,
-              granuleId,
+              granuleId, //may need to add collectionId here
             },
             'completed'
           );

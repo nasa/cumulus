@@ -286,6 +286,7 @@ describe('When the Sync Granule workflow is configured', () => {
           {
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId: inputPayload.granules[0].collectionId,
           },
           {
             status: 'completed',
@@ -339,6 +340,8 @@ describe('When the Sync Granule workflow is configured', () => {
           {
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId: inputPayload.granules[0].collectionId,
+
           },
           {
             status: 'completed',
@@ -393,6 +396,8 @@ describe('When the Sync Granule workflow is configured', () => {
           {
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId: inputPayload.granules[0].collectionId,
+
           },
           {
             status: 'failed',
@@ -444,6 +449,8 @@ describe('When the Sync Granule workflow is configured', () => {
           {
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId: inputPayload.granules[0].collectionId,
+
           },
           {
             status: 'failed',

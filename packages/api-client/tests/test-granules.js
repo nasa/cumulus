@@ -35,6 +35,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
   }));
 });
 
@@ -63,6 +64,7 @@ test('getGranule calls the callback with the expected status codes', async (t) =
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     expectedStatusCodes: [404, 200],
   }));
 });
@@ -141,6 +143,7 @@ test('waitForGranules calls getGranules with the expected payload', async (t) =>
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
   });
 });
 
@@ -149,6 +152,7 @@ test('waitForGranules fails on 500 statusCode', async (t) => {
     callback: () => Promise.resolve({ statusCode: 500 }),
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
   }));
 });
 
@@ -165,6 +169,7 @@ test('waitForGranules retries on status codes other than 500, 200, then throws e
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     retries,
     pRetryOptions: { minTimeout: 1, maxTimeout: 1 },
   }));
@@ -194,6 +199,7 @@ test('waitForGranules retries if status does not match provided status', async (
   await granulesApi.waitForGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     status: 'completed',
     pRetryOptions: { minTimeout: 1, maxTimeout: 1 },
     callback,

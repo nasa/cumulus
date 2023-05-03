@@ -265,6 +265,7 @@ describe('A dead letter record archive processing operation', () => {
       await expectAsync(waitForGranule({
         prefix: stackName,
         granuleId: testGranule.granuleId,
+        collectionId: testGranule.collectionId,
         pRetryOptions: {
           interval: 5 * 1000,
           timeout: 30 * 1000,
