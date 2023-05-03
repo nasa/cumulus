@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+- **CUMULUS-2985**
+  - Changed `onetime` rules to only execute upon creation if its' state is `ENABLED`
+  - Updated documentation to highlight the above change for `onetime` rules
 ### MIGRATION notes
 
 #### RDS Phase 3

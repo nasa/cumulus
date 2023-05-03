@@ -50,7 +50,7 @@ export const postRule = async (params: {
 export const updateRule = async (params: {
   prefix: string,
   ruleName: string,
-  updateParams: PartialRuleRecord & { action?: 'rerun' },
+  updateParams: PartialRuleRecord & { action?: 'rerun' | 'enable' },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {

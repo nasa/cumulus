@@ -670,7 +670,9 @@ async function createRuleTrigger(ruleItem) {
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {
   case 'onetime': {
-    await invoke(process.env.invoke, payload);
+    if (enabled) {
+      await invoke(process.env.invoke, payload);
+    }
     break;
   }
   case 'scheduled': {

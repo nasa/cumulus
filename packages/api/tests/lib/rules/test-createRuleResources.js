@@ -3,7 +3,7 @@
 const test = require('ava');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
-
+const { invoke } = require('@cumulus/aws-client/Lambda');
 const awsServices = require('@cumulus/aws-client/services');
 const SQS = require('@cumulus/aws-client/SQS');
 const workflows = require('@cumulus/common/workflows');
@@ -159,9 +159,31 @@ test('Creating a rule trigger for a onetime rule succeeds', async (t) => {
     },
   });
 
+  const invokeOneTimeSpy = sinon.spy(invoke);
   const onetimeRule = await createRuleTrigger(rule);
 
+  t.true(invokeOneTimeSpy.called);
   t.deepEqual(onetimeRule, rule);
+});
+
+test('Creating a rule trigger for a onetime rule with a DISABLED state is DISABLED', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'onetime',
+    },
+    state: 'DISABLED',
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+  });
+
+  const invokeOneTimeSpy = sinon.spy(invoke);
+  const onetimeRule = await createRuleTrigger(rule);
+
+  t.false(invokeOneTimeSpy.called);
+  t.deepEqual(onetimeRule.state, 'DISABLED');
 });
 
 test('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {

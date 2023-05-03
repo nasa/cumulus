@@ -157,7 +157,7 @@ async function put(req, res) {
     apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.created_at;
     // If rule type is onetime no change is allowed unless it is a rerun
-    if (apiRule.action === 'rerun') {
+    if (apiRule.action === 'rerun' || (apiRule.action === 'enable' && apiRule.state === 'DISABLED')) { // new option for changing from disabled -> enabled ?
       return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
     }
     const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
