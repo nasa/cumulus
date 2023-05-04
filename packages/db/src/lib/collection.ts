@@ -1,5 +1,7 @@
 import { Knex } from 'knex';
+import Logger from '@cumulus/logger';
 
+import { RetryOnDbConnectionTerminateError } from './retry';
 import { TableNames } from '../tables';
 
 /**
@@ -17,9 +19,11 @@ export const getCollectionsByGranuleIds = async (
     collections: collectionsTable,
     granules: granulesTable,
   } = TableNames;
-  return await knex(collectionsTable)
+  const log = new Logger({ sender: '@cumulus/db/models/collection' });
+  const query = knex(collectionsTable)
     .select(`${collectionsTable}.*`)
     .innerJoin(granulesTable, `${collectionsTable}.cumulus_id`, `${granulesTable}.collection_cumulus_id`)
     .whereIn(`${granulesTable}.granule_id`, granuleIds)
     .groupBy(`${collectionsTable}.cumulus_id`);
+  return await RetryOnDbConnectionTerminateError(query, {}, log);
 };
