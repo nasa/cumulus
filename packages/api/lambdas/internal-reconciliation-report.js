@@ -34,6 +34,7 @@ const {
   initialReportHeader,
   compareEsGranuleAndApiGranule,
 } = require('../lib/reconciliationReport');
+
 const log = new Logger({ sender: '@api/lambdas/internal-reconciliation-report' });
 
 /**
@@ -49,7 +50,7 @@ async function internalRecReportForCollections(recReportParams) {
   // compare collection holdings:
   //   Get collection list in ES ordered by granuleId
   //   Get collection list in PostgreSQL ordered by granuleId
-  //  Report collections only in ES
+  //   Report collections only in ES
   //   Report collections only in PostgreSQL
   //   Report collections with different contents
 
@@ -59,10 +60,13 @@ async function internalRecReportForCollections(recReportParams) {
   );
 
   const collectionPgModel = new CollectionPgModel();
-  const knex = await getKnexClient();
+  const knex = recReportParams.knex || await getKnexClient();
 
   // get collections from database and sort them, since the scan result is not ordered
-  const [updatedAtRangeParams, dbSearchParams] = convertToDBCollectionSearchObject(recReportParams);
+  const [
+    updatedAtRangeParams,
+    dbSearchParams,
+  ] = convertToDBCollectionSearchObject(recReportParams);
 
   const dbCollectionsSearched = await collectionPgModel.searchWithUpdatedAtRange(
     knex,
@@ -114,7 +118,7 @@ async function internalRecReportForCollections(recReportParams) {
       } else {
         withConflicts.push({ es: nextEsItem, db: nextDbItem });
       }
-      esCollectionsIterator.shift();
+      await esCollectionsIterator.shift(); // eslint-disable-line no-await-in-loop
       dbCollectionItems.shift();
     }
 
@@ -193,8 +197,11 @@ async function getCollectionsForGranules(recReportParams) {
   const {
     granuleIds,
   } = recReportParams;
+  let dbCollectionIds = [];
+  log.info('Getting collection IDs by Granule IDs');
+  dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
 
-  const dbCollectionIds = await getAllCollectionIdsByGranuleIds(recReportParams);
+  log.info('Completed getting collection IDs');
 
   const esGranulesIterator = new ESSearchQueue(
     { granuleId__in: granuleIds.join(','), sort_key: ['collectionId'], fields: ['collectionId'] }, 'granule', process.env.ES_INDEX
@@ -407,28 +414,43 @@ async function createInternalReconciliationReport(recReportParams) {
     granules: cloneDeep(initialReportFormat),
   };
 
-  await s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+  try {
+    await s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
 
-  const [collectionsReport, granulesReport] = await Promise.all([
-    internalRecReportForCollections(recReportParams),
-    internalRecReportForGranules(recReportParams),
-  ]);
-  report = Object.assign(report, { collections: collectionsReport, granules: granulesReport });
+    const [collectionsReport, granulesReport] = await Promise.all([
+      internalRecReportForCollections(recReportParams),
+      internalRecReportForGranules(recReportParams),
+    ]);
+    report = Object.assign(report, { collections: collectionsReport, granules: granulesReport });
 
-  // Create the full report
-  report.createEndTime = moment.utc().toISOString();
-  report.status = 'SUCCESS';
+    // Create the full report
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'SUCCESS';
 
-  // Write the full report to S3
-  return s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+    // Write the full report to S3
+    return s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
+  } catch (error) {
+    log.error(`Error caught in createInternalReconciliationReport. ${error}`);
+    // Create the full report
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'Failed';
+
+    // Write the full report to S3
+    await s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
+    throw error;
+  }
 }
 
 module.exports = {

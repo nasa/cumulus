@@ -122,7 +122,7 @@ const removeCollectionAndAllDependencies = async (params) => {
     await collectionExists(prefix, collection);
     await deleteCollection({ prefix, collectionName: collection.name, collectionVersion: collection.version });
   } catch (error) {
-    console.log(`Error: ${error}. Failed delete collection ${collection}`);
+    console.log(`Error: ${error}. Failed delete collection ${JSON.stringify(collection)}`);
   }
 };
 
