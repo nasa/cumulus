@@ -13,7 +13,6 @@
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run prepare && npm run build && npm run link-api-bin && npm run build-lambda-zips",
     "prepare": "npm run tsc",
-    "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true ./bin/cli.js reset-tables",
     "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test ./bin/cli.js serve-dist",
     "serve-dist-remote": "./bin/cli.js serve-dist",
     "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true ./bin/cli.js serve-dist",
