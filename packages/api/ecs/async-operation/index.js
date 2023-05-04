@@ -226,7 +226,6 @@ const updateAsyncOperation = async (params) => {
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 
-
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
   const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
