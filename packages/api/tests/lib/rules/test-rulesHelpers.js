@@ -27,7 +27,7 @@ const {
   translateApiRuleToPostgresRule,
   translateApiRuleToPostgresRuleRaw,
 } = require('@cumulus/db');
-
+const { invoke } = require('@cumulus/aws-client/Lambda');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const {
   buildPayload,
@@ -1345,6 +1345,26 @@ test('Creating a rule trigger for a onetime rule succeeds', async (t) => {
   const onetimeRule = await createRuleTrigger(rule);
 
   t.deepEqual(onetimeRule, rule);
+});
+
+test('Creating a rule trigger for a onetime rule with a DISABLED state is DISABLED', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'onetime',
+    },
+    state: 'DISABLED',
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+  });
+
+  const invokeOneTimeSpy = sinon.spy(invoke);
+  const onetimeRule = await createRuleTrigger(rule);
+
+  t.false(invokeOneTimeSpy.called);
+  t.deepEqual(onetimeRule.state, 'DISABLED');
 });
 
 test.serial('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {

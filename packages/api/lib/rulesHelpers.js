@@ -586,9 +586,12 @@ function recordIsValid(rule) {
  */
 async function invokeRerun(rule) {
   const payload = await buildPayload(rule);
-  await invoke(process.env.invoke, payload);
+  if (rule.state !== 'DISABLED') {
+    await invoke(process.env.invoke, payload);
+  }
 }
 
+/*eslint complexity: ["error", 16]*/
 /**
  * Updates rule trigger for rule
  *
@@ -640,6 +643,10 @@ async function updateRuleTrigger(original, updates) {
     clonedRuleItem = await validateAndUpdateSqsRule(mergedRule);
     break;
   case 'onetime':
+    if (stateChanged && original.state === 'DISABLED') {
+      const payload = await buildPayload(mergedRule);
+      await invoke(process.env.invoke, payload);
+    }
     break;
   default:
     throw new ValidationError(`Rule type \'${mergedRule.rule.type}\' not supported.`);
