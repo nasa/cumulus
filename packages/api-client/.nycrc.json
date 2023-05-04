@@ -1,5 +1,11 @@
 {
   "extends": "../../nyc.config.js",
-  "include": ["*.js"],
-  "exclude-after-remap": false
+  "include": [
+    "*.js"
+  ],
+  "exclude-after-remap": false,
+  "statements": 87.02,
+  "functions": 84.37,
+  "branches": 31.18,
+  "lines": 85.76
 }

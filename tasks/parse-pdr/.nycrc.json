@@ -1,4 +1,10 @@
 {
   "extends": "../../nyc.config.js",
-  "include": ["*.js"]
+  "include": [
+    "*.js"
+  ],
+  "statements": 93.39,
+  "functions": 93.33,
+  "branches": 82.97,
+  "lines": 95.95
 }

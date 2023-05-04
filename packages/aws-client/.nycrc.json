@@ -4,5 +4,9 @@
     "*.js",
     "lib/*.js"
   ],
-  "exclude-after-remap": false
+  "exclude-after-remap": false,
+  "statements": 79.8,
+  "functions": 79.16,
+  "branches": 59.83,
+  "lines": 78.74
 }
