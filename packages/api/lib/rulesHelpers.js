@@ -586,9 +586,7 @@ function recordIsValid(rule) {
  */
 async function invokeRerun(rule) {
   const payload = await buildPayload(rule);
-  if (rule.state !== 'DISABLED') {
-    await invoke(process.env.invoke, payload);
-  }
+  await invoke(process.env.invoke, payload);
 }
 
 /*eslint complexity: ["error", 16]*/
@@ -644,8 +642,7 @@ async function updateRuleTrigger(original, updates) {
     break;
   case 'onetime':
     if (stateChanged && original.state === 'DISABLED') {
-      const payload = await buildPayload(mergedRule);
-      await invoke(process.env.invoke, payload);
+      invokeRerun(mergedRule);
     }
     break;
   default:
