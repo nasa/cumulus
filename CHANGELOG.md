@@ -172,6 +172,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
     all of its data will be removed on deployment*.
 
 ### Added
+
 - **CUMULUS-3072**
   - Added `replaceGranule` to `@cumulus/api-client/granules` to add usage of the
     updated RESTful PUT logic
@@ -194,6 +195,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+
+- **CUMULUS-3215**
+  - Create reconciliation reports will properly throw errors and set the async
+    operation status correctly to failed if there is an error.
+  - Knex calls relating to reconciliation reports will retry if there is a
+    connection terminated unexpectedly error
 - **CUMULUS-3024**
   - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
     `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
