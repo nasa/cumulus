@@ -194,12 +194,22 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+- **CUMULUS-3024**
+  - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
+    `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
 - **CUMULUS-3209**
   - Apply brand color with high contrast settings for both (light and dark) themes.
   - Cumulus logo can be seen when scrolling down.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
+  
+  ### Removed
+
+- **CUMULUS-3204**
+  - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
+  - Removed deleteOldEventSourceMappings from @cumulus/api/lib/rulesHelpers and
+    refactored endpoint logic to use `deleteKinesisEventSources` instead.
 
 ## [v15.0.3] 2023-04-28
 
