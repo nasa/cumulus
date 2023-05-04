@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+
 ### MIGRATION notes
 
 #### RDS Phase 3
@@ -41,6 +46,7 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 ```
 
 Users/clients that do not make use of these endpoints will not be impacted.
+
 ### RDS Phase 3
 
 #### Breaking Changes
@@ -126,7 +132,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Add new endpoints to update and delete granules by collectionId as well as
       granuleId
 
-
 #### Removed
 
 - **CUMULUS-2994**
@@ -200,7 +205,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
     operation status correctly to failed if there is an error.
   - Knex calls relating to reconciliation reports will retry if there is a
     connection terminated unexpectedly error
-  - Set default async_operation_image_version to 47
+  - Set default example/cumulus-tf default async_operation_image_version to 47
 - **CUMULUS-3024**
   - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
     `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
@@ -211,7 +216,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
 
-  ### Removed
+### Removed
 
 - **CUMULUS-3204**
   - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
@@ -318,7 +323,7 @@ update the database cluster to use the new configuration.
   - Add a Python version file
 - **CUMULUS-3121**
   - Added a map of variables in terraform for custom configuration of cloudwatch_log_groups' retention periods.
-    Please refer to the [Cloudwatch-Retention] (https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
+    Please refer to the [Cloudwatch-Retention] (<https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention>)
     section of the Cumulus documentation in order for more detailed information and an example into how to do this.
 - **CUMULUS-3071**
   - Added 'PATCH' granules endpoint as an exact duplicate of the existing `PUT`
@@ -558,21 +563,21 @@ update the database cluster to use the new configuration.
 - **CUMULUS-2986**
   - Adds Terraform memory_size configurations to lambda functions with customizable timeouts enabled (the minimum default size has also been raised from 256 MB to 512 MB)
     allowed properties include:
-      - add_missing_file_checksums_task_memory_size
-      - discover_granules_task_memory_size
-      - discover_pdrs_task_memory_size
-      - hyrax_metadata_updates_task_memory_size
-      - lzards_backup_task_memory_size
-      - move_granules_task_memory_size
-      - parse_pdr_task_memory_size
-      - pdr_status_check_task_memory_size
-      - post_to_cmr_task_memory_size
-      - queue_granules_task_memory_size
-      - queue_pdrs_task_memory_size
-      - queue_workflow_task_memory_size
-      - sync_granule_task_memory_size
-      - update_cmr_access_constraints_task_memory_size
-      - update_granules_cmr_task_memory_size
+    - add_missing_file_checksums_task_memory_size
+    - discover_granules_task_memory_size
+    - discover_pdrs_task_memory_size
+    - hyrax_metadata_updates_task_memory_size
+    - lzards_backup_task_memory_size
+    - move_granules_task_memory_size
+    - parse_pdr_task_memory_size
+    - pdr_status_check_task_memory_size
+    - post_to_cmr_task_memory_size
+    - queue_granules_task_memory_size
+    - queue_pdrs_task_memory_size
+    - queue_workflow_task_memory_size
+    - sync_granule_task_memory_size
+    - update_cmr_access_constraints_task_memory_size
+    - update_granules_cmr_task_memory_size
   - Initializes the lambda_memory_size(s) variable in the Terraform variable list
   - Adds Terraform timeout variable for add_missing_file_checksums_task
 - **CUMULUS-2631**
@@ -583,7 +588,6 @@ update the database cluster to use the new configuration.
   - Added configuration to increase the limit for body-parser's JSON and URL encoded parsers to allow for larger input payloads
 
 ### Changed
-
 
 - Updated `example/cumulus-tf/variables.tf` to have `cmr_oauth_provider` default to `launchpad`
 - **CUMULUS-3024**
@@ -608,7 +612,7 @@ update the database cluster to use the new configuration.
     deletion, including collection, deleted granule ID, deleted files, and deletion time.
 - **CUMULUS-3027**
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
-    discussed in https://github.com/knex/knex/pull/5279
+    discussed in <https://github.com/knex/knex/pull/5279>
   - Update generate-ts-build-cache script to always install root project dependencies
 - **CUMULUS-3104**
   - Updated Dockerfile of async operation docker image to build from node:14.19.3-buster
@@ -809,6 +813,7 @@ releases.
 - **CUMULUS-2967**
   - Added fix example/spec/helpers/Provider that doesn't fail deletion 404 in
     case of deletion race conditions
+
 ### Fixed
 
 - **CUMULUS-2995**
@@ -822,11 +827,10 @@ releases.
   - Fixed `@cumulus/api` `granules` module to convert numeric productVolume to string
     when an old granule record is retrieved from DynamoDB
 - Fixed the following links on Cumulus docs' [Getting Started](https://nasa.github.io/cumulus/docs/getting-started) page:
-    * Cumulus Deployment
-    * Terraform Best Practices
-    * Integrator Common Use Cases
-- Also corrected the _How to Deploy Cumulus_ link in the [Glossary](https://nasa.github.io/cumulus/docs/glossary)
-
+  - Cumulus Deployment
+  - Terraform Best Practices
+  - Integrator Common Use Cases
+- Also corrected the *How to Deploy Cumulus* link in the [Glossary](https://nasa.github.io/cumulus/docs/glossary)
 
 ## [v13.0.1] 2022-7-12
 
@@ -1056,7 +1060,7 @@ releases.
     collection version in the URI path
 - **CUMULUS-3027**
   - Pinned typescript to ~4.7.x to address typing incompatibility issues
-    discussed in https://github.com/knex/knex/pull/5279
+    discussed in <https://github.com/knex/knex/pull/5279>
   - Update generate-ts-build-cache script to always install root project dependencies
 
 ## [v11.1.5] 2022-08-10 [BACKPORT]
@@ -1081,7 +1085,6 @@ are included in the future will have a corresponding CHANGELOG entry in future
 releases.
 
 ### MIGRATION notes
-
 
 - The changes introduced in CUMULUS-2962 will re-introduce a
   `files_granules_cumulus_id_index` on the `files` table in the RDS database.
@@ -1210,6 +1213,7 @@ releases.
     file extension for tasks that utilize metadata file lookups
 - **CUMULUS-2966**
   - Added extractPath operation and support of nested string replacement to `url_path` in the collection configuration
+
 ### Fixed
 
 - **CUMULUS-2863**
@@ -1295,7 +1299,6 @@ releases.
 - **CUMULUS-2934**
   - Update CI Docker container build to install pipenv to prevent contention on parallel lambda builds
 
-
 ## [v11.1.0] 2022-04-07
 
 ### MIGRATION NOTES
@@ -1373,7 +1376,7 @@ aws lambda invoke --function-name $PREFIX-data-migration1 \
 
 As part of the work on the RDS Phase 2 feature, it was decided to re-add the
 granule file `type` property on the file table (detailed reasoning
-https://wiki.earthdata.nasa.gov/pages/viewpage.action?pageId=219186829).  This
+<https://wiki.earthdata.nasa.gov/pages/viewpage.action?pageId=219186829>).  This
 change was implemented as part of CUMULUS-2672/CUMULUS-2673, however granule
 records ingested prior to v11 will *not* have the file.type property stored in the
 PostGreSQL database, and on installation of v11 API calls to get granule.files
@@ -2227,7 +2230,6 @@ upgrades to `knex` package and to address security vulnerabilities.
     `s3://internal-bucket/workflows` directory into
     `s3://internal-bucket/buckets`.
 
-
 ## [v9.7.1] 2021-12-08 [Backport]
 
 Please note changes in 9.7.0 may not yet be released in future versions, as this is a backport and patch release on the 9.7.x series of releases. Updates that are included in the future will have a corresponding CHANGELOG entry in future releases.
@@ -2404,7 +2406,7 @@ releases.
   - Update CNM lambda dependencies for Core tasks
     - cumulus-cnm-response-task: 1.4.4
     - cumulus-cnm-to-granule: 1.5.4
-  - Whitelist ssh2 re: https://github.com/advisories/GHSA-652h-xwhf-q4h6
+  - Whitelist ssh2 re: <https://github.com/advisories/GHSA-652h-xwhf-q4h6>
 
 ## [v9.4.0] 2021-08-16
 
@@ -2487,7 +2489,7 @@ The default reserved concurrency value is 8.
 - `cmr_custom_host` variable for `cumulus` module can now be used to configure Cumulus to
   integrate with a custom CMR host name and protocol (e.g.
   `http://custom-cmr-host.com`). Note that you **must** include a protocol
-  (`http://` or `https://)  if specifying a value for this variable.
+  (`http://` or `<https://)>  if specifying a value for this variable.
 - The cumulus module configuration value`rds_connetion_heartbeat` and it's
   behavior has been replaced by a more robust database connection 'retry'
   solution.   Users can remove this value from their configuration, regardless
@@ -2595,8 +2597,8 @@ behavior
   - Added new `rds_connection_timing_configuration` string map to allow for
     configuration and tuning of Core's internal database retry/connection
     timeout behaviors.  These values map to connection pool configuration
-    values for tarn (https://github.com/vincit/tarn.js/) which Core's database
-    module / knex(https://www.npmjs.com/package/knex) use for this purpose:
+    values for tarn (<https://github.com/vincit/tarn.js/>) which Core's database
+    module / knex(<https://www.npmjs.com/package/knex>) use for this purpose:
     - acquireTimeoutMillis
     - createRetryIntervalMillis
     - createTimeoutMillis
@@ -3784,7 +3786,7 @@ new `update-granules-cmr-metadata-file-links` task.
 - **CUMULUS-2195**
   - Fixed issue with redirect from `/token` not working when using a Cloudfront endpoint to access the Cumulus API with Launchpad authentication enabled. The redirect should now work properly whether you are using a plain API gateway URL or a Cloudfront endpoint pointing at an API gateway URL.
 - **CUMULUS-2200**
-  - Fixed issue where __in and __not queries were stripping spaces from values
+  - Fixed issue where __in and__not queries were stripping spaces from values
 
 ### Deprecated
 
@@ -5073,7 +5075,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
 
 - **CUMULUS-1686**
 
-  - `ecs_cluster_instance_image_id` is now a _required_ variable of the `cumulus` module, instead of optional.
+  - `ecs_cluster_instance_image_id` is now a *required* variable of the `cumulus` module, instead of optional.
 
 - **CUMULUS-1698**
 
@@ -5356,7 +5358,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Because of
     [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
     there may be situations where a GET operation for an object can temporarily
-    return a `NoSuchKey` response even if that object _has_ been created. The
+    return a `NoSuchKey` response even if that object *has* been created. The
     `@cumulus/common/aws.getS3Object()` function has been updated to support
     retries if a `NoSuchKey` response is returned by S3. This behavior can be
     enabled by passing a `retryOptions` object to that function. Supported
@@ -5502,7 +5504,7 @@ the [release page](https://github.com/nasa/cumulus/releases)
   - Because of
     [S3's Data Consistency Model](https://docs.aws.amazon.com/AmazonS3/latest/dev/Introduction.html#BasicsObjects),
     there may be situations where a GET operation for an object can temporarily
-    return a `NoSuchKey` response even if that object _has_ been created. The
+    return a `NoSuchKey` response even if that object *has* been created. The
     `@cumulus/common/aws.getS3Object()` function will now retry up to 10 times
     if a `NoSuchKey` response is returned by S3. This can behavior can be
     overridden by passing `{ retries: 0 }` as the `retryOptions` argument.
@@ -5609,7 +5611,7 @@ SfSnsReport:
   ```
 
   Accepted fields in `ReplaceConfig` include `MaxSize`, `FullMessage`, `Path` and `TargetPath`.
-  See https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration for full details.
+  See <https://github.com/nasa/cumulus-message-adapter/blob/master/CONTRACT.md#remote-message-configuration> for full details.
 
   As this change is backward compatible in Cumulus Core, users wishing to utilize the previous version of the CMA may opt to transition to using a CMA lambda layer, or set `message_adapter_version` in their configuration to a version prior to v1.1.0.
 
@@ -5634,7 +5636,7 @@ SfSnsReport:
     - Disabled endpoints
       - `POST /refresh`
       - Changes authorization worklow:
-      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate. If the token is malformed, it attempts to validate the token against Launchpad. This allows users to bring their own token as described here https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication. But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
+      - `ensureAuthorized` now presumes the bearer token is a JWT and tries to validate. If the token is malformed, it attempts to validate the token against Launchpad. This allows users to bring their own token as described here <https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+API+with+Launchpad+Authentication>. But it also allows dashboard users to manually authenticate via Launchpad SAML to receive a Launchpad-based JWT.
 
 - **CUMULUS-1394**
   - Added `Granule.generateGranuleRecord()` method to granules model to generate a granule database record from a Cumulus execution message
@@ -5891,12 +5893,12 @@ If you deploy with no distribution app your deployment will succeed but you may 
 
 - **CUMULUS-1356**
 
-  - The `Collection` model's `delete` method now _removes_ the specified item
+  - The `Collection` model's `delete` method now *removes* the specified item
     from the collection config store that was inserted by the `create` method.
     Previously, this behavior was missing.
 
 - **CUMULUS-1374**
-  - Addressed audit concerns (https://www.npmjs.com/advisories/782) in api package
+  - Addressed audit concerns (<https://www.npmjs.com/advisories/782>) in api package
 
 ### BREAKING CHANGES
 
@@ -5975,7 +5977,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
   - `params` have been moved: Nest `params` fields under `app`, `db` or `iam` to override all Parameters for a particular stack's cloudformation template. Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired. Use `prefix` and `prefixNoDash` instead.
   - The `iams` section in `app/config.yml` IAM roles has been deprecated as a user-facing parameter,
-    _unless_ your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
   - The `vpc.securityGroup` will need to be set with a pre-existing security group ID to use Cumulus in a VPC. Must allow inbound HTTP(S) (Port 443).
 
 - **CUMULUS-1212**
@@ -6058,7 +6060,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     Backwards-compatible. Please re-run `npm run bootstrap` to build new `kes` overrides.
     Deployment docs have been updated to show how to deploy a single-config Cumulus instance.
   - `params` fields should now be nested under the stack key (i.e. `app`, `db` or `iam`) to provide Parameters for a particular stack's cloudformation template,
-    for use with single-config instances. Keys _must_ match the name of the deployment package folder (`app`, `db`, or `iam`).
+    for use with single-config instances. Keys *must* match the name of the deployment package folder (`app`, `db`, or `iam`).
     Backwards-compatible with multi-config setups.
   - `stackName` and `stackNameNoDash` have been retired as user-facing config parameters. Use `prefix` and `prefixNoDash` instead.
     This will be used to create stack names for all stacks in a single-config use case.
@@ -6066,7 +6068,7 @@ If running Cumulus within a VPC and extended downtime is acceptable, we recommen
     Warning: overriding the `db` stack's `stackName` will require you to set `dbStackName` in your `app/config.yml`.
     This parameter is required to fetch outputs from the `db` stack to reference in the `app` stack.
   - The `iams` section in `app/config.yml` IAM roles has been retired as a user-facing parameter,
-    _unless_ your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
+    *unless* your IAM role ARNs do not match the convention shown in `@cumulus/deployment/app/config.yml`
     In that case, overriding `iams` in your own config is recommended.
   - `iam` and `db` `cloudformation.yml` file names will have respective prefixes (e.g `iam.cloudformation.yml`).
   - Cumulus will now only attempt to create reconciliation reports for buckets of the `private`, `public` and `protected` types.
@@ -6140,7 +6142,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 - **CUMULUS-670**
 
-  - The behavior of ParsePDR and related code has changed in this release. PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf) will fail to parse.
+  - The behavior of ParsePDR and related code has changed in this release. PDRs with FILE_TYPEs that do not conform to the PDR ICD (+ TGZ) (<https://cdn.earthdata.nasa.gov/conduit/upload/6376/ESDS-RFC-030v1.0.pdf>) will fail to parse.
 
 - **CUMULUS-1208**
   - The granule object input to `@cumulus/queue-granules` will now be added to ingest workflow messages **as is**. In practice, this means that if you are using `@cumulus/queue-granules` to trigger ingest workflows and your granule objects input have invalid properties, then your ingest workflows will fail due to schema validation errors.
@@ -6165,7 +6167,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - **CUMULUS-803**
   - Added CloudWatch alarms to check running tasks of each ECS service, and add the alarms to CloudWatch dashboard
 - **CUMULUS-670**
-  - Added Ancillary Metadata Export feature (see https://nasa.github.io/cumulus/docs/features/ancillary_metadata for more information)
+  - Added Ancillary Metadata Export feature (see <https://nasa.github.io/cumulus/docs/features/ancillary_metadata> for more information)
   - Added new Collection file parameter "fileType" that allows configuration of workflow granule file fileType
 - **CUMULUS-1184** - Added kes logging output to ensure we always see the state machine reference before failures due to configuration
 - **CUMULUS-1105** - Added a dashboard endpoint to serve the dashboard from an S3 bucket
@@ -6652,7 +6654,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - `@cumulus/ingest/consumer` correctly limits the number of messages being received and processed from SQS. Details:
   - **Background:** `@cumulus/api` includes a lambda `<stack-name>-sqs2sf` which processes messages from the `<stack-name>-startSF` SQS queue every minute. The `sqs2sf` lambda uses `@cumulus/ingest/consumer` to receive and process messages from SQS.
   - **Bug:** More than `messageLimit` number of messages were being consumed and processed from the `<stack-name>-startSF` SQS queue. Many step functions were being triggered simultaneously by the lambda `<stack-name>-sqs2sf` (which consumes every minute from the `startSF` queue) and resulting in step function failure with the error: `An error occurred (ThrottlingException) when calling the GetExecutionHistory`.
-  - **Fix:** `@cumulus/ingest/consumer#processMessages` now processes messages until `timeLimit` has passed _OR_ once it receives up to `messageLimit` messages. `sqs2sf` is deployed with a [default `messageLimit` of 10](https://github.com/nasa/cumulus/blob/670000c8a821ff37ae162385f921c40956e293f7/packages/deployment/app/config.yml#L147).
+  - **Fix:** `@cumulus/ingest/consumer#processMessages` now processes messages until `timeLimit` has passed *OR* once it receives up to `messageLimit` messages. `sqs2sf` is deployed with a [default `messageLimit` of 10](https://github.com/nasa/cumulus/blob/670000c8a821ff37ae162385f921c40956e293f7/packages/deployment/app/config.yml#L147).
   - **IMPORTANT NOTE:** `consumer` will actually process up to `messageLimit * 2 - 1` messages. This is because sometimes `receiveSQSMessages` will return less than `messageLimit` messages and thus the consumer will continue to make calls to `receiveSQSMessages`. For example, given a `messageLimit` of 10 and subsequent calls to `receiveSQSMessages` returns up to 9 messages, the loop will continue and a final call could return up to 10 messages.
 
 ## [v1.9.1] - 2018-08-22
@@ -6931,7 +6933,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ### Fixed
 
 - add the missing dist folder to the hello-world task
-- disable uglifyjs on the built version of the pdr-status-check (read: https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264)
+- disable uglifyjs on the built version of the pdr-status-check (read: <https://github.com/webpack-contrib/uglifyjs-webpack-plugin/issues/264>)
 
 ## [v1.5.0] - 2018-04-23
 
@@ -7094,7 +7096,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 - **CUMULUS-326: "Occasionally encounter "Too Many Requests" on deployment"** The api gateway calls will handle throttling errors
 - **CUMULUS-175: "Dashboard providers not in sync with AWS providers."** The root cause of this bug - DynamoDB operations not showing up in Elasticsearch - was shared by collections and rules. The fix was to update providers', collections' and rules; POST, PUT and DELETE endpoints to operate on DynamoDB and using DynamoDB streams to update Elasticsearch. The following packages were made:
   - `@cumulus/deployment` deploys DynamoDB streams for the Collections, Providers and Rules tables as well as a new lambda function called `dbIndexer`. The `dbIndexer` lambda has an event source mapping which listens to each of the DynamoDB streams. The dbIndexer lambda receives events referencing operations on the DynamoDB table and updates the elasticsearch cluster accordingly.
-  - The `@cumulus/api` endpoints for collections, providers and rules _only_ query DynamoDB, with the exception of LIST endpoints and the collections' GET endpoint.
+  - The `@cumulus/api` endpoints for collections, providers and rules *only* query DynamoDB, with the exception of LIST endpoints and the collections' GET endpoint.
 
 ### Updated
 
@@ -7152,81 +7154,15 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.3...HEAD
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
 [v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
 [v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0
-[v14.0.0]: https://github.com/nasa/cumulus/compare/v13.4.0...v14.0.0
-[v13.4.0]: https://github.com/nasa/cumulus/compare/v13.3.2...v13.4.0
-[v13.3.2]: https://github.com/nasa/cumulus/compare/v13.3.0...v13.3.2
-[v13.3.0]: https://github.com/nasa/cumulus/compare/v13.2.1...v13.3.0
-[v13.2.1]: https://github.com/nasa/cumulus/compare/v13.2.0...v13.2.1
-[v13.2.0]: https://github.com/nasa/cumulus/compare/v13.1.0...v13.2.0
-[v13.1.0]: https://github.com/nasa/cumulus/compare/v13.0.1...v13.1.0
-[v13.0.1]: https://github.com/nasa/cumulus/compare/v13.0.0...v13.0.1
-[v13.0.0]: https://github.com/nasa/cumulus/compare/v12.0.3...v13.0.0
-[v12.0.3]: https://github.com/nasa/cumulus/compare/v12.0.2...v12.0.3
-[v12.0.2]: https://github.com/nasa/cumulus/compare/v12.0.1...v12.0.2
-[v12.0.1]: https://github.com/nasa/cumulus/compare/v12.0.0...v12.0.1
-[v12.0.0]: https://github.com/nasa/cumulus/compare/v11.1.8...v12.0.0
-[v11.1.8]: https://github.com/nasa/cumulus/compare/v11.1.7...v11.1.8
-[v11.1.7]: https://github.com/nasa/cumulus/compare/v11.1.5...v11.1.7
-[v11.1.5]: https://github.com/nasa/cumulus/compare/v11.1.4...v11.1.5
-[v11.1.4]: https://github.com/nasa/cumulus/compare/v11.1.3...v11.1.4
-[v11.1.3]: https://github.com/nasa/cumulus/compare/v11.1.2...v11.1.3
-[v11.1.2]: https://github.com/nasa/cumulus/compare/v11.1.1...v11.1.2
-[v11.1.1]: https://github.com/nasa/cumulus/compare/v11.1.0...v11.1.1
-[v11.1.0]: https://github.com/nasa/cumulus/compare/v11.0.0...v11.1.0
-[v11.0.0]: https://github.com/nasa/cumulus/compare/v10.1.3...v11.0.0
-[v10.1.3]: https://github.com/nasa/cumulus/compare/v10.1.2...v10.1.3
-[v10.1.2]: https://github.com/nasa/cumulus/compare/v10.1.1...v10.1.2
-[v10.1.1]: https://github.com/nasa/cumulus/compare/v10.1.0...v10.1.1
-[v10.1.0]: https://github.com/nasa/cumulus/compare/v10.0.1...v10.1.0
-[v10.0.1]: https://github.com/nasa/cumulus/compare/v10.0.0...v10.0.1
-[v10.0.0]: https://github.com/nasa/cumulus/compare/v9.9.0...v10.0.0
-[v9.9.3]: https://github.com/nasa/cumulus/compare/v9.9.2...v9.9.3
-[v9.9.2]: https://github.com/nasa/cumulus/compare/v9.9.1...v9.9.2
-[v9.9.1]: https://github.com/nasa/cumulus/compare/v9.9.0...v9.9.1
-[v9.9.0]: https://github.com/nasa/cumulus/compare/v9.8.0...v9.9.0
-[v9.8.0]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.8.0
-[v9.7.1]: https://github.com/nasa/cumulus/compare/v9.7.0...v9.7.1
-[v9.7.0]: https://github.com/nasa/cumulus/compare/v9.6.0...v9.7.0
-[v9.6.0]: https://github.com/nasa/cumulus/compare/v9.5.0...v9.6.0
-[v9.5.0]: https://github.com/nasa/cumulus/compare/v9.4.0...v9.5.0
-[v9.4.1]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.1
-[v9.4.0]: https://github.com/nasa/cumulus/compare/v9.3.0...v9.4.0
-[v9.3.0]: https://github.com/nasa/cumulus/compare/v9.2.2...v9.3.0
 [v9.2.2]: https://github.com/nasa/cumulus/compare/v9.2.1...v9.2.2
 [v9.2.1]: https://github.com/nasa/cumulus/compare/v9.2.0...v9.2.1
 [v9.2.0]: https://github.com/nasa/cumulus/compare/v9.1.0...v9.2.0
 [v9.1.0]: https://github.com/nasa/cumulus/compare/v9.0.1...v9.1.0
-[v9.0.1]: https://github.com/nasa/cumulus/compare/v9.0.0...v9.0.1
-[v9.0.0]: https://github.com/nasa/cumulus/compare/v8.1.0...v9.0.0
-[v8.1.0]: https://github.com/nasa/cumulus/compare/v8.0.0...v8.1.0
-[v8.0.0]: https://github.com/nasa/cumulus/compare/v7.2.0...v8.0.0
-[v7.2.0]: https://github.com/nasa/cumulus/compare/v7.1.0...v7.2.0
-[v7.1.0]: https://github.com/nasa/cumulus/compare/v7.0.0...v7.1.0
-[v7.0.0]: https://github.com/nasa/cumulus/compare/v6.0.0...v7.0.0
-[v6.0.0]: https://github.com/nasa/cumulus/compare/v5.0.1...v6.0.0
-[v5.0.1]: https://github.com/nasa/cumulus/compare/v5.0.0...v5.0.1
-[v5.0.0]: https://github.com/nasa/cumulus/compare/v4.0.0...v5.0.0
-[v4.0.0]: https://github.com/nasa/cumulus/compare/v3.0.1...v4.0.0
-[v3.0.1]: https://github.com/nasa/cumulus/compare/v3.0.0...v3.0.1
-[v3.0.0]: https://github.com/nasa/cumulus/compare/v2.0.1...v3.0.0
-[v2.0.7]: https://github.com/nasa/cumulus/compare/v2.0.6...v2.0.7
-[v2.0.6]: https://github.com/nasa/cumulus/compare/v2.0.5...v2.0.6
-[v2.0.5]: https://github.com/nasa/cumulus/compare/v2.0.4...v2.0.5
-[v2.0.4]: https://github.com/nasa/cumulus/compare/v2.0.3...v2.0.4
-[v2.0.3]: https://github.com/nasa/cumulus/compare/v2.0.2...v2.0.3
-[v2.0.2]: https://github.com/nasa/cumulus/compare/v2.0.1...v2.0.2
-[v2.0.1]: https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.1
-[v2.0.0]: https://github.com/nasa/cumulus/compare/v1.24.0...v2.0.0
-[v1.24.0]: https://github.com/nasa/cumulus/compare/v1.23.2...v1.24.0
-[v1.23.2]: https://github.com/nasa/cumulus/compare/v1.22.1...v1.23.2
-[v1.22.1]: https://github.com/nasa/cumulus/compare/v1.21.0...v1.22.1
-[v1.21.0]: https://github.com/nasa/cumulus/compare/v1.20.0...v1.21.0
 [v1.20.0]: https://github.com/nasa/cumulus/compare/v1.19.0...v1.20.0
 [v1.19.0]: https://github.com/nasa/cumulus/compare/v1.18.0...v1.19.0
 [v1.18.0]: https://github.com/nasa/cumulus/compare/v1.17.0...v1.18.0
