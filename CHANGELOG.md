@@ -205,6 +205,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
     operation status correctly to failed if there is an error.
   - Knex calls relating to reconciliation reports will retry if there is a
     connection terminated unexpectedly error
+  - Improved logging for async operation
   - Set default async_operation_image_version to 47
 - **CUMULUS-3024**
   - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
