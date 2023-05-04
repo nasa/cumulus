@@ -1,7 +1,7 @@
 'use strict';
 
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { s3, sns, systemsManager } = require('@cumulus/aws-client/services');
+const { s3, sns } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,
@@ -26,7 +26,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
-const models = require('../models');
 const testUtils = require('../lib/testUtils');
 const serveUtils = require('./serveUtils');
 const {
