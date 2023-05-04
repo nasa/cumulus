@@ -242,8 +242,6 @@ export const waitForObjectToExist = async (params: {
 * @returns {Promise}
 **/
 export const s3PutObject = (params: PutObjectCommandInput) => s3().putObject(params);
-  ...params,
-});
 
 /**
  * Upload a file to S3
