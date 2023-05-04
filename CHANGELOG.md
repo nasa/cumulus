@@ -195,11 +195,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
-- **CUMULUS-3203**
-  - Removed ACL setting of private on S3.multipartCopyObject() call
-  - Removed ACL setting of private for s3PutObject()
-  - Removed ACL confguration on sync-granules task
-
 - **CUMULUS-3215**
   - Create reconciliation reports will properly throw errors and set the async
     operation status correctly to failed if there is an error.
@@ -214,8 +209,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
-  
-  ### Removed
+- **CUMULUS-3203**
+  - Removed ACL setting of private on S3.multipartCopyObject() call
+  - Removed ACL setting of private for s3PutObject()
+  - Removed ACL confguration on sync-granules task
+
+### Removed
 
 - **CUMULUS-3204**
   - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
@@ -235,7 +234,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 ### Fixed
 
 - **CUMULUS-3120**
-  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods`
   to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
   - Updated cloudwatch retention documentation to reflect the bugfix changes
 
