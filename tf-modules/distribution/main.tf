@@ -21,6 +21,8 @@ module "tea_map_cache" {
   lambda_subnet_ids          = var.subnet_ids
   vpc_id                     = var.vpc_id
   deploy_to_ngap             = var.deploy_to_ngap
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {
@@ -134,7 +136,7 @@ resource "aws_lambda_function" "s3_credentials" {
   source_code_hash = filebase64sha256(local.lambda_source_file)
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda[0].arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 50
   memory_size      = 512
 

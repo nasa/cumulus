@@ -9,7 +9,6 @@ const uuidv4 = require('uuid/v4');
 const proxyquire = require('proxyquire');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { randomString } = require('@cumulus/common/test-utils');
 const {
   sns,
   sqs,
@@ -164,7 +163,6 @@ test.before(async (t) => {
   t.context.pdrPgModel = new PdrPgModel();
   t.context.providerPgModel = new ProviderPgModel();
 
-  process.env.ExecutionsTable = randomString();
   fixture = await loadFixture('execution-running-event.json');
 
   const executionsTopicName = cryptoRandomString({ length: 10 });

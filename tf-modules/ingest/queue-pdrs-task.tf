@@ -1,10 +1,11 @@
 resource "aws_lambda_function" "queue_pdrs_task" {
+  depends_on       = [aws_cloudwatch_log_group.queue_pdrs_task]
   function_name    = "${var.prefix}-QueuePdrs"
   filename         = "${path.module}/../../tasks/queue-pdrs/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/queue-pdrs/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = lookup(var.lambda_timeouts, "queue_pdrs_task_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "queue_pdrs_task_memory_size", 1024)
 
@@ -31,7 +32,7 @@ resource "aws_lambda_function" "queue_pdrs_task" {
 }
 
 resource "aws_cloudwatch_log_group" "queue_pdrs_task" {
-  name              = "/aws/lambda/${aws_lambda_function.queue_pdrs_task.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ingest_queue_pdrs_task_log_retention", var.default_log_retention_days)
+  name              = "/aws/lambda/${var.prefix}-QueuePdrs"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "QueuePdrs", var.default_log_retention_days)
   tags              = var.tags
 }

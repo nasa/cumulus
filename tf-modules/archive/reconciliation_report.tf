@@ -6,19 +6,17 @@ resource "aws_lambda_function" "create_reconciliation_report" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/createReconciliationReport/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 256
   environment {
     variables = {
       CMR_ENVIRONMENT                  = var.cmr_environment
       CMR_HOST                         = var.cmr_custom_host
-      CollectionsTable                 = var.dynamo_tables.collections.name
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       ES_HOST                          = var.elasticsearch_hostname
       ES_SCROLL                        = lookup(var.elasticsearch_client_config, "create_reconciliation_report_es_scroll_duration", "6m")
       ES_SCROLL_SIZE                   = lookup(var.elasticsearch_client_config, "create_reconciliation_report_es_scroll_size", 1000)
-      GranulesTable                    = var.dynamo_tables.granules.name
       ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
       stackName                        = var.prefix
       system_bucket                    = var.system_bucket

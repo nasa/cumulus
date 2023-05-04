@@ -35,7 +35,7 @@ Commands:
 
 ## Assumptions
 
-- Terraform state files are configured for remote state storage in S3 using DynamoDB for locks. Follow the instructions in the [deployment documentation](https://nasa.github.io/cumulus/docs/deployment/deployment-readme#create-resources-for-terraform-state) for proper setup.
+- Terraform state files are configured for remote state storage in S3 using DynamoDB for locks. Follow the instructions in the [deployment documentation](https://nasa.github.io/cumulus/docs/deployment/#create-resources-for-terraform-state) for proper setup.
 
 - State files keys are in the format: `.*/data-persistence.*/terraform.tfstate` or `.*/cumulus.*/terraform.tfstate` or an extraction regex is specified for the `list-deployments` and `deployment-report` commands.
 

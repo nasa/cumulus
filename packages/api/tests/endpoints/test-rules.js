@@ -46,14 +46,12 @@ const {
 } = require('../../lib/testUtils');
 const { post, put, del } = require('../../endpoints/rules');
 
+const rulesHelpers = require('../../lib/rulesHelpers');
 const AccessToken = require('../../models/access-tokens');
-const Rule = require('../../models/rules');
 const assertions = require('../../lib/assertions');
 
 [
   'AccessTokensTable',
-  'RulesTable',
-  'CollectionsTable',
   'stackName',
   'system_bucket',
   'TOKEN_SECRET',
@@ -69,11 +67,10 @@ const { app } = require('../../app');
 
 const workflow = randomId('workflow-');
 
-const setBuildPayloadStub = () => sinon.stub(Rule, 'buildPayload').resolves({});
+const setBuildPayloadStub = () => sinon.stub(rulesHelpers, 'buildPayload').resolves({});
 
 let jwtAuthToken;
 let accessTokenModel;
-let ruleModel;
 let buildPayloadStub;
 
 test.before(async (t) => {
@@ -90,7 +87,7 @@ test.before(async (t) => {
     FunctionName: randomId('messageConsumer'),
     Role: randomId('role'),
     Handler: 'index.handler',
-    Runtime: 'nodejs14.x',
+    Runtime: 'nodejs16.x',
   }).promise();
   process.env.messageConsumer = messageConsumer.FunctionName;
 
@@ -155,17 +152,6 @@ test.before(async (t) => {
     },
     provider: t.context.pgProvider.name,
   });
-  t.context.collectionId = constructCollectionId(collectionName, collectionVersion);
-
-  ruleModel = new Rule();
-  await ruleModel.createTable();
-  t.context.ruleModel = ruleModel;
-
-  const ruleWithTrigger = await ruleModel.createRuleTrigger(t.context.testRule);
-  const ruleRecord = await ruleModel.create(ruleWithTrigger);
-  await indexer.indexRule(esClient, ruleRecord, t.context.esIndex);
-  t.context.testPgRule = await translateApiRuleToPostgresRuleRaw(ruleRecord, knex);
-  t.context.rulePgModel.create(knex, t.context.testPgRule);
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -189,6 +175,11 @@ test.before(async (t) => {
       {}
     ),
   ]);
+  const ruleWithTrigger = await rulesHelpers.createRuleTrigger(t.context.testRule);
+  t.context.collectionId = constructCollectionId(collectionName, collectionVersion);
+  t.context.testPgRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
+  await indexer.indexRule(esClient, ruleWithTrigger, t.context.esIndex);
+  t.context.rulePgModel.create(knex, t.context.testPgRule);
 });
 
 test.beforeEach((t) => {
@@ -202,7 +193,6 @@ test.beforeEach((t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await ruleModel.deleteTable();
   await S3.recursivelyDeleteS3Bucket(process.env.system_bucket);
   await cleanupTestIndex(t.context);
 
@@ -539,13 +529,17 @@ test('POST creates a rule that is enabled by default', async (t) => {
 });
 
 test('POST returns a 409 response if record already exists', async (t) => {
-  const { newRule, rulePgModel, testKnex } = t.context;
-  const ruleWithTrigger = await ruleModel.createRuleTrigger(newRule);
-  const dynamoRule = await ruleModel.create(ruleWithTrigger);
+  const { newRule } = t.context;
 
-  const newPgRule = await translateApiRuleToPostgresRuleRaw(dynamoRule);
-  await rulePgModel.create(testKnex, newPgRule);
+  // create rule
+  await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
 
+  // attempt to create duplicate rule
   const response = await request(app)
     .post('/rules')
     .set('Accept', 'application/json')
@@ -1257,15 +1251,12 @@ test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async
   const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
   const { queueUrl: queueUrl2 } = await createSqsQueues(queue2);
 
-  const stubbedRulesModel = new Rule();
-
   const {
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
     {
       ...t.context,
-      ruleModel: stubbedRulesModel,
     },
     {
       workflow,
@@ -1302,9 +1293,6 @@ test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async
       name: originalPgRecord.name,
     },
     body: updateRule,
-    testContext: {
-      ruleModel: stubbedRulesModel,
-    },
   };
   const response = buildFakeExpressResponse();
   await put(expressRequest, response);
@@ -1344,20 +1332,12 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
-  const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
-  t.teardown(() => {
-    deleteOldEventSourceMappingsSpy.restore();
-  });
-
-  const stubbedRulesModel = new Rule();
-
   const {
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
     {
       ...t.context,
-      ruleModel: stubbedRulesModel,
     },
     {
       workflow,
@@ -1389,7 +1369,6 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     },
     body: updateRule,
     testContext: {
-      ruleModel: stubbedRulesModel,
       rulePgModel: {
         get: () => Promise.resolve(originalPgRecord),
         upsert: () => {
@@ -1405,8 +1384,6 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
     put(expressRequest, response),
     { message: 'PG fail' }
   );
-
-  t.false(deleteOldEventSourceMappingsSpy.called);
 
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
@@ -1446,20 +1423,12 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
   const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
-  const deleteOldEventSourceMappingsSpy = sinon.spy(Rule.prototype, 'deleteOldEventSourceMappings');
-  t.teardown(() => {
-    deleteOldEventSourceMappingsSpy.restore();
-  });
-
-  const stubbedRulesModel = new Rule();
-
   const {
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
     {
       ...t.context,
-      ruleModel: stubbedRulesModel,
     },
     {
       workflow,
@@ -1491,7 +1460,6 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     },
     body: updateRule,
     testContext: {
-      ruleModel: stubbedRulesModel,
       esClient: {
         index: () => {
           throw new Error('ES fail');
@@ -1506,8 +1474,6 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
     put(expressRequest, response),
     { message: 'ES fail' }
   );
-
-  t.false(deleteOldEventSourceMappingsSpy.called);
 
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });

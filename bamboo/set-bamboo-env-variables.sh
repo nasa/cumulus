@@ -24,6 +24,7 @@ declare -a param_list=(
   "bamboo_SECRET_AWS_SUBNET"
   "bamboo_SECRET_CSDAP_CLIENT_ID"
   "bamboo_SECRET_CSDAP_CLIENT_PASSWORD"
+  "bamboo_SECRET_DOCSEARCH_APP_ID"
   "bamboo_SECRET_DOCSEARCH_API_KEY"
   "bamboo_SECRET_DOCSEARCH_INDEX_NAME"
   "bamboo_SECRET_EARTHDATA_CLIENT_ID"
@@ -66,6 +67,7 @@ for key in "${param_list[@]}"; do
 done
 
 ## Get the current git SHA
+git config --global --add safe.directory $bamboo_working_directory/source/cumulus
 GIT_SHA=$(git rev-parse HEAD)
 export GIT_SHA
 

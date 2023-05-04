@@ -13,25 +13,29 @@ Once the above files are in place and the entries created in CMR and Cumulus, we
 * Go to the Cumulus dashboard, click on `Rules` in the navigation.
 * Click `Add Rule`.
 
-![Screenshot of Rules page](assets/cd_rules_page.png)
+![Screenshot of Rules page](../assets/cd_rules_page.png)
 
 2. Complete Form
 <!-- markdownlint-enable MD029 -->
 
 * Fill out the template form.
 
-![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule_form_blank.png)
+![Screenshot of a Rules template for adding a new rule](../assets/cd_add_rule_form_blank.png)
 
 For more details regarding the field definitions and required information go to [Data Cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 
-> **Note:** If the state field is left blank, it defaults to `false`.
+:::note state field conditional
+
+If the state field is left blank, it defaults to `false`.
+
+:::
 
 ## Examples
 
 * A rule form with completed required fields:
 
-![Screenshot of a completed rule form](assets/cd_add_rule_filled.png)
+![Screenshot of a completed rule form](../assets/cd_add_rule_filled.png)
 
 * A successfully added Rule:
 
-![Screenshot of created rule](assets/cd_add_rule_overview.png)
+![Screenshot of created rule](../assets/cd_add_rule_overview.png)

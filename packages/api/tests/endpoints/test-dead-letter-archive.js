@@ -21,7 +21,6 @@ const { buildFakeExpressResponse } = require('./utils');
 process.env = {
   ...process.env,
   AccessTokensTable: randomId('AccessTokensTable'),
-  AsyncOperationsTable: randomId('asyncOperationsTable'),
   system_bucket: randomId('system'),
   stackName: randomId('stackName'),
   TOKEN_SECRET: randomId('tokenSecret'),

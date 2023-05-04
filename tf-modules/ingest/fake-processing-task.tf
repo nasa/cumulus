@@ -4,7 +4,7 @@ resource "aws_lambda_function" "fake_processing_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/test-processing/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = lookup(var.lambda_timeouts, "fake_processing_task_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "fake_processing_task_memory_size", 1024)
 

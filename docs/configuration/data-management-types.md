@@ -41,7 +41,11 @@ The following are created via the dashboard or API:
 
 Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
 
-> The schemas are _extremely_ useful for understanding which attributes are configurable and which of those are required. Cumulus uses these schemas for validation.
+:::note
+
+The schemas are _extremely_ useful for understanding which attributes are configurable and which of those are required. Cumulus uses these schemas for validation.
+
+:::
 
 ### Providers
 
@@ -49,10 +53,12 @@ Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/mas
 - [Provider API](https://nasa.github.io/cumulus-api/?language=Python#list-providers)
 - [Sample provider configurations](https://github.com/nasa/cumulus/tree/master/example/data/providers)
 
-Please note:
+:::note
 
 - While _connection_ configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
 - There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
+
+:::
 
 #### Provider Configuration
 
@@ -120,9 +126,9 @@ The Provider configuration is defined by a JSON object that takes different conf
 |host|string|Yes|The ftp host to pull data from (e.g. `nasa.gov`) |
 |username|string|No|Username to use to connect to the sftp server.|
 |password|string|No|Password to use to connect to the sftp server. |
-|port|integer|No|Port to connect to the provider on.  Defaults to `22`
-|privateKey|string|No|filename assumed to be in s3://bucketInternal/stackName/crypto
-|cmKeyId|string|No|AWS KMS Customer Master Key arn or alias
+|port|integer|No|Port to connect to the provider on.  Defaults to `22` |
+|privateKey|string|No|filename assumed to be in s3://bucketInternal/stackName/crypto |
+|cmKeyId|string|No|AWS KMS Customer Master Key arn or alias |
 
 </details>
 
@@ -238,23 +244,23 @@ The `rule - value` entry depends on the type of run:
 
 - In the Cumulus dashboard, go to the `Provider` page.
 
-![Screenshot of Create Provider form](assets/cd_provider_page.png)
+![Screenshot of Create Provider form](../assets/cd_provider_page.png)
 
 - Click on `Add Provider`.
 - Fill in the form and then submit it.
 
-![Screenshot of Create Provider form](assets/cd_add_provider_form.png)
+![Screenshot of Create Provider form](../assets/cd_add_provider_form.png)
 
 ### Create A Collection
 
 - Go to the `Collections` page.
 
-![Screenshot of the Collections page](assets/cd_collections_page.png)
+![Screenshot of the Collections page](../assets/cd_collections_page.png)
 
 - Click on `Add Collection`.
 - Copy and paste or fill in the collection JSON object form.
 
-![Screenshot of Add Collection form](assets/cd_add_collection.png)
+![Screenshot of Add Collection form](../assets/cd_add_collection.png)
 
 - Once you submit the form, you should be able to verify that your new collection is in the list.
 
@@ -266,25 +272,29 @@ The `rule - value` entry depends on the type of run:
 - Go to the Cumulus dashboard, click on `Rules` in the navigation.
 - Click `Add Rule`.
 
-![Screenshot of Rules page](assets/cd_rules_page.png)
+![Screenshot of Rules page](../assets/cd_rules_page.png)
 
 2. Complete Form
 
 - Fill out the template form.
 
 <!-- markdownlint-enable MD029 -->
-![Screenshot of a Rules template for adding a new rule](assets/cd_add_rule_form_blank.png)
+![Screenshot of a Rules template for adding a new rule](../assets/cd_add_rule_form_blank.png)
 
 For more details regarding the field definitions and required information go to [Data Cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 
-> **Note:** If the state field is left blank, it defaults to `false`.
+:::note state field conditional
+
+If the state field is left blank, it defaults to `false`.
+
+:::
 
 #### Rule Examples
 
 - A rule form with completed required fields:
 
-![Screenshot of a completed rule form](assets/cd_add_rule_filled.png)
+![Screenshot of a completed rule form](../assets/cd_add_rule_filled.png)
 
 - A successfully added Rule:
 
-![Screenshot of created rule](assets/cd_add_rule_overview.png)
+![Screenshot of created rule](../assets/cd_add_rule_overview.png)

@@ -5,7 +5,7 @@ resource "aws_lambda_function" "discover_granules_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/discover-granules/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = lookup(var.lambda_timeouts, "discover_granules_task_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "discover_granules_task_memory_size", 512)
 
@@ -14,7 +14,6 @@ resource "aws_lambda_function" "discover_granules_task" {
   environment {
     variables = {
       stackName                     = var.prefix
-      GranulesTable                 = var.dynamo_tables.granules.name
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
     }
   }

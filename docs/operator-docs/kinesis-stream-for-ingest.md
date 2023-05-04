@@ -4,7 +4,11 @@ title: Setup Kinesis Stream & CNM Message
 hide_title: false
 ---
 
-> **Note**: Keep in mind that you should only have to set this up once per ingest stream. Kinesis pricing is based on the shard value and not on amount of kinesis usage.
+:::tip
+
+Keep in mind that you should only have to set this up once per ingest stream. Kinesis pricing is based on the shard value and not on amount of kinesis usage.
+
+:::
 
 1. Create a Kinesis Stream
 
@@ -14,7 +18,7 @@ hide_title: false
     - Click on `Create Kinesis Stream`.
     - A status page with stream details display. Once the status is `active` then the stream is ready to use. Keep in mind to record the streamName and StreamARN for later use.
 
-    ![Screenshot of AWS console page for creating a Kinesis stream](assets/cnm_create_kinesis_stream.jpg)
+    ![Screenshot of AWS console page for creating a Kinesis stream](../assets/cnm_create_kinesis_stream.jpg)
 
 2. Create a Rule
 

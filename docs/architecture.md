@@ -8,7 +8,7 @@ hide_title: false
 
 Below, find a diagram with the components that comprise an instance of Cumulus.
 
-![Architecture diagram of a Cumulus deployment](assets/cumulus-arch-diagram.png)
+![Architecture diagram of a Cumulus deployment](assets/cumulus-arch-diagram-2023.png)
 
 This diagram details all of the major architectural  components of a Cumulus deployment.
 
@@ -34,7 +34,7 @@ Workflows can optionally report granule metadata to [CMR](<https://earthdata.nas
 
 #### Data persistence
 
-Cumulus entity state data is stored in a set of [PostgreSQL](https://www.postgresql.org/) compatible database, and is exported to an Elasticsearch instance for non-authoritative querying/state data for the API and other applications that require more complex queries. Currently the entity state data is replicated in DynamoDB and this will be removed in a future release.
+Cumulus entity state data is stored in a [PostgreSQL](https://www.postgresql.org/) compatible database, and is exported to an Elasticsearch instance for non-authoritative querying/state data for the API and other applications that require more complex queries.
 
 #### Data discovery
 
@@ -42,7 +42,7 @@ Discovering data for ingest is handled via workflow step components using Cumulu
 
 #### Database
 
-Cumulus utilizes a user-provided PostgreSQL database backend. For improved API search query efficiency Cumulus provides data replication to an Elasticsearch instance.   For legacy reasons, Cumulus is currently also deploying a DynamoDB datastore, and writes are replicated in parallel with the PostgreSQL database writes.   The DynamoDB replicated tables and parallel writes will be removed in future releases.
+Cumulus utilizes a user-provided PostgreSQL database backend. For improved API search query efficiency Cumulus provides data replication to an Elasticsearch instance.
 
 ##### PostgreSQL Database Schema Diagram
 
@@ -68,5 +68,5 @@ The [data persistence](https://github.com/nasa/cumulus/tree/master/tf-modules/da
 
 Other modules are provided as artifacts on the [release](https://github.com/nasa/cumulus/releases) page for use in users configuring their own deployment and contain extracted subcomponents of the [cumulus](#cumulus) module.  For more on these components see the [components documentation](deployment/components).
 
-For more on the specific structure, examples of use and how to deploy and more, please see the [deployment](deployment/deployment-readme) docs as well as the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
+For more on the specific structure, examples of use and how to deploy and more, please see the [deployment](deployment) docs as well as the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
 .

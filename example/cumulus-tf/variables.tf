@@ -1,11 +1,5 @@
 # Required
 
-variable "cloudwatch_log_retention_periods" {
-  type = map(number)
-  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
-  default = {}
-}
-
 variable "cmr_client_id" {
   type = string
 }
@@ -54,12 +48,6 @@ variable "csdap_client_password" {
 variable "csdap_host_url" {
   type        = string
   description = "The csdap host url"
-}
-
-variable "default_log_retention_days" {
-  type = number
-  default = 30
-  description = "default value that user chooses for their log retention periods"
 }
 
 variable "launchpad_api" {
@@ -362,7 +350,7 @@ variable "rds_admin_access_secret_arn" {
 variable "async_operation_image_version" {
   description = "docker image version to use for Cumulus async operations tasks"
   type = string
-  default = "45"
+  default = "46"
 }
 
 variable "cumulus_process_activity_version" {
@@ -374,7 +362,7 @@ variable "cumulus_process_activity_version" {
 variable "ecs_task_image_version" {
   description = "docker image version to use for Cumulus hello world task"
     type = string
-    default = "2.0.0"
+    default = "1.9.0"
 }
 
 variable "cumulus_test_ingest_image_version" {
@@ -391,13 +379,31 @@ variable "ecs_custom_sg_ids" {
 ## ORCA Variables Definitions
 
 variable "orca_db_user_password" {
-  description = "Password for RDS database user authentication"
+  description = "Password for RDS orca database user authentication"
   type = string
 }
 
 variable "orca_default_bucket" {
   type        = string
   description = "Default ORCA S3 Glacier bucket to use."
+}
+
+variable "orca_dlq_subscription_email" {
+  type        = string
+  description = "The email to notify users when messages are received in dead letter SQS queue due to orca restore failure."
+  default = "test@email.com"
+}
+
+variable "orca_s3_access_key" {
+  type        = string
+  description = "Access key for communicating with Orca S3 buckets."
+  default = ""
+}
+
+variable "orca_s3_secret_key" {
+  type        = string
+  description = "Secret key for communicating with Orca S3 buckets."
+  default = ""
 }
 
 variable "lambda_timeouts" {
@@ -439,4 +445,35 @@ variable "subnets_tag_name" {
   description = "Tag name to use for looking up VPC subnets"
   type = string
   default = "Private application us-east-1a *"
+}
+
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
+  default = {
+    thin-egress-app-EgressLambda = 7
+    ApiEndpoints = 7
+    AsyncOperationEcsLogs = 7
+    DiscoverPdrs = 7
+    DistributionApiEndpoints = 7
+    EcsLogs = 7
+    granuleFilesCacheUpdater = 7
+    HyraxMetadataUpdates = 7
+    ParsePdr = 7
+    PostToCmr = 7
+    PrivateApiLambda = 7
+    publishExecutions = 7
+    publishGranules = 7
+    QueuePdrs = 7
+    QueueWorkflow = 7
+    replaySqsMessages = 7
+    SyncGranule = 7
+    UpdateCmrAccessConstraints = 7
+  }
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 14
+  description = "default value that user chooses for their log retention periods"
 }

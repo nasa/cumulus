@@ -40,7 +40,6 @@ const { buildFakeExpressResponse } = require('../utils');
 
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
-process.env.AsyncOperationsTable = randomString();
 process.env.AccessTokensTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 

@@ -1,0 +1,122 @@
+:root {
+  --ifm-color-primary-lightest: #2788c6;
+  --ifm-color-primary-lighter: #2582bd;
+  --ifm-color-primary-light: #247cb5;
+  --ifm-color-primary: #2276ac;
+  --ifm-color-primary-dark: #1b5d88;
+  --ifm-color-primary-darker: #1a5a83;
+  --ifm-color-primary-darkest: #164d70;
+}
+
+[data-theme="dark"] {
+  --ifm-background-color: #0d1116 !important;
+  --ifm-background-surface-color: #1d1d1d !important;
+  --ifm-highlight-text: #ebf7ff;
+  --ifm-link-color: #52bdff;
+  --ifm-menu-color-active: #52bdff;
+}
+
+/* Links and Buttons */
+
+.theme-back-to-top-button {
+  background-color: #2276ac !important;
+}
+
+.header-github-link:hover {
+  opacity: 0.6;
+}
+
+.header-github-link::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  display: flex;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='white' d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E")
+    no-repeat;
+}
+
+[data-theme="dark"] .header-github-link::before {
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='white' d='M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12'/%3E%3C/svg%3E")
+    no-repeat;
+}
+
+[data-theme="dark"] .alert--info {
+  --ifm-alert-border-color: #2491d8;
+  --ifm-alert-background-color: rgba(200, 227, 244, 0.05);
+}
+
+[data-theme="dark"] .breadcrumbs__item--active .breadcrumbs__link {
+  --ifm-breadcrumb-item-background-active: #252525;
+  --ifm-breadcrumb-color-active: #52bdff;
+}
+
+[data-theme="dark"] .menu__link--active:not(.menu__link--sublist) {
+  --ifm-menu-color-background-active: #252525;
+}
+
+[data-theme="dark"] .menu__link--active:not(.menu__link--sublist),
+[data-theme="light"] .menu__link--active:not(.menu__link--sublist) {
+  border-left: 2px solid;
+  --ifm-menu-border-color: #52bdff;
+}
+
+[data-theme="dark"] .table-of-contents__link--active {
+  --ifm-color-primary: #52bdff;
+}
+
+/* DocSearch Dropdown */
+
+[data-theme="dark"] .DocSearch,
+.DocSearch-Help {
+  --docsearch-muted-color: #f6f6f6;
+}
+
+[data-theme="light"] .DocSearch,
+.DocSearch-Help {
+  --docsearch-muted-color: #2276ac;
+}
+
+[data-theme="light"] .DocSearch-Button .DocSearch-Search-Icon {
+  --docsearch-text-color: #2276ac;
+}
+
+[data-theme="light"] .DocSearch-Button {
+  --docsearch-searchbox-background: #f9f9f9;
+}
+
+[data-theme="dark"] .DocSearch-Modal {
+  --docsearch-modal-background: #121212;
+}
+
+[data-theme="dark"] .DocSearch-Input {
+  --docsearch-text-color: rgba(246, 246, 246, 1);
+  --docsearch-muted-color: rgba(255, 255, 255, 0.65);
+}
+
+[data-theme="light"] .DocSearch-Input {
+  --docsearch-text-color: rgba(34, 118, 172, 1);
+  --docsearch-muted-color: rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .DocSearch-Commands-Key {
+  --docsearch-key-gradient: linear-gradient(-26.5deg, #2788c6, #2276ac);
+}
+
+[data-theme="dark"] .DocSearch-Button-Key {
+  --docsearch-key-gradient: linear-gradient(-26.5deg, #2788c6, #2276ac);
+}
+
+[data-theme="dark"] .DocSearch-Footer {
+  --docsearch-footer-background: #1d1d1d;
+}
+
+/* Codeblock */
+
+.token.comment {
+  color: rgba(145, 152, 192, 1) !important;
+}
+
+[data-theme="dark"] code {
+  background-color: #222534;
+  color: rgba(219, 225, 236, 1);
+}

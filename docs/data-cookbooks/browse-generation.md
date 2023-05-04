@@ -20,13 +20,13 @@ We will discuss how to run a processing workflow against an inbound granule that
 
 ### Cumulus
 
-This entry assumes you have a deployed instance of Cumulus v1.16.0 or later, and a working dashboard following the instructions in the [deployment documentation](../deployment/deployment-readme). This entry also assumes you have some knowledge of how to configure Collections, Providers and Rules and basic Cumulus operation.
+This entry assumes you have a deployed instance of Cumulus v1.16.0 or later, and a working dashboard following the instructions in the [deployment documentation](../deployment). This entry also assumes you have some knowledge of how to configure Collections, Providers and Rules and basic Cumulus operation.
 
-Prior to working through this entry, you should be somewhat familiar with the [Hello World](hello-world) example the [Workflows](../workflows/workflows-readme) section of the documentation, and [building Cumulus lambdas](../workflows/lambda).
+Prior to working through this entry, you should be somewhat familiar with the [Hello World](hello-world) example the [Workflows](../workflows) section of the documentation, and [building Cumulus lambdas](../workflows/lambda).
 
-You should also review the [Data Cookbooks Setup](setup) portion of the documentation as it contains useful information on the inter-task message schema expectations.
+You should also review the [Data Cookbooks Setup](about-cookbooks#setup) portion of the documentation as it contains useful information on the inter-task message schema expectations.
 
-This entry will utilize the [dashboard application](https://github.com/nasa/cumulus-dashboard). You will need to have a dashboard deployed as described in the [Cumulus deployment documentation](../deployment/deployment-readme) to follow the instructions in this example.
+This entry will utilize the [dashboard application](https://github.com/nasa/cumulus-dashboard). You will need to have a dashboard deployed as described in the [Cumulus deployment documentation](../deployment) to follow the instructions in this example.
 
 If you'd prefer to _not_ utilize a running dashboard to add Collections, Providers and trigger Rules, you can set the Collection/Provider and Rule via the API, however in that instance you should be very familiar with the [Cumulus API](https://nasa.github.io/cumulus-api/) before attempting the example in this entry.
 
@@ -79,15 +79,23 @@ Copy the following workflow deployment files to your deployment's main directory
 - [`browse_example.tf` (`DiscoverGranulesBrowseExample` workflow)](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/browse_example.tf)
 - [`cookbook_browse_example_workflow.tf` (`CookbookBrowseExample` workflow)](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf)
 
-**Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module release artifact to the version of Cumulus you're deploying:
+:::note
+
+You should update the `source =` line to match the current Cumulus `workflow` module release artifact to the version of Cumulus you're deploying:
 
 ```hcl
 source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip"
 ```
 
-A few things to note about tasks in the workflow being added:
+:::
 
-> Note: In the snippets below, `${post_to_cmr_task_arn}` and `${fake_processing_task_arn}` are interpolated values referring to Terraform resources. See the example deployment code for the [`CookbookBrowseExample` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf).
+A few things to keep in mind about tasks in the workflow being added:
+
+:::info helpful snippets: interpolated values
+
+In the snippets below, `${post_to_cmr_task_arn}` and `${fake_processing_task_arn}` are interpolated values referring to Terraform resources. See the example deployment code for the [`CookbookBrowseExample` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf).
+
+:::
 
 - The CMR step in CookbookBrowseExample:
 
@@ -189,7 +197,11 @@ Note that, in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will co
 
 If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below. You will need to configure a different lambda entry for your lambda and utilize it in place of the `Resource` defined in the example workflow.
 
-**Please note**: `FakeProcessing` is the core provided browse/CMR generation lambda we're using for the example in this entry.
+:::note
+
+`FakeProcessing` is the core provided browse/CMR generation Lambda we're using for the example in this entry.
+
+:::
 
 #### Lambdas
 
@@ -318,7 +330,11 @@ Navigate to the 'Collection' tab on the interface and add a collection.
 }
 ```
 
-**Please note**: Even though our initial discover granules ingest brings in only the .hdf and .met files we've staged, we still configure the other possible file types for this collection's granules.
+:::note
+
+Even though our initial discover granules ingest brings in only the .hdf and .met files we've staged, we still configure the other possible file types for this collection's granules.
+
+:::
 
 ### Add Provider
 
@@ -366,25 +382,25 @@ Once you've configured the Collection and Provider and added a onetime rule, you
 
 Go to the Rules tab, click the rule you just created:
 
-![Screenshot of the Rules overview page with a list of rules in the Cumulus dashboard](../../assets/browse_processing_1.png)
+![Screenshot of the Rules overview page with a list of rules in the Cumulus dashboard](../assets/browse_processing_1.png)
 
 Then click the gear in the upper right corner and click "Rerun":
 
-![Screenshot of clicking the button to rerun a workflow rule from the rule edit page in the Cumulus dashboard](../../assets/browse_processing_2.png)
+![Screenshot of clicking the button to rerun a workflow rule from the rule edit page in the Cumulus dashboard](../assets/browse_processing_2.png)
 
 Tab over to executions and you should see the `DiscoverGranulesBrowseExample` workflow run, succeed, and then moments later the `CookbookBrowseExample` should run and succeed.
 
-![Screenshot of page listing executions in the Cumulus dashboard](../../assets/browse_processing_3.png)
+![Screenshot of page listing executions in the Cumulus dashboard](../assets/browse_processing_3.png)
 
 ### Results
 
 You can verify your data has ingested by clicking the successful workflow entry:
 
-![Screenshot of individual entry from table listing executions in the Cumulus dashboard](../../assets/browse_processing_4.png)
+![Screenshot of individual entry from table listing executions in the Cumulus dashboard](../assets/browse_processing_4.png)
 
 Select "Show Output" on the next page
 
-![Screenshot of "Show output" button from individual execution page in the Cumulus dashboard](../../assets/browse_processing_5.png)
+![Screenshot of "Show output" button from individual execution page in the Cumulus dashboard](../assets/browse_processing_5.png)
 
 and you should see in the payload from the workflow something similar to:
 
@@ -463,7 +479,7 @@ The incoming message to the task defined in the `ProcessingStep` as configured w
 
 - event.config.bucket -- the name of the bucket configured in `terraform.tfvars` as your `internal` bucket.
 
-- event.config.collection -- The full collection object we will configure in the [Configure Ingest](#configure-ingest) section. You can view the expected collection schema in the docs [here](data-cookbooks/setup.md) or in the source code [on github](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js). You need this as available input _and_ output so you can update as needed.
+- event.config.collection -- The full collection object we will configure in the [Configure Ingest](#configure-ingest) section. You can view the expected collection schema in the docs [here](../configuration/data-management-types.md) or in the source code [on github](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js). You need this as available input _and_ output so you can update as needed.
 
 `event.config.additionalUrls`, `generateFakeBrowse` and `event.config.cmrMetadataFormat` from the example can be ignored as they're configuration flags for the provided example script.
 

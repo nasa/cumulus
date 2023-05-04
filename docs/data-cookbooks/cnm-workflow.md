@@ -38,7 +38,7 @@ Using the "Create Data Stream" button on the [Kinesis Dashboard](https://console
 
 You should be able to quickly use the "Create Data Stream" button on the [Kinesis Dashboard](https://console.aws.amazon.com/kinesis/home), and setup streams that are similar to the following example:
 
-![Screenshot of AWS console page for creating a Kinesis stream](assets/cnm_create_kinesis_stream.jpg)
+![Screenshot of AWS console page for creating a Kinesis stream](../assets/cnm_create_kinesis_stream.jpg)
 
 Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user. If you are using the `cumulus` top-level module for your deployment this should be set properly.
 
@@ -228,7 +228,11 @@ To execute this workflow, you're required to include several Lambda resources in
 - <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_to_cma_task.tf>
 - <https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cnm_response_task.tf>
 
-**Please note:** To utilize these tasks you need to ensure you have a compatible CMA layer. See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
+:::note
+
+To utilize these tasks you need to ensure you have a compatible CMA layer. See the [deployment instructions](../deployment/README.md#deploy-cumulus-message-adapter-layer) for more details on how to deploy a CMA layer.
+
+:::
 
 - `CNMToCMA`: <https://github.com/podaac/cumulus-cnm-to-granule>
 - `CnmResponse`: <https://github.com/podaac/cumulus-cnm-response-task>
@@ -280,10 +284,12 @@ To add a rule via the dashboard (if you'd like to use the API, see the docs [her
 }
 ```
 
-**Please Note:**
+:::note
 
 - The rule's `value` attribute value must match the Amazon Resource Name [ARN](https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) for the Kinesis data stream you've preconfigured. You should be able to obtain this ARN from the Kinesis Dashboard entry for the selected stream.
 - The collection and provider should match the collection and provider you setup in the [`Prerequisites`](#prerequisites) section.
+
+:::
 
 Once you've clicked on 'submit' a new rule should appear in the dashboard's Rule Overview.
 
@@ -303,7 +309,11 @@ For the purpose of this example, the easiest way to accomplish this is using the
 
 Construct a JSON file containing an object that matches the values that have been previously setup. This JSON object should be a valid [Cloud Notification Mechanism](https://github.com/podaac/cloud-notification-message-schema#cumulus-sns-schema) message.
 
-**Please note**: _this example is somewhat contrived, as the downstream tasks don't care about most of these fields. A 'real' data ingest workflow would._
+:::note
+
+This example is somewhat contrived, as the downstream tasks don't care about most of these fields. A 'real' data ingest workflow would.
+
+:::
 
 The following values (denoted by `${}` in the sample below) should be replaced to match values we've previously configured:
 
@@ -343,7 +353,11 @@ Using the JSON file you created, push it to the Kinesis notification stream:
 aws kinesis put-record --stream-name YOUR_KINESIS_NOTIFICATION_STREAM_NAME_HERE --partition-key 1 --data file:///path/to/file.json
 ```
 
-**Please note**: The above command uses the stream name, _not_ the ARN.
+:::note
+
+The above command uses the stream name, _not_ the ARN.
+
+:::
 
 The command should return output similar to:
 
@@ -366,7 +380,11 @@ As detailed above, once the record is added to the Kinesis data stream, the `mes
 
 `TranslateMessage` (which corresponds to the `CNMToCMA` Lambda) will take the CNM object payload and add a granules object to the CMA payload that's consistent with other Cumulus ingest tasks, and add a `meta.cnm` key (as well as the payload) to store the original message.
 
-_For more on the Message Adapter, please see [the Message Flow documentation](workflows/cumulus-task-message-flow.md)_.
+:::info
+
+For more on the Message Adapter, please see [the Message Flow documentation](workflows/cumulus-task-message-flow.md).
+
+:::
 
 An example of what is happening in the `CNMToCMA` Lambda is as follows:
 
@@ -499,7 +517,7 @@ To test the failure scenario, send a record missing the `product.name` key.
 
 Following the successful execution of this workflow, you should expect to see the workflow complete successfully on the dashboard:
 
-![Screenshot of a successful CNM workflow appearing on the executions page of the Cumulus dashboard](assets/cnm_success_example.png)
+![Screenshot of a successful CNM workflow appearing on the executions page of the Cumulus dashboard](../assets/cnm_success_example.png)
 
 ### Check the test granule has been delivered to S3 staging
 
@@ -614,6 +632,6 @@ When a `kinesis` rule is created, in addition to the `messageConsumer` event map
 
 Cumulus also supports this feature for all outbound messages. To take advantage of this feature, you will need to set an event mapping on the `KinesisOutboundEventLogger` Lambda that targets your `response-endpoint`. You can do this in the Lambda management page for `KinesisOutboundEventLogger`. Add a Kinesis trigger, and configure it to target the cnmResponseStream for your workflow:
 
-![Screenshot of the AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](assets/KinesisLambdaTriggerConfiguration.png)
+![Screenshot of the AWS console showing configuration for Kinesis stream trigger on KinesisOutboundEventLogger Lambda](../assets/KinesisLambdaTriggerConfiguration.png)
 
 Once this is done, all records sent to the `response-endpoint` will also be logged in CloudWatch. For more on configuring Lambdas to trigger on Kinesis events, please see [creating an event source mapping](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html#services-kinesis-eventsourcemapping).

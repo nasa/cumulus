@@ -32,7 +32,7 @@ resource "aws_s3_bucket_object" "bucket_map_yaml" {
 }
 
 module "thin_egress_app" {
-  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.121.zip"
+  source = "s3::https://s3.amazonaws.com/asf.public.code/thin-egress-app/tea-terraform-build.1.3.2.zip"
 
   auth_base_url                 = "https://uat.urs.earthdata.nasa.gov"
   bucket_map_file               = aws_s3_bucket_object.bucket_map_yaml.id
@@ -63,7 +63,7 @@ resource "aws_cloudwatch_log_subscription_filter" "egress_api_gateway_log_subscr
 resource "aws_cloudwatch_log_group" "egress_lambda_log_group" {
   count             = (var.log_destination_arn != null) ? 1 : 0
   name              = "/aws/lambda/${module.thin_egress_app.egress_lambda_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cumulus-tf_egress_lambda_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "thin-egress-app-EgressLambda", var.default_log_retention_days)
   tags              = var.tags
 }
 

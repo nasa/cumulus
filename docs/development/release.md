@@ -1,3 +1,6 @@
+---
+id: release
+---
 # Versioning and Releases
 
 ## Versioning
@@ -8,17 +11,21 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ## Pre-release testing
 
-> Note: This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`)
+:::note
+
+This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`).
+
+:::
 
 Before releasing a new major version of Cumulus, we should test the deployment upgrade path from the latest release of Cumulus to the upcoming release.
 
-It is preferable to use the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
+It is preferable to use the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo for testing the deployment, since that repo is the officially recommended deployment configuration for end users.
 
 You should create an entirely new deployment for this testing to replicate the end user upgrade path. Using an existing test or CI deployment would not be useful because that deployment may already have been deployed with the latest changes and not match the upgrade path for end users.
 
 Pre-release testing steps:
 
-1. Checkout the [`cumulus-template-deploy`](`https://github.com/nasa/cumulus-template-deploy`) repo
+1. Checkout the [cumulus-template-deploy](https://github.com/nasa/cumulus-template-deploy) repo
 2. Update the deployment code to use the latest release artifacts if it wasn't done already. For example, assuming that the latest release was `5.0.1`, update the deployment files as follows:
 
     ```text
@@ -118,10 +125,14 @@ Lerna will handle updating the packages and all of the dependent package version
 
 #### 2B. Verify Lerna
 
-**Note:** Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
+:::note
+
+Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
 Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
 It's useful to use the search feature of your code editor or `grep` to see if there any references to the **_old_** package versions.
 In bash shell you can run
+
+:::
 
 ```bash
     find . -name package.json -exec grep -nH "@cumulus/.*[0-9]*\.[0-9]\.[0-9].*" {} \; | grep -v "@cumulus/.*MAJOR\.MINOR\.PATCH.*"
@@ -172,11 +183,28 @@ Commit and push these changes, if any.
 
 ### 8. Cut new version of Cumulus Documentation
 
-**If this is a backport, do not create a new version of the documentation.** For various reasons, we do not merge backports back to master, other than changelog notes. Documentation changes for backports will not be published to our documentation website.
+Docusaurus v2 uses snapshot approach for [documentation versioning](https://docusaurus.io/docs/versioning). Every versioned docs
+does not depends on other version.
+If this is a patch version, or a minor version with no significant functionality changes requiring document update, do not create
+a new version of the documentation, update the existing versioned_docs document instead.
+
+Create a new version:
 
 ```bash
 cd website
-npm run version ${release_version}
+npm run docusaurus docs:version ${release_version}
+# please update version in package.json
+git add .
+```
+
+Instructions to rename an existing version:
+
+```bash
+cd website
+git mv versioned_docs/version-<oldversion> versioned_docs/version-${release_version}
+git mv versioned_sidebars/version-<oldversion>-sidebars.json versioned_sidebars/version-${release_version}-sidebars.json
+# please update versions.json with new version
+# please update documents under versioned_docs/version-${release_version}
 git add .
 ```
 
@@ -193,7 +221,11 @@ Commit and push these changes.
     - `GIT_PR`: `true`
     - `SKIP_AUDIT`: `true`
 
-    **IMPORTANT**: Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
+    :::warning important
+
+    Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
+
+    :::
 
     ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](../assets/configure-release-branch-test.png)
 
@@ -240,10 +272,22 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 - Add the values in that list. Choose a display name that makes it _very_ clear this is a deployment branch plan. `Release (minor version branch name)` seems to work well (e.g. `Release (1.2.x)`)).
   - **Make sure** you enter the correct branch name (e.g. `release-1.2.x`).
 
-- **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
+- ::::note Manage the branch
 
-- **Do Immediately** On the `Branch Details` page, enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan.
-You should have been redirected to the `Branch Details` tab after creating the plan. If not, navigate to the branch from the list where you clicked `Create Plan Branch` in the previous step.
+  :::warning Deselect Enable Branch
+
+    Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
+
+  :::
+
+  :::tip Do Immediately
+
+  On the `Branch Details` page, enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan.
+  You should have been redirected to the `Branch Details` tab after creating the plan. If not, navigate to the branch from the list where you clicked `Create Plan Branch` in the previous step.
+
+  :::
+
+  ::::
 
 - Go to the `Variables` tab. Ensure that you are on your branch plan and not the `master` plan: You should not see a large list of configured variables, but instead a dropdown allowing you to select variables to override, and the tab title will be `Branch Variables`. Then set the branch variables as follow:
 
@@ -273,14 +317,22 @@ The CI release scripts will automatically create a GitHub release based on the r
 
 Make sure to verify the appropriate .zip files are present on Github after the release process is complete.
 
-- **Important** Copy the release notes for the new version from the changelog to the description of the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
+:::caution important
 
-- **Optional** The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_
-  the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
-  - Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
-  - Click the "Edit release" button (pencil icon)
-  - Check the "This is a pre-release" checkbox
-  - Click "Update release"
+  Copy the release notes for the new version from the changelog to the description of the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
+
+:::
+
+:::info Optional
+
+The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_ the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
+
+- Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
+- Click the "Edit release" button (pencil icon)
+- Check the "This is a pre-release" checkbox
+- Click "Update release"
+
+:::
 
 ### 13. Update Cumulus API document
 
@@ -296,12 +348,16 @@ If this is the latest version, you can simply create a PR to merge the minor ver
 
 Do not merge `master` back into the release branch since we want the release branch to _just_ have the code from the release.  Instead, create a new branch off of the release branch and merge that to master. You can freely merge master into this branch and delete it when it is merged to master.
 
-**Please Note** If this is a backport, you will need to create a PR that merges **ONLY** the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example:
+:::note
+
+If this is a backport, you will need to create a PR that merges **ONLY** the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example:
 
 >**Please note** changes in 13.3.2 may not yet be released in future versions, as
 >this is a backport and patch release on the 13.3.x series of releases. Updates that
 >are included in the future will have a corresponding CHANGELOG entry in future
 >releases..
+
+:::
 
 ## Troubleshooting
 

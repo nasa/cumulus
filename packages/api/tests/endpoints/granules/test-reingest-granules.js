@@ -25,7 +25,6 @@ const { buildFakeExpressResponse } = require('../utils');
 
 process.env.AccessTokensTable = randomString();
 process.env.backgroundQueueUrl = randomString();
-process.env.GranulesTable = randomString();
 process.env.TOKEN_SECRET = randomString();
 
 let accessTokenModel;
@@ -112,7 +111,7 @@ test('PATCH request with reingest action queues granule and calls the reingestGr
     {
       body,
       params: {
-        granuleName: granuleId,
+        granuleId,
         collectionId,
       },
       testContext: {

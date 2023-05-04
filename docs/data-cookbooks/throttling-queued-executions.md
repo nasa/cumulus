@@ -16,7 +16,7 @@ Limiting the number of executions that can be running from a given queue is usef
 
 #### Add a new queue
 
-In a `.tf` file for your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance), add a new SQS queue:
+In a `.tf` file for your [Cumulus deployment](./../deployment/#deploy-the-cumulus-instance), add a new SQS queue:
 
 ```hcl
 resource "aws_sqs_queue" "background_job_queue" {
@@ -28,7 +28,7 @@ resource "aws_sqs_queue" "background_job_queue" {
 
 #### Set maximum executions for the queue
 
-Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/deployment-readme#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
+Define the `throttled_queues` variable for the `cumulus` module in your [Cumulus deployment](./../deployment/#deploy-the-cumulus-instance) to specify the maximum concurrent executions for the queue.
 
 ```hcl
 module "cumulus" {
@@ -45,7 +45,11 @@ module "cumulus" {
 
 Add the `sqs2sfThrottle` Lambda as the consumer for the queue and add a Cloudwatch event rule/target to read from the queue on a scheduled basis.
 
-> **Please note**: You **must use the `sqs2sfThrottle` Lambda as the consumer for any queue with a queue execution limit** or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.
+:::caution
+
+You **must use the `sqs2sfThrottle` Lambda as the consumer for any queue with a queue execution limit** or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.
+
+:::
 
 `aws_sqs_queue.background_job_queue.id` refers to the [queue resource defined above](#add-a-new-queue).
 
@@ -94,7 +98,11 @@ For any workflows using `QueueGranules` or `QueuePdrs` that you want to use your
 
 As seen in this partial configuration for a `QueueGranules` step, update the `queueUrl` to reference the new throttled queue:
 
-> Note: `${ingest_granule_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverGranules` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
+:::note ingest_granule_workflow_name
+
+`${ingest_granule_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverGranules` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
+
+:::
 
 ```json
 {
@@ -120,7 +128,11 @@ As seen in this partial configuration for a `QueueGranules` step, update the `qu
 
 Similarly, for a `QueuePdrs` step:
 
-> Note: `${parse_pdr_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverPdrs` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf).
+:::note parse_pdr_workflow_name
+
+`${parse_pdr_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverPdrs` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf).
+
+:::
 
 ```json
 {
@@ -172,7 +184,7 @@ After creating/updating the rule, any subsequent invocations of the rule should 
 
 ## Architecture
 
-![Architecture diagram showing how executions started from a queue are throttled to a maximum concurrent limit](assets/queued-execution-throttling.png)
+![Architecture diagram showing how executions started from a queue are throttled to a maximum concurrent limit](../assets/queued-execution-throttling.png)
 
 Execution throttling based on the queue works by manually keeping a count (semaphore) of how many executions are running for the queue at a time. The key operation that prevents the number of executions from exceeding the maximum for the queue is that before starting new executions, the `sqs2sfThrottle` Lambda attempts to increment the semaphore and responds as follows:
 

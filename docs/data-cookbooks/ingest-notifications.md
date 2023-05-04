@@ -10,7 +10,7 @@ The ingest notification reporting SQS queue is populated via a [Cloudwatch rule 
 
 The `sfEventSqsToDbRecords` Lambda function reads from the `sfEventSqsToDbRecordsInputQueue` queue and updates the RDS database records for granules, executions, and PDRs. When the records are updated, messages are posted to the three SNS topics. This Lambda is invoked both when the workflow starts and when it reaches a terminal state (completion or failure).
 
-![Diagram of architecture for reporting workflow ingest notifications from AWS Step Functions](assets/interfaces.svg)
+![Diagram of architecture for reporting workflow ingest notifications from AWS Step Functions](../assets/interfaces.svg)
 
 ## Sending SQS messages to report status
 
@@ -59,7 +59,11 @@ As described above, ingest notifications will automatically be published to the 
 
 However, if you want to report your ingest status at any point **during a workflow execution**, you can add a workflow step using the `SfSqsReport` Lambda. In the following example from [`cumulus-tf/parse_pdr_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf), the `ParsePdr` workflow is configured to use the `SfSqsReport` Lambda, primarily to update the PDR ingestion status.
 
-> Note: `${sf_sqs_report_task_arn}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`ParsePdr` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf).
+:::info
+
+`${sf_sqs_report_task_arn}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`ParsePdr` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf).
+
+:::
 
 ```json
   "PdrStatusReport": {

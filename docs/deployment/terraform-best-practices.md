@@ -14,7 +14,7 @@ that versioning is enabled on the S3 bucket used for persisting your
 deployment's Terraform state file.
 
 To enable bucket versioning, either use the AWS CLI command given in
-[Configuring the Cumulus deployment], or the AWS Management Console, as follows:
+[Configuring the Cumulus deployment](../deployment/README.md#create-resources-for-terraform-state), or the AWS Management Console, as follows:
 
 1. Go to the S3 service
 2. Go to the bucket used for storing Terraform state files
@@ -23,11 +23,11 @@ To enable bucket versioning, either use the AWS CLI command given in
    which should then show the property as **Enabled**, with a check mark next
    to it.
 
-#### How to Recover from a Corrupted State File
+### How to Recover from a Corrupted State File
 
 If your state file appears to be corrupted, or in some invalid state, and the
 containing bucket has bucket versioning enabled, you may be able to recover by
-[restoring a previous version] of the state file. There are two primary
+[restoring a previous version][restore] of the state file. There are two primary
 approaches, but the AWS documentation does not provide specific instructions
 for either one:
 
@@ -44,7 +44,9 @@ are:
    object versions
 4. Locate your state file
 
-To **copy a previous version of your state file into the same bucket**:
+Next, you can proceed to either option:
+
+**Option 1**: To copy a previous version of your state file into the same bucket:
 
 1. Select the desired (good) version of the state file that you wish to make
    the latest version
@@ -59,9 +61,9 @@ To **copy a previous version of your state file into the same bucket**:
 9. Click the **Next** button (multiple times), then click the **Upload** button
 
 Once the upload completes, the newly uploaded file (identical to the good
-version you just downloaded) becomes the **Latest version** of the state file.
+version you just downloaded) becomes the **latest version** of the state file.
 
-**Alternatively,** if you simply wish to delete the latest (corrupted) version
+**Option 2**: Alternatively, if you simply wish to delete the latest (corrupted) version
 of the state file:
 
 1. Click the latest version of the file (listed at the top)
@@ -70,25 +72,33 @@ of the state file:
 
 At this point, the previous version is now the latest version.
 
-**NOTE:** When attempting to delete the latest (corrupt) version of the file,
-you must _explicitly_ choose the latest version. Otherwise, if you simply
+:::caution
+
+When attempting to delete the latest (corrupt) version of the file,
+you must _explicitly_ choose the **latest version**. Otherwise, if you simply
 choose the file when versions are hidden, deleting it will insert a
 _delete marker_ as the latest version of the file. This means that all prior
 versions still exist, but the file _appears_ to be deleted. When you **Show**
 the versions, you will see all of the previous versions (including the corrupt
 one), as well as a _delete marker_ as the current version.
 
-#### How to Recover from a Deleted State File
+:::
+
+### How to Recover from a Deleted State File
 
 If your state file appears to be deleted, but the containing bucket has bucket
 versioning enabled, you _might_ be able to recover the file. This can occur
 when your state file is not _permanently_ deleted, but rather a _delete marker_
 is the latest version of your file, and thus the file _appears_ to be deleted.
 
-To recover your deleted state file via the **AWS Management Console, you may
+#### Via AWS Management Console
+
+To recover your deleted state file via the AWS Management Console, **you may
 follow one of the options detailed in the previous section** because the
 _delete marker_ is simply considered the latest version of your file, and thus
 can be treated in the same manner as any other version of your file.
+
+#### Via AWS CLI
 
 To handle this via the **AWS CLI** instead, first obtain the version ID of the
 delete marker by replacing `BUCKET` and `KEY` as appropriate for the state file
@@ -168,14 +178,22 @@ Afterwards, remove the `policy.json` file.
 your Terraform state file does not correctly represent the state of your
 deployment resources. Specifically, this means:
 
+:::danger DO NOT's
+
 - **DO NOT** change deployment resources via the AWS Management Console
 - **DO NOT** change deployment resources via the AWS CLI
 - **DO NOT** change deployment resources via any of the AWS SDKs
+
+:::
+
+:::tip DO's
 
 Instead, **DO** change deployment resources **only** via changes to your
 Terraform files (along with subsequent Terraform commands), except where
 specifically instructed otherwise (such as in the instructions for destroying
 a deployment).
+
+:::
 
 ### Avoid Changing Connectivity Resources
 
@@ -193,7 +211,7 @@ resources, there are a number of things you can attempt to reconcile the
 differences. However, given that each Cumulus deployment is unique, we can
 provide only general guidance:
 
-- Consider restoring a previous version of your state file, as described
+- Consider [restoring a previous version][restore] of your state file, as described
   in the earlier section about recovering from a corrupted state file
 - If resources exist, but are not listed in your state file, consider using
   `terraform import` (see <https://www.terraform.io/docs/import/index.html>)
@@ -213,8 +231,12 @@ Starting from the root of your deployment repository workspace, perform the
 following commands to first **destroy the resources for your `cumulus` module**
 deployment.
 
-**NOTE:** If you are using Terraform workspaces, be sure to select the relevant
+:::note
+
+If you are using Terraform workspaces, be sure to select the relevant
 workspace first.
+
+:::
 
 ```bash
 tfenv use 0.13.6
@@ -222,11 +244,6 @@ cd cumulus-tf
 terraform init -reconfigure
 terraform destroy
 ```
-
-The next step is to _manually_ **delete the DynamoDB tables** related to your
-deployment. Again, these tables are protected such that they are **not**
-_automatically_ deleted by the `terraform destroy` command. This is a safety
-measure to prevent _accidental_ removal.
 
 However, this does not prevent manual destruction in case you truly do wish to
 remove them. You may do so via either the **AWS Management Console** or the
@@ -262,7 +279,5 @@ aws resourcegroupstaggingapi get-resources \
 Ideally, the output should be an empty list, but if it is not, then you may
 need to manually delete the listed resources.
 
-[Configuring the Cumulus deployment]:
-  README.md#configuring-the-cumulus-deployment
-[restoring a previous version]:
-  https://docs.aws.amazon.com/AmazonS3/latest/dev/RestoringPreviousVersions.html
+[configuring]: ../deployment/README.md#create-resources-for-terraform-state "Configuring the Cumulus deployment"
+[restore]: https://docs.aws.amazon.com/AmazonS3/latest/dev/RestoringPreviousVersions.html "Restoring a previous version"

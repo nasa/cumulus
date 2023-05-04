@@ -3,13 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:45"
-}
-
-variable "cloudwatch_log_retention_periods" {
-  type = map(number)
-  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
-  default = {}
+  default = "cumuluss/async-operation:44"
 }
 
 variable "cmr_client_id" {
@@ -603,4 +597,16 @@ variable "deploy_cumulus_distribution" {
   description = "If true, does not deploy the TEA distribution API"
   type        = bool
   default     = false
+}
+
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
+  default = {}
+}
+
+variable "default_log_retention_days" {
+  type = number
+  description = "default value that user chooses for their log retention periods"
+  default = 30
 }

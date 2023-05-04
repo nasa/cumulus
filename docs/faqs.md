@@ -14,6 +14,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 
 <details>
   <summary>What prerequisites are needed to setup Cumulus?</summary>
+
   Answer: Here is a list of the tools and access that you will need in order to get started. To maintain the up-to-date versions that we are using please visit our [Cumulus main README](https://github.com/nasa/cumulus) for details.
 
 - [NVM](https://github.com/creationix/nvm) for node versioning
@@ -24,7 +25,12 @@ Below are some commonly asked questions that you may encounter that can assist y
 - Python
 - [pipenv](https://pypi.org/project/pipenv/)
   
-> Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+:::info login credentials
+
+Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+
+:::
+
 </details>
 
 <details>
@@ -36,7 +42,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>How do I deploy a new instance in Cumulus?</summary>
 
-  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](../deployment/deployment-readme).
+  Answer: For steps on the Cumulus deployment process go to [How to Deploy Cumulus](deployment).
 </details>
 
 <details>
@@ -48,7 +54,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>How do I quickly troubleshoot an issue in Cumulus?</summary>
 
-  Answer: To troubleshoot and fix issues in Cumulus reference our recommended solutions in [Troubleshooting Cumulus](../troubleshooting/troubleshooting-readme).
+  Answer: To troubleshoot and fix issues in Cumulus reference our recommended solutions in [Troubleshooting Cumulus](troubleshooting).
 </details>
 
 <details>
@@ -59,7 +65,12 @@ Below are some commonly asked questions that you may encounter that can assist y
 - Cumulus: Outside NASA users should file a [GitHub issue](https://github.com/nasa/cumulus/issues) and inside NASA users should file a Cumulus JIRA ticket.
 - AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
-> For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
+:::info
+
+For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+
+:::
+
 </details>
 
 ---
@@ -69,25 +80,25 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What is a Cumulus workflow?</summary>
 
-  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting the [Workflows](../workflows/workflows-readme) section.
+  Answer: A workflow is a provider-configured set of steps that describe the process to ingest data. Workflows are defined using [AWS Step Functions](https://docs.aws.amazon.com/step-functions/index.html). For more details, we suggest visiting the [Workflows](workflows) section.
 </details>
 
 <details>
   <summary>How do I set up a Cumulus workflow?</summary>
 
-  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](../workflows/developing-a-cumulus-workflow).
+  Answer: You will need to create a provider, have an associated collection (add a new one), and generate a new rule first. Then you can set up a Cumulus workflow by following these steps [here](workflows/developing-a-cumulus-workflow).
 </details>
 
 <details>
   <summary>Where can I find a list of workflow tasks?</summary>
 
-  Answer: You can access a list of reusable tasks for Cumulus development at [Cumulus Tasks](../tasks).
+  Answer: You can access a list of reusable tasks for Cumulus development at [Cumulus Tasks](tasks).
 </details>
 
 <details>
   <summary>Are there any third-party workflows or applications that I can use with Cumulus?</summary>
 
-  Answer: The Cumulus team works with various partners to help build a robust framework. You can visit our [External Contributions](../external-contributions/external-contributions) section to see what other options are available to help you customize Cumulus for your needs.
+  Answer: The Cumulus team works with various partners to help build a robust framework. You can visit our [External Contributions](external-contributions/external-contributions.md) section to see what other options are available to help you customize Cumulus for your needs.
 </details>
 
 ---
@@ -108,7 +119,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 <details>
   <summary>What are the steps if I run into an issue during deployment?</summary>
 
-  Answer: If you encounter an issue with your deployment go to the [Troubleshooting Deployment](../troubleshooting/troubleshooting-deployment) guide.
+  Answer: If you encounter an issue with your deployment go to the [Troubleshooting Deployment](troubleshooting/troubleshoot_deployment.md) guide.
 </details>
 
 <details>
@@ -134,9 +145,9 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-- [Creating Cumulus Data Management Types](../integrator-guide/create-cumulus-data-mgmt-types)
-- [Workflow: Add New Lambda](../integrator-guide/workflow-add-new-lambda)
-- [Workflow: Troubleshoot Failed Step(s)](../integrator-guide/workflow-ts-failed-step)
+- [Creating Cumulus Data Management Types](configuration/data-management-types)
+- [Workflow: Add New Lambda](integrator-guide/workflow-add-new-lambda)
+- [Workflow: Troubleshoot Failed Step(s)](integrator-guide/workflow-ts-failed-step)
 
 </details>
 
@@ -165,15 +176,15 @@ Below are some commonly asked questions that you may encounter that can assist y
 
   Answer: The following are some examples of possible use cases you may see:
 
-- [Kinesis Stream For Ingest](../operator-docs/kinesis-stream-for-ingest)
-- [Create Rule In Cumulus](../operator-docs/create-rule-in-cumulus)
-- [Granule Workflows](../operator-docs/granule-workflows)
+- [Kinesis Stream For Ingest](operator-docs/kinesis-stream-for-ingest)
+- [Create Rule In Cumulus](operator-docs/create-rule-in-cumulus)
+- [Granule Workflows](operator-docs/granule-workflows)
 
-Explore more Cumulus operator best practices and how-tos in the dedicated [Operator Docs](../operator-docs/).
+Explore more Cumulus operator best practices and how-tos in the dedicated [Operator Docs](operator-docs/about-operator-docs).
 </details>
 
 <details>
   <summary>Can you re-run a workflow execution in AWS?</summary>
 
-  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](../operator-docs/rerunning-workflow-executions) in the [Cumulus Operator Docs](../operator-docs/about-operator-docs).
+  Answer: Yes. For steps on how to re-run a workflow execution go to [Re-running workflow executions](troubleshooting/rerunning-workflow-executions) in the [Cumulus Operator Docs](operator-docs/about-operator-docs).
 </details>

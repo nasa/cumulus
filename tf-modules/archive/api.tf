@@ -3,14 +3,7 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
   type = "String"
   value = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-    CollectionsTable           = var.dynamo_tables.collections.name
-    ExecutionsTable            = var.dynamo_tables.executions.name
-    GranulesTable              = var.dynamo_tables.granules.name
-    PdrsTable                  = var.dynamo_tables.pdrs.name
-    ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-    RulesTable                 = var.dynamo_tables.rules.name
   })
 }
 locals {
@@ -20,14 +13,7 @@ locals {
   api_redirect_uri          = "${local.api_uri}token"
   dynamo_table_namestring   = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-    CollectionsTable           = var.dynamo_tables.collections.name
-    ExecutionsTable            = var.dynamo_tables.executions.name
-    GranulesTable              = var.dynamo_tables.granules.name
-    PdrsTable                  = var.dynamo_tables.pdrs.name
-    ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-    RulesTable                 = var.dynamo_tables.rules.name
   })
   api_env_variables = {
         auth_mode                      = "public"
@@ -113,13 +99,13 @@ resource "aws_secretsmanager_secret_version" "api_config" {
 
 resource "aws_cloudwatch_log_group" "private_api" {
   name              = "/aws/lambda/${aws_lambda_function.private_api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_private_api_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "PrivateApiLambda", var.default_log_retention_days)
   tags              = var.tags
 }
 
 resource "aws_cloudwatch_log_group" "api" {
   name              = "/aws/lambda/${aws_lambda_function.api.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "archive_api_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ApiEndpoints", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -162,7 +148,7 @@ resource "aws_lambda_function" "private_api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
@@ -187,7 +173,7 @@ resource "aws_lambda_function" "api" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/app/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 100
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})
