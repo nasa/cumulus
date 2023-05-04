@@ -1,0 +1,4 @@
+{
+  "extends": "../../nyc.config.js",
+  "include": ["*.js"]
+}
