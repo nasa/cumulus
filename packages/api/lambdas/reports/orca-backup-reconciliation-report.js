@@ -13,7 +13,6 @@ const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const Logger = require('@cumulus/logger');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { errorify } = require('../../lib/utils');
 const {
   convertToESCollectionSearchParams,
   convertToESGranuleSearchParamsWithCreatedAtRange,
@@ -314,15 +313,14 @@ async function orcaReconciliationReportForGranules(recReportParams) {
       granulesReport.orcaCount += 1;
     }
   } catch (error) {
-    log.error('Error caught in orcaReconciliationReportForGranules');
-    log.error(errorify(error));
+    log.error(`Error caught in orcaReconciliationReportForGranules: ${error}`);
     throw error;
   }
 
-  const reportSummery = Object.entries(granulesReport)
+  const reportSummary = Object.entries(granulesReport)
     .map(([key, value]) => `${key} ${Array.isArray(value) ? value.length : value}`);
 
-  log.info(`returning orcaReconciliationReportForGranules report: ${reportSummery.join(', ')}`);
+  log.info(`returning orcaReconciliationReportForGranules report: ${reportSummary.join(', ')}`);
   return granulesReport;
 }
 
@@ -345,6 +343,7 @@ async function orcaReconciliationReportForGranules(recReportParams) {
  */
 async function createOrcaBackupReconciliationReport(recReportParams) {
   log.info(`createOrcaBackupReconciliationReport parameters ${JSON.stringify(recReportParams)}`);
+  let granulesReport;
   const {
     reportKey,
     systemBucket,
@@ -375,7 +374,24 @@ async function createOrcaBackupReconciliationReport(recReportParams) {
     Body: JSON.stringify(report, undefined, 2),
   });
 
-  const granulesReport = await orcaReconciliationReportForGranules(recReportParams);
+  try {
+    granulesReport = await orcaReconciliationReportForGranules(recReportParams);
+  } catch (error) {
+    log.error(`Error caught in createOrcaBackupReconciliationReport: ${error}`);
+
+    // Create the full report
+    report.granules = granulesReport;
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'Failed';
+
+    // Write the full report to S3
+    await s3().putObject({
+      Bucket: systemBucket,
+      Key: reportKey,
+      Body: JSON.stringify(report, undefined, 2),
+    });
+    throw error;
+  }
 
   // Create the full report
   report.granules = granulesReport;
