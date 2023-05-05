@@ -1,11 +1,8 @@
 {
   "extends": "../../nyc.config.js",
-  "include": [
-    "dist/src"
-  ],
   "exclude-after-remap": false,
-  "statements": "Unknown",
-  "functions": "Unknown",
-  "branches": "Unknown",
-  "lines": "Unknown"
+  "statements": 92.15,
+  "functions": 85.71,
+  "branches": 81.81,
+  "lines": 94
 }
