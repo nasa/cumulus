@@ -194,79 +194,78 @@ async function createReconciliationReportForBucket(Bucket, recReportParams) {
 
   const pgFileSearchClient = new QuerySearchClient(query, 100);
 
-  log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
   let okCount = 0;
   const onlyInS3 = [];
   const onlyInDb = [];
   const okCountByGranule = {};
-  try {
-    log.info('Comparing PostgreSQL to S3');
-    let [nextS3Object, nextPgItem] = await Promise.all([
-      s3ObjectsQueue.peek(),
-      pgFileSearchClient.peek(),
-    ]);
-    while (nextS3Object && nextPgItem) {
-      const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
-      const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
 
-      if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
-        okCountByGranule[nextPgItem.granule_id] = 0;
-      }
+  log.info(`createReconciliationReportForBucket(S3 vs. PostgreSQL): ${Bucket}: ${JSON.stringify(recReportParams)}`);
+  log.info('Comparing PostgreSQL to S3');
+  let [nextS3Object, nextPgItem] = await Promise.all([
+    s3ObjectsQueue.peek(),
+    pgFileSearchClient.peek(),
+  ]);
 
-      if (nextS3Uri < nextPgFileUri) {
-        // Found an item that is only in S3 and not in PostgreSQL
-        if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
-        s3ObjectsQueue.shift();
-      } else if (nextS3Uri > nextPgFileUri) {
-        // Found an item that is only in PostgreSQL and not in S3
-        const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
-        onlyInDb.push({
-          uri: buildS3Uri(Bucket, pgItem.key),
-          granuleId: pgItem.granule_id,
-        });
-      } else {
-        // Found an item that is in both S3 and PostgreSQL
-        okCount += 1;
-        if (linkFilesAndGranules) {
-          okCountByGranule[nextPgItem.granule_id] += 1;
-        }
-        s3ObjectsQueue.shift();
-        pgFileSearchClient.shift();
-      }
+  while (nextS3Object && nextPgItem) {
+    const nextS3Uri = buildS3Uri(Bucket, nextS3Object.Key);
+    const nextPgFileUri = buildS3Uri(Bucket, nextPgItem.key);
 
-      // eslint-disable-next-line no-await-in-loop
-      [nextS3Object, nextPgItem] = await Promise.all([
-        s3ObjectsQueue.peek(),
-        pgFileSearchClient.peek(),
-      ]);
+    if (linkFilesAndGranules && !okCountByGranule[nextPgItem.granule_id]) {
+      okCountByGranule[nextPgItem.granule_id] = 0;
     }
 
-    // Add any remaining S3 items to the report
-    if (!oneWayBucketReport) {
-      while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
-        const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
-        onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
-      }
-    }
-
-    // Add any remaining PostgreSQL items to the report
-    while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
-      const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
+    if (nextS3Uri < nextPgFileUri) {
+      // Found an item that is only in S3 and not in PostgreSQL
+      if (!oneWayBucketReport) onlyInS3.push(nextS3Uri);
+      await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+    } else if (nextS3Uri > nextPgFileUri) {
+      // Found an item that is only in PostgreSQL and not in S3
+      const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop, max-len
       onlyInDb.push({
         uri: buildS3Uri(Bucket, pgItem.key),
         granuleId: pgItem.granule_id,
       });
+    } else {
+      // Found an item that is in both S3 and PostgreSQL
+      okCount += 1;
+      if (linkFilesAndGranules) {
+        okCountByGranule[nextPgItem.granule_id] += 1;
+      }
+      await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+      await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
     }
-    log.info('Compare PostgreSQL to S3 completed');
-  } catch (error) {
-    log.error(`Error caught in createReconciliationReportForBucket for ${Bucket}`);
-    log.error(errorify(error));
-    throw error;
+
+    // eslint-disable-next-line no-await-in-loop
+    [nextS3Object, nextPgItem] = await Promise.all([
+      s3ObjectsQueue.peek(),
+      pgFileSearchClient.peek(),
+    ]);
   }
+
+  // Add any remaining S3 items to the report
+  log.info('Adding remaining S3 items to the report');
+  if (!oneWayBucketReport) {
+    while (await s3ObjectsQueue.peek()) { // eslint-disable-line no-await-in-loop
+      const s3Object = await s3ObjectsQueue.shift(); // eslint-disable-line no-await-in-loop
+      onlyInS3.push(buildS3Uri(Bucket, s3Object.Key));
+    }
+  }
+
+  // Add any remaining PostgreSQL items to the report
+  log.info('Adding remaining PostgreSQL items to the report');
+  while (await pgFileSearchClient.peek()) { // eslint-disable-line no-await-in-loop
+    const pgItem = await pgFileSearchClient.shift(); // eslint-disable-line no-await-in-loop
+    onlyInDb.push({
+      uri: buildS3Uri(Bucket, pgItem.key),
+      granuleId: pgItem.granule_id,
+    });
+  }
+  log.info('Compare PostgreSQL to S3 completed');
+
   log.info(`createReconciliationReportForBucket ${Bucket} returning `
-           + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
-           + `onlyInDb: ${onlyInDb.length}, `
-           + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
+    + `okCount: ${okCount}, onlyInS3: ${onlyInS3.length}, `
+    + `onlyInDb: ${onlyInDb.length}, `
+    + `okCountByGranule: ${Object.keys(okCountByGranule).length}`);
   return {
     okCount,
     onlyInS3,
@@ -378,7 +377,7 @@ async function reconciliationReportForGranuleFiles(params) {
     const relatedUrlPromises = granuleInCmr.RelatedUrls.map(async (relatedUrl) => {
       // only check URL types for downloading granule files and related data (such as documents)
       if (cmrGetDataTypes.includes(relatedUrl.Type)
-          || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
+        || cmrRelatedDataTypes.includes(relatedUrl.Type)) {
         const urlFileName = relatedUrl.URL.split('/').pop();
 
         // filename in both Cumulus and CMR
@@ -433,7 +432,7 @@ async function reconciliationReportForGranuleFiles(params) {
     Object.keys(granuleFiles).forEach((fileName) => {
       // private file only in database, it's ok
       if (bucketsConfig.key(granuleFiles[fileName].bucket)
-          && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
+        && bucketsConfig.type(granuleFiles[fileName].bucket) === 'private') {
         okCount += 1;
       } else {
         let uri = granuleFiles[fileName].source;
@@ -588,11 +587,11 @@ async function reconciliationReportForGranules(params) {
     throw error;
   }
   log.info(`returning reconciliationReportForGranules(${collectionId}) granulesReport: `
-           + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
-           + `onlyInCmr: ${granulesReport.onlyInCmr.length}`);
+    + `okCount: ${granulesReport.okCount} onlyInCumulus: ${granulesReport.onlyInCumulus.length}, `
+    + `onlyInCmr: ${granulesReport.onlyInCmr.length}`);
   log.info(`returning reconciliationReportForGranules(${collectionId}) filesReport: `
-           + `okCount: ${filesReport.okCount}, onlyInCumulus: ${filesReport.onlyInCumulus.length}, `
-           + `onlyInCmr: ${filesReport.onlyInCmr.length}`);
+    + `okCount: ${filesReport.okCount}, onlyInCumulus: ${filesReport.onlyInCumulus.length}, `
+    + `onlyInCmr: ${filesReport.onlyInCmr.length}`);
   return {
     granulesReport,
     filesReport,
@@ -633,7 +632,7 @@ async function reconciliationReportForCumulusCMR(params) {
   );
   const granuleAndFilesReports = await Promise.all(promisedGranuleReports);
   log.info('reconciliationReportForCumulusCMR: All Granule and Granule Files Reports completed. '
-            + `${JSON.stringify(recReportParams)}`);
+    + `${JSON.stringify(recReportParams)}`);
 
   const granulesInCumulusCmr = {};
   const filesInCumulusCmr = {};
@@ -658,6 +657,21 @@ async function reconciliationReportForCumulusCMR(params) {
 
   log.info('returning reconciliationReportForCumulusCMR');
   return { collectionsInCumulusCmr, granulesInCumulusCmr, filesInCumulusCmr };
+}
+
+/**
+ * Write reconciliation report to S3
+ * @param {Object} report       - report to upload
+ * @param {string} systemBucket - system bucket
+ * @param {string} reportKey    - report key
+ * @returns {Promise<null>}
+ */
+function _uploadReportToS3(report, systemBucket, reportKey) {
+  return s3().putObject({
+    Bucket: systemBucket,
+    Key: reportKey,
+    Body: JSON.stringify(report, undefined, 2),
+  });
 }
 
 /**
@@ -715,65 +729,69 @@ async function createReconciliationReport(recReportParams) {
     filesInCumulusCmr: cloneDeep(reportFormatCumulusCmr),
   };
 
-  await s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+  try {
+    await _uploadReportToS3(report, systemBucket, reportKey);
 
-  // Internal consistency check S3 vs Cumulus DBs
-  // --------------------------------------------
-  if (location !== 'CMR') {
-    // Create a report for each bucket
+    // Internal consistency check S3 vs Cumulus DBs
+    // --------------------------------------------
+    if (location !== 'CMR') {
+      // Create a report for each bucket
 
-    const promisedBucketReports = dataBuckets.map(
-      (bucket) => createReconciliationReportForBucket(bucket, recReportParams, knex)
-    );
-
-    const bucketReports = await Promise.all(promisedBucketReports);
-    log.info('bucketReports (S3 vs database) completed');
-
-    bucketReports.forEach((bucketReport) => {
-      report.filesInCumulus.okCount += bucketReport.okCount;
-      report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3);
-      report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
-        bucketReport.onlyInDb
+      const promisedBucketReports = dataBuckets.map(
+        (bucket) => createReconciliationReportForBucket(bucket, recReportParams, knex)
       );
 
-      if (linkingFilesToGranules(recReportParams.reportType)) {
-        Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
-          const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
-          const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+      const bucketReports = await Promise.all(promisedBucketReports);
+      log.info('bucketReports (S3 vs database) completed');
 
-          report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
-            + bucketGranuleCount;
-        });
-      } else {
-        delete report.filesInCumulus.okCountByGranule;
-      }
-    });
+      bucketReports.forEach((bucketReport) => {
+        report.filesInCumulus.okCount += bucketReport.okCount;
+        report.filesInCumulus.onlyInS3 = report.filesInCumulus.onlyInS3.concat(bucketReport.onlyInS3); // eslint-disable-line max-len
+        report.filesInCumulus.onlyInDb = report.filesInCumulus.onlyInDb.concat(
+          bucketReport.onlyInDb
+        );
+
+        if (linkingFilesToGranules(recReportParams.reportType)) {
+          Object.keys(bucketReport.okCountByGranule).forEach((granuleId) => {
+            const currentGranuleCount = report.filesInCumulus.okCountByGranule[granuleId];
+            const bucketGranuleCount = bucketReport.okCountByGranule[granuleId];
+
+            report.filesInCumulus.okCountByGranule[granuleId] = (currentGranuleCount || 0)
+              + bucketGranuleCount;
+          });
+        } else {
+          delete report.filesInCumulus.okCountByGranule;
+        }
+      });
+    }
+
+    // compare the CUMULUS holdings with the holdings in CMR
+    // -----------------------------------------------------
+    if (location !== 'S3') {
+      const cumulusCmrReport = await reconciliationReportForCumulusCMR({
+        bucketsConfig, distributionBucketMap, recReportParams,
+      });
+      report = Object.assign(report, cumulusCmrReport);
+    }
+  } catch (error) {
+    log.error(`Error caught in createReconciliationReport for reportKey ${reportKey}. ${error}`);
+    log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
+    // Create the full report
+    report.createEndTime = moment.utc().toISOString();
+    report.status = 'Failed';
+    report.error = error;
+
+    // Write the full report to S3
+    await _uploadReportToS3(report, systemBucket, reportKey);
+    throw error;
   }
-
-  // compare the CUMULUS holdings with the holdings in CMR
-  // -----------------------------------------------------
-  if (location !== 'S3') {
-    const cumulusCmrReport = await reconciliationReportForCumulusCMR({
-      bucketsConfig, distributionBucketMap, recReportParams,
-    });
-    report = Object.assign(report, cumulusCmrReport);
-  }
-
   log.info(`Writing report to S3: at ${systemBucket}/${reportKey}`);
   // Create the full report
   report.createEndTime = moment.utc().toISOString();
   report.status = 'SUCCESS';
 
   // Write the full report to S3
-  return s3().putObject({
-    Bucket: systemBucket,
-    Key: reportKey,
-    Body: JSON.stringify(report, undefined, 2),
-  });
+  return _uploadReportToS3(report, systemBucket, reportKey);
 }
 
 /**
@@ -781,11 +799,21 @@ async function createReconciliationReport(recReportParams) {
  * @param {Object} params - params
  * @param {string} params.systemBucket - the name of the CUMULUS system bucket
  * @param {string} params.stackName - the name of the CUMULUS stack
+ * @param {string} params.reportType - the type of reconciliation report
+ * @param {string} params.reportName - the name of the report
+ * @param {Knex} params.knex - Optional Instance of a Knex client for testing
  * @returns {Object} report record saved to the database
  */
 async function processRequest(params) {
   log.info(`processing reconciliation report request with params: ${JSON.stringify(params)}`);
-  const { reportType, reportName, systemBucket, stackName } = params;
+  const env = params.env ? params.env : process.env;
+  const {
+    reportType,
+    reportName,
+    systemBucket,
+    stackName,
+    knex = await getKnexClient(env),
+  } = params;
   const createStartTime = moment.utc();
   const reportRecordName = reportName
     || `${camelCase(reportType)}Report-${createStartTime.format('YYYYMMDDTHHmmssSSS')}`;
@@ -803,8 +831,6 @@ async function processRequest(params) {
   await reconciliationReportModel.create(reportRecord);
   log.info(`Report added to database as pending: ${JSON.stringify(reportRecord)}.`);
 
-  const env = params.env ? params.env : process.env;
-  const knex = await getKnexClient(env);
   const concurrency = env.CONCURRENCY || 3;
 
   try {
@@ -829,8 +855,7 @@ async function processRequest(params) {
     }
     await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
   } catch (error) {
-    log.error(`Error creating ${reportType} report ${reportRecordName}`, error);
-    log.error(errorify(error));
+    log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
     const updates = {
       status: 'Failed',
       error: {
@@ -839,6 +864,7 @@ async function processRequest(params) {
       },
     };
     await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    throw error;
   }
 
   return reconciliationReportModel.get({ name: reportRecord.name });

@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 
+import { RetryOnDbConnectionTerminateError } from './retry';
 import { BaseRecord } from '../types/base';
 
 /**
@@ -29,7 +30,7 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    * @throws
    */
   private async fetchRecords() {
-    this.records = await (
+    this.records = await RetryOnDbConnectionTerminateError(
       this.query
         .offset(this.offset)
         .limit(this.limit)
