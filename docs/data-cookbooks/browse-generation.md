@@ -79,23 +79,15 @@ Copy the following workflow deployment files to your deployment's main directory
 - [`browse_example.tf` (`DiscoverGranulesBrowseExample` workflow)](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/browse_example.tf)
 - [`cookbook_browse_example_workflow.tf` (`CookbookBrowseExample` workflow)](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf)
 
-:::note
-
-You should update the `source =` line to match the current Cumulus `workflow` module release artifact to the version of Cumulus you're deploying:
+**Please Note**: You should update the `source =` line to match the current Cumulus `workflow` module release artifact to the version of Cumulus you're deploying:
 
 ```hcl
 source = "https://github.com/nasa/cumulus/releases/download/{version}/terraform-aws-cumulus-workflow.zip"
 ```
 
-:::
+A few things to note about tasks in the workflow being added:
 
-A few things to keep in mind about tasks in the workflow being added:
-
-:::info helpful snippets: interpolated values
-
-In the snippets below, `${post_to_cmr_task_arn}` and `${fake_processing_task_arn}` are interpolated values referring to Terraform resources. See the example deployment code for the [`CookbookBrowseExample` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf).
-
-:::
+> Note: In the snippets below, `${post_to_cmr_task_arn}` and `${fake_processing_task_arn}` are interpolated values referring to Terraform resources. See the example deployment code for the [`CookbookBrowseExample` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/cookbook_browse_example_workflow.tf).
 
 - The CMR step in CookbookBrowseExample:
 
@@ -197,11 +189,7 @@ Note that, in the task, the `CmrStep.Parameters.cma.task_config.cmr` key will co
 
 If you're not ingesting mock data matching the example, or would like to use modify the example to ingest your own data please see the [build-lambda](#build-lambda) section below. You will need to configure a different lambda entry for your lambda and utilize it in place of the `Resource` defined in the example workflow.
 
-:::note
-
-`FakeProcessing` is the core provided browse/CMR generation Lambda we're using for the example in this entry.
-
-:::
+**Please note**: `FakeProcessing` is the core provided browse/CMR generation lambda we're using for the example in this entry.
 
 #### Lambdas
 
@@ -330,11 +318,7 @@ Navigate to the 'Collection' tab on the interface and add a collection.
 }
 ```
 
-:::note
-
-Even though our initial discover granules ingest brings in only the .hdf and .met files we've staged, we still configure the other possible file types for this collection's granules.
-
-:::
+**Please note**: Even though our initial discover granules ingest brings in only the .hdf and .met files we've staged, we still configure the other possible file types for this collection's granules.
 
 ### Add Provider
 

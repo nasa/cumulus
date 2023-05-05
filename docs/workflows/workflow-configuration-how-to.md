@@ -245,11 +245,7 @@ The following functions are implemented:
   passes the metadata date string and the format argument to
   [moment().format()](https://momentjs.com/docs/#/displaying/format/)
 
-:::note
-
-The 'move-granules' step needs to be in the workflow for this template to be populated and the file moved. This `cmrMetadata` or CMR granule XML needs to have been generated and stored on S3. From there any field could be retrieved and used for a url_path.
-
-:::
+Note: the move-granules step needs to be in the workflow for this template to be populated and the file moved. This `cmrMetadata` or CMR granule XML needs to have been generated and stored on S3. From there any field could be retrieved and used for a url_path.
 
 ### Adding Metadata dates and times to the URL Path
 

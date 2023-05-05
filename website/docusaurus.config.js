@@ -36,7 +36,7 @@ module.exports = {
         },
         blog: {},
         theme: {
-          customCss: [require.resolve('./src/css/custom.css')],
+          customCss: './src/css/custom.css',
         },
       },
     ],
@@ -49,7 +49,7 @@ module.exports = {
       },
     },
     navbar: {
-      hideOnScroll: false,
+      hideOnScroll: true,
       style: 'primary',
       title: 'Cumulus Documentation',
       logo: {
@@ -107,7 +107,7 @@ module.exports = {
           href: 'https://github.com/nasa/cumulus',
           position: 'right',
           className: 'header-github-link',
-          'aria-label': 'Cumulus Core GitHub Repository',
+          'aria-label': 'GitHub repository',
         },
       ],
     },
@@ -116,6 +116,5 @@ module.exports = {
       apiKey: process.env.DOCSEARCH_API_KEY || 'fakeApiKey',
       indexName: process.env.DOCSEARCH_INDEX_NAME || 'fakeIndexName',
     },
-
   },
 };

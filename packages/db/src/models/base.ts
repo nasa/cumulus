@@ -1,13 +1,11 @@
 import { Knex } from 'knex';
 
-import Logger from '@cumulus/logger';
 import { RecordDoesNotExist } from '@cumulus/errors';
 
 import { UpdatedAtRange } from '../types/record';
 import { BaseRecord } from '../types/base';
 import { TableNames } from '../tables';
 import { isRecordDefined } from '../database';
-import { RetryOnDbConnectionTerminateError } from '../lib/retry';
 
 class BasePgModel<ItemType, RecordType extends BaseRecord> {
   readonly tableName: TableNames;
@@ -29,18 +27,17 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     params: Partial<RecordType>,
     updatedAtParams: UpdatedAtRange
   ): Promise<RecordType[]> {
-    const log = new Logger({ sender: '@cumulus/db/models/base' });
-    const query: Promise<Array<RecordType>> = knexOrTransaction(this.tableName)
-      .where((builder) => {
-        builder.where(params);
-        if (updatedAtParams.updatedAtFrom || updatedAtParams.updatedAtTo) {
-          builder.whereBetween('updated_at', [
-            updatedAtParams?.updatedAtFrom ?? new Date(0),
-            updatedAtParams?.updatedAtTo ?? new Date(),
-          ]);
-        }
-      });
-    const records = await RetryOnDbConnectionTerminateError(query, {}, log);
+    const records: Array<RecordType> = await knexOrTransaction(
+      this.tableName
+    ).where((builder) => {
+      builder.where(params);
+      if (updatedAtParams.updatedAtFrom || updatedAtParams.updatedAtTo) {
+        builder.whereBetween('updated_at', [
+          updatedAtParams?.updatedAtFrom ?? new Date(0),
+          updatedAtParams?.updatedAtTo ?? new Date(),
+        ]);
+      }
+    });
     return records;
   }
 

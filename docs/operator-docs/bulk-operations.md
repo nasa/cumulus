@@ -14,21 +14,10 @@ Bulk operations are generally submitted via the endpoint for the relevant data t
 
 ### Using a Kibana query
 
-:::caution
+> Note: You **[must have configured your dashboard build with a KIBANAROOT environment variable](https://github.com/nasa/cumulus-dashboard#configuration)** in order for the Kibana link to render in the bulk granules modal
 
-You **[must have configured your dashboard build with a KIBANAROOT environment variable](https://github.com/nasa/cumulus-dashboard#configuration)** in order for the Kibana link to render in the bulk granules modal.
-
-:::
-
-<!-- markdownlint-disable MD029 -->
-1. From the Granules dashboard page, click on the "Run Bulk Granules" button, then select what type of action you would like to perform.
-
-:::note
-
-The rest of the process is the same regardless of what type of bulk action you perform.
-
-:::
-
+1. From the Granules dashboard page, click on the "Run Bulk Granules" button, then select what type of action you would like to perform
+    - Note: the rest of the process is the same regardless of what type of bulk action you perform
 2. From the bulk granules modal, click the "Open Kibana" link:
 
     ![Screenshot of Cumulus dashboard showing modal window for triggering bulk granule operations](../assets/bulk-granules-modal.png)
@@ -64,11 +53,9 @@ The rest of the process is the same regardless of what type of bulk action you p
 9. Click the "Run Bulk Operations" button. You should see a confirmation message, including an ID for the async operation that was started to handle your bulk action. You can [track the status of this async operation on the Operations dashboard page](#status-tracking), which can be visited by clicking the "Go To Operations" button:
 
     ![Screenshot of Cumulus dashboard showing confirmation message with async operation ID for bulk granules request](../assets/bulk-granules-submitted.png)
-<!-- markdownlint-disable MD029 -->
 
 #### Creating an index pattern for Kibana
 
-<!-- markdownlint-disable MD029 -->
 1. Define the index pattern for the indices that your Kibana queries should use. A wildcard character, `*`, will match across multiple indices. Once you are satisfied with your index pattern, click the "Next step" button:
 
     ![Screenshot of Kibana user interface for defining an index pattern](../assets/kibana-create-index-pattern-1.png)
@@ -76,7 +63,6 @@ The rest of the process is the same regardless of what type of bulk action you p
 2. Choose whether to use a Time Filter for your data, which is not required. Then click the "Create index pattern" button:
 
     ![Screenshot of Kibana user interface for configuring the settings of an index pattern](../assets/kibana-create-index-pattern-2.png)
-<!-- markdownlint-disable MD029 -->
 
 ## Status Tracking
 

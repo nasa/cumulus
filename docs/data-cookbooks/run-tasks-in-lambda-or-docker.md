@@ -21,11 +21,7 @@ You should use AWS Lambda whenever all of the following are true:
   - 512 MB disk storage (must be written to `/tmp`)
   - 15 minutes of execution time
 
-:::info
-
 See [this page](https://docs.aws.amazon.com/lambda/latest/dg/limits.html) for a complete and up-to-date list of AWS Lambda limits.
-
-:::
 
 If your task requires more than any of these resources or an unsupported runtime, creating a Docker image which can be run on ECS is the way to go. Cumulus supports running any lambda package (and its configured layers) as a Docker container with [`cumulus-ecs-task`](https://github.com/nasa/cumulus-ecs-task).
 
@@ -41,11 +37,7 @@ This example will use an already-defined workflow from the `cumulus` module that
 
 The following example is an excerpt from the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json) containing the step definition for the `QueueGranules` step:
 
-:::note interpolated values
-
-`${ingest_granule_workflow_name}` and `${queue_granules_task_arn}` are interpolated values that refer to Terraform resources. See the example deployment code for the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
-
-:::
+> Note: `${ingest_granule_workflow_name}` and `${queue_granules_task_arn}` are interpolated values that refer to Terraform resources. See the example deployment code for the [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
 
 ```json
   "QueueGranules": {
@@ -142,11 +134,7 @@ module "queue_granules_service" {
 }
 ```
 
-:::note
-
-If you have updated the code for the Lambda specified by `--lambdaArn`, you will have to manually restart the tasks in your ECS service before invocation of the Step Function activity will use the updated Lambda code.
-
-:::
+> **Please note:** If you have updated the code for the Lambda specified by `--lambdaArn`, you will have to manually restart the tasks in your ECS service before invocation of the Step Function activity will use the updated Lambda code.
 
 - An updated [Discover Granules workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.asl.json)) to utilize the new resource (the `Resource` key in the `QueueGranules` step has been updated to:
 

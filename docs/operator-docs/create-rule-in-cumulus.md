@@ -24,11 +24,7 @@ Once the above files are in place and the entries created in CMR and Cumulus, we
 
 For more details regarding the field definitions and required information go to [Data Cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 
-:::note state field conditional
-
-If the state field is left blank, it defaults to `false`.
-
-:::
+> **Note:** If the state field is left blank, it defaults to `false`.
 
 ## Examples
 

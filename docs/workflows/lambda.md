@@ -38,11 +38,7 @@ resource "aws_lambda_function" "myfunction" {
 }
 ```
 
-:::note configuration example
-
-This example contains the minimum set of required configuration.
-
-:::
+**Please note**: This example contains the minimum set of required configuration.
 
 Make sure to include a `vpc_config` that matches the information you've provided the `cumulus` module if intending to integrate the lambda with a Cumulus deployment.
 

@@ -12,8 +12,4 @@ Right now we're focused on tasks distributed via npm, but are open to including 
 
 The tasks list in docs/tasks.md is generated from the list of task package names from the tasks folder.
 
-:::caution
-
 Do not edit the docs/tasks.md file directly.
-
-:::

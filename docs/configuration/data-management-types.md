@@ -41,11 +41,7 @@ The following are created via the dashboard or API:
 
 Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
 
-:::note
-
-The schemas are _extremely_ useful for understanding which attributes are configurable and which of those are required. Cumulus uses these schemas for validation.
-
-:::
+> The schemas are _extremely_ useful for understanding which attributes are configurable and which of those are required. Cumulus uses these schemas for validation.
 
 ### Providers
 
@@ -53,12 +49,10 @@ The schemas are _extremely_ useful for understanding which attributes are config
 - [Provider API](https://nasa.github.io/cumulus-api/?language=Python#list-providers)
 - [Sample provider configurations](https://github.com/nasa/cumulus/tree/master/example/data/providers)
 
-:::note
+Please note:
 
 - While _connection_ configuration is defined here, things that are more specific to a specific ingest setup (e.g. 'What target directory should we be pulling from' or 'How is duplicate handling configured?') are generally defined in a Rule or Collection, not the Provider.
 - There is some provider behavior which is controlled by task-specific configuration and not the provider definition. This configuration has to be set on a **per-workflow** basis. For example, see the [`httpListTimeout` configuration on the `discover-granules` task](https://github.com/nasa/cumulus/blob/master/tasks/discover-granules/schemas/config.json#L84)
-
-:::
 
 #### Provider Configuration
 
@@ -283,11 +277,7 @@ The `rule - value` entry depends on the type of run:
 
 For more details regarding the field definitions and required information go to [Data Cookbooks](https://nasa.github.io/cumulus/docs/data-cookbooks/setup#rules).
 
-:::note state field conditional
-
-If the state field is left blank, it defaults to `false`.
-
-:::
+> **Note:** If the state field is left blank, it defaults to `false`.
 
 #### Rule Examples
 

@@ -159,10 +159,10 @@ if __name__ == "__main__":
 
 After setting up logging the code has a for-loop for processing any matching hdf5 in the input directory:
 
-1. Convert to NetCDF with a C script
-2. Validate the output (in this case just check for existence)
-3. Use 'ncatted' to update the resulting file to be CF-compliant
-4. Write out metadata generated for this file
+1) convert to NetCDF with a C script
+2) validate the output (in this case just check for existence)
+3) use 'ncatted' to update the resulting file to be CF-compliant
+4) write out metadata generated for this file
 
 ## Process Testing
 

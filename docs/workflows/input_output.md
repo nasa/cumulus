@@ -30,21 +30,13 @@ Once you've deployed the layer, integrate the CMA layer with your Lambdas:
 
 In the future if you wish to update/change the CMA version you will need to update the deployed CMA, and update the layer configuration for the impacted Lambdas as needed.
 
-:::note
-
-Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
-
-:::
+***Please Note***: Updating/removing a layer does not change a deployed Lambda, so to update the CMA you should deploy a new version of the CMA layer, update the associated Lambda configuration to reference the new CMA version, and re-deploy your Lambdas.
 
 ### Manual Addition
 
 You can include the CMA package in the Lambda code in the `cumulus-message-adapter` sub-directory in your lambda `.zip`, for any Lambda runtime that includes a `python` [runtime](https://docs.aws.amazon.com/lambda/latest/dg/lambda-runtimes.html).  `python 2` is included in Lambda runtimes that use `Amazon Linux`, however `Amazon Linux 2` will not support this directly.
 
-:::note python runtime
-
-It is expected that upcoming Cumulus releases will update the CMA layer to include a python runtime.
-
-:::
+> **Please note:** It is expected that upcoming Cumulus releases will update the CMA layer to include a python runtime.
 
 If you are manually adding the message adapter to your source and utilizing the CMA, you should set the Lambda's `CUMULUS_MESSAGE_ADAPTER_DIR` environment variable to target the installation path for the CMA.
 
@@ -501,11 +493,7 @@ The Cumulus Message Adapter would output the following Cumulus Message:
 
 If the `ReplaceConfig` configuration parameter is defined, the CMA will evaluate the configuration options provided, and if required write a portion of the Cumulus Message to S3, and add a `replace` key to the message for future steps to utilize.
 
-:::note
-
-The non user-modifiable field `cumulus-meta` will always be retained, regardless of the configuration.
-
-:::
+***Please Note***: the non user-modifiable field `cumulus-meta` will always be retained, regardless of the configuration.
 
 For example, if the output message (post output configuration) from a cumulus message looks like:
 
@@ -562,4 +550,4 @@ the resultant output would look like:
 
 ### Validate task input, output and configuration messages against the schemas provided
 
-The Cumulus Message Adapter has the capability to validate task input, output and configuration messages against their schemas.  The default location of the schemas is the schemas folder in the top level of the task and the default filenames are `input.json`, `output.json`, and `config.json`. The task can also configure a different schema location.  If no schema can be found, the Cumulus Message Adapter will not validate the messages.
+The Cumulus Message Adapter has the capability to validate task input, output and configuration messages against their schemas.  The default location of the schemas is the schemas folder in the top level of the task and the default filenames are input.json, output.json, and config.json. The task can also configure a different schema location.  If no schema can be found, the Cumulus Message Adapter will not validate the messages.

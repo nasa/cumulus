@@ -142,17 +142,9 @@ For any workflows using `post-to-cmr` task after the `update-granules-cmr-metada
 
 For an example workflow integrating all of these changes, please see our example [ingest and publish workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/ingest_and_publish_granule_workflow.asl.json).
 
-::::info Optional - Integrate granuleDuplicates information
+#### Optional - Integrate granuleDuplicates information
 
-<details>
-
-<summary>View Details</summary>
-
-:::note
-
-The `granuleDuplicates` output is purely **informational** and does not have any bearing on the separate configuration for how duplicates should be handled.
-
-:::
+**Please note** that the `granuleDuplicates` output is purely **informational** and does not have any bearing on the separate configuration for how duplicates should be handled.
 
 You can include `granuleDuplicates` output from the `sync-granule` or `move-granules` tasks in your workflow messages like so:
 
@@ -181,11 +173,7 @@ You can include `granuleDuplicates` output from the `sync-granule` or `move-gran
       ...more configuration...
 ```
 
-The result of this configuration is that the `granuleDuplicates` output from `sync-granule` would be placed in `meta.sync_granule.granule_duplicates` on the workflow message and remain there throughout the rest of the workflow. The same configuration could be replicated for the `move-granules` task, but be sure to use a different `destination` in the workflow message for the `granuleDuplicates` output.
-
-</details>
-
-::::
+The result of this configuration is that the `granuleDuplicates` output from `sync-granule` would be placed in `meta.sync_granule.granule_duplicates` on the workflow message and remain there throughout the rest of the workflow. The same configuration could be replicated for the `move-granules` task, but be sure to use a different `destination` in the workflow message for the `granuleDuplicates` output .
 
 ### Updating collection URL path templates
 

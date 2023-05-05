@@ -4,11 +4,7 @@ title: Setup Kinesis Stream & CNM Message
 hide_title: false
 ---
 
-:::tip
-
-Keep in mind that you should only have to set this up once per ingest stream. Kinesis pricing is based on the shard value and not on amount of kinesis usage.
-
-:::
+> **Note**: Keep in mind that you should only have to set this up once per ingest stream. Kinesis pricing is based on the shard value and not on amount of kinesis usage.
 
 1. Create a Kinesis Stream
 

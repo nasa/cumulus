@@ -11,11 +11,7 @@ Read more about the semantic versioning [here](https://docs.npmjs.com/getting-st
 
 ## Pre-release testing
 
-:::note
-
-This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`).
-
-:::
+> Note: This is only necessary when preparing a release for a new major version of Cumulus (e.g. preparing to go from `6.x.x` to `7.0.0`)
 
 Before releasing a new major version of Cumulus, we should test the deployment upgrade path from the latest release of Cumulus to the upcoming release.
 
@@ -125,14 +121,10 @@ Lerna will handle updating the packages and all of the dependent package version
 
 #### 2B. Verify Lerna
 
-:::note
-
-Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
+**Note:** Lerna can struggle to correctly update the versions on any non-standard/alpha versions (e.g. `1.17.0-alpha0`). Additionally some packages may have been left at the previous version.
 Please be sure to check any packages that are new or have been manually published since the previous release and any packages that list it as a dependency to ensure the listed versions are correct.
 It's useful to use the search feature of your code editor or `grep` to see if there any references to the **_old_** package versions.
 In bash shell you can run
-
-:::
 
 ```bash
     find . -name package.json -exec grep -nH "@cumulus/.*[0-9]*\.[0-9]\.[0-9].*" {} \; | grep -v "@cumulus/.*MAJOR\.MINOR\.PATCH.*"
@@ -221,11 +213,7 @@ Commit and push these changes.
     - `GIT_PR`: `true`
     - `SKIP_AUDIT`: `true`
 
-    :::warning important
-
-    Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
-
-    :::
+    **IMPORTANT**: Do NOT set the `PUBLISH_FLAG` variable to `true` for this branch plan. The actual publishing of the release will be handled by a separate, manually triggered branch plan.
 
     ![Screenshot of Bamboo CI interface showing the configuration of the GIT_PR branch variable to have a value of "true"](../assets/configure-release-branch-test.png)
 
@@ -272,22 +260,10 @@ If this is a new minor version branch, then you will need to create a new Bamboo
 - Add the values in that list. Choose a display name that makes it _very_ clear this is a deployment branch plan. `Release (minor version branch name)` seems to work well (e.g. `Release (1.2.x)`)).
   - **Make sure** you enter the correct branch name (e.g. `release-1.2.x`).
 
-- ::::note Manage the branch
+- **Important** Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
 
-  :::warning Deselect Enable Branch
-
-    Deselect Enable Branch - if you do not do this, it will immediately fire off a build.
-
-  :::
-
-  :::tip Do Immediately
-
-  On the `Branch Details` page, enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan.
-  You should have been redirected to the `Branch Details` tab after creating the plan. If not, navigate to the branch from the list where you clicked `Create Plan Branch` in the previous step.
-
-  :::
-
-  ::::
+- **Do Immediately** On the `Branch Details` page, enable `Change trigger`.  Set the `Trigger type` to manual, this will prevent commits to the branch from triggering the build plan.
+You should have been redirected to the `Branch Details` tab after creating the plan. If not, navigate to the branch from the list where you clicked `Create Plan Branch` in the previous step.
 
 - Go to the `Variables` tab. Ensure that you are on your branch plan and not the `master` plan: You should not see a large list of configured variables, but instead a dropdown allowing you to select variables to override, and the tab title will be `Branch Variables`. Then set the branch variables as follow:
 
@@ -317,22 +293,14 @@ The CI release scripts will automatically create a GitHub release based on the r
 
 Make sure to verify the appropriate .zip files are present on Github after the release process is complete.
 
-:::caution important
+- **Important** Copy the release notes for the new version from the changelog to the description of the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
 
-  Copy the release notes for the new version from the changelog to the description of the new release on the [GitHub Releases page](https://github.com/nasa/cumulus/releases).
-
-:::
-
-:::info Optional
-
-The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_ the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
-
-- Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
-- Click the "Edit release" button (pencil icon)
-- Check the "This is a pre-release" checkbox
-- Click "Update release"
-
-:::
+- **Optional** The "Publish" step in Bamboo will push the release artifcats to GitHub (and NPM). If you need more time to validate the release _after_
+  the packages are published, you can mark the release as a "Pre-Release" on GitHub. This will clearly indicate the that release is not ready for the public. To do this:
+  - Find the release on [GitHub Releases page](https://github.com/nasa/cumulus/releases)
+  - Click the "Edit release" button (pencil icon)
+  - Check the "This is a pre-release" checkbox
+  - Click "Update release"
 
 ### 13. Update Cumulus API document
 
@@ -348,16 +316,12 @@ If this is the latest version, you can simply create a PR to merge the minor ver
 
 Do not merge `master` back into the release branch since we want the release branch to _just_ have the code from the release.  Instead, create a new branch off of the release branch and merge that to master. You can freely merge master into this branch and delete it when it is merged to master.
 
-:::note
-
-If this is a backport, you will need to create a PR that merges **ONLY** the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example:
+**Please Note** If this is a backport, you will need to create a PR that merges **ONLY** the changelog updates back to master. It is important in this changelog note to call it out as a backport. For example:
 
 >**Please note** changes in 13.3.2 may not yet be released in future versions, as
 >this is a backport and patch release on the 13.3.x series of releases. Updates that
 >are included in the future will have a corresponding CHANGELOG entry in future
 >releases..
-
-:::
 
 ## Troubleshooting
 

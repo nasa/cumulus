@@ -8,7 +8,7 @@ hide_title: false
 
 Below, find a diagram with the components that comprise an instance of Cumulus.
 
-![Architecture diagram of a Cumulus deployment](assets/cumulus-arch-diagram-2023.png)
+![Architecture diagram of a Cumulus deployment](assets/cumulus-arch-diagram.png)
 
 This diagram details all of the major architectural  components of a Cumulus deployment.
 

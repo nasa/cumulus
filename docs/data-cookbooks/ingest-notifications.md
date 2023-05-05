@@ -59,11 +59,7 @@ As described above, ingest notifications will automatically be published to the 
 
 However, if you want to report your ingest status at any point **during a workflow execution**, you can add a workflow step using the `SfSqsReport` Lambda. In the following example from [`cumulus-tf/parse_pdr_workflow.tf`](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf), the `ParsePdr` workflow is configured to use the `SfSqsReport` Lambda, primarily to update the PDR ingestion status.
 
-:::info
-
-`${sf_sqs_report_task_arn}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`ParsePdr` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf).
-
-:::
+> Note: `${sf_sqs_report_task_arn}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`ParsePdr` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/parse_pdr_workflow.tf).
 
 ```json
   "PdrStatusReport": {

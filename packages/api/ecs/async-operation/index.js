@@ -226,12 +226,13 @@ const updateAsyncOperation = async (params) => {
     asyncOperationPgModel = new AsyncOperationPgModel(),
   } = params;
 
+  logger.info(`About to update async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
+
   const actualOutput = isError(output) ? buildErrorOutput(output) : output;
   const dbOutput = actualOutput ? JSON.stringify(actualOutput) : undefined;
   const updatedTime = envOverride.updateTime || (Number(Date.now())).toString();
   const env = { ...process.env, ...envOverride };
 
-  logger.info(`About to update async operation to ${JSON.stringify(status)} with output: ${dbOutput}`);
   const knex = await getKnexClient({ env });
 
   return await createRejectableTransaction(knex, async (trx) => {
@@ -245,7 +246,7 @@ const updateAsyncOperation = async (params) => {
     });
     const result = translatePostgresAsyncOperationToApiAsyncOperation(pgRecords[0]);
     await writeAsyncOperationToEs({ env, status, dbOutput, updatedTime, esClient });
-    logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(dbOutput)}`);
+    logger.info(`Successfully updated async operation to ${JSON.stringify(status)} with output: ${JSON.stringify(output)}`);
     return result;
   });
 };
@@ -269,7 +270,7 @@ async function runTask() {
     // Download the task (to the /home/task/lambda-function directory)
     await fetchLambdaFunction(lambdaInfo.codeUrl);
   } catch (error) {
-    logger.error('Failed to fetch lambda function', error);
+    logger.error('Failed to fetch lambda function:', error);
     await updateAsyncOperation({
       status: 'RUNNER_FAILED',
       output: error,
@@ -282,7 +283,7 @@ async function runTask() {
     logger.debug(`Fetching payload from ${process.env.payloadUrl}.`);
     payload = await fetchAndDeletePayload(process.env.payloadUrl);
   } catch (error) {
-    logger.error('Failed to fetch payload', error);
+    logger.error('Failed to fetch payload:', error);
     if (error.name === 'JSONParsingError') {
       await updateAsyncOperation({
         status: 'TASK_FAILED',

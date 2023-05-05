@@ -16,11 +16,7 @@ Follow the steps outlined below in precisely this order to upgrade your deployme
 
 Cumulus deployments require an Aurora [PostgreSQL 10.2](https://www.postgresql.org/) compatible database to be provided in addition to the existing DynamoDB/ElasticSearch backend with the eventual goal of utilizing the PostgreSQL database as the primary data store for Cumulus.
 
-:::note
-
-Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
-
-:::
+> **NOTE**: Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
 
 Refer to the docs on [how to deploy a new RDS cluster](./../deployment/postgres-database-deployment.md).
 
@@ -116,11 +112,7 @@ The `cumulus` module will create resources including the following relevant reso
 
 ### 5. Run the second data migration
 
-:::caution
-
-Please read this entire section thoroughly before proceeding to run the second data migration. In particular, pay close attention to the notes about parallelism options in order to achieve desired data migration performance while avoiding database outages and data loss.
-
-:::
+> **Note**: Please read this entire section thoroughly before proceeding to run the second data migration. In particular, pay close attention to the notes about parallelism options in order to achieve desired data migration performance while avoiding database outages and data loss.
 
 This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
 This Lambda starts an asynchronous operation which runs as an ECS task to run the migration.
@@ -211,11 +203,7 @@ where
 - `OUTFILE` is the filepath to store the output from the Lambda.
 - `PREFIX` is your Cumulus deployment prefix.
 
-:::note
-
-This will invoke the Lambda synchronously. Depending on your data holdings, the execution time of this Lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation as described below.**
-
-:::
+> **NOTE**: This will invoke the Lambda synchronously. Depending on your data holdings, the execution time of this Lambda may exceed the 15 minute AWS Lambda limit. **If this occurs, you will need to invoke the tool via the API as an asynchronous operation as described below.**
 
 #### API invocation
 

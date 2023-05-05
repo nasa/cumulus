@@ -1,9 +1,8 @@
 'use strict';
 
+const { Transform } = require('json2csv');
 const noop = require('lodash/noop');
 const Stream = require('stream');
-const { Transform } = require('json2csv');
-
 const Logger = require('@cumulus/logger');
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const {
@@ -12,7 +11,6 @@ const {
   translatePostgresGranuleResultToApiGranule,
 } = require('@cumulus/db');
 const log = new Logger({ sender: '@api/lambdas/granule-inventory-report' });
-
 const { convertToDBGranuleSearchParams } = require('../../lib/reconciliationReport');
 
 /**
@@ -69,6 +67,7 @@ async function createGranuleInventoryReport(recReportParams) {
       Body: pass,
     },
   });
+
   while (nextGranule) {
     // eslint-disable-next-line no-await-in-loop
     const apiGranule = await translatePostgresGranuleResultToApiGranule(

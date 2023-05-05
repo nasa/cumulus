@@ -1,5 +1,3 @@
-//@ts-check
-
 'use strict';
 
 const get = require('lodash/get');
@@ -56,6 +54,10 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
     });
   }
   return rules;
+}
+
+async function fetchAllRules() {
+  return await fetchRules({});
 }
 
 async function fetchEnabledRules() {
@@ -196,7 +198,7 @@ async function isEventSourceMappingShared(knex, rule, eventType) {
  * @param {Knex}    knex      - DB client
  * @param {RuleRecord} rule   - the rule item
  * @param {string}  eventType - kinesisSourceEvent type ['arn', 'log_event_arn']
- * @param {{log_event_arn?: string, arn?: string}} id        - event source id
+ * @param {string}  id        - event source id
  * @returns {Promise} the response from event source delete
  */
 async function deleteKinesisEventSource(knex, rule, eventType, id) {
@@ -211,20 +213,13 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
   return undefined;
 }
 
-// @typedef { typeof deleteKinesisEventSource } deleteKinesisEventSource
-
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
- *
  * @param {Knex} knex       - DB client
  * @param {RuleRecord} rule - the rule item
- * @param {{deleteKinesisEventSourceMethod: deleteKinesisEventSource}} testContext -
  * @returns {Promise<Array>} array of responses from the event source deletion
  */
-async function deleteKinesisEventSources(knex, rule, testContext = {
-  deleteKinesisEventSourceMethod: deleteKinesisEventSource,
-}) {
-  const deleteKinesisEventSourceMethod = testContext.deleteKinesisEventSourceMethod;
+async function deleteKinesisEventSources(knex, rule) {
   const kinesisSourceEvents = [
     {
       name: process.env.messageConsumer,
@@ -242,7 +237,7 @@ async function deleteKinesisEventSources(knex, rule, testContext = {
     },
   ];
   const deleteEventPromises = kinesisSourceEvents.map(
-    (lambda) => deleteKinesisEventSourceMethod(knex, rule, lambda.eventType, lambda.type).catch(
+    (lambda) => deleteKinesisEventSource(knex, rule, lambda.eventType, lambda.type).catch(
       (error) => {
         log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
         if (error.code !== 'ResourceNotFoundException') throw error;
@@ -307,7 +302,7 @@ async function deleteRuleResources(knex, rule) {
     break;
   }
   case 'sns': {
-    if (rule.rule.arn) {
+    if (rule.state === 'ENABLED') {
       await deleteSnsTrigger(knex, rule);
     }
     break;
@@ -368,7 +363,7 @@ async function validateAndUpdateSqsRule(rule) {
    * Add an event source to a target lambda function
    *
    * @param {RuleRecord} item   - The rule item
-   * @param {{ name: string | undefined}}  lambda - The name of the target lambda
+   * @param {string}  lambda - The name of the target lambda
    * @returns {Promise}
    */
 async function addKinesisEventSource(item, lambda) {
@@ -404,7 +399,7 @@ async function addKinesisEventSource(item, lambda) {
 /**
  * Add event sources for all mappings in the kinesisSourceEvents
  * @param {RuleRecord} rule - The rule item
- * @returns {Promise<Object>}     - Returns arn and logEventArn
+ * @returns {Object}     - Returns arn and logEventArn
  */
 async function addKinesisEventSources(rule) {
   const kinesisSourceEvents = [
@@ -703,14 +698,40 @@ async function createRuleTrigger(ruleItem) {
   return newRuleItem;
 }
 
+/**
+ * Removes SNS triggers or Kineses events from a rule
+ *
+ * @param {knex} knex - Knex DB Client
+ * @param {RuleRecord} apiRule - API-formatted Rule object
+ *
+ * @returns {Promise} - Returns response from deletion function
+ */
+async function deleteOldEventSourceMappings(knex, apiRule) {
+  switch (apiRule.rule.type) {
+  case 'kinesis':
+    await deleteKinesisEventSources(knex, apiRule);
+    break;
+  case 'sns': {
+    if (apiRule.rule.arn) {
+      await deleteSnsTrigger(knex, apiRule);
+    }
+    break;
+  }
+  default:
+    break;
+  }
+}
+
 module.exports = {
   buildPayload,
   checkForSnsSubscriptions,
   createRuleTrigger,
   deleteKinesisEventSource,
   deleteKinesisEventSources,
+  deleteOldEventSourceMappings,
   deleteRuleResources,
   deleteSnsTrigger,
+  fetchAllRules,
   fetchEnabledRules,
   fetchRules,
   filterRulesbyCollection,
