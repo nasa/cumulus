@@ -54,10 +54,14 @@ The path shown above will:
 - append or recur into all items that end in `.nc`,
 - append or recur into everything in any directories that ended in `.nc` without filtering anything out.
 
-**Note**: each discovery task performs its own post-discovery filtering on some relevant
+:::note
+
+Each discovery task performs its own post-discovery filtering on some relevant
 value, e.g. `granuleIdExtraction` for discover-granules, so discovery filtering is intended to
 be used primarily to limit unnecessary exploration of large file systems, *not* to filter for
 specific files.
+
+:::
 
 ## Troubleshooting
 
