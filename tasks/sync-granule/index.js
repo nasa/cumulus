@@ -38,7 +38,7 @@ async function download({
     + `granuleID: ${granules[0].granuleId}, `
   );
 
-  const proceed = await lock.proceed(bucket, provider, granules[0].granuleId, ACL);
+  const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
     const err = new errors.ResourcesLockedError(
