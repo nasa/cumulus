@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+
 ### MIGRATION notes
 
 #### RDS Phase 3
@@ -200,6 +205,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
     operation status correctly to failed if there is an error.
   - Knex calls relating to reconciliation reports will retry if there is a
     connection terminated unexpectedly error
+  - Improved logging for async operation
+  - Set default async_operation_image_version to 47
 - **CUMULUS-3024**
   - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
     `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
@@ -209,6 +216,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
+
 - **CUMULUS-3203**
   - Removed ACL setting of private on S3.multipartCopyObject() call
   - Removed ACL setting of private for s3PutObject()
