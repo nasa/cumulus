@@ -585,8 +585,10 @@ function recordIsValid(rule) {
  * @returns {Promise} lambda invocation response
  */
 async function invokeRerun(rule) {
-  const payload = await buildPayload(rule);
-  await invoke(process.env.invoke, payload);
+  if (rule.state !== 'DISABLED') {
+    const payload = await buildPayload(rule);
+    await invoke(process.env.invoke, payload);
+  }
 }
 
 /**
