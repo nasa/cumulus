@@ -640,7 +640,6 @@ async function updateRuleTrigger(original, updates) {
     clonedRuleItem = await validateAndUpdateSqsRule(mergedRule);
     break;
   case 'onetime':
-    invokeRerun(mergedRule);
     break;
   default:
     throw new ValidationError(`Rule type \'${mergedRule.rule.type}\' not supported.`);
