@@ -589,7 +589,6 @@ async function invokeRerun(rule) {
   await invoke(process.env.invoke, payload);
 }
 
-/*eslint complexity: ["error", 16]*/
 /**
  * Updates rule trigger for rule
  *
@@ -641,9 +640,7 @@ async function updateRuleTrigger(original, updates) {
     clonedRuleItem = await validateAndUpdateSqsRule(mergedRule);
     break;
   case 'onetime':
-    if (stateChanged && original.state === 'DISABLED') {
-      invokeRerun(mergedRule);
-    }
+    invokeRerun(mergedRule);
     break;
   default:
     throw new ValidationError(`Rule type \'${mergedRule.rule.type}\' not supported.`);
