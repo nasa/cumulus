@@ -9,6 +9,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
   - **CUMULUS-2985**
     - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
+
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+
 ### MIGRATION notes
 
 #### RDS Phase 3
@@ -198,12 +204,13 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
-
 - **CUMULUS-3215**
   - Create reconciliation reports will properly throw errors and set the async
     operation status correctly to failed if there is an error.
   - Knex calls relating to reconciliation reports will retry if there is a
     connection terminated unexpectedly error
+  - Improved logging for async operation
+  - Set default async_operation_image_version to 47
 - **CUMULUS-3024**
   - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
     `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
@@ -213,7 +220,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
-  
+
   ### Removed
 
 - **CUMULUS-3204**
@@ -234,7 +241,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 ### Fixed
 
 - **CUMULUS-3120**
-  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods`
   to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
   - Updated cloudwatch retention documentation to reflect the bugfix changes
 
