@@ -52,6 +52,7 @@ services:
     environment:
       - LOCALSTACK_HOST=127.0.0.1
       - LOCAL_ES_HOST=127.0.0.1
+      - HOSTNAME_EXTERNAL=awslocal
       - CI_UID
       - DOCKER_TEST_RUN=true
       - bamboo_planKey
