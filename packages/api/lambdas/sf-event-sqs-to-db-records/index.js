@@ -80,14 +80,16 @@ const writeRecords = async ({
     ),
   ]);
 
-  if (!shouldWriteExecutionToPostgres({
+  const fieldsToMeetRequirements = {
     messageCollectionNameVersion,
     collectionCumulusId,
     messageAsyncOperationId,
     asyncOperationCumulusId,
     messageParentExecutionArn,
     parentExecutionCumulusId,
-  })) {
+  };
+  if (!shouldWriteExecutionToPostgres(fieldsToMeetRequirements)) {
+    log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify('fieldsToMeetRequirements')}`);
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
 

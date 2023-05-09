@@ -220,8 +220,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
 ### Fixed
 
 - **CUMULUS-3223**
-  - Set the granule temporal info when granule status is 'completed'
-  - Update sfEventSqsToDbRecords to log and save message when message can't be processed
+  - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
+  - Update sfEventSqsToDbRecords to save message when message can't be retrieved from event
   - Update @cumulus/cumulus-message-adapter-js to 2.0.5
 
 ### Removed

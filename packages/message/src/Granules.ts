@@ -195,7 +195,7 @@ export const getGranuleCmrTemporalInfo = async ({
   // productionDateTime, lastUpdateDateTime)
   const temporalInfo = isGranuleTemporalInfo(cmrTemporalInfo)
     ? { ...cmrTemporalInfo }
-    : (granule.status === 'completed' ? await cmrUtils.getGranuleTemporalInfo(granule) : {});
+    : await cmrUtils.getGranuleTemporalInfo(granule);
   return mapValues(
     temporalInfo,
     convertDateToISOStringPreservingNull

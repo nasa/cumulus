@@ -1093,7 +1093,11 @@ async function getGranuleTemporalInfo(granule) {
   const cmrFile = granuleToCmrFileObject(granule);
   if (cmrFile.length === 0) return {};
 
-  const cmrFilename = getS3UrlOfFile(cmrFile[0]);
+  const cmrFilename = await getS3UrlOfFile(cmrFile[0])
+    .catch((error) => {
+      log.debug(`getGranuleTemporalInfo failed to getS3UrlOfFile ${JSON.stringify(cmrFile[0])}, ${error.message}`);
+      return {};
+    });
 
   if (isCMRISOFilename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);
