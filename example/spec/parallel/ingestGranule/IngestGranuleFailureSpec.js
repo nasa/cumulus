@@ -79,9 +79,7 @@ describe('The Ingest Granule failure workflow', () => {
           name: 'no-path-field-file',
         },
         {
-          key: 'non-existent-path/non-existent-file.cmr.json',
-          bucket: config.bucket,
-          name: 'non-existent-file',
+          name: 'non-existent-file.cmr.json',
           path: 'non-existent-path',
         },
         ...inputPayload.granules[0].files,
