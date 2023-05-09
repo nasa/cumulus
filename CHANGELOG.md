@@ -217,7 +217,14 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
 
-  ### Removed
+### Fixed
+
+- **CUMULUS-3223**
+  - Set the granule temporal info when granule status is 'completed'
+  - Update sfEventSqsToDbRecords to log and save message when message can't be processed
+  - Update @cumulus/cumulus-message-adapter-js to 2.0.5
+
+### Removed
 
 - **CUMULUS-3204**
   - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
