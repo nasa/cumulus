@@ -7,7 +7,7 @@ const program = require('commander');
 const pckg = require('../package.json');
 const backup = require('./backup');
 const restore = require('./restore');
-const { serveApi, serveDistributionApi, resetTables } = require('./serve');
+const { serveApi, serveDistributionApi } = require('./serve');
 
 program.version(pckg.version);
 
