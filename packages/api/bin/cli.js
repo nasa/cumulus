@@ -1,5 +1,5 @@
 #!/usr/bin/env node
->>>>>>> Stashed changes
+/* eslint-disable node/shebang */
 
 'use strict';
 
