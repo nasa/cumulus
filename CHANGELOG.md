@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### MIGRATION notes
 
+#### PI release version
+
+When migrating directly to v16 from prior releasesolder that V15, please make sure to
+read through all prior release migrations.
+
+Notable migration concerns since the last PI release version (11.1.x):
+
+- [v14.1.0] - Postgres compatibility update to Auror PostgreSQL 11.13.
+- [v13.1.0] - Postgres update to add `files_granules_cumulus_id_index` to the
+  `files` table may require manual steps depending on load.
+
 #### RDS Phase 3
 
 This release includes updates that remove existing DynamoDB tables as part of
@@ -43,8 +54,8 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 ```
 
 Users/clients that do not make use of these endpoints will not be impacted.
-### RDS Phase 3
 
+### RDS Phase 3
 #### Breaking Changes
 
 - **CUMULUS-2688**
