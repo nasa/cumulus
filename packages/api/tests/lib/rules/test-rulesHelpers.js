@@ -1360,11 +1360,9 @@ test('Creating a rule trigger for a onetime rule with a DISABLED state is DISABL
     },
   });
 
-  const invokeOneTimeSpy = sinon.spy(invoke);
   const onetimeRule = await createRuleTrigger(rule);
 
-  t.false(invokeOneTimeSpy.called);
-  t.deepEqual(onetimeRule.state, 'DISABLED');
+  t.deepEqual(onetimeRule, rule);
 });
 
 test.serial('Creating rule triggers for a kinesis type rule adds event mappings', async (t) => {
