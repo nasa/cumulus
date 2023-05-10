@@ -4,22 +4,18 @@ const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {
-  AsyncOperationPgModel,
   CollectionPgModel,
   ExecutionPgModel,
-  FilePgModel,
   getKnexClient,
   GranulePgModel,
-  GranulesExecutionsPgModel,
-  PdrPgModel,
+  localStackConnectionEnv,
   ProviderPgModel,
   RulePgModel,
-  localStackConnectionEnv,
   translateApiCollectionToPostgresCollection,
+  translateApiExecutionToPostgresExecution,
+  translateApiGranuleToPostgresGranule,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
-  translateApiGranuleToPostgresGranule,
-  translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -127,7 +123,7 @@ async function initializeLocalElasticsearch(stackName) {
 }
 
 /**
- * Fill Postgres annd Elasticsearch with fake records for testing.
+ * Fill Postgres and Elasticsearch with fake records for testing.
  * @param {string} stackName - The name of local stack. Used to prefix stack resources.
  * @param {string} user - username
  * @param {Object} knexOverride - Used to override knex object for testing
@@ -145,11 +141,11 @@ async function createDBRecords(stackName, user, knexOverride) {
   const rulePgModel = new RulePgModel();
 
   await initializeLocalElasticsearch(stackName);
+  await serveUtils.resetPostgresDb();
 
   if (user) {
     await testUtils.setAuthorizedOAuthUsers([user]);
   }
-
   // add collection records
   const collection = testUtils.fakeCollectionFactory({
     name: `${stackName}-collection`,
@@ -175,8 +171,7 @@ async function createDBRecords(stackName, user, knexOverride) {
       version: collection.version,
     },
     rule: {
-      type: 'kinesis',
-      arn: '164ab703-ffaa-413b-ab6a-7f813a9483b7',
+      type: 'onetime',
     },
   });
   await serveUtils.addRules([rule]);
@@ -184,19 +179,21 @@ async function createDBRecords(stackName, user, knexOverride) {
   await rulePgModel.upsert(knex, postgresRule);
 
   // add fake execution records
-  const execution = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn` });
-  await serveUtils.addExecutions([execution]);
+  const parentExecution = testUtils.fakeExecutionFactoryV2({ arn: randomId('fake-arn'), parentArn: undefined });
 
-  const postgresExecution = await translateApiExecutionToPostgresExecution(execution, knex);
-  await executionPgModel.upsert(knex, postgresExecution);
+  const execution = testUtils.fakeExecutionFactoryV2({ arn: `${stackName}-fake-arn`, parentArn: parentExecution.arn });
+
+  await serveUtils.addExecutions([parentExecution, execution]);
 
   // add fake granule records
   const granule = testUtils.fakeGranuleFactoryV2({
     granuleId: `${stackName}-granule`,
     collectionId: constructCollectionId(collection.name, collection.version),
-    execution: execution.name,
+    execution: execution.execution,
     published: false, // Important - we need to be able to delete these.
+    status: 'completed',
   });
+
   await serveUtils.addGranules([granule]);
   const postgresGranule = await translateApiGranuleToPostgresGranule({
     dynamoRecord: granule,
@@ -208,7 +205,11 @@ async function createDBRecords(stackName, user, knexOverride) {
   });
 
   // add pdrs records
-  const pdr = testUtils.fakePdrFactoryV2({ pdrName: `${stackName}-pdr` });
+  const pdr = testUtils.fakePdrFactoryV2({
+    pdrName: `${stackName}-pdr`,
+    provider: provider.id,
+    collectionId: constructCollectionId(collection.name, collection.version),
+  });
   await serveUtils.addPdrs([pdr]);
 }
 
@@ -231,7 +232,6 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
 
   // Set env variable to mark this as a local run of the API
   process.env.CUMULUS_ENV = 'local';
-
   process.env.API_BASE_URL = `http://localhost:${port}`;
   process.env.TOKEN_REDIRECT_ENDPOINT = `http://localhost:${port}/token`;
   process.env.TOKEN_SECRET = randomId('tokensecret');
@@ -302,34 +302,6 @@ async function serveDistributionApi(stackName = localStackName, done) {
 }
 
 /**
-* Remove all records from api-related postgres tables
-* @param {Object} knex - knex/knex transaction object
-* @returns {[Promise]} - Array of promises with deletion results
-*/
-async function erasePostgresTables(knex) {
-  const asyncOperationPgModel = new AsyncOperationPgModel();
-  const collectionPgModel = new CollectionPgModel();
-  const executionPgModel = new ExecutionPgModel();
-  const filePgModel = new FilePgModel();
-  const granulePgModel = new GranulePgModel();
-  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
-  const pdrPgModel = new PdrPgModel();
-  const providerPgModel = new ProviderPgModel();
-  const rulePgModel = new RulePgModel();
-
-  await granulesExecutionsPgModel.delete(knex, {});
-  await granulePgModel.delete(knex, {});
-  await pdrPgModel.delete(knex, {});
-  await executionPgModel.delete(knex, {});
-  await asyncOperationPgModel.delete(knex, {});
-  await filePgModel.delete(knex, {});
-  await granulePgModel.delete(knex, {});
-  await rulePgModel.delete(knex, {});
-  await collectionPgModel.delete(knex, {});
-  await providerPgModel.delete(knex, {});
-}
-
-/**
  * Resets Elasticsearch
  *
  * @param {string} stackName - defaults to local stack, 'localrun'
@@ -356,7 +328,7 @@ async function resetTables(
 ) {
   if (inTestMode() || runIt) {
     const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
-    await erasePostgresTables(knex);
+    await serveUtils.erasePostgresTables(knex);
     await createDBRecords(stackName, user, knex);
   }
 }
@@ -366,5 +338,4 @@ module.exports = {
   serveApi,
   serveDistributionApi,
   resetTables,
-  erasePostgresTables,
 };
