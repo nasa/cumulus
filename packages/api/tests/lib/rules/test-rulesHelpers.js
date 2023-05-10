@@ -27,7 +27,6 @@ const {
   translateApiRuleToPostgresRule,
   translateApiRuleToPostgresRuleRaw,
 } = require('@cumulus/db');
-const { invoke } = require('@cumulus/aws-client/Lambda');
 const { createSqsQueues, fakeRuleFactoryV2 } = require('../../../lib/testUtils');
 const {
   buildPayload,
