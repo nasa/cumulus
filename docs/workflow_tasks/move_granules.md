@@ -53,4 +53,4 @@ This task outputs an assembled array of Cumulus [granule](https://github.com/nas
 
 ## Examples
 
-See [the SIPS workflow cookbook](../data-cookbooks/sips-workflow) for an example of this task in a workflow
+See [the SIPS workflow cookbook](../data-cookbooks/sips-workflow) for an example of this task in a workflow.
