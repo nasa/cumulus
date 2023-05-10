@@ -24,6 +24,7 @@
     "package": "npm run generate-task-schemas && ./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "updateCoverage": "python ../../scripts/setCoverage.py",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",

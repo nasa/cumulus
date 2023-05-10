@@ -17,6 +17,7 @@
   },
   "scripts": {
     "test:coverage": "../../../../node_modules/.bin/nyc npm test",
+    "updateCoverage": "python ../../../../scripts/setCoverage.py",
     "test": "../../../../node_modules/.bin/ava"
   },
   "dependencies": {

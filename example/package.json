@@ -27,7 +27,8 @@
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "test": "npm run test:ava && for x in lambdas/*; do cd $x && npm test && cd -; done",
     "test:ava": "../node_modules/.bin/ava",
-    "test:coverage": "../node_modules/.bin/nyc npm run test:ava"
+    "test:coverage": "../node_modules/.bin/nyc npm run test:ava",
+    "updateCoverage": "python ../scripts/setCoverage.py"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

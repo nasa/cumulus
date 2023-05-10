@@ -23,7 +23,8 @@
     "clean": "rm -rf dist",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test"
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "updateCoverage": "python ../../scripts/setCoverage.py"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

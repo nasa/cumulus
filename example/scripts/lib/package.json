@@ -14,6 +14,7 @@
   "scripts": {
     "test": "../../../node_modules/.bin/ava",
     "test:coverage": "../../../node_modules/.bin/nyc npm test",
+    "updateCoverage": "python ../../../scripts/setCoverage.py",
     "lint": "true",
     "clean": "true",
     "build": "true",
