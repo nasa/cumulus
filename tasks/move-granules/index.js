@@ -241,7 +241,7 @@ async function moveFilesForAllGranules(
  *
  * @param {Object} event - Lambda function payload
  * @param {Object} event.config - the config object
- * @param {string} event.config.bucket - Bucket name where public/private keys are stored
+ * @param {string} event.config.bucket - Name of source aws s3 bucket that contains the granule files
  * @param {Object} event.config.buckets - Buckets config
  * @param {string} event.config.distribution_endpoint - distribution endpoint for the api
  * @param {Object} event.config.collection - collection configuration

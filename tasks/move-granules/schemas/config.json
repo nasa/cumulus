@@ -11,7 +11,7 @@
   "properties": {
     "bucket": {
       "type": "string",
-      "description": "the bucket the has the private/public key needed for decrypting cmr password"
+      "description": "the name of source aws s3 bucket that contains the granule files"
     },
     "buckets": {
       "type": "object",

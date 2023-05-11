@@ -12,7 +12,7 @@ Config object fields:
 
 | field name | type | default | values | description
 | ---------- | ---- | ------- | ------ | -----------
-| bucket | string | (required) | | Bucket with public/private key for decrypting CMR password
+| bucket | string | (required) | | The name of source AWS S3 bucket that contains the granule files
 | buckets | object | (required) | | Object specifying AWS S3 buckets used by this task
 | collection | object | (required) | | The cumulus-api collection object
 | distribution_endpoint | string | (required) | | The API distribution endpoint
