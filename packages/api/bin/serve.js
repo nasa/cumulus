@@ -5,14 +5,12 @@ const { s3, sns } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
-  ExecutionPgModel,
   getKnexClient,
   GranulePgModel,
   localStackConnectionEnv,
   ProviderPgModel,
   RulePgModel,
   translateApiCollectionToPostgresCollection,
-  translateApiExecutionToPostgresExecution,
   translateApiGranuleToPostgresGranule,
   translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
@@ -135,7 +133,6 @@ async function createDBRecords(stackName, user, knexOverride) {
   }
 
   const collectionPgModel = new CollectionPgModel();
-  const executionPgModel = new ExecutionPgModel();
   const granulePgModel = new GranulePgModel();
   const providerPgModel = new ProviderPgModel();
   const rulePgModel = new RulePgModel();
