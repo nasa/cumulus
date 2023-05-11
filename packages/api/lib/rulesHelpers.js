@@ -588,6 +588,9 @@ async function invokeRerun(rule) {
   if (rule.state !== 'DISABLED') {
     const payload = await buildPayload(rule);
     await invoke(process.env.invoke, payload);
+  } else {
+    log.error(`Cannot re-run rule ${rule.name} with a ${rule.state} state, please enable the rule and re-run.`);
+    throw new Error(`Cannot re-run rule ${rule.name} with a ${rule.state} state, please enable the rule and re-run.`);
   }
 }
 
