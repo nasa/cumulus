@@ -17,7 +17,7 @@ read through all prior release migrations.
 
 Notable migration concerns since the last PI release version (11.1.x):
 
-- [v14.1.0] - Postgres compatibility update to Auror PostgreSQL 11.13.
+- [v14.1.0] - Postgres compatibility update to Aurora PostgreSQL 11.13.
 - [v13.1.0] - Postgres update to add `files_granules_cumulus_id_index` to the
   `files` table may require manual steps depending on load.
 
