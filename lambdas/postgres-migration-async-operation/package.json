@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@cumulus/api": "15.0.0",
-    "@cumulus/async-operations": "15.0.0",
+    "@cumulus/async-operations": "15.0.1",
     "@cumulus/logger": "15.0.0",
     "@cumulus/types": "15.0.0"
   },
