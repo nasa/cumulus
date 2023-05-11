@@ -222,7 +222,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3223**
   - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
   - Update sfEventSqsToDbRecords to save message when message can't be retrieved from event
-  - Update @cumulus/cumulus-message-adapter-js to 2.0.5
+  - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
 
 ### Removed
 
