@@ -132,7 +132,6 @@ class S3ProviderClient implements ProviderClient {
         sourceObject,
         destinationBucket,
         destinationKey,
-        ACL: 'private',
         copyTags: true,
       });
       return { s3uri, etag };
