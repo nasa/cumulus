@@ -130,17 +130,25 @@ const handler = async (event) => {
   });
 
   const sqsMessages = get(event, 'Records', []);
+  const batchItemFailures = [];
 
-  return await Promise.all(sqsMessages.map(async (message) => {
+  await Promise.all(sqsMessages.map(async (message) => {
     const executionEvent = parseSQSMessageBody(message);
+    let reprocessFailed = true;
     try {
       const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+      reprocessFailed = false;
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
-      log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
+      log.error(`Writing message failed: ${JSON.stringify(message)}, reprocessFailed: ${reprocessFailed}`, error);
+      if (reprocessFailed) {
+        return batchItemFailures.push({ itemIdentifier: message.messageId });
+      }
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
   }));
+
+  return { batchItemFailures };
 };
 
 module.exports = {

@@ -40,6 +40,7 @@ const {
 const {
   getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
+const { createSqsQueues, getSqsQueueMessageCounts } = require('../../../lib/testUtils');
 const {
   writeRecords,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
@@ -47,9 +48,6 @@ const {
 const {
   handler,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
-  '@cumulus/aws-client/SQS': {
-    sendSQSMessage: (queue, message) => Promise.resolve([queue, message]),
-  },
   '@cumulus/message/Executions': {
     getMessageExecutionParentArn: (cumulusMessage) => {
       if (cumulusMessage.fail === true) {
@@ -93,6 +91,7 @@ const runHandler = async ({
   const sqsEvent = {
     ...additionalParams,
     Records: [{
+      messageId: cryptoRandomString({ length: 10 }),
       eventSource: 'aws:sqs',
       body: JSON.stringify(fixture),
     }],
@@ -191,11 +190,9 @@ test.beforeEach(async (t) => {
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
-  const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
-  t.context.QueueUrl = QueueUrl;
+  t.context.queues = await createSqsQueues(cryptoRandomString({ length: 10 }));
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
-    QueueUrl,
+    QueueUrl: t.context.queues.queueUrl,
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
@@ -210,6 +207,8 @@ test.beforeEach(async (t) => {
     TopicArn,
     Token: SubscriptionArn,
   }).promise();
+
+  process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
 
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:${fixture.region}:${fixture.account}:stateMachine:${stateMachineName}`;
@@ -266,6 +265,11 @@ test.beforeEach(async (t) => {
       host: t.context.provider.host,
       protocol: t.context.provider.protocol,
     });
+});
+
+test.afterEach(async (t) => {
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.queueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.deadLetterQueueUrl }).promise();
 });
 
 test.after.always(async (t) => {
@@ -361,16 +365,33 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
   );
 });
 
-test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
+test.serial('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
   const {
     handlerResponse,
-    sqsEvent,
   } = await runHandler({
     ...t.context,
     cumulusMessage: { fail: true },
   });
 
-  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
+  t.is(handlerResponse.batchItemFailures.length, 0);
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
+});
+
+test.serial('Lambda returns partial batch response to reprocess messages when getCumulusMessageFromExecutionEvent() throws an error', async (t) => {
+  const {
+    handlerResponse,
+  } = await runHandler({
+    ...t.context,
+    cumulusMessage: null,
+  });
+
+  t.is(handlerResponse.batchItemFailures.length, 1);
+  t.truthy(handlerResponse.batchItemFailures[0].itemIdentifier);
 });
 
 test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
