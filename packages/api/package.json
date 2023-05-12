@@ -6,9 +6,6 @@
   "engines": {
     "node": ">=16.19.0"
   },
-  "bin": {
-    "cumulus-api": "./bin/cli.js"
-  },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
     "build": "../../node_modules/.bin/webpack",
@@ -16,13 +13,12 @@
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run prepare && npm run build && npm run link-api-bin && npm run build-lambda-zips",
     "prepare": "npm run tsc",
-    "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
-    "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve-dist",
-    "serve-dist-remote": "cumulus-api serve-dist",
-    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve-dist",
-    "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
-    "serve-remote": "cumulus-api serve",
-    "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
+    "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test ./bin/cli.js serve-dist",
+    "serve-dist-remote": "./bin/cli.js serve-dist",
+    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true ./bin/cli.js serve-dist",
+    "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test ./bin/cli.js serve",
+    "serve-remote": "./bin/cli.js serve",
+    "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true ./bin/cli.js serve",
     "serve:debug": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true node --inspect-brk ./bin/cli.js serve",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
