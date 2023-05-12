@@ -272,12 +272,13 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
   }
 );
 
-const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = {}) => {
+const waitForGranuleAndDelete = async (prefix, granuleId, collectionId, status, retryConfig = {}) => {
   await waitForApiStatus(
     getGranule,
     {
       prefix,
       granuleId,
+      collectionId
     },
     status,
     retryConfig
@@ -286,6 +287,7 @@ const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = 
   await deleteGranule({
     prefix,
     granuleId,
+    collectionId
   });
 };
 
