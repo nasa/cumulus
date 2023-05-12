@@ -158,6 +158,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     {
       prefix,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId: constructCollectionId(newCollection.name, newCollection.version)
     },
     'completed'
   );
@@ -169,7 +170,9 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     status: 'completed',
   });
 
-  await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
+  await getGranuleWithStatus({ prefix, granuleId, 
+                                collectionId: constructCollectionId(newCollection.name, newCollection.version), 
+                                status: 'completed' });
   return newCollection;
 };
 
@@ -203,6 +206,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     {
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId: constructCollectionId(collection.name, collection.version)
     },
     'completed'
   );
@@ -390,6 +394,7 @@ describe('When there are granule differences and granule reconciliation is run',
       granuleBeforeUpdate = await getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
+        collectionId
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
@@ -403,8 +408,8 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
-        getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
-        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+        getGranule({ prefix: config.stackName, granuleId: dbGranuleId, collectionId }),
+        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId, collectionId }),
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([

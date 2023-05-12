@@ -100,6 +100,7 @@ describe('The S3 Ingest Granules workflow', () => {
       {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: constructCollectionId(collection.name, collection.version)
       },
       'completed'
     );
@@ -196,6 +197,8 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId,
+          collectionId: constructCollectionId(collection.name, collection.version)
+
         },
         'completed'
       );
@@ -269,6 +272,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId,
+        collectionId: constructCollectionId(collection.name, collection.version),
         query: { getRecoveryStatus: true },
       });
       expect(granule.granuleId).toEqual(granuleId);

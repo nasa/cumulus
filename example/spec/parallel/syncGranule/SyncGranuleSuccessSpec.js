@@ -158,9 +158,11 @@ describe('The Sync Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all(inputPayload.granules.map(
       async (granule) => {
+        const collectionId = constructCollectionId(collection.name, collection.version)
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          collectionId,          
           ['completed', 'failed']
         );
       }
@@ -289,6 +291,7 @@ describe('The Sync Granules workflow', () => {
       granule = await getGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
+        collectionId: constructCollectionId(collection.name, collection.version)
       });
 
       oldUpdatedAt = granule.updatedAt;
@@ -296,6 +299,7 @@ describe('The Sync Granules workflow', () => {
       const reingestGranuleResponse = await reingestGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
+        collectionId: constructCollectionId(collection.name, collection.version)
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
     });
@@ -343,6 +347,7 @@ describe('The Sync Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+        collectionId: constructCollectionId(collection.name, collection.version)
         },
         'completed'
       );
@@ -350,6 +355,8 @@ describe('The Sync Granules workflow', () => {
       const updatedGranule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: constructCollectionId(collection.name, collection.version)
+
       });
       expect(updatedGranule.status).toEqual('completed');
       expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);

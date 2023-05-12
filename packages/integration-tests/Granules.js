@@ -23,7 +23,7 @@ class GranuleNotFoundError extends Error {
 
 const getGranule = async (params) => {
   const response = await granulesApi.getGranuleResponse(
-    pick(params, ['prefix', 'granuleId', 'callback'])
+    pick(params, ['prefix', 'granuleId', 'callback', 'collectionId'])
   );
 
   if (response.status === 404) throw new GranuleNotFoundError(params.granuleId);
@@ -37,6 +37,7 @@ const getGranule = async (params) => {
  * @param {Object} params
  * @param {string} params.prefix    - the name of the Cumulus stack
  * @param {string} params.granuleId - the `granuleId` of the granule
+ * @param {string} params.collectionId - the `collectionId` of the granule
  * @param {string} params.status    - the status to wait for
  * @param {string} params.updatedAt - minimum updatedAt time the granule must have to return
  * @param {Function} [params.callback=cumulusApiClient.invokeApifunction] - an async function to
@@ -54,7 +55,7 @@ const getGranuleWithStatus = async (params = {}) =>
       const updatedAt = params.updatedAt || 0;
 
       try {
-        granule = await getGranule(pick(params, ['prefix', 'granuleId', 'callback']));
+        granule = await getGranule(pick(params, ['prefix', 'granuleId', 'callback', 'collectionId']));
       } catch (error) {
         throw new pRetry.AbortError(error);
       }

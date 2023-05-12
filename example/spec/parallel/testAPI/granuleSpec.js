@@ -111,9 +111,9 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteExecution({ prefix, executionArn: executionRecord.arn });
-    await deleteGranule({ prefix, granuleId: granule1.granuleId });
-    await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId });
-    await deleteGranule({ prefix, granuleId: putReplaceGranule.granuleId });
+    await deleteGranule({ prefix, granuleId: granule1.granuleId, collectionId: granule1.collectionId });
+    await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId, collectionId: invalidModifiedGranule.collectionId });
+    await deleteGranule({ prefix, granuleId: putReplaceGranule.granuleId, collectionId: putReplaceGranule.collectionId });
 
     await deleteCollection({
       prefix,
@@ -300,7 +300,7 @@ describe('The Granules API', () => {
         fail('beforeAll() failed');
       } else {
         const timestamp = Date.now();
-        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId });
+        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId, collectionId: modifiedGranule.collectionId });
         expect(response.statusCode).toBe(200);
 
         const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Delete.output`;
@@ -417,6 +417,7 @@ describe('The Granules API', () => {
       const searchResults = await getGranuleWithStatus({
         prefix,
         granuleId: replacementGranule.granuleId,
+        collectionId,
         status: 'failed',
       });
 

@@ -141,11 +141,13 @@ describe('The TestPythonProcessing workflow', () => {
     await waitForGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId: constructCollectionId(collection.name, collection.version),
       status: 'completed',
     });
     granuleResult = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId: constructCollectionId(collection.name, collection.version)
     });
     expect(granuleResult.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect(granuleResult.status).toEqual('completed');

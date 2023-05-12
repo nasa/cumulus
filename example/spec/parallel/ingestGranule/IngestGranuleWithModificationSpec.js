@@ -128,7 +128,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       });
 
       // Wait for the granule to be fully ingested
-      await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
+      await getGranuleWithStatus({ prefix, granuleId,collectionId, status: 'completed' });
 
       // Create a new collection
       newCollection = await createCollection(
@@ -200,6 +200,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       const reingestedGranule = await getGranule({
         prefix,
         granuleId,
+        collectionId
       });
       // Make sure that the collectionId is unmodified
       expect(reingestedGranule.collectionId).toBe(collectionId);
@@ -216,7 +217,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteGranule({ prefix, granuleId });
+    await deleteGranule({ prefix, granuleId, collectionId });
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }),
