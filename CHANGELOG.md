@@ -7143,7 +7143,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v16.0.0...HEAD
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.3...v16.0.0
+[v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.3...v16.0.0
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
 [v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
