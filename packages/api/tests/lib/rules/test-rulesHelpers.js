@@ -39,9 +39,6 @@ const {
 const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
 const listRulesStub = sinon.stub();
-const testOneTimeRuleParams = {
-  invokeMethod: sinon.stub(),
-};
 
 // TODO remove proxyquire/don't use rulesHelpers require
 const rulesHelpers = proxyquire('../../../lib/rulesHelpers', {
@@ -1361,6 +1358,10 @@ test('Creating a rule trigger for a onetime rule with a DISABLED state is DISABL
       retries: 4,
     },
   });
+
+  const testOneTimeRuleParams = {
+    invokeMethod: sinon.stub(),
+  };
 
   const onetimeRule = await createRuleTrigger(rule, testOneTimeRuleParams);
   t.false(testOneTimeRuleParams.invokeMethod.called);
