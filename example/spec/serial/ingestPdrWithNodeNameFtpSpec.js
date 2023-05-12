@@ -42,6 +42,7 @@ const {
 
 const { waitForApiStatus } = require('../helpers/apiUtils');
 const { deleteProvidersAndAllDependenciesByHost, waitForProviderRecordInOrNotInList } = require('../helpers/Providers');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const lambdaStep = new LambdaStep();
 const workflowName = 'DiscoverAndQueuePdrs';
@@ -356,13 +357,14 @@ describe('Ingesting from PDR', () => {
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
-                  collectionId: g.collectionId,
+                  collectionId: constructCollectionId(addedCollection.name, addedCollection.version),
                 },
                 'completed'
               );
               await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
+                collectionId: collectionId,
               });
             })
           );

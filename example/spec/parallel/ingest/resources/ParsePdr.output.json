@@ -26,7 +26,8 @@
       ],
       "version": "006",
       "granuleSize": 1119742,
-      "granuleId": "replace-me-granuleId"
+      "granuleId": "replace-me-granuleId",
+      "collectionId": "replace-me-collectionId"
     }
   ]
 }
