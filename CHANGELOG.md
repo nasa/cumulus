@@ -21,7 +21,7 @@ Notable migration concerns since the last PI release version (11.1.x):
 - [v13.1.0] - Postgres update to add `files_granules_cumulus_id_index` to the
   `files` table may require manual steps depending on load.
 
-#### RDS Phase 3
+#### RDS Phase 3 migration notes
 
 This release includes updates that remove existing DynamoDB tables as part of
 release deployment process.   This release *cannot* be properly rolled back in
@@ -138,7 +138,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Add new endpoint to fetch granules by collectionId as well as granuleId: GET /collectionId/granuleId
     - Add new endpoints to update and delete granules by collectionId as well as
       granuleId
-
 
 #### Removed
 
