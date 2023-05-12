@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 #### PI release version
 
 When updating directly to v16 from prior releases older that V15, please make sure to
-read through all prior release migrations.
+read through all prior release notes.
 
 Notable migration concerns since the last PI release version (11.1.x):
 
