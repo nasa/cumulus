@@ -26,7 +26,6 @@ const {
   validateOutput,
 } = require('@cumulus/common/test-utils');
 const {
-  disableOrDefaultAcl,
   syncGranule,
 } = require('..');
 
@@ -1060,28 +1059,4 @@ test.serial('download multiple granules from S3 provider to staging directory', 
     // Clean up
     recursivelyDeleteS3Bucket(t.context.event.config.provider.host);
   }
-});
-
-test('disableOrDefaultAcl defaults ACL to private when none is supplied in the config', async (t) => {
-  const ACL = undefined;
-
-  const result = await disableOrDefaultAcl(ACL);
-
-  t.deepEqual(result, 'private');
-});
-
-test('disableOrDefaultAcl returns undefined if config.ACL is set to disabled', async (t) => {
-  const ACL = 'disabled';
-
-  const result = await disableOrDefaultAcl(ACL);
-
-  t.deepEqual(result, undefined);
-});
-
-test('disableOrDefaultAcl defaults ACL to private if config.ACL is set and not set to disabled', async (t) => {
-  const ACL = 'authenticated-read';
-
-  const result = await disableOrDefaultAcl(ACL);
-
-  t.deepEqual(result, 'private');
 });
