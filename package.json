@@ -14,7 +14,7 @@
     "docs-build-schema": "./bin/build_db_schema.sh",
     "docs-clear": "(cd website && npm run clear)",
     "docs-serve": "npm run docs-build && (cd website && npm run start)",
-    "eslint": "eslint --ext .js --ext .ts .",
+    "eslint": "eslint --ext .js --ext .ts . --quiet",
     "remove-locks": "lerna exec 'rm -f package-lock.json'",
     "install-locks": "lerna exec --no-sort -- npm install --package-lock-only --no-audit --ignore-scripts",
     "install-python-deps": "lerna run install-python-deps --concurrency 1",

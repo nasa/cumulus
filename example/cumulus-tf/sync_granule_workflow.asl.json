@@ -7,7 +7,6 @@
         "cma": {
           "event.$": "$",
           "task_config": {
-            "ACL": "{$.meta.ACL}",
             "buckets": "{$.meta.buckets}",
             "provider": "{$.meta.provider}",
             "collection": "{$.meta.collection}",

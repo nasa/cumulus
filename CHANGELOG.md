@@ -175,6 +175,9 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed `granuleFilesCacheUpdater` lambda
   - Removed dynamo files table from `data-persistence` module.  *This table and
     all of its data will be removed on deployment*.
+- **CUMULUS-3290**
+  - Removed Dynamo references from local API serve.js script
+  - Updated .python-version to include patch version
 
 ### Added
 
@@ -217,7 +220,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
 
-  ### Removed
+- **CUMULUS-3203**
+  - Removed ACL setting of private on S3.multipartCopyObject() call
+  - Removed ACL setting of private for s3PutObject()
+  - Removed ACL confguration on sync-granules task
+
+### Removed
 
 - **CUMULUS-3204**
   - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
