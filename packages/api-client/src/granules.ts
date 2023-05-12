@@ -49,8 +49,7 @@ export const getGranuleResponse = async (params: {
     callback = invokeApi,
   } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
+  const path = `/granules/${collectionId}/${granuleId}`;
 
   return await callback({
     prefix,

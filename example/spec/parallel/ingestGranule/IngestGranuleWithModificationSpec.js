@@ -128,7 +128,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       });
 
       // Wait for the granule to be fully ingested
-      await getGranuleWithStatus({ prefix, granuleId,collectionId, status: 'completed' });
+      await getGranuleWithStatus({ prefix, granuleId, collectionId, status: 'completed' });
 
       // Create a new collection
       newCollection = await createCollection(
@@ -200,7 +200,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       const reingestedGranule = await getGranule({
         prefix,
         granuleId,
-        collectionId
+        collectionId,
       });
       // Make sure that the collectionId is unmodified
       expect(reingestedGranule.collectionId).toBe(collectionId);

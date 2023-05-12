@@ -3,6 +3,7 @@
 const fs = require('fs-extra');
 const hasha = require('hasha');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getObjectReadStream, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
@@ -147,7 +148,7 @@ describe('The TestPythonProcessing workflow', () => {
     granuleResult = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: constructCollectionId(collection.name, collection.version)
+      collectionId: constructCollectionId(collection.name, collection.version),
     });
     expect(granuleResult.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect(granuleResult.status).toEqual('completed');

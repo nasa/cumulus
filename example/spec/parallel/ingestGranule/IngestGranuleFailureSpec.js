@@ -14,6 +14,7 @@ const { getExecution } = require('@cumulus/api-client/executions');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -25,7 +26,6 @@ const {
   uploadTestDataToBucket,
 } = require('../../helpers/testUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const workflowName = 'IngestGranule';
 const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
@@ -224,7 +224,7 @@ describe('The Ingest Granule failure workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
-          collectionId: constructCollectionId(inputPayload.granules[0].name, inputPayload.granules[0].version)
+          collectionId: constructCollectionId(inputPayload.granules[0].name, inputPayload.granules[0].version),
         },
         'failed'
       );
@@ -232,7 +232,7 @@ describe('The Ingest Granule failure workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        collectionId: constructCollectionId(collection.name, collection.version)
+        collectionId: constructCollectionId(inputPayload.granules[0].name, inputPayload.granules[0].version),
       });
 
       expect(granule.status).toBe('failed');

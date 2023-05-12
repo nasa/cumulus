@@ -353,7 +353,7 @@ describe('The S3 Ingest Granules workflow', () => {
       {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        collectionId: constructCollectionId(collection.name, collection.version)
+        collectionId: constructCollectionId(collection.name, collection.version),
 
       },
       ['running', 'completed']
@@ -362,8 +362,7 @@ describe('The S3 Ingest Granules workflow', () => {
     const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: constructCollectionId(collection.name, collection.version)
-
+      collectionId: constructCollectionId(collection.name, collection.version),
 
     });
 
@@ -510,7 +509,7 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: lambdaOutput.meta.input_granules[0].granuleId,
-          collectionId: constructCollectionId(collection.name, collection.version)
+          collectionId: constructCollectionId(collection.name, collection.version),
 
         },
         ['completed']
@@ -519,7 +518,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId: lambdaOutput.meta.input_granules[0].granuleId,
-        collectionId: constructCollectionId(collection.name, collection.version)
+        collectionId: constructCollectionId(collection.name, collection.version),
 
       });
 
@@ -759,7 +758,7 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
-          collectionId: constructCollectionId(collection.name, collection.version)
+          collectionId: constructCollectionId(collection.name, collection.version),
 
         },
         'completed'
@@ -874,7 +873,7 @@ describe('The S3 Ingest Granules workflow', () => {
           granule = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
-            collectionId: constructCollectionId(collection.name, collection.version)
+            collectionId: constructCollectionId(collection.name, collection.version),
 
           });
           cmrLink = granule.cmrLink;
@@ -1017,7 +1016,7 @@ describe('The S3 Ingest Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: reingestGranuleId,
-              collectionId: constructCollectionId(collection.name, collection.version)
+              collectionId: constructCollectionId(collection.name, collection.version),
 
             },
             'completed'
@@ -1026,7 +1025,7 @@ describe('The S3 Ingest Granules workflow', () => {
           const updatedGranule = await getGranule({
             prefix: config.stackName,
             granuleId: reingestGranuleId,
-            collectionId: constructCollectionId(collection.name, collection.version)
+            collectionId: constructCollectionId(collection.name, collection.version),
 
           });
 
@@ -1148,7 +1147,7 @@ describe('The S3 Ingest Granules workflow', () => {
           {
             prefix: config.stackName,
             granuleId: granule.granuleId,
-            collectionId: constructCollectionId(collection.name, collection.version)
+            collectionId: constructCollectionId(collection.name, collection.version),
 
           },
           'completed'
@@ -1157,7 +1156,7 @@ describe('The S3 Ingest Granules workflow', () => {
         const updatedGranuleRecord = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
-          collectionId: constructCollectionId(collection.name, collection.version)
+          collectionId: constructCollectionId(collection.name, collection.version),
 
         });
         const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCMRFile);
@@ -1215,7 +1214,7 @@ describe('The S3 Ingest Granules workflow', () => {
           const granRecord = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
-            collectionId: constructCollectionId(collection.name, collection.version)
+            collectionId: constructCollectionId(collection.name, collection.version),
 
           });
 
@@ -1273,7 +1272,7 @@ describe('The S3 Ingest Granules workflow', () => {
           await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
-            collectionId: constructCollectionId(collection.name, collection.version)
+            collectionId: constructCollectionId(collection.name, collection.version),
 
           });
         } catch (error) {

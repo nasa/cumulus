@@ -158,7 +158,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     {
       prefix,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: constructCollectionId(newCollection.name, newCollection.version)
+      collectionId: constructCollectionId(newCollection.name, newCollection.version),
     },
     'completed'
   );
@@ -170,9 +170,10 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     status: 'completed',
   });
 
-  await getGranuleWithStatus({ prefix, granuleId, 
-                                collectionId: constructCollectionId(newCollection.name, newCollection.version), 
-                                status: 'completed' });
+  await getGranuleWithStatus({ prefix,
+    granuleId,
+    collectionId: constructCollectionId(newCollection.name, newCollection.version),
+    status: 'completed' });
   return newCollection;
 };
 
@@ -206,7 +207,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     {
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: constructCollectionId(collection.name, collection.version)
+      collectionId: constructCollectionId(collection.name, collection.version),
     },
     'completed'
   );
@@ -394,7 +395,7 @@ describe('When there are granule differences and granule reconciliation is run',
       granuleBeforeUpdate = await getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
-        collectionId
+        collectionId,
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);

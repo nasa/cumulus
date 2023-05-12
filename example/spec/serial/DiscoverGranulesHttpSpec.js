@@ -10,6 +10,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const { waitForApiStatus } = require('../helpers/apiUtils');
 const {
@@ -19,7 +20,6 @@ const {
 } = require('../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
 const { waitForGranuleAndDelete } = require('../helpers/granuleUtils');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const workflowName = 'DiscoverGranules';
 

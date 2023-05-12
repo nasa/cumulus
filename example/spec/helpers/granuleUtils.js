@@ -278,7 +278,7 @@ const waitForGranuleAndDelete = async (prefix, granuleId, collectionId, status, 
     {
       prefix,
       granuleId,
-      collectionId
+      collectionId,
     },
     status,
     retryConfig
@@ -287,7 +287,7 @@ const waitForGranuleAndDelete = async (prefix, granuleId, collectionId, status, 
   await deleteGranule({
     prefix,
     granuleId,
-    collectionId
+    collectionId,
   });
 };
 
