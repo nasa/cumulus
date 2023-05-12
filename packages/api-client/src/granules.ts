@@ -21,6 +21,7 @@ type AssociateExecutionRequest = {
  * @param {Object} params                                - params
  * @param {string} params.prefix                         - the prefix configured for the stack
  * @param {string} params.granuleId                      - a granule ID
+ * @param {string} params.collectionId                   - a collection ID
  * @param {Object} [params.query]                        - query to pass the API lambda
  * @param {number[] | number} params.expectedStatusCodes - the statusCodes which the granule API is
  *                                                         is expecting for the invokeApi Response,
@@ -34,7 +35,7 @@ type AssociateExecutionRequest = {
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionId?: CollectionId,
+  collectionId: CollectionId,
   expectedStatusCodes?: number[] | number,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
@@ -49,11 +50,7 @@ export const getGranuleResponse = async (params: {
   } = params;
 
   let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  
 
   return await callback({
     prefix,

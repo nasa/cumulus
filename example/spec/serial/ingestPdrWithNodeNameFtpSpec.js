@@ -13,6 +13,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { getPdr } = require('@cumulus/api-client/pdrs');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   addCollections,
@@ -351,17 +352,20 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
+              const id = constructCollectionId(finalOutput.meta.collection.name, finalOutput.meta.collection.version);
               await waitForApiStatus(
                 getGranule,
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
+                  collectionId: id
                 },
                 'completed'
               );
               await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
+                collectionId: id
               });
             })
           );
