@@ -225,7 +225,7 @@ describe('The Ingest Granule failure workflow', () => {
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });
 
-    it('fails the granule with an error object', async () => {
+    it('fails the granule with a list of errors', async () => {
       await waitForApiStatus(
         getGranule,
         {

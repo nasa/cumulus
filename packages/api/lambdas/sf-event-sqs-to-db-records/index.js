@@ -89,7 +89,7 @@ const writeRecords = async ({
     parentExecutionCumulusId,
   };
   if (!shouldWriteExecutionToPostgres(fieldsToMeetRequirements)) {
-    log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify('fieldsToMeetRequirements')}`);
+    log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
 
