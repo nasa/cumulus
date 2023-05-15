@@ -109,7 +109,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
     await deleteGranule({ prefix: testConfig.stackName,
       granuleId,
-      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+      collectionId: constructCollectionId(record.collection.name, record.collection.version) });
 
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
