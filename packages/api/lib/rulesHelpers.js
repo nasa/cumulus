@@ -585,8 +585,13 @@ function recordIsValid(rule) {
  * @returns {Promise} lambda invocation response
  */
 async function invokeRerun(rule) {
-  const payload = await buildPayload(rule);
-  await invoke(process.env.invoke, payload);
+  if (rule.state !== 'DISABLED') {
+    const payload = await buildPayload(rule);
+    await invoke(process.env.invoke, payload);
+  } else {
+    log.error(`Cannot re-run rule ${rule.name} with a ${rule.state} state, please enable the rule and re-run.`);
+    throw new Error(`Cannot re-run rule ${rule.name} with a ${rule.state} state, please enable the rule and re-run.`);
+  }
 }
 
 /**
@@ -652,17 +657,18 @@ async function updateRuleTrigger(original, updates) {
  * Creates rule trigger for rule
  *
  * @param {RuleRecord} ruleItem - Rule to create trigger for
- *
+ * @param {Object} testParams - Function to determine to use actual invoke or testInvoke
  * @returns {Promise<RuleRecord>} - Returns new rule object
  */
-async function createRuleTrigger(ruleItem) {
+async function createRuleTrigger(ruleItem, testParams = {}) {
   let newRuleItem = cloneDeep(ruleItem);
   // the default value for enabled is true
   if (newRuleItem.state === undefined) {
     newRuleItem.state = 'ENABLED';
   }
-  const enabled = newRuleItem.state === 'ENABLED';
 
+  const enabled = newRuleItem.state === 'ENABLED';
+  const invokeMethod = testParams.invokeMethod || invoke;
   // make sure the name only has word characters
   const re = /\W/;
   if (re.test(ruleItem.name)) {
@@ -675,7 +681,9 @@ async function createRuleTrigger(ruleItem) {
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {
   case 'onetime': {
-    await invoke(process.env.invoke, payload);
+    if (enabled) {
+      await invokeMethod(process.env.invoke, payload);
+    }
     break;
   }
   case 'scheduled': {
