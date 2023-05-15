@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+  - **CUMULUS-2985**
+    - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
+    - Changed the `invokeRerun` function to only re-run enabled rules
+
 ### Notable Changes
 
 - The async_operation_image property of cumulus module should be updated to pull
@@ -175,6 +180,9 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed `granuleFilesCacheUpdater` lambda
   - Removed dynamo files table from `data-persistence` module.  *This table and
     all of its data will be removed on deployment*.
+- **CUMULUS-3290**
+  - Removed Dynamo references from local API serve.js script
+  - Updated .python-version to include patch version
 
 ### Added
 

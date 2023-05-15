@@ -3,32 +3,62 @@
 const pEachSeries = require('p-each-series');
 const indexer = require('@cumulus/es-client/indexer');
 const {
-  RulePgModel,
-  PdrPgModel,
-  ExecutionPgModel,
+  AsyncOperationPgModel,
   CollectionPgModel,
+  createTestDatabase,
+  envParams,
+  ExecutionPgModel,
+  FilePgModel,
+  getKnexClient,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
+  localStackConnectionEnv,
+  migrationDir,
+  PdrPgModel,
   ProviderPgModel,
+  RulePgModel,
   translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
   translateApiExecutionToPostgresExecution,
   translateApiGranuleToPostgresGranule,
   translateApiPdrToPostgresPdr,
+  translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
+  translatePostgresExecutionToApiExecution,
   upsertGranuleWithExecutionJoinRecord,
-  getKnexClient,
-  localStackConnectionEnv,
-  envParams,
-  createTestDatabase,
-  migrationDir,
 } = require('@cumulus/db');
 const { log } = require('console');
 const models = require('../models');
 const { createRuleTrigger } = require('../lib/rulesHelpers');
 const { fakeGranuleFactoryV2 } = require('../lib/testUtils');
 const { getESClientAndIndex } = require('./local-test-defaults');
-const {
-  erasePostgresTables,
-} = require('./serve');
+
+/**
+* Remove all records from api-related postgres tables
+* @param {Object} knex - knex/knex transaction object
+* @returns {[Promise]} - Array of promises with deletion results
+*/
+async function erasePostgresTables(knex) {
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const filePgModel = new FilePgModel();
+  const granulePgModel = new GranulePgModel();
+  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  const pdrPgModel = new PdrPgModel();
+  const providerPgModel = new ProviderPgModel();
+  const rulePgModel = new RulePgModel();
+
+  await granulesExecutionsPgModel.delete(knex, {});
+  await granulePgModel.delete(knex, {});
+  await pdrPgModel.delete(knex, {});
+  await executionPgModel.delete(knex, {});
+  await asyncOperationPgModel.delete(knex, {});
+  await filePgModel.delete(knex, {});
+  await granulePgModel.delete(knex, {});
+  await rulePgModel.delete(knex, {});
+  await collectionPgModel.delete(knex, {});
+  await providerPgModel.delete(knex, {});
+}
 
 async function resetPostgresDb() {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
@@ -89,7 +119,7 @@ async function addGranules(granules) {
       );
       await indexer.indexGranule(es.client, newGranule, es.index);
       const dbRecord = await translateApiGranuleToPostgresGranule({
-        newGranule,
+        dynamoRecord: newGranule,
         knexOrTransaction: knex,
       });
       const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
@@ -98,7 +128,7 @@ async function addGranules(granules) {
 
       await upsertGranuleWithExecutionJoinRecord({
         knexTransaction: knex,
-        dbRecord,
+        granule: dbRecord,
         executionCumulusId,
       });
     })
@@ -152,7 +182,6 @@ async function addExecutions(executions) {
     },
   });
 
-  const executionModel = new models.Execution();
   const es = await getESClientAndIndex();
 
   executions.sort((firstEl, secondEl) => {
@@ -169,10 +198,13 @@ async function addExecutions(executions) {
 
   const executionPgModel = new ExecutionPgModel();
   const executionsIterator = async (execution) => {
-    const dynamoRecord = await executionModel.create(execution);
-    await indexer.indexExecution(es.client, dynamoRecord, es.index);
-    const dbRecord = await translateApiExecutionToPostgresExecution(dynamoRecord, knex);
-    await executionPgModel.create(knex, dbRecord);
+    const dbRecord = await translateApiExecutionToPostgresExecution(execution, knex);
+    const [writtenPostgresDbRecord] = await executionPgModel.create(knex, dbRecord);
+    const apiExecutionRecord = await translatePostgresExecutionToApiExecution(
+      writtenPostgresDbRecord,
+      knex
+    );
+    await indexer.indexExecution(es.client, apiExecutionRecord, es.index);
   };
 
   await pEachSeries(executions, executionsIterator);
@@ -218,4 +250,5 @@ module.exports = {
   addPdrs,
   addReconciliationReports,
   addRules,
+  erasePostgresTables,
 };
