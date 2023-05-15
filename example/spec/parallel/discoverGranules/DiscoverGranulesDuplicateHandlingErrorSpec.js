@@ -22,8 +22,8 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
-const { loadConfig } = require('../../helpers/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with an existing granule and duplicateHandling="error"', () => {
   let beforeAllFailed = false;
@@ -181,8 +181,8 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteGranule({ prefix, 
-      granuleId: existingGranuleId, 
+    await deleteGranule({ prefix,
+      granuleId: existingGranuleId,
       collectionId: constructCollectionId(collection.name, collection.version) });
     await Promise.all([
       deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn }),

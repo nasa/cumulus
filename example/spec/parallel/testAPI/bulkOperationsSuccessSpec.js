@@ -161,7 +161,8 @@ describe('POST /granules/bulk', () => {
         });
 
         // Wait for the granule to be fully ingested
-        ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, 
+        ingestedGranule = await getGranuleWithStatus({ prefix,
+          granuleId,
           collectionId: constructCollectionId(collection.name, collection.version),
           status: 'completed' });
 

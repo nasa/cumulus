@@ -156,9 +156,10 @@ describe('POST /granules/bulkDelete', () => {
         });
 
         // Wait for the granule to be fully ingested
-        ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, 
-                    collectionId: constructCollectionId(collection.name, collection.version), 
-                    status: 'completed' });
+        ingestedGranule = await getGranuleWithStatus({ prefix,
+          granuleId,
+          collectionId: constructCollectionId(collection.name, collection.version),
+          status: 'completed' });
         timestampBeforeCall = Date.now();
         postBulkDeleteResponse = await granules.bulkDeleteGranules(
           {

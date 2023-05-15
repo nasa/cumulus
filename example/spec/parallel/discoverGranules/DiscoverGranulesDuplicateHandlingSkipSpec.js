@@ -220,7 +220,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
     else {
       const granule = await waitForApiStatus(
         getGranule,
-        { prefix, granuleId: newGranuleId, collectionId },
+        { prefix, granuleId: newGranuleId, collectionId: constructCollectionId(collection.name, collection.version) },
         'completed'
       );
       expect(granule).toBeDefined();
@@ -232,7 +232,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
     else {
       const granule = await waitForApiStatus(
         getGranule,
-        { prefix, granuleId: queuedGranuleId, collectionId },
+        { prefix, granuleId: queuedGranuleId, collectionId: constructCollectionId(collection.name, collection.version) },
         'queued'
       );
       expect(granule).toBeDefined();
@@ -256,9 +256,9 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
 
     await pAll(
       [
-        () => deleteGranule({ prefix, granuleId: existingGranuleId, collectionId }),
-        () => deleteGranule({ prefix, granuleId: newGranuleId, collectionId }),
-        () => deleteGranule({ prefix, granuleId: queuedGranuleId, collectionId }),
+        () => deleteGranule({ prefix, granuleId: existingGranuleId, collectionId: constructCollectionId(collection.name, collection.version) }),
+        () => deleteGranule({ prefix, granuleId: newGranuleId, collectionId: constructCollectionId(collection.name, collection.version) }),
+        () => deleteGranule({ prefix, granuleId: queuedGranuleId, collectionId: constructCollectionId(collection.name, collection.version) }),
       ],
       { stopOnError: false }
     ).catch(console.error);
