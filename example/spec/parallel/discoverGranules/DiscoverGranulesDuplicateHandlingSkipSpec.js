@@ -141,7 +141,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
       await getExecutionWithStatus({ prefix, arn: ingestGranuleExecutionArn, status: 'completed' });
 
       // Wait for the existing granule to be fully ingested
-      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed' });
+      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed', collectionId });
 
       // Stage the new granule file to S3
       newGranuleId = randomId('new-granule-');
@@ -220,7 +220,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
     else {
       const granule = await waitForApiStatus(
         getGranule,
-        { prefix, granuleId: newGranuleId },
+        { prefix, granuleId: newGranuleId, collectionId },
         'completed'
       );
       expect(granule).toBeDefined();
@@ -232,7 +232,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
     else {
       const granule = await waitForApiStatus(
         getGranule,
-        { prefix, granuleId: queuedGranuleId },
+        { prefix, granuleId: queuedGranuleId, collectionId },
         'queued'
       );
       expect(granule).toBeDefined();
@@ -256,9 +256,9 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
 
     await pAll(
       [
-        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
-        () => deleteGranule({ prefix, granuleId: newGranuleId }),
-        () => deleteGranule({ prefix, granuleId: queuedGranuleId }),
+        () => deleteGranule({ prefix, granuleId: existingGranuleId, collectionId }),
+        () => deleteGranule({ prefix, granuleId: newGranuleId, collectionId }),
+        () => deleteGranule({ prefix, granuleId: queuedGranuleId, collectionId }),
       ],
       { stopOnError: false }
     ).catch(console.error);

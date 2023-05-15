@@ -161,7 +161,9 @@ describe('POST /granules/bulk', () => {
         });
 
         // Wait for the granule to be fully ingested
-        ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
+        ingestedGranule = await getGranuleWithStatus({ prefix, granuleId, 
+          collectionId: constructCollectionId(collection.name, collection.version),
+          status: 'completed' });
 
         scheduleQueueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
         bulkRequestTime = Date.now() - 1000 * 30;
@@ -287,6 +289,7 @@ describe('POST /granules/bulk', () => {
         await getGranuleWithStatus({
           prefix,
           granuleId: JSON.parse(asyncOperation.output)[0],
+          collectionId: constructCollectionId(collection.name, collection.version),
           status: 'running',
           timeout: 120,
           updatedAt: ingestedGranule.updatedAt,

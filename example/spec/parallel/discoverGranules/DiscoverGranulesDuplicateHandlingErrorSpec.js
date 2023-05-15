@@ -23,6 +23,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
 const { loadConfig } = require('../../helpers/testUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 describe('The DiscoverGranules workflow with an existing granule and duplicateHandling="error"', () => {
   let beforeAllFailed = false;
@@ -115,7 +116,7 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       });
 
       // Wait for the existing granule to be fully ingested
-      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed' });
+      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed', collectionId: constructCollectionId(collection.name, collection.version) });
 
       // Run DiscoverGranules
       discoverGranulesRule = await createOneTimeRule(
@@ -180,7 +181,9 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteGranule({ prefix, granuleId: existingGranuleId });
+    await deleteGranule({ prefix, 
+      granuleId: existingGranuleId, 
+      collectionId: constructCollectionId(collection.name, collection.version) });
     await Promise.all([
       deleteExecution({ prefix, executionArn: discoverGranulesExecutionArn }),
       deleteExecution({ prefix, executionArn: ingestGranuleExecutionArn }),
