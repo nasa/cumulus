@@ -172,7 +172,7 @@ describe('The Queue Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: granule.granuleId,
-              collection: constructCollectionId(collection.name, collection.version),
+              collectionid: constructCollectionId(collection.name, collection.version),
             },
             'queued'
           );
