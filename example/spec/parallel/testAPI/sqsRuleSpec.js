@@ -107,7 +107,9 @@ async function cleanUp() {
   ));
 
   await Promise.all(inputPayload.granules.map(
-    (granule) => deleteGranule({ prefix: config.stackName, granuleId: granule.granuleId })
+    (granule) => deleteGranule({ prefix: config.stackName,
+      granuleId: granule.granuleId,
+      collectionId: constructCollectionId(collection.name, collection.version) })
   ));
 
   await apiTestUtils.deletePdr({
@@ -248,11 +250,13 @@ describe('The SQS rule', () => {
       beforeAll(async () => {
         if (beforeAllFailed) return;
         try {
+          const collection = collectionResult[0];
           record = await waitForApiStatus(
             getGranule,
             {
               prefix: config.stackName,
               granuleId,
+              collectionId: constructCollectionId(collection.name, collection.version),
             },
             'completed'
           );

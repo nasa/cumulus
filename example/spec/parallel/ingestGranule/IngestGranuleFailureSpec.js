@@ -101,6 +101,7 @@ describe('The Ingest Granule failure workflow', () => {
       await deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
         pRetryOptions: {
           retries: 0,
         },

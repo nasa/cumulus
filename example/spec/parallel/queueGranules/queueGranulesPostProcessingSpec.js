@@ -15,6 +15,7 @@ const { getGranule } = require('@cumulus/api-client/granules');
 
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   loadConfig,
@@ -128,6 +129,7 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           'completed'
         );
       })
@@ -200,7 +202,7 @@ describe('The Queue Granules workflow triggered with a database-schema-compliant
       inputPayload.granules.map(async (granule) => {
         const record = await waitForApiStatus(
           getGranule,
-          { prefix: config.stackName, granuleId: granule.granuleId },
+          { prefix: config.stackName, granuleId: granule.granuleId, collectionId: constructCollectionId(collection.name, collection.version) },
           'completed'
         );
 
