@@ -27,6 +27,7 @@ const {
   deleteFolder,
   loadConfig,
 } = require('../../helpers/testUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 describe('The DiscoverGranules workflow', () => {
   let beforeAllError;
@@ -211,7 +212,7 @@ describe('The DiscoverGranules workflow', () => {
     else {
       const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
         getGranule,
-        { prefix: stackName, granuleId },
+        { prefix: stackName, granuleId, collectionId: constructCollectionId(collection.name, collection.version)},
         'completed'
       )));
       granules.forEach((g) => {

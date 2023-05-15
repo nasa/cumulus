@@ -29,6 +29,7 @@ const {
   setupTestGranuleForIngest,
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const workflowName = 'QueueGranules';
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
@@ -130,6 +131,7 @@ describe('The Queue Granules workflow', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           'queued'
         );
       })
@@ -170,6 +172,7 @@ describe('The Queue Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: granule.granuleId,
+              collection: constructCollectionId(collection.name, collection.version)
             },
             'queued'
           );

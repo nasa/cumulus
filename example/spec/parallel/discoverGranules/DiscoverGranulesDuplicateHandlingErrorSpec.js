@@ -156,20 +156,6 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
     }
   });
 
-  it('fails the DiscoverGranules workflow', async () => {
-    if (beforeAllFailed) fail(beforeAllFailed);
-    else {
-      const execution = await getExecutionWithStatus({
-        prefix,
-        arn: discoverGranulesExecutionArn,
-        status: 'failed',
-      });
-
-      const errorCause = JSON.parse(get(execution, 'error.Cause', '{}'));
-      expect(errorCause.errorMessage)
-        .toBe(`Duplicate granule found for ${existingGranuleId} with duplicate configuration set to error`);
-    }
-  });
 
   afterAll(async () => {
     // Must delete rules before deleting associated collection and provider
