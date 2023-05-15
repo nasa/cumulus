@@ -234,7 +234,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
             {
               prefix: config.stackName,
               granuleId,
-              collectionId: constructCollectionId(record.collection, record.version),
+              collectionId: constructCollectionId(record.collection, record.product.dataVersion),
             },
             'completed'
           );
