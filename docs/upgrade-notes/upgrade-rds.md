@@ -122,6 +122,16 @@ Please read this entire section thoroughly before proceeding to run the second d
 
 :::
 
+:::note
+
+The data migration Lambda described here uses Cumulus' Granule `upsert` logic to write granules from DynamoDB to PostgreSQL. This is particularly notable because granules with a `running` or `queued` status will only migrate a subset of their fields. See the Granule `upsert` logic [here](https://github.com/nasa/cumulus/blob/release-15.0.x/packages/db/src/models/granule.ts#L128).
+
+It is recommended that users ensure their granules are in the correct state before running this data migration. If there are Granules with an incorrect status, it will impact the data migration.
+
+For example, if a Granule in the `running` status is updated by a workflow or API call (containing an updated status) and _fails_, that granule will have the original `running` status, not the intended/updated status. Failed Granule writes/updates should be evaluated and resolved prior to this data migration.
+
+:::
+
 This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
 This Lambda starts an asynchronous operation which runs as an ECS task to run the migration.
 
