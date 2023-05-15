@@ -21,8 +21,8 @@ const { deleteRule } = require('@cumulus/api-client/rules');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
-const { loadConfig } = require('../../helpers/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandling = "error" and a granule re-ingested', () => {
   let beforeAllFailed = false;
@@ -125,7 +125,8 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       });
 
       // Wait for the granule to be fully ingested
-      await getGranuleWithStatus({ prefix, granuleId,
+      await getGranuleWithStatus({ prefix,
+        granuleId,
         collectionId: constructCollectionId(collection.name, collection.version),
         status: 'completed' });
 
@@ -218,8 +219,9 @@ describe('The IngestGranuleCatchDuplicateErrorTest workflow with DuplicateHandli
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteGranule({ prefix, granuleId,
-    collectionId: constructCollectionId(collection.name, collection.version)});
+    await deleteGranule({ prefix,
+      granuleId,
+      collectionId: constructCollectionId(collection.name, collection.version) });
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn1 }),
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),

@@ -30,6 +30,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForTestSfForRecord } = require('../../helpers/kinesisHelpers');
 
@@ -233,6 +234,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
             {
               prefix: config.stackName,
               granuleId,
+              collectionId: constructCollectionId(collection.name, collection.version),
             },
             'completed'
           );

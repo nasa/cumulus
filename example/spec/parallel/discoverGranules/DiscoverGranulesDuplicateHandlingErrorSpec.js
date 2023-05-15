@@ -26,7 +26,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The DiscoverGranules workflow with an existing granule and duplicateHandling="error"', () => {
-  let beforeAllFailed = false;
   let collection;
   let discoverGranulesExecutionArn;
   let discoverGranulesRule;
@@ -155,7 +154,6 @@ describe('The DiscoverGranules workflow with an existing granule and duplicateHa
       beforeAllFailed = error;
     }
   });
-
 
   afterAll(async () => {
     // Must delete rules before deleting associated collection and provider

@@ -12,6 +12,7 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getGranule } = require('@cumulus/api-client/granules');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
@@ -29,7 +30,6 @@ const {
   setupTestGranuleForIngest,
   waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const workflowName = 'QueueGranules';
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MOD09GQ_006';
@@ -172,7 +172,7 @@ describe('The Queue Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: granule.granuleId,
-              collection: constructCollectionId(collection.name, collection.version)
+              collection: constructCollectionId(collection.name, collection.version),
             },
             'queued'
           );
