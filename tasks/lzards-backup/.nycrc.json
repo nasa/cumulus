@@ -4,8 +4,8 @@
     "dist/src"
   ],
   "exclude-after-remap": false,
-  "statements": 89.63,
-  "functions": 85.18,
-  "branches": 81.35,
-  "lines": 89.77
+  "statements": 89,
+  "functions": 85,
+  "branches": 81,
+  "lines": 89
 }

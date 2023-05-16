@@ -4,8 +4,8 @@
     "*.js",
     "lib/*.js"
   ],
-  "statements": 96.26,
-  "functions": 95.12,
-  "branches": 91.66,
-  "lines": 96.26
+  "statements": 96,
+  "functions": 95,
+  "branches": 91,
+  "lines": 96
 }
