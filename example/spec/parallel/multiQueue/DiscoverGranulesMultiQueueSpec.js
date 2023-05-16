@@ -140,6 +140,7 @@ describe('The DiscoverGranules workflow', () => {
         await waitForGranuleAndDelete(
           stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           'completed'
         );
       }
