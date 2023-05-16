@@ -269,7 +269,7 @@ test.beforeEach(async (t) => {
     });
 });
 
-test.afterEach(async (t) => {
+test.afterEach.always(async (t) => {
   await sqs().deleteQueue({ QueueUrl: t.context.queues.queueUrl }).promise();
   await sqs().deleteQueue({ QueueUrl: t.context.queues.deadLetterQueueUrl }).promise();
 });
@@ -406,21 +406,21 @@ test.serial('Lambda returns partial batch response to reprocess messages when ge
   t.is(handlerResponse.batchItemFailures[0].itemIdentifier, sqsEvent.Records[0].messageId);
 });
 
-test.serial('Lambda hanldes multiple messages', async (t) => {
+test.serial('Lambda processes multiple messages', async (t) => {
   const {
     handlerResponse,
   } = await runHandler({
     ...t.context,
-    cumulusMessages: [{ fail: true }, null, t.context.cumulusMessage],
+    cumulusMessages: [{ fail: true }, null, t.context.cumulusMessage, null, { fail: true }],
   });
 
   const {
     numberOfMessagesAvailable,
     numberOfMessagesNotVisible,
   } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
-  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesAvailable, 2);
   t.is(numberOfMessagesNotVisible, 0);
-  t.is(handlerResponse.batchItemFailures.length, 1);
+  t.is(handlerResponse.batchItemFailures.length, 2);
 });
 
 test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {

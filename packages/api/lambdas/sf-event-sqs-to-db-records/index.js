@@ -138,7 +138,7 @@ const handler = async (event) => {
     try {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
     } catch (error) {
-      log.error(`Writing message failed: ${JSON.stringify(message)} on getting message from execution event`, error);
+      log.error(`Writing message failed on getting message from execution event: ${JSON.stringify(message)}`, error);
       return batchItemFailures.push({ itemIdentifier: message.messageId });
     }
     try {
