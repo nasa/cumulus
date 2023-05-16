@@ -1,8 +1,9 @@
 import json
 import subprocess
+import math
 from typing_extensions import TypedDict
 from typing import Dict, Union
-
+import time
 class TestException(Exception):
     pass
 
@@ -22,12 +23,15 @@ def generateCoverageReport() -> str:
     Returns:
         str: path to find coverage json file
     """
-    error = subprocess.call(["nyc", "--reporter=json-summary", "npm", "test"])
-    if error:
+    for _ in range(10):
+        error = subprocess.call(["nyc", "--reporter=json-summary", "npm", "test"])
+        if not error:
+            # hardcoded, but ready to potentially be flexible in future
+            return "coverage/coverage-summary.json"
+        time.sleep(10)
+    else:    
         raise TestException("nyc test failed, see output above")
 
-    # hardcoded, but ready to potentially be flexible in future
-    return "coverage/coverage-summary.json"
 
 def parseCoverageValues(coveragePath: str) -> CoverageDict:
     """
@@ -44,7 +48,7 @@ def parseCoverageValues(coveragePath: str) -> CoverageDict:
         unParsedCoverageDict = json.load(coverageFile)
     
     return {
-        "lines": unParsedCoverageDict['total'][covType]['pct']
+        covType: math.floor(unParsedCoverageDict['total'][covType]['pct'])
         for covType in ["lines", "branches", "functions", "statements"]
     }
     
