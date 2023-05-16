@@ -71,30 +71,32 @@ const loadFixture = (filename) =>
     )
   );
 
-let fixture;
-
 const runHandler = async ({
-  cumulusMessage = {},
+  fixture,
+  cumulusMessages = [{}],
   stateMachineArn,
   executionArn,
   executionName,
   testDbName,
   ...additionalParams
 }) => {
-  fixture.resources = [executionArn];
-  fixture.detail.executionArn = executionArn;
-  fixture.detail.stateMachineArn = stateMachineArn;
-  fixture.detail.name = executionName;
-
-  fixture.detail.input = JSON.stringify(cumulusMessage);
+  const eventRecords = cumulusMessages.map((cumulusMessage) => {
+    const eventFixture = { ...fixture };
+    eventFixture.resources = [executionArn];
+    eventFixture.detail.executionArn = executionArn;
+    eventFixture.detail.stateMachineArn = stateMachineArn;
+    eventFixture.detail.name = executionName;
+    eventFixture.detail.input = JSON.stringify(cumulusMessage);
+    return {
+      messageId: cryptoRandomString({ length: 10 }),
+      eventSource: 'aws:sqs',
+      body: JSON.stringify(eventFixture),
+    };
+  });
 
   const sqsEvent = {
     ...additionalParams,
-    Records: [{
-      messageId: cryptoRandomString({ length: 10 }),
-      eventSource: 'aws:sqs',
-      body: JSON.stringify(fixture),
-    }],
+    Records: eventRecords,
     env: {
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
@@ -162,7 +164,7 @@ test.before(async (t) => {
   t.context.pdrPgModel = new PdrPgModel();
   t.context.providerPgModel = new ProviderPgModel();
 
-  fixture = await loadFixture('execution-running-event.json');
+  t.context.fixture = await loadFixture('execution-running-event.json');
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
@@ -211,10 +213,10 @@ test.beforeEach(async (t) => {
   process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
 
   const stateMachineName = cryptoRandomString({ length: 5 });
-  t.context.stateMachineArn = `arn:aws:states:${fixture.region}:${fixture.account}:stateMachine:${stateMachineName}`;
+  t.context.stateMachineArn = `arn:aws:states:${t.context.fixture.region}:${t.context.fixture.account}:stateMachine:${stateMachineName}`;
 
   t.context.executionName = cryptoRandomString({ length: 5 });
-  t.context.executionArn = `arn:aws:states:${fixture.region}:${fixture.account}:execution:${stateMachineName}:${t.context.executionName}`;
+  t.context.executionArn = `arn:aws:states:${t.context.fixture.region}:${t.context.fixture.account}:execution:${stateMachineName}:${t.context.executionName}`;
 
   t.context.provider = {
     id: `provider${cryptoRandomString({ length: 5 })}`,
@@ -368,9 +370,10 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
 test.serial('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
   const {
     handlerResponse,
+    sqsEvent,
   } = await runHandler({
     ...t.context,
-    cumulusMessage: { fail: true },
+    cumulusMessages: [{ fail: true }],
   });
 
   t.is(handlerResponse.batchItemFailures.length, 0);
@@ -380,18 +383,44 @@ test.serial('Lambda sends message to DLQ when writeRecords() throws an error', a
   } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
   t.is(numberOfMessagesAvailable, 1);
   t.is(numberOfMessagesNotVisible, 0);
+  const { Messages } = await sqs()
+    .receiveMessage({
+      QueueUrl: t.context.queues.deadLetterQueueUrl,
+      WaitTimeSeconds: 10,
+    })
+    .promise();
+  const dlqMessage = JSON.parse(Messages[0].Body);
+  t.deepEqual(dlqMessage, sqsEvent.Records[0]);
 });
 
 test.serial('Lambda returns partial batch response to reprocess messages when getCumulusMessageFromExecutionEvent() throws an error', async (t) => {
   const {
     handlerResponse,
+    sqsEvent,
   } = await runHandler({
     ...t.context,
-    cumulusMessage: null,
+    cumulusMessages: [null],
   });
 
   t.is(handlerResponse.batchItemFailures.length, 1);
-  t.truthy(handlerResponse.batchItemFailures[0].itemIdentifier);
+  t.is(handlerResponse.batchItemFailures[0].itemIdentifier, sqsEvent.Records[0].messageId);
+});
+
+test.serial('Lambda hanldes multiple messages', async (t) => {
+  const {
+    handlerResponse,
+  } = await runHandler({
+    ...t.context,
+    cumulusMessages: [{ fail: true }, null, t.context.cumulusMessage],
+  });
+
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
+  t.is(handlerResponse.batchItemFailures.length, 1);
 });
 
 test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {
