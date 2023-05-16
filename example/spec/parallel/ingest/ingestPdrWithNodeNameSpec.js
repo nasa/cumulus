@@ -43,6 +43,7 @@ const {
 
 const { getExecution } = require('@cumulus/api-client/executions');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -406,12 +407,14 @@ describe('Ingesting from PDR', () => {
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
+                  collectionId: constructCollectionId(g.dataType, g.version),
                 },
                 'completed'
               );
               await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
+                collectionId: constructCollectionId(g.dataType, g.version),
               });
             })
           );
