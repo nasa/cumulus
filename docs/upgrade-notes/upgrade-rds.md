@@ -132,7 +132,7 @@ The data-migration2 Lambda (which is invoked asynchronously using `${PREFIX}-pos
 
 It is recommended that users ensure their granules are in the correct state before running this data migration. If there are Granules with an incorrect status, it will impact the data migration.
 
-For example, if a Granule in the `running` status is updated by a workflow or API call (containing an updated status) and _fails_, that granule will have the original `running` status, not the intended/updated status. Failed Granule writes/updates should be evaluated and resolved prior to this data migration.
+For example, if a Granule in the `running` status is updated by a workflow or API call (containing an updated status) and _fails_, that granule will have the original `running` status, not the intended/updated status. Failed Granule writes/updates should be evaluated and resolved prior to this data migration. These failures can be found in the [Cumulus Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/) which is populated by the Dead Letter Queue for the `sfEventSqsToDbRecords` Lambda, which is responsible for Cumulus message writes to PostgreSQL.
 
 :::
 
