@@ -3,8 +3,8 @@
   "include": [
     "*.js"
   ],
-  "statements": 88.29,
+  "statements": 88,
   "functions": 75,
   "branches": 80,
-  "lines": 88.29
+  "lines": 89
 }

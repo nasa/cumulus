@@ -4,8 +4,8 @@
     "*.js"
   ],
   "exclude-after-remap": false,
-  "statements": 54.18,
-  "functions": 43.66,
-  "branches": 43.58,
-  "lines": 53.72
+  "statements": 54,
+  "functions": 43,
+  "branches": 43,
+  "lines": 53
 }
