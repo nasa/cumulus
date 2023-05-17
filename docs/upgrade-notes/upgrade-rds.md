@@ -134,6 +134,8 @@ It is recommended that users ensure their granules are in the correct state befo
 
 For example, if a Granule in the `running` status is updated by a workflow or API call (containing an updated status) and _fails_, that granule will have the original `running` status, not the intended/updated status. Failed Granule writes/updates should be evaluated and resolved prior to this data migration. These failures can be found in the [Cumulus Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/) which is populated by the Dead Letter Queue for the `sfEventSqsToDbRecords` Lambda, which is responsible for Cumulus message writes to PostgreSQL.
 
+If a Granule record is correct except for the `status`, Cumulus provides [an API to update specific granule fields](https://nasa.github.io/cumulus-api/v14.1.0/#update-or-replace-granule).
+
 :::
 
 This second data migration process can be run by invoking the provided `${PREFIX}-postgres-migration-async-operation` Lambda included in the Cumulus module deployment.
