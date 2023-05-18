@@ -403,19 +403,20 @@ export const moveGranule = async (params: {
 /**
  * Removed a granule from CMR and delete from Cumulus via the API
  *
- * @param {Object} params             - params
- * @param {string} params.prefix      - the prefix configured for the stack
- * @param {string} params.granuleId   - a granule ID
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
- * @returns {Promise<Object>}         - the delete confirmation from the API
+ * @param {Object} params               - params
+ * @param {string} params.prefix        - the prefix configured for the stack
+ * @param {string} params.granuleId     - a granule ID
+ * @param {string} params.collectionId  - a collection ID
+ * @param {Function} params.callback    - async function to invoke the api lambda
+ *                                        that takes a prefix / user payload.  Defaults
+ *                                        to cumulusApiClient.invokeApifunction to invoke the
+ *                                        api lambda
+ * @returns {Promise<Object>}           - the delete confirmation from the API
  */
 export const removePublishedGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionId?: CollectionId,
+  collectionId: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, collectionId, callback = invokeApi } = params;
