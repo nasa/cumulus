@@ -38,20 +38,40 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
+<<<<<<< HEAD
 
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
+=======
+const {
+  getMessageExecutionParentArn,
+} = require('@cumulus/message/Executions');
+const { createSqsQueues, getSqsQueueMessageCounts } = require('../../../lib/testUtils');
+const {
+  writeRecords,
+} = require('../../../lambdas/sf-event-sqs-to-db-records');
+>>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
 
 const {
   handler,
   writeRecords,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
+<<<<<<< HEAD
   '@cumulus/aws-client/SQS': {
     sendSQSMessage: (queue, message) => Promise.resolve([queue, message]),
   },
   '@cumulus/aws-client/StepFunctions': {
     describeExecution: () => Promise.resolve({}),
+=======
+  '@cumulus/message/Executions': {
+    getMessageExecutionParentArn: (cumulusMessage) => {
+      if (cumulusMessage.fail === true) {
+        throw new Error('Intentional failure: test case');
+      }
+      return getMessageExecutionParentArn(cumulusMessage);
+    },
+>>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
   },
 });
 
@@ -68,29 +88,32 @@ const loadFixture = (filename) =>
     )
   );
 
-let fixture;
-
 const runHandler = async ({
-  cumulusMessage = {},
+  fixture,
+  cumulusMessages = [{}],
   stateMachineArn,
   executionArn,
   executionName,
   testDbName,
   ...additionalParams
 }) => {
-  fixture.resources = [executionArn];
-  fixture.detail.executionArn = executionArn;
-  fixture.detail.stateMachineArn = stateMachineArn;
-  fixture.detail.name = executionName;
-
-  fixture.detail.input = JSON.stringify(cumulusMessage);
+  const eventRecords = cumulusMessages.map((cumulusMessage) => {
+    const eventFixture = { ...fixture };
+    eventFixture.resources = [executionArn];
+    eventFixture.detail.executionArn = executionArn;
+    eventFixture.detail.stateMachineArn = stateMachineArn;
+    eventFixture.detail.name = executionName;
+    eventFixture.detail.input = JSON.stringify(cumulusMessage);
+    return {
+      messageId: cryptoRandomString({ length: 10 }),
+      eventSource: 'aws:sqs',
+      body: JSON.stringify(eventFixture),
+    };
+  });
 
   const sqsEvent = {
     ...additionalParams,
-    Records: [{
-      eventSource: 'aws:sqs',
-      body: JSON.stringify(fixture),
-    }],
+    Records: eventRecords,
     env: {
       ...localStackConnectionEnv,
       PG_DATABASE: testDbName,
@@ -151,6 +174,7 @@ test.before(async (t) => {
   t.context.pdrPgModel = new PdrPgModel();
   t.context.providerPgModel = new ProviderPgModel();
 
+<<<<<<< HEAD
   process.env.ExecutionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.PdrsTable = randomString();
@@ -177,6 +201,9 @@ test.before(async (t) => {
   t.context.pdrModel = pdrModel;
 
   fixture = await loadFixture('execution-running-event.json');
+=======
+  t.context.fixture = await loadFixture('execution-running-event.json');
+>>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
@@ -204,11 +231,9 @@ test.beforeEach(async (t) => {
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
-  const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
-  t.context.QueueUrl = QueueUrl;
+  t.context.queues = await createSqsQueues(cryptoRandomString({ length: 10 }));
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
-    QueueUrl,
+    QueueUrl: t.context.queues.queueUrl,
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
@@ -224,11 +249,13 @@ test.beforeEach(async (t) => {
     Token: SubscriptionArn,
   }).promise();
 
+  process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
+
   const stateMachineName = cryptoRandomString({ length: 5 });
-  t.context.stateMachineArn = `arn:aws:states:${fixture.region}:${fixture.account}:stateMachine:${stateMachineName}`;
+  t.context.stateMachineArn = `arn:aws:states:${t.context.fixture.region}:${t.context.fixture.account}:stateMachine:${stateMachineName}`;
 
   t.context.executionName = cryptoRandomString({ length: 5 });
-  t.context.executionArn = `arn:aws:states:${fixture.region}:${fixture.account}:execution:${stateMachineName}:${t.context.executionName}`;
+  t.context.executionArn = `arn:aws:states:${t.context.fixture.region}:${t.context.fixture.account}:execution:${stateMachineName}:${t.context.executionName}`;
 
   t.context.provider = {
     id: `provider${cryptoRandomString({ length: 5 })}`,
@@ -279,6 +306,11 @@ test.beforeEach(async (t) => {
       host: t.context.provider.host,
       protocol: t.context.provider.protocol,
     });
+});
+
+test.afterEach.always(async (t) => {
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.queueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.deadLetterQueueUrl }).promise();
 });
 
 test.after.always(async (t) => {
@@ -408,6 +440,7 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
   );
 });
 
+<<<<<<< HEAD
 test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
   // make execution write throw an error
   const fakeExecutionModel = {
@@ -416,15 +449,66 @@ test('Lambda sends message to DLQ when writeRecords() throws an error', async (t
     },
   };
 
+=======
+test.serial('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
+>>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
   const {
     handlerResponse,
     sqsEvent,
   } = await runHandler({
     ...t.context,
+<<<<<<< HEAD
     executionModel: fakeExecutionModel,
+=======
+    cumulusMessages: [{ fail: true }],
+>>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
   });
 
-  t.is(handlerResponse[0][1].body, sqsEvent.Records[0].body);
+  t.is(handlerResponse.batchItemFailures.length, 0);
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
+  const { Messages } = await sqs()
+    .receiveMessage({
+      QueueUrl: t.context.queues.deadLetterQueueUrl,
+      WaitTimeSeconds: 10,
+    })
+    .promise();
+  const dlqMessage = JSON.parse(Messages[0].Body);
+  t.deepEqual(dlqMessage, sqsEvent.Records[0]);
+});
+
+test.serial('Lambda returns partial batch response to reprocess messages when getCumulusMessageFromExecutionEvent() throws an error', async (t) => {
+  const {
+    handlerResponse,
+    sqsEvent,
+  } = await runHandler({
+    ...t.context,
+    cumulusMessages: [null],
+  });
+
+  t.is(handlerResponse.batchItemFailures.length, 1);
+  t.is(handlerResponse.batchItemFailures[0].itemIdentifier, sqsEvent.Records[0].messageId);
+});
+
+test.serial('Lambda processes multiple messages', async (t) => {
+  const {
+    handlerResponse,
+  } = await runHandler({
+    ...t.context,
+    cumulusMessages: [{ fail: true }, null, t.context.cumulusMessage, null, { fail: true }],
+  });
+
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
+  t.is(numberOfMessagesAvailable, 2);
+  t.is(numberOfMessagesNotVisible, 0);
+  t.is(handlerResponse.batchItemFailures.length, 2);
 });
 
 test.serial('writeRecords() discards an out of order message that is older than an existing message without error or write', async (t) => {

@@ -161,6 +161,7 @@ resource "aws_sqs_queue_policy" "sf_event_sqs_to_db_records_input_queue_policy" 
 resource "aws_lambda_event_source_mapping" "sf_event_sqs_to_db_records_mapping" {
   event_source_arn = aws_sqs_queue.sf_event_sqs_to_db_records_input_queue.arn
   function_name    = aws_lambda_function.sf_event_sqs_to_db_records.arn
+  function_response_types = ["ReportBatchItemFailures"]
 }
 
 resource "aws_sqs_queue" "sf_event_sqs_to_db_records_dead_letter_queue" {

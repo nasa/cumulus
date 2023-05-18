@@ -45,7 +45,7 @@
     "@cumulus/api-client": "15.0.3",
     "@cumulus/aws-client": "15.0.3",
     "@cumulus/common": "15.0.3",
-    "@cumulus/cumulus-message-adapter-js": "2.0.4",
+    "@cumulus/cumulus-message-adapter-js": "2.0.5",
     "@cumulus/db": "15.0.3",
     "@cumulus/distribution-utils": "15.0.3",
     "@cumulus/launchpad-auth": "15.0.3",

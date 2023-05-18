@@ -941,6 +941,18 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
   }
 });
 
+test.serial('getGranuleTemporalInfo returns empty object if cmr file s3 url is not available', async (t) => {
+  const temporalInfo = await getGranuleTemporalInfo({
+    granuleId: 'testGranuleId',
+    files: [{
+      path: 'path',
+      name: 'test.cmr_iso.xml',
+    }],
+  });
+
+  t.deepEqual(temporalInfo, {});
+});
+
 test.serial('generateFileUrl generates correct url for cmrGranuleUrlType distribution', (t) => {
   const filename = 's3://fake-bucket/folder/key.txt';
   const distEndpoint = 'www.example.com/';
