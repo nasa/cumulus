@@ -6,9 +6,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v16.0.0] 2023-05-09
+
 ### MIGRATION notes
 
-#### RDS Phase 3
+#### PI release version
+
+When updating directly to v16 from prior releases older that V15, please make sure to
+read through all prior release notes.
+
+Notable migration concerns since the last PI release version (11.1.x):
+
+- [v14.1.0] - Postgres compatibility update to Aurora PostgreSQL 11.13.
+- [v13.1.0] - Postgres update to add `files_granules_cumulus_id_index` to the
+  `files` table may require manual steps depending on load.
+
+#### RDS Phase 3 migration notes
 
 This release includes updates that remove existing DynamoDB tables as part of
 release deployment process.   This release *cannot* be properly rolled back in
@@ -41,8 +54,8 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 ```
 
 Users/clients that do not make use of these endpoints will not be impacted.
-### RDS Phase 3
 
+### RDS Phase 3
 #### Breaking Changes
 
 - **CUMULUS-2688**
@@ -126,7 +139,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Add new endpoints to update and delete granules by collectionId as well as
       granuleId
 
-
 #### Removed
 
 - **CUMULUS-2994**
@@ -208,7 +220,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 ### Fixed
 
 - **CUMULUS-3120**
-  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods` 
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods`
   to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
   - Updated cloudwatch retention documentation to reflect the bugfix changes
 
@@ -7129,7 +7141,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.3...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.0.0...HEAD
+[v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.3...v16.0.0
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
 [v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
