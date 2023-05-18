@@ -80,14 +80,16 @@ const writeRecords = async ({
     ),
   ]);
 
-  if (!shouldWriteExecutionToPostgres({
+  const fieldsToMeetRequirements = {
     messageCollectionNameVersion,
     collectionCumulusId,
     messageAsyncOperationId,
     asyncOperationCumulusId,
     messageParentExecutionArn,
     parentExecutionCumulusId,
-  })) {
+  };
+  if (!shouldWriteExecutionToPostgres(fieldsToMeetRequirements)) {
+    log.debug(`Could not satisfy requirements for writing records, fieldsToMeetRequirements: ${JSON.stringify(fieldsToMeetRequirements)}`);
     throw new UnmetRequirementsError('Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   }
 
@@ -128,11 +130,17 @@ const handler = async (event) => {
   });
 
   const sqsMessages = get(event, 'Records', []);
+  const batchItemFailures = [];
 
-  return await Promise.all(sqsMessages.map(async (message) => {
+  await Promise.all(sqsMessages.map(async (message) => {
+    let cumulusMessage;
     const executionEvent = parseSQSMessageBody(message);
-    const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
-
+    try {
+      cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+    } catch (error) {
+      log.error(`Writing message failed on getting message from execution event: ${JSON.stringify(message)}`, error);
+      return batchItemFailures.push({ itemIdentifier: message.messageId });
+    }
     try {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
@@ -140,6 +148,8 @@ const handler = async (event) => {
       return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
   }));
+
+  return { batchItemFailures };
 };
 
 module.exports = {
