@@ -7,6 +7,7 @@ hide_title: false
 A few issues were identied as part of the RDS Phase 2 release. These issues could impact Granule data-integrity and are described below along with recommended actions and guidance going forward.
 
 ## Issue Descriptions
+
 ### Issue 1:
 
 https://bugs.earthdata.nasa.gov/browse/CUMULUS-3019
@@ -48,12 +49,12 @@ This is a sub-issue of issue 2 above - due to the way we assign a PDR name to a 
 
 ## Immediate Actions
 
-1. Re-review the issues described here <insert link to granule write issues>.
+1. Re-review the issues described above
     - GHRC was able to scope the affected granules to specific collections, which makes the recovery process much easier. This may not be an option for all DAACs.
 
 2. If you have not ingested granules or performed partial granule updates on affected Cumulus versions (questions 1 and 2 on the survey), no action is required. You may update to the latest version of Cumulus.
 
-3. One option to ensure your Postgres data matches Dynamo is running the data-migration lambda (see links below for instructions) before updating to the latest Cumulus version if both of the following are true:
+3. One option to ensure your Postgres data matches Dynamo is running the data-migration lambda (see below for instructions) before updating to the latest Cumulus version if both of the following are true:
     - you have ingested granules using an affected Cumulus version
     - your DAAC has not had any operations that updated an existing granule with an empty files array (granule.files = [])
 
@@ -61,7 +62,7 @@ This is a sub-issue of issue 2 above - due to the way we assign a PDR name to a 
 
 ## Guidance Going Forward
 
-1. Before updating to Cumulus version 16.x and beyond, take a snapshot of your DynamoDB instance. The v16 update removes Dynamo. This snapshot would be for use in emergencies only. Once the DynamoDB tables are removed, recovering from a snapshot is doable but complicated.
+1. Before updating to Cumulus version 16.x and beyond, take a snapshot of your DynamoDB instance. The v16 update removes the DynamoDB tables. This snapshot would be for use in emergencies only.
 
 2. Cumulus recommends that you regularly backup your Cumulus RDS database. The frequency will depend on each DAAC’s comfort level, datastore size, and time available but we recommend regular backups. https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateSnapshot.html
 
@@ -71,7 +72,7 @@ This is a sub-issue of issue 2 above - due to the way we assign a PDR name to a 
 
 [Instructions for running the data-migration operation to sync Granules from DynamoDB to PostgreSQL](./upgrade-rds.md#5-run-the-second-data-migration)
 
-The data-migration2 Lambda (which is invoked asynchronously using ${PREFIX}-postgres-migration-async-operation) uses Cumulus' Granule upsert logic to write granules from DynamoDB to PostgreSQL. This is particularly notable because granules with a running or queued status will only migrate a subset of their fields:
+The data-migration2 Lambda (which is invoked asynchronously using `${PREFIX}-postgres-migration-async-operation)` uses Cumulus' Granule upsert logic to write granules from DynamoDB to PostgreSQL. This is particularly notable because granules with a running or queued status will only migrate a subset of their fields:
 
 - status
 - timestamp
