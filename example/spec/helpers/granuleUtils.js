@@ -152,13 +152,13 @@ const deleteGranules = async (prefix, granules) => {
         return await removePublishedGranule({
           prefix,
           granuleId: granule.granuleId,
-          collectionId: granule.collectionId
+          collectionId: granule.collectionId,
         });
       }
       return await deleteGranule({
         prefix,
         granuleId: granule.granuleId,
-        collectionId: granule.collectionId
+        collectionId: granule.collectionId,
       });
     })
   );
