@@ -1072,6 +1072,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
         });
 
         // Check that the granule was removed

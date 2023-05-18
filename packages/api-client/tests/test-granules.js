@@ -262,6 +262,7 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.removeFromCMR({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     callback,
   }));
 });
