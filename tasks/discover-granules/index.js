@@ -11,6 +11,7 @@ const Logger = require('@cumulus/logger');
 const granules = require('@cumulus/api-client/granules');
 const { runCumulusTask } = require('@cumulus/cumulus-message-adapter-js');
 const { buildProviderClient } = require('@cumulus/ingest/providerClientUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const logger = (logOptions) => new Logger({
   executions: process.env.EXECUTIONS,
@@ -192,19 +193,22 @@ const buildGranule = curry(
  *
  * @param {string} granuleId - granuleId to evaluate
  * @param {string} duplicateHandling - collection duplicate handling configuration value
+ * @param {string} params.collectionId - granule collectionId
+ *
  * @returns {*}     - returns granuleId string if no duplicate found, false if
  *                    a duplicate is found.
  * @throws {Error}  - Throws an error on duplicate if
  *                    dupeConfig.duplicateHandling is set to 'error'
  *
  */
-const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
+const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling, collectionId) => {
   let response;
   try {
     response = await granules.getGranuleResponse({
       prefix: process.env.STACKNAME,
       expectedStatusCodes: [200, 404],
       granuleId,
+      collectionId,
     });
   } catch (error) {
     const responseError = error;
@@ -239,13 +243,15 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
  *                                            (see description)
  * @param {number} params.concurrency - limitation on max concurrent granules
  *                                      to check for duplicates
+ * @param {string} params.collectionId - granule collectionId
+ *
  *
  * @returns {Array.string} returns granuleIds parameter with applicable duplciates removed
  */
-const filterDuplicates = async ({ granuleIds, duplicateHandling, concurrency }) => {
+const filterDuplicates = async ({ granuleIds, duplicateHandling, concurrency, collectionId }) => {
   const checkResults = await pMap(
     granuleIds,
-    (key) => checkGranuleHasNoDuplicate(key, duplicateHandling),
+    (key) => checkGranuleHasNoDuplicate(key, duplicateHandling, collectionId),
     { concurrency }
   );
   return checkResults.filter(Boolean);
@@ -266,10 +272,12 @@ const filterDuplicates = async ({ granuleIds, duplicateHandling, concurrency }) 
  *                                            (see description)
  * @param {number} params.concurrency - granule duplicate filtering max concurrency
  *                                      (`skip` or `error` handling only)
+ * @param {string} params.collectionId - granule collectionId
+ *
  *
  * @returns {Object} returns filesByGranuleId with applicable duplciates removed
  */
-const handleDuplicates = async ({ filesByGranuleId, duplicateHandling, concurrency }) => {
+const handleDuplicates = async ({ filesByGranuleId, duplicateHandling, concurrency, collectionId }) => {
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
   if (['skip', 'error'].includes(duplicateHandling)) {
     // Iterate over granules, remove if exists in dynamo
@@ -277,6 +285,7 @@ const handleDuplicates = async ({ filesByGranuleId, duplicateHandling, concurren
       granuleIds: Object.keys(filesByGranuleId),
       duplicateHandling,
       concurrency,
+      collectionId,
     });
     return pick(filesByGranuleId, filteredKeys);
   }
@@ -312,6 +321,7 @@ const discoverGranules = async ({ config }) => {
     filesByGranuleId,
     duplicateHandling,
     concurrency: get(config, 'concurrency', 3),
+    collectionId: constructCollectionId(config.collection.name, config.collection.version),
   });
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));
