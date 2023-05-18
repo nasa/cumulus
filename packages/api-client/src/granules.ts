@@ -262,7 +262,7 @@ export const removeFromCMR = async (params: {
 export const applyWorkflow = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionId?: CollectionId,
+  collectionId: CollectionId,
   workflow: string,
   meta?: object,
   callback?: InvokeApiFunction
@@ -278,10 +278,6 @@ export const applyWorkflow = async (params: {
 
   let path = `/granules/${collectionId}/${granuleId}`;
 
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
 
   return await callback({
     prefix: prefix,

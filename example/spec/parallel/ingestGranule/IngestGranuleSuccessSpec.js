@@ -1091,6 +1091,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
           workflow: 'PublishGranule',
         });
 
@@ -1126,6 +1127,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
           workflow: 'UpdateCmrAccessConstraints',
           meta: {
             accessConstraints,
