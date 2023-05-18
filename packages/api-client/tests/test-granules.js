@@ -213,7 +213,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
@@ -233,6 +233,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     workflowName: aWorkflow,
+    collectionId: t.context.collectionId,
     callback,
   }));
 });
@@ -302,7 +303,7 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
     },
   };
 
@@ -313,6 +314,7 @@ test('deleteGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.deleteGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     pRetryOptions: { foo: 'bar' },
     callback,
   }));
@@ -329,7 +331,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
       },
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
     },
   };
@@ -341,6 +343,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.moveGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     destinations,
     callback,
   }));
@@ -399,7 +402,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   const callback = ({ payload }) => {
     if (
       payload.httpMethod === 'PATCH'
-      && payload.path === `/granules/${t.context.granuleId}`
+      && payload.path === `/granules/${t.context.collectionId}/${t.context.granuleId}`
       && payload.body.includes('removeFromCmr')
     ) {
       removeFromCmrCalled = true;
@@ -407,7 +410,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
 
     if (
       payload.httpMethod === 'DELETE'
-      && payload.path === `/granules/${t.context.granuleId}`
+      && payload.path === `/granules/${t.context.collectionId}/${t.context.granuleId}`
     ) {
       deleteGranuleCalled = true;
     }
@@ -416,6 +419,7 @@ test('removePublishedGranule calls removeFromCmr and deleteGranule', async (t) =
   await granulesApi.removePublishedGranule({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     callback,
   });
 
