@@ -78,10 +78,10 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
     return await dispatch(queueUrl, queueMessage);
   } catch (error) {
     await decrementQueueSemaphore(queueUrl);
+
     if (error.code === 'ExecutionAlreadyExists' || error.message.includes('ExecutionAlreadyExists')) {
       logger.info('Execution already exists. Proceeding to delete message from queue...');
       await sqs.deleteSQSMessage(queueUrl, queueMessage.ReceiptHandle);
-      logger.info('Message successfully deleted.');
     }
     throw error;
   }
