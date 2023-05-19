@@ -2,9 +2,11 @@
 
 const isNumber = require('lodash/isNumber');
 const rewire = require('rewire');
+const sinon = require('sinon');
 const test = require('ava');
 
 const awsServices = require('@cumulus/aws-client/services');
+const sqs = require('@cumulus/aws-client/SQS');
 const {
   createQueue,
   receiveSQSMessages,
@@ -248,6 +250,36 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
     () => incrementAndDispatch(queueUrl, { Body: createWorkflowMessage(queueUrl, maxExecutions) }),
     { instanceOf: ResourcesLockedError }
   );
+});
+
+test.serial('incrementAndDispatch throws error and deletes message when execution already exists', async (t) => {
+  const { semaphore, queueUrl } = t.context;
+  const message = createWorkflowMessage(queueUrl, 5);
+  const deleteMessageStub = sinon.stub(sqs, 'deleteSQSMessage').resolves({});
+
+  await incrementAndDispatch(queueUrl, { Body: message });
+  const stubSFNThrowError = () => ({
+    startExecution: () => ({
+      promise: async () => {
+        const response = await semaphore.get(queueUrl);
+        t.is(response.semvalue, 2);
+        throw new Error('ExecutionAlreadyExists');
+      },
+    }),
+  });
+  const revert = sfStarter.__set__('sfn', stubSFNThrowError);
+
+  t.teardown(() => {
+    revert();
+    deleteMessageStub.restore();
+  });
+
+  const receiptHandle = randomId();
+  await t.throwsAsync(
+    () => incrementAndDispatch(queueUrl, { Body: message, ReceiptHandle: receiptHandle }),
+    { message: 'ExecutionAlreadyExists' }
+  );
+  t.true(deleteMessageStub.called);
 });
 
 test('handleThrottledEvent starts 0 executions when priority semaphore is at maximum', async (t) => {

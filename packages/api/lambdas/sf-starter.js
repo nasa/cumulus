@@ -4,7 +4,7 @@ const uuidv4 = require('uuid/v4');
 const get = require('lodash/get');
 
 const { sfn } = require('@cumulus/aws-client/services');
-const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
+const sqs = require('@cumulus/aws-client/SQS');
 const Logger = require('@cumulus/logger');
 const {
   buildExecutionArn,
@@ -29,7 +29,7 @@ const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-starter' });
  * @returns {Promise} - AWS SF Start Execution response
  */
 function dispatch(queueUrl, message) {
-  const input = parseSQSMessageBody(message);
+  const input = sqs.parseSQSMessageBody(message);
 
   input.cumulus_meta.workflow_start_time = Date.now();
 
@@ -65,7 +65,7 @@ function dispatch(queueUrl, message) {
  * @throws {Error}
  */
 async function incrementAndDispatch(queueUrl, queueMessage) {
-  const workflowMessage = parseSQSMessageBody(queueMessage);
+  const workflowMessage = sqs.parseSQSMessageBody(queueMessage);
 
   const maxExecutions = getMaximumExecutions(workflowMessage, queueUrl);
 
@@ -78,6 +78,11 @@ async function incrementAndDispatch(queueUrl, queueMessage) {
     return await dispatch(queueUrl, queueMessage);
   } catch (error) {
     await decrementQueueSemaphore(queueUrl);
+    if (error.code === 'ExecutionAlreadyExists' || error.message.includes('ExecutionAlreadyExists')) {
+      logger.info('Execution already exists. Proceeding to delete message from queue...');
+      await sqs.deleteSQSMessage(queueUrl, queueMessage.ReceiptHandle);
+      logger.info('Message successfully deleted.');
+    }
     throw error;
   }
 }
