@@ -205,8 +205,7 @@ describe('Parsing a PDR with multiple data types and node names', () => {
     await Promise.all(testGranuleIds.map(
       (granuleId) => waitForGranuleAndDelete(stackName,
         granuleId,
-        (found) =>
-          constructCollectionId(found.dataType, found.version)(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)),
+        ((found) => constructCollectionId(found.dataType, found.version))(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)),
         'completed')
     ));
     await deletePdr({ prefix: stackName, pdrName });
@@ -273,8 +272,7 @@ describe('Parsing a PDR with multiple data types and node names', () => {
           getGranule,
           { prefix: stackName,
             granuleId,
-            collectionId: (found) =>
-              constructCollectionId(found.dataType, found.version)(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)) },
+            collectionId: ((found) => constructCollectionId(found.dataType, found.version))(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)) },
           'completed'
         )));
         granules.forEach((g) => {
