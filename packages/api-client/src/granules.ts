@@ -344,6 +344,7 @@ export const deleteGranule = async (params: {
  * @param {Object} params                       - params
  * @param {string} params.prefix                - the prefix configured for the stack
  * @param {string} params.granuleId             - a granule ID
+ * @param {string} params.collectionId         - a collection ID
  * @param {Array<Object>} params.destinations   - move granule destinations
  * @param {Function} params.callback            - async function to invoke the api lambda
  *                                                that takes a prefix / user payload.  Defaults
@@ -354,7 +355,7 @@ export const deleteGranule = async (params: {
 export const moveGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
-  collectionId?: CollectionId,
+  collectionId: CollectionId,
   destinations: unknown[],
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
@@ -366,12 +367,7 @@ export const moveGranule = async (params: {
     callback = invokeApi,
   } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = `/granules/${collectionId}/${granuleId}`;
 
   return await callback({
     prefix: prefix,
@@ -519,6 +515,7 @@ export const replaceGranule = async (params: {
  * PATCH /granules/{granuleId}
  * @param {Object} params             - params
  * @param {Object} [params.body]      - granule to pass the API lambda
+ * @param {string} params.collectionId  - a collection ID
  * @param {Function} params.callback  - async function to invoke the api lambda
  *                                      that takes a prefix / user payload.  Defaults
  *                                      to cumulusApiClient.invokeApifunction to invoke the
@@ -529,17 +526,12 @@ export const updateGranule = async (params: {
   prefix: string,
   body: ApiGranuleRecord,
   granuleId: GranuleId,
-  collectionId?: CollectionId,
+  collectionId: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, collectionId, body, callback = invokeApi } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = `/granules/${collectionId}/${granuleId}`;
 
   return await callback({
     prefix,

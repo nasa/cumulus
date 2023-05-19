@@ -515,6 +515,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const moveGranuleResponse = await moveGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: constructCollectionId(collection.name, collection.version),
         destinations,
       });
 

@@ -1231,6 +1231,7 @@ describe('The S3 Ingest Granules workflow', () => {
             await moveGranule({
               prefix: config.stackName,
               granuleId: inputPayload.granules[0].granuleId,
+              collectionId,
               destinations,
             });
           } catch (error) {
@@ -1255,6 +1256,7 @@ describe('The S3 Ingest Granules workflow', () => {
           const moveGranuleResponse = await moveGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId,
             destinations,
           });
 
