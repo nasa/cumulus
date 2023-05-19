@@ -221,6 +221,9 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed ACL setting of private on S3.multipartCopyObject() call
   - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
+- **CUMULUS-3245**
+  - Update step function starter logic to catch ExecutionAlreadyExists error and
+    delete SQS message accordingly.
 
 ### Removed
 
