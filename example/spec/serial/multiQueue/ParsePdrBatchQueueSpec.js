@@ -13,6 +13,7 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForGranuleAndDelete } = require('../../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
@@ -202,7 +203,11 @@ describe('Parsing a PDR with multiple data types and node names', () => {
 
   afterAll(async () => {
     await Promise.all(testGranuleIds.map(
-      (granuleId) => waitForGranuleAndDelete(stackName, granuleId, 'completed')
+      (granuleId) => waitForGranuleAndDelete(stackName,
+        granuleId,
+        (found) =>
+          constructCollectionId(found.dataType, found.version)(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)),
+        'completed')
     ));
     await deletePdr({ prefix: stackName, pdrName });
     await Promise.all(queueGranulesOutput.payload.running.map(
@@ -266,7 +271,10 @@ describe('Parsing a PDR with multiple data types and node names', () => {
       else {
         const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
           getGranule,
-          { prefix: stackName, granuleId },
+          { prefix: stackName,
+            granuleId,
+            collectionId: (found) =>
+              constructCollectionId(found.dataType, found.version)(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)) },
           'completed'
         )));
         granules.forEach((g) => {

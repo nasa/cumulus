@@ -139,6 +139,7 @@ describe('When the Sync Granule workflow is configured', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           ['completed', 'failed']
         );
       }

@@ -7,6 +7,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../../helpers/Providers');
@@ -72,6 +73,7 @@ describe('The Discover Granules workflow with https Protocol', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           'completed'
         );
       }
