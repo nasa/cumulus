@@ -52,6 +52,7 @@ describe('A dead letter record archive processing operation', () => {
   let stackName;
   let systemBucket;
   let testCollection;
+  let collectionId;
   let testGranule;
   let testProvider;
   let testRule;
@@ -91,10 +92,10 @@ describe('A dead letter record archive processing operation', () => {
         fakeFileFactory({ bucket: systemBucket }),
         fakeFileFactory({ bucket: systemBucket }),
       ];
-
+      collectionId = constructCollectionId(testCollection.name, testCollection.version);
       testGranule = fakeGranuleFactoryV2({
         granuleId: `MOD09GQ.${randomString()}.hdf`,
-        collectionId: constructCollectionId(testCollection.name, testCollection.version),
+        collectionId,
         files: testFiles,
         published: false,
       });
@@ -203,7 +204,7 @@ describe('A dead letter record archive processing operation', () => {
     const failedRuleName = get(failingTestRule, 'name');
     if (testGranule) {
       await deleteGranule(
-        { prefix: stackName, granuleId: testGranule.granuleId }
+        { prefix: stackName, granuleId: testGranule.granuleId, collectionId }
       );
     }
     if (ruleName) {

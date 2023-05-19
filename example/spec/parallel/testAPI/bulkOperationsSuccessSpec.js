@@ -57,6 +57,7 @@ describe('POST /granules/bulk', () => {
     let postBulkOperationsBody;
     let taskArn;
     let collection;
+    let collectionId;
     let provider;
     let ingestGranuleRule;
     let granuleId;
@@ -101,6 +102,7 @@ describe('POST /granules/bulk', () => {
           Body: 'asdf',
         });
 
+        collectionId = constructCollectionId(collection.name, collection.version);
         granuleId = randomId('granule-id-');
         console.log('granuleId', granuleId);
 
@@ -163,7 +165,7 @@ describe('POST /granules/bulk', () => {
         // Wait for the granule to be fully ingested
         ingestedGranule = await getGranuleWithStatus({ prefix,
           granuleId,
-          collectionId: constructCollectionId(collection.name, collection.version),
+          collectionId,
           status: 'completed' });
 
         scheduleQueueUrl = await getQueueUrlByName(`${config.stackName}-backgroundProcessing`);
@@ -171,7 +173,7 @@ describe('POST /granules/bulk', () => {
         postBulkGranulesResponse = await granules.bulkGranules({
           prefix,
           body: {
-            granules: [{ granuleId, collectionId: constructCollectionId(collection.name, collection.version) }],
+            granules: [{ granuleId, collectionId }],
             workflowName: 'HelloWorldWorkflow',
             queueUrl: scheduleQueueUrl,
           },
@@ -199,7 +201,7 @@ describe('POST /granules/bulk', () => {
       await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn });
       await deleteExecution({ prefix: config.stackName, executionArn: bulkOperationExecutionArn });
 
-      await granules.deleteGranule({ prefix, granuleId });
+      await granules.deleteGranule({ prefix, granuleId, collectionId });
       if (postBulkOperationsBody.id) {
         await deleteAsyncOperation({ prefix: config.stackName, asyncOperationId: postBulkOperationsBody.id });
       }
@@ -290,7 +292,7 @@ describe('POST /granules/bulk', () => {
         await getGranuleWithStatus({
           prefix,
           granuleId: JSON.parse(asyncOperation.output)[0],
-          collectionId: constructCollectionId(collection.name, collection.version),
+          collectionId,
           status: 'running',
           timeout: 120,
           updatedAt: ingestedGranule.updatedAt,

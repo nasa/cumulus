@@ -244,7 +244,7 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
@@ -279,7 +279,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
       },
-      path: `/granules/${t.context.granuleId}`,
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
     },
   };
@@ -291,6 +291,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.applyWorkflow({
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     workflow,
     meta,
     callback,

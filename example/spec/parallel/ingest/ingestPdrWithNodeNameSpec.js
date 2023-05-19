@@ -402,19 +402,20 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
+              const id = constructCollectionId(g.dataType, g.version);
               await waitForApiStatus(
                 getGranule,
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
-                  collectionId: constructCollectionId(g.dataType, g.version),
+                  collectionId: id,
                 },
                 'completed'
               );
               await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
-                collectionId: constructCollectionId(g.dataType, g.version),
+                collectionId: id,
               });
             })
           );

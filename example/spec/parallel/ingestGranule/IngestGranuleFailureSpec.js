@@ -48,6 +48,7 @@ describe('The Ingest Granule failure workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+  let collectionId;
 
   beforeAll(async () => {
     try {
@@ -79,7 +80,7 @@ describe('The Ingest Granule failure workflow', () => {
           bucket: config.bucket,
         },
       ];
-
+      collectionId = constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version);
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
@@ -101,7 +102,7 @@ describe('The Ingest Granule failure workflow', () => {
       await deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
+        collectionId,
         pRetryOptions: {
           retries: 0,
         },
@@ -225,7 +226,7 @@ describe('The Ingest Granule failure workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
-          collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
+          collectionId,
         },
         'failed'
       );
@@ -233,7 +234,7 @@ describe('The Ingest Granule failure workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        collectionId: constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version),
+        collectionId,
       });
 
       expect(granule.status).toBe('failed');
