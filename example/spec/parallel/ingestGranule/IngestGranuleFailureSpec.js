@@ -72,15 +72,22 @@ describe('The Ingest Granule failure workflow', () => {
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
       pdrFilename = inputPayload.pdr.name;
 
-      // add a non-existent file to input payload to cause lambda error
+      // add a file with invalid schema (missing path field), and a non-existent file to input payload.
+      // .cmr.json is for testing retrieving cmr information when granule is failed
       inputPayload.granules[0].files = [
         {
-          name: 'non-existent-file',
-          key: 'non-existent-path/non-existent-file',
+          key: 'no-path-field/no-path-field-file',
           bucket: config.bucket,
+          name: 'no-path-field-file',
         },
+        {
+          name: 'non-existent-file.cmr.json',
+          path: 'non-existent-path',
+        },
+        ...inputPayload.granules[0].files,
       ];
       collectionId = constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version);
+      console.log(`testSuffix: ${testSuffix}, granuleId: ${inputPayload.granules[0].granuleId}`);
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
         config.bucket,
@@ -91,6 +98,7 @@ describe('The Ingest Granule failure workflow', () => {
       );
     } catch (error) {
       beforeAllFailed = true;
+      console.log('IngestGranuleFailure beforeAll caught error', error);
       throw error;
     }
   });
@@ -220,7 +228,7 @@ describe('The Ingest Granule failure workflow', () => {
       expect(JSON.parse(execution.error.Cause)).toEqual(JSON.parse(syncGranFailedDetail.cause));
     });
 
-    it('fails the granule with an error object', async () => {
+    it('fails the granule with a list of errors', async () => {
       await waitForApiStatus(
         getGranule,
         {
@@ -238,8 +246,16 @@ describe('The Ingest Granule failure workflow', () => {
       });
 
       expect(granule.status).toBe('failed');
-      expect(granule.error.Error).toBeDefined();
-      expect(granule.error.Cause).toBeDefined();
+      console.log('IngestGranuleFailure granule.error', granule.error);
+      const errors = JSON.parse(granule.error.errors || []);
+      expect(errors.length).toBeGreaterThanOrEqual(2);
+      errors.forEach((error) => {
+        const isSchemaValidationError = (error.Error === 'CumulusMessageAdapterExecutionError') &&
+          error.Cause.includes('jsonschema.exceptions.ValidationError');
+        const isPostgresWriteError = error.Error.includes('Failed writing files to PostgreSQL') &&
+          error.Cause.includes('null value in column "bucket" violates not-null constraint');
+        expect(isSchemaValidationError || isPostgresWriteError).toBeTrue();
+      });
     });
   });
 });
