@@ -255,9 +255,13 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
 test.serial('incrementAndDispatch throws error and deletes message when execution already exists', async (t) => {
   const { semaphore, queueUrl } = t.context;
   const message = createWorkflowMessage(queueUrl, 5);
-  const deleteMessageStub = sinon.stub(sqs, 'deleteSQSMessage').resolves({});
+  const receiptHandle = randomId();
 
-  await incrementAndDispatch(queueUrl, { Body: message });
+  // Send first message
+  await incrementAndDispatch(queueUrl, { Body: message, ReceiptHandle: receiptHandle });
+
+  // Stub to throw an error
+  const deleteMessageStub = sinon.stub(sqs, 'deleteSQSMessage').resolves({});
   const stubSFNThrowError = () => ({
     startExecution: () => ({
       promise: async () => {
@@ -274,7 +278,7 @@ test.serial('incrementAndDispatch throws error and deletes message when executio
     deleteMessageStub.restore();
   });
 
-  const receiptHandle = randomId();
+  // Send duplicate message to trigger ExecutionAlreadyExists
   await t.throwsAsync(
     () => incrementAndDispatch(queueUrl, { Body: message, ReceiptHandle: receiptHandle }),
     { message: 'ExecutionAlreadyExists' }
