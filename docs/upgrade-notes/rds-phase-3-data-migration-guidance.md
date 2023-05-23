@@ -62,7 +62,7 @@ This is a sub-issue of issue 2 above - due to the way we assign a PDR name to a 
 
 ## Guidance Going Forward
 
-1. Before updating to Cumulus version 16.x and beyond, take a snapshot of your DynamoDB instance. The v16 update removes the DynamoDB tables. This snapshot would be for use in emergencies only.
+1. Before updating to Cumulus version 16.x and beyond, take a snapshot of your DynamoDB instance. The v16 update removes the DynamoDB tables. This snapshot would be for use in unexpected data recovery scenarios only.
 
 2. Cumulus recommends that you regularly backup your Cumulus RDS database. The frequency will depend on each DAAC’s comfort level, datastore size, and time available but we recommend regular backups. https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateSnapshot.html
 
