@@ -225,11 +225,18 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
-
 - **CUMULUS-3203**
   - Removed ACL setting of private on S3.multipartCopyObject() call
   - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
+
+### Fixed
+
+- **CUMULUS-3223**
+  - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
+  - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
+    and only reprocess messages when cumulus message can't be retrieved from the execution events.
+  - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
 
 ### Removed
 
