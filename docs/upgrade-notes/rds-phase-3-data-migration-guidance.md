@@ -79,7 +79,7 @@ The data-migration2 Lambda (which is invoked asynchronously using `${PREFIX}-pos
 - updated_at
 - created_at
 
-It is recommended that users ensure their granules are in the correct state before running this data migration. If there are Granules with an incorrect status, it will impact the data migration.
+It is recommended that users ensure their granules are in a final state (`running`, `completed`) before running this data migration. If there are Granules with an incomplete status, it may impact the data migration.
 
 For example, if a Granule in the running status is updated by a workflow or API call (containing an updated status) and fails, that granule will have the original running status, not the intended/updated status. Failed Granule writes/updates should be evaluated and resolved prior to this data migration.
 
