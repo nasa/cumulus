@@ -4,7 +4,7 @@ const { deprecate } = require('@cumulus/common/util');
 const granulesApi = require('@cumulus/api-client/granules');
 
 /**
- * GET /granules/{granuleId}
+ * GET /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack

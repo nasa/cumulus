@@ -16,7 +16,7 @@ type AssociateExecutionRequest = {
 };
 
 /**
- * GET raw response from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
+ * GET raw response from /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params                                - params
  * @param {string} params.prefix                         - the prefix configured for the stack
@@ -64,7 +64,7 @@ export const getGranuleResponse = async (params: {
 };
 
 /**
- * GET granule record from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
+ * GET granule record from /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params               - params
  * @param {string} params.prefix        - the prefix configured for the stack
@@ -154,7 +154,7 @@ export const waitForGranule = async (params: {
 
 /**
  * Reingest a granule from the Cumulus API
- * PATCH /granules/{}
+ * PATCH /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params               - params
  * @param {string} params.prefix        - the prefix configured for the stack
@@ -208,7 +208,7 @@ export const reingestGranule = async (params: {
 
 /**
  * Removes a granule from CMR via the Cumulus API
- * PATCH /granules/{granuleId}
+ * PATCH /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params               - params
  * @param {string} params.prefix        - the prefix configured for the stack
@@ -247,7 +247,7 @@ export const removeFromCMR = async (params: {
 
 /**
  * Run a workflow with the given granule as the payload
- * PATCH /granules/{granuleId}
+ * PATCH /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params               - params
  * @param {string} params.prefix        - the prefix configured for the stack
@@ -296,7 +296,7 @@ export const applyWorkflow = async (params: {
 
 /**
  * Delete a granule from Cumulus via the API lambda
- * DELETE /granules/${granuleId}
+ * DELETE /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params                      - params
  * @param {pRetry.Options} params.pRetryObject - pRetry options object
@@ -339,7 +339,7 @@ export const deleteGranule = async (params: {
 
 /**
  * Move a granule via the API
- * PATCH /granules/{granuleId}
+ * PATCH /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params                       - params
  * @param {string} params.prefix                - the prefix configured for the stack
@@ -512,7 +512,7 @@ export const replaceGranule = async (params: {
  * Update granule in cumulus via PATCH request.  Existing values will
  * not be overwritten if not specified, null values will be removed and in
  * some cases replaced with defaults.
- * PATCH /granules/{granuleId}
+ * PATCH /granules/{collectionId}/{granuleId}
  * @param {Object} params             - params
  * @param {Object} [params.body]      - granule to pass the API lambda
  * @param {string} params.collectionId  - a collection ID

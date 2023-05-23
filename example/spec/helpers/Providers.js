@@ -147,7 +147,7 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
   const resp = await providersApi.getProviders({
     prefix,
     queryStringParameters: {
-      // fields: 'id',
+      fields: 'id',
       host,
     },
   });
