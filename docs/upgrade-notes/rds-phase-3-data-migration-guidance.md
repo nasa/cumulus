@@ -66,7 +66,7 @@ This is a sub-issue of issue 2 above - due to the way we assign a PDR name to a 
 
 2. Cumulus recommends that you regularly backup your Cumulus RDS database. The frequency will depend on each DAAC’s comfort level, datastore size, and time available but we recommend regular backups. https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateSnapshot.html
 
-3. Invest future development effort in data validation/integrity tools. Each DAAC has different procedures and requirements here. Each DAAC should maintain procedures for validating their Cumulus datastore against their current holdings.
+3. Invest future development effort in data validation/integrity tools and procedures. Each DAAC has different requirements here. Each DAAC should maintain procedures for validating their Cumulus datastore against their holdings.
 
 ## Running a Granule Migration
 
