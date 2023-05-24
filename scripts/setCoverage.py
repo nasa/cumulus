@@ -82,7 +82,10 @@ def main() -> None:
     then update the local nyc config (./.nycrc.json) to reflect these values
     """
     nycConfigPath = ".nycrc.json"
-    reportPath = generateCoverageReport()
+    try:
+        reportPath = generateCoverageReport()
+    except TestException:
+        exit(0)
     coverage = parseCoverageValues(reportPath)
     updateNYCRCFile(coverage, nycConfigPath)
 
