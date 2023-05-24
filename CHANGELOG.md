@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v15.0.4] 2023-06-23
 
+### Changed
+
+- **CUMULUS-3307**
+  - Pinned cumulus dependency on `pg` to `v8.10.x`
 ### Fixed
 
 - **CUMULUS-3115**
