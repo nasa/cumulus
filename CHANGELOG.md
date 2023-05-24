@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
     instead of NPM `parallel` package, as timeouts were not resulting in
     integration test failure
+- **CUMULUS-2625**
+  - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
 
 ### Notable Changes
 
