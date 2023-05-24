@@ -7,9 +7,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
-  - **CUMULUS-2985**
-    - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
-    - Changed the `invokeRerun` function to only re-run enabled rules
+  
+- **CUMULUS-2985**
+  - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
+  - Changed the `invokeRerun` function to only re-run enabled rules
+- **CUMULUS-3252**
+  - Add cumulus task `@cumulus/orca-copy-to-archive-adapter`
 
 ### Notable Changes
 

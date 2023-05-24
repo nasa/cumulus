@@ -1,32 +1,41 @@
 'use strict';
 
 import { Context } from 'aws-lambda';
-import cumulusMessageAdapter from '@cumulus/cumulus-message-adapter-js';
+import isObject from 'lodash/isObject';
+import pick from 'lodash/pick';
 
-import { lambda } from '@cumulus/aws-client/services';
-import log from '@cumulus/common/log';
+import Logger from '@cumulus/logger';
+import { invoke } from '@cumulus/aws-client/Lambda';
+import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
-import { HandlerEvent } from './types';
 
-async function invokeOrcaCopyToArchive(event: HandlerEvent) {
-  const functionName = process.env.OS_ENVIRON_COPY_TO_ARCHIVE_ARN_KEY || '';
-  const response = await lambda().invoke({
-    FunctionName: functionName,
-    InvocationType: 'RequestResponse',
-    Payload: JSON.stringify({
-      input: event.input,
-      config: event.config,
-    }),
-  }).promise();
+import { HandlerEvent, HandlerOutput } from './types';
 
-  log.info(response);
-  if (response.StatusCode !== 200) {
-    log.error(`Failed to invoke orca lambda ${functionName}, response ${JSON.stringify(response)}`);
-    throw new Error(`Failed to invoke orca lambda ${functionName}, response ${JSON.stringify(response)}`);
+const log = new Logger({ sender: '@cumulus/orca-copy-to-archive-adapter' });
+
+export const invokeOrcaCopyToArchive = async (
+  event: HandlerEvent,
+  _context?: Context
+) : Promise<HandlerOutput> => {
+  const functionName = process.env.orca_lambda_copy_to_archive_arn;
+  if (!functionName?.length) {
+    log.error('Environment orca_lambda_copy_to_archive_arn is not set');
+    throw new Error('Environment orca_lambda_copy_to_archive_arn is not set');
   }
 
-  return response.Payload;
-}
+  const payload = pick(event, ['input', 'config']);
+  const response = await invoke(functionName, payload, 'RequestResponse');
+
+  log.debug(`invokeOrcaCopyToArchive returns ${response && response.Payload}`);
+
+  if (!isObject(response) || response.StatusCode !== 200) {
+    const errorString = `Failed to invoke orca lambda ${functionName}, response ${response && response.Payload}`;
+    log.error(errorString);
+    throw new Error(errorString);
+  }
+
+  return JSON.parse(response.Payload?.toString('base64') ?? '{}');
+};
 
 /**
  * Lambda handler
@@ -36,13 +45,8 @@ async function invokeOrcaCopyToArchive(event: HandlerEvent) {
  * @returns {Promise<Object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
-async function handler(event: CumulusMessage | CumulusRemoteMessage,
-  context: Context) {
-  return await cumulusMessageAdapter.runCumulusTask(
-    invokeOrcaCopyToArchive,
-    event, context
-  );
-}
-
-exports.handler = handler;
-exports.invokeOrcaCopyToArchive = invokeOrcaCopyToArchive;
+export const handler = async (
+  event: CumulusMessage | CumulusRemoteMessage,
+  context: Context
+): Promise<CumulusMessageWithAssignedPayload
+| CumulusRemoteMessage> => await runCumulusTask(invokeOrcaCopyToArchive, event, context);

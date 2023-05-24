@@ -1,6 +1,4 @@
 export interface GranuleFile {
-  checksumType?: string,
-  checksum?: string,
   bucket: string,
   key: string,
   [key: string]: unknown
@@ -16,9 +14,18 @@ export interface HandlerInput {
   [key: string]: unknown
 }
 
+export interface HandlerOutput {
+  granules: Granule[],
+  copied_to_orca: [string]
+}
+
 export interface HandlerEvent {
   config: {
-    algorithm: string
+    providerId: string,
+    executionId: string,
+    collectionShortname: string,
+    collectionVersion: string,
+    [key: string]: unknown
   },
   input: HandlerInput
 }
