@@ -225,6 +225,7 @@ const sidebars = {
         'upgrade-notes/update-task-file-schemas',
         'upgrade-notes/update-cma-2.0.2',
         'upgrade-notes/upgrade-rds-phase-3-release',
+        'upgrade-notes/rds-phase-3-data-migration-guidance',
       ],
     },
     {
