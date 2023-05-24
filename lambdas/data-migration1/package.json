@@ -35,7 +35,7 @@
     "@cumulus/types": "15.0.0",
     "knex": "2.4.1",
     "lodash": "^4.17.21",
-    "pg": "^8.3.0"
+    "pg": "~8.10"
   },
   "devDependencies": {
     "@cumulus/test-data": "15.0.0"
