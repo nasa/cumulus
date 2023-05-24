@@ -8,44 +8,43 @@ A few issues were identied as part of the RDS Phase 2 release. These issues coul
 
 ## Issue Descriptions
 
-### Issue 1:
+### Issue 1
 
-https://bugs.earthdata.nasa.gov/browse/CUMULUS-3019
+[Relevant ticket: CUMULUS-3019](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3019)
 
 Ingesting granules will delete unrelated files from the Files Postgres table. This is due to an issue in our logic to remove excess files when writing granules and fixed in Cumulus versions 13.2.1, 12.0.2, 11.1.5
 
 With this bug we believe the data in Dynamo is the most reliable and Postgres is out-of-sync.
 
-### Issue 2:
+### Issue 2
 
-https://bugs.earthdata.nasa.gov/browse/CUMULUS-3024
+[Relevant ticket: CUMULUS-3024](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3024)
 
 Updating an existing granule either via API or Workflow could result in datastores becoming out-of-sync if a partial granule record is provided. Our update logic operates differently in Postgres and Dynamo/Elastic. If a partial object is provided in an update payload the Postgres record will delete/nullify fields not present in the payload. Dynamo/Elastic will retain existing values and not delete/nullify.
 
 With this bug it’s possible that either Dynamo or PG could be the source of truth. It’s likely that it’s still Dynamo.
 
-### Issue 3:
+### Issue 3
 
-### https://bugs.earthdata.nasa.gov/browse/CUMULUS-3024
+[Relevant ticket: CUMULUS-3024](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3024)
 
 Updating an existing granule with an empty files array in the update payload results in datastores becoming out-of-sync. If an empty array is provided, existing files in Dynamo and Elastic will be removed. Existing files in Postgres will be retained.
 
 With this bug Postgres is the source of truth. Files are retained in PG and incorrectly removed in Dynamo/Elastic.
 
-### Issue 4:
+### Issue 4
 
-https://bugs.earthdata.nasa.gov/browse/CUMULUS-3017
+[Relevant ticket: CUMULUS-3017](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3017)
 
 Updating/putting a granule via framework writes that duplicates a granuleId but has a different collection results in overwrite of the DynamoDB granule but a *new* granule record for Postgres.  This *intended* post RDS transition, however should not be happening now.
 
 With this bug we believe Dynamo is the source of truth, and ‘excess’ older granules will be left in postgres.     This should be detectable with tooling/query to detect duplicate granuleIds in the granules table.
 
-### Issue 5:
+### Issue 5
 
-https://bugs.earthdata.nasa.gov/browse/CUMULUS-3024
+[Relevant ticket: CUMULUS-3024](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3024)
 
 This is a sub-issue of issue 2 above - due to the way we assign a PDR name to a record, if the `pdr` field is missing from the final payload for a granule as part of a workflow message write, the final granule record will not link the PDR to the granule properly in postgres, however the dynamo record *will* have the linked PDR.       This *can* happen in situations where the granule is written prior to completion with the PDR in the payload, but then downstream only the granule object is included, particularly in multi-workflow ingest scenarios and/or bulk update situations.
-
 
 ## Immediate Actions
 
@@ -64,7 +63,7 @@ This is a sub-issue of issue 2 above - due to the way we assign a PDR name to a 
 
 1. Before updating to Cumulus version 16.x and beyond, take a snapshot of your DynamoDB instance. The v16 update removes the DynamoDB tables. This snapshot would be for use in unexpected data recovery scenarios only.
 
-2. Cumulus recommends that you establish and follow a database backup/disaster recovery protocol for your RDS database, which should include periodic backups.  The frequency will depend on each DAAC’s database architecture, comfort level, datastore size, and time available. https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateSnapshot.html
+2. Cumulus recommends that you establish and follow a database backup/disaster recovery protocol for your RDS database, which should include periodic backups.  The frequency will depend on each DAAC’s database architecture, comfort level, datastore size, and time available. [Relevant AWS Docs](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateSnapshot.html)
 
 3. Invest future development effort in data validation/integrity tools and procedures. Each DAAC has different requirements here. Each DAAC should maintain procedures for validating their Cumulus datastore against their holdings.
 
