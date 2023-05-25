@@ -40,7 +40,7 @@
     "knex": "2.4.1",
     "lodash": "^4.17.21",
     "p-map": "^4.0.0",
-    "pg": "~8.10""
+    "pg": "~8.10"
   },
   "devDependencies": {
     "@cumulus/test-data": "15.0.0"
