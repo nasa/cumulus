@@ -243,7 +243,13 @@ If tests are working, run coverage tests
 ```sh
 export LOCAL_ES_HOST=127.0.0.1
 export LOCALSTACK_HOST=127.0.0.1
-npm test
+npm test:coverage
+```
+These tests will fail if coverage drops below certain thresholds.
+an environment variable can be set to only measure and not threshold
+```sh
+export FAIL_ON_COVERAGE=false
+npm test:coverage
 ```
 
 ### Integration Tests
