@@ -20,7 +20,7 @@
     "deploy-all": "npm run deploy-data && npm run deploy-cumulus",
     "deploy-cumulus": "cd cumulus-tf && terraform init && terraform apply",
     "deploy-data": "cd data-persistence-tf && terraform init && terraform apply",
-    "int-test": "../node_modules/.bin/jasmine && nyc npm run parallel-tests",
+    "int-test": "../node_modules/.bin/jasmine && npm run parallel-tests",
     "load-test": "../node_modules/.bin/jasmine ./spec/loadTest/runScaledtest.js",
     "package": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm run package); done",
     "package-deployment": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm install && npm run package); done",
