@@ -4,12 +4,11 @@ const { deprecate } = require('@cumulus/common/util');
 const granulesApi = require('@cumulus/api-client/granules');
 
 /**
- * GET /granules/{collectionId}/{granuleId}
+ * GET /granules/{granuleId}
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
  * @param {string} params.granuleId - a granule ID
- * @param {string} params.collectionId - a collection ID
  * @param {Object} params.callback - function to invoke the api lambda
  *                                   that takes a prefix / user payload
  * @returns {Promise<Object>} - the granule fetched by the API
