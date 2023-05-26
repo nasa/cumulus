@@ -12,7 +12,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
 - **CUMULUS-3252**
-  - Add cumulus task `@cumulus/orca-copy-to-archive-adapter`
+  - Updated example/cumulus-tf/orca.tf to use orca v8.0.0
+  - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
+  - Updated `tf-modules/cumulus` module to take variable `orca_lambda_copy_to_archive_arn` and pass to `tf-modules/ingest`
+  - Updated `example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf` `CopyToGlacier` (renamed to `CopyToArchive`) step to call
+    `orca_copy_to_archive_adapter_task`
 
 ### Notable Changes
 

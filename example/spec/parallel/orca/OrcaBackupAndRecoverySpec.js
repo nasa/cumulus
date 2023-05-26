@@ -122,17 +122,17 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
-  describe('the CopyToGlacier task', () => {
+  describe('the CopyToArchive task', () => {
     let lambdaOutput;
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'copy_to_glacier');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'OrcaCopyToArchiveAdapter');
     });
 
     it('copies files configured to glacier', async () => {
       const excludedFileExtensions = get(lambdaOutput, 'meta.collection.meta.orca.excludedFileExtensions', []);
       expect(excludedFileExtensions.length).toBe(1);
-      filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
+      filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_orca', []);
       expect(filesCopiedToGlacier.length).toBe(3);
 
       // copiedToGlacier contains a list of the file s3uri in primary buckets
@@ -146,7 +146,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the recovery workflow', () => {
+  // TODO CUMULUS-3253 add recovery adapter to work with orca 8.0.0
+  xdescribe('the recovery workflow', () => {
     let asyncOperationId;
 
     it('generates an async operation through the Cumulus API', async () => {
@@ -249,7 +250,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
+  // TODO CUMULUS-3253 add recovery adapter to work with orca 8.0.0
+  xdescribe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
     it('returns list of granules with recovery status', async () => {
       const response = await listGranules({
         prefix: config.stackName,

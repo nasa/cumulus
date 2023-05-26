@@ -14,8 +14,7 @@ import { HandlerEvent, HandlerOutput } from './types';
 const log = new Logger({ sender: '@cumulus/orca-copy-to-archive-adapter' });
 
 export const invokeOrcaCopyToArchive = async (
-  event: HandlerEvent,
-  _context?: Context
+  event: HandlerEvent
 ) : Promise<HandlerOutput> => {
   const functionName = process.env.orca_lambda_copy_to_archive_arn;
   if (!functionName?.length) {

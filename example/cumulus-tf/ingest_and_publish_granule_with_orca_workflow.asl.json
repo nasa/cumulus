@@ -307,7 +307,7 @@
       },
       "Type": "Task",
       "Resource": "${hyrax_metadata_updates_task_arn}",
-      "Next": "CopyToGlacier",
+      "Next": "CopyToArchive",
       "Catch": [
         {
           "ErrorEquals": [
@@ -330,7 +330,7 @@
         }
       ]
     },
-    "CopyToGlacier": {
+    "CopyToArchive": {
       "Parameters": {
         "cma": {
           "event.$": "$",
@@ -345,7 +345,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${orca_lambda_copy_to_glacier_arn}",
+      "Resource": "${orca_copy_to_archive_adapter_task}",
       "Next": "CmrStep",
       "Catch": [
         {
