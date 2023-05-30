@@ -181,7 +181,7 @@ fi
 ## Set integration stack name if it's not been overridden *or* set by SIT
 if [[ -z $DEPLOYMENT ]]; then
   DEPLOYMENT=$(node ./bamboo/select-stack.js)
-  
+
   echo "Using terraform stack name $DEPLOYMENT-tf"
   DEPLOYMENT=$DEPLOYMENT-tf
 
@@ -192,7 +192,7 @@ if [[ -z $DEPLOYMENT ]]; then
   fi
   echo export DEPLOYMENT="$DEPLOYMENT" >> .bamboo_env_vars
 fi
-echo "using $DEPLOYMENT fr deployment"
+
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then
   export UNIT_TEST_BUILD_DIR=/cumulus
 else
