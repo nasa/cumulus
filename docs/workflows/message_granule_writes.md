@@ -37,7 +37,7 @@ For each granule to be written, the following constraints apply:
 
 - Message granule must match the [API Granule schema](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js).
 
-  If not the write will be rejected, the granule status will be updated to failed, and the message will wind up in the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/)
+  If not the write will be rejected, the granule status will be updated to `failed`, and the message will wind up in the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/)
 
 - If the granule is being updated to a running/queued state:
   - Only `status`, `timestamp`, `updated_at` and `created_at` are updated.   All other values are retained as-they currently exist in the database.
