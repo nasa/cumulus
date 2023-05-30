@@ -146,7 +146,7 @@ describe('Ingesting from PDR', () => {
     await waitForGranuleAndDelete(
       config.stackName,
       testDataGranuleId,
-      constructCollectionId(addedCollections[0].name, addCollections[0].version),
+      constructCollectionId(addedCollections[0].name, addedCollections[0].version),
       'completed'
     );
     await apiTestUtils.deletePdr({
