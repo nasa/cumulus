@@ -10,7 +10,7 @@ When an [AWS Step Function Event](https://docs.aws.amazon.com/step-functions/lat
 
 Messages on the `sfEventSqsToDbRecordsInputQueue` (which correspond to lambda invocations or workflow events) are processed in batches of 10 and the `sfEventSqsToDbRecords` Lambda is triggered for each. The corresponding execution/PDR is attempted to write, then the granule records associated with the message are also attempted to be written.
 
-For each granule in the batch of granules one of the following occurs:
+For each granule in the batch of granules **one of the following** occurs:
 
 - The granule is written successfully.
 - The granule write is dropped, due to asynchronous write constraints.
