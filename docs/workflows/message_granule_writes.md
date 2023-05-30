@@ -14,7 +14,7 @@ For each granule in the batch of granules **one of the following** occurs:
 
 - The granule is written successfully.
 - The granule write is dropped, due to asynchronous write constraints.
-- The lambda fails to write the granule in an unexpected way (e.g. lambda failure, AWS outage, etc).   In this case, the granule will become visible again after the `sfEventSqsToDbRecordsInputQueue` visibility timeout configuration (currently set as a function of the rds_connection_timing_configuration terraform variable:
+- The lambda fails to write the granule in an unexpected way (e.g. lambda failure, AWS outage, etc).   In this case, the granule will become visible again after the `sfEventSqsToDbRecordsInputQueue` visibility timeout (currently set as a function of the rds_connection_timing_configuration terraform variable:
 
 ```terraform
 var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
