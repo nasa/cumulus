@@ -6,7 +6,7 @@ hide_title: false
 
 The LZARDS backup task takes an array of granules and initiates backup requests to the LZARDS API, which will be handled asynchronously by LZARDS.
 
-:::info 
+:::info
 
 For more information about LZARDS and the backup process go to the [LZARDS Overview](https://wiki.earthdata.nasa.gov/display/LZARDS/LZARDS+Home).
 
