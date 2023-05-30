@@ -35,7 +35,7 @@ For each granule to be written, the following constraints apply:
 
   Granule write will not be allowed if `granuleId` already exists in the database for another collection, granules in this state will be rejected to write and wind up in the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/)
 
-- Message granule must match the API schema.
+- Message granule must match the [API Granule schema](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js).
 
   If not the write will be rejected, the granule status will be updated to failed, and the message will wind up in the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/)
 
