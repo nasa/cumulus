@@ -20,7 +20,7 @@ For each granule in the batch of granules **one of the following** occurs:
 var.rds_connection_timing_configuration.acquireTimeoutMillis / 1000) + 60
 ```
 
-- The granule fails to write due to a schema violation, database connection issue or other expected/trapped error.    The message is immediately written to the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/) for User manual intervention/investigation.
+- The granule fails to write due to a schema violation, database connection issue or other expected/caught error.    The message is immediately written to the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/) for manual intervention/investigation.
 
 ### Caveats
 
