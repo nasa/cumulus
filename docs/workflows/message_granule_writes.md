@@ -8,7 +8,7 @@ hide_title: false
 
 When an [AWS Step Function Event](https://docs.aws.amazon.com/step-functions/latest/dg/cw-events.html) occurs for a [Cumulus workflow](https://nasa.github.io/cumulus/docs/next/workflows/) *or* a write is attempted via the [sf-sqs-report task](https://github.com/nasa/cumulus/tree/master/tasks/sf-sqs-report) a message is dispatched to the `sfEventSqsToDbRecordsInputQueue` for processing.
 
-The `sfEventSqsToDbRecords` is then triggered in batches of 10 messages each, which correspond to lambda invocations or workflow events, and the corresponding execution/PDR is attempted to write, then the granule records associated with the message are also attempted to be written.
+Messages on the `sfEventSqsToDbRecordsInputQueue` (which correspond to lambda invocations or workflow events) are processed in batches of 10 and the `sfEventSqsToDbRecords` Lambda is triggered for each. The corresponding execution/PDR is attempted to write, then the granule records associated with the message are also attempted to be written.
 
 For each granule in the batch of granules one of the following occurs:
 
