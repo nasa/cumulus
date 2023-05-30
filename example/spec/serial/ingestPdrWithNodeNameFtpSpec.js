@@ -352,7 +352,6 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
-              const collectionId = constructCollectionId(finalOutput.meta.collection.name, finalOutput.meta.collection.version);
               await waitForApiStatus(
                 getGranule,
                 {
