@@ -25,6 +25,7 @@ function determineIntegrationTestStackName(cb) {
     'Katherine Kelly': 'kk-int',
     'Jennifer Tran': 'jtran-int',
     'Jonathan Kovarik': 'jk',
+    'etcart': 'ecarton-int',
     nasamoduyebo: 'mao-ci',
     'Nate Pauzenga': 'np-ci',
     'Naga Nages': 'nnaga-ci',
