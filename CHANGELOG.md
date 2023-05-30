@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+  - **CUMULUS-2985**
+    - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
+    - Changed the `invokeRerun` function to only re-run enabled rules
+
 ### Notable Changes
 
 - The async_operation_image property of cumulus module should be updated to pull
@@ -175,6 +180,9 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed `granuleFilesCacheUpdater` lambda
   - Removed dynamo files table from `data-persistence` module.  *This table and
     all of its data will be removed on deployment*.
+- **CUMULUS-3290**
+  - Removed Dynamo references from local API serve.js script
+  - Updated .python-version to include patch version
 
 ### Added
 
@@ -187,7 +195,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added support for sha512 as checksumType for LZARDs backup task.
 
 ### Changed
-
+- **CUMULUS-3307**
+  - Pinned cumulus dependency on `pg` to `v8.10.x`
 - **CUMULUS-3279**
   - Updated core dependencies on `xml2js` to `v0.5.0`
   - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
@@ -216,8 +225,21 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - "Back to Top" button matches the brand color for both themes.
   - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
   - Add updated arch diagram for both themes.
+- **CUMULUS-3203**
+  - Removed ACL setting of private on S3.multipartCopyObject() call
+  - Removed ACL setting of private for s3PutObject()
+  - Removed ACL confguration on sync-granules task
+  - Update documentation on dashboard deployment to exclude ACL public-read setting
 
-  ### Removed
+### Fixed
+
+- **CUMULUS-3223**
+  - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
+  - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
+    and only reprocess messages when cumulus message can't be retrieved from the execution events.
+  - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
+
+### Removed
 
 - **CUMULUS-3204**
   - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
