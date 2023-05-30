@@ -39,7 +39,7 @@ For each granule to be written, the following constraints apply:
 
   If not the write will be rejected, the granule status will be updated to `failed`, and the message will wind up in the [Dead Letter Archive](https://nasa.github.io/cumulus/docs/features/dead_letter_archive/)
 
-- If the granule is being updated to a running/queued state:
+- If the granule is being updated to a `running`/`queued` status:
   - Only `status`, `timestamp`, `updated_at` and `created_at` are updated.   All other values are retained as-they currently exist in the database.
   - The write will only be allowed if the following are true, else the write request will be ignored as out-of-order/stale:
     - The granule createdAt value is newer or the same as the existing record.
