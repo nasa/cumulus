@@ -29,7 +29,7 @@ type CollectionInfo = {
  * @alias module:Collections
  */
 export const constructCollectionId = (name: string, version: string) =>
-  `${name}${collectionIdSeparator}${version}`;
+  `${name}${collectionIdSeparator}${encodeURIComponent(version)}`;
 
 /**
  * Returns the name and version of a collection based on
