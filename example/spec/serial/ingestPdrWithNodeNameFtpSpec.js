@@ -13,7 +13,6 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, getGranule } = require('@cumulus/api-client/granules');
 const { getPdr } = require('@cumulus/api-client/pdrs');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   addCollections,
