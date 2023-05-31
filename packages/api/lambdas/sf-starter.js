@@ -183,6 +183,7 @@ async function sqs2sfEventSourceHandler(event) {
 }
 
 module.exports = {
+  dispatch,
   incrementAndDispatch,
   sqs2sfEventSourceHandler,
   sqs2sfHandler,

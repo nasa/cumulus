@@ -21,6 +21,7 @@ const sfStarter = rewire('../../lambdas/sf-starter');
 const { Manager } = require('../../models');
 
 const {
+  dispatch,
   incrementAndDispatch,
   handleEvent,
   handleThrottledEvent,
@@ -179,6 +180,36 @@ test.serial('handleEvent returns the number of messages consumed', async (t) => 
     revert();
   }
   t.is(data, 9);
+});
+
+test.serial('handleEvent deletes message if execution already exists', async (t) => {
+  const { queueUrl } = t.context;
+  const ruleInput = createRuleInput(queueUrl);
+  const deleteMessageStub = sinon.stub(sqs, 'deleteSQSMessage').resolves({});
+
+  const maxExecutions = 5;
+  const message = createWorkflowMessage(queueUrl, maxExecutions);
+  await sendSQSMessage(
+    queueUrl,
+    message
+  );
+
+  const stubSFNThrowError = () => ({
+    startExecution: () => ({
+      promise: async () => {
+        throw new Error('ExecutionAlreadyExists');
+      },
+    }),
+  });
+  const revert = sfStarter.__set__('sfn', stubSFNThrowError);
+
+  t.teardown(() => {
+    revert();
+    deleteMessageStub.restore();
+  });
+
+  await handleEvent(ruleInput, dispatch);
+  t.true(deleteMessageStub.called);
 });
 
 test('incrementAndDispatch throws error for message without queue URL', async (t) => {
