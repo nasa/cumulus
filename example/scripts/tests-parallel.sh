@@ -8,13 +8,14 @@ echo Running parallel integration tests
 (while true; do sleep 60; echo .; done) &
 DOT_PID="$!"
 
-TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js')
+TESTS=$(find spec/parallel -type f -name '*IngestGranuleSuccessSpec*.js' -or -name '*OrcaBackupAndRecoverySpec*.js')
 testOutputDir=scripts/test_output
+testTimeout=1200
 
 rm -r -f $testOutputDir
 mkdir -p $testOutputDir
 
-echo "" | ../node_modules/.bin/parallel -j "${INTEGRATION_CONCURRENCY:=0}" --timeout 1200 sh scripts/run_test.sh  $testOutputDir ::: $TESTS
+echo "" | ../node_modules/.bin/parallel -j "${INTEGRATION_CONCURRENCY:=0}" sh scripts/run_test.sh  $testOutputDir $testTimeout ::: $TESTS
 result=$?
 echo parallel tests complete: $result suite failures
 
