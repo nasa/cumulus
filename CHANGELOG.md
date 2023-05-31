@@ -231,7 +231,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed ACL confguration on sync-granules task
   - Update documentation on dashboard deployment to exclude ACL public-read setting
 - **CUMULUS-3245**
-  - Update step function starter logic to catch ExecutionAlreadyExists error and
+  - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
 
 ### Fixed

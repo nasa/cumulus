@@ -283,13 +283,16 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
   );
 });
 
-test.serial('incrementAndDispatch throws error and deletes message when execution already exists', async (t) => {
+test.serial('handleThrottledEvent throws error and deletes message when execution already exists', async (t) => {
   const { semaphore, queueUrl } = t.context;
-  const message = createWorkflowMessage(queueUrl, 5);
-  const receiptHandle = randomId();
+  const maxExecutions = 5;
 
-  // Send first message
-  await incrementAndDispatch(queueUrl, { Body: message, ReceiptHandle: receiptHandle });
+  const message = createWorkflowMessage(queueUrl, maxExecutions);
+
+  await sendSQSMessage(
+    queueUrl,
+    message
+  );
 
   // Stub to throw an error
   const deleteMessageStub = sinon.stub(sqs, 'deleteSQSMessage').resolves({});
@@ -297,23 +300,19 @@ test.serial('incrementAndDispatch throws error and deletes message when executio
     startExecution: () => ({
       promise: async () => {
         const response = await semaphore.get(queueUrl);
-        t.is(response.semvalue, 2);
+        t.is(response.semvalue, 1);
         throw new Error('ExecutionAlreadyExists');
       },
     }),
   });
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
-
   t.teardown(() => {
     revert();
     deleteMessageStub.restore();
   });
 
-  // Send duplicate message to trigger ExecutionAlreadyExists
-  await t.throwsAsync(
-    () => incrementAndDispatch(queueUrl, { Body: message, ReceiptHandle: receiptHandle }),
-    { message: 'ExecutionAlreadyExists' }
-  );
+  const result = await handleThrottledEvent({ queueUrl });
+  t.is(result, 0);
   t.true(deleteMessageStub.called);
 });
 
