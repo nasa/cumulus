@@ -46,7 +46,7 @@ test('getGranule calls the callback with the expected status codes', async (t) =
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      path: `/granules/${t.context.granuleId}`,
     },
     expectedStatusCodes: [404, 200],
   };
@@ -56,7 +56,6 @@ test('getGranule calls the callback with the expected status codes', async (t) =
     return Promise.resolve({
       body: JSON.stringify({
         granuleId: t.context.granuleId,
-        collectionId: t.context.collectionId,
         expectedStatusCodes: [404, 200],
       }),
     });
@@ -66,7 +65,6 @@ test('getGranule calls the callback with the expected status codes', async (t) =
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
-    collectionId: t.context.collectionId,
     expectedStatusCodes: [404, 200],
   }));
 });
