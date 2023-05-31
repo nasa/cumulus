@@ -44,7 +44,7 @@ fi
 
 # Deploy data-persistence-tf via terraform
 echo "Deploying Cumulus data-persistence module to $DEPLOYMENT"
-../terraform apply -lock=false\
+../terraform apply\
   -auto-approve \
   -input=false \
   -var-file="../deployments/data-persistence/$BASE_VAR_FILE" \
@@ -73,7 +73,7 @@ echo "terraform {
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
-../terraform apply -lock=false\
+../terraform apply \
   -auto-approve \
   -input=false \
   -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
