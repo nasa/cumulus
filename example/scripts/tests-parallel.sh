@@ -8,7 +8,7 @@ echo Running parallel integration tests
 (while true; do sleep 60; echo .; done) &
 DOT_PID="$!"
 
-TESTS=$(find spec/parallel -type f -name '*IngestGranuleSuccessSpec*.js' -or -name '*OrcaBackupAndRecoverySpec*.js')
+TESTS=$(find spec/parallel -type f -name '*spec.js' -or -name '*Spec.js')
 testOutputDir=scripts/test_output
 testTimeout=1200
 
