@@ -20,6 +20,8 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
@@ -163,7 +165,10 @@ describe('The S3 Ingest Granules workflow', () => {
 
       const response = await bulkOperation({
         prefix: config.stackName,
-        ids: [granuleId],
+        granules: [{
+          granuleId,
+          collectionId: constructCollectionId(collection.name, collection.version),
+        }],
         workflowName: recoveryWorkflowName,
       });
 
