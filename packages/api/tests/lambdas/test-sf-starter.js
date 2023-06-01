@@ -195,11 +195,9 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
   );
 
   const stubSFNThrowError = () => ({
-    startExecution: () => ({
-      promise: async () => {
-        throw new Error('ExecutionAlreadyExists');
-      },
-    }),
+    startExecution: () => {
+      throw new Error('ExecutionAlreadyExists');
+    },
   });
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
 

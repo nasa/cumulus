@@ -1,9 +1,10 @@
 import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
 import * as sqs from '@cumulus/aws-client/SQS';
-import * as log from '@cumulus/common/log';
+import Logger from '@cumulus/logger';
 
 export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;
 
+const log = new Logger({ sender: '@cumulus/ingest/consumer' });
 export interface ConsumerConstructorParams {
   queueUrl: string,
   messageLimit?: number,
@@ -43,7 +44,9 @@ export class Consumer {
   ): Promise<0 | 1> {
     try {
       await fn(this.queueUrl, message);
-      if (this.deleteProcessedMessage) await sqs.deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+      if (this.deleteProcessedMessage) {
+        await sqs.deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+      }
       return 1;
     } catch (error) {
       if (error.code === 'ExecutionAlreadyExists' || error.message.includes('ExecutionAlreadyExists')) {
