@@ -247,18 +247,18 @@ describe('POST /granules/bulkDelete', () => {
     it('runs an ECS task', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
-      console.log(taskArn)
       // Verify that the task ARN exists in that cluster
       const describeTasksResponse = await ecs().describeTasks({
         cluster: clusterArn,
         tasks: [taskArn],
       }).promise();
-      console.log(describeTasksResponse)
+
       expect(describeTasksResponse.tasks.length).toEqual(1);
     });
 
     it('eventually generates the correct output', async () => {
       expect(beforeAllSucceeded).toBeTrue();
+
       await ecs().waitFor(
         'tasksStopped',
         {
