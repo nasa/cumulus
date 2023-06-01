@@ -66,14 +66,14 @@ describe('POST /granules/bulkDelete', () => {
     beforeAll(async () => {
       try {
         const sourceBucket = config.bucket;
-        console.log("sourceBucket")
-        console.log(sourceBucket)
+        console.log('sourceBucket');
+        console.log(sourceBucket);
         const testId = createTimestampedTestId(config.stackName, 'bulkDeleteSuccess');
         const testSuffix = createTestSuffix(testId);
 
         // The S3 path where granules will be ingested from
         const sourcePath = `${prefix}/tmp/${testSuffix}`;
-        console.log("sourcePath: ");
+        console.log('sourcePath: ');
         console.log(sourcePath);
         // Create the collection
         // NOTE: Have to use a collection name/version (minus the suffix)
@@ -94,12 +94,12 @@ describe('POST /granules/bulkDelete', () => {
 
         // Create the S3 provider
         provider = await createProvider(prefix, { host: sourceBucket });
-        console.log("provider")
-        console.log(provider)
+        console.log('provider');
+        console.log(provider);
         const filename = `${randomId('file')}.txt`;
         const fileKey = `${sourcePath}/${filename}`;
-        console.log("fileKey")
-        console.log(fileKey)
+        console.log('fileKey');
+        console.log(fileKey);
         await s3PutObject({
           Bucket: sourceBucket,
           Key: fileKey,
@@ -107,8 +107,8 @@ describe('POST /granules/bulkDelete', () => {
         });
 
         granuleId = randomId('granule-id-');
-        console.log("granuleId")
-        console.log(granuleId)
+        console.log('granuleId');
+        console.log(granuleId);
         const ingestTime = Date.now() - 1000 * 30;
 
         // Ingest the granule the first time
