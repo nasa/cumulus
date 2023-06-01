@@ -207,7 +207,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added support for sha512 as checksumType for LZARDs backup task.
 
 ### Changed
-
+- **CUMULUS-3307**
+  - Pinned cumulus dependency on `pg` to `v8.10.x`
 - **CUMULUS-3279**
   - Updated core dependencies on `xml2js` to `v0.5.0`
   - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
@@ -240,6 +241,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed ACL setting of private on S3.multipartCopyObject() call
   - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
+  - Update documentation on dashboard deployment to exclude ACL public-read setting
 
 ### Fixed
 
