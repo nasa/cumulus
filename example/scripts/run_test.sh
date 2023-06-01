@@ -15,7 +15,7 @@ TIMESTAMP=$(date "+%Y-%m-%dT%H:%M:%S")
 if [[ "$result" -eq "0" ]]; then
   echo "$TIMESTAMP ../node_modules/.bin/jasmine $3 PASSED"
   mv "$outputPath" "$1/${specName}-passed.txt"
-elif [[ ( "$result" -gt "124" && "$result" -lt "128" ) || "$result" -eq "137" ]]; then
+elif [[ "$result" -gt "124" && "$result" -lt "128" ]] || [[ "$result" -eq "137" ]]; then
   echo "$TIMESTAMP ../node_modules/.bin/jasmine $3 PASSED"
   mv "$outputPath" "$1/${specName}-passed.txt"
   result=1
