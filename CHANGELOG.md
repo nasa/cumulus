@@ -7,9 +7,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
-  - **CUMULUS-2985**
-    - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
-    - Changed the `invokeRerun` function to only re-run enabled rules
+
+- **CUMULUS-2985**
+  - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
+  - Changed the `invokeRerun` function to only re-run enabled rules
+
+### Fixed
+
+- **CUMULUS-3315**
+  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
+    instead of NPM `parallel` package, as timeouts were not resulting in
+    integration test failure
 
 ### Notable Changes
 
@@ -195,7 +203,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added support for sha512 as checksumType for LZARDs backup task.
 
 ### Changed
-
+- **CUMULUS-3307**
+  - Pinned cumulus dependency on `pg` to `v8.10.x`
 - **CUMULUS-3279**
   - Updated core dependencies on `xml2js` to `v0.5.0`
   - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
@@ -228,6 +237,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed ACL setting of private on S3.multipartCopyObject() call
   - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
+  - Update documentation on dashboard deployment to exclude ACL public-read setting
 
 ### Fixed
 
