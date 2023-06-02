@@ -22,7 +22,6 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');

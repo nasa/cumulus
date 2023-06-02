@@ -707,7 +707,7 @@ export const bulkOperation = async (params: {
   workflowName: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granules, workflowName, callback = invokeApi } = params;3
+  const { prefix, granules, workflowName, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
     payload: {
