@@ -233,6 +233,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3245**
   - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
+  - Add ReportBatchItemFailures to event source mapping
 
 ### Fixed
 
