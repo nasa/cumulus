@@ -145,17 +145,6 @@ async function handleSourceMappingEvent(event) {
 }
 
 /**
- * Handler for messages from normal SQS queues.
- *
- * @param {Object} event - Lambda input message from SQS
- * @returns {Promise} - A promise resolving to how many executions were started
- * @throws {Error}
- */
-async function sqs2sfHandler(event) {
-  return await handleEvent(event, dispatch);
-}
-
-/**
  * Handler for messages from priority SQS queues.
  *
  * @param {Object} event - Lambda input message from SQS
@@ -181,7 +170,6 @@ module.exports = {
   dispatch,
   incrementAndDispatch,
   sqs2sfEventSourceHandler,
-  sqs2sfHandler,
   sqs2sfThrottleHandler,
   handleEvent,
   handleThrottledEvent,
