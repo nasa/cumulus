@@ -105,7 +105,10 @@ async function queueGranules(event, testMocks = {}) {
       await pMap(
         granuleBatch,
         (queuedGranule) => {
-          const collectionId = queuedGranule.collectionId;
+          const collectionId = constructCollectionId(
+            queuedGranule.dataType,
+            queuedGranule.version
+          );
 
           const granuleId = queuedGranule.granuleId;
 
