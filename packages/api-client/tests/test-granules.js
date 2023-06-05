@@ -543,7 +543,7 @@ test('bulkOperation calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: `/granules/bulk/`,
+      path: '/granules/bulk/',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         granules,
