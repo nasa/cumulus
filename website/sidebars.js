@@ -130,6 +130,7 @@ const sidebars = {
         'workflows/protocol',
         'workflows/input_output',
         'workflows/workflow-triggers',
+        'workflows/message_granule_writes',
         {
           type: 'category',
           label: 'Workflow Tasks',
