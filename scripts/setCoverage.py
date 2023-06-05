@@ -4,6 +4,8 @@ import math
 from typing_extensions import TypedDict
 from typing import Dict, Union
 import time
+from argparse import ArgumentParser
+
 class TestException(Exception):
     pass
 
@@ -12,6 +14,10 @@ class CoverageDict(TypedDict):
     branches: float
     statements: float
     functions: float
+
+def truncateFloat(value: float, precision: int) -> float:
+    shift = 10**precision
+    return math.floor(value * shift)/shift
 
 def generateCoverageReport() -> str:
     """
@@ -33,13 +39,14 @@ def generateCoverageReport() -> str:
         raise TestException("nyc test failed, see output above")
 
 
-def parseCoverageValues(coveragePath: str) -> CoverageDict:
+def parseCoverageValues(coveragePath: str, precision: int) -> CoverageDict:
     """
     extract lines, branches, functions, statements total coverage percentage values
     assumes those values are to be found at "total.<type>.pct"
 
     Args:
         coveragePath (str): filePath to find json summary
+        precision (int): coveragePrecision as position to the right of decimal
 
     Returns:
         CoverageDict: dict of coverage values by type
@@ -48,13 +55,12 @@ def parseCoverageValues(coveragePath: str) -> CoverageDict:
         unParsedCoverageDict = json.load(coverageFile)
     
     return {
-        covType: math.floor(unParsedCoverageDict['total'][covType]['pct'])
+        covType: truncateFloat(unParsedCoverageDict['total'][covType]['pct'], precision)
         for covType in ["lines", "branches", "functions", "statements"]
     }
     
     
 def updateNYCRCFile(coverage: CoverageDict, nycConfigPath: str) -> None:
-    
     """
     parse current .nycrc.json file and add/replace coverage values with new
 
@@ -79,14 +85,23 @@ def updateNYCRCFile(coverage: CoverageDict, nycConfigPath: str) -> None:
 def main() -> None:
     """
     run the current directory's npm test routine and capture current coverage
-    then update the local nyc config (./.nycrc.json) to reflect these values
+    then update the local nyc config to reflect these values
     """
-    nycConfigPath = ".nycrc.json"
-    try:
-        reportPath = generateCoverageReport()
-    except TestException:
-        exit(0)
-    coverage = parseCoverageValues(reportPath)
+    parser = ArgumentParser(
+        prog="setCoverage",
+        description="""
+setCoverage runs 'nyc npm test' and sets thresholds in the local nyc config
+        """,
+    )
+    parser.add_argument("-p", "--precision", type=int, default=0)
+    parser.add_argument("-n", "--nycConfigPath", type=str, default=".nycrc.json")
+    
+    args = parser.parse_args()
+    
+    precision: int = args.precision
+    nycConfigPath: str = args.nycConfigPath
+    reportPath = generateCoverageReport()
+    coverage = parseCoverageValues(reportPath, precision)
     updateNYCRCFile(coverage, nycConfigPath)
 
 if __name__ == "__main__":
