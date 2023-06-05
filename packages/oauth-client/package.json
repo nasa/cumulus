@@ -29,7 +29,7 @@
     "clean": "rm -rf dist",
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs dist/*.js > README.md",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "test:coverage": "../../node_modules/.bin/nyc npm test && python ../../scripts/setCoverage.py --validate",
     "updateCoverage": "python ../../scripts/setCoverage.py",
     "prepare": "npm run tsc",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
