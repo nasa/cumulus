@@ -1,0 +1,50 @@
+{
+  "Comment": "Orca Recovery Adapter",
+  "StartAt": "OrcaRecoveryAdapter",
+  "States": {
+    "OrcaRecoveryAdapter": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "task_config": {
+            "s3MultipartChunksizeMb": "{$.meta.collection.meta.s3MultipartChunksizeMb}",
+            "excludedFileExtensions": "{$.meta.collection.meta.orca.excludedFileExtensions}",
+            "providerId": "{$.meta.provider.id}",
+            "executionId": "{$.cumulus_meta.execution_name}",
+            "collectionShortname": "{$.meta.collection.name}",
+            "collectionVersion": "{$.meta.collection.version}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${orca_recovery_adapter_task}",
+      "Next": "WorkflowSucceeded",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "WorkflowFailed",
+          "ResultPath": "$.exception"
+        }
+      ],
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ]
+    },
+    "WorkflowSucceeded": {
+      "Type": "Succeed"
+    },
+    "WorkflowFailed": {
+      "Cause": "Workflow failed",
+      "Type": "Fail"
+    }
+  }
+}

@@ -147,7 +147,7 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   // TODO CUMULUS-3253 add recovery adapter to work with orca 8.0.0
-  xdescribe('the recovery workflow', () => {
+  describe('the recovery workflow', () => {
     let asyncOperationId;
 
     it('generates an async operation through the Cumulus API', async () => {
@@ -250,8 +250,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  // TODO CUMULUS-3253 add recovery adapter to work with orca 8.0.0
-  xdescribe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
+  describe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
     it('returns list of granules with recovery status', async () => {
       const response = await listGranules({
         prefix: config.stackName,
