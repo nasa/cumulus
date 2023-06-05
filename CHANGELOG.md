@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
-  
+
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
@@ -22,6 +22,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `tf-modules/cumulus` module to take variable `orca_sfn_recovery_workflow_arn` and pass to `tf-modules/ingest`
   - Added `example/cumulus-tf/orca_recovery_adapter_workflow.tf`, `OrcaRecoveryAdapterWorkflow` workflow has `OrcaRecoveryAdapter` task
     to call the ORCA recovery step-function.
+- **CUMULUS-3315**
+  - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
+    parameter in favor of `granules` parameter, in the form of a
+    `@cumulus/types/ApiGranule` that requires the following keys: `[granuleId, collectionId]`
+
+### Fixed
+
+- **CUMULUS-3315**
+  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
+    instead of NPM `parallel` package, as timeouts were not resulting in
+    integration test failure
 
 ### Notable Changes
 
