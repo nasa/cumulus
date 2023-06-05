@@ -1,6 +1,6 @@
 import pRetry from 'p-retry';
 
-import { ApiGranuleRecord, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { ApiGranuleRecord, ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
 import { CollectionId } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
@@ -612,7 +612,7 @@ export const associateExecutionWithGranule = async (params: {
  */
 export const bulkGranules = async (params: {
   prefix: string,
-  body: object,
+  body: unknown,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -693,7 +693,7 @@ export const bulkReingestGranules = async (params: {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {Array<string>} params.ids - the granules to have bulk operation on
+ * @param {Array<ApiGranuleRecord>} params.granules - the granules to have bulk operation on
  * @param {string} params.workflowName - workflowName for the bulk operation execution
  * @param {Function} params.callback  - async function to invoke the api lambda
  *                                      that takes a prefix / user payload.  Defaults
@@ -703,11 +703,11 @@ export const bulkReingestGranules = async (params: {
  */
 export const bulkOperation = async (params: {
   prefix: string,
-  ids: string[],
+  granules: ApiGranule[],
   workflowName: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, ids, workflowName, callback = invokeApi } = params;
+  const { prefix, granules, workflowName, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
     payload: {
@@ -717,7 +717,7 @@ export const bulkOperation = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ids, workflowName }),
+      body: JSON.stringify({ granules, workflowName }),
     },
     expectedStatusCodes: 202,
   });

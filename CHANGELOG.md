@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+
 ## [v16.0.0] 2023-05-09
 
 ### MIGRATION notes
@@ -193,7 +194,11 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Changed
 
- **CUMULUS-3307**
+- **CUMULUS-3315**
+  - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
+    parameter in favor of `granules` parameter, in the form of a
+    `@cumulus/types/ApiGranule` that requires the following keys: `[granuleId, collectionId]`
+- **CUMULUS-3307**
   - Pinned cumulus dependency on `pg` to `v8.10.x`
 - **CUMULUS-3279**
   - Updated core dependencies on `xml2js` to `v0.5.0`
