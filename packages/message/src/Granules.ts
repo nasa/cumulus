@@ -275,7 +275,7 @@ export const generateGranuleApiRecord = async ({
 
   // Get CMR temporalInfo
   const temporalInfo = await getGranuleCmrTemporalInfo({
-    granule,
+    granule: { ...granule, status },
     cmrTemporalInfo,
     cmrUtils,
   });

@@ -36,7 +36,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/api-client": "16.0.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.4",
+    "@cumulus/cumulus-message-adapter-js": "2.0.5",
     "@cumulus/ingest": "16.0.0",
     "@cumulus/logger": "16.0.0",
     "got": "^11.8.5",
