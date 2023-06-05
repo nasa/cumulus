@@ -36,7 +36,7 @@
     "@cumulus/aws-client": "15.0.0",
     "@cumulus/cmrjs": "15.0.0",
     "@cumulus/common": "15.0.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.4",
+    "@cumulus/cumulus-message-adapter-js": "2.0.5",
     "@cumulus/errors": "15.0.0",
     "@cumulus/launchpad-auth": "15.0.0",
     "lodash": "^4.17.21"

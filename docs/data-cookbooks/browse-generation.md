@@ -378,7 +378,7 @@ your mock/test data.:
 
 ## Run Workflows
 
-Once you've configured the Collection and Provider and added a onetime rule, you're ready to trigger your rule, and watch the ingest workflows process.
+Once you've configured the Collection and Provider and added a onetime rule with an `ENABLED` state, you're ready to trigger your rule, and watch the ingest workflows process.
 
 Go to the Rules tab, click the rule you just created:
 
