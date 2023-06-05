@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 
 ### MIGRATION notes
 
