@@ -8,6 +8,7 @@ const pMap = require('p-map');
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
   providers: providersApi,
@@ -35,7 +36,8 @@ async function fetchGranuleProvider(prefix, providerId) {
 function groupAndBatchGranules(granules, batchSize) {
   const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
   const granulesByCollectionMap = groupBy(
-    granules, granules.collectionId
+    granules,
+    (g) => constructCollectionId(g.dataType, g.version)
   );
   const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
     (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, filteredBatchSize)),

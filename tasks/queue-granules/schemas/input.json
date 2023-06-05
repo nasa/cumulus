@@ -16,17 +16,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["granuleId", "collectionId", "status", "updatedAt"],
+        "required": ["files", "granuleId"],
         "properties": {
           "type": { "type": "string" },
           "granuleId": { "type": "string" },
-          "collectionId": { "type": "string" },
-          "status": { "type": "string" },
           "dataType": { "type": "string" },
           "version": { "type": "string" },
           "provider": { "type": "string" },
-          "files": { "type": "array" },
-          "updatedAt": { "type": "string" }
+          "files": { "type": "array" }
         }
       }
     }
