@@ -37,3 +37,6 @@ np:
 
 nnaga-tf:
   bucket: nnaga-internal
+
+ecarton:
+  bucket: ecarton-internal
