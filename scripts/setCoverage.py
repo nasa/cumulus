@@ -2,12 +2,17 @@ import json
 import subprocess
 import math
 from typing_extensions import TypedDict
-from typing import Dict, Union
+from typing import Dict, Any
 import time
 from argparse import ArgumentParser
 
 class TestException(Exception):
     pass
+
+
+class CoverageUpdateRequired(Exception):
+    pass
+
 
 class CoverageDict(TypedDict):
     lines: float
@@ -15,7 +20,20 @@ class CoverageDict(TypedDict):
     statements: float
     functions: float
 
+
 def truncateFloat(value: float, precision: int) -> float:
+    """
+    round down to the given precision
+    i.e. 
+        - truncateFloat(99.99, 1) -> 99.9
+        - truncateFloat(23.45, -1) -> 20.0
+    Args:
+        value (float): floating point value to be truncated
+        precision (int): precision in digits to the right of the decimal
+
+    Returns:
+        float: _description_
+    """
     shift = 10**precision
     return math.floor(value * shift)/shift
 
@@ -39,26 +57,49 @@ def generateCoverageReport() -> str:
         raise TestException("nyc test failed, see output above")
 
 
-def parseCoverageValues(coveragePath: str, precision: int) -> CoverageDict:
-    """
-    extract lines, branches, functions, statements total coverage percentage values
-    assumes those values are to be found at "total.<type>.pct"
+def parseCoverageValues(
+    filePath: str = 'coverage/coverage-summary.json',
+    precision: int = 0,
+) -> CoverageDict:
+    """_summary_
 
     Args:
-        coveragePath (str): filePath to find json summary
-        precision (int): coveragePrecision as position to the right of decimal
+        filePath (str, optional): coverage summary json file expected to exist. Defaults to 'coverage/coverage-summary.json'.
+        precision (int, optional): coverage precision in digits to the right of decimal. Defaults to 0.
+
+    Raises:
+        FileNotFoundError: the expected coverage summary file was not found
+        KeyError: coverage value not found in coverage summary file. most likely from malformed coverage file
 
     Returns:
-        CoverageDict: dict of coverage values by type
+        CoverageDict: _description_
     """
-    with open(coveragePath) as coverageFile:
+
+    with open(filePath) as coverageFile:
         unParsedCoverageDict = json.load(coverageFile)
-    
+
     return {
         covType: truncateFloat(unParsedCoverageDict['total'][covType]['pct'], precision)
-        for covType in ["lines", "branches", "functions", "statements"]
+        for covType in CoverageDict.__required_keys__
     }
-    
+
+def parseCoverageConfigFile(
+    filePath: str = '.nycrc.json',
+) -> Dict[str, Any]:
+    """
+    parse the current nyc configuration json file
+
+    Args:
+        filePath (str, optional): nyc configuration file to parse. Defaults to '.nycrc.json'.
+
+    Raises:
+        FileNotFoundError: expected json file not found
+    Returns:
+        Dict[str, Any]: json object nyc configuration
+    """
+    with open(filePath) as nycFile:
+        config = json.load(nycFile)
+    return config
     
 def updateNYCRCFile(coverage: CoverageDict, nycConfigPath: str) -> None:
     """
@@ -70,8 +111,7 @@ def updateNYCRCFile(coverage: CoverageDict, nycConfigPath: str) -> None:
 
     """
     try:
-        with open(nycConfigPath) as nycFile:
-            current = json.load(nycFile)
+        current = parseCoverageConfigFile(nycConfigPath)
         config = {
             **current,
             **coverage
@@ -81,7 +121,51 @@ def updateNYCRCFile(coverage: CoverageDict, nycConfigPath: str) -> None:
     with open(nycConfigPath, "w") as nycFile:
         jsonForm = json.dumps(config, indent=2)
         nycFile.write(jsonForm)
+
+def validateCoverageAgainstConfig(
+    coverage: CoverageDict,
+    configuration: Dict[str, Any],
+) -> None:
+    """
+    validate that currently configured coverage minimum is sufficient for current code state
+
+    Args:
+        coverage (CoverageDict): current coverage detected by nyc by type
+        configuration (Dict[str, Any]): currently configured coverage threshold by type, with additional unused configuration
+
+    Raises:
+        CoverageUpdateRequired: coverage thresholding is insufficient and calls for an update
+    """
     
+    for coverageType, coverageValue in coverage.items():
+        if coverageType not in configuration:
+            raise CoverageUpdateRequired(
+                f"coverage type {coverageType} not configured at all\n"
+                "set this value appropriately or run 'npm run updateCoverage'"
+            )
+        if coverageValue > configuration[coverageType]:
+            raise CoverageUpdateRequired(
+                f"coverage of '{coverageType}' is low\n"
+                f"current coverage is {coverageValue} "
+                f"but configured to require {configuration[coverageType]}\n"
+                "set this value appropriately or run 'npm run updateCoverage'"
+            )
+        
+
+
+
+def validateCoverage(precision: int, nycConfigPath: str) -> None:
+    reportPath = "coverage/coverage-summary.json"
+    coverage = parseCoverageValues(reportPath, precision)
+    configuration = parseCoverageConfigFile(nycConfigPath)
+    validateCoverageAgainstConfig(coverage, configuration)
+
+def updateCoverage(precision: int, nycConfigPath: str) -> None:
+    reportPath = generateCoverageReport()
+    coverage = parseCoverageValues(reportPath, precision)
+    updateNYCRCFile(coverage, nycConfigPath)
+
+
 def main() -> None:
     """
     run the current directory's npm test routine and capture current coverage
@@ -95,14 +179,18 @@ setCoverage runs 'nyc npm test' and sets thresholds in the local nyc config
     )
     parser.add_argument("-p", "--precision", type=int, default=0)
     parser.add_argument("-n", "--nycConfigPath", type=str, default=".nycrc.json")
+    parser.add_argument('--validate', type=bool, const=True, default=False, nargs='?')
     
     args = parser.parse_args()
     
     precision: int = args.precision
     nycConfigPath: str = args.nycConfigPath
-    reportPath = generateCoverageReport()
-    coverage = parseCoverageValues(reportPath, precision)
-    updateNYCRCFile(coverage, nycConfigPath)
+    validate: bool = args.validate
+    if validate:
+        validateCoverage(precision, nycConfigPath)
+    else:
+        updateCoverage(precision, nycConfigPath)
+
 
 if __name__ == "__main__":
     main()
