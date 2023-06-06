@@ -37,10 +37,10 @@ function groupAndBatchGranules(granules, batchSize) {
   const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
   const granulesByCollectionMap = groupBy(
     granules,
-    (g) => constructCollectionId(
+    (g) => (g.collectionId !== undefined ? g.collectionId : (constructCollectionId(
       g.dataType !== undefined ? g.dataType : 'placeholder_datatype_value',
       g.version !== undefined ? g.version : 'placeholder_version_value'
-    )
+    )))
   );
   const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
     (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, filteredBatchSize)),
@@ -108,10 +108,11 @@ async function queueGranules(event, testMocks = {}) {
       await pMap(
         granuleBatch,
         (queuedGranule) => {
-          const collectionId = constructCollectionId(
-            queuedGranule.dataType !== undefined ? queuedGranule.dataType : 'placeholder_datatype_value',
-            queuedGranule.version !== undefined ? queuedGranule.version : 'placeholder_version_value'
-          );
+          const collectionId = queuedGranule.collectionId !== undefined
+            ? queuedGranule.collectionId : constructCollectionId(
+              queuedGranule.dataType !== undefined ? queuedGranule.dataType : 'placeholder_datatype_value',
+              queuedGranule.version !== undefined ? queuedGranule.version : 'placeholder_version_value'
+            );
 
           const granuleId = queuedGranule.granuleId;
 

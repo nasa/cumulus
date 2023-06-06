@@ -23,6 +23,9 @@
           "dataType": { "type": "string" },
           "version": { "type": "string" },
           "provider": { "type": "string" },
+          "collectionId": { "type": "string" },
+          "status": { "type": "string" },
+          "updatedAt": { "type": "string" },
           "files": { "type": "array" }
         }
       }
