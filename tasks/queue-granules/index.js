@@ -35,8 +35,8 @@ async function fetchGranuleProvider(prefix, providerId) {
  */
 function groupAndBatchGranules(granules, batchSize) {
   const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
-
-  if (granules.collectionId === 'undefined' && (granules.dataType === undefined || granules.version === undefined)) {
+  const granulesVars = (granules.dataType === undefined || granules.version === undefined);
+  if (granules.collectionId === undefined && granulesVars) {
     throw new Error('Invalid collection, please check task input to make sure collection information is provided');
   }
 
@@ -77,6 +77,7 @@ function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
  *   that is passed to the next task in the workflow
  **/
 async function queueGranules(event, testMocks = {}) {
+  let gVars;
   const granules = event.input.granules || [];
   const updateGranule = testMocks.updateGranuleMock || granulesApi.updateGranule;
   const enqueueGranuleIngestMessageFn
@@ -101,7 +102,8 @@ async function queueGranules(event, testMocks = {}) {
   const executionArns = await pMap(
     groupedAndBatchedGranules,
     async (granuleBatchIn) => {
-      if (granuleBatchIn[0].collectionId === 'undefined' && (granuleBatchIn[0].dataType === undefined || granuleBatchIn[0].version === undefined)) {
+      gVars = (granuleBatchIn[0].dataType === undefined || granuleBatchIn[0].version === undefined);
+      if (granuleBatchIn[0].collectionId === undefined && gVars) {
         throw new Error('Invalid collection, please check task input to make sure collection information is provided');
       }
 
@@ -115,7 +117,8 @@ async function queueGranules(event, testMocks = {}) {
       await pMap(
         granuleBatch,
         (queuedGranule) => {
-          if (queuedGranule.collectionId === 'undefined' && (queuedGranule.dataType === undefined || queuedGranule.version === undefined)) {
+          gVars = (queuedGranule.dataType === undefined || queuedGranule.version === undefined);
+          if (queuedGranule.collectionId === undefined && gVars) {
             throw new Error('Invalid collection, please check task input to make sure collection information is provided');
           }
 
