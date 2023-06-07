@@ -35,12 +35,15 @@ async function fetchGranuleProvider(prefix, providerId) {
  */
 function groupAndBatchGranules(granules, batchSize) {
   const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
+
+  if (granules.collectionId === 'undefined' && (granules.dataType === undefined || granules.version === undefined)) {
+    throw new Error('Invalid collection, please check task input to make sure collection information is provided');
+  }
+
   const granulesByCollectionMap = groupBy(
     granules,
-    (g) => (g.collectionId !== undefined ? g.collectionId : (constructCollectionId(
-      g.dataType !== undefined ? g.dataType : 'placeholder_datatype_value',
-      g.version !== undefined ? g.version : 'placeholder_version_value'
-    )))
+    (g) => (g.collectionId !== undefined ? g.collectionId
+      : (constructCollectionId(g.dataType, g.version)))
   );
   const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
     (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, filteredBatchSize)),
@@ -98,9 +101,13 @@ async function queueGranules(event, testMocks = {}) {
   const executionArns = await pMap(
     groupedAndBatchedGranules,
     async (granuleBatchIn) => {
+      if (granuleBatchIn[0].collectionId === 'undefined' && (granuleBatchIn[0].dataType === undefined || granuleBatchIn[0].version === undefined)) {
+        throw new Error('Invalid collection, please check task input to make sure collection information is provided');
+      }
+
       const collectionConfig = await collectionConfigStore.get(
-        granuleBatchIn[0].dataType !== undefined ? granuleBatchIn[0].dataType : 'placeholder_datatype_value',
-        granuleBatchIn[0].version !== undefined ? granuleBatchIn[0].version : 'placeholder_version_value'
+        granuleBatchIn[0].dataType,
+        granuleBatchIn[0].version
       );
 
       const createdAt = Date.now();
@@ -108,11 +115,14 @@ async function queueGranules(event, testMocks = {}) {
       await pMap(
         granuleBatch,
         (queuedGranule) => {
-          const collectionId = queuedGranule.collectionId !== undefined
-            ? queuedGranule.collectionId : constructCollectionId(
-              queuedGranule.dataType !== undefined ? queuedGranule.dataType : 'placeholder_datatype_value',
-              queuedGranule.version !== undefined ? queuedGranule.version : 'placeholder_version_value'
-            );
+          if (queuedGranule.collectionId === 'undefined' && (queuedGranule.dataType === undefined || queuedGranule.version === undefined)) {
+            throw new Error('Invalid collection, please check task input to make sure collection information is provided');
+          }
+
+          const collectionId = constructCollectionId(
+            queuedGranule.dataType,
+            queuedGranule.version
+          );
 
           const granuleId = queuedGranule.granuleId;
 

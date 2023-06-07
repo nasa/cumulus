@@ -830,3 +830,17 @@ test('updatedGranuleBatchCreatedAt updates batch granule object with correct cre
   const actual = updateGranuleBatchCreatedAt(testGranuleBatch, createdAtTestDate);
   t.deepEqual(actual, expected);
 });
+
+test.serial('queueGranules throws an error when no dataType, version, or collectionId are provided in input', async (t) => {
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      granuleId: randomString(), files: [],
+    },
+    {
+      granuleId: randomString(), files: [],
+    },
+  ];
+
+  await t.throwsAsync(queueGranules(event));
+});
