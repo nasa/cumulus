@@ -35,10 +35,6 @@ async function fetchGranuleProvider(prefix, providerId) {
  */
 function groupAndBatchGranules(granules, batchSize) {
   const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
-  const granulesVars = (granules.dataType === undefined || granules.version === undefined);
-  if (granules.collectionId === undefined && granulesVars) {
-    throw new Error('Invalid collection, please check task input to make sure collection information is provided');
-  }
 
   const granulesByCollectionMap = groupBy(
     granules,
