@@ -5,7 +5,7 @@
   ],
   "exclude-after-remap": false,
   "statements": 87,
-  "functions": 84,
+  "functions": 85,
   "branches": 31,
-  "lines": 85
+  "lines": 86
 }
