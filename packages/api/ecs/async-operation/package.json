@@ -16,9 +16,10 @@
     "directory": "packages/api/ecs/async-operation"
   },
   "scripts": {
-    "test:coverage": "../../../../node_modules/.bin/nyc npm test && python ../../../../scripts/setCoverage.py --validate",
-    "updateCoverage": "python ../../../../scripts/setCoverage.py",
-    "test": "../../../../node_modules/.bin/ava"
+    "test:coverage": "../../../../node_modules/.bin/nyc npm test",
+    "test": "../../../../node_modules/.bin/ava",
+    "coverage:validate": "python ../../../../scripts/coverage.py",
+    "coverage:update": "python ../../../../scripts/coverage.py --update"
   },
   "dependencies": {
     "@cumulus/aws-client": "15.0.0",

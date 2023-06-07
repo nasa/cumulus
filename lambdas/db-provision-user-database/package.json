@@ -10,13 +10,14 @@
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test && python ../../scripts/setCoverage.py --validate",
-    "updateCoverage": "python ../../scripts/setCoverage.py",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "python-lint": "true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "webpack": "../../node_modules/.bin/webpack"
+    "webpack": "../../node_modules/.bin/webpack",
+    "coverage:validate": "python ../../scripts/coverage.py",
+    "coverage:update": "python ../../scripts/coverage.py --update"
   },
   "directories": {
     "test": "tests"

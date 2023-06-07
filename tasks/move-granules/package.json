@@ -24,8 +24,9 @@
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "updateCoverage": "python ../../scripts/setCoverage.py",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w"
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
+    "coverage:validate": "python ../../scripts/coverage.py",
+    "coverage:update": "python ../../scripts/coverage.py --update"
   },
   "ava": {
     "files": [

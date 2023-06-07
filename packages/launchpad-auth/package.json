@@ -21,12 +21,13 @@
     "build-docs": "../../node_modules/.bin/jsdoc2md --heading-depth 3 --template templates/README.md.hbs index.js LaunchpadToken.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test && python ../../scripts/setCoverage.py --validate",
-    "updateCoverage": "python ../../scripts/setCoverage.py",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
+    "coverage:validate": "python ../../scripts/coverage.py",
+    "coverage:update": "python ../../scripts/coverage.py --update"
   },
   "ava": {
     "files": [

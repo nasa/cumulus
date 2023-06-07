@@ -23,9 +23,10 @@
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test && python ../../scripts/setCoverage.py --validate",
-    "updateCoverage": "python ../../scripts/setCoverage.py",
-    "watch": "../../node_modules/.bin/webpack --progress -w"
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "watch": "../../node_modules/.bin/webpack --progress -w",
+    "coverage:validate": "python ../../scripts/coverage.py",
+    "coverage:update": "python ../../scripts/coverage.py --update"
   },
   "ava": {
     "files": [

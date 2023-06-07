@@ -27,11 +27,12 @@
   "scripts": {
     "clean": "rm -rf dist",
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test && python ../../scripts/setCoverage.py --validate",
-    "updateCoverage": "python ../../scripts/setCoverage.py",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "coverage:validate": "python ../../scripts/coverage.py",
+    "coverage:update": "python ../../scripts/coverage.py --update"
   },
   "ava": {
     "timeout": "15m"

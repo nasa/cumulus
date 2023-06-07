@@ -11,8 +11,9 @@
   },
   "scripts": {
     "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test && python ../../scripts/setCoverage.py --validate",
-    "updateCoverage": "python ../../scripts/setCoverage.py"
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "coverage:validate": "python ../../scripts/coverage.py",
+    "coverage:update": "python ../../scripts/coverage.py --update"
   },
   "ava": {
     "files": [
