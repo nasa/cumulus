@@ -844,3 +844,22 @@ test.serial('queueGranules throws an error when no dataType, version, or collect
 
   await t.throwsAsync(queueGranules(event));
 });
+
+test.serial('queueGranules does not throw an error when collectionId is provided in the task input', async (t) => {
+  const dataType = undefined;
+  const version = undefined;
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      collectionId: randomString(), granuleId: randomString(), files: [],
+    },
+    {
+      collectionId: randomString(), granuleId: randomString(), files: [],
+    },
+  ];
+
+  await t.notThrowsAsync(queueGranules(event));
+});
