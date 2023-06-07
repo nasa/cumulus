@@ -6,5 +6,8 @@
     "bin",
     "lambdas"
   ],
-  "lines": 0
+  "lines": 10,
+  "functions": 9,
+  "statements": 10,
+  "branches": 9
 }
