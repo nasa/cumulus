@@ -118,10 +118,10 @@ async function queueGranules(event, testMocks = {}) {
             throw new Error('Invalid collection, please check task input to make sure collection information is provided');
           }
 
-          const collectionId = constructCollectionId(
+          const collectionId = queuedGranule.collectionId === undefined ? constructCollectionId(
             queuedGranule.dataType,
             queuedGranule.version
-          );
+          ) : queuedGranule.collectionId;
 
           const granuleId = queuedGranule.granuleId;
 
