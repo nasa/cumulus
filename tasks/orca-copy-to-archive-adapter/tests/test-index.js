@@ -65,7 +65,7 @@ test.serial('invokeOrcaCopyToArchive() successfully invokes orca lambda', async 
     },
     config: fakeConfig,
   };
-  const result = await invokeOrcaCopyToArchive(fakePayload, undefined);
+  const result = await invokeOrcaCopyToArchive(fakePayload);
   t.deepEqual(result, JSON.parse(fakeLambdaResponse.Payload));
 });
 
@@ -79,7 +79,7 @@ test.serial('invokeOrcaCopyToArchive() throws error if orca lambda failed', asyn
     fail: true,
   };
   await t.throwsAsync(
-    invokeOrcaCopyToArchive(fakePayload, undefined),
+    invokeOrcaCopyToArchive(fakePayload),
     {
       message: 'copy to archive failed',
     }
