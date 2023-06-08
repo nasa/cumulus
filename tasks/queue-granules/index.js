@@ -74,6 +74,7 @@ function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
  **/
 async function queueGranules(event, testMocks = {}) {
   let gVars;
+  let gVars2;
   const granules = event.input.granules || [];
   const updateGranule = testMocks.updateGranuleMock || granulesApi.updateGranule;
   const enqueueGranuleIngestMessageFn
@@ -98,8 +99,8 @@ async function queueGranules(event, testMocks = {}) {
   const executionArns = await pMap(
     groupedAndBatchedGranules,
     async (granuleBatchIn) => {
-      gVars = (granuleBatchIn[0].dataType === undefined || granuleBatchIn[0].version === undefined);
-      if (granuleBatchIn[0].collectionId === undefined && gVars) {
+      gVars = (granuleBatchIn[0].dataType !== undefined && granuleBatchIn[0].version !== undefined);
+      if (!gVars && granuleBatchIn[0].collectionId === undefined) {
         throw new Error('Invalid collection, please check task input to make sure collection information is provided');
       }
 
@@ -113,15 +114,16 @@ async function queueGranules(event, testMocks = {}) {
       await pMap(
         granuleBatch,
         (queuedGranule) => {
-          gVars = (queuedGranule.dataType === undefined || queuedGranule.version === undefined);
-          if (queuedGranule.collectionId === undefined && gVars) {
+          gVars2 = (queuedGranule.dataType !== undefined || queuedGranule.version !== undefined);
+          if (!gVars2 && queuedGranule.collectionId === undefined) {
             throw new Error('Invalid collection, please check task input to make sure collection information is provided');
           }
 
-          const collectionId = queuedGranule.collectionId === undefined ? constructCollectionId(
-            queuedGranule.dataType,
-            queuedGranule.version
-          ) : queuedGranule.collectionId;
+          const collectionId = queuedGranule.collectionId !== undefined ? queuedGranule.collectionId
+            : constructCollectionId(
+              queuedGranule.dataType,
+              queuedGranule.version
+            );
 
           const granuleId = queuedGranule.granuleId;
 
