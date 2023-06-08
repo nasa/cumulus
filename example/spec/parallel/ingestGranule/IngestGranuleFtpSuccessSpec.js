@@ -14,8 +14,7 @@ const {
 const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
-
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -81,7 +80,7 @@ describe('The FTP Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
-          collectionId: constructCollectionId(collection.name, collection.version),
+          collectionId: encodedConstructCollectionId(collection.name, collection.version),
         },
         'completed'
       );

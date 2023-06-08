@@ -18,8 +18,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
-
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 const { fetchFakeS3ProviderBuckets } = require('../../helpers/Providers');
 
@@ -109,7 +108,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
       // Wait for the granule to be fully ingested
       await getGranuleWithStatus({ prefix,
         granuleId,
-        collectionId: constructCollectionId(collection.name, collection.version),
+        collectionId: encodedConstructCollectionId(collection.name, collection.version),
         status: 'completed' });
     } catch (error) {
       beforeAllFailed = true;
@@ -136,7 +135,7 @@ describe('The IngestGranule workflow ingesting an 11G file', () => {
     ).catch(console.error);
 
     await deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecutionArn });
-    await deleteGranule({ prefix, granuleId, collectionId: constructCollectionId(collection.name, collection.version) });
+    await deleteGranule({ prefix, granuleId, collectionId: encodedConstructCollectionId(collection.name, collection.version) });
     await pAll(
       [
         () => deleteProvider({ prefix, providerId: get(provider, 'id') }),

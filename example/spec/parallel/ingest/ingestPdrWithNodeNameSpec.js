@@ -42,8 +42,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { getExecution } = require('@cumulus/api-client/executions');
-
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('@cumulus/message/Collections');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -402,7 +401,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
-              const id = constructCollectionId(g.dataType, g.version);
+              const id = encodedConstructCollectionId(g.dataType, g.version);
               await waitForApiStatus(
                 getGranule,
                 {

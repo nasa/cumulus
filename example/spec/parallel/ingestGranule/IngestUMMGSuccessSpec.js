@@ -18,7 +18,6 @@ const {
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
   conceptExists,
@@ -36,6 +35,7 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const {
   loadConfig,
@@ -131,7 +131,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       provider = { id: `s3_provider${testSuffix}` };
-      const newCollectionId = constructCollectionId(collection.name, collection.version);
+      const newCollectionId = encodedConstructCollectionId(collection.name, collection.version);
 
       process.env.system_bucket = config.bucket;
 
@@ -215,7 +215,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     await removePublishedGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
-      collectionId: constructCollectionId(collection.name, collection.version),
+      collectionId: encodedConstructCollectionId(collection.name, collection.version),
     });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
@@ -515,7 +515,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       const moveGranuleResponse = await moveGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        collectionId: constructCollectionId(collection.name, collection.version),
+        collectionId: encodedConstructCollectionId(collection.name, collection.version),
         destinations,
       });
 

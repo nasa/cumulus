@@ -41,7 +41,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { getExecution } = require('@cumulus/api-client/executions');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const {
@@ -146,7 +146,7 @@ describe('Ingesting from PDR', () => {
     await waitForGranuleAndDelete(
       config.stackName,
       testDataGranuleId,
-      constructCollectionId(addedCollections[0].name, addedCollections[0].version),
+      encodedConstructCollectionId(addedCollections[0].name, addedCollections[0].version),
       'completed'
     );
     await apiTestUtils.deletePdr({

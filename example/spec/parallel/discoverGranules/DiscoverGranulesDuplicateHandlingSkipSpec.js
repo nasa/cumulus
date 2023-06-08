@@ -9,7 +9,7 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('@cumulus/message/Collections');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
@@ -74,7 +74,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
         Body: 'asdf-queued',
       });
 
-      collectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = encodedConstructCollectionId(collection.name, collection.version);
       const randomQueuedGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
         collectionId,
         granuleId: queuedGranuleId,

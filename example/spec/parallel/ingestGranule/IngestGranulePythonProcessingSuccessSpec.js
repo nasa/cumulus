@@ -2,8 +2,6 @@
 
 const fs = require('fs-extra');
 const hasha = require('hasha');
-
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getObjectReadStream, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
@@ -19,6 +17,7 @@ const {
 } = require('@cumulus/api-client/providers');
 
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 
 const {
@@ -91,7 +90,7 @@ describe('The TestPythonProcessing workflow', () => {
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
       pdrFilename = inputPayload.pdr.name;
       const granuleId = inputPayload.granules[0].granuleId;
-      collectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = encodedConstructCollectionId(collection.name, collection.version);
 
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>

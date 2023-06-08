@@ -16,7 +16,7 @@ const { fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Executions API', () => {
@@ -37,7 +37,7 @@ describe('The Executions API', () => {
       prefix = config.stackName;
 
       collection = await createCollection(prefix);
-      collectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = encodedConstructCollectionId(collection.name, collection.version);
 
       executionRecord = omit(fakeExecutionFactoryV2({
         collectionId,
@@ -136,7 +136,7 @@ describe('The Executions API', () => {
       const name = randomId('name');
       const version = randomId('version');
       const badRandomExecutionRecord = fakeExecutionFactoryV2({
-        collectionId: constructCollectionId(name, version),
+        collectionId: encodedConstructCollectionId(name, version),
       });
       try {
         await createExecution({

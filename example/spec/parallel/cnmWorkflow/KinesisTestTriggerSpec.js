@@ -31,8 +31,8 @@ const { getExecution, deleteExecution } = require('@cumulus/api-client/execution
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   waitForApiRecord,
   waitForApiStatus,
@@ -109,7 +109,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
     await deleteGranule({ prefix: testConfig.stackName,
       granuleId,
-      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+      collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
@@ -370,7 +370,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           {
             prefix: testConfig.stackName,
             granuleId,
-            collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+            collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
           },
           {
             status: 'completed',
@@ -464,7 +464,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             {
               prefix: testConfig.stackName,
               granuleId,
-              collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
+              collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
             },
             {
               status: 'failed',

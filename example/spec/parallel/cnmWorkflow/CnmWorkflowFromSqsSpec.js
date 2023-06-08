@@ -30,9 +30,9 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForTestSfForRecord } = require('../../helpers/kinesisHelpers');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const {
   loadConfig,
@@ -75,7 +75,7 @@ async function cleanUp() {
   await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
   await removePublishedGranule({ prefix: config.stackName,
     granuleId,
-    collectionId: constructCollectionId(ruleOverride.collection.name, encodeURIComponent(ruleOverride.collection.version)) });
+    collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
@@ -236,7 +236,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
             {
               prefix: config.stackName,
               granuleId,
-              collectionId: constructCollectionId(record.collection, encodeURIComponent(record.product.dataVersion)),
+              collectionId: encodedConstructCollectionId(record.collection, record.product.dataVersion),
             },
             'completed'
           );

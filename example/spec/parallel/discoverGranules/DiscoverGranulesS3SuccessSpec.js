@@ -15,7 +15,8 @@ const { getExecution, deleteExecution } = require('@cumulus/api-client/execution
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
+
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
@@ -114,7 +115,7 @@ describe('The DiscoverGranules workflow', () => {
         await waitForGranuleAndDelete(
           stackName,
           granule.granuleId,
-          constructCollectionId(collection.name, collection.version),
+          encodedConstructCollectionId(collection.name, collection.version),
           'completed'
         );
       }

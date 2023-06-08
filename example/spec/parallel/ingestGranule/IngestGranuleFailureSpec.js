@@ -13,8 +13,7 @@ const {
 const { getExecution } = require('@cumulus/api-client/executions');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
-
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -86,7 +85,7 @@ describe('The Ingest Granule failure workflow', () => {
         },
         ...inputPayload.granules[0].files,
       ];
-      collectionId = constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version);
+      collectionId = encodedConstructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version);
       console.log(`testSuffix: ${testSuffix}, granuleId: ${inputPayload.granules[0].granuleId}`);
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
