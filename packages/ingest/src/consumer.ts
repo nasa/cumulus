@@ -49,7 +49,7 @@ export class Consumer {
       }
       return 1;
     } catch (error) {
-      if (error.code === 'ExecutionAlreadyExists' || error.message.includes('ExecutionAlreadyExists')) {
+      if (error.code === 'ExecutionAlreadyExists') {
         log.info('Execution already exists. Proceeding to delete message from queue...');
         await sqs.deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
       }
