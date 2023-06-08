@@ -539,3 +539,38 @@ test('associateExecutionWithGranule calls the callback with the expected object'
     body,
   }));
 });
+
+test('bulkOperation calls the callback with the expected object', async (t) => {
+  const workflowName = randomId('workflowName');
+  const granuleId = t.context.granuleId;
+  const collectionId = randomId('collectionId');
+  const granules = [{ granuleId, collectionId }];
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulk/',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        granules,
+        workflowName,
+      }),
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(
+    granulesApi.bulkOperation({
+      callback,
+      prefix: t.context.testPrefix,
+      granules,
+      workflowName,
+    })
+  );
+});

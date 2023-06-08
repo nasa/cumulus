@@ -141,7 +141,7 @@ describe('The S3 Ingest Granules workflow', () => {
       testDataFolder = createTestDataPath(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      const newCollectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
       process.env.system_bucket = config.bucket;
@@ -194,7 +194,7 @@ describe('The S3 Ingest Granules workflow', () => {
         },
       });
 
-      expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
+      expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, collectionId, config.stackName);
 
       expectedSyncGranulePayload.granules[0].dataType += testSuffix;
       expectedSyncGranulePayload.granules[0].files[0].checksumType = inputPayload.granules[0].files[0].checksumType;
@@ -232,7 +232,7 @@ describe('The S3 Ingest Granules workflow', () => {
         },
       });
 
-      expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
+      expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, collectionId);
       expectedPayload.granules[0].dataType += testSuffix;
 
       // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
@@ -947,7 +947,16 @@ describe('The S3 Ingest Granules workflow', () => {
             bulkReingestResponse = await bulkReingestGranules({
               prefix: config.stackName,
               body: {
-                ids: [reingestGranuleId, fakeGranuleId],
+                granules: [
+                  {
+                    collectionId,
+                    granuleId: reingestGranuleId,
+                  },
+                  {
+                    collectionId,
+                    granuleId: fakeGranuleId,
+                  },
+                ],
               },
             });
           } catch (error) {
