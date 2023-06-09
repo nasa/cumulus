@@ -10,6 +10,7 @@
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "python-lint": "true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
