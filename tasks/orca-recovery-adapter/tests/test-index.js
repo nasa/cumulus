@@ -1,87 +1,158 @@
 const test = require('ava');
-const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 
-const randomString = () => cryptoRandomString({ length: 10 });
+const { randomId } = require('@cumulus/common/test-utils');
 
 const fakeGranule = {
-  granuleId: 'FakeGranule1',
-  dataType: 'FakeGranuleType',
+  granuleId: randomId('FakeGranule1'),
+  dataType: randomId('FakeGranuleType'),
   version: '000',
-  provider: 'FakeProvider',
+  provider: randomId('FakeProvider'),
   createdAt: new Date().getTime(),
   files: [
     {
-      bucket: 'fakeBucket1',
+      bucket: randomId('fakeBucket1'),
       checksumType: 'md5',
-      checksum: 'fakehash',
+      checksum: randomId('fakehash'),
       key: 'path/to/granule1/foo.jpg',
     },
     {
-      bucket: 'fakeBucket1',
+      bucket: randomId('fakeBucket1'),
       checksumType: 'md5',
-      checksum: 'fakehash',
+      checksum: randomId('fakehash'),
       key: '/path/to/granule1/foo.dat',
     },
   ],
 };
 
 const fakeConfig = {
-  providerId: 'fakeProviderId',
-  executionId: 'fakeExecutionId',
-  collectionShortname: 'fakecollectionShortname',
-  collectionVersion: 'fakecollectionVersion',
+  buckets: {
+    glacier: {
+      name: randomId('glacier-bucket'),
+      type: 'orca',
+    },
+    protected: {
+      name: randomId('protected-bucket'),
+      type: 'protected',
+    },
+  },
+  fileBucketMaps: [{
+    regex: '.*.hdf$',
+    bucket: 'protected',
+  }],
 };
 
-const fakeOutput = {
-  granules: [fakeGranule],
-  copied_to_orca: ['file1', 'file2'],
+const fakeStartExecutionResponse = {
+  executionArn: randomId('executionArn'),
+  startDate: new Date(),
 };
 
-const fakeLambdaResponse = {
-  StatusCode: 200,
-  Payload: JSON.stringify(fakeOutput),
+const fakeInvalidSfnArn = randomId('fakeInvalidSfnArn');
+const fakeFailedSfnArn = randomId('fakeFailedSfnArn');
+const fakeRunningSfnArn = randomId('fakeRunningSfnArn');
+const fakeDescribeExecutionResponse = {
+  executionArn: randomId('executionArn'),
+  stateMachineArn: randomId('stateMachineArn'),
+  name: randomId('name'),
+  status: 'SUCCEEDED',
+  input: JSON.stringify({ inputKey: randomId('input') }),
+  inputDetails: {
+    included: true,
+  },
+  output: JSON.stringify({ outputKey: randomId('output') }),
+  outputDetails: {
+    included: true,
+  },
 };
 
-const fakeFailedLambdaName = 'fakeFailedLambdaName';
+const fakeDescribeFailedExecutionResponse = {
+  ...fakeDescribeExecutionResponse,
+  status: 'FAILED',
+  outputDetails: {
+    included: false,
+  },
+};
+
+const fakeDescribeRunningExecutionResponse = {
+  ...fakeDescribeExecutionResponse,
+  status: 'RUNNING',
+  outputDetails: {
+    included: false,
+  },
+};
+
 const {
-  invokeOrcaCopyToArchive,
+  invokeOrcaRecoveryWorkflow,
+  getStateMachineExecutionResults,
 } = proxyquire('../dist/src', {
-  '@cumulus/aws-client/Lambda': {
-    invoke: (name) => {
-      if (name === fakeFailedLambdaName) {
-        throw new Error('copy to archive failed');
+  '@cumulus/aws-client/services': {
+    sfn: () => ({
+      startExecution: ({ stateMachineArn }) => ({
+        promise: () => {
+          if (stateMachineArn.startsWith(fakeInvalidSfnArn)) {
+            throw new Error('sfn execution error');
+          }
+          return Promise.resolve(fakeStartExecutionResponse);
+        },
+      }),
+    }),
+  },
+  '@cumulus/aws-client/StepFunctions': {
+    describeExecution: ({ executionArn }) => {
+      if (executionArn.startsWith(fakeRunningSfnArn)) {
+        return Promise.resolve(fakeDescribeRunningExecutionResponse);
       }
-      return Promise.resolve(fakeLambdaResponse);
+      if (executionArn.startsWith(fakeFailedSfnArn)) {
+        return Promise.resolve(fakeDescribeFailedExecutionResponse);
+      }
+      return Promise.resolve(fakeDescribeExecutionResponse);
     },
   },
 });
 
-test.serial('invokeOrcaCopyToArchive() successfully invokes orca lambda', async (t) => {
-  process.env.orca_lambda_copy_to_archive_arn = randomString();
-  const fakePayload = {
-    input: {
-      granules: [fakeGranule],
-    },
-    config: fakeConfig,
-  };
-  const result = await invokeOrcaCopyToArchive(fakePayload, undefined);
-  t.deepEqual(result, JSON.parse(fakeLambdaResponse.Payload));
+const fakePayload = {
+  input: {
+    granules: [fakeGranule],
+  },
+  config: fakeConfig,
+  cumulus_config: {
+    execution_name: randomId('execution_name'),
+    state_machine: randomId('state_machine'),
+  },
+};
+
+test.serial('invokeOrcaRecoveryWorkflow() successfully invokes orca recovery workflow', async (t) => {
+  process.env.orca_sfn_recovery_workflow_arn = randomId('recoveryWorkflowArn');
+  const result = await invokeOrcaRecoveryWorkflow(fakePayload);
+  t.deepEqual(result, JSON.parse(fakeDescribeExecutionResponse.output));
 });
 
-test.serial('invokeOrcaCopyToArchive() throws error if orca lambda failed', async (t) => {
-  process.env.orca_lambda_copy_to_archive_arn = fakeFailedLambdaName;
-  const fakePayload = {
-    input: {
-      granules: [fakeGranule],
-    },
-    config: fakeConfig,
-    fail: true,
-  };
+test.serial('invokeOrcaRecoveryWorkflow() throws error if it fails to start orca workflow', async (t) => {
+  process.env.orca_sfn_recovery_workflow_arn = fakeInvalidSfnArn;
   await t.throwsAsync(
-    invokeOrcaCopyToArchive(fakePayload, undefined),
+    invokeOrcaRecoveryWorkflow(fakePayload, undefined),
     {
-      message: 'copy to archive failed',
+      message: 'sfn execution error',
     }
   );
+});
+
+test.serial('invokeOrcaRecoveryWorkflow() throws error if orca recovery workflow fails', async (t) => {
+  process.env.orca_sfn_recovery_workflow_arn = fakeFailedSfnArn;
+  await t.throwsAsync(
+    invokeOrcaRecoveryWorkflow(fakePayload, undefined),
+    {
+      message: new RegExp(`Error execute ${fakeFailedSfnArn}`),
+    }
+  );
+});
+
+test.serial('getStateMachineExecutionResults() waits for orca recovery workflow to complete', async (t) => {
+  process.env.orca_sfn_recovery_workflow_arn = fakeRunningSfnArn;
+  const error = await t.throwsAsync(
+    getStateMachineExecutionResults(`${fakeRunningSfnArn}:${randomId()}`, 1, 1, 1)
+  );
+  t.is(error.attemptNumber, 2);
+  t.is(error.retriesLeft, 0);
+  t.truthy(error.message.match(/Waiting for recovery workflow.* to complete/));
 });

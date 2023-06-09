@@ -15,11 +15,12 @@ import { HandlerEvent, HandlerOutput } from './types';
 
 const log = new Logger({ sender: '@cumulus/orca-recovery-adapter' });
 
-const getStateMachineExecutionResults = async (
+export const getStateMachineExecutionResults = async (
   executionArn: string,
+  retries = 50,
   retryIntervalInSecond = 5,
   maxRetryTimeInSecond = 1800
-) => {
+): Promise<AWS.StepFunctions.DescribeExecutionOutput> => {
   const result = await pRetry(
     async () => {
       const response = await describeExecution({ executionArn });
@@ -29,7 +30,7 @@ const getStateMachineExecutionResults = async (
       return response;
     },
     {
-      retries: 50,
+      retries,
       minTimeout: retryIntervalInSecond * 1000,
       maxTimeout: maxRetryTimeInSecond * 1000,
       maxRetryTime: maxRetryTimeInSecond * 1000,
@@ -72,9 +73,8 @@ export const invokeOrcaRecoveryWorkflow = async (
   try {
     await sfn().startExecution(workflowParams).promise();
   } catch (error) {
-    if (error.code === 'ExecutionAlreadyExists') {
-      log.debug(`Execution ${childWorkflowArn} already exists`);
-    }
+    log.error(`Error starting ${childWorkflowArn}`, error);
+    throw error;
   }
 
   log.info(`About to get result from execution ${childWorkflowArn}`);
