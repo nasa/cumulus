@@ -156,3 +156,13 @@ test.serial('getStateMachineExecutionResults() waits for orca recovery workflow 
   t.is(error.retriesLeft, 0);
   t.truthy(error.message.match(/Waiting for recovery workflow.* to complete/));
 });
+
+test.serial('invokeOrcaRecoveryWorkflow() throws error if env orca_sfn_recovery_workflow_arn is not set', async (t) => {
+  delete process.env.orca_sfn_recovery_workflow_arn;
+  await t.throwsAsync(
+    invokeOrcaRecoveryWorkflow(fakePayload, undefined),
+    {
+      message: 'Environment orca_sfn_recovery_workflow_arn is not set',
+    }
+  );
+});

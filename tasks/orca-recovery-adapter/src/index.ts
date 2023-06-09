@@ -1,15 +1,15 @@
 'use strict';
 
-import { Context } from 'aws-lambda';
 import pRetry from 'p-retry';
 import { v4 as uuidv4 } from 'uuid';
+import { Context } from 'aws-lambda';
 
-import Logger from '@cumulus/logger';
-import { describeExecution } from '@cumulus/aws-client/StepFunctions';
 import { sfn } from '@cumulus/aws-client/services';
+import { describeExecution } from '@cumulus/aws-client/StepFunctions';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
-import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
+import Logger from '@cumulus/logger';
 import { buildExecutionArn } from '@cumulus/message/Executions';
+import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 
 import { HandlerEvent, HandlerOutput } from './types';
 
