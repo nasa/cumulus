@@ -1,36 +1,35 @@
 const test = require('ava');
-const cryptoRandomString = require('crypto-random-string');
 const proxyquire = require('proxyquire');
 
-const randomString = () => cryptoRandomString({ length: 10 });
+const { randomId } = require('@cumulus/common/test-utils');
 
 const fakeGranule = {
-  granuleId: 'FakeGranule1',
-  dataType: 'FakeGranuleType',
+  granuleId: randomId('FakeGranule1'),
+  dataType: randomId('FakeGranuleType'),
   version: '000',
-  provider: 'FakeProvider',
+  provider: randomId('FakeProvider'),
   createdAt: new Date().getTime(),
   files: [
     {
-      bucket: 'fakeBucket1',
+      bucket: randomId('fakeBucket1'),
       checksumType: 'md5',
-      checksum: 'fakehash',
+      checksum: randomId('fakehash'),
       key: 'path/to/granule1/foo.jpg',
     },
     {
-      bucket: 'fakeBucket1',
+      bucket: randomId('fakeBucket1'),
       checksumType: 'md5',
-      checksum: 'fakehash',
+      checksum: randomId('fakehash'),
       key: '/path/to/granule1/foo.dat',
     },
   ],
 };
 
 const fakeConfig = {
-  providerId: 'fakeProviderId',
-  executionId: 'fakeExecutionId',
-  collectionShortname: 'fakecollectionShortname',
-  collectionVersion: 'fakecollectionVersion',
+  providerId: randomId('fakeProviderId'),
+  executionId: randomId('fakeExecutionId'),
+  collectionShortname: randomId('fakecollectionShortname'),
+  collectionVersion: randomId('fakecollectionVersion'),
 };
 
 const fakeOutput = {
@@ -38,13 +37,13 @@ const fakeOutput = {
   copied_to_orca: ['file1', 'file2'],
 };
 
-const fakeFailedLambdaName = 'fakeFailedLambdaName';
+const fakeFailedLambdaName = randomId('fakeFailedLambdaName');
 const fakeLambdaResponse = {
   StatusCode: 200,
   Payload: JSON.stringify(fakeOutput),
 };
 
-const fakeInvalidLambdaName = 'fakeInvalidLambdaName';
+const fakeInvalidLambdaName = randomId('fakeInvalidLambdaName');
 const fakeFailedInvokeResponse = {
   StatusCode: 500,
   Payload: JSON.stringify(new Error('invoke error')),
@@ -74,7 +73,7 @@ const fakePayload = {
 };
 
 test.serial('invokeOrcaCopyToArchive() successfully invokes orca lambda', async (t) => {
-  process.env.orca_lambda_copy_to_archive_arn = randomString();
+  process.env.orca_lambda_copy_to_archive_arn = randomId('copy_to_archive_arn');
   const result = await invokeOrcaCopyToArchive(fakePayload);
   t.deepEqual(result, JSON.parse(fakeLambdaResponse.Payload));
 });
