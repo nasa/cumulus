@@ -4,15 +4,21 @@ import { Context } from 'aws-lambda';
 import isObject from 'lodash/isObject';
 import pick from 'lodash/pick';
 
-import Logger from '@cumulus/logger';
 import { invoke } from '@cumulus/aws-client/Lambda';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
+import Logger from '@cumulus/logger';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 
 import { HandlerEvent, HandlerOutput } from './types';
 
 const log = new Logger({ sender: '@cumulus/orca-copy-to-archive-adapter' });
 
+/**
+ * Invoke orca copy-to-archive lambda
+ *
+ * @param {HandlerEvent} event - input from the message adapter
+ * @returns {Promise<HandlerOutput>} - returns output from orca lambda
+ */
 export const invokeOrcaCopyToArchive = async (
   event: HandlerEvent
 ) : Promise<HandlerOutput> => {
