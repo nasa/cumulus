@@ -194,7 +194,11 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Changed
 
- **CUMULUS-3307**
+- **CUMULUS-3315**
+  - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
+    parameter in favor of `granules` parameter, in the form of a
+    `@cumulus/types/ApiGranule` that requires the following keys: `[granuleId, collectionId]`
+- **CUMULUS-3307**
   - Pinned cumulus dependency on `pg` to `v8.10.x`
 - **CUMULUS-3279**
   - Updated core dependencies on `xml2js` to `v0.5.0`
@@ -211,6 +215,10 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Fixed
 
+- **CUMULUS-3315**
+  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
+    instead of NPM `parallel` package, as timeouts were not resulting in
+    integration test failure
 - **CUMULUS-3223**
   - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
   - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
