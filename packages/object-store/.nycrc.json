@@ -1,5 +1,5 @@
 {
-  "extends": "../nyc.config.js",
+  "extends": "../../nyc.config.js",
   "statements": 100,
   "functions": 100,
   "branches": 100,
