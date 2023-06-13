@@ -394,19 +394,19 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
         eventSourceARN: 'queue-url',
         body: createWorkflowMessage('test'),
         ReceiptHandle: 'receipt-handle-1',
-        messageId: 'id-1'
+        messageId: 'id-1',
       },
       {
         eventSourceARN: 'queue-url',
         body: createWorkflowMessage('test'),
         ReceiptHandle: 'receipt-handle-2',
-        messageId: 'id-2'
+        messageId: 'id-2',
       },
       {
         eventSourceARN: 'queue-url',
         body: createWorkflowMessage('test'),
         ReceiptHandle: 'receipt-handle-3',
-        messageId: failedMessageId
+        messageId: failedMessageId,
       },
     ],
   };
@@ -421,15 +421,18 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
     startExecution: () => {
       const error = new Error('RandomError');
       throw error;
-    }
-  })
+    },
+  });
   const deleteMessageStub = sinon.stub(sqs, 'deleteSQSMessage').resolves({});
 
   // Stub second call to throw ExecutionAlreadyExists error
   const sfStub = sinon.stub()
-    .onFirstCall().callsFake(stubSFN)
-    .onSecondCall().callsFake(stubSFNThrowError)
-    .onThirdCall().callsFake(stubSFNRandomThrowError);
+    .onFirstCall()
+    .callsFake(stubSFN)
+    .onSecondCall()
+    .callsFake(stubSFNThrowError)
+    .onThirdCall()
+    .callsFake(stubSFNRandomThrowError);
   const revert = sfStarter.__set__('sfn', sfStub);
 
   t.teardown(() => {

@@ -140,22 +140,20 @@ function handleThrottledEvent(event, visibilityTimeout) {
 async function handleSourceMappingEvent(event) {
   const sqsRecords = event.Records;
   const batchItemFailures = [];
-  await Promise.all(sqsRecords.map(
-    async (sqsRecord) => {
-      try {
-        await dispatch(sqsRecord.eventSourceARN, sqsRecord)
-      } catch (error) {
-        // If error is ExecutionAlreadyExists, do not include in batchItemFailures
-        if (error.code === 'ExecutionAlreadyExists') {
-          logger.debug(`Execution already exists. Error: ${error}`);
-          return batchItemFailures;
-        }
-        return batchItemFailures.push({
-          itemIdentifier: sqsRecord.messageId
-        })
+  await Promise.all(sqsRecords.map(async (sqsRecord) => {
+    try {
+      return await dispatch(sqsRecord.eventSourceARN, sqsRecord);
+    } catch (error) {
+      // If error is ExecutionAlreadyExists, do not include in batchItemFailures
+      if (error.code === 'ExecutionAlreadyExists') {
+        logger.debug(`Execution already exists. Error: ${error}`);
+        return batchItemFailures;
       }
+      return batchItemFailures.push({
+        itemIdentifier: sqsRecord.messageId,
+      });
     }
-  ));
+  }));
 
   return { batchItemFailures };
 }
