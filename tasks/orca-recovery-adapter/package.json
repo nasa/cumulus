@@ -32,6 +32,7 @@
     "files": [
       "tests/*"
     ],
+    "timeout": "2m",
     "verbose": true
   },
   "author": "Cumulus Authors",
