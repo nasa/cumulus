@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `tf-modules/cumulus` module to take variable `orca_sfn_recovery_workflow_arn` and pass to `tf-modules/ingest`
   - Added `example/cumulus-tf/orca_recovery_adapter_workflow.tf`, `OrcaRecoveryAdapterWorkflow` workflow has `OrcaRecoveryAdapter` task
     to call the ORCA recovery step-function.
+  - Updated `example/data/collections/` collection configuration `meta.granuleRecoveryWorkflow` to use `OrcaRecoveryAdapterWorkflow`
 - **CUMULUS-3315**
   - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
     parameter in favor of `granules` parameter, in the form of a

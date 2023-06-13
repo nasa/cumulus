@@ -150,7 +150,12 @@ test.serial('invokeOrcaRecoveryWorkflow() throws error if orca recovery workflow
 test.serial('getStateMachineExecutionResults() waits for orca recovery workflow to complete', async (t) => {
   process.env.orca_sfn_recovery_workflow_arn = fakeRunningSfnArn;
   const error = await t.throwsAsync(
-    getStateMachineExecutionResults(`${fakeRunningSfnArn}:${randomId()}`, 1, 1, 1)
+    getStateMachineExecutionResults({
+      executionArn: `${fakeRunningSfnArn}:${randomId()}`,
+      retries: 1,
+      retryIntervalInSecond: 1,
+      maxRetryTimeInSecond: 1,
+    })
   );
   t.is(error.attemptNumber, 2);
   t.is(error.retriesLeft, 0);

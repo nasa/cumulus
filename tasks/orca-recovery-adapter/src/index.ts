@@ -15,12 +15,31 @@ import { HandlerEvent, HandlerOutput } from './types';
 
 const log = new Logger({ sender: '@cumulus/orca-recovery-adapter' });
 
+/**
+ * Get state machine execution results
+ *
+ * @param {object} params
+ * @param {string} params.executionArn - execution arn
+ * @param {number} params.retries - number of retries
+ * @param {number} params.retryIntervalInSecond - retry internal in second
+ * @param {number} params.maxRetryTimeInSecond - max retry time in second
+ * @returns Promise<AWS.StepFunctions.DescribeExecutionOutput> - Returns promise
+ *   that resolves to the output of step function execution
+ */
 export const getStateMachineExecutionResults = async (
-  executionArn: string,
-  retries = 50,
-  retryIntervalInSecond = 5,
-  maxRetryTimeInSecond = 1800
-): Promise<AWS.StepFunctions.DescribeExecutionOutput> => {
+  params: {
+    executionArn: string,
+    retries?: number,
+    retryIntervalInSecond?: number,
+    maxRetryTimeInSecond?: number,
+  }
+) : Promise<AWS.StepFunctions.DescribeExecutionOutput> => {
+  const {
+    executionArn,
+    retries = 50,
+    retryIntervalInSecond = 5,
+    maxRetryTimeInSecond = 1800,
+  } = params;
   const result = await pRetry(
     async () => {
       const response = await describeExecution({ executionArn });
@@ -42,6 +61,12 @@ export const getStateMachineExecutionResults = async (
   return result;
 };
 
+/**
+ * Invoke ORCA Recovery workflow
+ *
+ * @param {HandlerEvent} event - input from the message adapter
+ * @returns {Promise<HandlerOutput>} - returns output from ORCA workflow
+ */
 export const invokeOrcaRecoveryWorkflow = async (
   event: HandlerEvent
 ) : Promise<HandlerOutput> => {
@@ -78,7 +103,7 @@ export const invokeOrcaRecoveryWorkflow = async (
   }
 
   log.info(`About to get result from execution ${childWorkflowArn}`);
-  const executionResult = await getStateMachineExecutionResults(childWorkflowArn || '');
+  const executionResult = await getStateMachineExecutionResults({ executionArn: childWorkflowArn || '' });
   log.info(`Get result from execution ${childWorkflowArn}, status ${executionResult?.status}`);
   if (executionResult?.status === 'FAILED') {
     throw new Error(`Error execute ${childWorkflowArn}, result from execution ${JSON.stringify(executionResult)}`);
@@ -90,9 +115,9 @@ export const invokeOrcaRecoveryWorkflow = async (
 /**
  * Lambda handler
  *
- * @param {Object} event      - a Cumulus Message
- * @param {Object} context    - an AWS Lambda context
- * @returns {Promise<Object>} - Returns output from task.
+ * @param {object} event      - a Cumulus Message
+ * @param {object} context    - an AWS Lambda context
+ * @returns {Promise<object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
 export const handler = async (
