@@ -24,6 +24,7 @@ const {
   translatePostgresCollectionToApiCollection,
   translatePostgresGranuleToApiGranule,
   getGranuleAndCollection,
+  getGranulesExist,
 } = require('@cumulus/db');
 const {
   Search,
@@ -32,6 +33,7 @@ const {
 } = require('@cumulus/es-client/search');
 const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 
+const pMap = require('p-map');
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
 
@@ -1075,6 +1077,74 @@ async function bulkReingest(req, res) {
   return res.status(202).send({ id: asyncOperationId });
 }
 
+/**
+ * Update several granules in the same collection.
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object
+ */
+async function bulkUpdateGranules(req, res) {
+  const {
+    collectionPgModel = new CollectionPgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const granules = req.body.granules;
+  const collectionId = granules[0].collectionId;
+  if (!collectionId) {
+    return res.boom.badRequest(
+      'All granules must have a collectionId defined.'
+    );
+  }
+  const collectionIdsMatch = granules.every(
+    ({ collectionId: granuleCollectionId }) => granuleCollectionId === collectionId
+  );
+  if (!collectionIdsMatch) {
+    return res.boom.badRequest(
+      `All granules must be in the same collection (${collectionId}).`
+    );
+  }
+
+  let pgCollection;
+  try {
+    pgCollection = await collectionPgModel.get(
+      knex,
+      deconstructCollectionId(collectionId)
+    );
+  } catch (error) {
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(
+        `No collection found for collectionId ${collectionId}`
+      );
+    }
+    return res.boom.badRequest(errorify(error));
+  }
+
+  try {
+    const granulesExist = await getGranulesExist(
+      knex,
+      pgCollection.cumulus_id,
+      granules.map(({ granuleId }) => granuleId)
+    );
+    await pMap(
+      granules,
+      async (apiGranule) => {
+        await updateGranuleFromApi(
+          _setNewGranuleDefaults(apiGranule, !granulesExist[apiGranule.granuleId]),
+          knex,
+          esClient
+        );
+      },
+      { concurrency: 1 }
+    );
+  } catch (error) {
+    return res.boom.badRequest(errorify(error));
+  }
+  return res.send({ message: 'Granules updated' });
+}
+
 router.get('/:granuleId', getByGranuleId);
 router.get('/:collectionId/:granuleId', get);
 router.get('/', list);
@@ -1102,6 +1172,11 @@ router.post(
   bulkReingest,
   asyncOperationEndpointErrorHandler
 );
+router.post(
+  '/bulkUpdate',
+  validateBulkGranulesRequest,
+  bulkUpdateGranules
+);
 router.delete('/:granuleId', delByGranuleId);
 router.delete('/:collectionId/:granuleId', del);
 
@@ -1109,6 +1184,7 @@ module.exports = {
   bulkDelete,
   bulkOperations,
   bulkReingest,
+  bulkUpdateGranules,
   del,
   create,
   put,

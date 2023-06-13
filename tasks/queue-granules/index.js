@@ -158,9 +158,10 @@ function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
  **/
 async function queueGranules(event, testMocks = {}) {
   const granules = event.input.granules || [];
-  const updateGranule = testMocks.updateGranuleMock || granulesApi.updateGranule;
-  const enqueueGranuleIngestMessageFn
-    = testMocks.enqueueGranuleIngestMessageMock || enqueueGranuleIngestMessage;
+  const {
+    bulkUpdateGranulesFn = granulesApi.bulkUpdateGranules,
+    enqueueGranuleIngestMessageFn = enqueueGranuleIngestMessage,
+  } = testMocks;
 
   const memoizedFetchProvider = memoize(fetchGranuleProvider, (_, providerId) => providerId);
   const memoizedFetchCollection = memoize(
@@ -206,27 +207,17 @@ async function queueGranules(event, testMocks = {}) {
       return await pMap(
         chunks,
         async (granuleBatchIn) => {
-          const createdAt = Date.now();
-          const granuleBatch = updateGranuleBatchCreatedAt(granuleBatchIn, createdAt);
-          await pMap(
-            granuleBatch,
-            (queuedGranule) => {
-              const granuleId = queuedGranule.granuleId;
+          const granuleBatch = updateGranuleBatchCreatedAt(granuleBatchIn, Date.now());
+          await bulkUpdateGranulesFn({
+            prefix: event.config.stackName,
+            granules: granuleBatch.map(({ granuleId, createdAt }) => ({
+              collectionId,
+              granuleId,
+              status: 'queued',
+              createdAt,
+            })),
+          });
 
-              return updateGranule({
-                prefix: event.config.stackName,
-                collectionId,
-                granuleId,
-                body: {
-                  collectionId,
-                  granuleId,
-                  status: 'queued',
-                  createdAt: queuedGranule.createdAt,
-                },
-              });
-            },
-            { concurrency: pMapConcurrency }
-          );
           return await enqueueGranuleIngestMessageFn({
             messageTemplate,
             workflow: {

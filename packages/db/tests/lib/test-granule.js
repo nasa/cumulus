@@ -25,6 +25,7 @@ const {
   migrationDir,
   getGranulesByApiPropertiesQuery,
   createRejectableTransaction,
+  getGranulesExist,
 } = require('../../dist');
 
 const testDbName = `granule_lib_${cryptoRandomString({ length: 10 })}`;
@@ -1115,4 +1116,50 @@ test('getGranulesByGranuleId() returns empty list when called with a granuleId t
   );
   const records = await getGranulesByGranuleId(knex, granuleId);
   t.deepEqual(records, []);
+});
+
+test('getGranulesExist() returns a mapping of granule ids to if the granule exists', async (t) => {
+  const {
+    collectionCumulusId,
+    knex,
+    granulePgModel,
+  } = t.context;
+  const doesNotExist = 'granule-4321';
+  const [exists] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId,
+    }),
+    '*'
+  );
+  const collection2 = fakeCollectionRecordFactory();
+  const collectionResponse = await t.context.collectionPgModel.create(
+    knex,
+    collection2
+  );
+  const collectionCumulusId2 = collectionResponse[0].cumulus_id;
+  const [wrongCollection] = await granulePgModel.create(
+    knex,
+    fakeGranuleRecordFactory({
+      collection_cumulus_id: collectionCumulusId2,
+    }),
+    '*'
+  );
+  const result = await getGranulesExist(
+    knex,
+    collectionCumulusId,
+    [exists.granule_id, doesNotExist, wrongCollection.granule_id]
+  );
+  t.deepEqual(
+    result,
+    {
+      [exists.granule_id]: true,
+      [doesNotExist]: false,
+      [wrongCollection.granule_id]: false,
+    }
+  );
+  t.teardown(async () => await Promise.all([
+    granulePgModel.delete(knex, { cumulus_id: exists.cumulus_id }),
+    granulePgModel.delete(knex, { cumulus_id: wrongCollection.cumulus_id }),
+  ]));
 });

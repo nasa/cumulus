@@ -504,6 +504,36 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
+test('updateGranule calls the callback without collectionid', async (t) => {
+  const body = {
+    granuleId: t.context.granuleId,
+    any: 'object',
+    status: t.context.status,
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PATCH',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.granuleId}`,
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: [200, 201],
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.updateGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    body,
+  }));
+});
+
 test('associateExecutionWithGranule calls the callback with the expected object', async (t) => {
   const body = {
     granuleId: t.context.granuleId,
@@ -563,6 +593,38 @@ test('bulkOperation calls the callback with the expected object', async (t) => {
       prefix: t.context.testPrefix,
       granules,
       workflowName,
+    })
+  );
+});
+
+test('bulkUpdateGranule calls the callback with the expected object', async (t) => {
+  const granuleId = t.context.granuleId;
+  const collectionId = randomId('collectionId');
+  const granules = [{ granuleId, collectionId }];
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulkUpdate',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
+      },
+      body: JSON.stringify({ granules }),
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(
+    granulesApi.bulkUpdateGranules({
+      callback,
+      prefix: t.context.testPrefix,
+      granules,
     })
   );
 });

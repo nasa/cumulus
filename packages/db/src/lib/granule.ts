@@ -9,6 +9,7 @@ import {
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
+import { GranuleId } from '@cumulus/types';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
@@ -353,4 +354,34 @@ export const getGranulesByGranuleId = async (
   const records: PostgresGranuleRecord[] = await knexOrTransaction(granulesTable)
     .where({ granule_id: granuleId });
   return records;
+};
+
+/**
+ * Test if granule ids exist in a given collection id.
+ *
+ * @param {Knex | Knex.Transaction} knexOrTransaction - DB client or transaction
+ * @param {number} collectionCumulusId - a granule.collection_cumulus_id
+ * @param {Set<GranuleId>} granuleIds - Granule IDs to query for
+ * @returns {Promise<Record<GranuleId, boolean>>} The returned list of records
+ */
+export const getGranulesExist = async (
+  knexOrTransaction: Knex | Knex.Transaction,
+  collectionCumulusId: number,
+  granuleIds: GranuleId[]
+): Promise<Record<GranuleId, boolean>> => {
+  if (granuleIds.length === 0) {
+    return {};
+  }
+
+  const {
+    granules: granulesTable,
+  } = TableNames;
+  const records = await knexOrTransaction(granulesTable)
+    .select('granule_id')
+    .whereIn('granule_id', granuleIds)
+    .andWhere('collection_cumulus_id', collectionCumulusId);
+  const existingGranules = records.map(({ granule_id }) => granule_id);
+  return Object.fromEntries(
+    granuleIds.map((id) => [id, existingGranules.includes(id)])
+  );
 };

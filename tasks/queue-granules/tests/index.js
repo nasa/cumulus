@@ -26,7 +26,7 @@ const { updateGranuleBatchCreatedAt } = require('..');
 const fakeProvidersApi = {};
 const fetchCollectionStub = sinon.stub();
 const fakeGranulesApi = {
-  updateGranule: noop,
+  bulkUpdateGranules: noop,
 };
 
 const { queueGranules } = proxyquire('..', {
@@ -637,7 +637,7 @@ test.serial('A default concurrency of 3 is used', async (t) => {
 
   await queueGranules(event);
 
-  t.is(pMapSpy.getCalls().length, 4);
+  t.is(pMapSpy.getCalls().length, 2);
   pMapSpy.getCalls().slice(1).forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
@@ -670,7 +670,7 @@ test.serial('A configured concurrency is used', async (t) => {
 
   await queueGranules(event);
 
-  t.is(pMapSpy.getCalls().length, 4);
+  t.is(pMapSpy.getCalls().length, 2);
   pMapSpy.getCalls().slice(1).forEach((call) => t.true(call.calledWithMatch(
     sinon.match.any,
     sinon.match.any,
@@ -802,17 +802,17 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
     },
   ];
 
-  const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
+  const bulkUpdateGranulesFn = sinon.spy(({ granules }) => granules[0].createdAt);
+  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
 
   const testMocks = {
-    updateGranuleMock,
-    enqueueGranuleIngestMessageMock,
+    bulkUpdateGranulesFn,
+    enqueueGranuleIngestMessageFn,
   };
 
   await queueGranules(event, testMocks);
-  const expectedCreatedAt = enqueueGranuleIngestMessageMock.returnValues[0].granules[0].createdAt;
-  t.is(updateGranuleMock.returnValues[0], expectedCreatedAt);
+  const expectedCreatedAt = enqueueGranuleIngestMessageFn.returnValues[0].granules[0].createdAt;
+  t.is(bulkUpdateGranulesFn.returnValues[0], expectedCreatedAt);
 });
 
 test.serial('updatedGranuleBatchCreatedAt updates batch granule object with correct createdAt values', (t) => {
@@ -882,43 +882,36 @@ test.serial('does not change collection id on granule', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
+  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
 
   const testMocks = {
-    updateGranuleMock: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageMock,
+    bulkUpdateGranulesFn: sinon.spy(async () => { }),
+    enqueueGranuleIngestMessageFn,
   };
 
   await queueGranules(event, testMocks);
-
+  const updatedGranules = testMocks.bulkUpdateGranulesFn.getCalls()
+    .flatMap(({ firstArg }) => firstArg.granules);
   const createdMap = Object.fromEntries(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
+    updatedGranules.map(({ granuleId, createdAt }) => [granuleId, createdAt])
   );
   t.deepEqual(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => params)
-      .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
+    updatedGranules.sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
       ({ granuleId, dataType, version }) => {
         const collectionId = constructCollectionId(dataType, version);
         return {
-          prefix: event.config.stackName,
           collectionId,
           granuleId,
-          body: {
-            collectionId,
-            granuleId,
-            status: 'queued',
-            createdAt: createdMap[granuleId],
-          },
+          status: 'queued',
+          createdAt: createdMap[granuleId],
         };
       }
     )
   );
 
   t.deepEqual(
-    enqueueGranuleIngestMessageMock.getCalls().length,
+    updatedGranules.length,
     event.input.granules.length
   );
 });
@@ -946,43 +939,36 @@ test.serial('handles different collections', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
+  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
 
   const testMocks = {
-    updateGranuleMock: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageMock,
+    bulkUpdateGranulesFn: sinon.spy(async () => { }),
+    enqueueGranuleIngestMessageFn,
   };
 
   await queueGranules(event, testMocks);
-
+  const updatedGranules = testMocks.bulkUpdateGranulesFn.getCalls()
+    .flatMap(({ firstArg }) => firstArg.granules);
   const createdMap = Object.fromEntries(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
+    updatedGranules.map(({ granuleId, createdAt }) => [granuleId, createdAt])
   );
   t.deepEqual(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => params)
-      .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
+    updatedGranules.sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
       ({ granuleId, dataType, version }) => {
         const collectionId = constructCollectionId(dataType, version);
         return {
-          prefix: event.config.stackName,
           collectionId,
           granuleId,
-          body: {
-            collectionId,
-            granuleId,
-            status: 'queued',
-            createdAt: createdMap[granuleId],
-          },
+          status: 'queued',
+          createdAt: createdMap[granuleId],
         };
       }
     )
   );
 
   t.deepEqual(
-    enqueueGranuleIngestMessageMock.getCalls().length,
+    updatedGranules.length,
     event.input.granules.length
   );
 });
@@ -1011,43 +997,36 @@ test.serial('handles different providers', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
+  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
 
   const testMocks = {
-    updateGranuleMock: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageMock,
+    bulkUpdateGranulesFn: sinon.spy(async () => { }),
+    enqueueGranuleIngestMessageFn,
   };
 
   await queueGranules(event, testMocks);
-
+  const updatedGranules = testMocks.bulkUpdateGranulesFn.getCalls()
+    .flatMap(({ firstArg }) => firstArg.granules);
   const createdMap = Object.fromEntries(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
+    updatedGranules.map(({ granuleId, createdAt }) => [granuleId, createdAt])
   );
   t.deepEqual(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => params)
-      .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
+    updatedGranules.sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
       ({ granuleId, dataType, version }) => {
         const collectionId = constructCollectionId(dataType, version);
         return {
-          prefix: event.config.stackName,
           collectionId,
           granuleId,
-          body: {
-            collectionId,
-            granuleId,
-            status: 'queued',
-            createdAt: createdMap[granuleId],
-          },
+          status: 'queued',
+          createdAt: createdMap[granuleId],
         };
       }
     )
   );
 
   t.deepEqual(
-    enqueueGranuleIngestMessageMock.getCalls().length,
+    updatedGranules.length,
     event.input.granules.length
   );
 });
