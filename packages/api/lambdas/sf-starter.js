@@ -149,6 +149,7 @@ async function handleSourceMappingEvent(event) {
         logger.debug(`Execution already exists. Error: ${error}`);
         return batchItemFailures;
       }
+      logger.error(error);
       return batchItemFailures.push({
         itemIdentifier: sqsRecord.messageId,
       });
