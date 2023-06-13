@@ -45,9 +45,9 @@ export const invokeOrcaCopyToArchive = async (
 /**
  * Lambda handler
  *
- * @param {Object} event      - a Cumulus Message
- * @param {Object} context    - an AWS Lambda context
- * @returns {Promise<Object>} - Returns output from task.
+ * @param {object} event      - a Cumulus Message
+ * @param {object} context    - an AWS Lambda context
+ * @returns {Promise<object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
 export const handler = async (
