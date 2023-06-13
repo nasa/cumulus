@@ -145,10 +145,11 @@ async function handleSourceMappingEvent(event) {
       try {
         await dispatch(sqsRecord.eventSourceARN, sqsRecord)
       } catch (error) {
+        // If error is ExecutionAlreadyExists, do not include in batchItemFailures
         if (error.code === 'ExecutionAlreadyExists') {
-          logger.info(`Execution already exists. Proceeding to delete message from queue ${event.queueUrl}...`);
+          logger.debug(`Execution already exists. Error: ${error}`);
+          return batchItemFailures;
         }
-        logger.error(error);
         return batchItemFailures.push({
           itemIdentifier: sqsRecord.messageId
         })

@@ -386,7 +386,7 @@ test('handleThrottledEvent starts MAX - N executions for messages with priority'
 
 test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSource event', async (t) => {
   // EventSourceMapping input uses 'body' instead of 'Body'
-  const failedMessageId = 'id-2';
+  const failedMessageId = 'id-3';
   const event = {
     queueUrl: 'queue-url',
     Records: [
@@ -400,6 +400,12 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
         eventSourceARN: 'queue-url',
         body: createWorkflowMessage('test'),
         ReceiptHandle: 'receipt-handle-2',
+        messageId: 'id-2'
+      },
+      {
+        eventSourceARN: 'queue-url',
+        body: createWorkflowMessage('test'),
+        ReceiptHandle: 'receipt-handle-3',
         messageId: failedMessageId
       },
     ],
@@ -411,10 +417,19 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
       throw error;
     },
   });
+  const stubSFNRandomThrowError = () => ({
+    startExecution: () => {
+      const error = new Error('RandomError');
+      throw error;
+    }
+  })
   const deleteMessageStub = sinon.stub(sqs, 'deleteSQSMessage').resolves({});
+
+  // Stub second call to throw ExecutionAlreadyExists error
   const sfStub = sinon.stub()
     .onFirstCall().callsFake(stubSFN)
-    .onSecondCall().callsFake(stubSFNThrowError);
+    .onSecondCall().callsFake(stubSFNThrowError)
+    .onThirdCall().callsFake(stubSFNRandomThrowError);
   const revert = sfStarter.__set__('sfn', sfStub);
 
   t.teardown(() => {
@@ -423,5 +438,6 @@ test.serial('handleSourceMappingEvent calls dispatch on messages in an EventSour
   });
 
   const output = await handleSourceMappingEvent(event);
+  // Check that batchItemFailures contain the non ExecutionAlreadyExists error messageId.
   t.deepEqual(output, { batchItemFailures: [{ itemIdentifier: failedMessageId }] });
 });
