@@ -139,9 +139,24 @@ function handleThrottledEvent(event, visibilityTimeout) {
 
 async function handleSourceMappingEvent(event) {
   const sqsRecords = event.Records;
-  return await Promise.all(sqsRecords.map(
-    (sqsRecord) => dispatch(sqsRecord.eventSourceARN, sqsRecord)
+  const batchItemFailures = [];
+  await Promise.all(sqsRecords.map(
+    async (sqsRecord) => {
+      try {
+        await dispatch(sqsRecord.eventSourceARN, sqsRecord)
+      } catch (error) {
+        if (error.code === 'ExecutionAlreadyExists') {
+          logger.info(`Execution already exists. Proceeding to delete message from queue ${event.queueUrl}...`);
+        }
+        logger.error(error);
+        return batchItemFailures.push({
+          itemIdentifier: sqsRecord.messageId
+        })
+      }
+    }
   ));
+
+  return { batchItemFailures };
 }
 
 /**
