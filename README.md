@@ -12,7 +12,7 @@ To learn more about Cumulus and NASA's Earth Observing System Data and Informati
 
 # 🚀 Getting Started
 
-Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus deployment go to our [Getting Started](https://nasa.github.io/cumulus/docs/) section.
+Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus deployment go to our [Getting Started](https://nasa.github.io/cumulus/docs/getting-started) section.
 
 ## Contents
 - [Documentation](#-documentation)
