@@ -1,4 +1,5 @@
 resource "aws_lambda_function" "post_to_cmr_task" {
+  depends_on       = [aws_cloudwatch_log_group.post_to_cmr_task]
   function_name    = "${var.prefix}-PostToCmr"
   filename         = "${path.module}/../../tasks/post-to-cmr/dist/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/../../tasks/post-to-cmr/dist/lambda.zip")
@@ -34,7 +35,7 @@ resource "aws_lambda_function" "post_to_cmr_task" {
 }
 
 resource "aws_cloudwatch_log_group" "post_to_cmr_task" {
-  name = "/aws/lambda/${aws_lambda_function.post_to_cmr_task.function_name}"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "ingest_post_to_cmr_task_log_retention", var.default_log_retention_days)
+  name = "/aws/lambda/${var.prefix}-PostToCmr"
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "PostToCmr", var.default_log_retention_days)
   tags = var.tags
 }

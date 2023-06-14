@@ -1,6 +1,7 @@
 import pRetry from 'p-retry';
 
-import { ApiGranuleRecord, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { ApiGranuleRecord, ApiGranule, GranuleId, GranuleStatus } from '@cumulus/types/api/granules';
+import { CollectionId } from '@cumulus/types/api/collections';
 import Logger from '@cumulus/logger';
 
 import { invokeApi } from './cumulusApiClient';
@@ -15,44 +16,59 @@ type AssociateExecutionRequest = {
 };
 
 /**
- * GET raw response from /granules/{granuleName}
+ * GET raw response from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
  *
- * @param {Object} params             - params
- * @param {string} params.prefix      - the prefix configured for the stack
- * @param {string} params.granuleId   - a granule ID
- * @param {Object} [params.query]     - query to pass the API lambda
- * @param {Function} params.callback  - async function to invoke the api lambda
- *                                      that takes a prefix / user payload.  Defaults
- *                                      to cumulusApiClient.invokeApifunction to invoke the
- *                                      api lambda
- * @returns {Promise<Object>}         - the granule fetched by the API
+ * @param {Object} params                                - params
+ * @param {string} params.prefix                         - the prefix configured for the stack
+ * @param {string} params.granuleId                      - a granule ID
+ * @param {Object} [params.query]                        - query to pass the API lambda
+ * @param {number[] | number} params.expectedStatusCodes - the statusCodes which the granule API is
+ *                                                         is expecting for the invokeApi Response,
+ *                                                         default is 200
+ * @param {Function} params.callback                     - async function to invoke the api lambda
+ *                                                         that takes a prefix / user payload,
+ *                                                         cumulusApiClient.invokeApifunction
+ *                                                         is the default to invoke the api lambda
+ * @returns {Promise<Object>}                            - the granule fetched by the API
  */
 export const getGranuleResponse = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
+  expectedStatusCodes?: number[] | number,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
+    collectionId,
     query,
+    expectedStatusCodes,
     callback = invokeApi,
   } = params;
 
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
+
   return await callback({
-    prefix: prefix,
+    prefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       ...(query && { queryStringParameters: query }),
     },
+    expectedStatusCodes,
   });
 };
 
 /**
- * GET granule record from /granules/{granuleName}
+ * GET granule record from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
  *
  * @param {Object} params             - params
  * @param {string} params.prefix      - the prefix configured for the stack
@@ -67,6 +83,7 @@ export const getGranuleResponse = async (params: {
 export const getGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   query?: { [key: string]: string },
   callback?: InvokeApiFunction
 }): Promise<ApiGranuleRecord> => {
@@ -104,6 +121,7 @@ export const waitForGranule = async (params: {
 
   await pRetry(
     async () => {
+      // TODO update to use collectionId + granuleId
       const apiResult = await getGranuleResponse({ prefix, granuleId, callback });
 
       if (apiResult.statusCode === 500) {
@@ -152,20 +170,36 @@ export const waitForGranule = async (params: {
 export const reingestGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   workflowName?: string | undefined,
   executionArn?: string | undefined,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, workflowName, executionArn, callback = invokeApi } = params;
+  const {
+    prefix,
+    granuleId,
+    collectionId,
+    workflowName,
+    executionArn,
+    callback = invokeApi,
+  } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({
         action: 'reingest',
@@ -192,18 +226,27 @@ export const reingestGranule = async (params: {
 export const removeFromCMR = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
+  const { prefix, granuleId, collectionId, callback = invokeApi } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({ action: 'removeFromCmr' }),
     },
@@ -227,6 +270,7 @@ export const removeFromCMR = async (params: {
 export const applyWorkflow = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   workflow: string,
   meta?: object,
   callback?: InvokeApiFunction
@@ -234,10 +278,18 @@ export const applyWorkflow = async (params: {
   const {
     prefix,
     granuleId,
+    collectionId,
     workflow,
     meta,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
@@ -246,8 +298,9 @@ export const applyWorkflow = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
-      path: `/granules/${granuleId}`,
+      path,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
     },
   });
@@ -270,6 +323,7 @@ export const applyWorkflow = async (params: {
 export const deleteGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   pRetryOptions?: pRetry.Options,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
@@ -277,14 +331,23 @@ export const deleteGranule = async (params: {
     pRetryOptions,
     prefix,
     granuleId,
+    collectionId,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
+
   return await callback({
     prefix: prefix,
     payload: {
       httpMethod: 'DELETE',
       resource: '/{proxy+}',
-      path: `/granules/${granuleId}`,
+      path,
     },
     pRetryOptions,
   });
@@ -307,15 +370,24 @@ export const deleteGranule = async (params: {
 export const moveGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   destinations: unknown[],
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const {
     prefix,
     granuleId,
+    collectionId,
     destinations,
     callback = invokeApi,
   } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix: prefix,
@@ -324,8 +396,9 @@ export const moveGranule = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
-      path: `/granules/${granuleId}`,
+      path,
       body: JSON.stringify({ action: 'move', destinations }),
     },
   });
@@ -346,13 +419,14 @@ export const moveGranule = async (params: {
 export const removePublishedGranule = async (params: {
   prefix: string,
   granuleId: GranuleId,
+  collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, granuleId, callback = invokeApi } = params;
+  const { prefix, granuleId, collectionId, callback = invokeApi } = params;
 
   // pre-delete: Remove the granule from CMR
-  await removeFromCMR({ prefix, granuleId, callback });
-  return deleteGranule({ prefix, granuleId, callback });
+  await removeFromCMR({ prefix, granuleId, collectionId, callback });
+  return deleteGranule({ prefix, granuleId, collectionId, callback });
 };
 
 /**
@@ -418,6 +492,42 @@ export const createGranule = async (params: {
 };
 
 /**
+ * Update/create granule in cumulus via PUT request.  Existing values will
+ * be removed if not specified and in some cases replaced with defaults.
+ * Granule execution association history will be retained.
+ * PUT /granules/{collectionId}/{granuleId}
+ * @param {Object} params             - params
+ * @param {Object} [params.body]      - granule to pass the API lambda
+ * @param {Function} params.callback  - async function to invoke the api lambda
+ *                                      that takes a prefix / user payload.  Defaults
+ *                                      to cumulusApiClient.invokeApifunction to invoke the
+ *                                      api lambda
+ * @returns {Promise<Object>}         - the response from the callback
+ */
+export const replaceGranule = async (params: {
+  prefix: string,
+  body: ApiGranuleRecord,
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const { prefix, body, callback = invokeApi } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${body.collectionId}/${body.granuleId}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
+      },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: [200, 201],
+  });
+};
+
+/**
  * Update granule in cumulus via PATCH request.  Existing values will
  * not be overwritten if not specified, null values will be removed and in
  * some cases replaced with defaults.
@@ -433,17 +543,26 @@ export const createGranule = async (params: {
 export const updateGranule = async (params: {
   prefix: string,
   body: ApiGranuleRecord,
+  granuleId: GranuleId,
+  collectionId?: CollectionId,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, body, callback = invokeApi } = params;
+  const { prefix, granuleId, collectionId, body, callback = invokeApi } = params;
+
+  let path = `/granules/${collectionId}/${granuleId}`;
+
+  // Fetching a granule without a collectionId is supported but deprecated
+  if (!collectionId) {
+    path = `/granules/${granuleId}`;
+  }
 
   return await callback({
     prefix,
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${body.granuleId}`,
-      headers: { 'Content-Type': 'application/json' },
+      path,
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
     expectedStatusCodes: [200, 201],
@@ -493,7 +612,7 @@ export const associateExecutionWithGranule = async (params: {
  */
 export const bulkGranules = async (params: {
   prefix: string,
-  body: object,
+  body: unknown,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
@@ -574,7 +693,7 @@ export const bulkReingestGranules = async (params: {
  *
  * @param {Object} params - params
  * @param {string} params.prefix - the prefix configured for the stack
- * @param {Array<string>} params.ids - the granules to have bulk operation on
+ * @param {Array<ApiGranuleRecord>} params.granules - the granules to have bulk operation on
  * @param {string} params.workflowName - workflowName for the bulk operation execution
  * @param {Function} params.callback  - async function to invoke the api lambda
  *                                      that takes a prefix / user payload.  Defaults
@@ -584,11 +703,11 @@ export const bulkReingestGranules = async (params: {
  */
 export const bulkOperation = async (params: {
   prefix: string,
-  ids: string[],
+  granules: ApiGranule[],
   workflowName: string,
   callback?: InvokeApiFunction
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
-  const { prefix, ids, workflowName, callback = invokeApi } = params;
+  const { prefix, granules, workflowName, callback = invokeApi } = params;
   return await callback({
     prefix: prefix,
     payload: {
@@ -598,7 +717,7 @@ export const bulkOperation = async (params: {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ids, workflowName }),
+      body: JSON.stringify({ granules, workflowName }),
     },
     expectedStatusCodes: 202,
   });

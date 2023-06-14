@@ -14,6 +14,7 @@ Below are some commonly asked questions that you may encounter that can assist y
 
 <details>
   <summary>What prerequisites are needed to setup Cumulus?</summary>
+
   Answer: Here is a list of the tools and access that you will need in order to get started. To maintain the up-to-date versions that we are using please visit our [Cumulus main README](https://github.com/nasa/cumulus) for details.
 
 - [NVM](https://github.com/creationix/nvm) for node versioning
@@ -24,7 +25,11 @@ Below are some commonly asked questions that you may encounter that can assist y
 - Python
 - [pipenv](https://pypi.org/project/pipenv/)
   
-> Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+:::info login credentials
+
+Keep in mind you will need access to the AWS console and an [Earthdata account](https://urs.earthdata.nasa.gov/) before you can deploy Cumulus.
+
+:::
 
 </details>
 
@@ -60,7 +65,11 @@ Below are some commonly asked questions that you may encounter that can assist y
 - Cumulus: Outside NASA users should file a [GitHub issue](https://github.com/nasa/cumulus/issues) and inside NASA users should file a Cumulus JIRA ticket.
 - AWS: You can create a case in the [AWS Support Center](https://console.aws.amazon.com/support/home), accessible via your AWS Console.
 
-> For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md)
+:::info
+
+For more information on how to submit an issue or contribute to Cumulus follow our guidelines at [Contributing](https://github.com/nasa/cumulus/blob/master/CONTRIBUTING.md).
+
+:::
 
 </details>
 

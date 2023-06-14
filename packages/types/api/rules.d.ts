@@ -30,6 +30,7 @@ export interface PartialRuleRecord {
   executionNamePrefix?: string,
   queueUrl?: string,
   tags?: string[],
+  asyncOperationId?: string,
 }
 
 export interface NewRuleRecord extends PartialRuleRecord {

@@ -7,6 +7,7 @@ const granulesApi = require('../granules');
 test.before((t) => {
   t.context.testPrefix = 'unitTestStack';
   t.context.granuleId = 'granule-1';
+  t.context.collectionId = 'fakeName___fakeVersion';
   t.context.status = 'queued';
 });
 
@@ -18,6 +19,7 @@ test('getGranule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
     },
+    expectedStatusCodes: undefined,
   };
 
   const callback = (configObject) => {
@@ -36,16 +38,15 @@ test('getGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
-test('getGranule calls the callback with the expected object when there is query param', async (t) => {
-  const query = { getRecoveryStatus: true };
+test('getGranule calls the callback with the expected status codes', async (t) => {
   const expected = {
     prefix: t.context.testPrefix,
     payload: {
       httpMethod: 'GET',
       resource: '/{proxy+}',
       path: `/granules/${t.context.granuleId}`,
-      queryStringParameters: query,
     },
+    expectedStatusCodes: [404, 200],
   };
 
   const callback = (configObject) => {
@@ -53,6 +54,7 @@ test('getGranule calls the callback with the expected object when there is query
     return Promise.resolve({
       body: JSON.stringify({
         granuleId: t.context.granuleId,
+        expectedStatusCodes: [404, 200],
       }),
     });
   };
@@ -61,7 +63,69 @@ test('getGranule calls the callback with the expected object when there is query
     callback,
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
+    expectedStatusCodes: [404, 200],
+  }));
+});
+
+test('getGranule calls the callback with the expected object when there is query param', async (t) => {
+  const query = { getRecoveryStatus: true };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      queryStringParameters: query,
+    },
+    expectedStatusCodes: undefined,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+        collectionId: t.context.collectionId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     query,
+  }));
+});
+
+test('getGranule accepts an optional collectionId', async (t) => {
+  const expected = {
+    prefix: t.context.testPrefix,
+    expectedStatusCodes: [404, 200],
+    payload: {
+      httpMethod: 'GET',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+    },
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+    return Promise.resolve({
+      body: JSON.stringify({
+        granuleId: t.context.granuleId,
+        collectionId: t.context.collectionId,
+      }),
+    });
+  };
+
+  await t.notThrowsAsync(granulesApi.getGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
+    expectedStatusCodes: [404, 200],
   }));
 });
 
@@ -148,6 +212,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
       path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       body: JSON.stringify({
         action: 'reingest',
@@ -177,8 +242,11 @@ test('removeFromCmr calls the callback with the expected object', async (t) => {
       path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
-      body: JSON.stringify({ action: 'removeFromCmr' }),
+      body: JSON.stringify({
+        action: 'removeFromCmr',
+      }),
     },
   };
 
@@ -203,6 +271,7 @@ test('applyWorkflow calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'applyWorkflow', workflow, meta }),
@@ -254,6 +323,7 @@ test('moveGranule calls the callback with the expected object', async (t) => {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/granules/${t.context.granuleId}`,
       body: JSON.stringify({ action: 'move', destinations }),
@@ -373,6 +443,36 @@ test('createGranule calls the callback with the expected object', async (t) => {
   }));
 });
 
+test('replaceGranule calls the callback with the expected object', async (t) => {
+  const body = {
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
+    any: 'object',
+    status: t.context.status,
+  };
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
+      body: JSON.stringify(body),
+    },
+    expectedStatusCodes: [200, 201],
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(granulesApi.replaceGranule({
+    callback,
+    prefix: t.context.testPrefix,
+    body,
+  }));
+});
+
 test('updateGranule calls the callback with the expected object', async (t) => {
   const body = {
     granuleId: t.context.granuleId,
@@ -384,8 +484,8 @@ test('updateGranule calls the callback with the expected object', async (t) => {
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.granuleId}`,
-      headers: { 'Content-Type': 'application/json' },
+      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      headers: { 'Content-Type': 'application/json', 'Cumulus-API-Version': '2' },
       body: JSON.stringify(body),
     },
     expectedStatusCodes: [200, 201],
@@ -398,6 +498,8 @@ test('updateGranule calls the callback with the expected object', async (t) => {
   await t.notThrowsAsync(granulesApi.updateGranule({
     callback,
     prefix: t.context.testPrefix,
+    granuleId: t.context.granuleId,
+    collectionId: t.context.collectionId,
     body,
   }));
 });
@@ -428,4 +530,39 @@ test('associateExecutionWithGranule calls the callback with the expected object'
     prefix: t.context.testPrefix,
     body,
   }));
+});
+
+test('bulkOperation calls the callback with the expected object', async (t) => {
+  const workflowName = randomId('workflowName');
+  const granuleId = t.context.granuleId;
+  const collectionId = randomId('collectionId');
+  const granules = [{ granuleId, collectionId }];
+
+  const expected = {
+    prefix: t.context.testPrefix,
+    payload: {
+      httpMethod: 'POST',
+      resource: '/{proxy+}',
+      path: '/granules/bulk/',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        granules,
+        workflowName,
+      }),
+    },
+    expectedStatusCodes: 202,
+  };
+
+  const callback = (configObject) => {
+    t.deepEqual(configObject, expected);
+  };
+
+  await t.notThrowsAsync(
+    granulesApi.bulkOperation({
+      callback,
+      prefix: t.context.testPrefix,
+      granules,
+      workflowName,
+    })
+  );
 });

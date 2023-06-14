@@ -14,6 +14,9 @@ module "archive" {
   async_operation_image = var.async_operation_image
   ecs_cluster_name      = aws_ecs_cluster.default.name
 
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+
   elasticsearch_client_config               = var.elasticsearch_client_config
   elasticsearch_domain_arn                  = var.elasticsearch_domain_arn
   elasticsearch_hostname                    = var.elasticsearch_hostname
@@ -103,8 +106,6 @@ module "archive" {
   rds_security_group = var.rds_security_group
   rds_user_access_secret_arn = var.rds_user_access_secret_arn
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
-  postgres_migration_count_tool_function_arn = module.postgres_migration_count_tool.postgres_migration_count_tool_function_arn
-  postgres_migration_async_operation_function_arn = module.postgres_migration_async_operation.postgres_migration_async_operation_function_arn
 
   tags = var.tags
 }

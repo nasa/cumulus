@@ -21,6 +21,7 @@ const {
   getGranulesByGranuleId,
   getApiGranuleExecutionCumulusIds,
   getUniqueGranuleByGranuleId,
+  getGranuleByUniqueColumns,
   migrationDir,
   getGranulesByApiPropertiesQuery,
   createRejectableTransaction,
@@ -969,6 +970,44 @@ test('getUniqueGranuleByGranuleId() returns a single granule', async (t) => {
 
   t.deepEqual(
     await getUniqueGranuleByGranuleId(knex, pgGranule.granule_id, granulePgModel),
+    pgGranule
+  );
+});
+
+test('getGranuleByUniqueColumns() returns a single granule', async (t) => {
+  const {
+    knex,
+    collectionCumulusId,
+    granulePgModel,
+    collectionPgModel,
+  } = t.context;
+
+  // Create the granule
+  const fakeGranule = fakeGranuleRecordFactory({
+    collection_cumulus_id: collectionCumulusId,
+  });
+  const [createdPgGranule] = await granulePgModel.create(knex, fakeGranule);
+  const pgGranule = await granulePgModel.get(knex, { cumulus_id: createdPgGranule.cumulus_id });
+
+  // Create a new collection
+  const fakeCollection = fakeCollectionRecordFactory();
+  const [createdPgCollection] = await collectionPgModel.create(knex, fakeCollection);
+
+  // Create a second granule with the same granule ID but the new collection Cumulus ID
+  // to ensure that the granule we fetch is the correct one
+  const fakeGranule2 = fakeGranuleRecordFactory({
+    granule_id: createdPgGranule.granule_id,
+    collection_cumulus_id: createdPgCollection.cumulus_id,
+  });
+  await granulePgModel.create(knex, fakeGranule2);
+
+  t.deepEqual(
+    await getGranuleByUniqueColumns(
+      knex,
+      pgGranule.granule_id,
+      collectionCumulusId,
+      granulePgModel
+    ),
     pgGranule
   );
 });

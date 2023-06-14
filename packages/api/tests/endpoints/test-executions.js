@@ -2,6 +2,8 @@
 
 const test = require('ava');
 const omit = require('lodash/omit');
+const omitBy = require('lodash/omitBy');
+const isNull = require('lodash/isNull');
 const sortBy = require('lodash/sortBy');
 const request = require('supertest');
 const cryptoRandomString = require('crypto-random-string');
@@ -38,7 +40,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken, AsyncOperation, Collection, Execution, Granule } = require('../../models');
+const { AccessToken } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,
@@ -47,15 +49,11 @@ const {
   createExecutionTestRecords,
   cleanupExecutionTestRecords,
   fakeGranuleFactoryV2,
-  fakeCollectionFactory,
   fakeAsyncOperationFactory,
 } = require('../../lib/testUtils');
 const assertions = require('../../lib/assertions');
 
 process.env.AccessTokensTable = randomString();
-process.env.CollectionsTable = randomString();
-process.env.ExecutionsTable = randomString();
-process.env.GranulesTable = randomString();
 process.env.stackName = randomString();
 process.env.system_bucket = randomString();
 process.env.TOKEN_SECRET = randomString();
@@ -70,15 +68,7 @@ const testDbName = `test_executions_${cryptoRandomString({ length: 10 })}`;
 const fakeExecutions = [];
 let jwtAuthToken;
 let accessTokenModel;
-let asyncOperationModel;
-let collectionModel;
-let executionModel;
-let granuleModel;
 process.env.AccessTokensTable = randomId('token');
-process.env.AsyncOperationsTable = randomId('asyncOperation');
-process.env.CollectionsTable = randomId('collection');
-process.env.ExecutionsTable = randomId('executions');
-process.env.GranulesTable = randomId('granules');
 process.env.stackName = randomId('stackname');
 process.env.system_bucket = randomId('bucket');
 process.env.TOKEN_SECRET = randomId('secret');
@@ -95,25 +85,6 @@ test.before(async (t) => {
 
   // create a fake bucket
   await createBucket(process.env.system_bucket);
-
-  // create fake AsyncOperation table
-  asyncOperationModel = new AsyncOperation({
-    systemBucket: process.env.system_bucket,
-    stackName: process.env.stackName,
-  });
-  await asyncOperationModel.createTable();
-
-  // create fake Granules table
-  granuleModel = new Granule();
-  await granuleModel.createTable();
-
-  collectionModel = new Collection();
-  await collectionModel.createTable();
-
-  // create fake execution table
-  executionModel = new Execution();
-  await executionModel.createTable();
-  t.context.executionModel = executionModel;
 
   const username = randomString();
   await setAuthorizedOAuthUsers([username]);
@@ -183,19 +154,15 @@ test.before(async (t) => {
       t.context.knex,
       executionPgRecord
     );
-    const dynamoRecord = await executionModel.create(execution);
-    await indexer.indexExecution(esClient, dynamoRecord, process.env.ES_INDEX);
+    await indexer.indexExecution(esClient, execution, process.env.ES_INDEX);
     return pgExecution;
   }));
 
-  // Create AsyncOperation in Dynamo and Postgres
-  const testAsyncOperation = fakeAsyncOperationFactory({
+  // Create AsyncOperation in Postgres
+  t.context.testAsyncOperation = fakeAsyncOperationFactory({
     id: uuidv4(),
     output: JSON.stringify({ test: randomId('output') }),
   });
-  t.context.testAsyncOperation = await asyncOperationModel.create(
-    testAsyncOperation
-  );
 
   const testPgAsyncOperation = translateApiAsyncOperationToPostgresAsyncOperation(
     t.context.testAsyncOperation
@@ -207,22 +174,14 @@ test.before(async (t) => {
   );
   t.context.asyncOperationCumulusId = pgAsyncOperationRecord.cumulus_id;
 
-  // Create collections in Dynamo and Postgres
+  // Create collections in Postgres
   // we need this because a granule has a foreign key referring to collections
   const collectionName = 'fakeCollection';
   const collectionVersion = 'v1';
 
-  t.context.testCollection = fakeCollectionFactory({
-    name: collectionName,
-    version: collectionVersion,
-    duplicateHandling: 'error',
-  });
-  const dynamoCollection = await collectionModel.create(
-    t.context.testCollection
-  );
   t.context.collectionId = constructCollectionId(
-    dynamoCollection.name,
-    dynamoCollection.version
+    collectionName,
+    collectionVersion
   );
 
   const testPgCollection = fakeCollectionRecordFactory({
@@ -285,10 +244,9 @@ test.beforeEach(async (t) => {
 
   // create fake Postgres granule records
   t.context.fakePGGranules = await Promise.all(t.context.fakeGranules.map(async (fakeGranule) => {
-    const dynamoRecord = await granuleModel.create(fakeGranule);
-    await indexer.indexGranule(esClient, dynamoRecord, esIndex);
+    await indexer.indexGranule(esClient, fakeGranule, esIndex);
     const granulePgRecord = await translateApiGranuleToPostgresGranule({
-      dynamoRecord,
+      dynamoRecord: fakeGranule,
       knexOrTransaction: t.context.knex,
     });
     return granulePgRecord;
@@ -326,10 +284,6 @@ test.beforeEach(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await asyncOperationModel.deleteTable();
-  await collectionModel.deleteTable();
-  await executionModel.deleteTable();
-  await granuleModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await destroyLocalTestDb({
     knex: t.context.knex,
@@ -518,17 +472,12 @@ test.serial('GET fails if execution is not found', async (t) => {
 });
 
 test.serial('DELETE deletes an execution', async (t) => {
-  const { originalDynamoExecution } = await createExecutionTestRecords(
+  const { originalPgRecord } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
   );
-  const { arn } = originalDynamoExecution;
+  const { arn } = originalPgRecord;
 
-  t.true(
-    await t.context.executionModel.exists(
-      { arn }
-    )
-  );
   t.true(
     await t.context.executionPgModel.exists(
       t.context.knex,
@@ -550,11 +499,6 @@ test.serial('DELETE deletes an execution', async (t) => {
   const { message } = response.body;
 
   t.is(message, 'Record deleted');
-  t.false(
-    await t.context.executionModel.exists(
-      { arn }
-    )
-  );
   const dbRecords = await t.context.executionPgModel
     .search(t.context.knex, { arn });
   t.is(dbRecords.length, 0);
@@ -565,67 +509,14 @@ test.serial('DELETE deletes an execution', async (t) => {
   );
 });
 
-test.serial('del() does not remove from PostgreSQL/Elasticsearch if removing from Dynamo fails', async (t) => {
+test.serial('del() does not remove from Elasticsearch if removing from PostgreSQL fails', async (t) => {
   const {
-    originalDynamoExecution,
+    originalPgRecord,
   } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
   );
-  const { arn } = originalDynamoExecution;
-  t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
-
-  const fakeExecutionModel = {
-    get: () => Promise.resolve(originalDynamoExecution),
-    delete: () => {
-      throw new Error('something bad');
-    },
-    create: () => Promise.resolve(true),
-  };
-
-  const expressRequest = {
-    params: {
-      arn,
-    },
-    testContext: {
-      knex: t.context.knex,
-      executionModel: fakeExecutionModel,
-    },
-  };
-
-  const response = buildFakeExpressResponse();
-
-  await t.throwsAsync(
-    del(expressRequest, response),
-    { message: 'something bad' }
-  );
-
-  t.deepEqual(
-    await t.context.executionModel.get({
-      arn,
-    }),
-    omit(originalDynamoExecution, 'parentArn')
-  );
-  t.true(
-    await t.context.executionPgModel.exists(t.context.knex, {
-      arn,
-    })
-  );
-  t.true(
-    await t.context.esExecutionsClient.exists(
-      arn
-    )
-  );
-});
-
-test.serial('del() does not remove from Dynamo/Elasticsearch if removing from PostgreSQL fails', async (t) => {
-  const {
-    originalDynamoExecution,
-  } = await createExecutionTestRecords(
-    t.context,
-    { parentArn: undefined }
-  );
-  const { arn } = originalDynamoExecution;
+  const { arn } = originalPgRecord;
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeExecutionPgModel = new ExecutionPgModel();
@@ -650,12 +541,6 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.executionModel.get({
-      arn,
-    }),
-    omit(originalDynamoExecution, 'parentArn')
-  );
   t.true(
     await t.context.executionPgModel.exists(t.context.knex, {
       arn,
@@ -668,14 +553,14 @@ test.serial('del() does not remove from Dynamo/Elasticsearch if removing from Po
   );
 });
 
-test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elasticsearch fails', async (t) => {
+test.serial('del() does not remove from PostgreSQL if removing from Elasticsearch fails', async (t) => {
   const {
-    originalDynamoExecution,
+    originalPgRecord,
   } = await createExecutionTestRecords(
     t.context,
     { parentArn: undefined }
   );
-  const { arn } = originalDynamoExecution;
+  const { arn } = originalPgRecord;
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeEsClient = {
@@ -701,12 +586,6 @@ test.serial('del() does not remove from Dynamo/PostgreSQL if removing from Elast
     { message: 'something bad' }
   );
 
-  t.deepEqual(
-    await t.context.executionModel.get({
-      arn,
-    }),
-    omit(originalDynamoExecution, 'parentArn')
-  );
   t.true(
     await t.context.executionPgModel.exists(t.context.knex, {
       arn,
@@ -728,14 +607,12 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
     name: 'test_execution',
   });
 
-  await executionModel.create(newExecution);
   const executionPgRecord = await translateApiExecutionToPostgresExecution(
     newExecution,
     knex
   );
   await executionPgModel.create(knex, executionPgRecord);
 
-  t.true(await executionModel.exists({ arn: newExecution.arn }));
   t.true(await executionPgModel.exists(knex, { arn: newExecution.arn }));
 
   await request(app)
@@ -744,9 +621,7 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  // Correct Dynamo and PG execution was deleted
-  t.false(await executionModel.exists({ arn: newExecution.arn }));
-
+  // Correct PG execution was deleted
   const dbRecords = await executionPgModel.search(t.context.knex, {
     arn: newExecution.arn,
   });
@@ -754,9 +629,6 @@ test.serial('DELETE removes only specified execution from all data stores', asyn
   t.is(dbRecords.length, 0);
 
   // Previously created executions still exist
-  t.true(await executionModel.exists({ arn: fakeExecutions[0].arn }));
-  t.true(await executionModel.exists({ arn: fakeExecutions[1].arn }));
-
   const originalExecution1 = await executionPgModel.search(t.context.knex, {
     arn: fakeExecutions[0].arn,
   });
@@ -859,10 +731,12 @@ test.serial('POST /executions/search-by-granules returns 1 record by default', a
 
   const response = await request(app)
     .post('/executions/search-by-granules')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -880,19 +754,23 @@ test.serial('POST /executions/search-by-granules supports paging', async (t) => 
 
   const page1 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=1')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
   const page2 = await request(app)
     .post('/executions/search-by-granules?limit=2&page=2')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -912,10 +790,12 @@ test.serial('POST /executions/search-by-granules supports sorting', async (t) =>
 
   const response = await request(app)
     .post('/executions/search-by-granules?sort_by=arn&order=asc&limit=10')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -929,10 +809,12 @@ test.serial('POST /executions/search-by-granules returns correct executions when
 
   const response = await request(app)
     .post('/executions/search-by-granules?limit=10')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId: t.context.collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId: t.context.collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -1132,10 +1014,12 @@ test.serial('POST /executions/workflows-by-granules returns correct executions w
 
   const response = await request(app)
     .post('/executions/workflows-by-granules')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId },
-      { granuleId: fakeGranules[1].granuleId, collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId },
+        { granuleId: fakeGranules[1].granuleId, collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -1170,9 +1054,11 @@ test.serial('POST /executions/workflows-by-granules returns executions by descen
 
   const response = await request(app)
     .post('/executions/workflows-by-granules')
-    .send({ granules: [
-      { granuleId: fakeGranules[0].granuleId, collectionId },
-    ] })
+    .send({
+      granules: [
+        { granuleId: fakeGranules[0].granuleId, collectionId },
+      ],
+    })
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`);
 
@@ -1222,7 +1108,7 @@ test.serial('POST /executions/workflows-by-granules returns correct workflows wh
   t.deepEqual(response.body.sort(), ['fakeWorkflow', 'workflow2']);
 });
 
-test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
+test.serial('POST /executions creates a new execution in PostgreSQL/Elasticsearch with correct timestamps', async (t) => {
   const newExecution = fakeExecutionFactoryV2();
 
   await request(app)
@@ -1231,10 +1117,6 @@ test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Ela
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: newExecution.arn,
-  });
 
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
@@ -1245,16 +1127,13 @@ test.serial('POST /executions creates a new execution in DynamoDB/PostgreSQL/Ela
 
   const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
 
-  t.true(fetchedDynamoRecord.createdAt > newExecution.createdAt);
-  t.true(fetchedDynamoRecord.updatedAt > newExecution.updatedAt);
+  t.true(fetchedPgRecord.created_at.getTime() > newExecution.createdAt);
 
-  t.is(fetchedPgRecord.created_at.getTime(), fetchedDynamoRecord.createdAt);
-  t.is(fetchedPgRecord.updated_at.getTime(), fetchedDynamoRecord.updatedAt);
   t.is(fetchedPgRecord.created_at.getTime(), fetchedEsRecord.createdAt);
   t.is(fetchedPgRecord.updated_at.getTime(), fetchedEsRecord.updatedAt);
 });
 
-test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('POST /executions creates the expected record in PostgreSQL/Elasticsearch', async (t) => {
   const newExecution = fakeExecutionFactoryV2({
     asyncOperationId: t.context.testAsyncOperation.id,
     collectionId: t.context.collectionId,
@@ -1273,10 +1152,6 @@ test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: newExecution.arn,
-  });
-
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1286,20 +1161,12 @@ test.serial('POST /executions creates the expected record in DynamoDB/PostgreSQL
 
   const fetchedEsRecord = await t.context.esExecutionsClient.get(newExecution.arn);
 
-  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.is(fetchedPgRecord.arn, newExecution.arn);
   t.truthy(fetchedPgRecord.cumulus_id);
   t.is(fetchedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
   t.is(fetchedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   t.is(fetchedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[1].cumulus_id);
 
-  t.deepEqual(
-    fetchedDynamoRecord,
-    {
-      ...newExecution,
-      createdAt: fetchedDynamoRecord.createdAt,
-      updatedAt: fetchedDynamoRecord.updatedAt,
-    }
-  );
   t.deepEqual(
     fetchedEsRecord,
     {
@@ -1403,10 +1270,6 @@ test.serial('POST /executions with non-existing parentArn still creates a new ex
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: newExecution.arn,
-  });
-
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1414,7 +1277,7 @@ test.serial('POST /executions with non-existing parentArn still creates a new ex
     }
   );
 
-  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.truthy(fetchedPgRecord);
   t.falsy(fetchedPgRecord.parent_cumulus_id);
 });
 
@@ -1478,7 +1341,7 @@ test.serial('POST /executions publishes message to SNS topic', async (t) => {
   t.deepEqual(executionRecord, translatedExecution);
 });
 
-test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreSQL/Elasticsearch', async (t) => {
+test.serial('PUT /executions updates the record as expected in PostgreSQL/Elasticsearch', async (t) => {
   const execution = fakeExecutionFactoryV2({
     collectionId: t.context.collectionId,
     parentArn: t.context.fakeApiExecutions[1].arn,
@@ -1501,10 +1364,6 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const dynamoRecord = await executionModel.get({
-    arn: execution.arn,
-  });
-
   const pgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1519,58 +1378,183 @@ test.serial('PUT /executions updates the record as expected in DynamoDB/PostgreS
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const updatedDynamoRecord = await executionModel.get({
-    arn: execution.arn,
-  });
-
-  const updatePgRecord = await t.context.executionPgModel.get(
+  const updatedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
       arn: execution.arn,
     }
   );
   const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
-  const expectedApiRecord = {
+  const expectedEsRecord = {
     ...updatedExecution,
     collectionId: execution.collectionId,
-    createdAt: dynamoRecord.createdAt,
-    updatedAt: updatedDynamoRecord.updatedAt,
+    createdAt: updatedPgRecord.created_at.getTime(),
+    updatedAt: updatedPgRecord.updated_at.getTime(),
   };
 
-  t.deepEqual(
-    updatedDynamoRecord,
-    expectedApiRecord
-  );
   t.like(
     updatedEsRecord,
     {
-      ...expectedApiRecord,
+      ...expectedEsRecord,
       timestamp: updatedEsRecord.timestamp,
     }
   );
 
-  t.is(updatePgRecord.arn, execution.arn);
-  t.is(updatePgRecord.cumulus_id, pgRecord.cumulus_id);
+  t.is(updatedPgRecord.arn, execution.arn);
+  t.is(updatedPgRecord.cumulus_id, pgRecord.cumulus_id);
 
-  t.is(updatedDynamoRecord.createdAt, dynamoRecord.createdAt);
-  t.true(updatedDynamoRecord.updatedAt > dynamoRecord.createdAt);
-  t.is(updatePgRecord.created_at.getTime(), pgRecord.created_at.getTime());
-  t.true(updatePgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
+  t.is(updatedPgRecord.created_at.getTime(), pgRecord.created_at.getTime());
+  t.true(updatedPgRecord.updated_at.getTime() > pgRecord.updated_at.getTime());
 
   // collectionId was omitted from body of PUT request, so values are
   // not overridden in the database
-  t.is(updatedDynamoRecord.collectionId, execution.collectionId);
-  t.is(updatePgRecord.collection_cumulus_id, t.context.collectionCumulusId);
+  t.is(updatedPgRecord.collection_cumulus_id, t.context.collectionCumulusId);
   // updated record has added field
-  t.is(updatedDynamoRecord.asyncOperationId, updatedExecution.asyncOperationId);
-  t.is(updatePgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
+  t.is(updatedPgRecord.async_operation_cumulus_id, t.context.asyncOperationCumulusId);
   // updated record has updated field
-  t.is(updatedDynamoRecord.parentArn, updatedExecution.parentArn);
-  t.is(updatePgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
-  t.is(updatedDynamoRecord.status, updatedExecution.status);
-  t.is(updatePgRecord.status, updatedExecution.status);
-  t.deepEqual(updatedDynamoRecord.finalPayload, updatedExecution.finalPayload);
-  t.deepEqual(updatePgRecord.final_payload, updatedExecution.finalPayload);
+  t.is(updatedPgRecord.parent_cumulus_id, t.context.fakePGExecutions[2].cumulus_id);
+  t.is(updatedPgRecord.status, updatedExecution.status);
+  t.deepEqual(updatedPgRecord.final_payload, updatedExecution.finalPayload);
+});
+
+test.serial('PUT /executions overwrites a completed record with a running record', async (t) => {
+  const execution = fakeExecutionFactoryV2({
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+    status: 'completed',
+    tasks: { fakeTask: 'fake' },
+  });
+
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...omit(execution, ['collectionId']),
+    asyncOperationId: t.context.testAsyncOperation.id,
+    finalPayload: { outputPayload: randomId('outputPayload') },
+    parentArn: t.context.fakeApiExecutions[2].arn,
+    status: 'running',
+    error: null,
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const updatedPgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
+  const expectedEsRecord = {
+    ...omitBy(updatedExecution, isNull),
+    collectionId: execution.collectionId,
+    createdAt: updatedPgRecord.created_at.getTime(),
+    updatedAt: updatedPgRecord.updated_at.getTime(),
+  };
+  t.like(
+    updatedEsRecord,
+    {
+      ...expectedEsRecord,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    updatedPgRecord,
+    t.context.knex
+  );
+
+  t.deepEqual(translatedExecution, expectedEsRecord);
+});
+
+test.serial('PUT /executions removes execution fields when nullified fields are passed in', async (t) => {
+  const execution = fakeExecutionFactoryV2({
+    collectionId: t.context.collectionId,
+    parentArn: t.context.fakeApiExecutions[1].arn,
+    status: 'completed',
+    tasks: { fakeTask: 'fake' },
+  });
+
+  const updatedExecution = fakeExecutionFactoryV2({
+    ...execution,
+    status: 'running',
+    asyncOperationId: null,
+    collectionId: null,
+    cumulusVersion: null,
+    duration: null,
+    error: null,
+    execution: null,
+    finalPayload: null,
+    originalPayload: null,
+    parentArn: null,
+    tasks: null,
+    type: null,
+  });
+
+  await request(app)
+    .post('/executions')
+    .send(execution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  await request(app)
+    .put(`/executions/${updatedExecution.arn}`)
+    .send(updatedExecution)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const updatedPgRecord = await t.context.executionPgModel.get(
+    t.context.knex,
+    {
+      arn: execution.arn,
+    }
+  );
+
+  const updatedEsRecord = await t.context.esExecutionsClient.get(execution.arn);
+  const expectedEsRecord = {
+    ...omitBy(updatedExecution, isNull),
+    createdAt: updatedPgRecord.created_at.getTime(),
+    updatedAt: updatedPgRecord.updated_at.getTime(),
+  };
+  t.like(
+    updatedEsRecord,
+    {
+      ...expectedEsRecord,
+      timestamp: updatedEsRecord.timestamp,
+    }
+  );
+
+  const translatedExecution = await translatePostgresExecutionToApiExecution(
+    updatedPgRecord,
+    t.context.knex
+  );
+  t.deepEqual(translatedExecution, expectedEsRecord);
 });
 
 test.serial('PUT /executions throws error for arn mismatch between params and payload', async (t) => {
@@ -1674,10 +1658,6 @@ test.serial('PUT /executions with non-existing parentArn still updates the execu
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const fetchedDynamoRecord = await executionModel.get({
-    arn: updatedExecution.arn,
-  });
-
   const fetchedPgRecord = await t.context.executionPgModel.get(
     t.context.knex,
     {
@@ -1685,7 +1665,7 @@ test.serial('PUT /executions with non-existing parentArn still updates the execu
     }
   );
 
-  t.is(fetchedPgRecord.arn, fetchedDynamoRecord.arn);
+  t.is(fetchedPgRecord.arn, updatedExecution.arn);
   t.falsy(fetchedPgRecord.parent_cumulus_id);
 });
 

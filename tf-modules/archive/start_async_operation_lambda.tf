@@ -10,7 +10,6 @@ resource "aws_lambda_function" "start_async_operation" {
   environment {
     variables = {
       acquireTimeoutMillis         = var.rds_connection_timing_configuration.acquireTimeoutMillis
-      AsyncOperationsTable         = var.dynamo_tables.async_operations.name
       AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
       createRetryIntervalMillis    = var.rds_connection_timing_configuration.createRetryIntervalMillis
       createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis

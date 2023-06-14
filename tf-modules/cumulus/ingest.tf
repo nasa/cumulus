@@ -47,6 +47,9 @@ module "ingest" {
   lzards_provider              = var.lzards_provider
   lzards_s3_link_timeout       = var.lzards_s3_link_timeout
 
+  # ORCA config
+  orca_lambda_copy_to_archive_arn = var.orca_lambda_copy_to_archive_arn
+
   # DB config
   dynamo_tables = var.dynamo_tables
 
@@ -59,4 +62,5 @@ module "ingest" {
 
   # Cloudwatch log retention config
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+  default_log_retention_days = var.default_log_retention_days
 }

@@ -15,14 +15,13 @@
     "build": "../../node_modules/.bin/webpack",
     "clean": "rm -rf dist",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip))",
-    "test:coverage": "../../node_modules/.bin/nyc true",
     "watch": "../../node_modules/.bin/webpack --progress -w"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "15.0.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.4",
+    "@cumulus/cumulus-message-adapter-js": "2.0.5",
     "@cumulus/integration-tests": "15.0.0"
   }
 }

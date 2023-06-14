@@ -4,12 +4,6 @@ variable "buckets" {
   default = {}
 }
 
-variable "cloudwatch_log_retention_periods"{
-  type = map(number)
-  description = "number of days logs will be retained for the respective cloudwatch log group, in the form of <module>_<cloudwatch_log_group_name>_log_retention"
-  default = {}
-}
-
 variable "cmr_oauth_provider" {
   type = string
 }
@@ -62,12 +56,6 @@ variable "custom_queues" {
   description = "Map of SQS queue identifiers to queue URLs"
   type    = list(object({ id = string, url = string }))
   default = []
-}
-
-variable "default_log_retention_days" {
-  type = number
-  default = 30
-  description = "default value that user chooses for their log retention periods"
 }
 
 variable "default_s3_multipart_chunksize_mb" {
@@ -132,6 +120,11 @@ variable "lzards_provider" {
   default     = ""
 }
 
+variable "orca_lambda_copy_to_archive_arn" {
+  description = "AWS ARN of the ORCA copy_to_archive lambda."
+  type        = string
+  default     = ""
+}
 
 variable "permissions_boundary_arn" {
   type = string
@@ -184,4 +177,16 @@ variable "throttled_queues" {
 variable "vpc_id" {
   type    = string
   default = null
+}
+
+variable "cloudwatch_log_retention_periods" {
+  type = map(number)
+  description = "Optional retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
+  default = {}
+}
+
+variable "default_log_retention_days" {
+  type = number
+  default = 30
+  description = "Optional default value that user chooses for their log retention periods"
 }

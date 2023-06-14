@@ -10,10 +10,13 @@ const {
 } = require('@cumulus/common/test-utils');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const {
+  CollectionPgModel,
+  ExecutionPgModel,
   FilePgModel,
   GranulePgModel,
-  CollectionPgModel,
+  GranulesExecutionsPgModel,
   translateApiGranuleToPostgresGranule,
+  translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { indexGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
@@ -33,25 +36,25 @@ const {
   fakeGranuleFactoryV2,
 } = require('../../lib/testUtils');
 
-const models = require('../../models');
-
 const metadataFileFixture = fs.readFileSync(path.resolve(__dirname, '../data/meta.xml'), 'utf-8');
 
 /**
- * Helper for creating a granule, a parent collection,
+ * Helper for creating a granule, a parent collection, postgres execution record
  * and files belonging to that granule (in S3 and Postgres)
  *
  * @param {Object} params
  * @param {Knex} params.dbClient - Knex client
+ * @param {number} params.executionCumulusId - executionId for execution record to link
  * @param {number} params.collectionId - collectionId for the granule's parent collection
  * @param {number} params.collectionCumulusId - cumulus_id for the granule's parent collection
  * @param {boolean} params.published - if the granule should be marked published to CMR
  * @returns {Object} fake granule object
  */
 async function createGranuleAndFiles({
-  dbClient,
-  collectionId,
   collectionCumulusId,
+  executionCumulusId,
+  collectionId,
+  dbClient,
   esClient,
   granuleParams = { published: false },
 }) {
@@ -71,7 +74,6 @@ async function createGranuleAndFiles({
     s3Buckets.public.name,
   ]);
 
-  const granuleModel = new models.Granule();
   const granulePgModel = new GranulePgModel();
   const filePgModel = new FilePgModel();
 
@@ -146,13 +148,9 @@ async function createGranuleAndFiles({
     }
   );
 
-  // create a new Dynamo granule
-  const dynamoGranule = await granuleModel.create(newGranule);
-  await indexGranule(esClient, dynamoGranule, process.env.ES_INDEX);
-
   // create a new Postgres granule
   const newPgGranule = await translateApiGranuleToPostgresGranule({
-    dynamoRecord: dynamoGranule,
+    dynamoRecord: newGranule,
     knexOrTransaction: dbClient,
   });
   const [pgGranule] = await granulePgModel.create(dbClient, newPgGranule);
@@ -172,6 +170,36 @@ async function createGranuleAndFiles({
     })
   );
 
+  // Create execution record if executionCumulusId not set
+  if (!executionCumulusId) {
+    const executionPgModel = new ExecutionPgModel();
+    const [pgExecution] = await executionPgModel.create(
+      dbClient,
+      {
+        url: newGranule.execution,
+        arn: newGranule.execution.split('/').pop(),
+        status: 'completed',
+      }
+    );
+    executionCumulusId = pgExecution.cumulus_id;
+  }
+  // Link existing Postgres execution to granule
+  const granulesExecutionsModel = new GranulesExecutionsPgModel();
+  await granulesExecutionsModel.create(
+    dbClient,
+    {
+      granule_cumulus_id: pgGranule.cumulus_id,
+      execution_cumulus_id: executionCumulusId,
+    }
+  );
+
+  const apiGranule = await translatePostgresGranuleToApiGranule({
+    knexOrTransaction: dbClient,
+    granulePgRecord: pgGranule,
+  });
+
+  await indexGranule(esClient, apiGranule, process.env.ES_INDEX);
+
   const esGranulesClient = new Search(
     {},
     'granule',
@@ -180,7 +208,7 @@ async function createGranuleAndFiles({
 
   return {
     newPgGranule: await granulePgModel.get(dbClient, { cumulus_id: pgGranule.cumulus_id }),
-    newDynamoGranule: await granuleModel.get({ granuleId: newGranule.granuleId }),
+    apiGranule,
     esRecord: await esGranulesClient.get(newGranule.granuleId),
     files: files,
     s3Buckets: s3Buckets,
@@ -196,13 +224,14 @@ async function createGranuleAndFiles({
 const generateListOfGranules = (count = 5000) => {
   const granuleRegString = () => randomStringFromRegex('^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$');
   const granuleLongString = () => randomStringFromRegex('^SWOT_L2_HR_Raster_\\_[\\w]{6}\\_[\\w]{1}\\_[\\d]{20}\\_[\\w]{6}\\_[\\d]{13}$');
-  const granuleIds = [];
+  const collectionId = () => `${randomString(3)}__${randomString(5)}`;
+  const granules = [];
   const halfOfCount = count / 2;
   for (let i = 0; i < halfOfCount; i += 1) {
-    granuleIds.push(granuleRegString());
-    granuleIds.push(granuleLongString());
+    granules.push({ granuleId: granuleRegString(), collectionId: collectionId() });
+    granules.push({ granuleId: granuleLongString(), collectionId: collectionId() });
   }
-  return granuleIds;
+  return granules;
 };
 
 module.exports = {
