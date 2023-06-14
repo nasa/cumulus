@@ -509,7 +509,7 @@ test('EarthdataLogin.getUserInfo() throws an exception if EarthdataLogin returns
     {
       instanceOf: EarthdataLoginError,
       code: 'UnexpectedResponse',
-      message: 'Unexpected response: asdf',
+      message: 'Unexpected response: "asdf"',
     }
   );
 });
