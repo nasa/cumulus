@@ -987,7 +987,6 @@ test.serial('handles different collections', async (t) => {
   );
 });
 
-
 test.serial('handles different providers', async (t) => {
   const { event } = t.context;
 
