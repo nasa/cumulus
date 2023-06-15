@@ -155,7 +155,7 @@ def validateCoverageAgainstConfig(
         if coverageValue > configuration[coverageType]:
             raise CoverageUpdateRequired(
                 f"coverage of '{coverageType}' is low\n"
-                f"current coverage is {coverageValue} "
+                f"current coverage is {coverageValue}"
                 f"but configured to require {configuration[coverageType]}\n"
                 "set this value appropriately or run 'npm run coverage:update'"
             )
