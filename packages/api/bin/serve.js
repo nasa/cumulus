@@ -259,7 +259,7 @@ async function serveApi(user, stackName = localStackName, reseed = true) {
     try {
       await reconciliationReportModel.createTable();
     } catch (error) {
-      if (error && error.message && error.message === 'Cannot create preexisting table') {
+      if (error && error.name && error.name === 'ResourceInUseException') {
         console.log(`${reconciliationReportTableName} is already created`);
       } else {
         throw error;
