@@ -120,6 +120,11 @@ variable "lzards_provider" {
   default     = ""
 }
 
+variable "orca_lambda_copy_to_archive_arn" {
+  description = "AWS ARN of the ORCA copy_to_archive lambda."
+  type        = string
+  default     = ""
+}
 
 variable "permissions_boundary_arn" {
   type = string
