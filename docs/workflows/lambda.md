@@ -56,7 +56,7 @@ The deploy folder referenced here would contain a folder 'test_task/task/' which
 
 ### Python Lambda
 
-Python Lambdas are created the same way as the Node.js example [above](#node.js-lambda).
+Python Lambdas are created the same way as the Node.js example [above](#nodejs-lambda).
 
 ## Cumulus Message Adapter
 

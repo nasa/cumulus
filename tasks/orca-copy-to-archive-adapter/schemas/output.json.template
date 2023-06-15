@@ -1,0 +1,30 @@
+{
+  "title": "orca-copy-to-archive-adapter Lambda Output",
+  "description": "The output for the orca-copy-to-archive-adapter Lambda.",
+  "type": "object",
+  "required": ["granules", "copied_to_orca"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "The 'granules' property from the input.",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "description": "The granule's ID.",
+            "type": "string"
+          },
+          "files": "{{files}}"
+        }
+      }
+    },
+    "copied_to_orca": {
+      "description": "Source URI of the file from origin s3 bucket.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
