@@ -61,7 +61,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let testDataFolder;
   let workflowExecutionArn;
   let granuleId;
-  let filesCopiedToGlacier;
+  let filesCopiedToOrca;
 
   beforeAll(async () => {
     config = await loadConfig();
@@ -123,22 +123,22 @@ describe('The S3 Ingest Granules workflow', () => {
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
   });
 
-  describe('the CopyToGlacier task', () => {
+  describe('the CopyToArchive task', () => {
     let lambdaOutput;
 
     beforeAll(async () => {
-      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'copy_to_glacier');
+      lambdaOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'OrcaCopyToArchiveAdapter');
     });
 
-    it('copies files configured to glacier', async () => {
+    it('copies files configured to orca', async () => {
       const excludedFileExtensions = get(lambdaOutput, 'meta.collection.meta.orca.excludedFileExtensions', []);
       expect(excludedFileExtensions.length).toBe(1);
-      filesCopiedToGlacier = get(lambdaOutput, 'payload.copied_to_glacier', []);
-      expect(filesCopiedToGlacier.length).toBe(3);
+      filesCopiedToOrca = get(lambdaOutput, 'payload.copied_to_orca', []);
+      expect(filesCopiedToOrca.length).toBe(3);
 
-      // copiedToGlacier contains a list of the file s3uri in primary buckets
+      // copiedToOrca contains a list of the file s3uri in primary buckets
       const copiedOver = await Promise.all(
-        filesCopiedToGlacier.map((s3uri) => {
+        filesCopiedToOrca.map((s3uri) => {
           expect(excludedFileExtensions.filter((type) => s3uri.endsWith(type)).length).toBe(0);
           return s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key });
         })
@@ -147,7 +147,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the recovery workflow', () => {
+  // TODO CUMULUS-3253 add recovery adapter to work with orca 8.0.0
+  xdescribe('the recovery workflow', () => {
     let asyncOperationId;
 
     it('generates an async operation through the Cumulus API', async () => {
@@ -255,7 +256,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
+  // TODO CUMULUS-3253 add recovery adapter to work with orca 8.0.0
+  xdescribe('The granule endpoint with getRecoveryStatus parameter set to true', () => {
     it('returns list of granules with recovery status', async () => {
       const response = await listGranules({
         prefix: config.stackName,
@@ -284,9 +286,9 @@ describe('The S3 Ingest Granules workflow', () => {
   });
 
   // TODO remove the glacier files via ORCA API when the API is available (PI 21.3 21.4)
-  it('removes files from glacier', async () => {
-    await Promise.all(filesCopiedToGlacier.map((s3uri) => deleteS3Object(config.buckets.glacier.name, parseS3Uri(s3uri).Key)));
-    const deletedFromGlacier = await Promise.all(filesCopiedToGlacier.map((s3uri) => s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key })));
-    deletedFromGlacier.forEach((check) => expect(check).toEqual(false));
+  it('removes files from orca', async () => {
+    await Promise.all(filesCopiedToOrca.map((s3uri) => deleteS3Object(config.buckets.glacier.name, parseS3Uri(s3uri).Key)));
+    const deletedFromOrca = await Promise.all(filesCopiedToOrca.map((s3uri) => s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key })));
+    deletedFromOrca.forEach((check) => expect(check).toEqual(false));
   });
 });
