@@ -138,6 +138,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
+  - **CUMULUS-3299**
+    - Docs: Update and fix links that reference the docs after Docusaurus upgrade
 
 #### Added
 
