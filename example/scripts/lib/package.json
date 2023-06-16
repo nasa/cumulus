@@ -20,7 +20,7 @@
     "prepare": "true",
     "package": "true",
     "coverage:validate": "python ../../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
-    "coverage:update": "python ../../../scripts/coverage_handler/coverage.y --update"
+    "coverage:update": "python ../../../scripts/coverage_handler/coverage.py --update"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

@@ -17,7 +17,7 @@
     "tsc:watch": "../../node_modules/.bin/tsc -w",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
     "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
-    "coverage:update": "python ../../scripts/coverage_handler/coverage.y --update"
+    "coverage:update": "python ../../scripts/coverage_handler/coverage.py --update"
   },
   "ava": {
     "files": [

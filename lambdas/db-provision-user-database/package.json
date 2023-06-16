@@ -17,7 +17,7 @@
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "webpack": "../../node_modules/.bin/webpack",
     "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
-    "coverage:update": "python ../../scripts/coverage_handler/coverage.y --update"
+    "coverage:update": "python ../../scripts/coverage_handler/coverage.py --update"
   },
   "directories": {
     "test": "tests"

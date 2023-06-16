@@ -20,7 +20,7 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
-    "coverage:update": "python ../../scripts/coverage_handler/coverage.y --update"
+    "coverage:update": "python ../../scripts/coverage_handler/coverage.py --update"
   },
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/pdr-status-check",
   "repository": {

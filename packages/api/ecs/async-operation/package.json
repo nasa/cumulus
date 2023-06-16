@@ -19,7 +19,7 @@
     "test:coverage": "../../../../node_modules/.bin/nyc npm test",
     "test": "../../../../node_modules/.bin/ava",
     "coverage:validate": "python ../../../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
-    "coverage:update": "python ../../../../scripts/coverage_handler/coverage.y --update"
+    "coverage:update": "python ../../../../scripts/coverage_handler/coverage.py --update"
   },
   "dependencies": {
     "@cumulus/aws-client": "15.0.0",

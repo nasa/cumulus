@@ -20,7 +20,7 @@
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
-    "coverage:update": "python ../../scripts/coverage_handler/coverage.y --update"
+    "coverage:update": "python ../../scripts/coverage_handler/coverage.py --update"
   },
   "ava": {
     "timeout": "15m"
