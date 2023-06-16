@@ -19,7 +19,7 @@
     "build": "true",
     "prepare": "true",
     "package": "true",
-    "coverage:validate": "python ../../../scripts/coverage_handler/coverage.y",
+    "coverage:validate": "python ../../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
     "coverage:update": "python ../../../scripts/coverage_handler/coverage.y --update"
   },
   "author": "Cumulus Authors",

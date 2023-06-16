@@ -25,7 +25,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && ../../node_modules/.bin/webpack --progress -w",
-    "coverage:validate": "python ../../scripts/coverage_handler/coverage.y",
+    "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
     "coverage:update": "python ../../scripts/coverage_handler/coverage.y --update"
   },
   "ava": {
