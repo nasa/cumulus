@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
-  
+
+- Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
@@ -138,6 +139,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
+  - **CUMULUS-3299**
+    - Docs: Update and fix links that reference the docs after Docusaurus upgrade
 
 #### Added
 

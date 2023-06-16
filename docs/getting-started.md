@@ -32,7 +32,7 @@ Cumulus operators are those who work within Cumulus to ingest/archive data and m
 
 As a developer, integrator, or operator, you will need to set up your environments to work in Cumulus. The following docs can get you started in your role specific activities.
 
-* [Developers](https://github.com/nasa/cumulus)
+* [Developers](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+Developer+Onboarding+Overview) - Cumulus Team Dev
 * [Integrators](integrator-guide/about-int-guide)
 * [Operators](operator-docs/about-operator-docs)
 
