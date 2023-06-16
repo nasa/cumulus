@@ -8,7 +8,7 @@ const pMap = require('p-map');
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
   providers: providersApi,
@@ -73,8 +73,7 @@ function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
  *   that is passed to the next task in the workflow
  **/
 async function queueGranules(event, testMocks = {}) {
-  let gVars;
-  let gVars2;
+  let deconstructedId = [];
   const granules = event.input.granules || [];
   const updateGranule = testMocks.updateGranuleMock || granulesApi.updateGranule;
   const enqueueGranuleIngestMessageFn
@@ -99,14 +98,14 @@ async function queueGranules(event, testMocks = {}) {
   const executionArns = await pMap(
     groupedAndBatchedGranules,
     async (granuleBatchIn) => {
-      gVars = (granuleBatchIn[0].dataType !== undefined && granuleBatchIn[0].version !== undefined);
-      if (!gVars && granuleBatchIn[0].collectionId === undefined) {
-        throw new Error('Invalid collection, please check task input to make sure collection information is provided');
+      if (!granuleBatchIn[0].collectionId) {
+        deconstructedId = [granuleBatchIn[0].dataType, granuleBatchIn[0].version];
+      } else if (!granuleBatchIn[0].dataType && !granuleBatchIn[0].version) {
+        deconstructedId = deconstructCollectionId(granuleBatchIn[0].collectionId);
       }
 
       const collectionConfig = await collectionConfigStore.get(
-        granuleBatchIn[0].dataType,
-        granuleBatchIn[0].version
+        deconstructedId[0], deconstructedId[1]
       );
 
       const createdAt = Date.now();
@@ -114,8 +113,8 @@ async function queueGranules(event, testMocks = {}) {
       await pMap(
         granuleBatch,
         (queuedGranule) => {
-          gVars2 = (queuedGranule.dataType !== undefined || queuedGranule.version !== undefined);
-          if (!gVars2 && queuedGranule.collectionId === undefined) {
+          const granuleId = queuedGranule.granuleId;
+          if ((!queuedGranule.dataType || !queuedGranule.version) && !queuedGranule.collectionId) {
             throw new Error('Invalid collection, please check task input to make sure collection information is provided');
           }
 
@@ -124,8 +123,6 @@ async function queueGranules(event, testMocks = {}) {
               queuedGranule.dataType,
               queuedGranule.version
             );
-
-          const granuleId = queuedGranule.granuleId;
 
           return updateGranule({
             prefix: event.config.stackName,

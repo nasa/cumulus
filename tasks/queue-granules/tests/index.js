@@ -854,10 +854,10 @@ test.serial('queueGranules does not throw an error when collectionId is provided
   const { event } = t.context;
   event.input.granules = [
     {
-      collectionId: randomString(), granuleId: randomString(), files: [],
+      collectionId: 'ABC___001', granuleId: randomString(), files: [],
     },
     {
-      collectionId: randomString(), granuleId: randomString(), files: [],
+      collectionId: 'ABC___001', granuleId: randomString(), files: [],
     },
   ];
 
