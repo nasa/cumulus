@@ -146,7 +146,7 @@ async function handleSourceMappingEvent(event) {
     } catch (error) {
       // If error is ExecutionAlreadyExists, do not include in batchItemFailures
       if (error.code === 'ExecutionAlreadyExists') {
-        logger.debug(`Execution already exists. Error: ${error}`);
+        logger.debug(`Warning: ${error}`);
         return batchItemFailures;
       }
       logger.error(error);
