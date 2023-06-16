@@ -41,6 +41,8 @@ def truncateFloat(value: float, precision: int) -> Union[float, int]:
 def generateCoverageReport(run: bool = True) -> str:
     """
     run nyc tests, generating a json-summary to get current coverage values
+    Args:
+        run (bool, optional): run the tests to get coverage. Defaults to True
 
     Raises:
         TestException: tests failed trying to get coverage
@@ -49,9 +51,14 @@ def generateCoverageReport(run: bool = True) -> str:
         str: path to find coverage json file
     """
     if run:
-        error = subprocess.call(["nyc", "--reporter=json-summary", "npm", "test"])
+        error = subprocess.call([
+            "nyc", "--reporter=json-summary",
+            "npm", "test"])
     else:
-        error = subprocess.call(["nyc", "--reporter=json-summary", "report"])
+        error = subprocess.call([
+            "nyc", "--reporter=json-summary",
+            "report"
+        ])
 
     if error:
         raise TestException("nyc failed, see output above")
@@ -64,7 +71,8 @@ def parseCoverageValues(
     filePath: str = "coverage/coverage-summary.json",
     precision: int = 0,
 ) -> CoverageDict:
-    """_summary_
+    """
+    parse coverage values from nyc report
 
     Args:
         filePath (str, optional): coverage summary json file expected to exist.
@@ -99,7 +107,8 @@ def parseCoverageConfigFile(
     parse the current nyc configuration json file
 
     Args:
-        filePath (str, optional): nyc configuration file to parse. Defaults to '.nycrc.json'.
+        filePath (str, optional): nyc configuration file to parse.
+            -   Defaults to '.nycrc.json'.
 
     Raises:
         FileNotFoundError: expected json file not found
@@ -121,8 +130,8 @@ def updateNYCRCFile(
 
     Args:
         coverage (CoverageDict): dict of coverage values by type
-        nycConfigPath (str): location of nyc config:
-
+        nycConfigPath (str): location of nyc config
+        grace (int): grace to give to future nyc tests
     """
     grace_coverage = {key: value - grace for key, value in coverage.items()}
     try:
@@ -147,6 +156,7 @@ def validateCoverageAgainstConfig(
     Args:
         coverage (CoverageDict): current coverage detected by nyc by type
         configuration (Dict[str, Any]): current nyc configuration
+        grace (int): grace to give to configured coverage values before failing
 
     Raises:
         CoverageUpdateRequired: coverage thresholding is insufficient
@@ -173,6 +183,14 @@ def validateCoverageAgainstConfig(
 def validateCoverage(
     precision: int, grace: int, noRerun: bool, nycConfigPath: str
 ) -> None:
+    """check coverage and fail if configuration is too low
+
+    Args:
+        precision (int): precision in digits right of decimal.
+        grace (int): grace to give to configured coverage values.
+        noRerun (bool): don't rerun the tests, use existing nyc_output.
+        nycConfigPath (str): nyc configuration path.
+    """
     reportPath = generateCoverageReport(not noRerun)
     coverage = parseCoverageValues(reportPath, precision)
     configuration = parseCoverageConfigFile(nycConfigPath)
@@ -182,6 +200,14 @@ def validateCoverage(
 def updateCoverage(
     precision: int, grace: int, noRerun: bool, nycConfigPath: str
 ) -> None:
+    """update configured coverage to current values
+
+    Args:
+        precision (int): precision in digits right of decimal.
+        grace (int): grace to give to configured coverage values before failing
+        noRerun (bool): don't rerun the tests, use existing nyc_output
+        nycConfigPath (str): nyc configuration path.
+    """
     reportPath = generateCoverageReport(not noRerun)
     coverage = parseCoverageValues(reportPath, precision)
     updateNYCRCFile(coverage, nycConfigPath, grace)
@@ -203,14 +229,16 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
         "--precision",
         type=int,
         default=0,
-        help="precision to use in figures to the right of decimal." "defaults to 0",
+        help="precision to use in figures to the right of decimal."
+        "defaults to 0",
     )
     parser.add_argument(
         "-n",
         "--nycConfigPath",
         type=str,
         default=".nycrc.json",
-        help="nyc configuration filepath to use." "defaults to .nycrc.json",
+        help="nyc configuration filepath to use."
+        "defaults to .nycrc.json",
     )
     parser.add_argument(
         "-g",
@@ -242,10 +270,20 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
     args = parser.parse_args()
     update: bool = args.update
     if update:
-        updateCoverage(args.precision, args.grace, args.noRerun, args.nycConfigPath)
+        updateCoverage(
+            args.precision,
+            args.grace,
+            args.noRerun,
+            args.nycConfigPath
+        )
 
     else:
-        validateCoverage(args.precision, args.grace, args.noRerun, args.nycConfigPath)
+        validateCoverage(
+            args.precision,
+            args.grace,
+            args.noRerun,
+            args.nycConfigPath
+        )
 
 
 if __name__ == "__main__":
