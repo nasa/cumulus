@@ -19,8 +19,8 @@
     "build": "true",
     "prepare": "true",
     "package": "true",
-    "coverage:validate": "python ../../../scripts/coverage.py",
-    "coverage:update": "python ../../../scripts/coverage.py --update"
+    "coverage:validate": "python ../../../scripts/coverage_handler/coverage.y",
+    "coverage:update": "python ../../../scripts/coverage_handler/coverage.y --update"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

@@ -19,8 +19,8 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "coverage:validate": "python ../../scripts/coverage.py",
-    "coverage:update": "python ../../scripts/coverage.py --update"
+    "coverage:validate": "python ../../scripts/coverage_handler/coverage.y",
+    "coverage:update": "python ../../scripts/coverage_handler/coverage.y --update"
   },
   "dependencies": {
     "@cumulus/api": "15.0.0",

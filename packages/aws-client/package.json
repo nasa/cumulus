@@ -33,8 +33,8 @@
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
-    "coverage:validate": "python ../../scripts/coverage.py",
-    "coverage:update": "python ../../scripts/coverage.py --update"
+    "coverage:validate": "python ../../scripts/coverage_handler/coverage.y",
+    "coverage:update": "python ../../scripts/coverage_handler/coverage.y --update"
   },
   "ava": {
     "files": [
