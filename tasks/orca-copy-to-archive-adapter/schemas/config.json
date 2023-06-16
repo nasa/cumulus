@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/nasa/cumulus-orca/blob/master/tasks/copy_to_archive_adapter/schemas/config.json",
+  "title": "copy_to_archive_adapter Lambda Config",
+  "description": "The config for the copy_to_archive_adapter Lambda.",
+  "type": "object",
+  "properties": {
+    "excludedFileExtensions": {
+      "type": ["array", "null"],
+      "description": "A list of file extensions to ignore when copying files.",
+      "items": {
+        "type": "string",
+        "pattern": "\\..+"
+      }
+    },
+    "s3MultipartChunksizeMb": {
+      "type": ["integer", "null"],
+      "description": "The collection's maximum size of chunks to use when copying. Defaults to environment variable."
+    },
+    "providerId": {
+      "type": "string",
+      "description": "Provider ID supplied by Cumulus"
+    },
+    "providerName": {
+      "type": ["string", "null"],
+      "description": "Provider Name supplied by Cumulus"
+    },
+    "executionId": {
+      "type": "string",
+      "description": "AWS step function execution id"
+    },
+    "collectionShortname": {
+      "type": "string",
+      "description": "Collection shortname from Cumulus"
+    },
+    "collectionVersion": {
+      "type": "string",
+      "description": "Collection version from Cumulus."
+    },
+    "defaultBucketOverride": {
+      "type": ["string", "null"],
+      "description": "Overrides the default bucket to copy to in os.environ['ORCA_DEFAULT_BUCKET']."
+    },
+    "defaultStorageClassOverride": {
+      "type": ["string", "null"],
+      "description": "The class of storage to use when ingesting files. Can be overridden by collection config. Must match value in storage_class table.",
+      "pattern": "^(GLACIER|DEEP_ARCHIVE)$"
+    }
+  },
+  "required": [ "providerId", "executionId", "collectionShortname", "collectionVersion"]
+}

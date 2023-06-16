@@ -8,9 +8,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
+- **CUMULUS-3252**
+  - Updated example/cumulus-tf/orca.tf to use orca v8.0.1
+  - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
+  - Updated `tf-modules/cumulus` module to take variable `orca_lambda_copy_to_archive_arn` and pass to `tf-modules/ingest`
+  - Updated `example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf` `CopyToGlacier` (renamed to `CopyToArchive`) step to call
+    `orca_copy_to_archive_adapter_task`
 - **CUMULUS-3315**
   - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
     parameter in favor of `granules` parameter, in the form of a
@@ -132,6 +139,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
+  - **CUMULUS-3299**
+    - Docs: Update and fix links that reference the docs after Docusaurus upgrade
 
 #### Added
 

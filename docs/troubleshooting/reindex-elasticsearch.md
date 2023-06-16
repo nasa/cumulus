@@ -9,7 +9,7 @@ current index, or the mappings for an index have been updated (they do not updat
 
 ## Switch to a new index and Reindex
 
-There are two operations needed: [reindex](https://nasa.github.io/cumulus-api/#reindex) and [change-index](https://nasa.github.io/cumulus-api/#change-index) to switch over to the new index. A Change Index/Reindex can be done in either order, but both have their trade-offs.
+There are two operations needed: [reindex][reindex] and [change-index][change] to switch over to the new index. A Change Index/Reindex can be done in either order, but both have their trade-offs.
 
 If you decide to point Cumulus to a new (empty) index first (with a change index operation), and then Reindex the data to the new index, data ingested while reindexing will automatically be sent to the new index. As reindexing operations can take a while, not all the data will show up on the Cumulus Dashboard right away. The advantage is you do not have to turn of any ingest operations. This way is recommended.
 
@@ -17,25 +17,25 @@ If you decide to Reindex data to a new index first, and then point Cumulus to th
 
 ### Change Index
 
-This will point Cumulus to the index in Elasticsearch that will be used when retrieving data. Performing a change index operation to an index that does not exist yet will create the index for you. The change index operation can be found [here](https://nasa.github.io/cumulus-api/#change-index).
+This will point Cumulus to the index in Elasticsearch that will be used when retrieving data. Performing a change index operation to an index that does not exist yet will create the index for you. The change index operation can be found [here][change].
 
 ### Reindex from the old index to the new index
 
-The reindex operation will take the data from one index and copy it into another index. The reindex operation can be found [here](https://nasa.github.io/cumulus-api/#reindex)
+The reindex operation will take the data from one index and copy it into another index. The reindex operation can be found [here][reindex]
 
 #### Reindex status
 
-Reindexing is a long-running operation. The [reindex-status](https://nasa.github.io/cumulus-api/#reindex-status) endpoint can be used to monitor the progress of the operation.
+Reindexing is a long-running operation. The [reindex-status][status] endpoint can be used to monitor the progress of the operation.
 
 ## Index from database
 
-If you want to just grab the data straight from the database you can perform an [Index from Database Operation](https://nasa.github.io/cumulus-api/#index-from-database). After the data is indexed from the database, a  [Change Index operation](https://nasa.github.io/cumulus-api/#change-index) will need
+If you want to just grab the data straight from the database you can perform an [Index from Database Operation](https://nasa.github.io/cumulus-api/unreleased/#index-from-database). After the data is indexed from the database, a  [Change Index operation][change] will need
 to be performed to ensure Cumulus is pointing to the right index. It is **strongly recommended** to turn off
 workflow rules when performing this operation so any data ingested to the database is not lost.
 
 ## Validate reindex
 
-To validate the reindex, use the [reindex-status](https://nasa.github.io/cumulus-api/#reindex-status) endpoint. The doc count can be used to verify that the reindex was successful. In the below example the reindex from `cumulus-2020-11-3` to `cumulus-2021-3-4` was not fully successful as they show different doc counts.
+To validate the reindex, use the [reindex-status][status] endpoint. The doc count can be used to verify that the reindex was successful. In the below example the reindex from `cumulus-2020-11-3` to `cumulus-2021-3-4` was not fully successful as they show different doc counts.
 
 ```json
 "indices": {
@@ -157,4 +157,10 @@ POST _reindex?wait_for_completion=false
 }
 ```
 
-The Cumulus API [reindex-status](https://nasa.github.io/cumulus-api/#reindex-status) endpoint can be used to monitor completion of this operation.
+The Cumulus API [reindex-status][status] endpoint can be used to monitor completion of this operation.
+
+[status]: https://nasa.github.io/cumulus-api/unreleased/#reindex-status "Reindexing Elasticsearch Status"
+
+[reindex]: https://nasa.github.io/cumulus-api/unreleased/#reindex "Reindexing Elasticsearch"
+
+[change]: https://nasa.github.io/cumulus-api/unreleased/#change-index "Indexing Elasticsearch"
