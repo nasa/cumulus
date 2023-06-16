@@ -2,7 +2,7 @@ import json
 import subprocess
 import math
 
-from typing import Dict, Any, Union, Literal
+from typing import Dict, Any, Union
 from argparse import ArgumentParser
 
 
@@ -14,10 +14,7 @@ class CoverageUpdateRequired(Exception):
     pass
 
 
-CoverageDict = Dict[
-    Literal["lines", "branches", "statements", "functions"],
-    float
-]
+CoverageDict = Dict[str, float]
 
 
 def truncateFloat(value: float, precision: int) -> Union[float, int]:
