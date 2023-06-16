@@ -211,7 +211,7 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
     payload: {
       httpMethod: 'PATCH',
       resource: '/{proxy+}',
-      path: `/granules/${t.context.collectionId}/${t.context.granuleId}`,
+      path: `/granules/${t.context.granuleId}`,
       headers: {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
@@ -231,7 +231,6 @@ test('reingestGranule calls the callback with the expected object', async (t) =>
     prefix: t.context.testPrefix,
     granuleId: t.context.granuleId,
     workflowName: aWorkflow,
-    collectionId: t.context.collectionId,
     callback,
   }));
 });
