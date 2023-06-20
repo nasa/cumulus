@@ -6,15 +6,14 @@ const memoize = require('lodash/memoize');
 const pMap = require('p-map');
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
 const {
   getWorkflowFileKey,
   templateKey,
 } = require('@cumulus/common/workflows');
 const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
-const { buildQueueMessageFromTemplate } = require('@cumulus/message/Build');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
-const { sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const {
   collections: collectionsApi,
@@ -60,7 +59,7 @@ function getCollectionIdFromGranule(granule) {
  * The *[Symbol.iterator] method loops over the collection looking for groups that have not
  * already been yielded. Once the first granule of an unseen group is located, a new iterator is
  * created that will search from that point in the collection of granules looking for other
- * granules that to the same group.
+ * granules that belong to the same group.
  *
  * Finally a generator version of the _.chunk() function breaks the grouped granules into chunks.
  */
@@ -138,69 +137,6 @@ function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
 }
 
 /**
- * Constructs the partial params for enqueueGranuleIngestMessage. This is an optimization.
- * This part of the message requires loading files out of S3. We don't want to do that everytime
- * we create an SQS message considering that these parts at the same for every message, so this
- * is done before looping through the chunks of granules as an optimization.
- */
-async function buildPartialMessage({
-  granuleIngestWorkflow,
-  stack,
-  systemBucket,
-}) {
-  const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
-  const { arn } = await getJsonS3Object(
-    systemBucket,
-    getWorkflowFileKey(stack, granuleIngestWorkflow)
-  );
-  return {
-    messageTemplate,
-    workflow: {
-      name: granuleIngestWorkflow,
-      arn,
-    },
-  };
-}
-
-/**
- * This mimics the function of enqueueGranuleIngestMessage but takes a partially
- * constructed message as an additional param.
- *
- * @see buildPartialMessage()
- */
-async function enqueueGranuleIngestMessage({
-  collection,
-  granules,
-  parentExecutionArn,
-  pdr,
-  provider,
-  partialMessage,
-  queueUrl,
-  executionNamePrefix,
-  additionalCustomMeta = {},
-}) {
-  const message = buildQueueMessageFromTemplate({
-    ...partialMessage,
-    parentExecutionArn,
-    payload: { granules },
-    customMeta: {
-      ...additionalCustomMeta,
-      ...(pdr ? { pdr } : {}),
-      collection,
-      provider,
-    },
-    executionNamePrefix,
-  });
-
-  await sendSQSMessage(queueUrl, message);
-
-  return buildExecutionArn(
-    message.cumulus_meta.state_machine,
-    message.cumulus_meta.execution_name
-  );
-}
-
-/**
  * See schemas/input.json and schemas/config.json for detailed event description
  *
  * @param {Object} event - Lambda event object
@@ -228,11 +164,14 @@ async function queueGranules(event, testMocks = {}) {
   );
   const pMapConcurrency = get(event, 'config.concurrency', 3);
 
-  const partialMessage = await buildPartialMessage({
-    granuleIngestWorkflow: event.config.granuleIngestWorkflow,
-    stack: event.config.stackName,
-    systemBucket: event.config.internalBucket,
-  });
+  const messageTemplate = await getJsonS3Object(
+    event.config.internalBucket,
+    templateKey(event.config.stackName)
+  );
+  const { arn: granuleIngestWorkflowArn } = await getJsonS3Object(
+    event.config.internalBucket,
+    getWorkflowFileKey(event.config.stackName, event.config.granuleIngestWorkflow)
+  );
   const iterable = new GroupedGranulesIterable(
     granules,
     event.config.preferredQueueBatchSize
@@ -278,7 +217,11 @@ async function queueGranules(event, testMocks = {}) {
             { concurrency: pMapConcurrency }
           );
           return await enqueueGranuleIngestMessageFn({
-            partialMessage,
+            messageTemplate,
+            workflow: {
+              name: event.config.granuleIngestWorkflow,
+              arn: granuleIngestWorkflowArn,
+            },
             granules: granuleBatch,
             queueUrl: event.config.queueUrl,
             provider: normalizedProvider,

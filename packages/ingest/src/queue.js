@@ -79,10 +79,10 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  * Enqueue a granule to be ingested
  *
  * @param {Object} params
- * @param {Object} params.granule - the granule to be enqueued for ingest
+ * @param {Object} params.granules - the granules to be enqueued for ingest
  * @param {string} params.queueUrl - the SQS queue to add the message to
- * @param {string} params.granuleIngestMessageTemplateUri - the S3 URI of template for
- * a granule ingest message
+ * @param {Object} params.messageTemplate - Message template for the workflow
+ * @param {Object} params.workflow - workflow name & arn object
  * @param {Object} params.provider - the provider config to be attached to the message
  * @param {Object} params.collection - the collection config to be attached to the
  *   message
@@ -96,52 +96,34 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
 async function enqueueGranuleIngestMessage({
   collection,
   granules,
-  granuleIngestWorkflow,
   parentExecutionArn,
   pdr,
   provider,
-  stack,
-  systemBucket,
+  messageTemplate,
+  workflow,
   queueUrl,
   executionNamePrefix,
   additionalCustomMeta = {},
 }) {
-  const messageTemplate = await getJsonS3Object(systemBucket, templateKey(stack));
-  const { arn: ingestGranuleArn } = await getJsonS3Object(
-    systemBucket,
-    getWorkflowFileKey(stack, granuleIngestWorkflow)
-  );
-
-  const payload = { granules };
-
-  const workflow = {
-    name: granuleIngestWorkflow,
-    arn: ingestGranuleArn,
-  };
-
   const message = buildQueueMessageFromTemplate({
     messageTemplate,
     parentExecutionArn,
-    payload,
+    payload: { granules },
     workflow,
     customMeta: {
       ...additionalCustomMeta,
+      ...(pdr ? { pdr } : {}),
       collection,
       provider,
     },
     executionNamePrefix,
   });
 
-  if (pdr) message.meta.pdr = pdr;
-
-  const arn = buildExecutionArn(
+  await sendSQSMessage(queueUrl, message);
+  return buildExecutionArn(
     message.cumulus_meta.state_machine,
     message.cumulus_meta.execution_name
   );
-
-  await sendSQSMessage(queueUrl, message);
-
-  return arn;
 }
 exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
 
