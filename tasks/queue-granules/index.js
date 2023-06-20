@@ -38,7 +38,7 @@ function getCollectionIdFromGranule(granule) {
   if (granule.dataType && granule.version) {
     return constructCollectionId(granule.dataType, granule.version);
   }
-  throw new Error('Invalid collection, please check task input to make sure collection information is provided');
+  throw new Error('Invalid collection information provided, please check task input to make sure collection information is provided');
 }
 /**
  * Group granules by collection and split into batches then split again on provider
