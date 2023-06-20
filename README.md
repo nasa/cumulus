@@ -12,26 +12,26 @@ To learn more about Cumulus and NASA's Earth Observing System Data and Informati
 
 # 🚀 Getting Started
 
-Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus deployment go to our [Getting Started](https://nasa.github.io/cumulus/docs/cumulus-docs-readme) section.
+Below is in-depth guidance to help get you started with your Cumulus development. To get a quick start on Cumulus deployment go to our [Getting Started](https://nasa.github.io/cumulus/docs/getting-started) section.
 
 ## Contents
-- [Documentation](#📖-documentation)
-- [Development](#🔨-development)
+- [Documentation](#-documentation)
+- [Development](#-development)
   - [Installation](#installation)
     - [Prerequisites](#prerequisites)
     - [Install Lerna](#install-lerna)
     - [Install Local Dependencies](#install-local-dependencies)
   - [Running the Cumulus APIs Locally](#running-the-cumulus-apis-locally)
-  - [Tests](#📝-tests)
+  - [Tests](#-tests)
     - [Unit Tests](#unit-tests)
             -[LocalStack](#localstack)
     - [Integration Tests](#integration-tests)
     - [Running Tests via VS Code Debugger](#running-tests-via-vs-code-debugger)
-  - [Code Coverage And Quality](#🔦-code-coverage-and-quality)
-  - [Adding New Packages](#📦-adding-new-packages)
+  - [Code Coverage And Quality](#-code-coverage-and-quality)
+  - [Adding New Packages](#-adding-new-packages)
   - [Cleaning Up All The Repos](#cleaning-up-all-the-repos)
   - [Contribution](#contribution)
-  - [Release](#🛒-release)
+  - [Release](#-release)
 - [More Information](#more-information)
 
 ---
@@ -39,8 +39,8 @@ Below is in-depth guidance to help get you started with your Cumulus development
 ## 📖 Documentation
 
 - Documentation for the latest [released version](https://nasa.github.io/cumulus).
-- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/cumulus-docs-readme).
-- Documentation: [How To's](./docs/docs-how-to.md)
+- Documentation for the [unreleased work](https://nasa.github.io/cumulus/docs/next/).
+- Documentation: [How To's](./docs/docs-how-to.md) when serving and updating the documentation.
 
 # 🔨 Development
 
@@ -113,7 +113,7 @@ Build and watch packages:
 npm run watch
 ```
 
-To add new packages go to [Adding New Packages](#📦-adding-new-packages) for guidance.
+To add new packages go to [Adding New Packages](#-adding-new-packages) for guidance.
 
 ## Running the Cumulus APIs locally
 
