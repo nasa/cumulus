@@ -283,7 +283,7 @@ test('incrementAndDispatch throws error when trying to increment priority semaph
   );
 });
 
-test.serial('handleThrottledEvent throws error and deletes message when execution already exists', async (t) => {
+test.serial('handleThrottledEvent logs error and deletes message when execution already exists', async (t) => {
   const { semaphore, queueUrl } = t.context;
   const maxExecutions = 5;
 
@@ -314,7 +314,7 @@ test.serial('handleThrottledEvent throws error and deletes message when executio
   });
 
   const result = await handleThrottledEvent({ queueUrl });
-  t.is(result, 0);
+  t.is(result, 1);
   t.true(deleteMessageStub.called);
 });
 
