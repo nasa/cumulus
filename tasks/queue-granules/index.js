@@ -26,6 +26,21 @@ async function fetchGranuleProvider(prefix, providerId) {
 }
 
 /**
+ * Return the collectionId from a Granule if possible, otherwise throw an Error
+ *
+ * @param {Object} granule - the granule to get the collectionId from
+ * @returns {String} the collectionId of the granule if has it in its properties'
+ */
+function getCollectionIdFromGranule(granule) {
+  if (granule.collectionId) {
+    return granule.collectionId;
+  }
+  if (granule.dataType && granule.version) {
+    return constructCollectionId(granule.dataType, granule.version);
+  }
+  throw new Error('Invalid collection, please check task input to make sure collection information is provided');
+}
+/**
  * Group granules by collection and split into batches then split again on provider
  *
  * @param {Array<Object>} granules - list of input granules
@@ -38,8 +53,7 @@ function groupAndBatchGranules(granules, batchSize) {
 
   const granulesByCollectionMap = groupBy(
     granules,
-    (g) => (g.collectionId !== undefined ? g.collectionId
-      : (constructCollectionId(g.dataType, g.version)))
+    (g) => getCollectionIdFromGranule(g)
   );
   const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
     (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, filteredBatchSize)),
@@ -114,15 +128,7 @@ async function queueGranules(event, testMocks = {}) {
         granuleBatch,
         (queuedGranule) => {
           const granuleId = queuedGranule.granuleId;
-          if ((!queuedGranule.dataType || !queuedGranule.version) && !queuedGranule.collectionId) {
-            throw new Error('Invalid collection, please check task input to make sure collection information is provided');
-          }
-
-          const collectionId = queuedGranule.collectionId !== undefined ? queuedGranule.collectionId
-            : constructCollectionId(
-              queuedGranule.dataType,
-              queuedGranule.version
-            );
+          const collectionId = getCollectionIdFromGranule(queuedGranule);
 
           return updateGranule({
             prefix: event.config.stackName,
@@ -179,6 +185,7 @@ async function handler(event, context) {
 }
 
 module.exports = {
+  getCollectionIdFromGranule,
   groupAndBatchGranules,
   handler,
   queueGranules,
