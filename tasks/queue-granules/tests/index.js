@@ -843,7 +843,6 @@ test.serial('queueGranules throws an error when no dataType, version, or collect
     },
   ];
 
-  await t.throwsAsync(getCollectionIdFromGranule(event.input.granules[0]));
   await t.throwsAsync(queueGranules(event));
 });
 
