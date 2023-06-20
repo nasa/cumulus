@@ -93,6 +93,13 @@ class GroupedGranulesIterable {
     }
   }
 
+  /**
+   * This generator acts like a filter. It will yield all granules that match the
+   * `groupKey` param, starting at the `start` point passed in. The `start` index
+   * is an optimization to avoid reiterating through granules that can't possibly
+   * be in the same group because _groupedGranules is called the first time a
+   * group is seen from the [Symbol.iterator] generator.
+   */
   *_groupedGranules(groupKey, start) {
     for (let i = start; i < this._granules.length; i += 1) {
       const granule = this._granules[i];
@@ -103,6 +110,11 @@ class GroupedGranulesIterable {
     }
   }
 
+  /**
+   * [Symbol.iterator] implements the `Iterable` protocol. This generator iterates through
+   * all the granules finding unique groups. When a new group is found, it yields all the
+   * matching granules through `_groupedGranules` and chunked using `_chunk`.
+   */
   *[Symbol.iterator]() {
     const previouslySeen = new Set();
     for (let i = 0; i < this._granules.length; i += 1) {
