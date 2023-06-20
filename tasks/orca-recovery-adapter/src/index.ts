@@ -1,8 +1,8 @@
 'use strict';
 
+import { Context } from 'aws-lambda';
 import pRetry from 'p-retry';
 import { v4 as uuidv4 } from 'uuid';
-import { Context } from 'aws-lambda';
 
 import { sfn } from '@cumulus/aws-client/services';
 import { describeExecution } from '@cumulus/aws-client/StepFunctions';
@@ -33,14 +33,15 @@ export const getStateMachineExecutionResults = async (
     retryIntervalInSecond?: number,
     maxRetryTimeInSecond?: number,
   }
-) : Promise<AWS.StepFunctions.DescribeExecutionOutput> => {
+): Promise<AWS.StepFunctions.DescribeExecutionOutput> => {
   const {
     executionArn,
     retries = 50,
     retryIntervalInSecond = 5,
     maxRetryTimeInSecond = 1800,
   } = params;
-  const result = await pRetry(
+
+  return await pRetry(
     async () => {
       const response = await describeExecution({ executionArn });
       if (response.status === 'RUNNING') {
@@ -58,7 +59,6 @@ export const getStateMachineExecutionResults = async (
       },
     }
   );
-  return result;
 };
 
 /**
@@ -69,7 +69,7 @@ export const getStateMachineExecutionResults = async (
  */
 export const invokeOrcaRecoveryWorkflow = async (
   event: HandlerEvent
-) : Promise<HandlerOutput> => {
+): Promise<HandlerOutput> => {
   const workflowArn = process.env.orca_sfn_recovery_workflow_arn;
   if (!workflowArn?.length) {
     log.error('Environment orca_sfn_recovery_workflow_arn is not set');
@@ -82,8 +82,8 @@ export const invokeOrcaRecoveryWorkflow = async (
   };
 
   const currentWorkflowArn = buildExecutionArn(
-    event.cumulus_config?.state_machine || '',
-    event.cumulus_config?.execution_name || ''
+    event.cumulus_config?.state_machine!,
+    event.cumulus_config?.execution_name!
   );
 
   const childExecutionName = uuidv4();
@@ -103,13 +103,14 @@ export const invokeOrcaRecoveryWorkflow = async (
   }
 
   log.info(`About to get result from execution ${childWorkflowArn}`);
-  const executionResult = await getStateMachineExecutionResults({ executionArn: childWorkflowArn || '' });
+  const executionResult = await getStateMachineExecutionResults({
+    executionArn: childWorkflowArn!,
+  });
   log.info(`Get result from execution ${childWorkflowArn}, status ${executionResult?.status}`);
   if (executionResult?.status === 'FAILED') {
     throw new Error(`Error execute ${childWorkflowArn}, result from execution ${JSON.stringify(executionResult)}`);
   }
-  const executionOutput = executionResult?.outputDetails?.included ? JSON.parse(executionResult.output ?? '{}') : undefined;
-  return executionOutput;
+  return executionResult?.outputDetails?.included ? JSON.parse(executionResult.output ?? '{}') : undefined;
 };
 
 /**
