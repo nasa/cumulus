@@ -55,9 +55,7 @@ export class Consumer {
         log.debug('Completed deleting message.');
         return 1;
       }
-      else {
-        log.error(error);
-      }
+      log.error(error);
       return 0;
     }
   }
