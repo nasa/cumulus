@@ -23,7 +23,7 @@ const noop = require('lodash/noop');
 
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
-const { groupAndBatchGranules, updateGranuleBatchCreatedAt } = require('..');
+const { getCollectionIdFromGranule, groupAndBatchGranules, updateGranuleBatchCreatedAt } = require('..');
 const fakeGranulesApi = {
   updateGranule: noop,
 };
@@ -805,6 +805,7 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
 
   await queueGranules(event, testMocks);
   const expectedCreatedAt = enqueueGranuleIngestMessageMock.returnValues[0].granules[0].createdAt;
+  t.deepEqual(dataType + '___' + version, getCollectionIdFromGranule(event.input.granules[0]));
   t.assert(updateGranuleMock.returnValues[0] === expectedCreatedAt);
 });
 
@@ -829,4 +830,37 @@ test('updatedGranuleBatchCreatedAt updates batch granule object with correct cre
 
   const actual = updateGranuleBatchCreatedAt(testGranuleBatch, createdAtTestDate);
   t.deepEqual(actual, expected);
+});
+
+test.serial('queueGranules throws an error when no dataType, version, or collectionId are provided in input', async (t) => {
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      granuleId: randomString(), files: [],
+    },
+    {
+      granuleId: randomString(), files: [],
+    },
+  ];
+
+  await t.throwsAsync(queueGranules(event));
+});
+
+test.serial('queueGranules does not throw an error when collectionId is provided in the task input', async (t) => {
+  const dataType = undefined;
+  const version = undefined;
+  const collectionConfig = { foo: 'bar' };
+  await t.context.collectionConfigStore.put(dataType, version, collectionConfig);
+
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      collectionId: 'ABC___001', granuleId: randomString(), files: [],
+    },
+    {
+      collectionId: 'ABC___001', granuleId: randomString(), files: [],
+    },
+  ];
+  await t.deepEqual('ABC___001', getCollectionIdFromGranule(event.input.granules[0]));
+  await t.notThrowsAsync(queueGranules(event));
 });
