@@ -133,7 +133,7 @@ def updateNYCRCFile(
         nycConfigPath (str): location of nyc config
         grace (int): grace to give to future nyc tests
     """
-    grace_coverage = {key: value - grace for key, value in coverage.items()}
+    grace_coverage = {key: value - (grace/2) for key, value in coverage.items()}
     try:
         current = parseCoverageConfigFile(nycConfigPath)
         config = {**current, **grace_coverage}
@@ -244,10 +244,10 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
         "-g",
         "--grace",
         type=int,
-        default=0,
+        default=6,
         help="grace to give thresholds."
         "if validating, don't fail if coverage is < g above threshold."
-        "if updating, set threshold to t-g.",
+        "if updating, set threshold to t-(g/2).",
     )
     parser.add_argument(
         "--noRerun",
