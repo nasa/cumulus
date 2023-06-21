@@ -24,7 +24,7 @@
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --grace=5 --noRerun",
+    "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --noRerun",
     "coverage:update": "python ../../scripts/coverage_handler/coverage.py --update"
   },
   "author": "Cumulus Authors",
