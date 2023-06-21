@@ -512,8 +512,7 @@ function constructOnlineAccessUrls({
     throw new Error(`cmrGranuleUrlType is ${cmrGranuleUrlType}, but no distribution endpoint is configured.`);
   }
 
-  const urlListCalls = files.map((file) => {
-    const urls = [];
+  const [distributionUrls, s3Urls] = files.reduce(([distribution,s3], file) => {
     if (['both', 'distribution'].includes(cmrGranuleUrlType)) {
       const url = constructOnlineAccessUrl({
         file,
@@ -523,7 +522,7 @@ function constructOnlineAccessUrls({
         distributionBucketMap,
         useDirectS3Type,
       });
-      urls.push(url);
+      distribution.push(url)
     }
     if (['both', 's3'].includes(cmrGranuleUrlType)) {
       const url = constructOnlineAccessUrl({
@@ -534,11 +533,12 @@ function constructOnlineAccessUrls({
         distributionBucketMap,
         useDirectS3Type,
       });
-      urls.push(url);
+      s3.push(url);
     }
-    return urls;
-  });
-  const urlList = flatten(urlListCalls);
+    return [distribution, s3];
+  }, [[],[]]);
+
+  const urlList = distributionUrls.concat(s3Urls);
   return urlList.filter((urlObj) => urlObj);
 }
 
