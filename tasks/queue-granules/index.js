@@ -8,7 +8,7 @@ const pMap = require('p-map');
 
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const { enqueueGranuleIngestMessage } = require('@cumulus/ingest/queue');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { constructCollectionId, deconstructCollectionId } = require('@cumulus/message/Collections');
 const { buildExecutionArn } = require('@cumulus/message/Executions');
 const {
   providers: providersApi,
@@ -26,6 +26,21 @@ async function fetchGranuleProvider(prefix, providerId) {
 }
 
 /**
+ * Return the collectionId from a Granule if possible, otherwise throw an Error
+ *
+ * @param {Object} granule - the granule to get the collectionId from
+ * @returns {String} the collectionId of the granule if has it in its properties'
+ */
+function getCollectionIdFromGranule(granule) {
+  if (granule.collectionId) {
+    return granule.collectionId;
+  }
+  if (granule.dataType && granule.version) {
+    return constructCollectionId(granule.dataType, granule.version);
+  }
+  throw new Error('Invalid collection information provided, please check task input to make sure collection information is provided');
+}
+/**
  * Group granules by collection and split into batches then split again on provider
  *
  * @param {Array<Object>} granules - list of input granules
@@ -35,9 +50,10 @@ async function fetchGranuleProvider(prefix, providerId) {
  */
 function groupAndBatchGranules(granules, batchSize) {
   const filteredBatchSize = isNumber(batchSize) ? batchSize : 1;
+
   const granulesByCollectionMap = groupBy(
     granules,
-    (g) => constructCollectionId(g.dataType, g.version)
+    (g) => getCollectionIdFromGranule(g)
   );
   const granulesBatchedByCollection = Object.values(granulesByCollectionMap).reduce(
     (arr, granulesByCollection) => arr.concat(chunk(granulesByCollection, filteredBatchSize)),
@@ -95,9 +111,15 @@ async function queueGranules(event, testMocks = {}) {
   const executionArns = await pMap(
     groupedAndBatchedGranules,
     async (granuleBatchIn) => {
+      let deconstructedId = [];
+      if (!granuleBatchIn[0].collectionId) {
+        deconstructedId = [granuleBatchIn[0].dataType, granuleBatchIn[0].version];
+      } else if (!granuleBatchIn[0].dataType && !granuleBatchIn[0].version) {
+        deconstructedId = deconstructCollectionId(granuleBatchIn[0].collectionId);
+      }
+
       const collectionConfig = await collectionConfigStore.get(
-        granuleBatchIn[0].dataType,
-        granuleBatchIn[0].version
+        deconstructedId[0], deconstructedId[1]
       );
 
       const createdAt = Date.now();
@@ -105,12 +127,8 @@ async function queueGranules(event, testMocks = {}) {
       await pMap(
         granuleBatch,
         (queuedGranule) => {
-          const collectionId = constructCollectionId(
-            queuedGranule.dataType,
-            queuedGranule.version
-          );
-
           const granuleId = queuedGranule.granuleId;
+          const collectionId = getCollectionIdFromGranule(queuedGranule);
 
           return updateGranule({
             prefix: event.config.stackName,
@@ -167,6 +185,7 @@ async function handler(event, context) {
 }
 
 module.exports = {
+  getCollectionIdFromGranule,
   groupAndBatchGranules,
   handler,
   queueGranules,
