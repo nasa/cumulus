@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
-  
+
+- Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
@@ -250,6 +251,10 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
   - Update documentation on dashboard deployment to exclude ACL public-read setting
+- **CUMULUS-3245**
+  - Update SQS consumer logic to catch ExecutionAlreadyExists error and
+    delete SQS message accordingly.
+  - Add ReportBatchItemFailures to event source mapping start_sf_mapping
 
 ### Fixed
 

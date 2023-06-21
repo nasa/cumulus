@@ -4,7 +4,7 @@ const uuidv4 = require('uuid/v4');
 const get = require('lodash/get');
 
 const { sfn } = require('@cumulus/aws-client/services');
-const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
+const sqs = require('@cumulus/aws-client/SQS');
 const Logger = require('@cumulus/logger');
 const {
   buildExecutionArn,
@@ -29,7 +29,7 @@ const logger = new Logger({ sender: '@cumulus/api/lambdas/sf-starter' });
  * @returns {Promise} - AWS SF Start Execution response
  */
 function dispatch(queueUrl, message) {
-  const input = parseSQSMessageBody(message);
+  const input = sqs.parseSQSMessageBody(message);
 
   input.cumulus_meta.workflow_start_time = Date.now();
 
@@ -65,7 +65,7 @@ function dispatch(queueUrl, message) {
  * @throws {Error}
  */
 async function incrementAndDispatch(queueUrl, queueMessage) {
-  const workflowMessage = parseSQSMessageBody(queueMessage);
+  const workflowMessage = sqs.parseSQSMessageBody(queueMessage);
 
   const maxExecutions = getMaximumExecutions(workflowMessage, queueUrl);
 
@@ -139,20 +139,24 @@ function handleThrottledEvent(event, visibilityTimeout) {
 
 async function handleSourceMappingEvent(event) {
   const sqsRecords = event.Records;
-  return await Promise.all(sqsRecords.map(
-    (sqsRecord) => dispatch(sqsRecord.eventSourceARN, sqsRecord)
-  ));
-}
+  const batchItemFailures = [];
+  await Promise.all(sqsRecords.map(async (sqsRecord) => {
+    try {
+      return await dispatch(sqsRecord.eventSourceARN, sqsRecord);
+    } catch (error) {
+      // If error is ExecutionAlreadyExists, do not include in batchItemFailures
+      if (error.code === 'ExecutionAlreadyExists') {
+        logger.debug(`Warning: ${error}`);
+        return batchItemFailures;
+      }
+      logger.error(error);
+      return batchItemFailures.push({
+        itemIdentifier: sqsRecord.messageId,
+      });
+    }
+  }));
 
-/**
- * Handler for messages from normal SQS queues.
- *
- * @param {Object} event - Lambda input message from SQS
- * @returns {Promise} - A promise resolving to how many executions were started
- * @throws {Error}
- */
-async function sqs2sfHandler(event) {
-  return await handleEvent(event, dispatch);
+  return { batchItemFailures };
 }
 
 /**
@@ -178,9 +182,9 @@ async function sqs2sfEventSourceHandler(event) {
 }
 
 module.exports = {
+  dispatch,
   incrementAndDispatch,
   sqs2sfEventSourceHandler,
-  sqs2sfHandler,
   sqs2sfThrottleHandler,
   handleEvent,
   handleThrottledEvent,
