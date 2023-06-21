@@ -87,7 +87,6 @@ function updateGranuleBatchCreatedAt(granuleBatch, createdAt) {
  *   that is passed to the next task in the workflow
  **/
 async function queueGranules(event, testMocks = {}) {
-  let deconstructedId = [];
   const granules = event.input.granules || [];
   const updateGranule = testMocks.updateGranuleMock || granulesApi.updateGranule;
   const enqueueGranuleIngestMessageFn
@@ -112,6 +111,7 @@ async function queueGranules(event, testMocks = {}) {
   const executionArns = await pMap(
     groupedAndBatchedGranules,
     async (granuleBatchIn) => {
+      let deconstructedId = [];
       if (!granuleBatchIn[0].collectionId) {
         deconstructedId = [granuleBatchIn[0].dataType, granuleBatchIn[0].version];
       } else if (!granuleBatchIn[0].dataType && !granuleBatchIn[0].version) {
