@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api-client",
-  "version": "16.0.1-alpha.0",
+  "version": "16.0.2-alpha.0",
   "description": "API client for working with the Cumulus archive API",
   "keywords": [
     "GIBS",
@@ -38,11 +38,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "16.0.1-alpha.0",
-    "@cumulus/logger": "16.0.1-alpha.0",
+    "@cumulus/aws-client": "16.0.2-alpha.0",
+    "@cumulus/logger": "16.0.2-alpha.0",
     "p-retry": "^2.0.0"
   },
   "devDependencies": {
-    "@cumulus/types": "16.0.1-alpha.0"
+    "@cumulus/types": "16.0.2-alpha.0"
   }
 }

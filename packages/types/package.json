@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/types",
-  "version": "16.0.1-alpha.0",
+  "version": "16.0.2-alpha.0",
   "description": "TypeScript definitions for working with Cumulus data structures",
   "keywords": [
     "GIBS",
