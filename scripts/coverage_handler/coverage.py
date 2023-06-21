@@ -52,7 +52,7 @@ def generateCoverageReport(run: bool = True) -> str:
     """
     if run:
         error = subprocess.call([
-            "nyc", "--reporter=json-summary",
+            "nyc", "--reporter=json-summary", "--reporter=text",
             "npm", "test"])
     else:
         error = subprocess.call([
