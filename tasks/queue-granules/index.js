@@ -69,8 +69,8 @@ class GroupedGranulesIterable {
     this._chunkSize = isNumber(chunkSize) ? chunkSize : 1;
   }
 
-  _groupKeyFromGranule({ provider, dataType, version }) {
-    return provider ? `${provider}${dataType}${version}` : `${dataType}${version}`;
+  _groupKeyFromGranule(collectionId, provider) {
+    return provider ? `${provider}${collectionId}` : collectionId;
   }
 
   /**
@@ -103,7 +103,8 @@ class GroupedGranulesIterable {
   *_groupedGranules(groupKey, start) {
     for (let i = start; i < this._granules.length; i += 1) {
       const granule = this._granules[i];
-      const granuleGroup = this._groupKeyFromGranule(granule);
+      const collectionId = getCollectionIdFromGranule(granule);
+      const granuleGroup = this._groupKeyFromGranule(collectionId, granule.provider);
       if (granuleGroup === groupKey) {
         yield granule;
       }
@@ -119,14 +120,13 @@ class GroupedGranulesIterable {
     const previouslySeen = new Set();
     for (let i = 0; i < this._granules.length; i += 1) {
       const granule = this._granules[i];
-      const { provider, dataType, version } = granule;
-      const groupKey = this._groupKeyFromGranule(granule);
+      const collectionId = getCollectionIdFromGranule(granule);
+      const groupKey = this._groupKeyFromGranule(collectionId, granule.provider);
       if (!previouslySeen.has(groupKey)) {
         previouslySeen.add(groupKey);
         yield {
-          provider,
-          dataType,
-          version,
+          collectionId,
+          provider: granule.provider,
           chunks: this._chunk(this._groupedGranules(groupKey, i)),
         };
       }
@@ -190,16 +190,15 @@ async function queueGranules(event, testMocks = {}) {
   );
   const executionArns = await pMap(
     iterable,
-    async ({ provider, dataType, version, chunks }) => {
-      const collectionId = constructCollectionId(
-        dataType,
-        version
+    async ({ provider, collectionId, chunks }) => {
+      const { name: collectionName, version: collectionVersion } = deconstructCollectionId(
+        collectionId
       );
       const [collection, normalizedProvider] = await Promise.all([
         memoizedFetchCollection({
           prefix: event.config.stackName,
-          collectionName: dataType,
-          collectionVersion: version,
+          collectionName,
+          collectionVersion,
         }),
         memoizedFetchProvider(event, provider),
       ]);
