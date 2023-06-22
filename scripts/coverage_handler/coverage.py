@@ -85,7 +85,7 @@ def parseCoverageValues(
         KeyError: coverage value not found in coverage summary file.
 
     Returns:
-        CoverageDict: _description_
+        CoverageDict: current coverage values according to recent test
     """
 
     with open(filePath) as coverageFile:

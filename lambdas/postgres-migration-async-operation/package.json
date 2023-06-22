@@ -19,9 +19,7 @@
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "webpack": "../../node_modules/.bin/webpack",
-    "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --noRerun",
-    "coverage:update": "python ../../scripts/coverage_handler/coverage.py --update"
+    "webpack": "../../node_modules/.bin/webpack"
   },
   "ava": {
     "files": [
