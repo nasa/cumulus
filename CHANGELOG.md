@@ -24,7 +24,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
     parameter in favor of `granules` parameter, in the form of a
     `@cumulus/types/ApiGranule` that requires the following keys: `[granuleId, collectionId]`
-
+- **CUMULUS-2871**
+  - Added `@cumulus/api-client/granules.bulkUpdate` and associated api to allow updating multiple 
+    granules at a time. 
+  - Switched `@cumulus/queue-granules` to use the `bulkUpdateGranules` api instead of individually
+    updating one granule at a time to increase throughput to the database.
 ### Fixed
 
 - **CUMULUS-3315**
