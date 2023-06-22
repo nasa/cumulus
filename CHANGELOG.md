@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 
 ### Changed
 
@@ -251,6 +253,10 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed ACL setting of private for s3PutObject()
   - Removed ACL confguration on sync-granules task
   - Update documentation on dashboard deployment to exclude ACL public-read setting
+- **CUMULUS-3245**
+  - Update SQS consumer logic to catch ExecutionAlreadyExists error and
+    delete SQS message accordingly.
+  - Add ReportBatchItemFailures to event source mapping start_sf_mapping
 
 ### Fixed
 
