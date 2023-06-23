@@ -2,7 +2,7 @@
 
 This is a [Cumulus](https://nasa.github.io/cumulus) task which acts as an adapter of ORCA recovery workflow.
 It will take input cumulus message, build a list of Cumulus granule objects and granule
-collection configuration, call the ORCA recovery step-function, and return results and raising errors as appropriate.
+collection configuration, call the ORCA recovery step-function, and return result, raising errors as appropriate.
 This provides an injection seam to contact the ORCA recovery step-function with ORCA's formatting.
 
 ## Message Configuration
