@@ -1,8 +1,10 @@
-import { receiveSQSMessages, deleteSQSMessage, SQSMessage } from '@cumulus/aws-client/SQS';
-import * as log from '@cumulus/common/log';
+import { receiveSQSMessages, SQSMessage } from '@cumulus/aws-client/SQS';
+import * as sqs from '@cumulus/aws-client/SQS';
+import Logger from '@cumulus/logger';
 
 export type MessageConsumerFunction = (queueUrl: string, message: SQSMessage) => Promise<void>;
 
+const log = new Logger({ sender: '@cumulus/ingest/consumer' });
 export interface ConsumerConstructorParams {
   queueUrl: string,
   messageLimit?: number,
@@ -42,9 +44,17 @@ export class Consumer {
   ): Promise<0 | 1> {
     try {
       await fn(this.queueUrl, message);
-      if (this.deleteProcessedMessage) await deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+      if (this.deleteProcessedMessage) {
+        await sqs.deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+      }
       return 1;
     } catch (error) {
+      if (error.code === 'ExecutionAlreadyExists') {
+        log.debug('Deleting message for execution that already exists...');
+        await sqs.deleteSQSMessage(this.queueUrl, message.ReceiptHandle);
+        log.debug('Completed deleting message.');
+        return 1;
+      }
       log.error(error);
       return 0;
     }
