@@ -29,6 +29,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     granules at a time. 
   - Switched `@cumulus/queue-granules` to use the `bulkUpdateGranules` api instead of individually
     updating one granule at a time to increase throughput to the database.
+- **CUMULUS-3357**
+  - `@cumulus/queue-granules` is now written in Typescript
+  - `@cumulus/schemas` can now generate Typescript interfaces for the task input, output and config.
+
 ### Fixed
 
 - **CUMULUS-3315**
