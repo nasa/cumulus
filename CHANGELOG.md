@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3307**
   - Pinned cumulus dependency on `pg` to `v8.10.x`
+
 ### Fixed
 
 - **CUMULUS-3115**
@@ -6930,7 +6931,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.3...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.4...HEAD
+[v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
 [v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1

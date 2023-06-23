@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "15.0.3",
+  "version": "15.0.4",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -52,26 +52,26 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "15.0.3",
-    "@cumulus/async-operations": "15.0.3",
-    "@cumulus/aws-client": "15.0.3",
-    "@cumulus/cmr-client": "15.0.3",
-    "@cumulus/cmrjs": "15.0.3",
-    "@cumulus/collection-config-store": "15.0.3",
-    "@cumulus/common": "15.0.3",
-    "@cumulus/db": "15.0.3",
-    "@cumulus/distribution-utils": "15.0.3",
-    "@cumulus/errors": "15.0.3",
-    "@cumulus/es-client": "15.0.3",
-    "@cumulus/ingest": "15.0.3",
-    "@cumulus/launchpad-auth": "15.0.3",
-    "@cumulus/logger": "15.0.3",
-    "@cumulus/message": "15.0.3",
-    "@cumulus/oauth-client": "15.0.3",
-    "@cumulus/object-store": "15.0.3",
-    "@cumulus/pvl": "15.0.3",
-    "@cumulus/sftp-client": "15.0.3",
-    "@cumulus/types": "15.0.3",
+    "@cumulus/api-client": "15.0.4",
+    "@cumulus/async-operations": "15.0.4",
+    "@cumulus/aws-client": "15.0.4",
+    "@cumulus/cmr-client": "15.0.4",
+    "@cumulus/cmrjs": "15.0.4",
+    "@cumulus/collection-config-store": "15.0.4",
+    "@cumulus/common": "15.0.4",
+    "@cumulus/db": "15.0.4",
+    "@cumulus/distribution-utils": "15.0.4",
+    "@cumulus/errors": "15.0.4",
+    "@cumulus/es-client": "15.0.4",
+    "@cumulus/ingest": "15.0.4",
+    "@cumulus/launchpad-auth": "15.0.4",
+    "@cumulus/logger": "15.0.4",
+    "@cumulus/message": "15.0.4",
+    "@cumulus/oauth-client": "15.0.4",
+    "@cumulus/object-store": "15.0.4",
+    "@cumulus/pvl": "15.0.4",
+    "@cumulus/sftp-client": "15.0.4",
+    "@cumulus/types": "15.0.4",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
@@ -122,6 +122,6 @@
     }
   },
   "devDependencies": {
-    "@cumulus/test-data": "15.0.3"
+    "@cumulus/test-data": "15.0.4"
   }
 }
