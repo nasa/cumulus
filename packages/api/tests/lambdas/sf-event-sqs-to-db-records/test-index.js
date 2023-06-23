@@ -38,32 +38,25 @@ const {
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
-<<<<<<< HEAD
+const {
+  getMessageExecutionParentArn,
+} = require('@cumulus/message/Executions');
 
 const Execution = require('../../../models/executions');
 const Granule = require('../../../models/granules');
 const Pdr = require('../../../models/pdrs');
-=======
-const {
-  getMessageExecutionParentArn,
-} = require('@cumulus/message/Executions');
+
 const { createSqsQueues, getSqsQueueMessageCounts } = require('../../../lib/testUtils');
 const {
   writeRecords,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
->>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
 
 const {
   handler,
-  writeRecords,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
-<<<<<<< HEAD
-  '@cumulus/aws-client/SQS': {
-    sendSQSMessage: (queue, message) => Promise.resolve([queue, message]),
-  },
   '@cumulus/aws-client/StepFunctions': {
     describeExecution: () => Promise.resolve({}),
-=======
+  },
   '@cumulus/message/Executions': {
     getMessageExecutionParentArn: (cumulusMessage) => {
       if (cumulusMessage.fail === true) {
@@ -71,7 +64,6 @@ const {
       }
       return getMessageExecutionParentArn(cumulusMessage);
     },
->>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
   },
 });
 
@@ -174,7 +166,6 @@ test.before(async (t) => {
   t.context.pdrPgModel = new PdrPgModel();
   t.context.providerPgModel = new ProviderPgModel();
 
-<<<<<<< HEAD
   process.env.ExecutionsTable = randomString();
   process.env.GranulesTable = randomString();
   process.env.PdrsTable = randomString();
@@ -200,10 +191,7 @@ test.before(async (t) => {
   await pdrModel.createTable();
   t.context.pdrModel = pdrModel;
 
-  fixture = await loadFixture('execution-running-event.json');
-=======
   t.context.fixture = await loadFixture('execution-running-event.json');
->>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
@@ -440,28 +428,20 @@ test.serial('writeRecords() writes records to Dynamo and PostgreSQL', async (t) 
   );
 });
 
-<<<<<<< HEAD
-test('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
+test.serial('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
   // make execution write throw an error
   const fakeExecutionModel = {
     storeExecution: () => {
       throw new Error('execution Dynamo error');
     },
   };
-
-=======
-test.serial('Lambda sends message to DLQ when writeRecords() throws an error', async (t) => {
->>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
   const {
     handlerResponse,
     sqsEvent,
   } = await runHandler({
     ...t.context,
-<<<<<<< HEAD
     executionModel: fakeExecutionModel,
-=======
     cumulusMessages: [{ fail: true }],
->>>>>>> 0d4bf26889 (CUMULUS-3223: Fix failed granule stuck in queued (#3373))
   });
 
   t.is(handlerResponse.batchItemFailures.length, 0);
