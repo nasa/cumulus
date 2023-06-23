@@ -72,38 +72,17 @@ test('RulePgModel.upsert() overwrites a rule record', async (t) => {
   );
 });
 
-test('RulePgModel.upsert() overwrites a rule record and deletes fields', async (t) => {
+test('RulePgModel.upsert() returns an array of an object with all fields of a record by default', async (t) => {
   const {
     knex,
     rulePgModel,
     ruleRecord,
   } = t.context;
 
-  ruleRecord.queue_url = 'queue-url';
+  const [upsertedRecord] = await rulePgModel.upsert(knex, ruleRecord);
 
-  await rulePgModel.create(knex, ruleRecord);
-  const initialRule = await rulePgModel.get(knex, {
-    name: ruleRecord.name,
-  });
-  t.is(initialRule.queue_url, 'queue-url');
-
-  const ruleUpdates = {
-    ...ruleRecord,
-    queue_url: undefined,
-    value: cryptoRandomString({ length: 5 }),
-  };
-
-  await rulePgModel.upsert(knex, ruleUpdates);
-
-  const actualRule = await rulePgModel.get(knex, {
-    name: ruleRecord.name,
-  });
-
-  t.like(
-    actualRule,
-    {
-      ...ruleUpdates,
-      queue_url: null,
-    }
+  t.deepEqual(
+    await rulePgModel.get(knex, ruleRecord),
+    upsertedRecord
   );
 });

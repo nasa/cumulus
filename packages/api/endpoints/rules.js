@@ -9,7 +9,6 @@ const {
   getKnexClient,
   isCollisionError,
   RulePgModel,
-  translateApiRuleToPostgresRule,
   translateApiRuleToPostgresRuleRaw,
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
@@ -17,7 +16,12 @@ const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
 const { isBadRequestError } = require('../lib/errors');
-const models = require('../models');
+const {
+  createRuleTrigger,
+  deleteRuleResources,
+  invokeRerun,
+  updateRuleTrigger,
+} = require('../lib/rulesHelpers');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
@@ -73,7 +77,6 @@ async function get(req, res) {
  */
 async function post(req, res) {
   const {
-    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -84,7 +87,7 @@ async function post(req, res) {
   const name = apiRule.name;
 
   try {
-    if (await ruleModel.exists(name)) {
+    if (await rulePgModel.exists(knex, { name })) {
       return res.boom.conflict(`A record already exists for ${name}`);
     }
 
@@ -92,21 +95,19 @@ async function post(req, res) {
     apiRule.updatedAt = Date.now();
 
     // Create rule trigger
-    const ruleWithTrigger = await ruleModel.createRuleTrigger(apiRule);
-    const postgresRule = await translateApiRuleToPostgresRule(ruleWithTrigger, knex);
+    const ruleWithTrigger = await createRuleTrigger(apiRule);
+    const postgresRule = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, knex);
 
     try {
       await createRejectableTransaction(knex, async (trx) => {
-        await rulePgModel.create(trx, postgresRule);
-        record = await ruleModel.create(ruleWithTrigger);
+        const [pgRecord] = await rulePgModel.create(trx, postgresRule);
+        record = await translatePostgresRuleToApiRule(pgRecord, knex);
         await indexRule(esClient, record, process.env.ES_INDEX);
       });
     } catch (innerError) {
       if (isCollisionError(innerError)) {
         return res.boom.conflict(`A record already exists for ${name}`);
       }
-      // Clean up DynamoDB record in case of any failure
-      await ruleModel.delete(apiRule);
       throw innerError;
     }
     return res.send({ message: 'Record saved', record });
@@ -133,7 +134,6 @@ async function post(req, res) {
  */
 async function put(req, res) {
   const {
-    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -142,7 +142,7 @@ async function put(req, res) {
   const { params: { name }, body } = req;
 
   const apiRule = { ...body };
-  let newRule;
+  let translatedRule;
 
   if (name !== apiRule.name) {
     return res.boom.badRequest(`Expected rule name to be '${name}', but found`
@@ -153,46 +153,29 @@ async function put(req, res) {
     const oldRule = await rulePgModel.get(knex, { name });
     const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
 
+    apiRule.updatedAt = Date.now();
+    apiRule.createdAt = oldRule.created_at;
     // If rule type is onetime no change is allowed unless it is a rerun
     if (apiRule.action === 'rerun') {
-      return models.Rule.invoke(oldApiRule).then(() => res.send(oldApiRule));
+      return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
     }
+    const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
+    const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRuleWithTrigger, knex);
 
-    apiRule.updatedAt = Date.now();
-    apiRule.createdAt = oldApiRule.createdAt;
-
-    const fieldsToDelete = Object.keys(oldApiRule).filter(
-      (key) => !(key in apiRule) && key !== 'createdAt'
-    );
-
-    const ruleWithUpdatedTrigger = await ruleModel.updateRuleTrigger(oldApiRule, apiRule);
-
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        // stores updated record in dynamo
-        newRule = await ruleModel.update(ruleWithUpdatedTrigger, fieldsToDelete);
-        // make sure we include undefined values so fields will be correctly unset in PG
-        const postgresRule = await translateApiRuleToPostgresRuleRaw(newRule, knex);
-        await rulePgModel.upsert(trx, postgresRule);
-        await indexRule(esClient, newRule, process.env.ES_INDEX);
-      });
-      // wait to delete original event sources until all update operations were successful
-      await ruleModel.deleteOldEventSourceMappings(oldApiRule);
-    } catch (innerError) {
-      if (newRule) {
-        const ruleWithRevertedTrigger = await ruleModel.updateRuleTrigger(apiRule, oldApiRule);
-        await ruleModel.update(ruleWithRevertedTrigger);
-      }
-      throw innerError;
+    await createRejectableTransaction(knex, async (trx) => {
+      const [pgRule] = await rulePgModel.upsert(trx, apiPgRule);
+      translatedRule = await translatePostgresRuleToApiRule(pgRule, knex);
+      await indexRule(esClient, translatedRule, process.env.ES_INDEX);
+    });
+    if (['kinesis', 'sns'].includes(oldApiRule.rule.type)) {
+      await deleteRuleResources(knex, oldApiRule);
     }
-
-    return res.send(newRule);
+    return res.send(translatedRule);
   } catch (error) {
     log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
       return res.boom.notFound(`Rule '${name}' not found`);
     }
-
     throw error;
   }
 }
@@ -206,7 +189,6 @@ async function put(req, res) {
  */
 async function del(req, res) {
   const {
-    ruleModel = new models.Rule(),
     rulePgModel = new RulePgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
@@ -218,11 +200,12 @@ async function del(req, res) {
     'rule',
     process.env.ES_INDEX
   );
-
+  let rule;
   let apiRule;
 
   try {
-    await rulePgModel.get(knex, { name });
+    rule = await rulePgModel.get(knex, { name });
+    apiRule = await translatePostgresRuleToApiRule(rule, knex);
   } catch (error) {
     // If rule doesn't exist in PG or ES, return not found
     if (error instanceof RecordDoesNotExist) {
@@ -236,34 +219,16 @@ async function del(req, res) {
     }
   }
 
-  try {
-    // Save DynamoDB rule to recreate record in case of deletion failure
-    apiRule = await ruleModel.get({ name });
-  } catch (error) {
-    if (!(error instanceof RecordDoesNotExist)) {
-      throw error;
-    }
-  }
-
-  try {
-    await createRejectableTransaction(knex, async (trx) => {
-      await rulePgModel.delete(trx, { name });
-      await ruleModel.delete(apiRule);
-      await deleteRule({
-        esClient,
-        name,
-        index: process.env.ES_INDEX,
-        ignore: [404],
-      });
+  await createRejectableTransaction(knex, async (trx) => {
+    await rulePgModel.delete(trx, { name });
+    await deleteRule({
+      esClient,
+      name,
+      index: process.env.ES_INDEX,
+      ignore: [404],
     });
-  } catch (error) {
-    // Delete is idempotent, so there may not be a DynamoDB
-    // record to recreate
-    if (apiRule) {
-      await ruleModel.create(apiRule);
-    }
-    throw error;
-  }
+    if (rule) await deleteRuleResources(knex, apiRule);
+  });
 
   return res.send({ message: 'Record deleted' });
 }

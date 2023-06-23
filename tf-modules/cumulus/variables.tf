@@ -398,6 +398,18 @@ variable "lzards_s3_link_timeout" {
   default     = ""
 }
 
+variable "orca_lambda_copy_to_archive_arn" {
+  description = "AWS ARN of the ORCA copy_to_archive lambda."
+  type        = string
+  default     = ""
+}
+
+variable "orca_sfn_recovery_workflow_arn" {
+  description = "The ARN of the recovery step function."
+  type        = string
+  default     = ""
+}
+
 variable "log_destination_arn" {
   type        = string
   default     = null

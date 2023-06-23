@@ -6,7 +6,7 @@ const asyncOperations = require('@cumulus/async-operations');
 const { getQueueUrlByName } = require('@cumulus/aws-client/SQS');
 
 const { asyncOperationEndpointErrorHandler } = require('../app/middleware');
-const AsyncOperation = require('../models/async-operation');
+
 const { getFunctionNameFromRequestContext } = require('../lib/request');
 
 const logger = new Logger({ sender: '@cumulus/api/replays' });
@@ -21,8 +21,6 @@ async function startKinesisReplayAsyncOperation(req, res) {
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
 
-  const asyncOperationModel = new AsyncOperation({ stackName, systemBucket });
-
   const payload = req.body;
 
   if (!payload.type) {
@@ -36,7 +34,6 @@ async function startKinesisReplayAsyncOperation(req, res) {
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     description: 'Kinesis Replay',
-    dynamoTableName: asyncOperationModel.tableName,
     knexConfig: process.env,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ManualConsumerLambda,
@@ -45,12 +42,11 @@ async function startKinesisReplayAsyncOperation(req, res) {
     stackName,
     systemBucket,
     useLambdaEnvironmentVariables: true,
-  }, AsyncOperation);
+  });
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 
 async function startSqsMessagesReplay(req, res) {
-  const tableName = process.env.AsyncOperationsTable;
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
 
@@ -71,7 +67,6 @@ async function startSqsMessagesReplay(req, res) {
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     description: 'SQS Replay',
-    dynamoTableName: tableName,
     knexConfig: process.env,
     callerLambdaName: getFunctionNameFromRequestContext(req),
     lambdaName: process.env.ReplaySqsMessagesLambda,
@@ -80,7 +75,7 @@ async function startSqsMessagesReplay(req, res) {
     stackName,
     systemBucket,
     useLambdaEnvironmentVariables: true,
-  }, AsyncOperation);
+  });
   return res.status(202).send({ asyncOperationId: asyncOperation.id });
 }
 

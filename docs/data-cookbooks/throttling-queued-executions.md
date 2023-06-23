@@ -45,7 +45,11 @@ module "cumulus" {
 
 Add the `sqs2sfThrottle` Lambda as the consumer for the queue and add a Cloudwatch event rule/target to read from the queue on a scheduled basis.
 
-> **Please note**: You **must use the `sqs2sfThrottle` Lambda as the consumer for any queue with a queue execution limit** or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.
+:::caution
+
+You **must use the `sqs2sfThrottle` Lambda as the consumer for any queue with a queue execution limit** or else the execution throttling will not work correctly. Additionally, please allow at least 60 seconds after creation before using the queue while associated infrastructure and triggers are set up and made ready.
+
+:::
 
 `aws_sqs_queue.background_job_queue.id` refers to the [queue resource defined above](#add-a-new-queue).
 
@@ -94,7 +98,11 @@ For any workflows using `QueueGranules` or `QueuePdrs` that you want to use your
 
 As seen in this partial configuration for a `QueueGranules` step, update the `queueUrl` to reference the new throttled queue:
 
-> Note: `${ingest_granule_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverGranules` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
+:::note ingest_granule_workflow_name
+
+`${ingest_granule_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverGranules` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_granules_workflow.tf).
+
+:::
 
 ```json
 {
@@ -120,7 +128,11 @@ As seen in this partial configuration for a `QueueGranules` step, update the `qu
 
 Similarly, for a `QueuePdrs` step:
 
-> Note: `${parse_pdr_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverPdrs` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf).
+:::note parse_pdr_workflow_name
+
+`${parse_pdr_workflow_name}` is an interpolated value referring to a Terraform resource. See the example deployment code for the [`DiscoverPdrs` workflow](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/discover_and_queue_pdrs_workflow.tf).
+
+:::
 
 ```json
 {

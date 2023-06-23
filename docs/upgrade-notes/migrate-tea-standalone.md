@@ -6,7 +6,11 @@ hide_title: false
 
 ## Background
 
-> This document is only relevant for upgrades of Cumulus from versions < 3.x.x to versions > 3.x.x
+:::info
+
+This document is only relevant for upgrades of Cumulus from versions < 3.x.x to versions > 3.x.x
+
+:::
 
 Previous versions of Cumulus included deployment of the Thin Egress App (TEA) by default in the `distribution` module. As a result, Cumulus users who wanted to deploy a new version of TEA to wait on a new release of Cumulus that incorporated that release.
 
@@ -69,7 +73,11 @@ Now, if you re-run `terraform plan`, it should work as expected.
 
 ## Migration instructions
 
-> **Please note:** These instructions assume that you are deploying the `thin_egress_app` module as shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf)
+:::note
+
+These instructions assume that you are deploying the `thin_egress_app` module as shown in the [Cumulus core example deployment code](https://github.com/nasa/cumulus/blob/master/example/cumulus-tf/main.tf).
+
+:::
 
 1. Ensure that you have [downloaded the latest version of your state file for your cumulus deployment](#download-your-most-recent-state-version)
 2. Find the URL for your `<prefix>-thin-egress-app-EgressGateway` API gateway. Confirm that you can access it in the browser and that it is functional.

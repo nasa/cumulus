@@ -16,7 +16,7 @@
     "directory": "packages/api/ecs/async-operation"
   },
   "scripts": {
-    "test:coverage": "../../../../node_modules/.bin/nyc true",
+    "test:coverage": "../../../../node_modules/.bin/nyc npm test",
     "test": "../../../../node_modules/.bin/ava"
   },
   "dependencies": {

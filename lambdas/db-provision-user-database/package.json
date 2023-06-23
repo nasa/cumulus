@@ -10,6 +10,7 @@
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "python-lint": "true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -27,7 +28,7 @@
     "@cumulus/common": "15.0.3",
     "@cumulus/db": "15.0.3",
     "knex": "2.4.1",
-    "pg": "^8.3.0"
+    "pg": "~8.10"
   },
   "devDependencies": {
     "@types/pg": "^7.14.4"

@@ -19,7 +19,7 @@ module "ingest_and_publish_granule_with_orca_workflow" {
       hyrax_metadata_updates_task_arn: module.cumulus.hyrax_metadata_updates_task.task_arn,
       lzards_backup_task_arn: module.cumulus.lzards_backup_task.task_arn,
       post_to_cmr_task_arn: module.cumulus.post_to_cmr_task.task_arn,
-      orca_lambda_copy_to_glacier_arn: module.orca[0].orca_lambda_copy_to_glacier_arn,
+      orca_copy_to_archive_adapter_task: module.cumulus.orca_copy_to_archive_adapter_task.task_arn
     }
   )
 }

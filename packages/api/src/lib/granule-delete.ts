@@ -21,7 +21,6 @@ const { deleteGranule } = require('@cumulus/es-client/indexer');
 const { Search } = require('@cumulus/es-client/search');
 const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');
-const Granule = require('../../models/granules');
 
 const logger = new Logger({ sender: '@cumulus/api/granule-delete' });
 
@@ -45,29 +44,27 @@ const deleteS3Files = async (
   );
 
 /**
- * Delete a Granule from Postgres, DynamoDB, ES, delete the Granule's
+ * Delete a Granule from Postgres and/or ES, delete the Granule's
  * Files from Postgres and S3
  *
  * @param {Object} params
  * @param {Knex} params.knex - DB client
- * @param {Object} params.dynamoGranule - Granule from DynamoDB
+ * @param {Object} params.apiGranule - Granule from API
  * @param {PostgresGranule} params.pgGranule - Granule from Postgres
  * @param {number | undefined} params.collectionCumulusId - Optional Collection Cumulus ID
  * @param {FilePgModel} params.filePgModel - File Postgres model
  * @param {GranulePgModel} params.granulePgModel - Granule Postgres model
  * @param {CollectionPgModel} params.collectionPgModel - Collection Postgres model
- * @param {Object} params.granuleModelClient - Granule Dynamo model
  * @param {Object} params.esClient - Elasticsearch client
  * @returns {Object} - Granule Deletion details
  */
 const deleteGranuleAndFiles = async (params: {
   knex: Knex,
-  dynamoGranule: ApiGranuleRecord,
+  apiGranule?: ApiGranuleRecord,
   pgGranule: PostgresGranuleRecord,
   filePgModel: FilePgModel,
   granulePgModel: GranulePgModel,
   collectionPgModel: CollectionPgModel,
-  granuleModelClient: typeof Granule,
   esClient: {
     delete(...args: any): any | any[];
   },
@@ -75,86 +72,83 @@ const deleteGranuleAndFiles = async (params: {
 }) => {
   const {
     knex,
-    dynamoGranule,
     pgGranule,
+    apiGranule,
     filePgModel = new FilePgModel(),
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    granuleModelClient = new Granule(),
     esClient = await Search.es(),
   } = params;
-  if (pgGranule === undefined) {
-    logger.debug(`PG Granule is undefined, only deleting DynamoDB and Elasticsearch granule ${JSON.stringify(dynamoGranule)}`);
-    // Delete only the Dynamo Granule and S3 Files
-    await deleteS3Files(dynamoGranule.files);
-    await granuleModelClient.delete(dynamoGranule);
-    await publishGranuleDeleteSnsMessage(dynamoGranule);
+
+  // Most of the calls using this method aren't typescripted
+  // We cannot rely on typings to save us here
+  if (!pgGranule && !apiGranule) {
+    throw new Error('pgGranule and apiGranule undefined, but one is required');
+  }
+  if (!pgGranule && apiGranule) {
+    logger.info('deleteGranuleAndFiles called without pgGranule, removing ES record only');
     await deleteGranule({
       esClient,
-      granuleId: dynamoGranule.granuleId,
-      collectionId: dynamoGranule.collectionId,
+      granuleId: apiGranule.granuleId,
+      collectionId: apiGranule.collectionId,
       index: process.env.ES_INDEX,
       ignore: [404],
     });
+    logger.debug(`Successfully deleted granule ${apiGranule.granuleId} from ES datastore`);
+    await deleteS3Files(apiGranule.files);
+    logger.debug(`Successfully removed S3 files ${JSON.stringify(apiGranule.files)}`);
     return {
-      collection: dynamoGranule.collectionId,
-      deletedGranuleId: dynamoGranule.granuleId,
+      collection: apiGranule.collectionId,
+      deletedGranuleId: apiGranule.granuleId,
       deletionTime: Date.now(),
-      deletedFiles: dynamoGranule.files,
+      deletedFiles: apiGranule.files,
     };
-  } if (pgGranule && pgGranule.published) {
+  }
+  if (pgGranule?.published === true) {
     throw new DeletePublishedGranule('You cannot delete a granule that is published to CMR. Remove it from CMR first');
-  } else {
-    // Delete PG Granule, PG Files, Dynamo Granule, S3 Files
-    logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)} mapped to dynamoGranule ${JSON.stringify(dynamoGranule)}`);
-    const files = await filePgModel.search(
-      knex,
-      { granule_cumulus_id: pgGranule.cumulus_id }
-    );
+  }
+  // Delete PG Granule, PG Files, S3 Files
+  logger.debug(`Initiating deletion of PG granule ${JSON.stringify(pgGranule)}`);
+  const files = await filePgModel.search(
+    knex,
+    { granule_cumulus_id: pgGranule.cumulus_id }
+  );
 
-    const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
-      granulePgRecord: pgGranule,
-      knexOrTransaction: knex,
-      collectionPgModel,
-      filePgModel,
-      pdrPgModel: new PdrPgModel(),
-      providerPgModel: new ProviderPgModel(),
-    });
+  const granuleToPublishToSns = await translatePostgresGranuleToApiGranule({
+    granulePgRecord: pgGranule,
+    knexOrTransaction: knex,
+    collectionPgModel,
+    filePgModel,
+    pdrPgModel: new PdrPgModel(),
+    providerPgModel: new ProviderPgModel(),
+  });
 
-    try {
-      await createRejectableTransaction(knex, async (trx) => {
-        await granulePgModel.delete(trx, {
-          cumulus_id: pgGranule.cumulus_id,
-        });
-        if (dynamoGranule) {
-          await granuleModelClient.delete(dynamoGranule);
-        }
-        await deleteGranule({
-          esClient,
-          granuleId: pgGranule.granule_id,
-          collectionId: granuleToPublishToSns.collectionId,
-          index: process.env.ES_INDEX,
-          ignore: [404],
-        });
+  try {
+    await createRejectableTransaction(knex, async (trx) => {
+      await granulePgModel.delete(trx, {
+        cumulus_id: pgGranule.cumulus_id,
       });
-      await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
-      logger.debug(`Successfully deleted granule ${pgGranule.granule_id}`);
-      await deleteS3Files(files);
-      return {
-        collection: granuleToPublishToSns.collectionId,
-        deletedGranuleId: pgGranule.granule_id,
-        deletionTime: Date.now(),
-        deletedFiles: files,
-      };
-    } catch (error) {
-      logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${JSON.stringify(error)}`);
-      // Delete is idempotent, so there may not be a DynamoDB
-      // record to recreate
-      if (dynamoGranule) {
-        await granuleModelClient.create(dynamoGranule);
-      }
-      throw error;
-    }
+      await deleteGranule({
+        esClient,
+        granuleId: granuleToPublishToSns.granuleId,
+        collectionId: granuleToPublishToSns.collectionId,
+        index: process.env.ES_INDEX,
+        ignore: [404],
+      });
+    });
+    await publishGranuleDeleteSnsMessage(granuleToPublishToSns);
+    logger.debug(`Successfully deleted granule ${pgGranule.granule_id} from ES/PostGreSQL datastores`);
+    await deleteS3Files(files);
+    logger.debug(`Successfully removed S3 files ${JSON.stringify(files)}`);
+    return {
+      collection: granuleToPublishToSns.collectionId,
+      deletedGranuleId: pgGranule.granule_id,
+      deletionTime: Date.now(),
+      deletedFiles: files,
+    };
+  } catch (error) {
+    logger.debug(`Error deleting granule with ID ${pgGranule.granule_id} or S3 files ${JSON.stringify(files)}: ${JSON.stringify(error)}`);
+    throw error;
   }
 };
 

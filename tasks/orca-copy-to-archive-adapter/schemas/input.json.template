@@ -1,0 +1,27 @@
+{
+  "title": "orca-copy-to-archive-adapter Lambda Input",
+  "description": "The input for the orca-copy-to-archive-adapter Lambda.",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "A list of objects representing individual files to copy.",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "createdAt", "files"],
+        "properties": {
+          "granuleId": {
+            "description": "The granule's ID.",
+            "type": "string"
+          },
+          "createdAt": {
+            "description": "The time, in milliseconds since 1 January 1970 UTC, data was originally ingested into Cumulus.",
+            "type": "integer"
+          },
+          "files": "{{files}}"
+        }
+      }
+    }
+  }
+}

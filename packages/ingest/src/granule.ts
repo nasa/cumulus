@@ -344,7 +344,7 @@ export function generateMoveFileParams(
     } else if (file.filename) {
       source = S3.parseS3Uri(file.filename);
     } else {
-      throw new Error(`Unable to determine location of file: ${JSON.stringify(file)}`);
+      throw new Error(`granule.generateMoveFileParams unable to determine location of file: ${JSON.stringify(file)}`);
     }
 
     const targetKey = destination.filepath

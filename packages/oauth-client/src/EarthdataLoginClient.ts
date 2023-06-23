@@ -53,7 +53,7 @@ export class EarthdataLoginClient extends OAuthClient {
       default:
         return new EarthdataLoginError(
           'UnexpectedResponse',
-          `Unexpected response: ${httpError.response.body}`
+          `Unexpected response: ${JSON.stringify(httpError.response.body)}`
         );
     }
   };

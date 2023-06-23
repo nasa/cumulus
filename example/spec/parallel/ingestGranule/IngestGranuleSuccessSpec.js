@@ -3,8 +3,6 @@
 const fs = require('fs-extra');
 const got = require('got');
 const path = require('path');
-const pMap = require('p-map');
-const pRetry = require('p-retry');
 const { URL, resolve } = require('url');
 
 const difference = require('lodash/difference');
@@ -13,7 +11,6 @@ const includes = require('lodash/includes');
 const intersection = require('lodash/intersection');
 const isObject = require('lodash/isObject');
 
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const {
@@ -31,7 +28,6 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
   conceptExists,
-  getExecutionOutput,
   getOnlineResources,
   waitForAsyncOperationStatus,
   waitForConceptExistsOutcome,
@@ -118,6 +114,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   let beforeAllError;
   let collection;
+  let collectionId;
   let config;
   let expectedPayload;
   let expectedS3TagSet;
@@ -144,12 +141,10 @@ describe('The S3 Ingest Granules workflow', () => {
       testDataFolder = createTestDataPath(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      const newCollectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
       process.env.system_bucket = config.bucket;
-      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       const providerData = {
@@ -199,7 +194,7 @@ describe('The S3 Ingest Granules workflow', () => {
         },
       });
 
-      expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, newCollectionId, config.stackName);
+      expectedSyncGranulePayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedSyncGranuleFilename, granuleId, testDataFolder, collectionId, config.stackName);
 
       expectedSyncGranulePayload.granules[0].dataType += testSuffix;
       expectedSyncGranulePayload.granules[0].files[0].checksumType = inputPayload.granules[0].files[0].checksumType;
@@ -237,7 +232,7 @@ describe('The S3 Ingest Granules workflow', () => {
         },
       });
 
-      expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, newCollectionId);
+      expectedPayload = loadFileWithUpdatedGranuleIdPathAndCollection(templatedOutputPayloadFilename, granuleId, testDataFolder, collectionId);
       expectedPayload.granules[0].dataType += testSuffix;
 
       // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
@@ -421,31 +416,6 @@ describe('The S3 Ingest Granules workflow', () => {
     );
     const collectionResult = JSON.parse(collectionResponse.body);
     expect(collectionResult).not.toBeNull();
-  });
-
-  it('results in the files being added to the granule files cache table', async () => {
-    failOnSetupError([beforeAllError]);
-
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-
-    const executionOutput = await getExecutionOutput(workflowExecutionArn);
-
-    await pMap(
-      executionOutput.payload.granules[0].files,
-      async (file) => {
-        const granuleId = await pRetry(
-          async () => {
-            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
-            return id;
-          },
-          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
-        );
-
-        expect(granuleId).toEqual(executionOutput.payload.granules[0].granuleId);
-      },
-      { concurrency: 1 }
-    );
   });
 
   describe('the BackupGranulesToLzards task', () => {
@@ -963,7 +933,16 @@ describe('The S3 Ingest Granules workflow', () => {
             bulkReingestResponse = await bulkReingestGranules({
               prefix: config.stackName,
               body: {
-                ids: [reingestGranuleId, fakeGranuleId],
+                granules: [
+                  {
+                    collectionId,
+                    granuleId: reingestGranuleId,
+                  },
+                  {
+                    collectionId,
+                    granuleId: fakeGranuleId,
+                  },
+                ],
               },
             });
           } catch (error) {
@@ -1187,7 +1166,7 @@ describe('The S3 Ingest Granules workflow', () => {
           try {
             failOnSetupError([beforeAllError]);
 
-            file = granule.files.sort((a, b) => (a.key > b.key ? 1 : -1))[0];
+            file = granule.files.filter((x) => x.fileName.match(/\.hdf$/))[0];
 
             destinationKey = `${testDataFolder}/${file.key}`;
 
@@ -1237,13 +1216,13 @@ describe('The S3 Ingest Granules workflow', () => {
               destinations,
             });
           } catch (error) {
-            console.log('moveGranuleResponseError %j', moveGranuleResponseError);
             moveGranuleResponseError = error;
+            console.log('moveGranuleResponseError %j', moveGranuleResponseError);
           }
 
           expect(moveGranuleResponseError.statusCode).toEqual(409);
           expect(JSON.parse(moveGranuleResponseError.apiMessage).message).toEqual(
-            `Cannot move granule because the following files would be overwritten at the destination location: ${granule.files[0].fileName}. Delete the existing files or reingest the source files.`
+            `Cannot move granule because the following files would be overwritten at the destination location: ${file.fileName}. Delete the existing files or reingest the source files.`
           );
         });
 
@@ -1281,7 +1260,6 @@ describe('The S3 Ingest Granules workflow', () => {
           await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
-            expectedStatusCodes: 404,
           });
         } catch (error) {
           granuleResponseError = error;
