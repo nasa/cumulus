@@ -86,8 +86,8 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  * @param {Object} params.provider - the provider config to be attached to the message
  * @param {Object} params.collection - the collection config to be attached to the
  *   message
- * @param {Object} params.pdr - an optional PDR to be configured in the message payload
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
+ * @param {Object} [params.pdr] - an optional PDR to be configured in the message payload
  * @param {string} [params.executionNamePrefix] - the prefix to apply to the
  *   name of the enqueued execution
  * @param {Object} [params.additionalCustomMeta] - additional object to merge into meta object

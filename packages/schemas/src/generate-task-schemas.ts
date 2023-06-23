@@ -1,24 +1,57 @@
 #!/usr/bin/env node
 
-import fs from 'fs';
+import fs, { FileHandle } from 'fs/promises';
 import path from 'path';
+import { templateJsonSchemaWithFiles } from './generate-schemas';
+import generateTypes from './generate-types';
 
-const {
-  templateJsonSchemaWithFiles,
-} = require('./generate-schemas');
+const TYPESCRIPT_OPTION = '--typescript';
+function parseOptions(taskDirectory: string, args: string[]): { tsFile?: Promise<FileHandle> } {
+  let tsFile; 
 
-const taskDirectory = process.argv[2];
-const command = process.argv[3];
-const taskSchemasDirectory = path.join(taskDirectory, 'schemas');
-
-if (command === 'files') {
-  const schemaTemplateFiles = fs.readdirSync(taskSchemasDirectory)
-    .filter((filename) => filename.endsWith('.template'));
-
-  schemaTemplateFiles.forEach((schemaTemplateFile) => {
-    templateJsonSchemaWithFiles(
-      path.join(taskSchemasDirectory, schemaTemplateFile),
-      path.join(taskSchemasDirectory, schemaTemplateFile.replace('.template', ''))
-    );
-  });
+  if (args.includes(TYPESCRIPT_OPTION)) {
+    const position = args.indexOf(TYPESCRIPT_OPTION)
+    if (args.length <= position + 1) {
+      throw new Error('Missing filepath for typescript option');
+    }
+    tsFile = fs.open(path.join(taskDirectory, args[position + 1]), 'w') 
+  }
+  return { tsFile }
 }
+
+async function main() {
+  const taskDirectory = process.argv[2];
+  const command = process.argv[3];
+  const options = process.argv.slice(4);
+
+  switch (command) {
+    case 'files':
+      await runFilesCommand(taskDirectory, options);
+      return
+    default:
+      console.error('Unknown command')
+  }
+}
+
+async function runFilesCommand(taskDirectory: string, rawOptions: string[]): Promise<void> {
+  const taskSchemasDirectory = path.join(taskDirectory, 'schemas');
+  const options = parseOptions(taskDirectory, rawOptions)
+  const schemaFiles = await fs.readdir(taskSchemasDirectory);
+  schemaFiles.filter((filename) => filename.endsWith('.template'))
+    .forEach(
+      (schemaTemplateFile) => {
+        const inputFile = path.join(taskSchemasDirectory, schemaTemplateFile);
+        const outputFile = path.join(
+          taskSchemasDirectory, 
+          schemaTemplateFile.replace('.template', ''),
+        );
+        templateJsonSchemaWithFiles(inputFile, outputFile);
+      }
+    );
+  if (options.tsFile) {
+    const outputFile = await options.tsFile;
+    await generateTypes(taskSchemasDirectory, outputFile);
+  }
+}
+
+main();
