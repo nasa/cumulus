@@ -27,7 +27,7 @@ interface HandlerEvent {
   config: QueueGranulesConfig,
 }
 
-type ApiGranule = QueueGranulesInput['granules'][number]
+type ApiGranule = QueueGranulesInput['granules'][number];
 
 async function fetchGranuleProvider(event: HandlerEvent, providerId?: string | null) {
   if (!providerId || providerId === event.config.provider.id) {
@@ -104,14 +104,14 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
     event.config.internalBucket,
     getWorkflowFileKey(event.config.stackName, event.config.granuleIngestWorkflow)
   );
-  const preferredBatchSize = event.config.preferredQueueBatchSize
+  const preferredBatchSize = event.config.preferredQueueBatchSize;
   const iterable = new GroupAndChunkIterable(
     granules,
     (granule) => {
       const collectionId = getCollectionIdFromGranule(granule);
       return { collectionId, provider: granule.provider };
     },
-    isNumber(preferredBatchSize) && preferredBatchSize > 0 ? preferredBatchSize : 1,
+    isNumber(preferredBatchSize) && preferredBatchSize > 0 ? preferredBatchSize : 1
   );
   const executionArns = await pMap(
     iterable,
@@ -182,7 +182,7 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
  */
 async function handler(
   event: CumulusMessage | CumulusRemoteMessage,
-  context: Context,
+  context: Context
 ): Promise<CumulusMessage | CumulusRemoteMessage> {
   return await cumulusMessageAdapter.runCumulusTask(
     queueGranules,
