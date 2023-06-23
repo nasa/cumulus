@@ -44,9 +44,13 @@ This is a one time operation that must be performed on each AWS account to allow
 
 2. ### Create an account role to act as ApiGateway and write to CloudWatchLogs
 
-    > NASA users in NGAP: be sure to use your account's permission boundary.
+:::info in NGAP
 
-    ```sh
+**NASA users in NGAP**: Be sure to use your account's permission boundary.
+
+:::
+
+```sh
     aws iam create-role \
     --role-name ApiGatewayToCloudWatchLogs \
     [--permissions-boundary <permissionBoundaryArn>] \

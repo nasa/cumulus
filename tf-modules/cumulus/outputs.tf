@@ -103,6 +103,10 @@ output "queue_workflow_task" {
   value = module.ingest.queue_workflow_task
 }
 
+output "send_pan_task" {
+  value = module.ingest.send_pan_task
+}
+
 output "sf_sqs_report_task" {
   value = module.ingest.sf_sqs_report_task
 }
