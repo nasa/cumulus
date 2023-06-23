@@ -12,18 +12,19 @@
  * Finally a generator version of the _.chunk() function breaks the grouped granules into chunks.
  */
 class GroupAndChunkIterable<
-  TElement, 
-  TGroupProps extends { [s: string]: string | undefined | null } = { [s: string]: string | undefined | null },
-  TGroupKey extends string = string,
+  TElement,
+  TGroupProps extends Record<string, string | undefined | null> =
+  Record<string, string | undefined | null>,
+  TGroupKey extends string = string
 > implements Iterable<TGroupProps & { chunks: Iterable<TElement[]> }> {
   constructor(
-    private readonly _source: TElement[], 
+    private readonly _source: TElement[],
     private readonly _predicate: (elm: TElement) => TGroupProps,
-    private readonly _chunkSize: number,
+    private readonly _chunkSize: number
   ) { }
 
   private _groupKey(props: TGroupProps): TGroupKey {
-    return Object.values(props).filter(p => Boolean(p)).join('') as TGroupKey;
+    return Object.values(props).filter((p) => Boolean(p)).join('') as TGroupKey;
   }
 
   /**
@@ -77,7 +78,7 @@ class GroupAndChunkIterable<
       if (!previouslySeen.has(groupKey)) {
         previouslySeen.add(groupKey);
         yield {
-          ... groupProps,
+          ...groupProps,
           chunks: this._chunk(this._filterFrom(groupKey, i)),
         };
       }
