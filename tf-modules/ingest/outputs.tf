@@ -112,6 +112,14 @@ output "orca_copy_to_archive_adapter_task" {
   }
 }
 
+output "orca_recovery_adapter_task" {
+  value = {
+    task_arn           = aws_lambda_function.orca_recovery_adapter_task.arn
+    task_log_group     = aws_cloudwatch_log_group.orca_recovery_adapter_task.name
+    last_modified_date = aws_lambda_function.orca_recovery_adapter_task.last_modified
+  }
+}
+
 output "queue_granules_task" {
   value = {
     task_arn           = aws_lambda_function.queue_granules_task.arn
