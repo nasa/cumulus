@@ -33,7 +33,9 @@ function fakeCollectionsAndGranules() {
     name: 'fakeCollection',
     version: 'v1',
     meta: {
-      excludeFileTypes: ['.xml', '.met'],
+      orca: {
+        excludedFileExtensions: ['.xml', '.met'],
+      },
     },
   });
   const fakeCollectionV2 = fakeCollectionFactory({
@@ -208,7 +210,7 @@ test.serial('shouldFileBeExcludedFromOrca returns true for configured file types
   const collectionsConfig = {
     collectionId1: {
       orca: {
-        excludeFileTypes: ['.xml', '.met'],
+        excludedFileExtensions: ['.xml', '.met'],
       },
     },
   };
@@ -240,7 +242,7 @@ test.serial('getReportForOneGranule reports no ok for one granule in both cumulu
   const collectionsConfig = {
     fakeCollection___v1: {
       orca: {
-        excludeFileTypes: ['.xml', '.met'],
+        excludedFileExtensions: ['.xml', '.met'],
       },
     },
   };
@@ -275,7 +277,7 @@ test.serial('getReportForOneGranule reports ok for one granule in cumulus only w
   const collectionsConfig = {
     fakeCollection___v1: {
       orca: {
-        excludeFileTypes: ['.xml', '.met'],
+        excludedFileExtensions: ['.xml', '.met'],
       },
     },
   };
@@ -294,7 +296,7 @@ test.serial('getReportForOneGranule reports not ok for one granule in cumulus on
   const collectionsConfig = {
     fakeCollection___v1: {
       orca: {
-        excludeFileTypes: ['.xml', '.met'],
+        excludedFileExtensions: ['.xml', '.met'],
       },
     },
   };

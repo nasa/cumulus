@@ -1,6 +1,6 @@
 ---
 id: thin_egress_app
-title: Using the Thin Egress App for Cumulus Distribution
+title: Using the Thin Egress App (TEA) for Cumulus Distribution
 hide_title: false
 ---
 
@@ -36,11 +36,15 @@ The configuration file is a simple JSON mapping of the form:
 }
 ```
 
- > ⚠️ **Note**: Cumulus only supports a one-to-one mapping of bucket->TEA path for 'distribution' buckets.
+:::info
+
+Cumulus only supports a one-to-one mapping of bucket->TEA path for 'distribution' buckets.
+
+:::
 
 #### Optionally Configure a Custom Bucket Map
 
-A simple config would look something like this:
+A simple configuration would look something like this:
 
 ##### bucket_map.yaml
 
@@ -53,7 +57,11 @@ PUBLIC_BUCKETS:
   - my-public
 ```
 
-> ⚠️ **Note**: Your custom bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors.
+:::caution
+
+Your custom bucket map **must include mappings for all of the `protected` and `public` buckets specified in the `buckets` variable in `cumulus-tf/terraform.tfvars`**, otherwise Cumulus may not be able to determine the correct distribution URL for ingested files and you may encounter errors.
+
+:::
 
 ### Optionally Configure Shared Variables
 
