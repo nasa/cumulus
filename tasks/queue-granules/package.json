@@ -2,7 +2,7 @@
   "name": "@cumulus/queue-granules",
   "version": "15.0.0",
   "description": "Add discovered granules to the queue",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "directories": {
     "test": "tests"
   },

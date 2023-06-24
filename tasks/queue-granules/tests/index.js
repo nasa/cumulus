@@ -17,25 +17,24 @@ const {
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
+const queue = require('@cumulus/ingest/queue');
 const sinon = require('sinon');
 const pMap = require('p-map');
-const noop = require('lodash/noop');
 
 const pMapSpy = sinon.spy(pMap);
-const { updateGranuleBatchCreatedAt } = require('..');
 const fakeProvidersApi = {};
-const fetchCollectionStub = sinon.stub();
-const fakeGranulesApi = {
-  bulkUpdateGranules: noop,
-};
+const getCollection = sinon.stub();
+const enqueueGranuleIngestMessage = sinon.stub(queue, 'enqueueGranuleIngestMessage');
+const bulkUpdateGranules = sinon.spy(({ granules }) => granules[0].createdAt);
 
-const { queueGranules } = proxyquire('..', {
+const { queueGranules, updateGranuleBatchCreatedAt } = proxyquire('..', {
   'p-map': pMapSpy,
   '@cumulus/api-client': {
-    collections: { getCollection: fetchCollectionStub },
-    granules: fakeGranulesApi,
+    collections: { getCollection },
+    granules: { bulkUpdateGranules },
     providers: fakeProvidersApi,
   },
+  '@cumulus/ingest/queue': enqueueGranuleIngestMessage,
 });
 
 test.beforeEach(async (t) => {
@@ -45,8 +44,16 @@ test.beforeEach(async (t) => {
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
-  fetchCollectionStub.resetBehavior();
-  t.context.getCollection = fetchCollectionStub;
+
+  bulkUpdateGranules.resetHistory();
+  t.context.bulkUpdateGranules = bulkUpdateGranules;
+
+  getCollection.resetBehavior();
+  t.context.getCollection = getCollection;
+
+  enqueueGranuleIngestMessage.resetBehavior();
+  enqueueGranuleIngestMessage.callThrough();
+  t.context.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
 
   await s3().createBucket({ Bucket: t.context.internalBucket });
 
@@ -85,7 +92,7 @@ test.beforeEach(async (t) => {
     config: {
       internalBucket: t.context.internalBucket,
       stackName: t.context.stackName,
-      provider: { name: 'provider-name' },
+      provider: { id: 'id', name: 'provider-name' },
       queueUrl: t.context.queueUrl,
       granuleIngestWorkflow: t.context.workflow,
     },
@@ -225,7 +232,6 @@ test.serial('Granules are added to the queue', async (t) => {
 
 test.serial('The correct message is enqueued without a PDR', async (t) => {
   const {
-    getCollection,
     event,
     queueUrl,
     queueExecutionLimits,
@@ -238,7 +244,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   const granule1 = {
     createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -247,7 +253,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   const granule2 = {
     createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -256,12 +262,12 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    getCollection.withArgs({
+    t.context.getCollection.withArgs({
       prefix: t.context.stackName,
       collectionName: granule1.dataType,
       collectionVersion: granule1.version,
     }).returns(collectionConfig1),
-    getCollection.withArgs({
+    t.context.getCollection.withArgs({
       prefix: t.context.stackName,
       collectionName: granule2.dataType,
       collectionVersion: granule2.version,
@@ -301,7 +307,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       },
       meta: {
         collection: collectionConfig1,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -333,7 +339,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       },
       meta: {
         collection: collectionConfig2,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -353,7 +359,6 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
 test.serial('granules are enqueued with createdAt values added to granules that are missing them', async (t) => {
   const {
-    getCollection,
     event,
   } = t.context;
 
@@ -361,7 +366,7 @@ test.serial('granules are enqueued with createdAt values added to granules that 
 
   const granule1 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -370,7 +375,7 @@ test.serial('granules are enqueued with createdAt values added to granules that 
   const granule2 = {
     createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -379,12 +384,12 @@ test.serial('granules are enqueued with createdAt values added to granules that 
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    getCollection.withArgs({
+    t.context.getCollection.withArgs({
       prefix: t.context.stackName,
       collectionName: granule1.dataType,
       collectionVersion: granule1.version,
     }).returns(collectionConfig1),
-    getCollection.withArgs({
+    t.context.getCollection.withArgs({
       prefix: t.context.stackName,
       collectionName: granule2.dataType,
       collectionVersion: granule2.version,
@@ -419,7 +424,6 @@ test.serial('granules are enqueued with createdAt values added to granules that 
 
 test.serial('The correct message is enqueued with a PDR', async (t) => {
   const {
-    getCollection,
     event,
     queueUrl,
     queueExecutionLimits,
@@ -445,7 +449,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     createdAt,
   };
   const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
@@ -454,7 +458,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     createdAt,
   };
   const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
@@ -462,12 +466,12 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
   event.input.granules = [granule1, granule2];
 
   await Promise.all([
-    getCollection.withArgs({
+    t.context.getCollection.withArgs({
       prefix: t.context.stackName,
       collectionName: granule1.dataType,
       collectionVersion: granule1.version,
     }).returns(collectionConfig1),
-    getCollection.withArgs({
+    t.context.getCollection.withArgs({
       prefix: t.context.stackName,
       collectionName: granule2.dataType,
       collectionVersion: granule2.version,
@@ -509,7 +513,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       meta: {
         pdr: event.input.pdr,
         collection: collectionConfig1,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -543,7 +547,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       meta: {
         pdr: event.input.pdr,
         collection: collectionConfig2,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -802,17 +806,11 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
     },
   ];
 
-  const bulkUpdateGranulesFn = sinon.spy(({ granules }) => granules[0].createdAt);
-  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
-
-  const testMocks = {
-    bulkUpdateGranulesFn,
-    enqueueGranuleIngestMessageFn,
-  };
-
-  await queueGranules(event, testMocks);
-  const expectedCreatedAt = enqueueGranuleIngestMessageFn.returnValues[0].granules[0].createdAt;
-  t.is(bulkUpdateGranulesFn.returnValues[0], expectedCreatedAt);
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
+  await queueGranules(event);
+  const expectedCreatedAt = t.context.enqueueGranuleIngestMessage
+    .lastCall.returnValue.granules[0].createdAt;
+  t.is(t.context.bulkUpdateGranules.returnValues[0], expectedCreatedAt);
 });
 
 test.serial('updatedGranuleBatchCreatedAt updates batch granule object with correct createdAt values', (t) => {
@@ -882,15 +880,11 @@ test.serial('does not change collection id on granule', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
 
-  const testMocks = {
-    bulkUpdateGranulesFn: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageFn,
-  };
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  await queueGranules(event, testMocks);
-  const updatedGranules = testMocks.bulkUpdateGranulesFn.getCalls()
+  await queueGranules(event);
+  const updatedGranules = t.context.bulkUpdateGranules.getCalls()
     .flatMap(({ firstArg }) => firstArg.granules);
   const createdMap = Object.fromEntries(
     updatedGranules.map(({ granuleId, createdAt }) => [granuleId, createdAt])
@@ -939,15 +933,11 @@ test.serial('handles different collections', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
 
-  const testMocks = {
-    bulkUpdateGranulesFn: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageFn,
-  };
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  await queueGranules(event, testMocks);
-  const updatedGranules = testMocks.bulkUpdateGranulesFn.getCalls()
+  await queueGranules(event);
+  const updatedGranules = t.context.bulkUpdateGranules.getCalls()
     .flatMap(({ firstArg }) => firstArg.granules);
   const createdMap = Object.fromEntries(
     updatedGranules.map(({ granuleId, createdAt }) => [granuleId, createdAt])
@@ -997,15 +987,11 @@ test.serial('handles different providers', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageFn = sinon.spy((params) => params);
 
-  const testMocks = {
-    bulkUpdateGranulesFn: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageFn,
-  };
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  await queueGranules(event, testMocks);
-  const updatedGranules = testMocks.bulkUpdateGranulesFn.getCalls()
+  await queueGranules(event);
+  const updatedGranules = t.context.bulkUpdateGranules.getCalls()
     .flatMap(({ firstArg }) => firstArg.granules);
   const createdMap = Object.fromEntries(
     updatedGranules.map(({ granuleId, createdAt }) => [granuleId, createdAt])
