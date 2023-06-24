@@ -59,6 +59,28 @@ function getCollectionIdFromGranule(granule: ApiGranule): string {
 }
 
 /**
+ * Return an Iterable of granules, grouped by collectionId and provider, containing
+ * chunks of granules to queue together.
+ *
+ * @param granules Granules to group and chunk
+ * @param preferredBatchSize The max chunk size to use when chunking the groups (default 1)
+ * @returns Iterable
+ */
+function createIterable(
+  granules: ApiGranule[],
+  preferredBatchSize: any
+): GroupAndChunkIterable<ApiGranule, { collectionId: string, provider: string | undefined }> {
+  return new GroupAndChunkIterable(
+    granules,
+    (granule) => {
+      const collectionId = getCollectionIdFromGranule(granule);
+      return { collectionId, provider: granule.provider };
+    },
+    isNumber(preferredBatchSize) && preferredBatchSize > 0 ? preferredBatchSize : 1
+  );
+}
+
+/**
 * Updates each granule in the 'batch' to the passed in createdAt value if one does not already exist
 * @param {Array<BackwardsCompatibleApiGranule>} granuleBatch - Array of Cumulus Granule objects
 * @param {number} createdAt           - 'Date.now()' to apply to the granules if there is no
@@ -104,17 +126,9 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
     event.config.internalBucket,
     getWorkflowFileKey(event.config.stackName, event.config.granuleIngestWorkflow)
   );
-  const preferredBatchSize = event.config.preferredQueueBatchSize;
-  const iterable = new GroupAndChunkIterable(
-    granules,
-    (granule) => {
-      const collectionId = getCollectionIdFromGranule(granule);
-      return { collectionId, provider: granule.provider };
-    },
-    isNumber(preferredBatchSize) && preferredBatchSize > 0 ? preferredBatchSize : 1
-  );
+
   const executionArns = await pMap(
-    iterable,
+    createIterable(granules, event.config.preferredQueueBatchSize),
     async ({ provider, collectionId, chunks }) => {
       const { name: collectionName, version: collectionVersion } = deconstructCollectionId(
         collectionId
@@ -192,6 +206,7 @@ async function handler(
 }
 
 export {
+  createIterable,
   handler,
   queueGranules,
   updateGranuleBatchCreatedAt,
