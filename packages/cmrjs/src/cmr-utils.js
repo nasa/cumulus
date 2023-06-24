@@ -1090,8 +1090,13 @@ async function getUserAccessibleBuckets(edlUser, cmrProvider = process.env.cmr_p
  *    available.
  */
 async function getGranuleTemporalInfo(granule) {
-  const cmrFile = granuleToCmrFileObject(granule);
-  if (cmrFile.length === 0) return {};
+  let cmrFile = [];
+  try {
+    cmrFile = granuleToCmrFileObject(granule);
+  } catch (error) {
+    log.debug(`getGranuleTemporalInfo failed to granuleToCmrFileObject ${JSON.stringify(granule)}, ${error.message}`);
+  }
+  if (cmrFile === undefined || cmrFile.length === 0) return {};
 
   const cmrFilename = getS3UrlOfFile(cmrFile[0]);
 

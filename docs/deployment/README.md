@@ -523,7 +523,7 @@ Deploy your dashboard to S3 bucket from the `cumulus-dashboard` directory:
 Using AWS CLI:
 
 ```bash
-  aws s3 sync dist s3://<prefix>-dashboard --acl public-read
+  aws s3 sync dist s3://<prefix>-dashboard
 ```
 
 From the S3 Console:
