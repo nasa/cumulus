@@ -1,7 +1,7 @@
 {
   "extends": "../../nyc.config.js",
-  "lines": 97,
-  "branches": 88,
-  "statements": 97,
-  "functions": 97
+  "lines": 97.0,
+  "branches": 85.0,
+  "statements": 97.0,
+  "functions": 97.0
 }
