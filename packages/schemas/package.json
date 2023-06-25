@@ -23,8 +23,7 @@
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "coverage:validate": "python ../../scripts/coverage_handler/coverage.py --noRerun",
-    "coverage:update": "python ../../scripts/coverage_handler/coverage.py --update"
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "bin": {
     "generate-task-schemas": "./dist/generate-task-schemas.js"
