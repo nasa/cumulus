@@ -1,7 +1,8 @@
 import json
 import subprocess
 import math
-
+import os
+from copy import deepcopy
 from typing import Dict, Any, Union
 from argparse import ArgumentParser
 
@@ -50,15 +51,17 @@ def generateCoverageReport(run: bool = True) -> str:
     Returns:
         str: path to find coverage json file
     """
+    env = deepcopy(os.environ)
+    env["FAIL_ON_COVERAGE"] = "false"
     if run:
         error = subprocess.call([
             "nyc", "--reporter=json-summary", "--reporter=text",
-            "npm", "test"])
+            "npm", "test"], env=env)
     else:
         error = subprocess.call([
             "nyc", "--reporter=json-summary",
             "report"
-        ])
+        ], env=env)
 
     if error:
         raise TestException("nyc failed, see output above")
