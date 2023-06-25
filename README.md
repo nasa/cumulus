@@ -255,7 +255,7 @@ npm run test:coverage
 
 Additionally, you can facilitate updating coverage values with the included coverage:update script
 ```sh
-npm run coverage:update
+npm run coverage -- --update
 ```
 ### Integration Tests
 
