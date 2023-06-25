@@ -71,7 +71,9 @@
   "dependencies": {
     "archiver": "^4.0.2",
     "crypto-js": "^4.0.0",
-    "fs-extra": "^9.0.0"
+    "fs-extra": "^9.0.0",
+    "ml-regression-polynomial": "^2.2.0",
+    "simple-statistics": "^7.8.3"
   },
   "devDependencies": {
     "@ava/typescript": "^1.1.1",
