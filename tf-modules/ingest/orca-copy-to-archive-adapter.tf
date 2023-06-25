@@ -16,6 +16,7 @@ resource "aws_lambda_function" "orca_copy_to_archive_adapter_task" {
       stackName                   = var.prefix
       CUMULUS_MESSAGE_ADAPTER_DIR = "/opt/"
       orca_lambda_copy_to_archive_arn    = var.orca_lambda_copy_to_archive_arn
+      orca_sfn_recovery_workflow_arn     = var.orca_sfn_recovery_workflow_arn
     }
   }
 

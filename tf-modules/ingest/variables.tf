@@ -126,6 +126,12 @@ variable "orca_lambda_copy_to_archive_arn" {
   default     = ""
 }
 
+variable "orca_sfn_recovery_workflow_arn" {
+  description = "The ARN of the recovery step function."
+  type        = string
+  default     = ""
+}
+
 variable "permissions_boundary_arn" {
   type = string
 }
