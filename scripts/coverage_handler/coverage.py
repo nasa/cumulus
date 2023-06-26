@@ -169,7 +169,7 @@ def validateCoverageAgainstConfig(
         if coverageType not in configuration:
             raise CoverageUpdateRequired(
                 f"coverage type {coverageType} not configured at all\n"
-                "set this value appropriately or run 'npm run coverage:update'"
+                "set this value appropriately or run 'npm run coverage -- --update'"
             )
         if coverageValue > (configuration[coverageType] + grace):
             badCoverages.append(coverageType)
@@ -179,7 +179,7 @@ def validateCoverageAgainstConfig(
             f"currently configured coverage {insufficientDict}\n"
             f"is low against current coverage is {coverage}\n"
             "set this configuration appropriately or run\n"
-            "'npm run coverage:update'"
+            "'npm run coverage -- --update'"
         )
 
 

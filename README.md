@@ -253,7 +253,7 @@ export FAIL_ON_COVERAGE=false
 npm run test:coverage
 ```
 
-Additionally, you can facilitate updating coverage values with the included coverage:update script
+Additionally, you can facilitate updating coverage values with the included coverage script
 ```sh
 npm run coverage -- --update
 ```
