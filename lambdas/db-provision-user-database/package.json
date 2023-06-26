@@ -15,7 +15,8 @@
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "webpack": "../../node_modules/.bin/webpack"
+    "webpack": "../../node_modules/.bin/webpack",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "directories": {
     "test": "tests"
