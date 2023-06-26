@@ -11,8 +11,8 @@
     "migrations",
     "models"
   ],
-  "statements": 85,
-  "functions": 82,
-  "branches": 79,
-  "lines": 86
+  "statements": 90.0,
+  "functions": 88.0,
+  "branches": 81.0,
+  "lines": 90.0
 }
