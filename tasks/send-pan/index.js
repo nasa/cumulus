@@ -1,6 +1,6 @@
 'use strict';
 
-const pdrs = require('@cumulus/api/models/pdrs');
+const { generatePAN } = require('@cumulus/api/lib/pdrHelpers');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const fs = require('fs');
 const path = require('path');
@@ -16,10 +16,10 @@ async function sendPAN(event) {
   const config = event.config;
   const provider = config.provider;
   const remoteDir = config.remoteDir;
-  const panName = config.pdrName.replace(/\.pdr/ig, '.pan');
+  const panName = config.pdrName.replace(/\.pdr/gi, '.pan');
   const uploadPath = path.join(remoteDir, panName);
 
-  const pan = pdrs.generatePAN();
+  const pan = generatePAN();
 
   const localPath = `/tmp/${panName}`;
   fs.writeFile(localPath, pan, (err) => {
