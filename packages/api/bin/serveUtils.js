@@ -3,11 +3,17 @@
 const pEachSeries = require('p-each-series');
 const indexer = require('@cumulus/es-client/indexer');
 const {
+  AsyncOperationPgModel,
   RulePgModel,
   PdrPgModel,
   ExecutionPgModel,
+  FilePgModel,
+  GranulePgModel,
+  GranulesExecutionsPgModel,
   CollectionPgModel,
+  PdrPgModel,
   ProviderPgModel,
+  RulePgModel,
   translateApiCollectionToPostgresCollection,
   translateApiProviderToPostgresProvider,
   translateApiExecutionToPostgresExecution,
@@ -26,9 +32,29 @@ const models = require('../models');
 const { createRuleTrigger } = require('../lib/rulesHelpers');
 const { fakeGranuleFactoryV2 } = require('../lib/testUtils');
 const { getESClientAndIndex } = require('./local-test-defaults');
-const {
-  erasePostgresTables,
-} = require('./serve');
+
+async function erasePostgresTables(knex) {
+  const asyncOperationPgModel = new AsyncOperationPgModel();
+  const collectionPgModel = new CollectionPgModel();
+  const executionPgModel = new ExecutionPgModel();
+  const filePgModel = new FilePgModel();
+  const granulePgModel = new GranulePgModel();
+  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
+  const pdrPgModel = new PdrPgModel();
+  const providerPgModel = new ProviderPgModel();
+  const rulePgModel = new RulePgModel();
+
+  await granulesExecutionsPgModel.delete(knex, {});
+  await granulePgModel.delete(knex, {});
+  await pdrPgModel.delete(knex, {});
+  await executionPgModel.delete(knex, {});
+  await asyncOperationPgModel.delete(knex, {});
+  await filePgModel.delete(knex, {});
+  await granulePgModel.delete(knex, {});
+  await rulePgModel.delete(knex, {});
+  await collectionPgModel.delete(knex, {});
+  await providerPgModel.delete(knex, {});
+}
 
 async function resetPostgresDb() {
   const knexAdmin = await getKnexClient({ env: localStackConnectionEnv });
@@ -218,4 +244,5 @@ module.exports = {
   addPdrs,
   addReconciliationReports,
   addRules,
+  erasePostgresTables,
 };
