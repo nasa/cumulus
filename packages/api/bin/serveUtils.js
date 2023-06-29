@@ -11,7 +11,6 @@ const {
   GranulePgModel,
   GranulesExecutionsPgModel,
   CollectionPgModel,
-  PdrPgModel,
   ProviderPgModel,
   RulePgModel,
   translateApiCollectionToPostgresCollection,
