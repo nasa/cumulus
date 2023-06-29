@@ -20,7 +20,8 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "publishConfig": {
     "access": "public"

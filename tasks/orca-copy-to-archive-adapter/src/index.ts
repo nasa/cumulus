@@ -21,7 +21,7 @@ const log = new Logger({ sender: '@cumulus/orca-copy-to-archive-adapter' });
  */
 export const invokeOrcaCopyToArchive = async (
   event: HandlerEvent
-) : Promise<HandlerOutput> => {
+): Promise<HandlerOutput> => {
   const functionName = process.env.orca_lambda_copy_to_archive_arn;
   if (!functionName?.length) {
     log.error('Environment orca_lambda_copy_to_archive_arn is not set');

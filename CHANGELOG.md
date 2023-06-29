@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 
 ### Changed
 
@@ -18,6 +20,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `tf-modules/cumulus` module to take variable `orca_lambda_copy_to_archive_arn` and pass to `tf-modules/ingest`
   - Updated `example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf` `CopyToGlacier` (renamed to `CopyToArchive`) step to call
     `orca_copy_to_archive_adapter_task`
+- **CUMULUS-3253**
+  - Added cumulus task `@cumulus/orca-recovery-adapter`, and add the task to `tf-modules/ingest`
+  - Updated `tf-modules/cumulus` module to take variable `orca_sfn_recovery_workflow_arn` and pass to `tf-modules/ingest`
+  - Added `example/cumulus-tf/orca_recovery_adapter_workflow.tf`, `OrcaRecoveryAdapterWorkflow` workflow has `OrcaRecoveryAdapter` task
+    to call the ORCA recovery step-function.
+  - Updated `example/data/collections/` collection configuration `meta.granuleRecoveryWorkflow` to use `OrcaRecoveryAdapterWorkflow`
 - **CUMULUS-3315**
   - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
     parameter in favor of `granules` parameter, in the form of a
@@ -29,6 +37,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
     instead of NPM `parallel` package, as timeouts were not resulting in
     integration test failure
+- **CUMULUS-2625**
+  - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
 
 ### Notable Changes
 
