@@ -4,7 +4,6 @@ const pEachSeries = require('p-each-series');
 const indexer = require('@cumulus/es-client/indexer');
 const {
   AsyncOperationPgModel,
-  RulePgModel,
   PdrPgModel,
   ExecutionPgModel,
   FilePgModel,
