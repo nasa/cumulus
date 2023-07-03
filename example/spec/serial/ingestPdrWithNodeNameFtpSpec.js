@@ -356,14 +356,12 @@ describe('Ingesting from PDR', () => {
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
-                  collectionId,
                 },
                 'completed'
               );
               await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
-                collectionId,
               });
             })
           );
