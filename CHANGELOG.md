@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 - **CUMULUS-3188**
   - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+- **CUMULUS-3287**
+  - Added variable to allow the aws_ecs_task_definition health check to be configurable.
+  - Added clarity to how the bucket field needs to be configured for the move-granules task definition
 
 ### Changed
 
