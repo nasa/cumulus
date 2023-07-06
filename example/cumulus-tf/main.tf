@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.14.1"
+      version = ">= 4.0.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -139,9 +139,7 @@ module "cumulus" {
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 
-  orca_api_uri = module.orca[0].orca_api_deployment_invoke_url
-  orca_lambda_copy_to_archive_arn = module.orca[0].orca_lambda_copy_to_archive_arn
-  orca_sfn_recovery_workflow_arn  = module.orca[0].orca_sfn_recovery_workflow_arn
+  # orca_api_uri = module.orca[0].orca_api_deployment_invoke_url
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service

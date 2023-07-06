@@ -345,7 +345,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${orca_copy_to_archive_adapter_task}",
+      "Resource": "${hyrax_metadata_updates_task_arn}",
       "Next": "CmrStep",
       "Catch": [
         {
