@@ -87,6 +87,10 @@ output "orca_copy_to_archive_adapter_task" {
   value = module.ingest.orca_copy_to_archive_adapter_task
 }
 
+output "orca_recovery_adapter_task" {
+  value = module.ingest.orca_recovery_adapter_task
+}
+
 output "parse_pdr_task" {
   value = module.ingest.parse_pdr_task
 }
