@@ -4,26 +4,27 @@ const pEachSeries = require('p-each-series');
 const indexer = require('@cumulus/es-client/indexer');
 const {
   AsyncOperationPgModel,
-  PdrPgModel,
+  CollectionPgModel,
+  createTestDatabase,
+  envParams,
   ExecutionPgModel,
   FilePgModel,
+  getKnexClient,
   GranulePgModel,
   GranulesExecutionsPgModel,
-  CollectionPgModel,
+  localStackConnectionEnv,
+  migrationDir,
+  PdrPgModel,
   ProviderPgModel,
   RulePgModel,
   translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
   translateApiExecutionToPostgresExecution,
   translateApiGranuleToPostgresGranule,
   translateApiPdrToPostgresPdr,
+  translateApiProviderToPostgresProvider,
   translateApiRuleToPostgresRule,
+  translatePostgresExecutionToApiExecution,
   upsertGranuleWithExecutionJoinRecord,
-  getKnexClient,
-  localStackConnectionEnv,
-  envParams,
-  createTestDatabase,
-  migrationDir,
 } = require('@cumulus/db');
 const { log } = require('console');
 const models = require('../models');
@@ -31,6 +32,11 @@ const { createRuleTrigger } = require('../lib/rulesHelpers');
 const { fakeGranuleFactoryV2 } = require('../lib/testUtils');
 const { getESClientAndIndex } = require('./local-test-defaults');
 
+/**
+* Remove all records from api-related postgres tables
+* @param {Object} knex - knex/knex transaction object
+* @returns {[Promise]} - Array of promises with deletion results
+*/
 async function erasePostgresTables(knex) {
   const asyncOperationPgModel = new AsyncOperationPgModel();
   const collectionPgModel = new CollectionPgModel();
@@ -113,7 +119,7 @@ async function addGranules(granules) {
       );
       await indexer.indexGranule(es.client, newGranule, es.index);
       const dbRecord = await translateApiGranuleToPostgresGranule({
-        newGranule,
+        dynamoRecord: newGranule,
         knexOrTransaction: knex,
       });
       const executionCumulusId = await executionPgModel.getRecordCumulusId(knex, {
@@ -122,7 +128,7 @@ async function addGranules(granules) {
 
       await upsertGranuleWithExecutionJoinRecord({
         knexTransaction: knex,
-        dbRecord,
+        granule: dbRecord,
         executionCumulusId,
       });
     })
@@ -176,7 +182,6 @@ async function addExecutions(executions) {
     },
   });
 
-  const executionModel = new models.Execution();
   const es = await getESClientAndIndex();
 
   executions.sort((firstEl, secondEl) => {
@@ -193,10 +198,13 @@ async function addExecutions(executions) {
 
   const executionPgModel = new ExecutionPgModel();
   const executionsIterator = async (execution) => {
-    const dynamoRecord = await executionModel.create(execution);
-    await indexer.indexExecution(es.client, dynamoRecord, es.index);
-    const dbRecord = await translateApiExecutionToPostgresExecution(dynamoRecord, knex);
-    await executionPgModel.create(knex, dbRecord);
+    const dbRecord = await translateApiExecutionToPostgresExecution(execution, knex);
+    const [writtenPostgresDbRecord] = await executionPgModel.create(knex, dbRecord);
+    const apiExecutionRecord = await translatePostgresExecutionToApiExecution(
+      writtenPostgresDbRecord,
+      knex
+    );
+    await indexer.indexExecution(es.client, apiExecutionRecord, es.index);
   };
 
   await pEachSeries(executions, executionsIterator);

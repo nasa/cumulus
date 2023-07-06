@@ -4,14 +4,9 @@ const { promiseS3Upload } = require('@cumulus/aws-client/S3');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {
-  AsyncOperationPgModel,
   CollectionPgModel,
-  ExecutionPgModel,
-  FilePgModel,
   getKnexClient,
   GranulePgModel,
-  GranulesExecutionsPgModel,
-  PdrPgModel,
   localStackConnectionEnv,
   ProviderPgModel,
   RulePgModel,
@@ -337,34 +332,6 @@ function eraseDataStack(
 }
 
 /**
-* Remove all records from api-related postgres tables
-* @param {Object} knex - knex/knex transaction object
-* @returns {[Promise]} - Array of promises with deletion results
-*/
-async function erasePostgresTables(knex) {
-  const asyncOperationPgModel = new AsyncOperationPgModel();
-  const collectionPgModel = new CollectionPgModel();
-  const executionPgModel = new ExecutionPgModel();
-  const filePgModel = new FilePgModel();
-  const granulePgModel = new GranulePgModel();
-  const granulesExecutionsPgModel = new GranulesExecutionsPgModel();
-  const pdrPgModel = new PdrPgModel();
-  const providerPgModel = new ProviderPgModel();
-  const rulePgModel = new RulePgModel();
-
-  await granulesExecutionsPgModel.delete(knex, {});
-  await granulePgModel.delete(knex, {});
-  await pdrPgModel.delete(knex, {});
-  await executionPgModel.delete(knex, {});
-  await asyncOperationPgModel.delete(knex, {});
-  await filePgModel.delete(knex, {});
-  await granulePgModel.delete(knex, {});
-  await rulePgModel.delete(knex, {});
-  await collectionPgModel.delete(knex, {});
-  await providerPgModel.delete(knex, {});
-}
-
-/**
  * Removes all additional data from tables and repopulates with original data.
  *
  * @param {string} user - defaults to local user, testUser
@@ -379,14 +346,13 @@ async function resetTables(
 ) {
   if (inTestMode() || runIt) {
     const knex = await getKnexClient({ env: { ...localStackConnectionEnv, ...process.env } });
-    await erasePostgresTables(knex);
+    await serveUtils.erasePostgresTables(knex);
     await createDBRecords(stackName, user, knex);
   }
 }
 
 module.exports = {
   eraseDataStack,
-  erasePostgresTables,
   serveApi,
   serveDistributionApi,
   resetTables,
