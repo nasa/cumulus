@@ -37,7 +37,7 @@ const {
   waitForStartedExecution,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
-const { encodedConstructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,

@@ -42,7 +42,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { getExecution } = require('@cumulus/api-client/executions');
-const { encodedConstructCollectionId } = require('@cumulus/message/Collections');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const {
   createTestDataPath,
   createTestSuffix,

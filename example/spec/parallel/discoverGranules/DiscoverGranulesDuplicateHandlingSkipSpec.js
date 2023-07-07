@@ -9,7 +9,7 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
-const { encodedConstructCollectionId } = require('@cumulus/message/Collections');
+
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
@@ -24,6 +24,8 @@ const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
+
 
 describe('The DiscoverGranules workflow with one existing granule, one queued granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllError;
