@@ -26,7 +26,6 @@ const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
-
 describe('The DiscoverGranules workflow with one existing granule, one queued granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllError;
   let collection;
