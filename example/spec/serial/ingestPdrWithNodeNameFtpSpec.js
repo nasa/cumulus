@@ -205,7 +205,7 @@ describe('Ingesting from PDR', () => {
     let queuePdrsOutput;
 
     beforeAll(async () => {
-      try {
+      try { //is addedCollection undefined??
         workflowExecution = await buildAndExecuteWorkflow(
           config.stackName,
           config.bucket,
