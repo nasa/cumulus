@@ -27,7 +27,7 @@ function determineIntegrationTestStackName(cb) {
     'Jonathan Kovarik': 'jk',
     etcart: 'ecarton-ci',
     ecarton: 'ecarton-ci',
-    nasamoduyebo: 'mao1-ci',
+    nasamoduyebo: 'mao-ci',
     'Nate Pauzenga': 'np-ci',
     'Naga Nages': 'nnaga-ci',
     vpnguye2: 'vkn-ci',
