@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "orca-recovery-adapter Lambda Config",
+  "description": "The config for the orca-recovery-adapter Lambda.",
+  "type": "object",
+  "required": [
+    "buckets",
+    "fileBucketMaps"
+  ],
+  "properties": {
+    "buckets": {
+      "type": "object",
+      "description": "AWS S3 bucket mapping used for Cumulus and ORCA configuration.",
+      "patternProperties": {
+        "\\S*": {
+          "description": "bucket configuration for the key'd bucket",
+          "type": "object",
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "name of the S3 bucket"
+            },
+            "type": {
+              "type": "string",
+              "description": "the type of bucket - i.e. internal, public, private, protected"
+            }
+          }
+        }
+      }
+    },
+    "fileBucketMaps": {
+      "description": "A list of dictionaries that contains details of the configured storage bucket and file regex.",
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "regex": {
+              "description": "The regex that matches the file extension type",
+              "type": "string"
+            },
+            "sampleFileName": {
+              "description": "name of a sample file having extension.",
+              "type": "string"
+            },
+            "bucket": {
+              "description": "The name of the key that points to the correct S3 bucket. Examples include public, private, protected, etc",
+              "type": "string"
+            }
+          },
+          "required": [
+            "regex",
+            "bucket"
+          ]
+        }
+      ]
+    },
+    "excludedFileExtensions": {
+      "type": ["array", "null"],
+      "description": "A list of file extensions to ignore when copying files.",
+      "items": {
+        "type": "string",
+        "pattern": "\\..+"
+      }
+    },
+    "asyncOperationId": {
+      "description": "The unique identifier used for tracking requests. If not present, will be generated.",
+      "type": ["string", "null"]
+    },
+    "s3MultipartChunksizeMb": {
+      "description": "Overrides default_multipart_chunksize from TF.",
+      "type": ["number", "null"]
+    },
+    "defaultBucketOverride": {
+      "type": ["string", "null"],
+      "description": "Overrides the default bucket to copy to in os.environ['ORCA_DEFAULT_BUCKET']."
+    },
+    "defaultRecoveryTypeOverride": {
+      "type": ["string", "null"],
+      "description": "Overrides the default restore type in os.environ['DEFAULT_RECOVERY_TYPE']."
+    }
+  }
+}
