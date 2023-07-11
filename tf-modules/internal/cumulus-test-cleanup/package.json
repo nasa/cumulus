@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/cumulus-test-cleanup",
-  "version": "16.0.2-alpha.0",
+  "version": "16.0.0",
   "description": "Nightly cron job for cleaning up integration test artifacts",
   "main": "index.js",
   "engines": {
