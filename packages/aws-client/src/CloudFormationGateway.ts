@@ -23,7 +23,7 @@ class CloudFormationGateway {
             StackName,
           }).promise();
 
-          if (!stackDetails.Stacks) {
+          if (!stackDetais.Stacks) {
             throw new Error(`Could not fetch stack details of ${StackName}`);
           }
 

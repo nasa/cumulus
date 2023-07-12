@@ -15,6 +15,7 @@
     },
     "dependencies": {
         "@cumulus/aws-client": "15.0.0",
-        "logplease": "^1.2.15"
+        "logplease": "^1.2.15",
+        "ml-regression-polynomial": "^2.2.0"
     }
 }

@@ -1,9 +1,14 @@
 {
   "spec_dir": "spec",
   "spec_files": [
-    "*/*.js",
+    "*/*[sS]pec.js",
+    "setup/CleansUpTestResources.js"
+  ],
+  "helpers": [
+    "helpers/**/*.js"
   ],
   "stopOnSpecFailure": false,
   "stopSpecOnExpectationFailure": false,
   "random": false
 }
+
