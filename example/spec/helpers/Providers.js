@@ -162,7 +162,7 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
   const granuleResponse = await Promise.all(ids.map((id) => listGranules({
     prefix,
     query: {
-      fields: ['published', 'granuleId'],
+      fields: ['published', 'granuleId', 'collectionId'],
       'provider.keyword': id,
     },
   })));
