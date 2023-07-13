@@ -12,6 +12,7 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getGranule } = require('@cumulus/api-client/granules');
 
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
@@ -130,6 +131,7 @@ describe('The Queue Granules workflow', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          encodedConstructCollectionId(collection.name, collection.version),
           'queued'
         );
       })
@@ -170,6 +172,7 @@ describe('The Queue Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: granule.granuleId,
+              collectionId: encodedConstructCollectionId(collection.name, collection.version),
             },
             'queued'
           );

@@ -16,6 +16,7 @@ const { getExecution, deleteExecution } = require('@cumulus/api-client/execution
 const { getGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
@@ -139,6 +140,7 @@ describe('The DiscoverGranules workflow', () => {
         await waitForGranuleAndDelete(
           stackName,
           granule.granuleId,
+          encodedConstructCollectionId(collection.name, collection.version),
           'completed'
         );
       }
@@ -211,7 +213,7 @@ describe('The DiscoverGranules workflow', () => {
     else {
       const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
         getGranule,
-        { prefix: stackName, granuleId },
+        { prefix: stackName, granuleId, collectionId: encodedConstructCollectionId(collection.name, collection.version) },
         'completed'
       )));
       granules.forEach((g) => {

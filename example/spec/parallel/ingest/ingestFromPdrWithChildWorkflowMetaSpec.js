@@ -37,7 +37,7 @@ const {
   waitForStartedExecution,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
-
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
   createTestDataPath,
@@ -179,6 +179,7 @@ describe('The DiscoverAndQueuePdrsChildWorkflowMeta workflow', () => {
     await deleteGranule({
       prefix: config.stackName,
       granuleId: testDataGranuleId,
+      collectionId: encodedConstructCollectionId(addedCollections[0].name, addedCollections[0].version),
     });
     await waitAndDeletePdr(
       config.stackName,
