@@ -3,10 +3,15 @@
 const test = require('ava');
 const {
   s3PutObject,
+  getJsonS3Object,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { s3, sqs } = require('@cumulus/aws-client/services');
 const { createQueue } = require('@cumulus/aws-client/SQS');
+const {
+  getWorkflowFileKey,
+  templateKey,
+} = require('@cumulus/common/workflows');
 const { randomString, randomId, randomNumber } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const queue = require('../queue');
@@ -78,14 +83,24 @@ test.serial('the queue receives a correctly formatted workflow message without a
   let receiveMessageResponse;
 
   try {
+    const messageTemplate = await getJsonS3Object(
+      templateBucket,
+      templateKey(stackName)
+    );
+    const { arn: granuleIngestWorkflowArn } = await getJsonS3Object(
+      templateBucket,
+      getWorkflowFileKey(stackName, workflow)
+    );
     output = await queue.enqueueGranuleIngestMessage({
       granules: [granule],
       queueUrl,
-      granuleIngestWorkflow: workflow,
       provider,
       collection,
-      systemBucket: templateBucket,
-      stack: stackName,
+      messageTemplate,
+      workflow: {
+        name: workflow,
+        arn: granuleIngestWorkflowArn,
+      },
     });
     receiveMessageResponse = await sqs().receiveMessage({
       QueueUrl: queueUrl,
@@ -138,16 +153,26 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
   let receiveMessageResponse;
 
   try {
+    const messageTemplate = await getJsonS3Object(
+      templateBucket,
+      templateKey(stackName)
+    );
+    const { arn: granuleIngestWorkflowArn } = await getJsonS3Object(
+      templateBucket,
+      getWorkflowFileKey(stackName, workflow)
+    );
     output = await queue.enqueueGranuleIngestMessage({
       granules: [granule],
       queueUrl,
-      granuleIngestWorkflow: workflow,
       provider,
       collection,
       pdr,
       parentExecutionArn: arn,
-      systemBucket: templateBucket,
-      stack: stackName,
+      messageTemplate,
+      workflow: {
+        name: workflow,
+        arn: granuleIngestWorkflowArn,
+      },
     });
     receiveMessageResponse = await sqs().receiveMessage({
       QueueUrl: queueUrl,
@@ -210,14 +235,24 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
   let response;
 
   try {
+    const messageTemplate = await getJsonS3Object(
+      templateBucket,
+      templateKey(stackName)
+    );
+    const { arn: granuleIngestWorkflowArn } = await getJsonS3Object(
+      templateBucket,
+      getWorkflowFileKey(stackName, workflow)
+    );
     await queue.enqueueGranuleIngestMessage({
       granules: [granule],
       queueUrl,
-      granuleIngestWorkflow: workflow,
       provider,
       collection,
-      systemBucket: templateBucket,
-      stack: stackName,
+      messageTemplate,
+      workflow: {
+        name: workflow,
+        arn: granuleIngestWorkflowArn,
+      },
     });
     response = await sqs().receiveMessage({
       QueueUrl: queueUrl,
@@ -252,15 +287,24 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
   };
 
   const executionNamePrefix = randomId('prefix');
-
+  const messageTemplate = await getJsonS3Object(
+    templateBucket,
+    templateKey(stackName)
+  );
+  const { arn: granuleIngestWorkflowArn } = await getJsonS3Object(
+    templateBucket,
+    getWorkflowFileKey(stackName, workflow)
+  );
   await queue.enqueueGranuleIngestMessage({
     granules: [granule],
     queueUrl,
-    granuleIngestWorkflow: workflow,
     provider,
     collection,
-    systemBucket: templateBucket,
-    stack: stackName,
+    messageTemplate,
+    workflow: {
+      name: workflow,
+      arn: granuleIngestWorkflowArn,
+    },
     executionNamePrefix,
   });
 
@@ -380,15 +424,25 @@ test.serial('enqueueGranuleIngestMessage does not overwrite the collection or pr
   const provider = {
     id: 'prov1',
   };
-
+  const messageTemplate = await getJsonS3Object(
+    templateBucket,
+    templateKey(stackName)
+  );
+  const { arn: granuleIngestWorkflowArn } = await getJsonS3Object(
+    templateBucket,
+    getWorkflowFileKey(stackName, workflow)
+  );
   await queue.enqueueGranuleIngestMessage({
     collection,
     parentExecutionArn: randomId(),
     granuleIngestWorkflow: workflow,
     pdr: {},
     provider,
-    stack: stackName,
-    systemBucket: templateBucket,
+    messageTemplate,
+    workflow: {
+      name: workflow,
+      arn: granuleIngestWorkflowArn,
+    },
     queueUrl,
     additionalCustomMeta: {
       collection: {

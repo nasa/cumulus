@@ -1,0 +1,18 @@
+{
+  "extends": "../../nyc.config.js",
+  "include": [
+    "*.js",
+    "app",
+    "bin",
+    "endpoints",
+    "es",
+    "lambdas",
+    "lib",
+    "migrations",
+    "models"
+  ],
+  "statements": 90.0,
+  "functions": 88.0,
+  "branches": 81.0,
+  "lines": 90.0
+}

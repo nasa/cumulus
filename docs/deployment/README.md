@@ -92,7 +92,11 @@ Terraform v0.13.6
 
 ## Prepare Deployment Repository
 
- > _If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS Configuration.](#prepare-aws-configuration)_
+:::info existing configured repo
+
+ If you already are working with an existing repository that is configured appropriately for the version of Cumulus you intend to deploy or update, skip to [Prepare AWS Configuration.](#prepare-aws-configuration).
+
+:::
 
 Clone the [`cumulus-template-deploy`](https://github.com/nasa/cumulus-template-deploy) repo and name appropriately for your organization:
 
@@ -330,9 +334,17 @@ Fill in the appropriate values in `terraform.tfvars`. See the [`data-persistence
 
 Consider [the size of your Elasticsearch cluster](#elasticsearch) when configuring `data-persistence`.
 
-**Reminder:** _Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus Dashboard will not work without Elasticsearch._
+:::tip
 
-**Reminder:** _If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already._
+Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus Dashboard will not work without Elasticsearch.
+
+:::
+
+:::note reminder
+
+If you are including `subnet_ids` in your `terraform.tfvars`, Elasticsearch will need a service-linked role to deploy successfully. Follow the [instructions above](#elasticsearch-in-a-vpc) to create the service-linked role if you haven't already.
+
+:::
 
 #### Initialize Terraform
 
@@ -506,7 +518,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 ### Dashboard Requirements
 
-:::note
+:::info what you will need
 
 The requirements are similar to the [Cumulus stack deployment requirements](#requirements). The installation instructions below include a step that will install/use the required node version referenced in the `.nvmrc` file in the Dashboard repository.
 
@@ -585,7 +597,7 @@ Deploy your dashboard to S3 bucket from the `cumulus-dashboard` directory:
 Using AWS CLI:
 
 ```bash
-  aws s3 sync dist s3://<prefix>-dashboard --acl public-read
+  aws s3 sync dist s3://<prefix>-dashboard
 ```
 
 From the S3 Console:
@@ -601,7 +613,11 @@ You should be able to visit the Dashboard website at `http://<prefix>-dashboard.
 
 The Cumulus deployment default sizing for Elasticsearch instances, EC2 instances, and Autoscaling Groups are small and designed for testing and cost savings. The default settings are likely not suitable for production workloads. Sizing is highly individual and dependent on expected load and archive size.
 
-> Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
+:::tip aws cost calculator
+
+Please be cognizant of costs as any change in size will affect your AWS bill. AWS provides a [pricing calculator](https://calculator.aws/#/) for estimating costs.
+
+:::
 
 ### Elasticsearch
 
@@ -613,7 +629,11 @@ In addition to size you'll want to consider the [number of nodes](https://docs.a
 
 Configuration can be done in the [data persistence module](https://github.com/nasa/cumulus/blob/master/tf-modules/data-persistence/variables.tf#L16) in `elasticsearch_config` and the [cumulus module](https://github.com/nasa/cumulus/blob/master/tf-modules/cumulus/variables.tf#L541) in `es_index_shards`.
 
-> If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
+:::caution reindex after changes
+
+If you make changes to your Elasticsearch configuration you will need to [reindex](../troubleshooting/reindex-elasticsearch) for those changes to take effect.
+
+:::
 
 ### EC2 Instances and Autoscaling Groups
 

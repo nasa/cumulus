@@ -22,6 +22,49 @@ Notable migration concerns since the last PI release version (11.1.x):
   `files` table may require manual steps depending on load.
 
 #### RDS Phase 3 migration notes
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+
+### Changed
+
+- Security upgrade node from 14.19.3-buster to 14.21.1-buster
+- **CUMULUS-2985**
+  - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
+  - Changed the `invokeRerun` function to only re-run enabled rules
+- **CUMULUS-3252**
+  - Updated example/cumulus-tf/orca.tf to use orca v8.0.1
+  - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
+  - Updated `tf-modules/cumulus` module to take variable `orca_lambda_copy_to_archive_arn` and pass to `tf-modules/ingest`
+  - Updated `example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf` `CopyToGlacier` (renamed to `CopyToArchive`) step to call
+    `orca_copy_to_archive_adapter_task`
+- **CUMULUS-3253**
+  - Added cumulus task `@cumulus/orca-recovery-adapter`, and add the task to `tf-modules/ingest`
+  - Updated `tf-modules/cumulus` module to take variable `orca_sfn_recovery_workflow_arn` and pass to `tf-modules/ingest`
+  - Added `example/cumulus-tf/orca_recovery_adapter_workflow.tf`, `OrcaRecoveryAdapterWorkflow` workflow has `OrcaRecoveryAdapter` task
+    to call the ORCA recovery step-function.
+  - Updated `example/data/collections/` collection configuration `meta.granuleRecoveryWorkflow` to use `OrcaRecoveryAdapterWorkflow`
+- **CUMULUS-3315**
+  - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
+    parameter in favor of `granules` parameter, in the form of a
+    `@cumulus/types/ApiGranule` that requires the following keys: `[granuleId, collectionId]`
+
+### Fixed
+
+- **CUMULUS-3315**
+  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
+    instead of NPM `parallel` package, as timeouts were not resulting in
+    integration test failure
+- **CUMULUS-2625**
+  - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
+
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+
+### MIGRATION notes
+
+#### RDS Phase 3
 
 This release includes updates that remove existing DynamoDB tables as part of
 release deployment process.   This release *cannot* be properly rolled back in
@@ -54,8 +97,8 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 ```
 
 Users/clients that do not make use of these endpoints will not be impacted.
-
 ### RDS Phase 3
+
 #### Breaking Changes
 
 - **CUMULUS-2688**
@@ -123,6 +166,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
+  - **CUMULUS-3299**
+    - Docs: Update and fix links that reference the docs after Docusaurus upgrade
 
 #### Added
 
@@ -182,8 +227,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed `granuleFilesCacheUpdater` lambda
   - Removed dynamo files table from `data-persistence` module.  *This table and
     all of its data will be removed on deployment*.
+- **CUMULUS-3290**
+  - Removed Dynamo references from local API serve.js script
+  - Updated .python-version to include patch version
 
 ### Added
+
 - **CUMULUS-3072**
   - Added `replaceGranule` to `@cumulus/api-client/granules` to add usage of the
     updated RESTful PUT logic
@@ -212,6 +261,78 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+- **CUMULUS-3215**
+  - Create reconciliation reports will properly throw errors and set the async
+    operation status correctly to failed if there is an error.
+  - Knex calls relating to reconciliation reports will retry if there is a
+    connection terminated unexpectedly error
+  - Improved logging for async operation
+  - Set default async_operation_image_version to 47
+- **CUMULUS-3024**
+  - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
+    `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
+- **CUMULUS-3209**
+  - Apply brand color with high contrast settings for both (light and dark) themes.
+  - Cumulus logo can be seen when scrolling down.
+  - "Back to Top" button matches the brand color for both themes.
+  - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
+  - Add updated arch diagram for both themes.
+- **CUMULUS-3203**
+  - Removed ACL setting of private on S3.multipartCopyObject() call
+  - Removed ACL setting of private for s3PutObject()
+  - Removed ACL confguration on sync-granules task
+  - Update documentation on dashboard deployment to exclude ACL public-read setting
+- **CUMULUS-3245**
+  - Update SQS consumer logic to catch ExecutionAlreadyExists error and
+    delete SQS message accordingly.
+  - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+
+### Fixed
+
+- **CUMULUS-3223**
+  - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
+  - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
+    and only reprocess messages when cumulus message can't be retrieved from the execution events.
+  - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
+
+### Removed
+
+- **CUMULUS-3204**
+  - Removed fetchAllRules from @cumulus/api/lib/rulesHelpers.
+  - Removed deleteOldEventSourceMappings from @cumulus/api/lib/rulesHelpers and
+    refactored endpoint logic to use `deleteKinesisEventSources` instead.
+
+## [v15.0.3] 2023-04-28
+
+### Fixed
+
+- **CUMULUS-3243**
+  - Updated granule delete logic to delete granule which is not in DynamoDB
+  - Updated granule unpublish logic to handle granule which is not in DynamoDB and/or CMR
+
+## [v15.0.2] 2023-04-25
+
+### Fixed
+
+- **CUMULUS-3120**
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods`
+  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
+  - Updated cloudwatch retention documentation to reflect the bugfix changes
+
+## [v15.0.1] 2023-04-20
+
+### Changed
+
+- **CUMULUS-3279**
+  - Updated core dependencies on `xml2js` to `v0.5.0`
+  - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
+    `v0.5.0`
+  - Added audit-ci CVE override until July 1 to allow for Core package releases
+
+## Fixed
+
+- **CUMULUS-3285**
+  - Updated `api/lib/distribution.js isAuthBearTokenRequest` to handle non-Bearer authorization header
 
 ### Fixed
 

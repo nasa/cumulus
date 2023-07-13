@@ -15,7 +15,6 @@
     "build": "../../node_modules/.bin/webpack",
     "clean": "rm -rf dist",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip $(ls | grep -v lambda.zip))",
-    "test:coverage": "../../node_modules/.bin/nyc true",
     "watch": "../../node_modules/.bin/webpack --progress -w"
   },
   "author": "Cumulus Authors",

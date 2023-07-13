@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable node/shebang */
 
 'use strict';
 
@@ -6,7 +7,7 @@ const program = require('commander');
 const pckg = require('../package.json');
 const backup = require('./backup');
 const restore = require('./restore');
-const { serveApi, serveDistributionApi, resetTables } = require('./serve');
+const { serveApi, serveDistributionApi } = require('./serve');
 
 program.version(pckg.version);
 
@@ -64,18 +65,6 @@ program
   .description('Serves the local version of the distribution API')
   .action(() => {
     serveDistributionApi(process.env.stackName).catch(console.error);
-  });
-
-program
-  .command('reset-tables')
-  .option('--username <username>', 'username [default: process.env.USERNAME]', process.env.USERNAME)
-  .option('--stack-name <stackName>', 'Name of stack', 'localrun')
-  .option('--system-bucket <systemBucket>', 'Name of systemBucket', 'localbucket')
-  .option('--run-it', 'Override check for TestMode and run commands.')
-  .description('Resets dynamodb tables for testing')
-  .action((cmd) => {
-    resetTables(cmd.username, cmd.stackName, cmd.systemBucket, cmd.runIt)
-      .catch(console.error);
   });
 
 program

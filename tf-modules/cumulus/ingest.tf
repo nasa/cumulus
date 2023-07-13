@@ -47,6 +47,10 @@ module "ingest" {
   lzards_provider              = var.lzards_provider
   lzards_s3_link_timeout       = var.lzards_s3_link_timeout
 
+  # ORCA config
+  orca_lambda_copy_to_archive_arn = var.orca_lambda_copy_to_archive_arn
+  orca_sfn_recovery_workflow_arn  = var.orca_sfn_recovery_workflow_arn
+
   # DB config
   dynamo_tables = var.dynamo_tables
 
