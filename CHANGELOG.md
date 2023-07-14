@@ -27,17 +27,34 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `example/cumulus-tf/orca_recovery_adapter_workflow.tf`, `OrcaRecoveryAdapterWorkflow` workflow has `OrcaRecoveryAdapter` task
     to call the ORCA recovery step-function.
   - Updated `example/data/collections/` collection configuration `meta.granuleRecoveryWorkflow` to use `OrcaRecoveryAdapterWorkflow`
-- **CUMULUS-3315**
-  - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
-    parameter in favor of `granules` parameter, in the form of a
-    `@cumulus/types/ApiGranule` that requires the following keys: `[granuleId, collectionId]`
+- **CUMULUS-3215**
+  - Create reconciliation reports will properly throw errors and set the async
+    operation status correctly to failed if there is an error.
+  - Knex calls relating to reconciliation reports will retry if there is a
+    connection terminated unexpectedly error
+  - Improved logging for async operation
+  - Set default async_operation_image_version to 47
+- **CUMULUS-3024**
+  - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
+    `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
+- **CUMULUS-3209**
+  - Apply brand color with high contrast settings for both (light and dark) themes.
+  - Cumulus logo can be seen when scrolling down.
+  - "Back to Top" button matches the brand color for both themes.
+  - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
+  - Add updated arch diagram for both themes.
+- **CUMULUS-3203**
+  - Removed ACL setting of private on S3.multipartCopyObject() call
+  - Removed ACL setting of private for s3PutObject()
+  - Removed ACL confguration on sync-granules task
+  - Update documentation on dashboard deployment to exclude ACL public-read setting
+- **CUMULUS-3245**
+  - Update SQS consumer logic to catch ExecutionAlreadyExists error and
+    delete SQS message accordingly.
+  - Add ReportBatchItemFailures to event source mapping start_sf_mapping
 
 ### Fixed
 
-- **CUMULUS-3315**
-  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
-    instead of NPM `parallel` package, as timeouts were not resulting in
-    integration test failure
 - **CUMULUS-2625**
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
 
