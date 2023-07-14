@@ -81,7 +81,7 @@ States cloudwatch event, which is wrapped in an SQS message.</p>
 <dt><a href="#exp_module_PDRs--getPdrPercentCompletion">getPdrPercentCompletion(stats)</a> ⇒ <code>number</code> ⏏</dt>
 <dd><p>Get the percent completion of PDR executions</p>
 </dd>
-<dt><a href="#exp_module_Executions--generatePdrApiRecordFromMessage">generatePdrApiRecordFromMessage(message, [updatedAt])</a> ⇒ <code>ExecutionRecord</code> ⏏</dt>
+<dt><a href="#exp_module_Executions--generatePdrApiRecordFromMessage">generatePdrApiRecordFromMessage(message, [updatedAt])</a> ⇒ <code>ApiPdr</code> ⏏</dt>
 <dd><p>Generate a PDR record for the API from the message.</p>
 </dd>
 <dt><a href="#exp_module_Providers--getMessageProvider">getMessageProvider(message)</a> ⇒ <code>MessageProvider</code> | <code>string</code> ⏏</dt>
@@ -192,9 +192,9 @@ const Executions = require('@cumulus/message/Executions');
     * [getMessageCumulusVersion(message)](#exp_module_Executions--getMessageCumulusVersion) ⇒ <code>undefined</code> \| <code>string</code> ⏏
     * [getMessageExecutionOriginalPayload(message)](#exp_module_Executions--getMessageExecutionOriginalPayload) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
     * [getMessageExecutionFinalPayload(message)](#exp_module_Executions--getMessageExecutionFinalPayload) ⇒ <code>unknown</code> \| <code>undefined</code> ⏏
-    * [generateExecutionApiRecordFromMessage(message, [updatedAt])](#exp_module_Executions--generateExecutionApiRecordFromMessage) ⇒ <code>ExecutionRecord</code> ⏏
+    * [generateExecutionApiRecordFromMessage(message, [updatedAt])](#exp_module_Executions--generateExecutionApiRecordFromMessage) ⇒ <code>ApiExecution</code> ⏏
     * _global_
-        * [generatePdrApiRecordFromMessage(message, [updatedAt])](#exp_module_Executions--generatePdrApiRecordFromMessage) ⇒ <code>ExecutionRecord</code> ⏏
+        * [generatePdrApiRecordFromMessage(message, [updatedAt])](#exp_module_Executions--generatePdrApiRecordFromMessage) ⇒ <code>ApiPdr</code> ⏏
 
 <a name="exp_module_Executions--buildExecutionArn"></a>
 
@@ -327,11 +327,11 @@ Get the workflow final payload, if any.
 
 <a name="exp_module_Executions--generateExecutionApiRecordFromMessage"></a>
 
-#### generateExecutionApiRecordFromMessage(message, [updatedAt]) ⇒ <code>ExecutionRecord</code> ⏏
+#### generateExecutionApiRecordFromMessage(message, [updatedAt]) ⇒ <code>ApiExecution</code> ⏏
 Generate an execution record for the API from the message.
 
 **Kind**: Exported function  
-**Returns**: <code>ExecutionRecord</code> - An execution API record  
+**Returns**: <code>ApiExecution</code> - An execution API record  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -340,11 +340,11 @@ Generate an execution record for the API from the message.
 
 <a name="exp_module_Executions--generatePdrApiRecordFromMessage"></a>
 
-#### generatePdrApiRecordFromMessage(message, [updatedAt]) ⇒ <code>ExecutionRecord</code> ⏏
+#### generatePdrApiRecordFromMessage(message, [updatedAt]) ⇒ <code>ApiPdr</code> ⏏
 Generate a PDR record for the API from the message.
 
 **Kind**: global method of [<code>Executions</code>](#module_Executions)  
-**Returns**: <code>ExecutionRecord</code> - An PDR API record  
+**Returns**: <code>ApiPdr</code> - An PDR API record  
 
 | Param | Type | Description |
 | --- | --- | --- |
