@@ -32,6 +32,7 @@ const {
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForTestSfForRecord } = require('../../helpers/kinesisHelpers');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const {
   loadConfig,
@@ -72,7 +73,9 @@ async function cleanUp() {
   const rules = await readJsonFilesFromDir(ruleDirectory);
   await deleteRules(config.stackName, config.bucket, rules, ruleSuffix);
   await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
-  await removePublishedGranule({ prefix: config.stackName, granuleId });
+  await removePublishedGranule({ prefix: config.stackName,
+    granuleId,
+    collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
@@ -233,6 +236,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
             {
               prefix: config.stackName,
               granuleId,
+              collectionId: encodedConstructCollectionId(record.collection, record.product.dataVersion),
             },
             'completed'
           );
