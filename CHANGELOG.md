@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
+- **CUMULUS-3245**
+  - Updated Terraform AWS provider to ~>5.0.0
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
@@ -62,6 +64,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - The async_operation_image property of cumulus module should be updated to pull
   the ECR image for cumuluss/async-operation:47
+- **CUMULUS-3258**
+- Updated all terraform AWS providers to ~> 5.0.0
 
 ## [v16.0.0] 2023-05-09
 
