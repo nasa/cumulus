@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-workflow",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "description": "Add workflow to the queue",
   "main": "index.js",
   "directories": {
@@ -23,7 +23,8 @@
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w"
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "timeout": "15m"
@@ -31,11 +32,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/common": "15.0.0",
+    "@cumulus/aws-client": "16.0.0",
+    "@cumulus/common": "16.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/ingest": "15.0.0",
-    "@cumulus/message": "15.0.0",
+    "@cumulus/ingest": "16.0.0",
+    "@cumulus/message": "16.0.0",
     "lodash": "^4.17.21"
   }
 }

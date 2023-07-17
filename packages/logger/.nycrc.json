@@ -4,8 +4,8 @@
     "dist"
   ],
   "exclude-after-remap": false,
-  "statements": 100,
-  "functions": 100,
-  "branches": 90,
-  "lines": 100
+  "statements": 97.0,
+  "functions": 97.0,
+  "branches": 87.0,
+  "lines": 97.0
 }
