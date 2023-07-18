@@ -103,7 +103,7 @@ In addition to the above requirements, we suggest users:
 
 ### Deploy cumulus-tf module
 
-  Ensure your source for the data-persistence module is set to the release version (substituting v16.0.0 for the latest v16 release):
+  Ensure your source for the cumulus-tf module is set to the release version (substituting v16.0.0 for the latest v16 release):
 
   ```tf
   source = "https://github.com/nasa/cumulus/releases/download/v16.0.0/terraform-aws-cumulus.zip//tf-modules/cumulus"
