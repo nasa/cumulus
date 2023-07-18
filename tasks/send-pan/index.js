@@ -7,7 +7,7 @@ const path = require('path');
 const { buildUploaderClient } = require('./uploader');
 
 /**
- * Return Input payload
+ * Send PAN and return the input payload
  *
  * @param {object} event - input from the message adapter
  * @returns {object} sample JSON object
@@ -39,6 +39,7 @@ async function sendPAN(event) {
 
   return event;
 }
+
 /**
  * Lambda handler
  *

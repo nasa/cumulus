@@ -1,7 +1,4 @@
-const FtpProviderClient = require('@cumulus/ingest/FtpProviderClient');
 const HttpProviderClient = require('@cumulus/ingest/HttpProviderClient');
-const S3ProviderClient = require('@cumulus/ingest/S3ProviderClient');
-const SftpProviderClient = require('@cumulus/ingest/SftpProviderClient');
 const log = require('@cumulus/common/log');
 const { buildURL } = require('@cumulus/common/URLUtils');
 const { promisify } = require('util');
