@@ -14,7 +14,6 @@ const {
 } = require('@cumulus/api-client/granules');
 
 const { randomId } = require('@cumulus/common/test-utils');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
@@ -24,6 +23,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -79,7 +79,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       const ingestTime = Date.now() - 1000 * 30;
 
       // Ingest granule the first time
-      collectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = encodedConstructCollectionId(collection.name, collection.version);
       ingestGranuleRule1 = await createOneTimeRule(
         prefix,
         {
@@ -128,7 +128,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       });
 
       // Wait for the granule to be fully ingested
-      await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
+      await getGranuleWithStatus({ prefix, granuleId, collectionId, status: 'completed' });
 
       // Create a new collection
       newCollection = await createCollection(
@@ -151,7 +151,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
             granules: [
               {
                 granuleId,
-                collectionId: constructCollectionId(newCollection.name, newCollection.version),
+                collectionId: encodedConstructCollectionId(newCollection.name, newCollection.version),
                 version: collection.version,
                 files: [
                   {
@@ -200,6 +200,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       const reingestedGranule = await getGranule({
         prefix,
         granuleId,
+        collectionId,
       });
       // Make sure that the collectionId is unmodified
       expect(reingestedGranule.collectionId).toBe(collectionId);
@@ -216,7 +217,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteGranule({ prefix, granuleId });
+    await deleteGranule({ prefix, granuleId, collectionId });
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }),
