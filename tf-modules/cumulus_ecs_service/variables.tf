@@ -104,10 +104,10 @@ variable "health_check" {
   description = "Health check used by AWS ECS to determine containers health status. See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#container_definition_healthcheck"
   type = object({
     command     = list(string)
-    interval    = optional(number)
-    timeout     = optional(number)
-    retries     = optional(number)
-    startPeriod = optional(number)
+    interval    = number
+    timeout     = number
+    retries     = number
+    startPeriod = number
   })
   default = null
 }
