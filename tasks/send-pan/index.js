@@ -1,10 +1,23 @@
 'use strict';
 
-const { generatePAN } = require('@cumulus/api/lib/pdrHelpers');
-const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const fs = require('fs');
 const path = require('path');
-const { buildUploaderClient } = require('./uploader');
+const { generatePAN } = require('@cumulus/api/lib/pdrHelpers');
+const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
+const HttpProviderClient = require('@cumulus/ingest/HttpProviderClient');
+const S3ProviderClient = require('@cumulus/ingest/S3ProviderClient');
+
+const buildUploaderClient = (providerConfig = {}) => {
+  switch (providerConfig.protocol) {
+  case 'http':
+  case 'https':
+    return new HttpProviderClient(providerConfig);
+  case 's3':
+    return new S3ProviderClient({ bucket: providerConfig.host });
+  default:
+    throw new Error(`Protocol ${providerConfig.protocol} is not supported.`);
+  }
+};
 
 /**
  * Send PAN and return the input payload
@@ -22,21 +35,12 @@ async function sendPAN(event) {
   const pan = generatePAN();
 
   const localPath = `/tmp/${panName}`;
-  fs.writeFile(localPath, pan, (err) => {
-    if (err) {
-      throw new Error(`Unable to write file ${localPath}: ${err.message}`);
-    }
-  });
+  fs.writeFileSync(localPath, pan);
 
   const providerClient = buildUploaderClient(provider);
   await providerClient.upload({ localPath, uploadPath });
 
-  fs.unlink(localPath, (err) => {
-    if (err) {
-      throw new Error(`Unable to unlink file ${localPath}: ${err.message}.`);
-    }
-  });
-
+  fs.unlinkSync(localPath);
   return event;
 }
 

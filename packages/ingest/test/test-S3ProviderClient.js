@@ -161,3 +161,18 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
     }
   );
 });
+
+test.serial('S3ProviderClient.upload uploads a file', async (t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
+  const localPath = '/tmp/tmp.txt';
+  t.teardown(() => fs.unlinkSync(localPath));
+  const uploadPath = 'destinationPath/destinationfile.txt';
+
+  fs.writeFileSync(localPath, t.context.fileContent);
+  await s3ProviderClient.upload({ localPath, uploadPath });
+
+  t.is(
+    await S3.getTextObject(t.context.sourceBucket, uploadPath),
+    t.context.fileContent
+  );
+});

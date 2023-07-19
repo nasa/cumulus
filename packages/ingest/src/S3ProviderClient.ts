@@ -15,7 +15,7 @@ class S3ProviderClient implements ProviderClient {
   /**
    * Download a remote file to disk
    *
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.remotePath - the full path to the remote file to be fetched
    * @param {string} params.localPath - the full local destination file path
    * @param {string} params.remoteAltBucket - alternate per-file bucket override to this.bucket
@@ -79,8 +79,8 @@ class S3ProviderClient implements ProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {Object} params - the full path to the remote file to be fetched
-   * @param {string} params.sourceKey - the full path to the remote file to be fetched
+   * @param {object} params - the full path to the remote file to be fetched
+   * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
    * @param {string} params.bucket - destination s3 bucket of the file
    * @param {string} params.destinationBucket - destination s3 bucket of the file
    * @param {string} params.destinationKey - destination s3 key of the file
@@ -143,6 +143,32 @@ class S3ProviderClient implements ProviderClient {
 
       throw error;
     }
+  }
+
+  /**
+   * Upload a file
+   *
+   * @param {object} params
+   * @param {string} params.localPath - the full local file path
+   * @param {string} params.uploadPath - the full remote file path for uploading file to
+   * @param {string} params.remoteAltBucket - alternate per-file bucket override to this.bucket
+   * @returns {Promise}
+   */
+  async upload(params: {
+    localPath: string,
+    uploadPath: string,
+    remoteAltBucket?: string,
+  }) {
+    const { localPath, uploadPath, remoteAltBucket } = params;
+    log.info(params);
+    const remoteBucket = remoteAltBucket || this.bucket;
+    await S3.putFile(
+      remoteBucket,
+      uploadPath,
+      localPath
+    );
+log.info('here', await S3.getTextObject(remoteBucket, uploadPath));
+    log.info(`Finishing uploading ${localPath} to ${remoteBucket}/${uploadPath}`);
   }
 
   /* eslint-disable @typescript-eslint/no-empty-function */
