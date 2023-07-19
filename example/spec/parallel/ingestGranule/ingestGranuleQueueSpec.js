@@ -10,7 +10,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
   getOnlineResources,
@@ -29,6 +28,7 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -70,6 +70,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
   let beforeAllError = false;
   let collection;
+  let collectionId;
   let config;
   let expectedPayload;
   let expectedS3TagSet;
@@ -90,9 +91,8 @@ describe('The S3 Ingest Granules workflow', () => {
       testDataFolder = createTestDataPath(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      const newCollectionId = constructCollectionId(collection.name, collection.version);
+      const newCollectionId = encodedConstructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
-
       process.env.system_bucket = config.bucket;
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
@@ -190,6 +190,8 @@ describe('The S3 Ingest Granules workflow', () => {
       // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
       setDistributionApiEnvVars();
 
+      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+
       console.log('Start SuccessExecution');
       workflowExecutionArn = await buildAndStartWorkflow(
         config.stackName,
@@ -214,6 +216,7 @@ describe('The S3 Ingest Granules workflow', () => {
     await removePublishedGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId,
     });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
@@ -273,6 +276,8 @@ describe('The S3 Ingest Granules workflow', () => {
       {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId,
+
       },
       'completed'
     );
@@ -280,6 +285,8 @@ describe('The S3 Ingest Granules workflow', () => {
     const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId,
+
     });
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect((granule.status === 'running') || (granule.status === 'completed')).toBeTrue();

@@ -24,7 +24,6 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { randomId } = require('@cumulus/common/test-utils');
 const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   addCollections,
   conceptExists,
@@ -56,6 +55,7 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 const { getPdr } = require('@cumulus/api-client/pdrs');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -141,7 +141,7 @@ describe('The S3 Ingest Granules workflow', () => {
       testDataFolder = createTestDataPath(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      collectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = encodedConstructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
       process.env.system_bucket = config.bucket;
@@ -237,6 +237,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
       setDistributionApiEnvVars();
+      collectionId = encodedConstructCollectionId(collection.name, collection.version);
 
       console.log('Start SuccessExecution');
       workflowExecutionArn = await buildAndStartWorkflow(
@@ -265,11 +266,12 @@ describe('The S3 Ingest Granules workflow', () => {
         await removePublishedGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
         });
       } catch (error) {
         if (error.statusCode !== 404 &&
-            // remove from CMR throws a 400 when granule is missing
-            (error.statusCode !== 400 && !error.apiMessage.includes('No record found'))) {
+          // remove from CMR throws a 400 when granule is missing
+          (error.statusCode !== 400 && !error.apiMessage.includes('No record found'))) {
           throw error;
         }
       }
@@ -354,6 +356,8 @@ describe('The S3 Ingest Granules workflow', () => {
       {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId,
+
       },
       ['running', 'completed']
     );
@@ -361,6 +365,8 @@ describe('The S3 Ingest Granules workflow', () => {
     const granule = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId,
+
     });
 
     expect(granule.granuleId).toEqual(inputPayload.granules[0].granuleId);
@@ -437,7 +443,7 @@ describe('The S3 Ingest Granules workflow', () => {
     it('adds LZARDS backup output', () => {
       const dataType = lambdaOutput.meta.input_granules[0].dataType;
       const version = lambdaOutput.meta.input_granules[0].version;
-      const expectedCollectionId = constructCollectionId(dataType, version);
+      const expectedCollectionId = encodedConstructCollectionId(dataType, version);
       expect(true, lambdaOutput.meta.backupStatus.every((file) => file.status === 'COMPLETED'));
       expect(lambdaOutput.meta.backupStatus[0].provider).toBe(provider.id);
       expect(lambdaOutput.meta.backupStatus[0].createdAt).toBe(lambdaOutput.meta.input_granules[0].createdAt);
@@ -506,6 +512,8 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+          collectionId,
+
         },
         ['completed']
       );
@@ -513,6 +521,8 @@ describe('The S3 Ingest Granules workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId: lambdaOutput.meta.input_granules[0].granuleId,
+        collectionId,
+
       });
 
       expect(granule.granuleId).toEqual(lambdaOutput.meta.input_granules[0].granuleId);
@@ -692,7 +702,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const scienceFileUrls = resourceURLs
         .filter((url) =>
           (url.startsWith(process.env.DISTRIBUTION_ENDPOINT) ||
-          url.match(/s3\.amazonaws\.com/)) &&
+            url.match(/s3\.amazonaws\.com/)) &&
           !url.endsWith('.cmr.xml') &&
           !url.includes('s3credentials'));
 
@@ -751,6 +761,8 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
+
         },
         'completed'
       );
@@ -864,6 +876,8 @@ describe('The S3 Ingest Granules workflow', () => {
           granule = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId,
+
           });
           cmrLink = granule.cmrLink;
         } catch (error) {
@@ -1014,6 +1028,8 @@ describe('The S3 Ingest Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: reingestGranuleId,
+              collectionId,
+
             },
             'completed'
           );
@@ -1021,6 +1037,8 @@ describe('The S3 Ingest Granules workflow', () => {
           const updatedGranule = await getGranule({
             prefix: config.stackName,
             granuleId: reingestGranuleId,
+            collectionId,
+
           });
 
           expect(updatedGranule.status).toEqual('completed');
@@ -1063,6 +1081,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await removeFromCMR({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
         });
 
         // Check that the granule was removed
@@ -1081,6 +1100,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
           workflow: 'PublishGranule',
         });
 
@@ -1116,6 +1136,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await applyWorkflow({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
           workflow: 'UpdateCmrAccessConstraints',
           meta: {
             accessConstraints,
@@ -1141,6 +1162,8 @@ describe('The S3 Ingest Granules workflow', () => {
           {
             prefix: config.stackName,
             granuleId: granule.granuleId,
+            collectionId,
+
           },
           'completed'
         );
@@ -1148,6 +1171,8 @@ describe('The S3 Ingest Granules workflow', () => {
         const updatedGranuleRecord = await getGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
+
         });
         const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCMRFile);
 
@@ -1204,6 +1229,8 @@ describe('The S3 Ingest Granules workflow', () => {
           const granRecord = await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId,
+
           });
 
           console.log('Granule Record*****:', granRecord);
@@ -1213,6 +1240,7 @@ describe('The S3 Ingest Granules workflow', () => {
             await moveGranule({
               prefix: config.stackName,
               granuleId: inputPayload.granules[0].granuleId,
+              collectionId,
               destinations,
             });
           } catch (error) {
@@ -1237,6 +1265,7 @@ describe('The S3 Ingest Granules workflow', () => {
           const moveGranuleResponse = await moveGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId,
             destinations,
           });
 
@@ -1252,6 +1281,7 @@ describe('The S3 Ingest Granules workflow', () => {
         await removePublishedGranule({
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
         });
 
         // Verify deletion
@@ -1260,6 +1290,8 @@ describe('The S3 Ingest Granules workflow', () => {
           await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
+            collectionId,
+
           });
         } catch (error) {
           granuleResponseError = error;
