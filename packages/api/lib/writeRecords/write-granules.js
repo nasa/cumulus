@@ -67,6 +67,7 @@ const { translatePostgresGranuleToApiGranule } = require('@cumulus/db/dist/trans
 
 const {
   CumulusMessageError,
+  GranuleFileWriteError,
 } = require('@cumulus/errors');
 
 const FileUtils = require('../FileUtils');
@@ -419,7 +420,7 @@ const updateGranuleStatusToFailed = async (params) => {
  * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
  * @param {ApiGranule} params.granule - Granule from the payload
  * @param {Knex} params.knex - Client to interact with PostgreSQL database
- * @returns {Promise<void>}
+ * @returns {Promise<ReturnType<GranuleFileWriteError> | undefined>}
  */
 const _writeGranuleFiles = async ({
   granuleCumulusId,
@@ -468,6 +469,35 @@ const _writeGranuleFiles = async ({
       knex,
       error: errorsObject,
     });
+    const returnError = new GranuleFileWriteError(JSON.stringify(errorObject));
+    return returnError;
+  }
+  return undefined;
+};
+
+/**
+ * Wrapper _writeGranuleFiles for Generate file records based on workflow status, write files to
+ * the database, and update granule status if file writes fail
+ *
+ * @param {Object} params
+ * @param {number} params.granuleCumulusId - Cumulus ID of the granule for this file
+ * @param {ApiGranule} params.granule - Granule from the payload
+ * @param {Knex} params.knex - Client to interact with PostgreSQL database
+ * @throws {GranuleFileWriteError}
+ * @returns {Promise<void>}
+ */
+const _writeGranuleFilesAndThrowIfExpectedWriteError = async ({
+  granuleCumulusId,
+  granule,
+  knex,
+}) => {
+  const fileWriteError = await _writeGranuleFiles({
+    granuleCumulusId,
+    granule,
+    knex,
+  });
+  if (fileWriteError) {
+    throw fileWriteError;
   }
 };
 
@@ -610,13 +640,15 @@ const _writeGranuleRecords = async (params) => {
 /**
  * Write a granule record to PostgreSQL and publish SNS topic updates
  *
- * @param {Object}            params - params object
- * @param {Knex}              params.knex - Knex object
- * @param {string}            params.snsEventType - SNS Event Type
- * @param {boolean}           params.writeConstraints - Boolean flag to set if createdAt/execution
- *                                                      write constraints should restrict write
- *                                                      behavior in the database via
- *                                                      upsertGranuleWithExecutionJoinRecord
+ * @param {Object}                    params - params object
+ * @param {typeof _writeGranuleFiles} params.writeGranuleFilesMethod - Internal method to use to
+ *                                                                     write granule files
+ * @param {Knex}                      params.knex - Knex object
+ * @param {string}                    params.snsEventType - SNS Event Type
+ * @param {boolean}                   params.writeConstraints - Boolean flag to set if
+ *                                       createdAt/execution write constraints should restrict write
+ *                                       behavior in the database via
+ *                                       upsertGranuleWithExecutionJoinRecord
  * @param {PostgresGranuleRecord} params.postgresGranuleRecord - PostgreSQL granule record to write
  *                                                               to the database
  * @param {ApiGranuleRecord}  params.apiGranuleRecord - Api Granule object to write to the database
@@ -634,6 +666,7 @@ const _writeGranule = async ({
   knex,
   snsEventType,
   writeConstraints = true,
+  writeGranuleFilesMethod = _writeGranuleFiles,
 }) => {
   const { status } = apiGranuleRecord;
   const writePgGranuleResult = await _writeGranuleRecords({
@@ -653,7 +686,7 @@ const _writeGranule = async ({
     // An empty array of files will remove existing file records but a missing
     // `files` key will not.
     if ((writeConstraints === false || (isStatusFinalState(status))) && 'files' in apiGranuleRecord) {
-      await _writeGranuleFiles({
+      await writeGranuleFilesMethod({
         granuleCumulusId: pgGranule.cumulus_id,
         granule: apiGranuleRecord,
         knex,
@@ -877,6 +910,7 @@ const writeGranuleFromApi = async (
       postgresGranuleRecord: omitBy(postgresGranuleRecord, isUndefined),
       snsEventType,
       writeConstraints: false,
+      writeGranuleFilesMethod: _writeGranuleFilesAndThrowIfExpectedWriteError,
     });
     return `Wrote Granule ${granule.granuleId}`;
   } catch (thrownError) {
@@ -1110,6 +1144,7 @@ const updateGranuleStatusToQueued = async (params) => {
 
 module.exports = {
   _writeGranule,
+  _writeGranuleFilesAndThrowIfExpectedWriteError,
   createGranuleFromApi,
   generateFilePgRecord,
   getGranuleFromQueryResultOrLookup,
