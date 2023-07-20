@@ -1077,5 +1077,5 @@ test.serial('queueGranules does not throw an error when updatedAt is provided an
     },
   ];
 
-  await !t.throwsAsync(queueGranules(event));
+  await t.notThrowsAsync(queueGranules(event));
 });
