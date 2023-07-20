@@ -1070,7 +1070,7 @@ test.serial('queueGranules does not throw an error when updatedAt is provided an
   const { event } = t.context;
   event.input.granules = [
     {
-      granuleId: randomString(), files: [], updatedAt: new Date(t.now()), collectionId: 'ABC___001',
+      granuleId: randomString(), files: [], updatedAt: 1553053438767, collectionId: 'ABC___001',
     },
     {
       granuleId: randomString(), files: [], collectionId: 'ABC___001',
