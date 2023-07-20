@@ -21,10 +21,10 @@ const buildUploaderClient = (providerConfig = {}) => {
 };
 
 /**
- * Send PAN and return the input payload
+ * Send PAN and return the uri of the uploaded pan
  *
  * @param {object} event - input from the message adapter
- * @returns {object} sample JSON object
+ * @returns {object} the uri of the pan
  */
 async function sendPAN(event) {
   const config = event.config;
@@ -39,10 +39,10 @@ async function sendPAN(event) {
   fs.writeFileSync(localPath, pan);
 
   const providerClient = buildUploaderClient(provider);
-  await providerClient.upload({ localPath, uploadPath });
+  const panUri = await providerClient.upload({ localPath, uploadPath });
 
   fs.unlinkSync(localPath);
-  return event;
+  return { pan: panUri };
 }
 
 /**

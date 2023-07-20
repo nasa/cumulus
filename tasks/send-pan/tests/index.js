@@ -94,9 +94,10 @@ test('SendPan task sends PAN to s3', async (t) => {
   };
 
   try {
-    await sendPAN(event);
+    const pan = await sendPAN(event);
     const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
     t.regex(text, regex);
+    t.is(pan.pan, S3.buildS3Uri(t.context.providerBucket, uploadPath));
   } catch (error) {
     console.log(error);
     t.fail();
