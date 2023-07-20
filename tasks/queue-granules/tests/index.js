@@ -1079,3 +1079,17 @@ test.serial('queueGranules does not throw an error when updatedAt is provided an
 
   await t.notThrowsAsync(queueGranules(event));
 });
+
+test.serial('queueGranules throws an error when the updatedAt field is not an Integer value', async (t) => {
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      granuleId: randomString(), files: [], updatedAt: '12/25/2022', collectionId: 'ABC___001',
+    },
+    {
+      granuleId: randomString(), files: [], updatedAt: 1553053438767.3, collectionId: 'ABC___001',
+    },
+  ];
+
+  await t.throwsAsync(queueGranules(event));
+});
