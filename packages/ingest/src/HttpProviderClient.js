@@ -298,7 +298,7 @@ class HttpProviderClient {
    * @param {object} params
    * @param {string} params.localPath - the full local file path
    * @param {string} params.uploadPath - the full remote file path for uploading file to
-   * @returns {Promise}
+   * @returns {Promise<string>} the uri of the uploaded file
    */
   async upload(params) {
     const { localPath, uploadPath } = params;
@@ -325,7 +325,7 @@ class HttpProviderClient {
 
     log.info(`Finishing uploading ${localPath} to ${remoteUrl}`);
 
-    return localPath;
+    return remoteUrl;
   }
 
   /* eslint-disable no-empty-function */

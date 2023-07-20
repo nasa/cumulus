@@ -152,7 +152,7 @@ class S3ProviderClient implements ProviderClient {
    * @param {string} params.localPath - the full local file path
    * @param {string} params.uploadPath - the full remote file path for uploading file to
    * @param {string} params.remoteAltBucket - alternate per-file bucket override to this.bucket
-   * @returns {Promise}
+   * @returns {Promise<string>} the uri of the uploaded file
    */
   async upload(params: {
     localPath: string,
@@ -167,8 +167,10 @@ class S3ProviderClient implements ProviderClient {
       uploadPath,
       localPath
     );
-log.info('here', await S3.getTextObject(remoteBucket, uploadPath));
-    log.info(`Finishing uploading ${localPath} to ${remoteBucket}/${uploadPath}`);
+
+    const s3Uri = S3.buildS3Uri(remoteBucket, uploadPath);
+    log.info(`Finishing uploading ${localPath} to ${s3Uri}`);
+    return s3Uri;
   }
 
   /* eslint-disable @typescript-eslint/no-empty-function */

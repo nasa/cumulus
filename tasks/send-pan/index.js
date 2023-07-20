@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { tmpdir } = require('os');
 const { generatePAN } = require('@cumulus/api/lib/pdrHelpers');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const HttpProviderClient = require('@cumulus/ingest/HttpProviderClient');
@@ -34,7 +35,7 @@ async function sendPAN(event) {
 
   const pan = generatePAN();
 
-  const localPath = `/tmp/${panName}`;
+  const localPath = path.join(tmpdir(), panName);
   fs.writeFileSync(localPath, pan);
 
   const providerClient = buildUploaderClient(provider);
