@@ -55,6 +55,7 @@ const {
 
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
+  waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 
 const { uploadS3GranuleDataForDiscovery } = require('../../helpers/discoverUtils');
@@ -171,10 +172,6 @@ describe('Ingesting from PDR', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename,
-      }),
     ]).catch(console.error);
 
     await providersApi.deleteProvider({
@@ -512,7 +509,7 @@ describe('Ingesting from PDR', () => {
 
             // the output of the CheckStatus is used to determine the task of choice
             const checkStatusTaskName = 'CheckStatus';
-            const successStepName = 'WorkflowSucceeded';
+            const successStepName = 'SendPAN';
             const pdrStatusReportTaskName = 'PdrStatusReport';
 
             let choiceVerified = false;

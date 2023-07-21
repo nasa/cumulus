@@ -44,6 +44,7 @@ async function sendPAN(event) {
 
   const providerClient = buildUploaderClient(provider);
   const uri = await providerClient.upload({ localPath, uploadPath });
+  log.debug(`sent pan to ${uri}`);
 
   fs.unlinkSync(localPath);
   return {
