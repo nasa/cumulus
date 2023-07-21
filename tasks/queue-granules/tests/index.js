@@ -1087,7 +1087,7 @@ test.serial('queueGranules throws an error when the updatedAt field is not an In
       granuleId: randomString(), files: [], updatedAt: '12/25/2022', collectionId: 'ABC___001',
     },
     {
-      granuleId: randomString(), files: [], updatedAt: 1553053438767.3, collectionId: 'ABC___001',
+      granuleId: randomString(), files: [], updatedAt: 1553053438767.378196, collectionId: 'ABC___001',
     },
   ];
 
