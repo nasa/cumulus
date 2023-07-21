@@ -46,8 +46,9 @@ test('SendPan task calls upload', async (t) => {
   nock(url).post(remotePath, regex)
     .reply(200);
 
-  await sendPAN(event);
+  const pan = await sendPAN(event);
   t.true(nock.isDone());
+  t.is(pan.uri, `${url}${remotePath}`);
 });
 
 test('SendPan task sends PAN to HTTP server', async (t) => {
@@ -97,14 +98,14 @@ test('SendPan task sends PAN to s3', async (t) => {
     const pan = await sendPAN(event);
     const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
     t.regex(text, regex);
-    t.is(pan.pan, S3.buildS3Uri(t.context.providerBucket, uploadPath));
+    t.is(pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
   } catch (error) {
     console.log(error);
     t.fail();
   }
 });
 
-test('SendPan task does not support protocols besides http/https/s3', async (t) => {
+test('SendPan task throws error when provider protocol is not supported', async (t) => {
   const event = {
     config: {
       provider: {
@@ -125,5 +126,29 @@ test('SendPan task does not support protocols besides http/https/s3', async (t) 
     if (error.message.includes('Protocol ftp is not supported')) {
       t.pass();
     }
+  }
+});
+
+test('SendPan task does nothing when remoteDir is not configured', async (t) => {
+  const fileNameBase = 'test-send-s3-pdr';
+  const event = {
+    config: {
+      provider: {
+        id: randomId('s3Provider'),
+        globalConnectionLimit: 5,
+        protocol: 's3',
+        host: t.context.providerBucket,
+      },
+      pdrName: `${fileNameBase}.pdr`,
+      remoteDir: undefined,
+    },
+  };
+
+  try {
+    const pan = await sendPAN(event);
+    t.deepEqual(pan, {});
+  } catch (error) {
+    console.log(error);
+    t.fail();
   }
 });

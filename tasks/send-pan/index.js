@@ -3,10 +3,13 @@
 const fs = require('fs');
 const path = require('path');
 const { tmpdir } = require('os');
+const Logger = require('@cumulus/logger');
 const { generatePAN } = require('@cumulus/api/lib/pdrHelpers');
 const cumulusMessageAdapter = require('@cumulus/cumulus-message-adapter-js');
 const HttpProviderClient = require('@cumulus/ingest/HttpProviderClient');
 const S3ProviderClient = require('@cumulus/ingest/S3ProviderClient');
+
+const log = new Logger({ sender: '@cumulus/send-pan' });
 
 const buildUploaderClient = (providerConfig = {}) => {
   switch (providerConfig.protocol) {
@@ -30,6 +33,11 @@ async function sendPAN(event) {
   const config = event.config;
   const provider = config.provider;
   const remoteDir = config.remoteDir;
+  if (!remoteDir) {
+    log.debug('remoteDir is not configured, PAN is not sent');
+    return {};
+  }
+
   const panName = config.pdrName.replace(/\.pdr/gi, '.pan');
   const uploadPath = path.join(remoteDir, panName);
 
@@ -39,10 +47,10 @@ async function sendPAN(event) {
   fs.writeFileSync(localPath, pan);
 
   const providerClient = buildUploaderClient(provider);
-  const panUri = await providerClient.upload({ localPath, uploadPath });
+  const uri = await providerClient.upload({ localPath, uploadPath });
 
   fs.unlinkSync(localPath);
-  return { pan: panUri };
+  return { uri };
 }
 
 /**

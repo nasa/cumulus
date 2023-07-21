@@ -478,7 +478,7 @@ describe('Ingesting from PDR', () => {
 
             // the output of the CheckStatus is used to determine the task of choice
             const checkStatusTaskName = 'CheckStatus';
-            const successStepName = 'WorkflowSucceeded';
+            const successStepName = 'SendPAN';
             const pdrStatusReportTaskName = 'PdrStatusReport';
 
             let choiceVerified = false;
