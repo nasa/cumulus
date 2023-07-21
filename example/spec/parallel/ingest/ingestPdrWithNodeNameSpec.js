@@ -55,7 +55,6 @@ const {
 
 const {
   loadFileWithUpdatedGranuleIdPathAndCollection,
-  waitForGranuleAndDelete,
 } = require('../../helpers/granuleUtils');
 
 const { uploadS3GranuleDataForDiscovery } = require('../../helpers/discoverUtils');

@@ -160,7 +160,7 @@ test('SendPan task throws error when provider protocol is not supported', async 
 });
 
 test('SendPan task sends PAN to default location when remoteDir is null', async (t) => {
-  const fileNameBase = 'test-send-s3-pdr';
+  const fileNameBase = 'test-default-pan-path-pdr';
   const uploadPath = `pans/${fileNameBase}.pan`;
   const event = {
     config: {
