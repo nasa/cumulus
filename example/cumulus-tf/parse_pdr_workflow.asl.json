@@ -202,7 +202,7 @@
           },
           "task_config": {
             "provider": "{$.meta.provider}",
-            "remoteDir": "{$.meta.collection.meta.pan_path}"
+            "remoteDir": "{$.meta.collection.meta.panPath}"
           }
         }
       },

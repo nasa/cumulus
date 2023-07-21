@@ -32,11 +32,7 @@ const buildUploaderClient = (providerConfig = {}) => {
 async function sendPAN(event) {
   const { config, input } = event;
   const provider = config.provider;
-  const remoteDir = config.remoteDir;
-  if (!remoteDir) {
-    log.debug('remoteDir is not configured, PAN is not sent');
-    return input;
-  }
+  const remoteDir = config.remoteDir || 'pans';
 
   const panName = input.pdr.name.replace(/\.pdr/gi, '.pan');
   const uploadPath = path.join(remoteDir, panName);

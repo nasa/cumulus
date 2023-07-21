@@ -4,7 +4,7 @@
     "*.js"
   ],
   "statements": 90.0,
-  "functions": 50.0,
+  "functions": 60.0,
   "branches": 80.0,
   "lines": 90.0
 }

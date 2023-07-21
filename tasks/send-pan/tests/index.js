@@ -159,8 +159,9 @@ test('SendPan task throws error when provider protocol is not supported', async 
   }
 });
 
-test('SendPan task does nothing when remoteDir is not configured', async (t) => {
+test('SendPan task sends PAN to default location when remoteDir is null', async (t) => {
   const fileNameBase = 'test-send-s3-pdr';
+  const uploadPath = `pans/${fileNameBase}.pan`;
   const event = {
     config: {
       provider: {
@@ -169,7 +170,7 @@ test('SendPan task does nothing when remoteDir is not configured', async (t) => 
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      remoteDir: undefined,
+      remoteDir: null,
     },
     input: {
       pdr: {
@@ -184,7 +185,9 @@ test('SendPan task does nothing when remoteDir is not configured', async (t) => 
     await validateConfig(t, event.config);
     const output = await sendPAN(event);
     await validateOutput(t, output);
-    t.falsy(output.pan);
+    const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
+    t.regex(text, regex);
+    t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
   } catch (error) {
     console.log(error);
     t.fail();
