@@ -212,10 +212,12 @@ async function queueGranules(event, testMocks = {}) {
             granuleBatch,
             (queuedGranule) => {
               const granuleId = queuedGranule.granuleId;
+              const updatedAt = queuedGranule.updatedAt;
 
-              if (!Number.isInteger(queuedGranule.updatedAt) || queuedGranule.updatedAt < 0) {
-                throw new Error(`Invalid updatedAt value: ${queuedGranule.updatedAt} for granule with granuleId + ${queuedGranule.granuleId}`);
+              if (updatedAt && (!Number.isInteger(updatedAt) || updatedAt < 0)) {
+                throw new Error(`Invalid updatedAt value: ${queuedGranule.updatedAt} for granule with granuleId: ${queuedGranule.granuleId}`);
               }
+
               return updateGranule({
                 prefix: event.config.stackName,
                 collectionId,
