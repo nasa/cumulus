@@ -202,16 +202,7 @@
           },
           "task_config": {
             "provider": "{$.meta.provider}",
-            "pdrName": "{$.payload.pdr.name}",
-            "remoteDir": "{$.meta.collection.meta.pan_path}",
-            "cumulus_message": {
-              "outputs": [
-                {
-                  "source": "{$}",
-                  "destination": "{$.payload.pan}"
-                }
-              ]
-            }
+            "remoteDir": "{$.meta.collection.meta.pan_path}"
           }
         }
       },

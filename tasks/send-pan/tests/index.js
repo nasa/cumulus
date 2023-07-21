@@ -2,7 +2,7 @@
 
 const test = require('ava');
 const nock = require('nock');
-const { randomId } = require('@cumulus/common/test-utils');
+const { randomId, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
 const S3 = require('@cumulus/aws-client/S3');
 const { sendPAN } = require('..');
 
@@ -22,6 +22,7 @@ test.after.always(async (t) => await Promise.all([
 ]));
 
 test('SendPan task calls upload', async (t) => {
+  const fileNameBase = 'test-uploadcall-pdr';
   const event = {
     config: {
       provider: {
@@ -32,13 +33,18 @@ test('SendPan task calls upload', async (t) => {
         createdAt: 1676325180635,
         updatedAt: 1677776213600,
       },
-      pdrName: 'some-pdr.pdr',
       remoteDir: '/some-remote-dir/',
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
     },
   };
 
   const url = `http://${event.config.provider.host}`;
-  const remotePath = `${event.config.remoteDir}${event.config.pdrName.replace('.pdr', '.pan')}`;
+  const remotePath = `${event.config.remoteDir}${fileNameBase}.pan`;
   // Message should look like this:
   // MESSAGE_TYPE = "SHORTPAN";
   // DISPOSITION = "SUCCESSFUL";
@@ -46,9 +52,13 @@ test('SendPan task calls upload', async (t) => {
   nock(url).post(remotePath, regex)
     .reply(200);
 
-  const pan = await sendPAN(event);
+  await validateInput(t, event.input);
+  await validateConfig(t, event.config);
+  const output = await sendPAN(event);
+  await validateOutput(t, output);
+
   t.true(nock.isDone());
-  t.is(pan.uri, `${url}${remotePath}`);
+  t.is(output.pan.uri, `${url}${remotePath}`);
 });
 
 test('SendPan task sends PAN to HTTP server', async (t) => {
@@ -61,8 +71,13 @@ test('SendPan task sends PAN to HTTP server', async (t) => {
         host: '127.0.0.1',
         port: 3030,
       },
-      pdrName: 'test-send-http-pdr.pdr',
       remoteDir: '/pan/remote-dir/',
+    },
+    input: {
+      pdr: {
+        name: 'test-send-http-pdr.pdr',
+        path: 'some-pdr-path',
+      },
     },
   };
 
@@ -89,16 +104,24 @@ test('SendPan task sends PAN to s3', async (t) => {
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      pdrName: `${fileNameBase}.pdr`,
       remoteDir,
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
     },
   };
 
   try {
-    const pan = await sendPAN(event);
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    const output = await sendPAN(event);
+    await validateOutput(t, output);
     const text = await S3.getTextObject(t.context.providerBucket, uploadPath);
     t.regex(text, regex);
-    t.is(pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
+    t.is(output.pan.uri, S3.buildS3Uri(t.context.providerBucket, uploadPath));
   } catch (error) {
     console.log(error);
     t.fail();
@@ -114,12 +137,19 @@ test('SendPan task throws error when provider protocol is not supported', async 
         protocol: 'ftp',
         host: randomId('s3bucket'),
       },
-      pdrName: 'test-send-ftp-pdr.pdr',
       remoteDir: '/pan/remote-dir/',
+    },
+    input: {
+      pdr: {
+        name: 'test-send-ftp-pdr.pdr',
+        path: 'some-pdr-path',
+      },
     },
   };
 
   try {
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
     await sendPAN(event);
     t.fail();
   } catch (error) {
@@ -139,14 +169,22 @@ test('SendPan task does nothing when remoteDir is not configured', async (t) => 
         protocol: 's3',
         host: t.context.providerBucket,
       },
-      pdrName: `${fileNameBase}.pdr`,
       remoteDir: undefined,
+    },
+    input: {
+      pdr: {
+        name: `${fileNameBase}.pdr`,
+        path: 'some-pdr-path',
+      },
     },
   };
 
   try {
-    const pan = await sendPAN(event);
-    t.deepEqual(pan, {});
+    await validateInput(t, event.input);
+    await validateConfig(t, event.config);
+    const output = await sendPAN(event);
+    await validateOutput(t, output);
+    t.falsy(output.pan);
   } catch (error) {
     console.log(error);
     t.fail();

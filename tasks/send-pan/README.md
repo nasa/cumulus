@@ -1,6 +1,6 @@
 # @cumulus/send-pan
 
-`@cumulus/send-pan` contains code for a lambda function that generates a PAN response and sends that response to a configured provider, then returns the payload that was passed to it.
+`@cumulus/send-pan` contains code for a lambda function that generates a Product Acceptance Notice(PAN) response and sends that response to a configured provider, then returns the payload that was passed to it.
 
 ## About Cumulus
 

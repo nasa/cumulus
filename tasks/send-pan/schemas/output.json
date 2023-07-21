@@ -1,0 +1,25 @@
+{
+  "title": "SendPanOutput",
+  "description": "Describes the output produced by the send-pan task",
+  "type": "object",
+  "required": ["pdr"],
+  "properties": {
+    "pdr": {
+      "description": "Product Delivery Record",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "pan": {
+      "description": "Product Acceptance Notice",
+      "type": "object",
+      "required": ["uri"],
+      "properties": {
+        "uri": { "type": "string" }
+      }
+    }
+  }
+}

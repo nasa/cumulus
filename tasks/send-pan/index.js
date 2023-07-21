@@ -30,15 +30,15 @@ const buildUploaderClient = (providerConfig = {}) => {
  * @returns {object} the uri of the pan
  */
 async function sendPAN(event) {
-  const config = event.config;
+  const { config, input } = event;
   const provider = config.provider;
   const remoteDir = config.remoteDir;
   if (!remoteDir) {
     log.debug('remoteDir is not configured, PAN is not sent');
-    return {};
+    return input;
   }
 
-  const panName = config.pdrName.replace(/\.pdr/gi, '.pan');
+  const panName = input.pdr.name.replace(/\.pdr/gi, '.pan');
   const uploadPath = path.join(remoteDir, panName);
 
   const pan = generatePAN();
@@ -50,7 +50,10 @@ async function sendPAN(event) {
   const uri = await providerClient.upload({ localPath, uploadPath });
 
   fs.unlinkSync(localPath);
-  return { uri };
+  return {
+    ...input,
+    pan: { uri },
+  };
 }
 
 /**
