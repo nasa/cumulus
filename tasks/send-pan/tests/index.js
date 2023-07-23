@@ -4,7 +4,7 @@ const test = require('ava');
 const nock = require('nock');
 const { randomId, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
 const S3 = require('@cumulus/aws-client/S3');
-const { sendPAN } = require('..');
+const { sendPAN } = require('../dist/src');
 
 // eslint-disable-next-line max-len
 const regex = /MESSAGE_TYPE = "SHORTPAN";\nDISPOSITION = "SUCCESSFUL";\nTIME_STAMP = \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z;\n/;

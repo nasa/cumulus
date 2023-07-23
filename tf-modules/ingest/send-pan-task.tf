@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "send_pan_task" {
   function_name    = "${var.prefix}-SendPan"
-  filename         = "${path.module}/../../tasks/send-pan/dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../tasks/send-pan/dist/lambda.zip")
+  filename         = "${path.module}/../../tasks/send-pan/dist/webpack/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../tasks/send-pan/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs14.x"
