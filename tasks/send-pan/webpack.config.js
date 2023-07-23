@@ -4,51 +4,36 @@ const { IgnorePlugin } = require('webpack');
 const root = path.resolve(__dirname);
 
 const ignoredPackages = [
-  'cpu-features',
-  'sshcrypto.node'
+  'better-sqlite3',
+  'mssql',
+  'mssql/lib/base',
+  'mssql/package.json',
+  'mysql',
+  'mysql2',
+  'oracledb',
+  'pg-native',
+  'pg-query-stream',
+  'sqlite3',
+  'tedious',
 ];
 
 module.exports = {
+  mode: process.env.PRODUCTION ? 'production' : 'development',
   plugins: [
     new IgnorePlugin({
-      resourceRegExp: new RegExp(`(${ignoredPackages.join('|')})$`)
+      resourceRegExp: new RegExp(`^(${ignoredPackages.join('|')})$`)
     }),
   ],
-  mode: process.env.PRODUCTION ? 'production' : 'development',
-  entry: './index.js',
+  entry: './dist/src/index.js',
   output: {
     libraryTarget: 'commonjs2',
-    filename: 'index.js',
-    path: path.resolve(__dirname, 'dist'),
-    devtoolModuleFilenameTemplate: (info) => {
-      const relativePath = path.relative(root, info.absoluteResourcePath)
-      return `webpack://${relativePath}`;
-    }
+    path: path.resolve(__dirname, 'dist', 'webpack'),
+    filename: 'index.js'
   },
-  externals: [
-    'aws-sdk',
-    'electron',
-    {'formidable': 'url'}
-  ],
-  module: {
-    rules: [
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'babel-loader',
-            options: {
-              cacheDirectory: true
-            },
-          },
-        ],
-      },
-    ],
-  },
-  devtool: 'inline-source-map',
+  externals: ['aws-sdk'],
   target: 'node',
+  devtool: 'eval-cheap-module-source-map',
   optimization: {
     nodeEnv: false
-  }
+  },
 };
