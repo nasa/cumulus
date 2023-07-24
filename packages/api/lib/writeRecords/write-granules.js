@@ -633,7 +633,7 @@ const _writeGranuleRecords = async (params) => {
         error: errorsObject,
       });
     }
-    throw thrownError;
+    throw new Error('Granule/granule files failed schema validation and will be updated in the datastore with the error and a status of failed', { cause: thrownError });
   }
 };
 
@@ -900,7 +900,6 @@ const writeGranuleFromApi = async (
       knexOrTransaction: knex,
     });
 
-    // TODO Fix remove api granule model
     await _writeGranule({
       apiGranuleRecord,
       esClient,
