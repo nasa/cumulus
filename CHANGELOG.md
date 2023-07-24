@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed the `invokeRerun` function to only re-run enabled rules
 - **CUMULUS-3188**
   - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+  - Added optional additional properties to queue-granules input schema
 - **CUMULUS-3252**
   - Updated example/cumulus-tf/orca.tf to use orca v8.0.1
   - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
