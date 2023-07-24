@@ -2,6 +2,8 @@
 
 const test = require('ava');
 const nock = require('nock');
+const path = require('path');
+const urljoin = require('url-join');
 const { randomId, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
 const S3 = require('@cumulus/aws-client/S3');
 const { sendPAN } = require('../dist/src');
@@ -33,7 +35,7 @@ test('SendPan task calls upload', async (t) => {
         createdAt: 1676325180635,
         updatedAt: 1677776213600,
       },
-      remoteDir: '/some-remote-dir/',
+      remoteDir: 'some-remote-dir',
     },
     input: {
       pdr: {
@@ -44,7 +46,7 @@ test('SendPan task calls upload', async (t) => {
   };
 
   const url = `http://${event.config.provider.host}`;
-  const remotePath = `${event.config.remoteDir}${fileNameBase}.pan`;
+  const remotePath = path.join('/', event.config.remoteDir, `${fileNameBase}.pan`);
   // Message should look like this:
   // MESSAGE_TYPE = "SHORTPAN";
   // DISPOSITION = "SUCCESSFUL";
@@ -58,7 +60,7 @@ test('SendPan task calls upload', async (t) => {
   await validateOutput(t, output);
 
   t.true(nock.isDone());
-  t.is(output.pan.uri, `${url}${remotePath}`);
+  t.is(output.pan.uri, urljoin(url, remotePath));
 });
 
 test('SendPan task sends PAN to HTTP server', async (t) => {
@@ -71,7 +73,7 @@ test('SendPan task sends PAN to HTTP server', async (t) => {
         host: '127.0.0.1',
         port: 3030,
       },
-      remoteDir: '/pan/remote-dir/',
+      remoteDir: 'pan/remote-dir/',
     },
     input: {
       pdr: {
@@ -93,9 +95,9 @@ test('SendPan task sends PAN to HTTP server', async (t) => {
 });
 
 test('SendPan task sends PAN to s3', async (t) => {
-  const remoteDir = '/pan/remote-dir';
+  const remoteDir = 'pan/remote-dir';
   const fileNameBase = 'test-send-s3-pdr';
-  const uploadPath = `${remoteDir}/${fileNameBase}.pan`;
+  const uploadPath = path.join(remoteDir, `${fileNameBase}.pan`);
   const event = {
     config: {
       provider: {
@@ -137,7 +139,7 @@ test('SendPan task throws error when provider protocol is not supported', async 
         protocol: 'ftp',
         host: randomId('s3bucket'),
       },
-      remoteDir: '/pan/remote-dir/',
+      remoteDir: 'pan/remote-dir/',
     },
     input: {
       pdr: {

@@ -2,14 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import { tmpdir } from 'os';
 import { Context } from 'aws-lambda';
-import Logger from '@cumulus/logger';
+
 import { pdrHelpers } from '@cumulus/api';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import HttpProviderClient from '@cumulus/ingest/HttpProviderClient';
 import S3ProviderClient from '@cumulus/ingest/S3ProviderClient';
+import Logger from '@cumulus/logger';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 
-import { HandlerEvent } from './types';
+import { HandlerEvent, HandlerOutput } from './types';
 
 const log = new Logger({ sender: '@cumulus/send-pan' });
 
@@ -36,7 +37,7 @@ const buildUploaderClient = (
  * @param {object} event - input from the message adapter
  * @returns {object} the uri of the pan
  */
-async function sendPAN(event: HandlerEvent) {
+async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
   const { config, input } = event;
   const provider = config.provider;
   const remoteDir = config.remoteDir || 'pans';

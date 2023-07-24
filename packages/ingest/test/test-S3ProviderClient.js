@@ -167,7 +167,7 @@ test.serial('S3ProviderClient.upload uploads a file', async (t) => {
   const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
   const localPath = path.join(tmpdir(), randomString());
   t.teardown(() => fs.unlinkSync(localPath));
-  const uploadPath = `${randomString()}/destinationfile.txt`;
+  const uploadPath = path.join(randomString(), 'destinationfile.txt');
 
   fs.writeFileSync(localPath, t.context.fileContent);
   await s3ProviderClient.upload({ localPath, uploadPath });

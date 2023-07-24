@@ -302,20 +302,18 @@ class HttpProviderClient {
    */
   async upload(params) {
     const { localPath, uploadPath } = params;
+    log.info(params);
     await this.setUpGotOptions();
     await this.downloadTLSCertificate();
     const options = {
-      protocol: 'http',
+      protocol: this.protocol,
       host: this.host,
       port: this.port,
       path: uploadPath,
       method: 'POST',
     };
 
-    log.info(params);
-
     const remoteUrl = buildURL(options);
-    log.info(`Uploading ${localPath} to ${remoteUrl}`);
     got.stream.options = options;
     await promisify(pipeline)(
       fs.createReadStream(localPath),
@@ -324,7 +322,6 @@ class HttpProviderClient {
     );
 
     log.info(`Finishing uploading ${localPath} to ${remoteUrl}`);
-
     return remoteUrl;
   }
 

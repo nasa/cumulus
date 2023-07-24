@@ -1,10 +1,22 @@
-export interface HandlerInput {
-  pdr: {
-    name: string,
-    path?: string,
-  },
+export interface Pdr {
+  name: string,
+  path?: string,
+  [key: string]: unknown
 }
 
+export interface Pan {
+  uri: string
+}
+export interface HandlerInput {
+  pdr: Pdr,
+  [key: string]: unknown
+}
+
+export interface HandlerOutput {
+  pdr: Pdr,
+  pan: Pan,
+  [key: string]: unknown
+}
 export interface HandlerEvent {
   config: {
     provider: {

@@ -1,6 +1,6 @@
 # @cumulus/send-pan
 
-`@cumulus/send-pan` contains code for a lambda function that generates a Product Acceptance Notice(PAN) response and sends that response to a configured provider, then returns the payload that was passed to it.
+This is a [Cumulus](https://nasa.github.io/cumulus) task which generates a Product Acceptance Notice(PAN) response, sends that response to a configured provider, and returns the payload that was passed to it with PAN information.
 
 ## About Cumulus
 

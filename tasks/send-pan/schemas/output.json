@@ -2,7 +2,7 @@
   "title": "SendPanOutput",
   "description": "Describes the output produced by the send-pan task",
   "type": "object",
-  "required": ["pdr"],
+  "required": ["pdr", "pan"],
   "properties": {
     "pdr": {
       "description": "Product Delivery Record",
