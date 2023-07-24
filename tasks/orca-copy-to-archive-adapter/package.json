@@ -38,13 +38,13 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/common": "15.0.0",
+    "@cumulus/aws-client": "16.0.0",
+    "@cumulus/common": "16.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/logger": "15.0.0",
+    "@cumulus/logger": "16.0.0",
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@cumulus/schemas": "15.0.0"
+    "@cumulus/schemas": "16.0.0"
   }
 }

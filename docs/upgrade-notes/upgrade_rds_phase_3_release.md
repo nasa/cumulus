@@ -34,9 +34,9 @@ In addition to the above requirements, we suggest users:
   and other efforts included in the outcome from CUMULUS-3035/CUMULUS-3071.
 
 - Halt all ingest prior to performing the version upgrade.
-- Run load testing/functional testing
+- Run load testing/functional testing.
 
-  While the majority of the modifications for release 16 are related to DynamoDB removal, we always encourage user engineering teams ensure compatibility at scale with their deployment's engineering configuration prior to promotion to a production environment to ensure a smooth upgrade.
+  While the majority of the modifications for release 16 are related to DynamoDB removal, we always encourage user engineering teams ensure compatibility at scale with their deployment's configuration prior to promotion to a production environment to ensure a smooth upgrade.
 
 ## Upgrade procedure
 
@@ -103,7 +103,7 @@ In addition to the above requirements, we suggest users:
 
 ### Deploy cumulus-tf module
 
-  Ensure your source for the data-persistence module is set to the release version (substituting v16.0.0 for the latest v16 release):
+  Ensure your source for the cumulus-tf module is set to the release version (substituting v16.0.0 for the latest v16 release):
 
   ```tf
   source = "https://github.com/nasa/cumulus/releases/download/v16.0.0/terraform-aws-cumulus.zip//tf-modules/cumulus"
@@ -151,6 +151,6 @@ In addition to the above requirements, we suggest users:
   module.cumulus.module.postgres_migration_async_operation.aws_security_group.postgres_migration_async_operation[0]
   ```
 
-  Because the AWS resources associated with these security groups can take some time to be properly updated (in testing this was 20-35 minutes), these deletions may cause the deployment to take some time.   If for some unexpected reason this takes longer than expected this causes the update to time out, you should be able to continue the deployment by re-running terraform to completion.
+  Because the AWS resources associated with these security groups can take some time to be properly updated (in testing this was 20-35 minutes), these deletions may cause the deployment to take some time.   If for some unexpected reason this takes longer than expected and this causes the update to time out, you should be able to continue the deployment by re-running terraform to completion.
 
   Users may also opt to attempt to reassign the affected Network Interfaces from the Security Group/deleting the security group manually if this situation occurs and the deployment time is not desirable.
