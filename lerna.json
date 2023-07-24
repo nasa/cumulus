@@ -5,7 +5,7 @@
     "example",
     "example/lambdas/*",
     "example/scripts/*",
-    "lambdas/db-provision-user-database/",
+    "lambdas/*",
     "packages/*",
     "packages/api/ecs/async-operation",
     "tasks/*",
