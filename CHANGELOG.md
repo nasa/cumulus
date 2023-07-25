@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3319**
+  - Update api/lib/schemas.js to require bucket, filename for granule.files to prevent postgres schema write failures from causing granules that are written without a bucket or filename from making it to a database schema validation failure
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
+  - Updated thrown error to include information related to this automatic failure behavior in addition to the stack trace.
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
