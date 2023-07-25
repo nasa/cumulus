@@ -45,6 +45,6 @@
   },
   "devDependencies": {
     "@cumulus/aws-client": "16.0.0",
-    "url-join": "^5.0.0"
+    "url-join": "^4.0.0"
   }
 }
