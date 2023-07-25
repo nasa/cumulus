@@ -9,7 +9,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3270**
   - update to use python3.10
   - update dependencies to use python3.10 including CMA-python and cumulus-process-py
-
 - **CUMULUS-3188**
   - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 - **CUMULUS-3287**
