@@ -28,7 +28,7 @@ const {
   translateApiExecutionToPostgresExecution,
 } = require('@cumulus/db');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken } = require('../../models');
+const { AccessToken } = require('../lib/access-token');
 const assertions = require('../../lib/assertions');
 const {
   createFakeJwtAuthToken,

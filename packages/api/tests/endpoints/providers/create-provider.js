@@ -26,7 +26,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 
-const AccessToken = require('../../../models/access-tokens');
+const AccessToken = require('../../../lib/access-tokens');
 const {
   createFakeJwtAuthToken,
   fakeProviderFactory,

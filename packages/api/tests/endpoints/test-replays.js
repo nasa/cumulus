@@ -15,7 +15,7 @@ const { EcsStartTaskError } = require('@cumulus/errors');
 
 const { app } = require('../../app');
 const { createFakeJwtAuthToken, createSqsQueues, setAuthorizedOAuthUsers } = require('../../lib/testUtils');
-const AccessToken = require('../../models/access-tokens');
+const AccessToken = require('../../lib/access-tokens');
 
 const {
   startKinesisReplayAsyncOperation,

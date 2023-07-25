@@ -2,7 +2,7 @@ const base64 = require('base-64');
 const got = require('got');
 const { URL } = require('url');
 
-const { AccessToken } = require('@cumulus/api/models');
+const { AccessToken } = require('@cumulus/api');
 const { EarthdataLoginClient } = require('@cumulus/oauth-client');
 
 /**

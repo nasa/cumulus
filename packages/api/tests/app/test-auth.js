@@ -8,7 +8,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { app } = require('../../app');
 const { createJwtToken } = require('../../lib/token');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
-const AccessToken = require('../../models/access-tokens');
+const AccessToken = require('../../lib/access-tokens');
 
 let accessTokenModel;
 const validUsername = randomId('user');

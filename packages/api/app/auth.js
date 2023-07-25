@@ -9,7 +9,7 @@ const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
 const { ensureLaunchpadAPIAuthorized, launchpadProtectedAuth } = require('./launchpadAuth');
-const { AccessToken } = require('../models');
+const { AccessToken } = require('../lib/access-tokens');
 const { verifyJwtToken } = require('../lib/token');
 
 const authorizedOAuthUsersKey = () =>

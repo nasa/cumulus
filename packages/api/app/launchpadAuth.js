@@ -12,7 +12,7 @@ const log = require('@cumulus/common/log');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { isAccessTokenExpired, verifyJwtToken } = require('../lib/token');
-const { AccessToken } = require('../models');
+const { AccessToken } = require('../lib/access-tokens');
 
 const launchpadProtectedAuth = () => (process.env.OAUTH_PROVIDER === 'launchpad');
 

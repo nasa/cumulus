@@ -17,7 +17,7 @@ const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
 } = require('../../../lib/testUtils');
-const AccessToken = require('../../../models/access-tokens');
+const AccessToken = require('../../../lib/access-tokens');
 const { generateListOfGranules } = require('../../helpers/create-test-data');
 
 let accessTokenModel;

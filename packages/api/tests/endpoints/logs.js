@@ -13,7 +13,7 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
-const { AccessToken } = require('../../models');
+const { AccessToken } = require('../lib/access-token');
 
 const assertions = require('../../lib/assertions');
 

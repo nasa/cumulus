@@ -7,7 +7,7 @@ const isNumber = require('lodash/isNumber');
 const { randomString } = require('@cumulus/common/test-utils');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
-const { AccessToken } = require('../../models');
+const { AccessToken } = require('../lib/access-token');
 
 let accessTokenModel;
 test.before(async () => {

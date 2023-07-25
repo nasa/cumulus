@@ -47,7 +47,7 @@ const {
 const { post, put, del } = require('../../endpoints/rules');
 
 const rulesHelpers = require('../../lib/rulesHelpers');
-const AccessToken = require('../../models/access-tokens');
+const AccessToken = require('../../lib/access-tokens');
 const assertions = require('../../lib/assertions');
 
 [

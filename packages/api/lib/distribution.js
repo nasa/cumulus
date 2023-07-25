@@ -10,7 +10,7 @@ const { RecordDoesNotExist } = require('@cumulus/errors');
 
 const { isLocalApi } = require('./testUtils');
 const { isAccessTokenExpired } = require('./token');
-const { AccessToken } = require('../models');
+const { AccessToken } = require('../lib/access-token');
 const { getBucketMap, isPublicBucket, processFileRequestPath } = require('./bucketMapUtils');
 
 const BEARER_TOKEN_REGEX = new RegExp('^Bearer ([-a-zA-Z0-9._~+/]+)$', 'i');

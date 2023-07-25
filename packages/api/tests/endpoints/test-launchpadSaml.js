@@ -18,7 +18,7 @@ const {
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { verifyJwtToken } = require('../../lib/token');
-const { AccessToken } = require('../../models');
+const { AccessToken } = require('../lib/access-token');
 const launchpadSaml = rewire('../../endpoints/launchpadSaml');
 const launchpadPublicCertificate = launchpadSaml.__get__(
   'launchpadPublicCertificate'
