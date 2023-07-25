@@ -98,7 +98,6 @@ function updateGranuleBatchCreatedAt(granuleBatch: ApiGranule[], createdAt: numb
  * See schemas/input.json and schemas/config.json for detailed event description
  *
  * @param {HandlerEvent} event - Lambda event object
- * @param {Object} testMocks - Object containing mock functions for testing
  * @returns {Promise<QueueGranulesOutput>} - see schemas/output.json for detailed output schema
  *   that is passed to the next task in the workflow
  **/
@@ -146,17 +145,29 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
         chunks,
         async (granuleBatchIn) => {
           const granuleBatch = updateGranuleBatchCreatedAt(granuleBatchIn, Date.now());
-          await granulesApi.bulkUpdateGranules({
-            prefix: event.config.stackName,
-            // @ts-ignore TODO: Need to update the typehint on the api-client method
-            //    both bulkUpdate and update take ApiGranuleRecord which requires updatedAt
-            granules: granuleBatch.map(({ granuleId, createdAt }) => ({
-              collectionId,
-              granuleId,
-              status: 'queued',
-              createdAt,
-            })),
-          });
+          await pMap(
+            granuleBatch,
+            (queuedGranule) => {
+              const { granuleId, updatedAt, createdAt } = queuedGranule
+
+              if (updatedAt && (!Number.isInteger(updatedAt) || updatedAt < 0)) {
+                throw new Error(`Invalid collection information provided for granule with granuleId: ${granuleId}, please check task input to make sure collection information is provided`)
+              }
+              return granulesApi.updateGranule({
+                prefix: event.config.stackName,
+                collectionId,
+                granuleId,
+                body: {
+                  collectionId,
+                  granuleId,
+                  status: 'queued',
+                  updatedAt: updatedAt!,
+                  createdAt: createdAt!,
+                }
+              })
+            },
+            { concurrency: pMapConcurrency }
+          )
 
           return await enqueueGranuleIngestMessage({
             messageTemplate,
