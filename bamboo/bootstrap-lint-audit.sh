@@ -7,8 +7,6 @@ set -e
 . ./bamboo/abort-if-not-pr.sh
 ./bamboo/setup_python_environment.sh
 
-update-alternatives --install /usr/bin/python python /usr/bin/python3.10 1 && \
-    update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
   echo "*** Using cached bootstrap"
   cp .bamboo_env_vars /cumulus/

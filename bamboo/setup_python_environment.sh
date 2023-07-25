@@ -1,7 +1,7 @@
 PYTHON_VERSION=$(cat .python-version)
 
 export DEBIAN_FRONTEND=noninteractive
-export TZ-Etc/UTC
+export TZ=Etc/UTC
 apt update -y
 apt install software-properties-common -y
 add-apt-repository ppa:deadsnakes/ppa -y
