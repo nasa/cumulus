@@ -1,0 +1,27 @@
+{
+  "title": "orca-recovery-adapter Lambda Input",
+  "description": "The input for the orca-recovery-adapter Lambda.",
+  "type": "object",
+  "required": ["granules"],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "A list of objects representing individual files to copy.",
+      "items": {
+        "type": "object",
+        "required": ["granuleId", "files"],
+        "properties": {
+          "granuleId": {
+            "description": "The granule's ID.",
+            "type": "string"
+          },
+          "recoveryBucketOverride": {
+            "description": "The user specified recovery S3 bucket to store recovered files",
+            "type": ["string", "null"]
+          },
+          "files": "{{files}}"
+        }
+      }
+    }
+  }
+}

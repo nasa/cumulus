@@ -1,13 +1,10 @@
 {
   "name": "@cumulus/api",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
     "node": ">=16.19.0"
-  },
-  "bin": {
-    "cumulus-api": "./bin/cli.js"
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
@@ -16,19 +13,19 @@
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run prepare && npm run build && npm run link-api-bin && npm run build-lambda-zips",
     "prepare": "npm run tsc",
-    "reset-tables": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api reset-tables",
-    "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test cumulus-api serve-dist",
-    "serve-dist-remote": "cumulus-api serve-dist",
-    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve-dist",
-    "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test cumulus-api serve",
-    "serve-remote": "cumulus-api serve",
-    "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true cumulus-api serve",
+    "serve-dist-oauth": "LOCALSTACK_HOST=localhost NODE_ENV=test ./bin/cli.js serve-dist",
+    "serve-dist-remote": "./bin/cli.js serve-dist",
+    "serve-dist": "LOCALSTACK_HOST=localhost NODE_ENV=test FAKE_AUTH=true ./bin/cli.js serve-dist",
+    "serve-oauth": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test ./bin/cli.js serve",
+    "serve-remote": "./bin/cli.js serve",
+    "serve": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true ./bin/cli.js serve",
     "serve:debug": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true node --inspect-brk ./bin/cli.js serve",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "watch": "../../node_modules/.bin/webpack --progress -w"
+    "watch": "../../node_modules/.bin/webpack --progress -w",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "files": [
@@ -41,7 +38,7 @@
     ],
     "fail-fast": true,
     "verbose": true,
-    "timeout": "15m"
+    "timeout": "20m"
   },
   "publishConfig": {
     "access": "public"
@@ -52,26 +49,26 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "15.0.0",
-    "@cumulus/async-operations": "15.0.0",
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/cmr-client": "15.0.0",
-    "@cumulus/cmrjs": "15.0.0",
-    "@cumulus/collection-config-store": "15.0.0",
-    "@cumulus/common": "15.0.0",
-    "@cumulus/db": "15.0.0",
-    "@cumulus/distribution-utils": "15.0.0",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/es-client": "15.0.0",
-    "@cumulus/ingest": "15.0.0",
-    "@cumulus/launchpad-auth": "15.0.0",
-    "@cumulus/logger": "15.0.0",
-    "@cumulus/message": "15.0.0",
-    "@cumulus/oauth-client": "15.0.0",
-    "@cumulus/object-store": "15.0.0",
-    "@cumulus/pvl": "15.0.0",
-    "@cumulus/sftp-client": "15.0.0",
-    "@cumulus/types": "15.0.0",
+    "@cumulus/api-client": "16.0.0",
+    "@cumulus/async-operations": "16.0.0",
+    "@cumulus/aws-client": "16.0.0",
+    "@cumulus/cmr-client": "16.0.0",
+    "@cumulus/cmrjs": "16.0.0",
+    "@cumulus/collection-config-store": "16.0.0",
+    "@cumulus/common": "16.0.0",
+    "@cumulus/db": "16.0.0",
+    "@cumulus/distribution-utils": "16.0.0",
+    "@cumulus/errors": "16.0.0",
+    "@cumulus/es-client": "16.0.0",
+    "@cumulus/ingest": "16.0.0",
+    "@cumulus/launchpad-auth": "16.0.0",
+    "@cumulus/logger": "16.0.0",
+    "@cumulus/message": "16.0.0",
+    "@cumulus/oauth-client": "16.0.0",
+    "@cumulus/object-store": "16.0.0",
+    "@cumulus/pvl": "16.0.0",
+    "@cumulus/sftp-client": "16.0.0",
+    "@cumulus/types": "16.0.0",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
@@ -111,7 +108,7 @@
     "semver": "^7.3.2",
     "split2": "^2.2.0",
     "superagent-defaults": "0.1.14",
-    "tough-cookie": "~4.0.0",
+    "tough-cookie": "~4.1.2",
     "url-join": "^4.0.0",
     "uuid": "^3.2.1",
     "xml2js": "0.5.0",
@@ -123,6 +120,6 @@
     }
   },
   "devDependencies": {
-    "@cumulus/test-data": "15.0.0"
+    "@cumulus/test-data": "16.0.0"
   }
 }

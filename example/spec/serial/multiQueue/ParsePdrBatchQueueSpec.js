@@ -17,6 +17,7 @@ const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForGranuleAndDelete } = require('../../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { deleteProvidersAndAllDependenciesByHost } = require('../../helpers/Providers');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const {
   createTimestampedTestId,
@@ -202,7 +203,10 @@ describe('Parsing a PDR with multiple data types and node names', () => {
 
   afterAll(async () => {
     await Promise.all(testGranuleIds.map(
-      (granuleId) => waitForGranuleAndDelete(stackName, granuleId, 'completed')
+      (granuleId) => waitForGranuleAndDelete(stackName,
+        granuleId,
+        ((found) => encodedConstructCollectionId(found.dataType, found.version))(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)),
+        'completed')
     ));
     await deletePdr({ prefix: stackName, pdrName });
     await Promise.all(queueGranulesOutput.payload.running.map(
@@ -266,7 +270,9 @@ describe('Parsing a PDR with multiple data types and node names', () => {
       else {
         const granules = await Promise.all(testGranuleIds.map((granuleId) => waitForApiStatus(
           getGranule,
-          { prefix: stackName, granuleId },
+          { prefix: stackName,
+            granuleId,
+            collectionId: ((found) => encodedConstructCollectionId(found.dataType, found.version))(parsePdrOutput.payload.granules.find((ele) => ele.granuleId === granuleId)) },
           'completed'
         )));
         granules.forEach((g) => {

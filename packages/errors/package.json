@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/errors",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "description": "Provides error classes for Cumulus",
   "keywords": [
     "GIBS",
@@ -26,7 +26,6 @@
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
-    "test:coverage": "../../node_modules/.bin/nyc true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"

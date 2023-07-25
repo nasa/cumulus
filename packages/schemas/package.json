@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/schemas",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "description": "Helpers for managing Cumulus task schemas",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/schemas",
   "repository": {
@@ -22,7 +22,8 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "bin": {
     "generate-task-schemas": "./dist/generate-task-schemas.js"

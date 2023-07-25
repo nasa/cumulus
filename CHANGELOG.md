@@ -4,9 +4,119 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased Phase 3
+## Unreleased
 
-### Breaking Changes
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+- **CUMULUS-3287**
+  - Added variable to allow the aws_ecs_task_definition health check to be configurable.
+  - Added clarity to how the bucket field needs to be configured for the move-granules task definition
+
+### Changed
+
+- Security upgrade node from 14.19.3-buster to 14.21.1-buster
+- **CUMULUS-2985**
+  - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
+  - Changed the `invokeRerun` function to only re-run enabled rules
+- **CUMULUS-3252**
+  - Updated example/cumulus-tf/orca.tf to use orca v8.0.1
+  - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
+  - Updated `tf-modules/cumulus` module to take variable `orca_lambda_copy_to_archive_arn` and pass to `tf-modules/ingest`
+  - Updated `example/cumulus-tf/ingest_and_publish_granule_with_orca_workflow.tf` `CopyToGlacier` (renamed to `CopyToArchive`) step to call
+    `orca_copy_to_archive_adapter_task`
+- **CUMULUS-3253**
+  - Added cumulus task `@cumulus/orca-recovery-adapter`, and add the task to `tf-modules/ingest`
+  - Updated `tf-modules/cumulus` module to take variable `orca_sfn_recovery_workflow_arn` and pass to `tf-modules/ingest`
+  - Added `example/cumulus-tf/orca_recovery_adapter_workflow.tf`, `OrcaRecoveryAdapterWorkflow` workflow has `OrcaRecoveryAdapter` task
+    to call the ORCA recovery step-function.
+  - Updated `example/data/collections/` collection configuration `meta.granuleRecoveryWorkflow` to use `OrcaRecoveryAdapterWorkflow`
+- **CUMULUS-3215**
+  - Create reconciliation reports will properly throw errors and set the async
+    operation status correctly to failed if there is an error.
+  - Knex calls relating to reconciliation reports will retry if there is a
+    connection terminated unexpectedly error
+  - Improved logging for async operation
+  - Set default async_operation_image_version to 47
+- **CUMULUS-3024**
+  - Combined unit testing of @cumulus/api/lib/rulesHelpers to a single test file
+    `api/tests/lib/test-rulesHelpers` and removed extraneous test files.
+- **CUMULUS-3209**
+  - Apply brand color with high contrast settings for both (light and dark) themes.
+  - Cumulus logo can be seen when scrolling down.
+  - "Back to Top" button matches the brand color for both themes.
+  - Update "note", "info", "tip", "caution", and "warning" components to [new admonition styling](https://docusaurus.io/docs/markdown-features/admonitions).
+  - Add updated arch diagram for both themes.
+- **CUMULUS-3203**
+  - Removed ACL setting of private on S3.multipartCopyObject() call
+  - Removed ACL setting of private for s3PutObject()
+  - Removed ACL confguration on sync-granules task
+  - Update documentation on dashboard deployment to exclude ACL public-read setting
+- **CUMULUS-3245**
+  - Update SQS consumer logic to catch ExecutionAlreadyExists error and
+    delete SQS message accordingly.
+  - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+
+### Fixed
+
+- **CUMULUS-2625**
+  - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
+
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+
+## [v16.0.0] 2023-05-09
+
+### MIGRATION notes
+
+#### PI release version
+
+When updating directly to v16 from prior releases older that V15, please make sure to
+read through all prior release notes.
+
+Notable migration concerns since the last PI release version (11.1.x):
+
+- [v14.1.0] - Postgres compatibility update to Aurora PostgreSQL 11.13.
+- [v13.1.0] - Postgres update to add `files_granules_cumulus_id_index` to the
+  `files` table may require manual steps depending on load.
+
+#### RDS Phase 3 migration notes
+
+This release includes updates that remove existing DynamoDB tables as part of
+release deployment process.   This release *cannot* be properly rolled back in
+production as redeploying a prior version of Cumulus will not recover the
+associated Dynamo tables.
+
+Please read the full change log for RDS Phase 3 and consult the [RDS Phase 3 update
+documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-rds-phase-3-release)
+
+#### API Endpoint Versioning
+
+As part of the work on CUMULUS-3072, we have added a required header for the
+granule PUT/PATCH endpoints -- to ensure that older clients/utilities do not
+unexpectedly make destructive use of those endpoints, a validation check of a
+header value against supported versions has been implemented.
+
+Moving forward, if a breaking change is made to an existing endpoint that
+requires user updates, as part of that update we will set the current version of
+the core API and require a header that confirms the client is compatible with
+the version required or greater.
+
+In this instance, the granule PUT/PATCH
+endpoints will require a `Cumulus-API-Version` value of at least `2`.
+
+```bash
+ curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
+ --header 'Cumulus-API-Version': '2'\
+ --header 'Authorization: Bearer ReplaceWithToken'\
+ --data ...
+```
+
+Users/clients that do not make use of these endpoints will not be impacted.
+
+### RDS Phase 3
+#### Breaking Changes
 
 - **CUMULUS-2688**
   - Updated bulk operation logic to use collectionId in addition to granuleId to fetch granules.
@@ -14,33 +124,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2856**
   - Update execution PUT endpoint to no longer respect message write constraints and update all values passed in
 
-### Changed
+#### Changed
 
 - **CUMULUS-3282**
   - Updated internal granule endpoint parameters from :granuleName to :granuleId
     for maintenance/consistency reasons
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
-  - **CUMULUS-3199**
-    - Removed DbIndexer lambda and all associated terraform resources
-  - **CUMULUS-2793**
-    - Removed Provider Dynamo model and related test code
   - **CUMULUS-2645**
-    - Removed dynamo structural migrations and related code from `@cumulus/api`
     - Removed unused index functionality for all tables other than
       `ReconciliationReportsTable` from `dbIndexer` lambda
-    - Removed `executeMigrations` lambda
-    - Removed `granuleFilesCacheUpdater` lambda
-    - Removed dynamo files table from `data-persistence` module.  *This table and
-      all of its data will be removed on deployment*.
   - **CUMULUS-2398**
     - Remove all dynamoDB updates for `@cumulus/api/ecs/async-operation/*`
     - Updates all api endpoints with updated signature for
       `asyncOperationsStart` calls
     - Remove all dynamoDB models calls from async-operations api endpoints
-  - **CUMULUS-2795**
-    - Removed API executions model
-  - **CUMULUS-2796**
-    - Remove API Pdrs model and all related test code
   - **CUMULUS-2801**
     - Move `getFilesExistingAtLocation`from api granules model to api/lib, update granules put
       endpoint to remove model references
@@ -73,47 +170,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - **CUMULUS-2817**
     - Removes deletion of DynamoDB record from API endpoint DELETE /collection/<name>/<version>
   - **CUMULUS-2814**
-    - Remove DynamoDB logic from rules `DELETE` endpoint
     - Move event resources deletion logic from `rulesModel` to `rulesHelper`
   - **CUMULUS-2815**
-    - Remove update of DynamoDB record from API endpoint PUT /collections/<name>/<version>
     - Move File Config and Core Config validation logic for Postgres Collections from `api/models/collections.js` to `api/lib/utils.js`
   - **CUMULUS-2813**
     - Removes creation and deletion of DynamoDB record from API endpoint POST /rules/
   - **CUMULUS-2816**
     - Removes addition of DynamoDB record from API endpoint POST /collections
-  - **CUMULUS-2794**
-    - Remove API Collections model and all related test code
-    - Remove lambdas/postgres-migration-count-tool, api/endpoints/migrationCounts and api-client/migrationCounts
-    - Remove lambdas/data-migration1 tool
-    - Remove lambdas/data-migration2 and lambdas/postgres-migration-async-operation
-  - **CUMULUS-2792**
-    - Remove API Granule model and all related test code
-    - Remove granule-csv endpoint
   - **CUMULUS-2797**
-    - Remove API Rules model and all related test code
     - Move rule helper functions to separate rulesHelpers file
   - **CUMULUS-2821**
     - Remove DynamoDB logic from `sfEventSqsToDbRecords` lambda
   - **CUMULUS-2856**
     - Update API/Message write logic to handle nulls as deletion in execution PUT/message write logic
-  - **CUMULUS-3008**
-    - Remove DynamoDB Collections table
-  - **CUMULUS-2798**
-    - Removed AsyncOperations model
-  - **CUMULUS-3009**
-    - Removed Dynamo PDRs table
-  - **CUMULUS-3226**
-    - Removed Dynamo Async Operations table
 
-### Added
+#### Added
 
 - **CUMULUS-2312** - RDS Migration Epic Phase 3
   - **CUMULUS-2813**
     - Added function `create` in the `db` model for Rules
       to return an array of objects containing all columns of the created record.
   - **CUMULUS-2812**
-    - Remove DynamoDB logic from rules `PUT` endpoint
     - Move event resources logic from `rulesModel` to `rulesHelper`
   - **CUMULUS-2820**
     - Remove deletion of DynamoDB record from API endpoint DELETE /pdr/<pdrName>
@@ -122,40 +199,49 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Add new endpoints to update and delete granules by collectionId as well as
       granuleId
 
-
-### Removed
+#### Removed
 
 - **CUMULUS-2994**
   - Delete code/lambdas that publish DynamoDB stream events to SNS
-
-
-## Unreleased
-
-### MIGRATION notes
-
-#### API Endpoint Versioning
-
-As part of the work on CUMULUS-3072, we have added a required header for the
-granule PUT/PATCH endpoints -- to ensure that older clients/utilities do not
-unexpectedly make destructive use of those endpoints, a validation check of a
-header value against supported versions has been implemented.
-
-Moving forward, if a breaking change is made to an existing endpoint that
-requires user updates, as part of that update we will set the current version of
-the core API and require a header that confirms the client is compatible with
-the version required or greater.
-
-In this instance, the granule PUT/PATCH
-endpoints will require a `Cumulus-API-Version` value of at least `2`.
-
-```bash
- curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
- --header 'Cumulus-API-Version': '2'\
- --header 'Authorization: Bearer ReplaceWithToken'\
- --data ...
-```
-
-Users/clients that do not make use of these endpoints will not be impacted.
+- **CUMULUS-3226**
+  - Removed Dynamo Async Operations table
+- **CUMULUS-3199**
+  - Removed DbIndexer lambda and all associated terraform resources
+- **CUMULUS-3009**
+  - Removed Dynamo PDRs table
+- **CUMULUS-3008**
+  - Removed DynamoDB Collections table
+- **CUMULUS-2815**
+  - Remove update of DynamoDB record from API endpoint PUT /collections/<name>/<version>
+- **CUMULUS-2814**
+  - Remove DynamoDB logic from rules `DELETE` endpoint
+- **CUMULUS-2812**
+  - Remove DynamoDB logic from rules `PUT` endpoint
+- **CUMULUS-2798**
+  - Removed AsyncOperations model
+- **CUMULUS-2797**
+- **CUMULUS-2795**
+  - Removed API executions model
+- **CUMULUS-2796**
+  - Remove API pdrs model and all related test code
+  - Remove API Rules model and all related test code
+- **CUMULUS-2794**
+  - Remove API Collections model and all related test code
+  - Remove lambdas/postgres-migration-count-tool, api/endpoints/migrationCounts and api-client/migrationCounts
+  - Remove lambdas/data-migration1 tool
+  - Remove lambdas/data-migration2 and
+    lambdas/postgres-migration-async-operation
+- **CUMULUS-2793**
+  - Removed Provider Dynamo model and related test code
+- **CUMULUS-2792**
+  - Remove API Granule model and all related test code
+  - Remove granule-csv endpoint
+- **CUMULUS-2645**
+  - Removed dynamo structural migrations and related code from `@cumulus/api`
+  - Removed `executeMigrations` lambda
+  - Removed `granuleFilesCacheUpdater` lambda
+  - Removed dynamo files table from `data-persistence` module.  *This table and
+    all of its data will be removed on deployment*.
 
 ### Added
 - **CUMULUS-3072**
@@ -168,6 +254,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Changed
 
+- **CUMULUS-3315**
+  - Updated `@cumulus/api-client/granules.bulkOperation` to remove `ids`
+    parameter in favor of `granules` parameter, in the form of a
+    `@cumulus/types/ApiGranule` that requires the following keys: `[granuleId, collectionId]`
+- **CUMULUS-3307**
+  - Pinned cumulus dependency on `pg` to `v8.10.x`
 - **CUMULUS-3279**
   - Updated core dependencies on `xml2js` to `v0.5.0`
   - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
@@ -180,6 +272,57 @@ Users/clients that do not make use of these endpoints will not be impacted.
     after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3165**
   - Update example/cumulus-tf/orca.tf to use orca v6.0.3
+
+### Fixed
+
+- **CUMULUS-3315**
+  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
+    instead of NPM `parallel` package, as timeouts were not resulting in
+    integration test failure
+- **CUMULUS-3223**
+  - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
+  - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
+    and only reprocess messages when cumulus message can't be retrieved from the execution events.
+  - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
+
+## [v15.0.4] 2023-06-23
+
+### Changed
+
+- **CUMULUS-3307**
+  - Pinned cumulus dependency on `pg` to `v8.10.x`
+
+### Fixed
+
+- **CUMULUS-3115**
+  - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
+    after receiving a 404 Not Found Response Error from the `cumulus-api`.
+- **CUMULUS-3315**
+  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
+    instead of NPM `parallel` package, as timeouts were not resulting in
+    integration test failure
+- **CUMULUS-3223**
+  - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
+  - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
+    and only reprocess messages when cumulus message can't be retrieved from the execution events.
+  - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
+
+## [v15.0.3] 2023-04-28
+
+### Fixed
+
+- **CUMULUS-3243**
+  - Updated granule delete logic to delete granule which is not in DynamoDB
+  - Updated granule unpublish logic to handle granule which is not in DynamoDB and/or CMR
+
+## [v15.0.2] 2023-04-25
+
+### Fixed
+
+- **CUMULUS-3120**
+  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods`
+  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
+  - Updated cloudwatch retention documentation to reflect the bugfix changes
 
 ## [v15.0.1] 2023-04-20
 
@@ -7098,7 +7241,12 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v15.0.1...HEAD
+
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.0.0...HEAD
+[v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
+[v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
+[v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
+[v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
 [v15.0.0]: https://github.com/nasa/cumulus/compare/v14.1.0...v15.0.0
 [v14.1.0]: https://github.com/nasa/cumulus/compare/v14.0.0...v14.1.0

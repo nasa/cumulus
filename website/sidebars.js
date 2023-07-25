@@ -130,6 +130,7 @@ const sidebars = {
         'workflows/protocol',
         'workflows/input_output',
         'workflows/workflow-triggers',
+        'workflows/message_granule_writes',
         {
           type: 'category',
           label: 'Workflow Tasks',
@@ -225,6 +226,7 @@ const sidebars = {
         'upgrade-notes/update-task-file-schemas',
         'upgrade-notes/update-cma-2.0.2',
         'upgrade-notes/upgrade-rds-phase-3-release',
+        'upgrade-notes/rds-phase-3-data-migration-guidance',
       ],
     },
     {

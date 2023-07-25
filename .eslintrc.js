@@ -113,6 +113,7 @@ module.exports = {
     ],
     strict: 'off',
     'guard-for-in': 'off',
+    'no-restricted-syntax': ['error', 'ForInStatement', 'LabeledStatement', 'WithStatement'],
     'object-shorthand': 'off',
     'space-before-function-paren': [
       'error',

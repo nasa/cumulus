@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const get = require('lodash/get');
@@ -54,10 +56,6 @@ async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
     });
   }
   return rules;
-}
-
-async function fetchAllRules() {
-  return await fetchRules({});
 }
 
 async function fetchEnabledRules() {
@@ -198,7 +196,7 @@ async function isEventSourceMappingShared(knex, rule, eventType) {
  * @param {Knex}    knex      - DB client
  * @param {RuleRecord} rule   - the rule item
  * @param {string}  eventType - kinesisSourceEvent type ['arn', 'log_event_arn']
- * @param {string}  id        - event source id
+ * @param {{log_event_arn?: string, arn?: string}} id        - event source id
  * @returns {Promise} the response from event source delete
  */
 async function deleteKinesisEventSource(knex, rule, eventType, id) {
@@ -213,13 +211,20 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
   return undefined;
 }
 
+// @typedef { typeof deleteKinesisEventSource } deleteKinesisEventSource
+
 /**
  * Delete event source mappings for all mappings in the kinesisSourceEvents
+ *
  * @param {Knex} knex       - DB client
  * @param {RuleRecord} rule - the rule item
+ * @param {{deleteKinesisEventSourceMethod: deleteKinesisEventSource}} testContext -
  * @returns {Promise<Array>} array of responses from the event source deletion
  */
-async function deleteKinesisEventSources(knex, rule) {
+async function deleteKinesisEventSources(knex, rule, testContext = {
+  deleteKinesisEventSourceMethod: deleteKinesisEventSource,
+}) {
+  const deleteKinesisEventSourceMethod = testContext.deleteKinesisEventSourceMethod;
   const kinesisSourceEvents = [
     {
       name: process.env.messageConsumer,
@@ -237,7 +242,7 @@ async function deleteKinesisEventSources(knex, rule) {
     },
   ];
   const deleteEventPromises = kinesisSourceEvents.map(
-    (lambda) => deleteKinesisEventSource(knex, rule, lambda.eventType, lambda.type).catch(
+    (lambda) => deleteKinesisEventSourceMethod(knex, rule, lambda.eventType, lambda.type).catch(
       (error) => {
         log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
         if (error.code !== 'ResourceNotFoundException') throw error;
@@ -302,7 +307,7 @@ async function deleteRuleResources(knex, rule) {
     break;
   }
   case 'sns': {
-    if (rule.state === 'ENABLED') {
+    if (rule.rule.arn) {
       await deleteSnsTrigger(knex, rule);
     }
     break;
@@ -363,7 +368,7 @@ async function validateAndUpdateSqsRule(rule) {
    * Add an event source to a target lambda function
    *
    * @param {RuleRecord} item   - The rule item
-   * @param {string}  lambda - The name of the target lambda
+   * @param {{ name: string | undefined}}  lambda - The name of the target lambda
    * @returns {Promise}
    */
 async function addKinesisEventSource(item, lambda) {
@@ -399,7 +404,7 @@ async function addKinesisEventSource(item, lambda) {
 /**
  * Add event sources for all mappings in the kinesisSourceEvents
  * @param {RuleRecord} rule - The rule item
- * @returns {Object}     - Returns arn and logEventArn
+ * @returns {Promise<Object>}     - Returns arn and logEventArn
  */
 async function addKinesisEventSources(rule) {
   const kinesisSourceEvents = [
@@ -580,8 +585,13 @@ function recordIsValid(rule) {
  * @returns {Promise} lambda invocation response
  */
 async function invokeRerun(rule) {
-  const payload = await buildPayload(rule);
-  await invoke(process.env.invoke, payload);
+  if (rule.state !== 'DISABLED') {
+    const payload = await buildPayload(rule);
+    await invoke(process.env.invoke, payload);
+  } else {
+    log.error(`Cannot re-run rule ${rule.name} with a ${rule.state} state, please enable the rule and re-run.`);
+    throw new Error(`Cannot re-run rule ${rule.name} with a ${rule.state} state, please enable the rule and re-run.`);
+  }
 }
 
 /**
@@ -647,17 +657,18 @@ async function updateRuleTrigger(original, updates) {
  * Creates rule trigger for rule
  *
  * @param {RuleRecord} ruleItem - Rule to create trigger for
- *
+ * @param {Object} testParams - Function to determine to use actual invoke or testInvoke
  * @returns {Promise<RuleRecord>} - Returns new rule object
  */
-async function createRuleTrigger(ruleItem) {
+async function createRuleTrigger(ruleItem, testParams = {}) {
   let newRuleItem = cloneDeep(ruleItem);
   // the default value for enabled is true
   if (newRuleItem.state === undefined) {
     newRuleItem.state = 'ENABLED';
   }
-  const enabled = newRuleItem.state === 'ENABLED';
 
+  const enabled = newRuleItem.state === 'ENABLED';
+  const invokeMethod = testParams.invokeMethod || invoke;
   // make sure the name only has word characters
   const re = /\W/;
   if (re.test(ruleItem.name)) {
@@ -670,7 +681,9 @@ async function createRuleTrigger(ruleItem) {
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {
   case 'onetime': {
-    await invoke(process.env.invoke, payload);
+    if (enabled) {
+      await invokeMethod(process.env.invoke, payload);
+    }
     break;
   }
   case 'scheduled': {
@@ -698,40 +711,14 @@ async function createRuleTrigger(ruleItem) {
   return newRuleItem;
 }
 
-/**
- * Removes SNS triggers or Kineses events from a rule
- *
- * @param {knex} knex - Knex DB Client
- * @param {RuleRecord} apiRule - API-formatted Rule object
- *
- * @returns {Promise} - Returns response from deletion function
- */
-async function deleteOldEventSourceMappings(knex, apiRule) {
-  switch (apiRule.rule.type) {
-  case 'kinesis':
-    await deleteKinesisEventSources(knex, apiRule);
-    break;
-  case 'sns': {
-    if (apiRule.rule.arn) {
-      await deleteSnsTrigger(knex, apiRule);
-    }
-    break;
-  }
-  default:
-    break;
-  }
-}
-
 module.exports = {
   buildPayload,
   checkForSnsSubscriptions,
   createRuleTrigger,
   deleteKinesisEventSource,
   deleteKinesisEventSources,
-  deleteOldEventSourceMappings,
   deleteRuleResources,
   deleteSnsTrigger,
-  fetchAllRules,
   fetchEnabledRules,
   fetchRules,
   filterRulesbyCollection,

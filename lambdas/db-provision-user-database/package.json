@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/db-provision-user-database-lambda",
-  "version": "15.0.0",
+  "version": "16.0.0",
   "description": "A Lambda function used for provisioning user databases",
   "engines": {
     "node": ">=16.19.0"
@@ -10,11 +10,13 @@
     "clean": "rm -rf dist",
     "package": "npm run clean && npm run tsc && npm run webpack && (cd dist/webpack && zip lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "python-lint": "true",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "webpack": "../../node_modules/.bin/webpack"
+    "webpack": "../../node_modules/.bin/webpack",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "directories": {
     "test": "tests"
@@ -24,10 +26,10 @@
     "timeout": "2m"
   },
   "dependencies": {
-    "@cumulus/common": "15.0.0",
-    "@cumulus/db": "15.0.0",
+    "@cumulus/common": "16.0.0",
+    "@cumulus/db": "16.0.0",
     "knex": "2.4.1",
-    "pg": "^8.3.0"
+    "pg": "~8.10"
   },
   "devDependencies": {
     "@types/pg": "^7.14.4"

@@ -19,7 +19,6 @@ const GranuleFetcher = require('./GranuleFetcher');
  * @param {Object[]} kwargs.granules - the granules to be ingested
  * @param {boolean} [kwargs.syncChecksumFiles=false] - if `true`, also ingest
  *    all corresponding checksum files
- * @param {string} kwargs.ACL - Access Control List
  * @returns {Promise<Array>} the list of successfully ingested granules, or an
  *    empty list if the input granules was not a non-empty array of granules
  */
@@ -29,7 +28,6 @@ async function download({
   provider,
   granules,
   syncChecksumFiles = false,
-  ACL,
 }) {
   if (!Array.isArray(granules) || granules.length === 0) return [];
 
@@ -38,10 +36,9 @@ async function download({
     + `bucket: ${bucket}, `
     + `provider: ${JSON.stringify(provider)}, `
     + `granuleID: ${granules[0].granuleId}, `
-    + `ACL: ${ACL}`
   );
 
-  const proceed = await lock.proceed(bucket, provider, granules[0].granuleId, ACL);
+  const proceed = await lock.proceed(bucket, provider, granules[0].granuleId);
 
   if (!proceed) {
     const err = new errors.ResourcesLockedError(
@@ -82,20 +79,6 @@ async function download({
 }
 
 /**
-* Disable ACL using value supplied from configuration.
-* Defaults to private. ACL value of 'disabled' disables it.
-*
-* @param {string} acl
-* @returns {string | undefined }
-*/
-function disableOrDefaultAcl(acl) {
-  if (acl === 'disabled') {
-    return undefined;
-  }
-  return 'private';
-}
-
-/**
  * Ingest a list of granules
  *
  * @param {Object} event - contains input and config parameters
@@ -105,7 +88,6 @@ function disableOrDefaultAcl(acl) {
 function syncGranule(event) {
   const now = Date.now();
   const config = event.config;
-  const ACL = disableOrDefaultAcl(config.ACL);
   const input = event.input;
   const stack = config.stack;
   const buckets = config.buckets;
@@ -118,7 +100,6 @@ function syncGranule(event) {
     Math.min(config.workflowStartTime, now) :
     now;
 
-  log.debug(`Putting object in S3 with parameters: ACL: ${ACL}`);
   // use stack and collection names to suffix fileStagingDir
   const fileStagingDir = s3Join(
     (config.fileStagingDir || 'file-staging'),
@@ -145,7 +126,6 @@ function syncGranule(event) {
     provider,
     granules: input.granules,
     syncChecksumFiles,
-    ACL,
   }).then((granuleResults) => {
     // eslint-disable-next-line camelcase
     const granuleDuplicates = {};
@@ -200,6 +180,5 @@ async function handler(event, context) {
 
 module.exports = {
   handler,
-  disableOrDefaultAcl,
   syncGranule,
 };

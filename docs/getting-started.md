@@ -32,7 +32,7 @@ Cumulus operators are those who work within Cumulus to ingest/archive data and m
 
 As a developer, integrator, or operator, you will need to set up your environments to work in Cumulus. The following docs can get you started in your role specific activities.
 
-* [Developers](https://github.com/nasa/cumulus)
+* [Developers](https://wiki.earthdata.nasa.gov/display/CUMULUS/Cumulus+Developer+Onboarding+Overview) - Cumulus Team Dev
 * [Integrators](integrator-guide/about-int-guide)
 * [Operators](operator-docs/about-operator-docs)
 
@@ -99,10 +99,7 @@ Here are some useful tips to keep in mind when deploying or working in Cumulus.
 * [Versioning and Releases](https://github.com/nasa/cumulus/blob/master/docs/development/release.md): This documentation gives information on our global versioning approach. We suggest upgrading to the supported version for Cumulus, Cumulus dashboard, and Thin Egress App (TEA).
 * [Cumulus Developer Documentation](https://github.com/nasa/cumulus#cumulus-framework): We suggest that you read through and reference this resource for development best practices in Cumulus.
 * [Cumulus Deployment](deployment): We will guide you on how to manually deploy a new instance of Cumulus. In this reference, you will learn how to install Terraform, create an AWS S3 bucket, configure a compatible database, and create a Lambda layer.
-* [Terraform Best Practices](deployment/terraform-best-practices): This will help guide you through your Terraform configuration and Cumulus deployment.
-
-> For an introduction about Terraform go [here](https://www.terraform.io/intro/index.html).
-
+* [Terraform Best Practices](deployment/terraform-best-practices): This will help guide you through your Terraform configuration and Cumulus deployment. For an introduction about Terraform, go to [Terraform's official site](https://www.terraform.io/intro/index.html).
 * [Integrator Common Use Cases](integrator-guide/int-common-use-cases): Scenarios to help integrators along in the Cumulus environment.
 
 ### Operator

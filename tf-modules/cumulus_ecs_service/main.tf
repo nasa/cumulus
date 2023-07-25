@@ -16,7 +16,7 @@ data "aws_region" "current" {}
 
 resource "aws_cloudwatch_log_group" "default" {
   name              = "${local.full_name}EcsLogs"
-  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "cumulus_ecs_service_default_log_retention", var.default_log_retention_days)
+  retention_in_days = lookup(var.cloudwatch_log_retention_periods, "EcsLogs", var.default_log_retention_days)
   tags              = var.tags
 }
 
@@ -33,6 +33,7 @@ resource "aws_ecs_task_definition" "default" {
       privileged        = var.privileged
       environment       = [for k, v in var.environment : { name = k, value = v }]
       image             = var.image
+      healthCheck       = var.health_check
       memoryReservation = var.memory_reservation
       command           = var.command
       logConfiguration = {

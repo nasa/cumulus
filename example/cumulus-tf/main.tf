@@ -140,6 +140,8 @@ module "cumulus" {
   oauth_user_group = var.oauth_user_group
 
   orca_api_uri = module.orca[0].orca_api_deployment_invoke_url
+  orca_lambda_copy_to_archive_arn = module.orca[0].orca_lambda_copy_to_archive_arn
+  orca_sfn_recovery_workflow_arn  = module.orca[0].orca_sfn_recovery_workflow_arn
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
@@ -159,6 +161,8 @@ module "cumulus" {
   es_index_shards                           = var.es_index_shards
 
   dynamo_tables = merge(data.terraform_remote_state.data_persistence.outputs.dynamo_tables, var.optional_dynamo_tables)
+  default_log_retention_days = var.default_log_retention_days
+  cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
   # Archive API settings
   token_secret = var.token_secret
