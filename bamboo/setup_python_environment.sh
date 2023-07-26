@@ -1,7 +1,7 @@
 PYTHON_VERSION=$(cat .python-version)
 
-wget -c https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tar.xz
-tar -Jxf Python-3.11.0.tar.xz
+wget -c https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz
+tar -zxf Python-$PYTHON_VERSION.tgz
 cd Python-$PYTHON_VERSION
 ./configure --enable-optimizations
 make -j4 && sudo make altinstall
