@@ -1,5 +1,5 @@
 RETURN=$(pwd)
-
+cd /opt
 PYTHON_VERSION=$(cat .python-version)
 PYTHON_VERSION_PATCH=9
 wget -c https://www.python.org/ftp/python/$PYTHON_VERSION.$PYTHON_VERSION_PATCH/Python-$PYTHON_VERSION.$PYTHON_VERSION_PATCH.tgz
