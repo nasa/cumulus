@@ -4,7 +4,7 @@ wget -c https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION
 tar -zxf Python-$PYTHON_VERSION.tgz
 cd Python-$PYTHON_VERSION
 ./configure --enable-optimizations
-make -j4 && sudo make altinstall
+make -j4 && make altinstall
 update-alternatives --set python /usr/local/bin/python$PYTHON_VERSION
 
 update-alternatives --set python3 /usr/local/bin/python$PYTHON_VERSION
