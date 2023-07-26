@@ -161,12 +161,19 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                   collectionId,
                   granuleId,
                   status: 'queued',
+                  // The non-null assertion operator is used below because we know
+                  // createdAt and updatedAt are non-null values given the condition
+                  // checking updatedAt above, and the function call to updateGranuleBatchCreatedAt
+                  // which will set createdAt.
                   updatedAt: updatedAt!,
                   createdAt: createdAt!,
                 }
               })
             },
-            { concurrency: pMapConcurrency }
+            {
+              concurrency: pMapConcurrency,
+              stopOnError: false,
+            }
           )
 
           return await enqueueGranuleIngestMessage({
@@ -185,7 +192,10 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
             additionalCustomMeta: event.config.childWorkflowMeta,
           });
         },
-        { concurrency: pMapConcurrency }
+        {
+          concurrency: pMapConcurrency,
+          stopOnError: false,
+        }
       );
     },
     // purposefully serial, the chunks run in parallel.
