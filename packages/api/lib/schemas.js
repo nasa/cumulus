@@ -316,11 +316,7 @@ module.exports.granule = {
           source: { type: 'string' },
           type: { type: 'string' },
           updatedAt: { type: 'integer' },
-        },
-        required: [
-          'bucket',
-          'fileName',
-        ],
+        }
       },
     },
     error: {

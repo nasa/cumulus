@@ -632,8 +632,9 @@ const _writeGranuleRecords = async (params) => {
         knex,
         error: errorsObject,
       });
+      throw new Error('Granule/granule files failed schema validation and will be updated in the datastore with the error and a status of failed', { cause: thrownError });
     }
-    throw new Error('Granule/granule files failed schema validation and will be updated in the datastore with the error and a status of failed', { cause: thrownError });
+    throw thrownError;
   }
 };
 
