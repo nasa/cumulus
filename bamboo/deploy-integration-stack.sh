@@ -5,6 +5,8 @@ set -ex
 echo "Locking stack for deployment $DEPLOYMENT"
 cd example
 set +e
+
+.  ./bamboo/setup_python_environment.sh
 # Wait for the stack to be available
 node ./scripts/lock-stack.js lock "$GIT_SHA" "$DEPLOYMENT" true
 LOCK_EXISTS_STATUS=$?
