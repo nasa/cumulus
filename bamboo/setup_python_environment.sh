@@ -1,3 +1,5 @@
+RETURN=$(pwd)
+
 PYTHON_VERSION=$(cat .python-version)
 PYTHON_VERSION_PATCH=9
 wget -c https://www.python.org/ftp/python/$PYTHON_VERSION.$PYTHON_VERSION_PATCH/Python-$PYTHON_VERSION.$PYTHON_VERSION_PATCH.tgz
@@ -7,6 +9,8 @@ cd Python-$PYTHON_VERSION.$PYTHON_VERSION_PATCH
 make -j4 && make altinstall
 update-alternatives --install /usr/bin/python python /usr/local/bin/python$PYTHON_VERSION 1
 update-alternatives --set python /usr/local/bin/python$PYTHON_VERSION
+
+cd $RETURN
 # update-alternatives --install /usr/bin/python3 python3 /usr/local/bin/python$PYTHON_VERSION 1
 # update-alternatives --set python3 /usr/local/bin/python$PYTHON_VERSION
 #TODO handle this interaction with base python
