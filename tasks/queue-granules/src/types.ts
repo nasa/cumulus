@@ -1,6 +1,6 @@
 /**
  * This file is generated using @cumulus/schema. Any modifications made to this file
- * will the overwritten when the build script is rerun. Please do not modify this file.
+ * will be overwritten when the build script is rerun. Please do not modify this file.
  */
 
 /**
