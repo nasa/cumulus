@@ -11,7 +11,7 @@ npm install @octokit/graphql@2.1.1 simple-git@3.7.0
 
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
-. ./bamboo/setup_python_environment.sh
+
 
 npm config set unsafe-perm true
 
