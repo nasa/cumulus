@@ -2,7 +2,6 @@
 # shellcheck disable=SC2154
 set -ex
 
-. ./bamboo/setup_python_environment.sh
 
 # Bamboo envs are prefixed with bamboo_SECRET to avoid being printed
 declare -a param_list=(
