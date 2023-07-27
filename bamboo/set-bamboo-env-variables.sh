@@ -57,6 +57,7 @@ declare -a param_list=(
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_USE_TERRAFORM_ZIPS"
   "bamboo_VERSION_FLAG"
+  "bamboo_CUMULUS_BASE_IMAGE"
 )
 
 ## Strip 'bamboo_SECRET_' from secret keys
