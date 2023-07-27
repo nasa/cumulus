@@ -2112,7 +2112,7 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
     testOverrides: { stepFunctionUtils },
   }));
 
-  t.true(error.message.includes('The record has validation errors:'));
+  t.true(error.cause.message.includes('The record has validation errors:'));
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
