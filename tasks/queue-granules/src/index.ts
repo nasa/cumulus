@@ -148,10 +148,10 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
           await pMap(
             granuleBatch,
             (queuedGranule) => {
-              const { granuleId, updatedAt, createdAt } = queuedGranule
+              const { granuleId, updatedAt, createdAt } = queuedGranule;
 
               if (updatedAt && (!Number.isInteger(updatedAt) || updatedAt < 0)) {
-                throw new Error(`Invalid collection information provided for granule with granuleId: ${granuleId}, please check task input to make sure collection information is provided`)
+                throw new Error(`Invalid collection information provided for granule with granuleId: ${granuleId}, please check task input to make sure collection information is provided`);
               }
               return granulesApi.updateGranule({
                 prefix: event.config.stackName,
@@ -167,14 +167,14 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                   // which will set createdAt.
                   updatedAt: updatedAt!,
                   createdAt: createdAt!,
-                }
-              })
+                },
+              });
             },
             {
               concurrency: pMapConcurrency,
               stopOnError: false,
             }
-          )
+          );
 
           return await enqueueGranuleIngestMessage({
             messageTemplate,

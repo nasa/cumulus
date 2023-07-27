@@ -24,7 +24,7 @@ const pMap = require('p-map');
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
 const getCollection = sinon.stub();
-const updateGranule = sinon.spy(({ body: { createdAt }}) => createdAt);
+const updateGranule = sinon.spy(({ body: { createdAt } }) => createdAt);
 const enqueueGranuleIngestMessage = sinon.stub(queue, 'enqueueGranuleIngestMessage');
 
 const { queueGranules, updateGranuleBatchCreatedAt } = proxyquire('..', {
@@ -34,7 +34,7 @@ const { queueGranules, updateGranuleBatchCreatedAt } = proxyquire('..', {
     granules: { updateGranule },
     providers: fakeProvidersApi,
   },
-  '@cumulus/ingest/queue': { enqueueGranuleIngestMessage }
+  '@cumulus/ingest/queue': { enqueueGranuleIngestMessage },
 });
 
 test.beforeEach(async (t) => {
@@ -233,7 +233,6 @@ test.serial('Granules are added to the queue', async (t) => {
 
 test.serial('The correct message is enqueued without a PDR', async (t) => {
   const {
-    getCollection,
     event,
     queueUrl,
     queueExecutionLimits,
@@ -361,7 +360,6 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
 test.serial('granules are enqueued with createdAt values added to granules that are missing them', async (t) => {
   const {
-    getCollection,
     event,
   } = t.context;
 
@@ -427,7 +425,6 @@ test.serial('granules are enqueued with createdAt values added to granules that 
 
 test.serial('The correct message is enqueued with a PDR', async (t) => {
   const {
-    getCollection,
     event,
     queueUrl,
     queueExecutionLimits,
@@ -812,10 +809,10 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
 
   t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  await queueGranules(event); 
+  await queueGranules(event);
   t.is(
-    t.context.updateGranule.returnValues[0], 
-    t.context.enqueueGranuleIngestMessage.lastCall.returnValue.granules[0].createdAt,
+    t.context.updateGranule.returnValues[0],
+    t.context.enqueueGranuleIngestMessage.lastCall.returnValue.granules[0].createdAt
   );
 });
 
@@ -886,7 +883,7 @@ test.serial('does not change collection id on granule', async (t) => {
       files: [],
     },
   ];
-  
+
   t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
   await queueGranules(event);
@@ -1009,7 +1006,7 @@ test.serial('handles different providers', async (t) => {
       files: [],
     },
   ];
-  
+
   t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
   await queueGranules(event);

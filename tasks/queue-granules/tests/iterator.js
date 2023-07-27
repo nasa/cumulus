@@ -46,8 +46,8 @@ test('GroupAndChunkIterable handles NaN chunkSize', (t) => {
   const granule3 = createGranule('granule-3', 'collection-1', '001');
   const iterable = createIterable([granule1, granule2, granule3], Number.NaN);
   t.deepEqual(
-    [...iterable].flatMap(({ chunks }) => [...chunks]), 
-    [[granule1], [granule2], [granule3]],
+    [...iterable].flatMap(({ chunks }) => [...chunks]),
+    [[granule1], [granule2], [granule3]]
   );
 });
 
