@@ -79,7 +79,7 @@ class S3ProviderClient implements ProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {object} params - the full path to the remote file to be fetched
+   * @param {object} params
    * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
    * @param {string} params.bucket - destination s3 bucket of the file
    * @param {string} params.destinationBucket - destination s3 bucket of the file
@@ -151,7 +151,7 @@ class S3ProviderClient implements ProviderClient {
    * @param {object} params
    * @param {string} params.localPath - the full local file path
    * @param {string} params.uploadPath - the full remote file path for uploading file to
-   * @param {string} params.remoteAltBucket - alternate per-file bucket override to this.bucket
+   * @param {string} [params.remoteAltBucket] - alternate per-file bucket override to this.bucket
    * @returns {Promise<string>} the uri of the uploaded file
    */
   async upload(params: {

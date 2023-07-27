@@ -66,8 +66,9 @@ async function sendPAN(event: HandlerEvent): Promise<HandlerOutput> {
  *
  * @param {object} event      - a Cumulus Message
  * @param {object} context    - an AWS Lambda context
- * @returns {Promise<object>} - Returns output from task.
- *                              See schemas/output.json for detailed output schema
+ * @returns {Promise<CumulusMessageWithAssignedPayload | CumulusRemoteMessage>} -
+ *   Returns output from task.
+ *   See schemas/output.json for detailed output schema
  */
 export const handler = async (
   event: CumulusMessage | CumulusRemoteMessage,

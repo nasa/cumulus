@@ -540,7 +540,7 @@ describe('Ingesting from PDR', () => {
             Key: panKey,
           });
           expect(panExists).toEqual(true);
-          deleteS3Object(config.bucket, panKey);
+          await deleteS3Object(config.bucket, panKey);
         });
       });
     });
