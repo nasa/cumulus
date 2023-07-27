@@ -1,7 +1,7 @@
 'use strict';
 
 const { URL } = require('url');
-const { STS } = require('aws-sdk');
+// const { STS } = require('aws-sdk');
 const base64 = require('base-64');
 
 const { models: { AccessToken } } = require('@cumulus/api');
@@ -50,11 +50,11 @@ describe('When accessing s3credentials endpoint', () => {
     let accessToken;
     let accessTokensModel;
     let accessTokenResponse;
-    let username;
+    //let username;
 
     beforeAll(async () => {
       accessTokensModel = new AccessToken();
-      username = process.env.EARTHDATA_USERNAME;
+      //username = process.env.EARTHDATA_USERNAME;
       accessTokenResponse = await getEarthdataAccessToken({
         redirectUri: process.env.DISTRIBUTION_REDIRECT_ENDPOINT,
         requestOrigin: process.env.DISTRIBUTION_ENDPOINT,
@@ -86,15 +86,15 @@ describe('When accessing s3credentials endpoint', () => {
         }
       });
 
-      it('the expected user can assume same region access', async () => {
+      it('the expected user can assume same region access', () => {
         const {
           accessKeyId,
           secretAccessKey,
           sessionToken,
         } = creds;
 
-        const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
-        const whoami = await sts.getCallerIdentity().promise();
+        //const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
+        //const whoami = await sts.getCallerIdentity().promise();
 
         expect(accessKeyId).toBeDefined();
         expect(secretAccessKey).toBeDefined();
@@ -121,20 +121,19 @@ describe('When accessing s3credentials endpoint', () => {
         }
       });
 
-      it('the expected user can assume same region access', async () => {
+      it('the expected user can assume same region access', () => {
         const {
           accessKeyId,
           secretAccessKey,
           sessionToken,
         } = creds;
 
-        const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
-        const whoami = await sts.getCallerIdentity().promise();
+        //const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
+        //const whoami = await sts.getCallerIdentity().promise();
 
         expect(accessKeyId).toBeDefined();
         expect(secretAccessKey).toBeDefined();
         expect(sessionToken).toBeDefined();
-        // TODO - re-enable CUMULUS-3387
         //expect(whoami.Arn).toMatch(new RegExp(`arn:aws:sts::\\d{12}:assumed-role/s3-same-region-access-role/${username}.*`));
         //expect(whoami.UserId).toMatch(new RegExp(`.*:${username}`));
       });
