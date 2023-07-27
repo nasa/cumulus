@@ -6,8 +6,6 @@ set -e
 . ./bamboo/set-bamboo-env-variables.sh
 . ./bamboo/abort-if-not-pr.sh
 
-. ./bamboo/setup_python_environment.sh
-
 if [[ $USE_CACHED_BOOTSTRAP == true ]]; then ## Change into cached cumulus, pull down /cumulus ref and run there
   echo "*** Using cached bootstrap"
   cp .bamboo_env_vars /cumulus/
