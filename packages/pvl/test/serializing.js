@@ -1,5 +1,5 @@
 const test = require('ava');
-const jsToPVL = require('../t').jsToPVL;
+const jsToPVL = require('..').jsToPVL;
 const PVLRoot = require('../lib/models').PVLRoot;
 const PVLObject = require('../lib/models').PVLObject;
 const PVLGroup = require('../lib/models').PVLGroup;
