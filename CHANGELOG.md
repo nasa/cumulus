@@ -6,11 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-- **CUMULUS-3188**
-  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
-
 ### Changed
 
+- **CUMULUS-3258**
+  - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
