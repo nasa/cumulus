@@ -1065,3 +1065,34 @@ test.serial('queueGranules throws an error when no dataType, version, or collect
 
   await t.throwsAsync(queueGranules(event));
 });
+
+test.serial('queueGranules does not throw an error when updatedAt is provided and is not provided', async (t) => {
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      granuleId: randomString(), files: [], updatedAt: 1553053438767, collectionId: 'ABC___001',
+    },
+    {
+      granuleId: randomString(), files: [], collectionId: 'ABC___001',
+    },
+  ];
+
+  await t.notThrowsAsync(queueGranules(event));
+});
+
+test.serial('queueGranules throws an error when the updatedAt field is not an Integer value', async (t) => {
+  const { event } = t.context;
+  event.input.granules = [
+    {
+      granuleId: randomString(), files: [], updatedAt: '12/25/2022', collectionId: 'ABC___001',
+    },
+    {
+      granuleId: randomString(), files: [], updatedAt: 1553053438767.378196, collectionId: 'ABC___001',
+    },
+    {
+      granuleId: randomString(), files: [], updatedAt: -1, collectionId: 'ABC___001',
+    },
+  ];
+
+  await t.throwsAsync(queueGranules(event));
+});

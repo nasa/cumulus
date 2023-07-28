@@ -47,7 +47,7 @@ function getCollectionIdFromGranule(granule) {
   if (granule.dataType && granule.version) {
     return constructCollectionId(granule.dataType, granule.version);
   }
-  throw new Error('Invalid collection information provided, please check task input to make sure collection information is provided');
+  throw new Error(`Invalid collection information provided for granule with granuleId: ${granule.granuleId}', please check task input to make sure collection information is provided`);
 }
 
 /**
@@ -212,6 +212,11 @@ async function queueGranules(event, testMocks = {}) {
             granuleBatch,
             (queuedGranule) => {
               const granuleId = queuedGranule.granuleId;
+              const updatedAt = queuedGranule.updatedAt;
+
+              if (updatedAt && (!Number.isInteger(updatedAt) || updatedAt < 0)) {
+                throw new Error(`Invalid updatedAt value: ${queuedGranule.updatedAt} for granule with granuleId: ${queuedGranule.granuleId}`);
+              }
 
               return updateGranule({
                 prefix: event.config.stackName,
