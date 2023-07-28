@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+
+- **CUMULUS-3220**
+  - Created a new send-pan task
 - **CUMULUS-3270**
   - update to use python3.10
   - update dependencies to use python3.10 including CMA-python and cumulus-process-py
@@ -21,6 +25,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+  - Added optional additional properties to queue-granules input schema
 - **CUMULUS-3252**
   - Updated example/cumulus-tf/orca.tf to use orca v8.0.1
   - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
@@ -58,6 +65,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
   - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+- Added missing name to throttle_queue_watcher Cloudwatch event in `throttled-queue.tf`
 
 ### Fixed
 
