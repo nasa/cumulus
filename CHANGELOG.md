@@ -63,6 +63,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3319**
+  - Removed @cumulus/api/models/schema and changed all references to
+    @cumulus/api/lib/schema in docs and related models
+  - Removed @cumulus/api/models/errors.js
+
 - **CUMULUS-2625**
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
 
