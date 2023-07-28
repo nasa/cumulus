@@ -60,6 +60,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
   - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+- Added missing name to throttle_queue_watcher Cloudwatch event in `throttled-queue.tf`
 
 ### Fixed
 
