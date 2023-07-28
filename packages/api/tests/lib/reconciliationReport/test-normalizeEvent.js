@@ -4,7 +4,7 @@ const { InvalidArgument } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomId } = require('@cumulus/common/test-utils');
 const { normalizeEvent } = require('../../../lib/reconciliationReport/normalizeEvent');
-const { reconciliationReport } = require('../../../lib/schemas');
+const { reconciliationReport } = require('../../../models/schemas');
 
 test('normalizeEvent converts input key collectionId string to length 1 array on collectionIds', (t) => {
   const inputEvent = {

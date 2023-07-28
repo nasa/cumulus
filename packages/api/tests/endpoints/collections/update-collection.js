@@ -33,7 +33,7 @@ const {
   UnmatchedRegexError,
 } = require('@cumulus/errors');
 
-const { AccessToken } = require('../lib/access-token');
+const { AccessToken } = require('../../../models');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,

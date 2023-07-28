@@ -16,7 +16,7 @@ const { getLocalstackEndpoint } = require('@cumulus/aws-client/test-utils');
 const { randomId } = require('@cumulus/common/test-utils');
 const { OAuthClient, CognitoClient } = require('@cumulus/oauth-client');
 
-const { AccessToken } = require('../lib/access-token');
+const { AccessToken } = require('../../models');
 const { fakeAccessTokenFactory } = require('../../lib/testUtils');
 
 process.env.OAUTH_CLIENT_ID = randomId('edlId');

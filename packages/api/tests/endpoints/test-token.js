@@ -20,7 +20,7 @@ const {
   fakeAccessTokenFactory,
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
-const { AccessToken } = require('../lib/access-token');
+const { AccessToken } = require('../../models');
 
 let accessTokenModel;
 

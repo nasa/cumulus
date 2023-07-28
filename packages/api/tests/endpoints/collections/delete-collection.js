@@ -31,7 +31,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { AccessToken } = require('../lib/access-token');
+const { AccessToken } = require('../../../models');
 const {
   createCollectionTestRecords,
   createFakeJwtAuthToken,

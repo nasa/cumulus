@@ -20,7 +20,7 @@ const {
 
 const { verifyJwtAuthorization } = require('../lib/request');
 
-const { AccessToken } = require('../lib/access-tokens');
+const { AccessToken } = require('../models');
 
 const buildPermanentRedirectResponse = (location, response) =>
   response

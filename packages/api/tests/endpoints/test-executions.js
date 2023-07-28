@@ -40,7 +40,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { AccessToken } = require('../lib/access-token');
+const { AccessToken } = require('../../models');
 // Dynamo mock data factories
 const {
   createFakeJwtAuthToken,

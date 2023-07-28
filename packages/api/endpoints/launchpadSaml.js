@@ -18,7 +18,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const log = require('@cumulus/common/log');
 
-const { AccessToken } = require('../lib/access-token');
+const { AccessToken } = require('../models');
 const { createJwtToken } = require('../lib/token');
 
 const parseXmlString = promisify(parseString);
