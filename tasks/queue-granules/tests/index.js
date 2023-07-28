@@ -888,10 +888,15 @@ test.serial('does not change collection id on granule', async (t) => {
 
   await queueGranules(event);
 
-  const createdMap = Object.fromEntries(
-    t.context.updateGranule.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
-  );
+  const granuleDates = t.context.updateGranule.getCalls()
+    .map(({ args: [params] }) => [
+      params.granuleId,
+      {
+        createdAt: params.body.createdAt,
+        updatedAt: params.body.updatedAt,
+      },
+    ]);
+  const createdMap = Object.fromEntries(granuleDates);
   t.deepEqual(
     t.context.updateGranule.getCalls()
       .map(({ args: [params] }) => params)
@@ -907,8 +912,8 @@ test.serial('does not change collection id on granule', async (t) => {
             collectionId,
             granuleId,
             status: 'queued',
-            createdAt: createdMap[granuleId],
-            updatedAt: undefined,
+            createdAt: createdMap[granuleId].createdAt,
+            updatedAt: createdMap[granuleId].updatedAt,
           },
         };
       }
@@ -949,10 +954,16 @@ test.serial('handles different collections', async (t) => {
 
   await queueGranules(event);
 
-  const createdMap = Object.fromEntries(
-    t.context.updateGranule.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
-  );
+  const granuleDates = t.context.updateGranule.getCalls()
+    .map(({ args: [params] }) => [
+      params.granuleId,
+      {
+        createdAt: params.body.createdAt,
+        updatedAt: params.body.updatedAt,
+      },
+    ]);
+  const createdMap = Object.fromEntries(granuleDates);
+
   t.deepEqual(
     t.context.updateGranule.getCalls()
       .map(({ args: [params] }) => params)
@@ -968,8 +979,8 @@ test.serial('handles different collections', async (t) => {
             collectionId,
             granuleId,
             status: 'queued',
-            createdAt: createdMap[granuleId],
-            updatedAt: undefined,
+            createdAt: createdMap[granuleId].createdAt,
+            updatedAt: createdMap[granuleId].updatedAt,
           },
         };
       }
@@ -1011,10 +1022,16 @@ test.serial('handles different providers', async (t) => {
 
   await queueGranules(event);
 
-  const createdMap = Object.fromEntries(
-    t.context.updateGranule.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
-  );
+  const entries = t.context.updateGranule.getCalls()
+    .map(({ args: [params] }) => [
+      params.granuleId,
+      {
+        createdAt: params.body.createdAt,
+        updatedAt: params.body.updatedAt,
+      },
+    ]);
+  const createdMap = Object.fromEntries(entries);
+
   t.deepEqual(
     t.context.updateGranule.getCalls()
       .map(({ args: [params] }) => params)
@@ -1030,8 +1047,8 @@ test.serial('handles different providers', async (t) => {
             collectionId,
             granuleId,
             status: 'queued',
-            createdAt: createdMap[granuleId],
-            updatedAt: undefined,
+            createdAt: createdMap[granuleId].createdAt,
+            updatedAt: createdMap[granuleId].updatedAt,
           },
         };
       }
