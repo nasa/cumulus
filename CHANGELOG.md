@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Added
+
 - **CUMULUS-3298**
   - Added extra time to replace launchpad token before it expires
 - **CUMULUS-3220**
