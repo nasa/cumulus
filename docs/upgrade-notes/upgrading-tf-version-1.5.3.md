@@ -17,7 +17,6 @@ Cumulus is upgrading its supported version of Terraform from **0.13.6** to **1.5
 - Review the [Terraform v1.5 release notes](https://github.com/hashicorp/terraform/blob/v1.5/CHANGELOG.md) to prepare for any breaking changes that may affect your custom deployment code. **Cumulus' deployment code has already been updated for compatibility with version 1.5**.
 - Install Terraform version 1.5.3. We recommend using Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv) to manage your installed versons of Terraform, but this is not required.
 
-
 ### Upgrade your deployment
 
 1. Ensure that you are running Terraform 1.5.3 by running `terraform --version`. If you are using `tfenv`, you can switch versions by running `tfenv use 1.5.3`.
