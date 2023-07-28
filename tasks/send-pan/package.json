@@ -1,12 +1,12 @@
 {
-  "name": "@cumulus/orca-copy-to-archive-adapter",
+  "name": "@cumulus/send-pan",
   "version": "16.0.0",
-  "description": "Adapter to invoke orca copy-to-archive lambda",
+  "description": "Sends a PAN response after parsing a PDR.",
   "main": "dist/index.js",
   "directories": {
     "test": "tests"
   },
-  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/send-pan",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus"
@@ -16,13 +16,13 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "generate-task-schemas": "npx generate-task-schemas . files",
-    "package": "npm run generate-task-schemas && ./bin/package.sh",
+    "package": "./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
     "webpack": "../../node_modules/.bin/webpack",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
@@ -30,19 +30,21 @@
     "files": [
       "tests/*"
     ],
-    "timeout": "2m",
+    "timeout": "5m",
     "verbose": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "16.0.0",
+    "@cumulus/api": "16.0.0",
     "@cumulus/common": "16.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/ingest": "16.0.0",
     "@cumulus/logger": "16.0.0",
-    "lodash": "^4.17.15"
+    "got": "^11.8.5"
   },
   "devDependencies": {
-    "@cumulus/schemas": "16.0.0"
+    "@cumulus/aws-client": "16.0.0",
+    "url-join": "^4.0.0"
   }
 }

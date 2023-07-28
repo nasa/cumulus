@@ -1,0 +1,17 @@
+{
+  "title": "SendPanInput",
+  "description": "Describes the input expected by the send-pan task",
+  "type": "object",
+  "required": ["pdr"],
+  "properties": {
+    "pdr": {
+      "description": "Product Delivery Record",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    }
+  }
+}

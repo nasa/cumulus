@@ -1,5 +1,5 @@
 const test = require('ava');
-const pvlToJS = require('../t').pvlToJS;
+const pvlToJS = require('..').pvlToJS;
 const PVLTextString = require('../lib/models').PVLTextString;
 
 test('accessing aggregates', (t) => {

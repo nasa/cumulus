@@ -9,6 +9,7 @@ const Crawler = require('simplecrawler');
 const got = require('got');
 const { CookieJar } = require('tough-cookie');
 const { promisify } = require('util');
+const stream = require('node:stream');
 
 const {
   buildS3Uri,
@@ -206,7 +207,7 @@ class HttpProviderClient {
   /**
    * Download a remote file to disk
    *
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.remotePath - the full path to the remote file to be fetched
    * @param {string} params.localPath - the full local destination file path
    * @returns {Promise.<string>} - the path that the file was saved to
@@ -244,7 +245,7 @@ class HttpProviderClient {
   /**
    * Download the remote file to a given s3 location
    *
-   * @param {Object} params
+   * @param {object} params
    * @param {string} params.fileRemotePath - the full path to the remote file to be fetched
    * @param {string} params.destinationBucket - destination s3 bucket of the file
    * @param {string} params.destinationKey - destination s3 key of the file
@@ -289,6 +290,39 @@ class HttpProviderClient {
 
     log.info('Uploading to s3 is complete (http)', s3uri);
     return { s3uri, etag };
+  }
+
+  /**
+   * Upload a file
+   *
+   * @param {object} params
+   * @param {string} params.localPath - the full local file path
+   * @param {string} params.uploadPath - the full remote file path for uploading file to
+   * @returns {Promise<string>} the uri of the uploaded file
+   */
+  async upload(params) {
+    const { localPath, uploadPath } = params;
+    log.info(params);
+    await this.setUpGotOptions();
+    await this.downloadTLSCertificate();
+    const options = {
+      protocol: this.protocol,
+      host: this.host,
+      port: this.port,
+      path: uploadPath,
+      method: 'POST',
+    };
+
+    const remoteUrl = buildURL(options);
+    got.stream.options = options;
+    await promisify(pipeline)(
+      fs.createReadStream(localPath),
+      await got.stream.post(remoteUrl),
+      new stream.PassThrough()
+    );
+
+    log.info(`Finishing uploading ${localPath} to ${remoteUrl}`);
+    return remoteUrl;
   }
 
   /* eslint-disable no-empty-function */

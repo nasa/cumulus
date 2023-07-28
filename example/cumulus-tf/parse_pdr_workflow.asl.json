@@ -143,7 +143,7 @@
         {
           "Variable": "$.meta.isPdrFinished",
           "BooleanEquals": true,
-          "Next": "WorkflowSucceeded"
+          "Next": "SendPAN"
         }
       ],
       "Default": "WorkflowSucceeded"
@@ -192,6 +192,44 @@
       "Type": "Wait",
       "Seconds": 10,
       "Next": "CheckStatus"
+    },
+    "SendPAN": {
+      "Parameters": {
+        "cma": {
+          "event.$": "$",
+          "ReplaceConfig": {
+            "FullMessage": true
+          },
+          "task_config": {
+            "provider": "{$.meta.provider}",
+            "remoteDir": "{$.meta.collection.meta.panPath}"
+          }
+        }
+      },
+      "Type": "Task",
+      "Resource": "${send_pan_arn}",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.exception",
+          "Next": "WorkflowFailed"
+        }
+      ],
+      "Next": "WorkflowSucceeded"
     },
     "WorkflowFailed": {
       "Type": "Fail",
