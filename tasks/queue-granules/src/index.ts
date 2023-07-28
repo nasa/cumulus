@@ -211,9 +211,9 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
 /**
  * Lambda handler
  *
- * @param {CumulusMessage | CumulusRemoteMessage} event - a Cumulus Message
- * @param {Context} context    - an AWS Lambda context
- * @returns {Promise<CumulusMessage | CumulusRemoteMessage>} - Returns output from task.
+ * @param event   - a Cumulus Message
+ * @param context - an AWS Lambda context
+ * @returns       - Returns output from task
  */
 async function handler(
   event: CumulusMessage | CumulusRemoteMessage,
