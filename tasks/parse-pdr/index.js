@@ -8,7 +8,7 @@ const isString = require('lodash/isString');
 const S3 = require('@cumulus/aws-client/S3');
 const { buildProviderClient, fetchTextFile } = require('@cumulus/ingest/providerClientUtils');
 const { PDRParsingError } = require('@cumulus/errors');
-const { pvlToJS } = require('@cumulus/pvl/t');
+const { pvlToJS } = require('@cumulus/pvl');
 const {
   collections: collectionsApi,
   providers: providersApi,
