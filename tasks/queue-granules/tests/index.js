@@ -1055,7 +1055,10 @@ test.serial('queueGranules throws an error when no dataType, version, or collect
     },
   ];
 
-  await t.throwsAsync(queueGranules(event));
+  await t.throwsAsync(queueGranules(event),
+    {
+      message: 'Invalid collection information provided, please check task input to make sure collection information is provided',
+    });
 });
 
 test.serial('queueGranules does not throw an error when updatedAt is provided and is not provided', async (t) => {
@@ -1074,9 +1077,11 @@ test.serial('queueGranules does not throw an error when updatedAt is provided an
 
 test.serial('queueGranules throws an error when the updatedAt field is not an Integer value', async (t) => {
   const { event } = t.context;
+  const firstGranuleId = randomString();
+  const firstInvalidUpdatedAt = '12/25/2022';
   event.input.granules = [
     {
-      granuleId: randomString(), files: [], updatedAt: '12/25/2022', collectionId: 'ABC___001',
+      granuleId: firstGranuleId, files: [], updatedAt: firstInvalidUpdatedAt, collectionId: 'ABC___001',
     },
     {
       granuleId: randomString(), files: [], updatedAt: 1553053438767.378196, collectionId: 'ABC___001',
@@ -1084,7 +1089,13 @@ test.serial('queueGranules throws an error when the updatedAt field is not an In
     {
       granuleId: randomString(), files: [], updatedAt: -1, collectionId: 'ABC___001',
     },
+    {
+      granuleId: randomString(), files: [], updatedAt: 1553053438767, collectionId: 'ABC___001',
+    },
   ];
 
-  await t.throwsAsync(queueGranules(event));
+  await t.throwsAsync(queueGranules(event),
+    {
+      message: `Invalid updatedAt value: ${firstInvalidUpdatedAt} for granule with granuleId: ${firstGranuleId}`,
+    });
 });

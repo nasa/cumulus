@@ -29,7 +29,7 @@ interface HandlerEvent {
 
 type ApiGranule = QueueGranulesInput['granules'][number];
 
-async function fetchGranuleProvider(event: HandlerEvent, providerId?: string | null) {
+async function fetchGranuleProvider(event: HandlerEvent, providerId: string | undefined) {
   if (!providerId || providerId === event.config.provider.id) {
     return event.config.provider;
   }
@@ -45,8 +45,8 @@ async function fetchGranuleProvider(event: HandlerEvent, providerId?: string | n
 /**
  * Return the collectionId from a Granule if possible, otherwise throw an Error
  *
- * @param {ApiGranule} granule - the granule to get the collectionId from
- * @returns {String} the collectionId of the granule if has it in its properties'
+ * @param granule - the granule to get the collectionId from
+ * @returns the collectionId of the granule if has it in its properties'
  */
 function getCollectionIdFromGranule(granule: ApiGranule): string {
   if (granule.collectionId) {
@@ -55,15 +55,16 @@ function getCollectionIdFromGranule(granule: ApiGranule): string {
   if (granule.dataType && granule.version) {
     return constructCollectionId(granule.dataType, granule.version);
   }
-  throw new Error('Invalid collection information provided, please check task input to make sure collection information is provided');
+  throw new Error('Invalid collection information provided, please check task '
+                  + 'input to make sure collection information is provided');
 }
 
 /**
  * Return an Iterable of granules, grouped by collectionId and provider, containing
  * chunks of granules to queue together.
  *
- * @param granules Granules to group and chunk
- * @param preferredBatchSize The max chunk size to use when chunking the groups (default 1)
+ * @param granules - Granules to group and chunk
+ * @param preferredBatchSize - The max chunk size to use when chunking the groups (default 1)
  * @returns Iterable
  */
 function createIterable(
@@ -81,12 +82,13 @@ function createIterable(
 }
 
 /**
-* Updates each granule in the 'batch' to the passed in createdAt value if one does not already exist
-* @param {Array<BackwardsCompatibleApiGranule>} granuleBatch - Array of Cumulus Granule objects
-* @param {number} createdAt           - 'Date.now()' to apply to the granules if there is no
-*                                     existing createdAt value
-* @returns {Array<Object>} updated array of Cumulus Granule objects
-*/
+ * Updates each granule in the 'batch' to the passed in createdAt
+ * value if one does not already exist
+ * @param granuleBatch - Array of Cumulus Granule objects
+ * @param createdAt    - 'Date.now()' to apply to the granules if there is
+ *                        no existing createdAt value
+ * @returns updated array of Cumulus Granule objects
+ */
 function updateGranuleBatchCreatedAt(granuleBatch: ApiGranule[], createdAt: number): ApiGranule[] {
   return granuleBatch.map((granule) => ({
     ...granule,
@@ -97,10 +99,10 @@ function updateGranuleBatchCreatedAt(granuleBatch: ApiGranule[], createdAt: numb
 /**
  * See schemas/input.json and schemas/config.json for detailed event description
  *
- * @param {HandlerEvent} event - Lambda event object
- * @returns {Promise<QueueGranulesOutput>} - see schemas/output.json for detailed output schema
+ * @param event - Lambda event object
+ * @returns see schemas/output.json for detailed output schema
  *   that is passed to the next task in the workflow
- **/
+ */
 async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> {
   const granules = (event.input.granules || []);
   const memoizedFetchProvider = memoize(fetchGranuleProvider, (_, providerId) => providerId);
@@ -151,7 +153,8 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
               const { granuleId, updatedAt, createdAt } = queuedGranule;
 
               if (updatedAt && (!Number.isInteger(updatedAt) || updatedAt < 0)) {
-                throw new Error(`Invalid collection information provided for granule with granuleId: ${granuleId}, please check task input to make sure collection information is provided`);
+                throw new Error(`Invalid updatedAt value: ${queuedGranule.updatedAt} `
+                                + `for granule with granuleId: ${queuedGranule.granuleId}`);
               }
               return granulesApi.updateGranule({
                 prefix: event.config.stackName,
@@ -161,18 +164,16 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                   collectionId,
                   granuleId,
                   status: 'queued',
-                  // The non-null assertion operator is used below because we know
-                  // createdAt and updatedAt are non-null values given the condition
-                  // checking updatedAt above, and the function call to updateGranuleBatchCreatedAt
-                  // which will set createdAt.
-                  updatedAt: updatedAt!,
+                  // We use the non-null assertion operator below because we know that
+                  // the call above to updateGranuleBatchCreatedAt has set createdAt to
+                  // the current time (in milliseconds).
+                  updatedAt: updatedAt ?? createdAt!,
                   createdAt: createdAt!,
                 },
               });
             },
             {
               concurrency: pMapConcurrency,
-              stopOnError: false,
             }
           );
 
@@ -194,7 +195,6 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
         },
         {
           concurrency: pMapConcurrency,
-          stopOnError: false,
         }
       );
     },
