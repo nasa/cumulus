@@ -92,7 +92,7 @@ function createIterable(
 function updateGranuleBatchCreatedAt(granuleBatch: ApiGranule[], createdAt: number): ApiGranule[] {
   return granuleBatch.map((granule) => ({
     ...granule,
-    createdAt: granule.createdAt ? granule.createdAt : createdAt,
+    createdAt: granule.createdAt ?? createdAt,
   }));
 }
 
