@@ -1,7 +1,7 @@
 'use strict';
 
 const { URL } = require('url');
-// const { STS } = require('aws-sdk');
+const { STS } = require('aws-sdk');
 const base64 = require('base-64');
 
 const { models: { AccessToken } } = require('@cumulus/api');

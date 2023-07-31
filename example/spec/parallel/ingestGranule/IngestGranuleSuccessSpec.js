@@ -141,7 +141,7 @@ describe('The S3 Ingest Granules workflow', () => {
       testDataFolder = createTestDataPath(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
 
       process.env.system_bucket = config.bucket;

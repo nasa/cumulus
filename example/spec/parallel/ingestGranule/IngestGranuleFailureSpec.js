@@ -85,7 +85,7 @@ describe('The Ingest Granule failure workflow', () => {
         },
         ...inputPayload.granules[0].files,
       ];
-      collectionId = encodedConstructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version);
+
       console.log(`testSuffix: ${testSuffix}, granuleId: ${inputPayload.granules[0].granuleId}`);
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,

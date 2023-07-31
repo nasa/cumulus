@@ -6,7 +6,58 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v16.0.0] 2023-05-09
 ### Added
+
+### MIGRATION notes
+
+#### PI release version
+
+When updating directly to v16 from prior releases older that V15, please make sure to
+read through all prior release notes.
+
+Notable migration concerns since the last PI release version (11.1.x):
+
+- [v14.1.0] - Postgres compatibility update to Aurora PostgreSQL 11.13.
+- [v13.1.0] - Postgres update to add `files_granules_cumulus_id_index` to the
+  `files` table may require manual steps depending on load.
+
+#### RDS Phase 3 migration notes
+
+This release includes updates that remove existing DynamoDB tables as part of
+release deployment process.   This release *cannot* be properly rolled back in
+production as redeploying a prior version of Cumulus will not recover the
+associated Dynamo tables.
+
+Please read the full change log for RDS Phase 3 and consult the [RDS Phase 3 update
+documentation](https://nasa.github.io/cumulus/docs/next/upgrade-notes/upgrade-rds-phase-3-release)
+
+#### API Endpoint Versioning
+
+As part of the work on CUMULUS-3072, we have added a required header for the
+granule PUT/PATCH endpoints -- to ensure that older clients/utilities do not
+unexpectedly make destructive use of those endpoints, a validation check of a
+header value against supported versions has been implemented.
+
+Moving forward, if a breaking change is made to an existing endpoint that
+requires user updates, as part of that update we will set the current version of
+the core API and require a header that confirms the client is compatible with
+the version required or greater.
+
+In this instance, the granule PUT/PATCH
+endpoints will require a `Cumulus-API-Version` value of at least `2`.
+
+```bash
+ curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
+ --header 'Cumulus-API-Version': '2'\
+ --header 'Authorization: Bearer ReplaceWithToken'\
+ --data ...
+```
+
+Users/clients that do not make use of these endpoints will not be impacted.
+
+### RDS Phase 3
+#### Breaking Changes
 
 - **CUMULUS-3220**
   - Created a new send-pan task
@@ -286,28 +337,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Fixed
 
-- **CUMULUS-3315**
-  - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
-    instead of NPM `parallel` package, as timeouts were not resulting in
-    integration test failure
-- **CUMULUS-3223**
-  - Update `@cumulus/cmrjs/cmr-utils.getGranuleTemporalInfo` to handle the error when the cmr file s3url is not available
-  - Update `sfEventSqsToDbRecords` lambda to return [partial batch failure](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html#services-sqs-batchfailurereporting),
-    and only reprocess messages when cumulus message can't be retrieved from the execution events.
-  - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
-
-## [v15.0.4] 2023-06-23
-
-### Changed
-
-- **CUMULUS-3307**
-  - Pinned cumulus dependency on `pg` to `v8.10.x`
-
-### Fixed
-
-- **CUMULUS-3115**
-  - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
-    after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3315**
   - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
     instead of NPM `parallel` package, as timeouts were not resulting in
@@ -7252,10 +7281,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-
 [unreleased]: https://github.com/nasa/cumulus/compare/v16.0.0...HEAD
-[v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
-[v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
+[v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.3...v16.0.0
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
 [v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1
