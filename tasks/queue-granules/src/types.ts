@@ -39,38 +39,7 @@ export interface QueueGranulesInput {
     createdAt?: number;
     updatedAt?: number;
     files: {
-      /**
-       * Bucket where file is archived in S3
-       */
-      bucket: string;
-      /**
-       * Checksum value for file
-       */
-      checksum?: string;
-      /**
-       * Type of checksum (e.g. md5, sha256, etc)
-       */
-      checksumType?: string;
-      /**
-       * Name of file (e.g. file.txt)
-       */
-      fileName?: string;
-      /**
-       * S3 Key for archived file
-       */
-      key: string;
-      /**
-       * Size of file (in bytes)
-       */
-      size?: number;
-      /**
-       * Source URI of the file from origin system (e.g. S3, FTP, HTTP)
-       */
-      source?: string;
-      /**
-       * Type of file (e.g. data, metadata, browse)
-       */
-      type?: string;
+      [k: string]: unknown;
     }[];
   }[];
 }

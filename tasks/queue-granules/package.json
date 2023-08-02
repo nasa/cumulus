@@ -20,7 +20,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "generate-task-schemas": "npx generate-task-schemas . files --typescript src/types.ts",
+    "generate-task-schemas": "npx generate-task-schemas . queueGranulesFiles --typescript src/types.ts",
     "package": "npm run generate-task-schemas && ./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",

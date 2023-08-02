@@ -3,7 +3,8 @@ import get from 'lodash/get';
 import isNumber from 'lodash/isNumber';
 import memoize from 'lodash/memoize';
 import pMap from 'p-map';
-import cumulusMessageAdapter from '@cumulus/cumulus-message-adapter-js';
+
+import { runCumulusTask } from '@cumulus/cumulus-message-adapter-js';
 import { enqueueGranuleIngestMessage } from '@cumulus/ingest/queue';
 import {
   getWorkflowFileKey,
@@ -219,7 +220,7 @@ async function handler(
   event: CumulusMessage | CumulusRemoteMessage,
   context: Context
 ): Promise<CumulusMessage | CumulusRemoteMessage> {
-  return await cumulusMessageAdapter.runCumulusTask(
+  return await runCumulusTask(
     queueGranules,
     event,
     context

@@ -12,7 +12,7 @@ type SchemaReplacements = {
  *
  * @param {string} schemaTemplatePath - Input schema template path
  * @param {string} schemaOutputPath - Path to write updated output schema
- * @param {Object} replacements
+ * @param {object} replacements
  *   Object map specifying values to replace in schema template
  * @returns {void}
  */
@@ -33,17 +33,20 @@ export function templateJsonSchema(
 /**
  * Generate output JSON schema from template with file properties updated.
  *
- * @param {string} schemaTemplatePath - Input schema template path
- * @param {string} schemaOutputPath - Path to write updated output schema
+ * @param schemaTemplatePath - Input schema template path
+ * @param schemaOutputPath   - Path to write updated output schema
+ * @param [replacements]     - Optional schema replacement
  * @returns {void}
  */
 export function templateJsonSchemaWithFiles(
   schemaTemplatePath: string,
-  schemaOutputPath: string
+  schemaOutputPath: string,
+  altJsonSchema: SchemaReplacements = filesJsonSchema
 ) {
+  const replacements = { files: altJsonSchema };
   templateJsonSchema(
     schemaTemplatePath,
     schemaOutputPath,
-    { files: filesJsonSchema }
+    replacements,
   );
 }
