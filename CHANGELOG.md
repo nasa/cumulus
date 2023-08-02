@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- **CUMULUS-3298**
+  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages 
 - **CUMULUS-3220**
   - Created a new send-pan task
 - **CUMULUS-3287**
