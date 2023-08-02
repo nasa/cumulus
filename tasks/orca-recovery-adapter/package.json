@@ -9,7 +9,8 @@
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/orca-recovery-adapter",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "tasks/orca-recovery-adapter"
   },
   "engines": {
     "node": ">=16.19.0"
