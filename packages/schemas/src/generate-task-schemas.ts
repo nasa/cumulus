@@ -21,7 +21,11 @@ function parseOptions(taskDirectory: string, args: string[]): { tsFile?: Promise
   return { tsFile };
 }
 
-async function runFilesCommand(taskDirectory: string, rawOptions: string[], replacements?: any): Promise<void> {
+async function runFilesCommand(
+  taskDirectory: string,
+  rawOptions: string[],
+  replacements?: any
+): Promise<void> {
   const taskSchemasDirectory = path.join(taskDirectory, 'schemas');
   const options = parseOptions(taskDirectory, rawOptions);
   const schemaFiles = await fs.readdir(taskSchemasDirectory);
@@ -52,7 +56,7 @@ async function main() {
       await runFilesCommand(taskDirectory, options);
       return;
     case 'queueGranulesFiles':
-      await runFilesCommand(taskDirectory, options, queueGranulesFilesJsonSchema)
+      await runFilesCommand(taskDirectory, options, queueGranulesFilesJsonSchema);
       return;
     default:
       console.error('Unknown command');

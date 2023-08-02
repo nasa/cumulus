@@ -14,19 +14,21 @@ const {
 /**
  * Enqueue a PDR to be parsed
  *
- * @param {Object} params
- * @param {Object} params.pdr - the PDR to be enqueued for parsing
- * @param {string} params.queueUrl - the SQS queue to add the message to
- * @param {string} params.parsePdrMessageTemplateUri - the S3 URI of template for
- * a PDR parse message
- * @param {Object} params.provider - the provider config to be attached to the message
- * @param {Object} params.collection - the collection config to be attached to the
- *   message
+ * @param {object} params
+ * @param {object} params.collection         - the collection config to be attached to the message
  * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
- * @param {string} [params.executionNamePrefix] - the prefix to apply to the
- *   name of the enqueued execution
- * @param {Object} [params.additionalCustomMeta] - additional object to merge into meta object
- * @returns {Promise} - resolves when the message has been enqueued
+ * @param {string} params.parsePdrWorkflow   - the S3 URI of template for a PDR parse message
+ * @param {object} params.pdr                - the PDR to be enqueued for parsing
+ * @param {object} params.provider           - the provider config to be attached to the message
+ * @param {string} params.stack              - stack name
+ * @param {string} params.systemBucket       - system bucket name
+ * @param {string} params.queueUrl           - the SQS queue to add the message to
+ * @param {string} [params.executionNamePrefix]
+ *   - the prefix to apply to the name of the enqueued execution
+ * @param {object} [params.additionalCustomMeta]
+ *   - additional object to merge into meta object
+ * @returns {Promise<string>}
+ *   - resolves when the message has been enqueued
  */
 async function enqueueParsePdrMessage({
   collection,
@@ -78,20 +80,23 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
 /**
  * Enqueue a granule to be ingested
  *
- * @param {Object} params
- * @param {Object} params.granules - the granules to be enqueued for ingest
- * @param {string} params.queueUrl - the SQS queue to add the message to
- * @param {Object} params.messageTemplate - Message template for the workflow
- * @param {Object} params.workflow - workflow name & arn object
- * @param {Object} params.provider - the provider config to be attached to the message
- * @param {Object} params.collection - the collection config to be attached to the
- *   message
- * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
- * @param {Object} [params.pdr] - an optional PDR to be configured in the message payload
- * @param {string} [params.executionNamePrefix] - the prefix to apply to the
- *   name of the enqueued execution
- * @param {Object} [params.additionalCustomMeta] - additional object to merge into meta object
- * @returns {Promise} - resolves when the message has been enqueued
+ * @param {object} params
+ * @param {object} params.collection      - the collection config to be attached to the message
+ * @param {object} params.granules        - the granules to be enqueued for ingest
+ * @param {string} params.parentExecutionArn
+ *   - parent workflow execution arn to add to the message
+ * @param {object} params.provider        - the provider config to be attached to the message
+ * @param {object} params.messageTemplate - Message template for the workflow
+ * @param {object} params.workflow        - workflow name & arn object
+ * @param {string} params.queueUrl        - the SQS queue to add the message to
+ * @param {object} [params.pdr]
+ *   - an optional PDR to be configured in the message payload
+ * @param {string} [params.executionNamePrefix]
+ *   - the prefix to apply to the name of the enqueued execution
+ * @param {object} [params.additionalCustomMeta]
+ *   - additional object to merge into meta object
+ * @returns {Promise<string|null>}
+ *   - resolves when the message has been enqueued
  */
 async function enqueueGranuleIngestMessage({
   collection,
@@ -130,17 +135,20 @@ exports.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
 /**
  * Enqueue a workflow
  *
- * @param {Object} params
- * @param {Object} params.workflow - the workflow to be enqueued
- * @param {Object} params.workflowInput - the input that should be passed to the queued workflow
- * @param {string} [params.queueUrl] - an optional SQS queue to add the message to
- * @param {Object} params.provider - the provider config to be attached to the message
- * @param {Object} params.collection - the collection config to be attached to the
- *   message
- * @param {string} params.parentExecutionArn - parent workflow execution arn to add to the message
- * @param {string} [params.executionNamePrefix] - the prefix to apply to the
- *   name of the enqueued execution
- * @returns {Promise} - resolves when the message has been enqueued
+ * @param {object} params
+ * @param {string} params.parentExecutionArn
+ *   - parent workflow execution arn to add to the message
+ * @param {string} params.stack         - stack name
+ * @param {string} params.systemBucket  - system bucket name
+ * @param {object} params.collection    - the collection config to be attached to the message
+ * @param {object} params.provider      - the provider config to be attached to the message
+ * @param {object} params.workflow      - the workflow to be enqueued
+ * @param {object} params.workflowInput - the input that should be passed to the queued workflow
+ * @param {string} [params.queueUrl]    - an optional SQS queue to add the message to
+ * @param {string} [params.executionNamePrefix]
+ *   - the prefix to apply to the name of the enqueued execution
+ * @returns {Promise<string>}
+ *   - resolves when the message has been enqueued
  */
 async function enqueueWorkflowMessage({
   parentExecutionArn,

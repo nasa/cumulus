@@ -47,6 +47,6 @@ export function templateJsonSchemaWithFiles(
   templateJsonSchema(
     schemaTemplatePath,
     schemaOutputPath,
-    replacements,
+    replacements
   );
 }
