@@ -70,7 +70,7 @@ function getCollectionIdFromGranule(granule: ApiGranule): string {
  */
 function createIterable(
   granules: ApiGranule[],
-  preferredBatchSize: any
+  preferredBatchSize: number | null | undefined
 ): GroupAndChunkIterable<ApiGranule, { collectionId: string, provider: string | undefined }> {
   return new GroupAndChunkIterable(
     granules,
