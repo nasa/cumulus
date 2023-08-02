@@ -95,7 +95,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  *   - the prefix to apply to the name of the enqueued execution
  * @param {object} [params.additionalCustomMeta]
  *   - additional object to merge into meta object
- * @returns {Promise<string|null>}
+ * @returns {Promise<string>}
  *   - resolves when the message has been enqueued
  */
 async function enqueueGranuleIngestMessage({
