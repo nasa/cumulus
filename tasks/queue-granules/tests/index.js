@@ -21,7 +21,7 @@ const queue = require('@cumulus/ingest/queue');
 const sinon = require('sinon');
 const pMap = require('p-map');
 
-const { updateGranuleBatchCreatedAt } = require('../');
+const { updateGranuleBatchCreatedAt } = require('..');
 
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
