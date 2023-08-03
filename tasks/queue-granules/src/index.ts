@@ -175,9 +175,6 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                   collectionId,
                   granuleId,
                   status: 'queued',
-                  // We use the non-null assertion operator below because we know that
-                  // the call above to updateGranuleBatchCreatedAt has set createdAt to
-                  // the current time (in milliseconds).
                   updatedAt: updatedAt ?? createdAt,
                   createdAt: createdAt,
                 },
