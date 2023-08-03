@@ -1063,18 +1063,21 @@ test.serial('handles different providers', async (t) => {
 
 test.serial('queueGranules throws an error when no dataType, version, or collectionId are provided in input', async (t) => {
   const { event } = t.context;
+  const granuleId1 = randomString();
   event.input.granules = [
     {
-      granuleId: randomString(), files: [],
+      granuleId: granuleId1, files: [],
     },
     {
       granuleId: randomString(), files: [],
     },
   ];
 
+  const expectedMessage = `Invalid collection information provided for granule with granuleId: ${granuleId1}, `
+    + 'please check task input to make sure collection information is provided';
   await t.throwsAsync(queueGranules(event),
     {
-      message: 'Invalid collection information provided, please check task input to make sure collection information is provided',
+      message: expectedMessage,
     });
 });
 

@@ -20,6 +20,7 @@ import {
   providers as providersApi,
   granules as granulesApi,
 } from '@cumulus/api-client';
+
 import { QueueGranulesInput, QueueGranulesConfig, QueueGranulesOutput } from './types';
 import GroupAndChunkIterable from './iterable';
 
@@ -56,8 +57,8 @@ function getCollectionIdFromGranule(granule: ApiGranule): string {
   if (granule.dataType && granule.version) {
     return constructCollectionId(granule.dataType, granule.version);
   }
-  throw new Error('Invalid collection information provided, please check task '
-                  + 'input to make sure collection information is provided');
+  throw new Error(`Invalid collection information provided for granule with granuleId: ${granule.granuleId}, `
+    + 'please check task input to make sure collection information is provided');
 }
 
 /**
@@ -82,6 +83,10 @@ function createIterable(
   );
 }
 
+interface ApiGranuleWithCreatedAt extends ApiGranule {
+  createdAt: number
+}
+
 /**
  * Updates each granule in the 'batch' to the passed in createdAt
  * value if one does not already exist
@@ -90,11 +95,16 @@ function createIterable(
  *                        no existing createdAt value
  * @returns updated array of Cumulus Granule objects
  */
-function updateGranuleBatchCreatedAt(granuleBatch: ApiGranule[], createdAt: number): ApiGranule[] {
-  return granuleBatch.map((granule) => ({
-    ...granule,
-    createdAt: granule.createdAt ?? createdAt,
-  }));
+function updateGranuleBatchCreatedAt(
+  granuleBatch: ApiGranule[],
+  createdAt: number
+): ApiGranuleWithCreatedAt[] {
+  return granuleBatch.map((granule) => (
+    {
+      ...granule,
+      createdAt: granule.createdAt ?? createdAt,
+    }
+  ));
 }
 
 /**
@@ -168,8 +178,8 @@ async function queueGranules(event: HandlerEvent): Promise<QueueGranulesOutput> 
                   // We use the non-null assertion operator below because we know that
                   // the call above to updateGranuleBatchCreatedAt has set createdAt to
                   // the current time (in milliseconds).
-                  updatedAt: updatedAt ?? createdAt!,
-                  createdAt: createdAt!,
+                  updatedAt: updatedAt ?? createdAt,
+                  createdAt: createdAt,
                 },
               });
             },
