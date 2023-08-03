@@ -261,7 +261,7 @@ function setEnvVarsForOperation(event) {
 
 async function handler(event) {
   setEnvVarsForOperation(event);
-  log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}`);
+  log.info(`bulkOperation asyncOperationId ${process.env.asyncOperationId} event type ${event.type}, payload: ${JSON.stringify(event.payload)}`);
   if (event.type === 'BULK_GRANULE') {
     return await bulkGranule(event.payload, event.applyWorkflowHandler);
   }
