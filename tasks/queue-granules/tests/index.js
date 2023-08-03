@@ -21,20 +21,21 @@ const queue = require('@cumulus/ingest/queue');
 const sinon = require('sinon');
 const pMap = require('p-map');
 
+const { updateGranuleBatchCreatedAt } = require('../');
+
 const pMapSpy = sinon.spy(pMap);
 const fakeProvidersApi = {};
 const getCollection = sinon.stub();
 const updateGranule = sinon.spy(({ body: { createdAt } }) => createdAt);
 const enqueueGranuleIngestMessage = sinon.stub(queue, 'enqueueGranuleIngestMessage');
 
-const { queueGranules, updateGranuleBatchCreatedAt } = proxyquire('..', {
+const { queueGranules } = proxyquire('..', {
   'p-map': pMapSpy,
   '@cumulus/api-client': {
     collections: { getCollection },
     granules: { updateGranule },
     providers: fakeProvidersApi,
   },
-  '@cumulus/ingest/queue': { enqueueGranuleIngestMessage },
 });
 
 test.beforeEach(async (t) => {
