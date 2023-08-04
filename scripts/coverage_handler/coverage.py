@@ -18,7 +18,7 @@ class CoverageUpdateRequired(Exception):
 CoverageDict = Dict[str, float]
 
 def getRoot() -> str:
-    return os.path.dirname(os.path.dirname(__file__))
+    return os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 
 def mergeCoverage() -> None:
     root = getRoot()
