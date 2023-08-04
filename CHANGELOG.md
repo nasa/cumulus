@@ -6,17 +6,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-- **CUMULUS-3188**
-  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+  
+- **CUMULUS-3258**
+  - Updated all terraform AWS providers to ~> 5.0.0
+
+### Added
+
+- **CUMULUS-3298**
+  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages 
+- **CUMULUS-3220**
+  - Created a new send-pan task
+- **CUMULUS-3287**
+  - Added variable to allow the aws_ecs_task_definition health check to be configurable.
+  - Added clarity to how the bucket field needs to be configured for the move-granules task definition
 
 ### Changed
 
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
+- **CUMULUS-3258**
+  - Updated all terraform AWS providers to ~> 5.0.0
 - **CUMULUS-3245**
   - Updated Terraform AWS provider to ~>5.0.0
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+  - Added optional additional properties to queue-granules input schema
 - **CUMULUS-3252**
   - Updated example/cumulus-tf/orca.tf to use orca v8.0.1
   - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
@@ -54,20 +74,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
   - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+- Added missing name to throttle_queue_watcher Cloudwatch event in `throttled-queue.tf`
 
 ### Fixed
 
 - **CUMULUS-2625**
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
+- **CUMULUS-3265**
+  - Fixed `@cumulus/api` `getGranulesForPayload` function to query cloud metrics es when needed.
+
+## [v16.0.0] 2023-05-09
 
 ### Notable Changes
 
 - The async_operation_image property of cumulus module should be updated to pull
-  the ECR image for cumuluss/async-operation:47
-- **CUMULUS-3258**
-- Updated all terraform AWS providers to ~> 5.0.0
-
-## [v16.0.0] 2023-05-09
+  the ECR image for cumuluss/async-operation:46
 
 ### MIGRATION notes
 
@@ -286,40 +307,18 @@ Users/clients that do not make use of these endpoints will not be impacted.
     and only reprocess messages when cumulus message can't be retrieved from the execution events.
   - Update `@cumulus/cumulus-message-adapter-js` to `2.0.5` for all cumulus tasks
 
-## [v15.0.3] 2023-04-28
-
-### Fixed
-
-- **CUMULUS-3243**
-  - Updated granule delete logic to delete granule which is not in DynamoDB
-  - Updated granule unpublish logic to handle granule which is not in DynamoDB and/or CMR
-
-## [v15.0.2] 2023-04-25
-
-### Fixed
-
-- **CUMULUS-3120**
-  - Fixed a bug by adding in `default_log_retention_periods` and `cloudwatch_log_retention_periods`
-  to Cumulus modules so they can be used during deployment for configuring cloudwatch retention periods, for more information check here: [retention document](https://nasa.github.io/cumulus/docs/configuration/cloudwatch-retention)
-  - Updated cloudwatch retention documentation to reflect the bugfix changes
-
-## [v15.0.1] 2023-04-20
+## [v15.0.4] 2023-06-23
 
 ### Changed
 
-- **CUMULUS-3279**
-  - Updated core dependencies on `xml2js` to `v0.5.0`
-  - Forcibly updated downstream dependency for `xml2js` in `saml2-js` to
-    `v0.5.0`
-  - Added audit-ci CVE override until July 1 to allow for Core package releases
-
-## Fixed
-
-- **CUMULUS-3285**
-  - Updated `api/lib/distribution.js isAuthBearTokenRequest` to handle non-Bearer authorization header
+- **CUMULUS-3307**
+  - Pinned cumulus dependency on `pg` to `v8.10.x`
 
 ### Fixed
 
+- **CUMULUS-3115**
+  - Fixed DiscoverGranules' workflow's duplicateHandling when set to `skip` or `error` to stop retrying
+    after receiving a 404 Not Found Response Error from the `cumulus-api`.
 - **CUMULUS-3315**
   - Update CI scripts to use shell logic/GNU timeout to bound test timeouts
     instead of NPM `parallel` package, as timeouts were not resulting in
@@ -7264,8 +7263,10 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
+
 [unreleased]: https://github.com/nasa/cumulus/compare/v16.0.0...HEAD
-[v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.3...v16.0.0
+[v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
+[v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
 [v15.0.2]: https://github.com/nasa/cumulus/compare/v15.0.1...v15.0.2
 [v15.0.1]: https://github.com/nasa/cumulus/compare/v15.0.0...v15.0.1

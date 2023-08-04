@@ -1,6 +1,7 @@
 'use strict';
 
-const { basename, dirname } = require('path');
+const path = require('path');
+const { tmpdir } = require('os');
 const fs = require('fs');
 const test = require('ava');
 
@@ -50,8 +51,8 @@ test.serial('S3ProviderClient.list lists objects from the bucket root with paths
 
   const files = await s3ProviderClient.list('');
   t.is(files.length, 1);
-  t.is(files[0].name, basename(t.context.sourceKey));
-  t.is(files[0].path, dirname(t.context.sourceKey));
+  t.is(files[0].name, path.basename(t.context.sourceKey));
+  t.is(files[0].path, path.dirname(t.context.sourceKey));
 });
 
 test.serial('S3ProviderClient.list lists objects under a path in a bucket', async (t) => {
@@ -59,7 +60,7 @@ test.serial('S3ProviderClient.list lists objects under a path in a bucket', asyn
 
   const files = await s3ProviderClient.list(t.context.sourcePrefix);
   t.is(files.length, 1);
-  t.is(files[0].name, basename(t.context.sourceKey));
+  t.is(files[0].name, path.basename(t.context.sourceKey));
 });
 
 test.serial('S3ProviderClient.download downloads a file to local disk', async (t) => {
@@ -159,5 +160,20 @@ test.serial('S3ProviderClient.sync throws an error if the source file does not e
       instanceOf: errors.FileNotFound,
       message: `Source file not found s3://${t.context.sourceBucket}/non-existent`,
     }
+  );
+});
+
+test.serial('S3ProviderClient.upload uploads a file', async (t) => {
+  const s3ProviderClient = new S3ProviderClient({ bucket: t.context.sourceBucket });
+  const localPath = path.join(tmpdir(), randomString());
+  t.teardown(() => fs.unlinkSync(localPath));
+  const uploadPath = path.join(randomString(), 'destinationfile.txt');
+
+  fs.writeFileSync(localPath, t.context.fileContent);
+  await s3ProviderClient.upload({ localPath, uploadPath });
+
+  t.is(
+    await S3.getTextObject(t.context.sourceBucket, uploadPath),
+    t.context.fileContent
   );
 });
