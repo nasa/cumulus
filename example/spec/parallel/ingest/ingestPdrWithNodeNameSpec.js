@@ -42,7 +42,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { getExecution } = require('@cumulus/api-client/executions');
-
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const {
   createTestDataPath,
   createTestSuffix,
@@ -171,10 +171,6 @@ describe('Ingesting from PDR', () => {
       deleteFolder(config.bucket, testDataFolder),
       cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
       cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
-      apiTestUtils.deletePdr({
-        prefix: config.stackName,
-        pdr: pdrFilename,
-      }),
     ]).catch(console.error);
 
     await providersApi.deleteProvider({
@@ -401,17 +397,20 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
+              const id = encodedConstructCollectionId(g.dataType, g.version);
               await waitForApiStatus(
                 getGranule,
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
+                  collectionId: id,
                 },
                 'completed'
               );
               await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
+                collectionId: id,
               });
             })
           );
@@ -509,7 +508,7 @@ describe('Ingesting from PDR', () => {
 
             // the output of the CheckStatus is used to determine the task of choice
             const checkStatusTaskName = 'CheckStatus';
-            const successStepName = 'WorkflowSucceeded';
+            const successStepName = 'SendPAN';
             const pdrStatusReportTaskName = 'PdrStatusReport';
 
             let choiceVerified = false;

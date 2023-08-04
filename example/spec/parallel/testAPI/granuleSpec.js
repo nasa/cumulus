@@ -8,7 +8,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { waitForListGranulesResult, getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const {
   associateExecutionWithGranule,
@@ -28,6 +27,7 @@ const {
   fakeExecutionFactoryV2,
   fakeGranuleFactoryV2,
 } = require('@cumulus/api/lib/testUtils');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -58,7 +58,7 @@ describe('The Granules API', () => {
       prefix = config.stackName;
 
       collection1 = await createCollection(prefix);
-      collectionId = constructCollectionId(collection1.name, collection1.version);
+      collectionId = encodedConstructCollectionId(collection1.name, collection1.version);
 
       executionRecord = omit(fakeExecutionFactoryV2({
         collectionId,
@@ -111,9 +111,9 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteExecution({ prefix, executionArn: executionRecord.arn });
-    await deleteGranule({ prefix, granuleId: granule1.granuleId });
-    await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId });
-    await deleteGranule({ prefix, granuleId: putReplaceGranule.granuleId });
+    await deleteGranule({ prefix, granuleId: granule1.granuleId, collectionId: granule1.collectionId });
+    await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId, collectionId: invalidModifiedGranule.collectionId });
+    await deleteGranule({ prefix, granuleId: putReplaceGranule.granuleId, collectionId: putReplaceGranule.collectionId });
 
     await deleteCollection({
       prefix,
@@ -245,7 +245,7 @@ describe('The Granules API', () => {
       const name = randomId('name');
       const version = randomId('version');
       const badRandomGranuleRecord = fakeGranuleFactoryV2({
-        collectionId: constructCollectionId(name, version),
+        collectionId: encodedConstructCollectionId(name, version),
         execution: undefined,
       });
       try {
@@ -300,7 +300,7 @@ describe('The Granules API', () => {
         fail('beforeAll() failed');
       } else {
         const timestamp = Date.now();
-        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId });
+        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId, collectionId: modifiedGranule.collectionId });
         expect(response.statusCode).toBe(200);
 
         const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Delete.output`;
@@ -321,7 +321,7 @@ describe('The Granules API', () => {
         fail(beforeAllError);
       }
       collection2 = await createCollection(prefix);
-      const newCollectionId = constructCollectionId(collection2.name, collection2.version);
+      const newCollectionId = encodedConstructCollectionId(collection2.name, collection2.version);
       granule1 = removeNilProperties(fakeGranuleFactoryV2({
         collectionId: newCollectionId,
         published: false,
@@ -333,7 +333,7 @@ describe('The Granules API', () => {
         body: granule1,
       });
       collection3 = await createCollection(prefix);
-      const diffCollectionId = constructCollectionId(collection3.name, collection3.version);
+      const diffCollectionId = encodedConstructCollectionId(collection3.name, collection3.version);
       const granuleWithDiffCollection = {
         ...granule1,
         collectionId: diffCollectionId,
@@ -359,7 +359,7 @@ describe('The Granules API', () => {
         fail(beforeAllError);
       }
       collection4 = await createCollection(prefix);
-      const newCollectionId = constructCollectionId(collection4.name, collection4.version);
+      const newCollectionId = encodedConstructCollectionId(collection4.name, collection4.version);
       invalidModifiedGranule = removeNilProperties(fakeGranuleFactoryV2({
         collectionId: newCollectionId,
         published: false,
@@ -371,7 +371,7 @@ describe('The Granules API', () => {
         body: invalidModifiedGranule,
       });
       collection5 = await createCollection(prefix);
-      const diffCollectionId = constructCollectionId(collection5.name, collection5.version);
+      const diffCollectionId = encodedConstructCollectionId(collection5.name, collection5.version);
       const granuleWithDiffCollection = {
         ...invalidModifiedGranule,
         collectionId: diffCollectionId,
@@ -417,6 +417,7 @@ describe('The Granules API', () => {
       const searchResults = await getGranuleWithStatus({
         prefix,
         granuleId: replacementGranule.granuleId,
+        collectionId,
         status: 'failed',
       });
 

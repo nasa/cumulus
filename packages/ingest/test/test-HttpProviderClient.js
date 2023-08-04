@@ -312,3 +312,18 @@ test.serial('list fails if client wait time is set less than the response delay'
     }
   );
 });
+
+test.serial('upload() attemps to upload a file', async (t) => {
+  const localPath = path.join(tmpdir(), randomString());
+  t.teardown(() => fs.unlinkSync(localPath));
+  const uploadPath = path.join(randomString(), 'destinationfile.txt');
+  fs.writeFileSync(localPath, randomString());
+
+  const { httpProviderClient } = t.context;
+  nock('http://localhost:3030')
+    .post(path.join('/', uploadPath))
+    .reply(200);
+
+  await httpProviderClient.upload({ localPath, uploadPath });
+  t.true(nock.isDone());
+});

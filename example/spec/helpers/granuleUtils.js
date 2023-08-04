@@ -152,11 +152,13 @@ const deleteGranules = async (prefix, granules) => {
         return await removePublishedGranule({
           prefix,
           granuleId: granule.granuleId,
+          collectionId: granule.collectionId,
         });
       }
       return await deleteGranule({
         prefix,
         granuleId: granule.granuleId,
+        collectionId: granule.collectionId,
       });
     })
   );
@@ -272,12 +274,13 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
   }
 );
 
-const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = {}) => {
+const waitForGranuleAndDelete = async (prefix, granuleId, collectionId, status, retryConfig = {}) => {
   await waitForApiStatus(
     getGranule,
     {
       prefix,
       granuleId,
+      collectionId,
     },
     status,
     retryConfig
@@ -286,6 +289,7 @@ const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = 
   await deleteGranule({
     prefix,
     granuleId,
+    collectionId,
   });
 };
 
