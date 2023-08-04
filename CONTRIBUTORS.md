@@ -37,6 +37,7 @@
 * Patrick Quinn
 * Phil Osip
 * Sara Chaparro Diaz
+* Sean Quinlan
 * Seth Vincent
 * Slav Korolev
 * Snyk bot
