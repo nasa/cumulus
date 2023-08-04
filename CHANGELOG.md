@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - **CUMULUS-3298**
-  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages 
+  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages
 - **CUMULUS-3220**
   - Created a new send-pan task
 - **CUMULUS-3287**
@@ -75,6 +75,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
 - **CUMULUS-3265**
   - Fixed `@cumulus/api` `getGranulesForPayload` function to query cloud metrics es when needed.
+- **CUMULUS-3389**
+  - Updated runtime of `send-pan` and `startAsyncOperation` lambdas to `nodejs16.x`
 
 ## [v16.0.0] 2023-05-09
 
