@@ -347,7 +347,7 @@ async function getGranulesForPayload(payload) {
   const queryGranules = granules || [];
 
   // query ElasticSearch if needed
-  if (!granules && query) {
+  if (queryGranules.length === 0 && query) {
     log.info('No granules detected. Searching for granules in ElasticSearch.');
 
     const esGranules = await granuleEsQuery({
