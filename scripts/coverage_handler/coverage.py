@@ -25,8 +25,8 @@ def mergeCoverage() -> None:
     cwd = os.getcwd()
     outFile = '_'.join(cwd.split("/")[-2:])
     error = subprocess.call([
-        "nyc", "merge"
-        f"{cwd}/.nyc_output"
+        "nyc", "merge",
+        f"{cwd}/.nyc_output",
         f"{root}/.nyc_output/{outFile}.json"
     ])
     if error:
