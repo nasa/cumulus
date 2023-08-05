@@ -20,8 +20,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "generate-task-schemas": "npx generate-task-schemas . queueGranulesFiles --typescript src/types.ts",
-    "package": "npm run generate-task-schemas && ./bin/package.sh",
+    "package": "./bin/package.sh",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
@@ -52,9 +51,5 @@
     "@cumulus/message": "16.0.0",
     "lodash": "^4.17.21",
     "p-map": "^4.0.0"
-  },
-  "devDependencies": {
-    "@cumulus/schemas": "16.0.0",
-    "@cumulus/types": "16.0.0"
   }
 }

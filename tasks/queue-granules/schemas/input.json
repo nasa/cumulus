@@ -2,68 +2,31 @@
   "title": "QueueGranulesInput",
   "description": "Describes the input and config used by the queue-granules task",
   "type": "object",
-  "required": [
-    "granules"
-  ],
+  "require": [ "granules" ],
   "properties": {
     "pdr": {
       "type": "object",
-      "required": [
-        "name",
-        "path"
-      ],
+      "required": ["name", "path"],
       "properties": {
-        "name": {
-          "type": "string"
-        },
-        "path": {
-          "type": "string"
-        }
+        "name": { "type": "string" },
+        "path": { "type": "string" }
       }
     },
     "granules": {
       "type": "array",
       "items": {
         "type": "object",
-        "required": [
-          "files",
-          "granuleId"
-        ],
+        "required": ["files", "granuleId"],
         "properties": {
-          "type": {
-            "type": "string"
-          },
-          "granuleId": {
-            "type": "string"
-          },
-          "dataType": {
-            "type": "string"
-          },
-          "version": {
-            "type": "string"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "collectionId": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "number"
-          },
-          "updatedAt": {
-            "type": "number"
-          },
-          "files": {
-            "type": "array",
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            }
-          }
+          "type": { "type": "string" },
+          "granuleId": { "type": "string" },
+          "dataType": { "type": "string" },
+          "version": { "type": "string" },
+          "provider": { "type": "string" },
+          "collectionId": { "type": "string" },
+          "status": { "type": "string" },
+          "updatedAt": { "type": "integer" },
+          "files": { "type": "array" }
         }
       }
     }

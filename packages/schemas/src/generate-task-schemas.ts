@@ -5,8 +5,6 @@ import path from 'path';
 import { templateJsonSchemaWithFiles } from './generate-schemas';
 import generateTypes from './generate-types';
 
-const queueGranulesFilesJsonSchema = require('../preSyncedFiles.schema.json');
-
 const TYPESCRIPT_OPTION = '--typescript';
 function parseOptions(taskDirectory: string, args: string[]): { tsFile?: Promise<FileHandle> } {
   let tsFile;
@@ -23,8 +21,7 @@ function parseOptions(taskDirectory: string, args: string[]): { tsFile?: Promise
 
 async function runFilesCommand(
   taskDirectory: string,
-  rawOptions: string[],
-  replacements?: any
+  rawOptions: string[]
 ): Promise<void> {
   const taskSchemasDirectory = path.join(taskDirectory, 'schemas');
   const options = parseOptions(taskDirectory, rawOptions);
@@ -37,7 +34,7 @@ async function runFilesCommand(
           taskSchemasDirectory,
           schemaTemplateFile.replace('.template', '')
         );
-        templateJsonSchemaWithFiles(inputFile, outputFile, replacements);
+        templateJsonSchemaWithFiles(inputFile, outputFile);
       }
     );
   if (options.tsFile) {
@@ -54,9 +51,6 @@ async function main() {
   switch (command) {
     case 'files':
       await runFilesCommand(taskDirectory, options);
-      return;
-    case 'queueGranulesFiles':
-      await runFilesCommand(taskDirectory, options, queueGranulesFilesJsonSchema);
       return;
     default:
       console.error('Unknown command');

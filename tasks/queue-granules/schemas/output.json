@@ -2,9 +2,7 @@
   "title": "QueueGranulesOutput",
   "description": "Describes the output produced by the queue-granules task",
   "type": "object",
-  "required": [
-    "running"
-  ],
+  "required": [ "running" ],
   "properties": {
     "running": {
       "type": "array",
@@ -16,17 +14,10 @@
     "pdr": {
       "description": "Product Delivery Record",
       "type": "object",
-      "required": [
-        "name",
-        "path"
-      ],
+      "required": ["name", "path"],
       "properties": {
-        "name": {
-          "type": "string"
-        },
-        "path": {
-          "type": "string"
-        }
+        "name": { "type": "string" },
+        "path": { "type": "string" }
       }
     }
   }

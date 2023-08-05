@@ -35,18 +35,15 @@ export function templateJsonSchema(
  *
  * @param schemaTemplatePath - Input schema template path
  * @param schemaOutputPath   - Path to write updated output schema
- * @param [replacements]     - Optional schema replacement
  * @returns {void}
  */
 export function templateJsonSchemaWithFiles(
   schemaTemplatePath: string,
-  schemaOutputPath: string,
-  altJsonSchema: SchemaReplacements = filesJsonSchema
+  schemaOutputPath: string
 ) {
-  const replacements = { files: altJsonSchema };
   templateJsonSchema(
     schemaTemplatePath,
     schemaOutputPath,
-    replacements
+    { files: filesJsonSchema }
   );
 }

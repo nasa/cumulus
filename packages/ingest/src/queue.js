@@ -89,7 +89,7 @@ module.exports.enqueueParsePdrMessage = enqueueParsePdrMessage;
  * @param {object} params.messageTemplate - Message template for the workflow
  * @param {object} params.workflow        - workflow name & arn object
  * @param {string} params.queueUrl        - the SQS queue to add the message to
- * @param {object} [params.pdr]
+ * @param {object | undefined} [params.pdr]
  *   - an optional PDR to be configured in the message payload
  * @param {string} [params.executionNamePrefix]
  *   - the prefix to apply to the name of the enqueued execution
