@@ -10,14 +10,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - The async_operation_image property of cumulus module should be updated to pull
   the ECR image for cumuluss/async-operation:47
-  
+- @cumulus/api is now compatible *only* with Orca >= 8.1.0.    Prior versions of
+  Orca are not compatible with Cumulus 17+
+
 - **CUMULUS-3258**
   - Updated all terraform AWS providers to ~> 5.0.0
 
 ### Added
 
 - **CUMULUS-3298**
-  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages 
+  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages
 - **CUMULUS-3220**
   - Created a new send-pan task
 - **CUMULUS-3287**
@@ -28,6 +30,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-3258**
+  - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
+    to o/@cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleIdAndCollection and
+    add collectionId to arguments to support Orca v8+ required us of
+    collectionId
+  - Update all Core integration tests/integrations to be compatible with Orca >=
+    v8.1.0 only
   - Updated all terraform AWS providers to ~> 5.0.0
 - **CUMULUS-3245**
   - Updated Terraform AWS provider to ~>5.0.0
@@ -78,6 +86,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3258**
+  - Fix un-prefixed s3 lifecycle configuration ID from CUMULUS-2915
 - **CUMULUS-2625**
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
 - **CUMULUS-3265**
