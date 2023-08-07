@@ -3,6 +3,7 @@
   "version": "16.1.0",
   "description": "Adapter to invoke orca recovery workflow",
   "main": "dist/index.js",
+  "private": true,
   "directories": {
     "test": "tests"
   },

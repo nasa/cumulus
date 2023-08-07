@@ -3,6 +3,7 @@
   "version": "16.1.0",
   "description": "Sends a PAN response after parsing a PDR.",
   "main": "dist/index.js",
+  "private": true,
   "directories": {
     "test": "tests"
   },
