@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## [v16.1.0] 2023-08-03
+## [v16.1.1] 2023-08-03
 
 ### Notable Changes
 
@@ -7259,8 +7259,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.0...HEAD
-[v16.1.0]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.0
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.1...HEAD
+[v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
 [v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3
