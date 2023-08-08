@@ -38,7 +38,6 @@ export const getSecretConnectionConfig = async (
     password: dbAccessMeta.password,
     database: dbAccessMeta.database,
     port: dbAccessMeta.port ?? 5432,
-    ssl: true,
   };
 };
 
