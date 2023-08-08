@@ -152,7 +152,7 @@ describe('The S3 Ingest Granules workflow', () => {
     let asyncOperationId;
     let collectionId;
 
-    it('generatess an async operation through the Cumulus API', async () => {
+    it('generates an async operation through the Cumulus API', async () => {
       const collectionsApiResponse = await getCollection({
         prefix: config.stackName,
         collectionName: collection.name,
