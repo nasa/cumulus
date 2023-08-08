@@ -77,6 +77,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
 - **CUMULUS-3265**
   - Fixed `@cumulus/api` `getGranulesForPayload` function to query cloud metrics es when needed.
+- **CUMULUS-3389**
+  - Updated runtime of `send-pan` and `startAsyncOperation` lambdas to `nodejs16.x`
 
 ## [v16.0.0] 2023-05-09
 
