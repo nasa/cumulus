@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   Orca are not compatible with Cumulus 17+
 
 - **CUMULUS-3258**
-  - Updated all hashicorp terraform AWS provider configs to ~> 5.0.0
+  - Updated all hashicorp terraform AWS provider configs to ~> 5.0
     - Upstream/downstream terraform modules will need to utilize an AWS provider
       that matches this range
 ### Added
@@ -39,9 +39,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     collectionId
   - Update all Core integration tests/integrations to be compatible with Orca >=
     v8.1.0 only
-  - Updated all terraform AWS providers to ~> 5.0.0
-- **CUMULUS-3245**
-  - Updated Terraform AWS provider to ~>5.0.0
+  - Updated all terraform AWS providers to ~> 5.0
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
