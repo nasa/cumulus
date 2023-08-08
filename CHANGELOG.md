@@ -35,7 +35,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3258**
   - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
     to o/@cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleIdAndCollection and
-    add collectionId to arguments to support Orca v8+ required us of
+    add collectionId to arguments to support Orca v8+ required use of
     collectionId
   - Update all Core integration tests/integrations to be compatible with Orca >=
     v8.1.0 only
