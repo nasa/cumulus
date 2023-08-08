@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/s3-credentials-endpoint",
-  "version": "16.0.0",
+  "version": "16.1.1",
   "description": "An API Gateway Lambda to return AWS credentials for fetching objects from S3",
   "license": "Apache-2.0",
   "engines": {
@@ -18,12 +18,12 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "16.0.0",
-    "@cumulus/aws-client": "16.0.0",
-    "@cumulus/cmrjs": "16.0.0",
-    "@cumulus/errors": "16.0.0",
-    "@cumulus/logger": "16.0.0",
-    "@cumulus/oauth-client": "16.0.0",
+    "@cumulus/api": "16.1.1",
+    "@cumulus/aws-client": "16.1.1",
+    "@cumulus/cmrjs": "16.1.1",
+    "@cumulus/errors": "16.1.1",
+    "@cumulus/logger": "16.1.1",
+    "@cumulus/oauth-client": "16.1.1",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",
