@@ -14,17 +14,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   Orca are not compatible with Cumulus 17+
 
 - **CUMULUS-3258**
-  - Updated all terraform AWS providers to ~> 5.0.0
-
+  - Updated all hashicorp terraform AWS provider configs to ~> 5.0.0
+    - Upstream/downstream terraform modules will need to utilize an AWS provider
+      that matches this range
 ### Added
 
 - **CUMULUS-3298**
-  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages
+  - Added extra time to the buffer for replacing the launchpad token before it
+    expires to alleviate CMR error messages
 - **CUMULUS-3220**
   - Created a new send-pan task
 - **CUMULUS-3287**
   - Added variable to allow the aws_ecs_task_definition health check to be configurable.
-  - Added clarity to how the bucket field needs to be configured for the move-granules task definition
+  - Added clarity to how the bucket field needs to be configured for the
+    move-granules task definition
 
 ### Changed
 
