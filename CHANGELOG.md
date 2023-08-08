@@ -6,9 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-- **CUMULUS-3188**
-  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
-  - Added optional additional properties to queue-granules input schema
+### Changed
+
+- **CUMULUS-3319**
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
+  - Updated thrown error to include information related to this automatic failure behavior in addition to the stack trace.
+
+## [v16.1.1] 2023-08-03
+
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+
+### Added
+
+- **CUMULUS-3298**
+  - Added extra time to the buffer for replacing the launchpad token before it expires to alleviate CMR error messages
+- **CUMULUS-3220**
+  - Created a new send-pan task
 - **CUMULUS-3287**
   - Added variable to allow the aws_ecs_task_definition health check to be configurable.
   - Added clarity to how the bucket field needs to be configured for the move-granules task definition
@@ -23,6 +40,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
+- **CUMULUS-3188**
+  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+  - Added optional additional properties to queue-granules input schema
 - **CUMULUS-3252**
   - Updated example/cumulus-tf/orca.tf to use orca v8.0.1
   - Added cumulus task `@cumulus/orca-copy-to-archive-adapter`, and add the task to `tf-modules/ingest`
@@ -60,6 +80,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
   - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+- Added missing name to throttle_queue_watcher Cloudwatch event in `throttled-queue.tf`
 
 ### Fixed
 
@@ -70,13 +91,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2625**
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
+- **CUMULUS-3265**
+  - Fixed `@cumulus/api` `getGranulesForPayload` function to query cloud metrics es when needed.
+- **CUMULUS-3389**
+  - Updated runtime of `send-pan` and `startAsyncOperation` lambdas to `nodejs16.x`
+
+## [v16.0.0] 2023-05-09
 
 ### Notable Changes
 
 - The async_operation_image property of cumulus module should be updated to pull
-  the ECR image for cumuluss/async-operation:47
-
-## [v16.0.0] 2023-05-09
+  the ECR image for cumuluss/async-operation:46
 
 ### MIGRATION notes
 
@@ -7252,7 +7277,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v16.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.1...HEAD
+[v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
 [v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3

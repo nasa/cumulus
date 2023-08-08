@@ -147,6 +147,13 @@ output "schedule_sf_lambda_function_arn" {
   value = aws_lambda_function.schedule_sf.arn
 }
 
+output "send_pan_task" {
+  value = {
+    task_arn           = aws_lambda_function.send_pan_task.arn
+    last_modified_date = aws_lambda_function.send_pan_task.last_modified
+  }
+}
+
 output "sf_sqs_report_task" {
   value = {
     task_arn           = aws_lambda_function.sf_sqs_report_task.arn
