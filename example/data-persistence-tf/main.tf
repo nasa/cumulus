@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.14.1"
+      version = "~> 5.0"
     }
     random = {
       source = "hashicorp/random"
@@ -27,7 +27,7 @@ resource "random_string" "db_pass" {
 module "provision_database" {
   source                                 = "../../lambdas/db-provision-user-database"
   vpc_id                                 = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
-  subnet_ids                             = var.subnet_ids != null ? var.subnet_ids : data.aws_subnet_ids.subnet_ids[0].ids
+  subnet_ids                             = var.subnet_ids != null ? var.subnet_ids : data.aws_subnets.subnet_ids[0].ids
   prefix                                 = var.prefix
   rds_security_group                     = var.rds_security_group
   rds_admin_access_secret_arn            = var.rds_admin_access_secret_arn
@@ -43,7 +43,7 @@ module "data_persistence" {
   source                         = "../../tf-modules/data-persistence"
   prefix                         = var.prefix
   vpc_id                         = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
-  subnet_ids                     = var.subnet_ids != null ? var.subnet_ids : data.aws_subnet_ids.subnet_ids[0].ids
+  subnet_ids                     = var.subnet_ids != null ? var.subnet_ids : data.aws_subnets.subnet_ids[0].ids
   enable_point_in_time_tables    = var.enable_point_in_time_tables
 
   elasticsearch_config           = var.elasticsearch_config

@@ -35,8 +35,10 @@ test.after.always(() => {
   sandbox.restore();
 });
 
+const collectionId = randomId('collectionId');
+
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns undefined status when orca endpoint returns error',
+  'getOrcaRecoveryStatusByGranuleIdAndCollection returns undefined status when orca endpoint returns error',
   async (t) => {
     const granuleId = randomId('granId');
     fakePostToOrca.resolves({
@@ -47,13 +49,16 @@ test.serial(
         message: 'Function not found: prefix_request_status, please check if orca is deployed',
       },
     });
-    const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
+    const status = await orca.getOrcaRecoveryStatusByGranuleIdAndCollection(
+      granuleId,
+      collectionId
+    );
     t.is(status, undefined);
   }
 );
 
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns undefined status when recovery request for granule is not found',
+  'getOrcaRecoveryStatusByGranuleIdAndCollection returns undefined status when recovery request for granule is not found',
   async (t) => {
     const granuleId = randomId('granId');
     fakePostToOrca.resolves({
@@ -64,13 +69,16 @@ test.serial(
         message: 'No granules found',
       },
     });
-    const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
+    const status = await orca.getOrcaRecoveryStatusByGranuleIdAndCollection(
+      granuleId,
+      collectionId
+    );
     t.is(status, undefined);
   }
 );
 
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns running status when files are still in progress',
+  'getOrcaRecoveryStatusByGranuleIdAndCollection returns running status when files are still in progress',
   async (t) => {
     const granuleId = randomId('granId');
     const files = [
@@ -92,13 +100,16 @@ test.serial(
       statusCode: 200,
       body: recoveryRequests,
     });
-    const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
+    const status = await orca.getOrcaRecoveryStatusByGranuleIdAndCollection(
+      granuleId,
+      collectionId
+    );
     t.is(status, 'running');
   }
 );
 
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns completed status when files are success',
+  'getOrcaRecoveryStatusByGranuleIdAndCollection returns completed status when files are success',
   async (t) => {
     const granuleId = randomId('granId');
     const files = [
@@ -116,13 +127,16 @@ test.serial(
       statusCode: 200,
       body: recoveryRequests,
     });
-    const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
+    const status = await orca.getOrcaRecoveryStatusByGranuleIdAndCollection(
+      granuleId,
+      collectionId
+    );
     t.is(status, 'completed');
   }
 );
 
 test.serial(
-  'getOrcaRecoveryStatusByGranuleId returns failed status when file restore has error',
+  'getOrcaRecoveryStatusByGranuleIdAndCollection returns failed status when file restore has error',
   async (t) => {
     const granuleId = randomId('granId');
     const files = [
@@ -140,7 +154,10 @@ test.serial(
       statusCode: 200,
       body: recoveryRequests,
     });
-    const status = await orca.getOrcaRecoveryStatusByGranuleId(granuleId);
+    const status = await orca.getOrcaRecoveryStatusByGranuleIdAndCollection(
+      granuleId,
+      collectionId
+    );
     t.is(status, 'failed');
   }
 );
