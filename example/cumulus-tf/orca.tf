@@ -12,8 +12,8 @@ locals {
 
 # ORCA Module
 module "orca" {
-  count = 1
-  source = "https://github.com/nasa/cumulus-orca/releases/download/v8.0.1/cumulus-orca-terraform.zip"
+  aws_region = var.region
+  source = "https://github.com/nasa/cumulus-orca/releases/download/v8.1.0/cumulus-orca-terraform.zip"
 
   ## --------------------------
   ## Cumulus Variables
@@ -25,7 +25,6 @@ module "orca" {
   prefix                   = var.prefix
   system_bucket            = var.system_bucket
   vpc_id                   = local.vpc_id
-  workflow_config          = module.cumulus.workflow_config
 
   ## OPTIONAL
   tags                     = var.tags

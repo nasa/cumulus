@@ -115,7 +115,8 @@ export const MissingBucketMap = createErrorType('MissingBucketMap');
 /**
  * The provider info is missing error
  */
-export const ProviderNotFound = createErrorType('ProviderNotFound');
+
+export const ApiCollisionError = createErrorType('ApiCollisionError');
 
 export const ConnectionTimeout = createErrorType('ConnectionTimeout');
 
@@ -131,7 +132,9 @@ export const FileNotFound = createErrorType('FileNotFound');
 
 export const FTPError = createErrorType('FTPError');
 
-export const ApiCollisionError = createErrorType('ApiCollisionError');
+export const GranuleNotPublished = createErrorType('GranuleNotPublished');
+
+export const GranuleFileWriteError = createErrorType('GranuleFileWriteError');
 
 export const HostNotFound = createErrorType('HostNotFound');
 
@@ -147,7 +150,13 @@ export const MissingRequiredArgument = createErrorType('MissingRequiredArgument'
 
 export const MissingRequiredEnvVar = createErrorType('MissingRequiredEnvVar');
 
+export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');
+
 export const PDRParsingError = createErrorType('PDRParsingError');
+
+export const ProviderNotFound = createErrorType('ProviderNotFound');
+
+export const RecordAlreadyMigrated = createErrorType('RecordAlreadyMigrated');
 
 export const RecordDoesNotExist = createErrorType('RecordDoesNotExist');
 
@@ -158,12 +167,6 @@ export const UnmatchedRegexError = createErrorType('UnmatchedRegexError');
 export const UnparsableFileLocationError = createErrorType('UnparsableFileLocationError');
 
 export const ValidationError = createErrorType('ValidationError');
-
-export const MissingRequiredEnvVarError = createErrorType('MissingRequiredEnvVarError');
-
-export const RecordAlreadyMigrated = createErrorType('RecordAlreadyMigrated');
-
-export const GranuleNotPublished = createErrorType('GranuleNotPublished');
 
 export class PostgresValidationError extends ValidationError {
   detail: string | undefined;
