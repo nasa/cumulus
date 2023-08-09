@@ -53,7 +53,7 @@ const { reingestGranule, applyWorkflow } = require('../lib/ingest');
 const { unpublishGranule } = require('../lib/granule-remove-from-cmr');
 const {
   addOrcaRecoveryStatus,
-  getOrcaRecoveryStatusByGranuleId,
+  getOrcaRecoveryStatusByGranuleIdAndCollection,
 } = require('../lib/orca');
 const {
   validateBulkGranulesRequest,
@@ -860,7 +860,7 @@ async function get(req, res) {
 
   const recoveryStatus =
     getRecoveryStatus === 'true'
-      ? await getOrcaRecoveryStatusByGranuleId(granuleId)
+      ? await getOrcaRecoveryStatusByGranuleIdAndCollection(granuleId, collectionId)
       : undefined;
   return res.send({ ...result, recoveryStatus });
 }
@@ -901,7 +901,7 @@ async function getByGranuleId(req, res) {
 
   const recoveryStatus =
     getRecoveryStatus === 'true'
-      ? await getOrcaRecoveryStatusByGranuleId(granuleId)
+      ? await getOrcaRecoveryStatusByGranuleIdAndCollection(granuleId, result.collectionId)
       : undefined;
   return res.send({ ...result, recoveryStatus });
 }

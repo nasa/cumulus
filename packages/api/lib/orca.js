@@ -43,15 +43,16 @@ async function postRequestToOrca({ orcaApiUri = process.env.orca_api_uri, path, 
  * use granule recovery status when available
  *
  * @param {string} granuleId - granule id
+ * @param {string} collectionId - collection id
  * @returns {string} - granule recovery status
  * valid values: null (no recovery status found), completed, failed, running
  */
-const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
+const getOrcaRecoveryStatusByGranuleIdAndCollection = async (granuleId, collectionId) => {
   let response;
   try {
     response = await postRequestToOrca({
       path: 'recovery/granules',
-      body: { granuleId },
+      body: { granuleId, collectionId },
     });
   } catch (error) {
     log.error('Unable to get orca recovery status');
@@ -88,7 +89,10 @@ const getOrcaRecoveryStatusByGranuleId = async (granuleId) => {
 const addOrcaRecoveryStatus = async (inputResponse) => {
   const response = cloneDeep(inputResponse);
   const jobs = response.results.map(async (granule) => {
-    const recoveryStatus = await getOrcaRecoveryStatusByGranuleId(granule.granuleId);
+    const recoveryStatus = await getOrcaRecoveryStatusByGranuleIdAndCollection(
+      granule.granuleId,
+      granule.collectionId
+    );
     return { ...granule, recoveryStatus };
   });
   response.results = await Promise.all(jobs);
@@ -97,6 +101,6 @@ const addOrcaRecoveryStatus = async (inputResponse) => {
 
 module.exports = {
   addOrcaRecoveryStatus,
-  getOrcaRecoveryStatusByGranuleId,
+  getOrcaRecoveryStatusByGranuleIdAndCollection,
   postRequestToOrca,
 };
