@@ -6,13 +6,37 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-3319**
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
+  - Updated thrown error to include information related to this automatic failure behavior in addition to the stack trace.
+
+## [v16.1.1] 2023-08-03
+
+### Notable Changes
+
+- The async_operation_image property of cumulus module should be updated to pull
+  the ECR image for cumuluss/async-operation:47
+- @cumulus/api is now compatible *only* with Orca >= 8.1.0.    Prior versions of
+  Orca are not compatible with Cumulus 17+
+
+- **CUMULUS-3258**
+  - Updated all hashicorp terraform AWS provider configs to ~> 5.0
+    - Upstream/downstream terraform modules will need to utilize an AWS provider
+      that matches this range
 ### Added
 
+- **CUMULUS-3298**
+  - Added extra time to the buffer for replacing the launchpad token before it
+    expires to alleviate CMR error messages
 - **CUMULUS-3220**
   - Created a new send-pan task
 - **CUMULUS-3287**
   - Added variable to allow the aws_ecs_task_definition health check to be configurable.
-  - Added clarity to how the bucket field needs to be configured for the move-granules task definition
+  - Added clarity to how the bucket field needs to be configured for the
+    move-granules task definition
 
 ### Changed
 
@@ -21,6 +45,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3188**
   - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
+- **CUMULUS-3258**
+  - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
+    to o/@cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleIdAndCollection and
+    add collectionId to arguments to support Orca v8+ required use of
+    collectionId
+  - Update all Core integration tests/integrations to be compatible with Orca >=
+    v8.1.0 only
+  - Updated all terraform AWS providers to ~> 5.0
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
@@ -68,15 +100,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- **CUMULUS-3258**
+  - Fix un-prefixed s3 lifecycle configuration ID from CUMULUS-2915
 - **CUMULUS-2625**
   - Optimized heap memory and api load in queue-granules task to scale to larger workloads.
+- **CUMULUS-3265**
+  - Fixed `@cumulus/api` `getGranulesForPayload` function to query cloud metrics es when needed.
+- **CUMULUS-3389**
+  - Updated runtime of `send-pan` and `startAsyncOperation` lambdas to `nodejs16.x`
+
+## [v16.0.0] 2023-05-09
 
 ### Notable Changes
 
 - The async_operation_image property of cumulus module should be updated to pull
-  the ECR image for cumuluss/async-operation:47
-
-## [v16.0.0] 2023-05-09
+  the ECR image for cumuluss/async-operation:46
 
 ### MIGRATION notes
 
@@ -7252,7 +7290,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v16.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.1...HEAD
+[v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
 [v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
 [v15.0.3]: https://github.com/nasa/cumulus/compare/v15.0.2...v15.0.3

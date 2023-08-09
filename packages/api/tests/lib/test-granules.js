@@ -438,6 +438,7 @@ test.serial('getGranulesForPayload returns unique granules from query', async (t
     },
   });
   const returnedGranules = await getGranulesForPayload({
+    granules: [],
     query: 'fake-query',
     index: 'fake-index',
   });

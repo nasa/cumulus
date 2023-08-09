@@ -4,7 +4,7 @@ resource "aws_lambda_function" "start_async_operation" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/startAsyncOperation/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.start_async_operation.arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 960
   environment {
