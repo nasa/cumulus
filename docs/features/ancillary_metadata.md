@@ -4,7 +4,7 @@ title: Ancillary Metadata Export
 hide_title: false
 ---
 
-This feature utilizes the `type` key on a files object in a Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js).  It uses the key  to provide a mechanism where granule discovery, processing and other tasks can set and use this value to facilitate metadata export to CMR.
+This feature utilizes the `type` key on a files object in a Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js).  It uses the key  to provide a mechanism where granule discovery, processing and other tasks can set and use this value to facilitate metadata export to CMR.
 
 ## Tasks setting type
 

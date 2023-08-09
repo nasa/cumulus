@@ -39,7 +39,7 @@ The following are created via the dashboard or API:
 
 ### Schemas
 
-Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
+Looking at our API schema [definitions](https://github.com/nasa/cumulus/tree/master/packages/api/lib/schemas.js) can provide us with some insight into collections, providers, rules, and their attributes (and whether those are required or not). The schema for different concepts will be reference throughout this document.
 
 :::note
 
@@ -49,7 +49,7 @@ The schemas are _extremely_ useful for understanding which attributes are config
 
 ### Providers
 
-- [Provider schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (`module.exports.provider`)
+- [Provider schema](https://github.com/nasa/cumulus/tree/master/packages/api/lib/schemas.js) (`module.exports.provider`)
 - [Provider API](https://nasa.github.io/cumulus-api/?language=Python#list-providers)
 - [Sample provider configurations](https://github.com/nasa/cumulus/tree/master/example/data/providers)
 
@@ -134,7 +134,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 
 ### Collections
 
-- [Collection schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (`module.exports.collection`)
+- [Collection schema](https://github.com/nasa/cumulus/tree/master/packages/api/lib/schemas.js) (`module.exports.collection`)
 - [Collection API](https://nasa.github.io/cumulus-api/?language=Python#list-collections)
 - [Sample collection configurations](https://github.com/nasa/cumulus/tree/master/example/data/collections)
 
@@ -171,7 +171,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 
 ### Rules
 
-- [Rule schema](https://github.com/nasa/cumulus/tree/master/packages/api/models/schemas.js) (`module.exports.rule`)
+- [Rule schema](https://github.com/nasa/cumulus/tree/master/packages/api/lib/schemas.js) (`module.exports.rule`)
 - [Rule API](https://nasa.github.io/cumulus-api/?language=Python#list-rules)
 - [Sample Kinesis rule](https://github.com/nasa/cumulus/blob/master/example/data/rules/L2_HR_PIXC_kinesisRule.json)
 - [Sample SNS rule](https://github.com/nasa/cumulus/blob/master/example/spec/parallel/testAPI/snsRuleDef.json)
