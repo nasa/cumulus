@@ -39,10 +39,10 @@ Below are expanded descriptions of selected config keys:
 
 #### inputGranules
 
-An array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
+An array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) objects.
 
 This object will be used to define metadata values for the move granules task, and is the basis for the updated object that will be added to the output.
 
 ## Task Outputs
 
-This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.
+This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.
