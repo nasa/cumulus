@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.14.1"
+      version = "~> 5.0"
     }
     null = {
       source  = "hashicorp/null"
@@ -42,7 +42,7 @@ locals {
   rds_credentials_secret_arn      = lookup(data.terraform_remote_state.data_persistence.outputs, "database_credentials_secret_arn", "")
 
   vpc_id     = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
-  subnet_ids = length(var.lambda_subnet_ids) > 0 ? var.lambda_subnet_ids : data.aws_subnet_ids.subnet_ids[0].ids
+  subnet_ids = length(var.lambda_subnet_ids) > 0 ? var.lambda_subnet_ids : data.aws_subnets.subnet_ids[0].ids
 }
 
 data "aws_caller_identity" "current" {}
@@ -139,9 +139,10 @@ module "cumulus" {
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 
-  orca_api_uri = module.orca[0].orca_api_deployment_invoke_url
-  orca_lambda_copy_to_archive_arn = module.orca[0].orca_lambda_copy_to_archive_arn
-  orca_sfn_recovery_workflow_arn  = module.orca[0].orca_sfn_recovery_workflow_arn
+  orca_api_uri = module.orca.orca_api_deployment_invoke_url
+
+  orca_lambda_copy_to_archive_arn = module.orca.orca_lambda_copy_to_archive_arn
+  orca_sfn_recovery_workflow_arn = module.orca.orca_sfn_recovery_workflow_arn
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service

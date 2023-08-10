@@ -5,7 +5,7 @@ const moment = require('moment');
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
 
 const Manager = require('./base');
-const { accessToken: accessTokenSchema } = require('./schemas');
+const { accessToken: accessTokenSchema } = require('../lib/schemas');
 
 class AccessToken extends Manager {
   constructor(params = {}) {
