@@ -72,6 +72,9 @@ echo "terraform {
   -input=false
 
 ../terraform import module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress sg-050309e4f6518dd78 \
+  -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
+  -var "cmr_username=$CMR_USERNAME" \
+  -var "cmr_password=$CMR_PASSWORD" \
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
