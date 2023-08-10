@@ -71,6 +71,7 @@ echo "terraform {
 ../terraform init \
   -input=false
 
+../terraform import module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress sg-050309e4f6518dd78 \
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
