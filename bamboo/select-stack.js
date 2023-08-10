@@ -31,11 +31,10 @@ function determineIntegrationTestStackName(cb) {
     'Nate Pauzenga': 'np-ci',
     'Naga Nages': 'nnaga-ci',
     vpnguye2: 'vkn-ci',
-  'Roger Kwarteng':'rkwarten-ci',
+    'Roger Kwarteng': 'rkwarten-ci',
 
   };
-
-
+  
   return git('.').log({ '--max-count': '1' }, (e, r) => {
     const author = r.latest.author_name;
 
