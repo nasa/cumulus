@@ -71,12 +71,8 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-../terraform import module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress nnaga-ci-tf-vpc-ingress-all-egress\
-  -input=false
-  -var 'ADDR=module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress'
-  -ver 'ID=nnaga-ci-tf-vpc-ingress-all-egress'
-  -var "module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress"
-  -var "nnaga-ci-tf-vpc-ingress-all-egress"
+terraform import module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress nnaga-ci-tf-vpc-ingress-all-egress
+
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
