@@ -34,7 +34,7 @@ function determineIntegrationTestStackName(cb) {
     'Roger Kwarteng': 'rkwarten-ci',
 
   };
-  
+
   return git('.').log({ '--max-count': '1' }, (e, r) => {
     const author = r.latest.author_name;
 
