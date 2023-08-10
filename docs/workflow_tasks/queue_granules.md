@@ -40,7 +40,7 @@ Below are expanded descriptions of selected config keys:
 
 #### `provider`
 
-A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object for the originating provider. Will be passed along to the ingest workflow. This will be overruled by more specific provider information that may exist on a granule.
+A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) object for the originating provider. Will be passed along to the ingest workflow. This will be overruled by more specific provider information that may exist on a granule.
 
 #### `internalBucket`
 

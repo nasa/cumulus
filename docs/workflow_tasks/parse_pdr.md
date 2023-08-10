@@ -56,7 +56,7 @@ Below are expanded descriptions of selected config keys:
 
 #### Provider
 
-A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.  Used to define connection information for retrieving the PDR.
+A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) object.  Used to define connection information for retrieving the PDR.
 
 #### Bucket
 
@@ -64,11 +64,11 @@ Defines the bucket where the 'pdrs' folder for parsed PDRs will be stored.
 
 #### Collection
 
-A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.
+A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.
 
 ## Task Outputs
 
-This task outputs a single payload output object containing metadata about the parsed PDR (e.g. filesCount, totalSize, etc), a pdr object with information for later steps and a the generated array of [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
+This task outputs a single payload output object containing metadata about the parsed PDR (e.g. filesCount, totalSize, etc), a pdr object with information for later steps and a the generated array of [granule](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) objects.
 
 ## Examples
 

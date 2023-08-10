@@ -66,7 +66,7 @@ For this example, you are going to be adding two workflows to your Cumulus deplo
 
   The output from this task will be passed into the `ProcessingStep` step , which in this example will utilize the `FakeProcessingLambda` task we provide for testing/as an example in Core, however to use your own data you will need to write a lambda that generates the appropriate CMR metadata file and accepts and returns appropriate task inputs and outputs.
 
-  From that task we will utilize a core task `FilesToGranules` that will transform the processing output event.input list/config.InputGranules into an array of Cumulus [granules](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects.
+  From that task we will utilize a core task `FilesToGranules` that will transform the processing output event.input list/config.InputGranules into an array of Cumulus [granules](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) objects.
 
   Using the generated granules list, we will utilize the core task `MoveGranules` to move the granules to the target buckets as defined in the collection configuration. That task will transfer the files to their final storage location and update the CMR metadata files and the granules list as output.
 
@@ -479,7 +479,7 @@ The incoming message to the task defined in the `ProcessingStep` as configured w
 
 - event.config.bucket -- the name of the bucket configured in `terraform.tfvars` as your `internal` bucket.
 
-- event.config.collection -- The full collection object we will configure in the [Configure Ingest](#configure-ingest) section. You can view the expected collection schema in the docs [here](../configuration/data-management-types.md) or in the source code [on github](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js). You need this as available input _and_ output so you can update as needed.
+- event.config.collection -- The full collection object we will configure in the [Configure Ingest](#configure-ingest) section. You can view the expected collection schema in the docs [here](../configuration/data-management-types.md) or in the source code [on github](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js). You need this as available input _and_ output so you can update as needed.
 
 `event.config.additionalUrls`, `generateFakeBrowse` and `event.config.cmrMetadataFormat` from the example can be ignored as they're configuration flags for the provided example script.
 

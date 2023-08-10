@@ -6,12 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Changed
+## Fixed
 
 - **CUMULUS-3319**
-  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
-  - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
-  - Updated thrown error to include information related to this automatic failure behavior in addition to the stack trace.
+  - Removed @cumulus/api/models/schema and changed all references to
+    @cumulus/api/lib/schema in docs and related models
+  - Removed @cumulus/api/models/errors.js
 
 ## [v16.1.1] 2023-08-03
 
@@ -44,6 +44,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
 - **CUMULUS-3188**
   - Updated QueueGranules to support queueing granules that meet the required API granule schema.
+- **CUMULUS-3319**
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
+  - Updated thrown error to include information related to this automatic failure behavior in addition to the stack trace.
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-3258**
   - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
