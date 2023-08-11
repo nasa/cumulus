@@ -78,8 +78,8 @@ Pre-release testing steps:
 11. [Publishing the release](#11-publishing-the-release)
 12. [Create a new Cumulus release on github](#12-create-a-new-cumulus-release-on-github)
 13. [Update Cumulus API document](#13-update-cumulus-api-document)
-14. [Update Cumulus Template Deploy](#15-update-cumulus-template-deploy)
-15. [Merge base branch back to master](#16-merge-base-branch-back-to-master)
+14. [Update Cumulus Template Deploy](#14-update-cumulus-template-deploy)
+15. [Merge base branch back to master](#15-merge-base-branch-back-to-master)
 
 ### 1. Create a branch for the new release
 
@@ -358,7 +358,7 @@ There may be unreleased changes in the [Cumulus API document](https://github.com
 If there are unrelease changes in the cumulus-api repo, follow the release instruction to create the release, the release version should match
 the Cumulus Core release.
 
-### 15. Update Cumulus Template Deploy
+### 14. Update Cumulus Template Deploy
 
 Users are encouraged to use our [Cumulus Template Deploy Project](https://github.com/nasa/cumulus-template-deploy) for deployments. The Cumulus Core version should be updated in this repo when a new Cumulus Core version is released.
 
@@ -380,7 +380,7 @@ module "cumulus" {
 }
 ```
 
-### 16. Merge base branch back to master
+### 15. Merge base branch back to master
 
 Finally, you need to reproduce the version update changes back to master.
 
