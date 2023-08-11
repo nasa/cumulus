@@ -17,9 +17,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   allow redeployment of a prior version of Cumulus using an older version of
   the provider.  Please be sure to validate the install changeset is what you
   expect prior to upgrading to this version.
-- Migration forward to v17 from v16+ is strongly
-  recommended, as the changeset from the v16.x.y baselines is relatively minimal
-  and has been tested.
 - Upgrading Cumulus to v17 from prior versions should only require the usual
   terraform init/apply steps.  As always **be sure** to inspect the `terraform plan` or
   `terraform apply` changeset to ensure the changes between providers are what
