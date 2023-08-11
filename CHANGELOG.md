@@ -31,16 +31,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Upstream/downstream terraform modules will need to utilize an AWS provider
       that matches this range
 
-## Changed
+## Breaking Changes
 
 - **CUMULUS-3258**
   - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
     to @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleIdAndCollection and
     add collectionId to arguments to support Orca v8+ required use of
     collectionId
+
+  - Updated all terraform AWS providers to ~> 5.0
+
+## Changes
+
+- **CUMULUS-3258**
   - Update all Core integration tests/integrations to be compatible with Orca >=
     v8.1.0 only
-  - Updated all terraform AWS providers to ~> 5.0
 
 ## Fixed
 
