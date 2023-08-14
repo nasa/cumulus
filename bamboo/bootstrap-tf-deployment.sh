@@ -71,16 +71,6 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-../terraform import module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress nnaga-ci-tf-vpc-ingress-all-egress \
-  -auto-approve \
-  -var "module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress"
-  -var "nnaga-ci-tf-vpc-ingress-all-egress"
-  -var "ADDR=module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress"
-  -var "ID=nnaga-ci-tf-vpc-ingress-all-egress"
-  -var "cmr_username=$CMR_USERNAME" \
-  -var "cmr_password=$CMR_PASSWORD" \
-  -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
-
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
