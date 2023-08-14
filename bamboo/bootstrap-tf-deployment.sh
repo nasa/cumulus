@@ -71,8 +71,6 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-../terraform force-unlock -force fca85b96-1e99-3b8b-a0a4-38827132a777
-
 ../terraform import module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress nnaga-ci-tf-vpc-ingress-all-egress \
   -auto-approve \
   -var "module.orca.module.orca.module.orca_lambdas.module.lambda_security_group.aws_security_group.vpc-postgres-ingress-all-egress"
