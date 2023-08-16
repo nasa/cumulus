@@ -102,10 +102,10 @@ export async function getLaunchpadToken(params: LaunchpadTokenParams): Promise<s
     log.debug('getLaunchpadToken requesting launchpad token');
     const launchpad = new LaunchpadToken(params);
     const tokenResponse = await launchpad.requestToken();
-    // add session_starttime to token object, assume token is generated 60s ago
+    // add session_starttime to token object, assume token is generated 5 min ago
     const tokenObject: TokenObject = {
       ...tokenResponse,
-      session_starttime: (Date.now() / 1000) - 60,
+      session_starttime: (Date.now() / 1000) - (5 * 60),
     };
 
     const s3location = launchpadTokenBucketKey();
