@@ -364,7 +364,7 @@ Users are encouraged to use our [Cumulus Template Deploy Project](https://github
 
 This will mean updating the `source` property of Cumulus modules with the correct version:
 
-```
+```hcl
 module "cumulus" {
   source = "https://github.com/nasa/cumulus/releases/download/{most_current_version}/terraform-aws-cumulus.zip//tf-modules/cumulus"
   ...
@@ -373,7 +373,7 @@ module "cumulus" {
 
 e.g.
 
-```
+```hcl
 module "cumulus" {
   source = "https://github.com/nasa/cumulus/releases/download/v16.1.1/terraform-aws-cumulus.zip//tf-modules/cumulus"
   ...
