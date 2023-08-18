@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/move-granules",
-  "version": "16.0.0",
+  "version": "17.0.0",
   "description": "Move granule files from staging to final location",
   "main": "index.js",
   "directories": {
@@ -39,17 +39,17 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "16.0.0",
-    "@cumulus/cmrjs": "16.0.0",
-    "@cumulus/common": "16.0.0",
+    "@cumulus/aws-client": "17.0.0",
+    "@cumulus/cmrjs": "17.0.0",
+    "@cumulus/common": "17.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/distribution-utils": "16.0.0",
-    "@cumulus/errors": "16.0.0",
-    "@cumulus/ingest": "16.0.0",
-    "@cumulus/message": "16.0.0",
+    "@cumulus/distribution-utils": "17.0.0",
+    "@cumulus/errors": "17.0.0",
+    "@cumulus/ingest": "17.0.0",
+    "@cumulus/message": "17.0.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/schemas": "16.0.0"
+    "@cumulus/schemas": "17.0.0"
   }
 }

@@ -232,6 +232,7 @@ Wait for a granule to have an expected status and return the granule
 | params | <code>Object</code> |  |  |
 | params.prefix | <code>string</code> |  | the name of the Cumulus stack |
 | params.granuleId | <code>string</code> |  | the `granuleId` of the granule |
+| params.collectionId | <code>string</code> |  | the `collectionId` of the granule |
 | params.status | <code>string</code> |  | the status to wait for |
 | params.updatedAt | <code>string</code> |  | minimum updatedAt time the granule must have to return |
 | [params.callback] | <code>function</code> | <code>cumulusApiClient.invokeApifunction</code> | an async function to invoke the API Lambda that takes a prefix / user payload |

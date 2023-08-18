@@ -122,7 +122,7 @@ test.before(async (t) => {
     FunctionName: randomId('messageConsumer'),
     Role: randomId('role'),
     Handler: 'index.handler',
-    Runtime: 'nodejs14.x',
+    Runtime: 'nodejs16.x',
   }).promise();
   process.env.messageConsumer = lambda.FunctionName;
   process.env.messageConsumerArn = lambda.FunctionArn;
@@ -1284,7 +1284,8 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
   }));
 
   await t.throwsAsync(
-    rulesHelpers.deleteSnsTrigger(t.context.testKnex, ruleWithTrigger), {
+    rulesHelpers.deleteSnsTrigger(t.context.testKnex, ruleWithTrigger),
+    {
       instanceOf: ResourceNotFoundError,
       message: `${errorMessage} ${resourceNotFoundInfo}`,
     }
