@@ -17,23 +17,23 @@ const {
   validateInput,
   validateOutput,
 } = require('@cumulus/common/test-utils');
+const queue = require('@cumulus/ingest/queue');
 const sinon = require('sinon');
 const pMap = require('p-map');
-const noop = require('lodash/noop');
+
+const { updateGranuleBatchCreatedAt } = require('..');
 
 const pMapSpy = sinon.spy(pMap);
-const { updateGranuleBatchCreatedAt } = require('..');
 const fakeProvidersApi = {};
-const fetchCollectionStub = sinon.stub();
-const fakeGranulesApi = {
-  updateGranule: noop,
-};
+const getCollection = sinon.stub();
+const updateGranule = sinon.spy(({ body: { createdAt } }) => createdAt);
+const enqueueGranuleIngestMessage = sinon.stub(queue, 'enqueueGranuleIngestMessage');
 
 const { queueGranules } = proxyquire('..', {
   'p-map': pMapSpy,
   '@cumulus/api-client': {
-    collections: { getCollection: fetchCollectionStub },
-    granules: fakeGranulesApi,
+    collections: { getCollection },
+    granules: { updateGranule },
     providers: fakeProvidersApi,
   },
 });
@@ -45,8 +45,17 @@ test.beforeEach(async (t) => {
   t.context.stackName = `stack-${randomString().slice(0, 6)}`;
   t.context.workflow = randomString();
   t.context.stateMachineArn = randomString();
-  fetchCollectionStub.resetBehavior();
-  t.context.getCollection = fetchCollectionStub;
+
+  updateGranule.resetHistory();
+  t.context.updateGranule = updateGranule;
+
+  getCollection.resetBehavior();
+  t.context.getCollection = getCollection;
+
+  enqueueGranuleIngestMessage.resetBehavior();
+  enqueueGranuleIngestMessage.resetHistory();
+  enqueueGranuleIngestMessage.callThrough();
+  t.context.enqueueGranuleIngestMessage = enqueueGranuleIngestMessage;
 
   await s3().createBucket({ Bucket: t.context.internalBucket });
 
@@ -85,7 +94,7 @@ test.beforeEach(async (t) => {
     config: {
       internalBucket: t.context.internalBucket,
       stackName: t.context.stackName,
-      provider: { name: 'provider-name' },
+      provider: { id: 'id', name: 'provider-name' },
       queueUrl: t.context.queueUrl,
       granuleIngestWorkflow: t.context.workflow,
     },
@@ -225,7 +234,6 @@ test.serial('Granules are added to the queue', async (t) => {
 
 test.serial('The correct message is enqueued without a PDR', async (t) => {
   const {
-    getCollection,
     event,
     queueUrl,
     queueExecutionLimits,
@@ -238,7 +246,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   const granule1 = {
     createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -247,7 +255,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
   const granule2 = {
     createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -301,7 +309,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       },
       meta: {
         collection: collectionConfig1,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -333,7 +341,7 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
       },
       meta: {
         collection: collectionConfig2,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -353,7 +361,6 @@ test.serial('The correct message is enqueued without a PDR', async (t) => {
 
 test.serial('granules are enqueued with createdAt values added to granules that are missing them', async (t) => {
   const {
-    getCollection,
     event,
   } = t.context;
 
@@ -361,7 +368,7 @@ test.serial('granules are enqueued with createdAt values added to granules that 
 
   const granule1 = {
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -370,7 +377,7 @@ test.serial('granules are enqueued with createdAt values added to granules that 
   const granule2 = {
     createdAt,
     dataType: `data-type-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     granuleId: `granule-${randomString().slice(0, 6)}`,
     version: '6',
   };
@@ -419,7 +426,6 @@ test.serial('granules are enqueued with createdAt values added to granules that 
 
 test.serial('The correct message is enqueued with a PDR', async (t) => {
   const {
-    getCollection,
     event,
     queueUrl,
     queueExecutionLimits,
@@ -445,7 +451,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     createdAt,
   };
   const collectionConfig1 = { name: `collection-config-${randomString().slice(0, 6)}` };
@@ -454,7 +460,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
     dataType: `data-type-${randomString().slice(0, 6)}`,
     version: '6',
     granuleId: `granule-${randomString().slice(0, 6)}`,
-    files: [{ name: `file-${randomString().slice(0, 6)}` }],
+    files: [{ fileName: `file-${randomString().slice(0, 6)}`, bucket: 'test-bucket', key: '/test_key/' }],
     createdAt,
   };
   const collectionConfig2 = { name: `collection-config-${randomString().slice(0, 6)}` };
@@ -509,7 +515,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       meta: {
         pdr: event.input.pdr,
         collection: collectionConfig1,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -543,7 +549,7 @@ test.serial('The correct message is enqueued with a PDR', async (t) => {
       meta: {
         pdr: event.input.pdr,
         collection: collectionConfig2,
-        provider: { name: 'provider-name' },
+        provider: { id: 'id', name: 'provider-name' },
         workflow_name: workflow,
       },
       payload: {
@@ -802,17 +808,13 @@ test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessag
     },
   ];
 
-  const updateGranuleMock = sinon.spy(({ body }) => body.createdAt);
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  const testMocks = {
-    updateGranuleMock,
-    enqueueGranuleIngestMessageMock,
-  };
-
-  await queueGranules(event, testMocks);
-  const expectedCreatedAt = enqueueGranuleIngestMessageMock.returnValues[0].granules[0].createdAt;
-  t.is(updateGranuleMock.returnValues[0], expectedCreatedAt);
+  await queueGranules(event);
+  t.is(
+    t.context.updateGranule.returnValues[0],
+    t.context.enqueueGranuleIngestMessage.lastCall.returnValue.granules[0].createdAt
+  );
 });
 
 test.serial('updatedGranuleBatchCreatedAt updates batch granule object with correct createdAt values', (t) => {
@@ -882,21 +884,22 @@ test.serial('does not change collection id on granule', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
 
-  const testMocks = {
-    updateGranuleMock: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageMock,
-  };
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  await queueGranules(event, testMocks);
+  await queueGranules(event);
 
-  const createdMap = Object.fromEntries(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
-  );
+  const granuleDates = t.context.updateGranule.getCalls()
+    .map(({ args: [params] }) => [
+      params.granuleId,
+      {
+        createdAt: params.body.createdAt,
+        updatedAt: params.body.updatedAt,
+      },
+    ]);
+  const createdMap = Object.fromEntries(granuleDates);
   t.deepEqual(
-    testMocks.updateGranuleMock.getCalls()
+    t.context.updateGranule.getCalls()
       .map(({ args: [params] }) => params)
       .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
@@ -910,7 +913,8 @@ test.serial('does not change collection id on granule', async (t) => {
             collectionId,
             granuleId,
             status: 'queued',
-            createdAt: createdMap[granuleId],
+            createdAt: createdMap[granuleId].createdAt,
+            updatedAt: createdMap[granuleId].updatedAt,
           },
         };
       }
@@ -918,7 +922,7 @@ test.serial('does not change collection id on granule', async (t) => {
   );
 
   t.deepEqual(
-    enqueueGranuleIngestMessageMock.getCalls().length,
+    t.context.enqueueGranuleIngestMessage.getCalls().length,
     event.input.granules.length
   );
 });
@@ -946,21 +950,23 @@ test.serial('handles different collections', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
 
-  const testMocks = {
-    updateGranuleMock: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageMock,
-  };
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  await queueGranules(event, testMocks);
+  await queueGranules(event);
 
-  const createdMap = Object.fromEntries(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
-  );
+  const granuleDates = t.context.updateGranule.getCalls()
+    .map(({ args: [params] }) => [
+      params.granuleId,
+      {
+        createdAt: params.body.createdAt,
+        updatedAt: params.body.updatedAt,
+      },
+    ]);
+  const createdMap = Object.fromEntries(granuleDates);
+
   t.deepEqual(
-    testMocks.updateGranuleMock.getCalls()
+    t.context.updateGranule.getCalls()
       .map(({ args: [params] }) => params)
       .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
@@ -974,7 +980,8 @@ test.serial('handles different collections', async (t) => {
             collectionId,
             granuleId,
             status: 'queued',
-            createdAt: createdMap[granuleId],
+            createdAt: createdMap[granuleId].createdAt,
+            updatedAt: createdMap[granuleId].updatedAt,
           },
         };
       }
@@ -982,7 +989,7 @@ test.serial('handles different collections', async (t) => {
   );
 
   t.deepEqual(
-    enqueueGranuleIngestMessageMock.getCalls().length,
+    t.context.enqueueGranuleIngestMessage.getCalls().length,
     event.input.granules.length
   );
 });
@@ -1011,21 +1018,23 @@ test.serial('handles different providers', async (t) => {
       files: [],
     },
   ];
-  const enqueueGranuleIngestMessageMock = sinon.spy((params) => params);
 
-  const testMocks = {
-    updateGranuleMock: sinon.spy(async () => { }),
-    enqueueGranuleIngestMessageMock,
-  };
+  t.context.enqueueGranuleIngestMessage.returnsArg(0);
 
-  await queueGranules(event, testMocks);
+  await queueGranules(event);
 
-  const createdMap = Object.fromEntries(
-    testMocks.updateGranuleMock.getCalls()
-      .map(({ args: [params] }) => [params.granuleId, params.body.createdAt])
-  );
+  const entries = t.context.updateGranule.getCalls()
+    .map(({ args: [params] }) => [
+      params.granuleId,
+      {
+        createdAt: params.body.createdAt,
+        updatedAt: params.body.updatedAt,
+      },
+    ]);
+  const createdMap = Object.fromEntries(entries);
+
   t.deepEqual(
-    testMocks.updateGranuleMock.getCalls()
+    t.context.updateGranule.getCalls()
       .map(({ args: [params] }) => params)
       .sort(({ granuleId: a }, { granuleId: b }) => a.localeCompare(b)),
     event.input.granules.map(
@@ -1039,7 +1048,8 @@ test.serial('handles different providers', async (t) => {
             collectionId,
             granuleId,
             status: 'queued',
-            createdAt: createdMap[granuleId],
+            createdAt: createdMap[granuleId].createdAt,
+            updatedAt: createdMap[granuleId].updatedAt,
           },
         };
       }
@@ -1047,23 +1057,29 @@ test.serial('handles different providers', async (t) => {
   );
 
   t.deepEqual(
-    enqueueGranuleIngestMessageMock.getCalls().length,
+    t.context.enqueueGranuleIngestMessage.getCalls().length,
     event.input.granules.length
   );
 });
 
 test.serial('queueGranules throws an error when no dataType, version, or collectionId are provided in input', async (t) => {
   const { event } = t.context;
+  const granuleId1 = randomString();
   event.input.granules = [
     {
-      granuleId: randomString(), files: [],
+      granuleId: granuleId1, files: [],
     },
     {
       granuleId: randomString(), files: [],
     },
   ];
 
-  await t.throwsAsync(queueGranules(event));
+  const expectedMessage = `Invalid collection information provided for granule with granuleId: ${granuleId1}, `
+    + 'please check task input to make sure collection information is provided';
+  await t.throwsAsync(queueGranules(event),
+    {
+      message: expectedMessage,
+    });
 });
 
 test.serial('queueGranules does not throw an error when updatedAt is provided and is not provided', async (t) => {
@@ -1082,9 +1098,11 @@ test.serial('queueGranules does not throw an error when updatedAt is provided an
 
 test.serial('queueGranules throws an error when the updatedAt field is not an Integer value', async (t) => {
   const { event } = t.context;
+  const firstGranuleId = randomString();
+  const firstInvalidUpdatedAt = '12/25/2022';
   event.input.granules = [
     {
-      granuleId: randomString(), files: [], updatedAt: '12/25/2022', collectionId: 'ABC___001',
+      granuleId: firstGranuleId, files: [], updatedAt: firstInvalidUpdatedAt, collectionId: 'ABC___001',
     },
     {
       granuleId: randomString(), files: [], updatedAt: 1553053438767.378196, collectionId: 'ABC___001',
@@ -1092,7 +1110,13 @@ test.serial('queueGranules throws an error when the updatedAt field is not an In
     {
       granuleId: randomString(), files: [], updatedAt: -1, collectionId: 'ABC___001',
     },
+    {
+      granuleId: randomString(), files: [], updatedAt: 1553053438767, collectionId: 'ABC___001',
+    },
   ];
 
-  await t.throwsAsync(queueGranules(event));
+  await t.throwsAsync(queueGranules(event),
+    {
+      message: `Invalid updatedAt value: ${firstInvalidUpdatedAt} for granule with granuleId: ${firstGranuleId}`,
+    });
 });
