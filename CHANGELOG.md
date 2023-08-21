@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+### Notable Changes
+
+- **CUMULUS-3270**
+  - update to use python3.10
+  - update dependencies to use python3.10 including CMA-python and cumulus-process-py
 
 ## [v17.0.0] 2023-08-09
 
@@ -71,11 +76,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     expires to alleviate CMR error messages
 - **CUMULUS-3220**
   - Created a new send-pan task
-- **CUMULUS-3270**
-  - update to use python3.10
-  - update dependencies to use python3.10 including CMA-python and cumulus-process-py
-- **CUMULUS-3188**
-  - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 - **CUMULUS-3287**
   - Added variable to allow the aws_ecs_task_definition health check to be configurable.
   - Added clarity to how the bucket field needs to be configured for the
