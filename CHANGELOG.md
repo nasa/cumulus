@@ -127,7 +127,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
   - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+- **CUMULUS-3357**
+  - `@cumulus/queue-granules` is now written in TypeScript
+  - `@cumulus/schemas` can now generate TypeScript interfaces for the task input, output and config.
 - Added missing name to throttle_queue_watcher Cloudwatch event in `throttled-queue.tf`
+
 
 ### Fixed
 
