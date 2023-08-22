@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## Notable Changes
+
+- **CUMULUS-3259**
+  - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
+
 ## [v17.0.0] 2023-08-09
 
 ### MIGRATION notes
@@ -78,8 +83,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- **CUMULUS-3258**
-  - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
 - **CUMULUS-3188**
   - Updated QueueGranules to support queueing granules that meet the required API granule schema.
 - **CUMULUS-3319**

@@ -6,14 +6,14 @@ hide_title: false
 
 ## Background
 
-Cumulus pins its support to a specific version of Terraform [see: deployment documentation](../deployment/README.md#install-terraform). The reason for only supporting one specific Terraform version at a time is to avoid deployment errors than can be caused by deploying to the same target with different Terraform versions.
+Cumulus pins its support to a specific version of Terraform [see: deployment documentation](../deployment/README.md#install-terraform). The reason for only supporting one specific Terraform version at a time is to avoid deployment errors than can be caused by deploying to the same target with different Terraform versions  as a rollback to a previous Terraform version is not possible.
 
 Cumulus is upgrading its supported version of Terraform from **0.13.6** to **1.5.3**. This document contains instructions on how to perform the upgrade for your deployments.
 
 ### Prerequisites
 
 - Follow the [Terraform guidance for what to do before upgrading](https://developer.hashicorp.com/terraform/language/upgrade-guides), notably ensuring that you have no pending changes to your Cumulus deployments before proceeding.
-  - You should do a `terraform plan` to see if you have any pending changes for your deployment (for both the `data-persistence-tf`, `cumulus-tf` and `rds-cluster-tf` modules), and if so, run a `terraform apply` **before doing the upgrade to Terraform 1.5.3**
+  - You should do a `terraform plan` to see if you have any pending changes for your deployment (for the `data-persistence-tf`, `cumulus-tf` and `rds-cluster-tf` modules), and if so, run a `terraform apply` **before doing the upgrade to Terraform 1.5.3**
 - Review the [Terraform v1.5 release notes](https://github.com/hashicorp/terraform/blob/v1.5/CHANGELOG.md) to prepare for any breaking changes that may affect your custom deployment code. **Cumulus' deployment code has already been updated for compatibility with version 1.5**.
 - Install Terraform version 1.5.3. We recommend using Terraform Version Manager [tfenv](https://github.com/tfutils/tfenv) to manage your installed versons of Terraform, but this is not required.
 
