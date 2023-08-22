@@ -9,7 +9,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Changes
 
 - **CUMULUS-3366**
-  - Added logging to the sqs-message-consumer when an incoming message's collection does not match any rules.
+  - Added logging to the `collectionRuleMatcher` Rules Helper, which is used by the sqs-message-consumer and message-consumer Lambdas,
+    to report when an incoming message's collection does not match any rules.
 
 ## [v17.0.0] 2023-08-09
 
