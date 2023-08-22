@@ -6,12 +6,56 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v17.0.0] 2023-08-09
+
+### MIGRATION notes
+
+- This release updates the `hashicorp/aws` provider required by Cumulus to `~> 5.0`
+  which in turn requires updates to all modules deployed with Core in the same stack
+  to use a compatible provider version.
+- This update is *not* compatible with prior stack states - Terraform will not
+  allow redeployment of a prior version of Cumulus using an older version of
+  the provider.  Please be sure to validate the install changeset is what you
+  expect prior to upgrading to this version.
+- Upgrading Cumulus to v17 from prior versions should only require the usual
+  terraform init/apply steps.  As always **be sure** to inspect the `terraform plan` or
+  `terraform apply` changeset to ensure the changes between providers are what
+  you're expecting for all modules you've chosen to deploy with Cumulus
+
+### Notable Changes
+
+- **CUMULUS-3258**
+  - @cumulus/api is now compatible *only* with Orca >= 8.1.0.    Prior versions of
+    Orca are not compatible with Cumulus 17+
+  - Updated all hashicorp terraform AWS provider configs to ~> 5.0
+    - Upstream/downstream terraform modules will need to utilize an AWS provider
+      that matches this range
+
+## Breaking Changes
+
+- **CUMULUS-3258**
+  - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
+    to @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleIdAndCollection and
+    add collectionId to arguments to support Orca v8+ required use of
+    collectionId
+
+  - Updated all terraform AWS providers to ~> 5.0
+
+## Changes
+
+- **CUMULUS-3258**
+  - Update all Core integration tests/integrations to be compatible with Orca >=
+    v8.1.0 only
+
 ## Fixed
 
 - **CUMULUS-3319**
   - Removed @cumulus/api/models/schema and changed all references to
     @cumulus/api/lib/schema in docs and related models
   - Removed @cumulus/api/models/errors.js
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
+  - Updated thrown error to include information related to automatic failure behavior in addition to the stack trace.
 
 ## [v16.1.1] 2023-08-03
 
@@ -19,13 +63,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - The async_operation_image property of cumulus module should be updated to pull
   the ECR image for cumuluss/async-operation:47
-- @cumulus/api is now compatible *only* with Orca >= 8.1.0.    Prior versions of
-  Orca are not compatible with Cumulus 17+
 
-- **CUMULUS-3258**
-  - Updated all hashicorp terraform AWS provider configs to ~> 5.0
-    - Upstream/downstream terraform modules will need to utilize an AWS provider
-      that matches this range
 ### Added
 
 - **CUMULUS-3298**
@@ -49,14 +87,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
   - Updated thrown error to include information related to this automatic failure behavior in addition to the stack trace.
 - Security upgrade node from 14.19.3-buster to 14.21.1-buster
-- **CUMULUS-3258**
-  - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
-    to o/@cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleIdAndCollection and
-    add collectionId to arguments to support Orca v8+ required use of
-    collectionId
-  - Update all Core integration tests/integrations to be compatible with Orca >=
-    v8.1.0 only
-  - Updated all terraform AWS providers to ~> 5.0
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
@@ -7293,8 +7323,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-
-[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.1...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v17.0.0...HEAD
+[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
 [v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
