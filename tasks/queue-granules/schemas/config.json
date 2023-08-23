@@ -13,7 +13,13 @@
   "properties": {
     "granuleIngestWorkflow": { "type": "string" },
     "internalBucket": { "type": "string" },
-    "provider": { "type": "object" },
+    "provider": {
+      "type": "object",
+      "required": [ "id" ],
+      "properties": {
+        "id": { "type": "string" }
+      }
+    },
     "preferredQueueBatchSize": { "type": ["number", "null"] },
     "queueUrl": { "type": "string" },
     "stackName": { "type": "string" },

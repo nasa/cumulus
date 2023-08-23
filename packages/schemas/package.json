@@ -14,7 +14,8 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist/**/*.js",
-    "dist/**/*.d.ts"
+    "dist/**/*.d.ts",
+    "*.schema.json"
   ],
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
@@ -41,6 +42,8 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "lodash": "^4.17.21",
+    "json-schema-to-typescript": "^13.0.2",
     "json-templates": "^4.1.0"
   }
 }
