@@ -20,7 +20,7 @@ Cumulus is upgrading its supported version of Terraform from **0.13.6** to **1.5
 ### Upgrade your deployment
 
 1. Ensure that you are running Terraform 1.5.3 by running `terraform --version`. If you are using `tfenv`, you can switch versions by running `tfenv use 1.5.3`.
-2. For the `data-persistence-tf` and `cumulus-tf` directories, take the following steps:
+2. For the `data-persistence-tf` and `cumulus-tf` directories (and `rds-cluster-tf` if neccessary), take the following steps:
    1. Run `terraform init --reconfigure`. The `--reconfigure` flag is required, otherwise you might see an error like:
 
         ```text
