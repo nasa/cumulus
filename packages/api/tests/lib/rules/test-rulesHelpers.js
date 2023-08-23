@@ -9,6 +9,7 @@ const fs = require('fs-extra');
 
 const awsServices = require('@cumulus/aws-client/services');
 const workflows = require('@cumulus/common/workflows');
+const Logger = require('@cumulus/logger');
 
 const SQS = require('@cumulus/aws-client/SQS');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
@@ -39,6 +40,8 @@ const {
 const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
 const listRulesStub = sinon.stub();
+
+const log = new Logger({ sender: '@cumulus/test-rulesHelpers' });
 
 // TODO remove proxyquire/don't use rulesHelpers require
 const rulesHelpers = proxyquire('../../../lib/rulesHelpers', {
@@ -256,6 +259,35 @@ test('filterRulesbyCollection returns rules with matching collection name and ve
   t.deepEqual(
     rulesHelpers.filterRulesbyCollection([rule1, rule2], collection),
     [rule1]
+  );
+});
+
+test('filterRulesbyCollection logs info when no rules match collection name and version', (t) => {
+  const collectionName = randomId('name');
+  const collectionVersion = '1.0.0';
+
+  const collection = {
+    name: collectionName,
+    version: collectionVersion,
+  };
+
+  const ruleCollection1Name = randomString(3);
+  const ruleCollection1Version = collectionVersion;
+
+  const rule1 = fakeRuleFactoryV2({
+    collection: {
+      name: ruleCollection1Name,
+      version: ruleCollection1Version,
+    },
+  });
+
+  const logArgs = `Rule collection name - ${ruleCollection1Name} - or Rule collection version - ${ruleCollection1Version} - does not match collection - ${JSON.stringify(collection)}`;
+  const logMock = sinon.mock(log).expects('info').withArgs(logArgs).once();
+  log.info = logMock;
+
+  t.deepEqual(
+    rulesHelpers.filterRulesbyCollection([rule1], collection, log),
+    []
   );
 });
 
