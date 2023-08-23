@@ -139,10 +139,10 @@ module "cumulus" {
   oauth_provider   = var.oauth_provider
   oauth_user_group = var.oauth_user_group
 
-  orca_api_uri = module.orca.orca_api_deployment_invoke_url
+  #orca_api_uri = module.orca.orca_api_deployment_invoke_url
 
-  orca_lambda_copy_to_archive_arn = module.orca.orca_lambda_copy_to_archive_arn
-  orca_sfn_recovery_workflow_arn = module.orca.orca_sfn_recovery_workflow_arn
+  #orca_lambda_copy_to_archive_arn = module.orca.orca_lambda_copy_to_archive_arn
+  #orca_sfn_recovery_workflow_arn = module.orca.orca_sfn_recovery_workflow_arn
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
