@@ -83,6 +83,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Security upgrade node from 14.19.3-buster to 14.21.1-buster
 - **CUMULUS-2985**
   - Changed `onetime` rules RuleTrigger to only execute when the state is `ENABLED` and updated documentation to reflect the change
   - Changed the `invokeRerun` function to only re-run enabled rules
