@@ -16,7 +16,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["files", "granuleId"],
+        "required": ["granuleId"],
         "properties": {
           "type": { "type": "string" },
           "granuleId": { "type": "string" },
