@@ -46,7 +46,7 @@ services:
     environment:
       SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs"
   build_env:
-    image: maven.earthdata.nasa.gov/cumulus:latest
+    image: $CUMULUS_BASE_IMAGE
     volumes:
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
     environment:
