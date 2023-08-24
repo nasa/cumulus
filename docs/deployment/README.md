@@ -57,13 +57,13 @@ brew install tfenv
 For other cases, installation instructions are available to follow along [here](https://github.com/tfutils/tfenv#installation).
 
 ```shell
- $ tfenv install 0.13.6
-[INFO] Installing Terraform v0.13.6
+ $ tfenv install 1.5.3
+[INFO] Installing Terraform v1.5.3
 ...
 [INFO] Switching completed
 
-$ tfenv use 0.13.6
-[INFO] Switching to v0.13.6
+$ tfenv use 1.5.3
+[INFO] Switching to v1.5.3
 ...
 [INFO] Switching completed
 ```
@@ -74,7 +74,7 @@ To verify your Terraform version, run:
 
 ```shell
 $ terraform --version
-Terraform v0.13.6
+Terraform v1.5.3
 ```
 
 ### Credentials
