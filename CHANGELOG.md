@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## Notable Changes
+
+- **CUMULUS-3259**
+  - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
+
 ## Changes
 
 - **CUMULUS-3366**
