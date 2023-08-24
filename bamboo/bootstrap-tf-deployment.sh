@@ -73,7 +73,7 @@ echo "terraform {
 
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
-../terraform apply -destroy \
+../terraform apply \
   -auto-approve \
   -input=false \
   -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
