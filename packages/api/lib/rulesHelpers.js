@@ -39,7 +39,7 @@ const log = new Logger({ sender: '@cumulus/rulesHelpers' });
  * @param {number} [params.pageNumber] - current page of API results
  * @param {Array<Object>} [params.rules] - partial rules Array
  * @param {Object} [params.queryParams] - API query params, empty query returns all rules
- * @returns {Array<Object>} all matching rules
+ * @returns {Promise<Array<Object>>} all matching rules
  */
 async function fetchRules({ pageNumber = 1, rules = [], queryParams = {} }) {
   const query = { ...queryParams, page: pageNumber };
@@ -62,19 +62,27 @@ async function fetchEnabledRules() {
   return await fetchRules({ queryParams: { state: 'ENABLED' } });
 }
 
-const collectionRuleMatcher = (rule, collection) => {
+const collectionRuleMatcher = (rule, collection, logger = log) => {
   // Match as much collection info as we found in the message
+  const ruleCollectionName = get(rule, 'collection.name');
+  const ruleCollectionVersion = get(rule, 'collection.version');
+
   const nameMatch = collection.name
-    ? get(rule, 'collection.name') === collection.name
+    ? ruleCollectionName === collection.name
     : true;
   const versionMatch = collection.version
-    ? get(rule, 'collection.version') === collection.version
+    ? ruleCollectionVersion === collection.version
     : true;
+
+  if (!nameMatch || !versionMatch) {
+    logger.info(`Rule collection name - ${ruleCollectionName} - or Rule collection version - ${ruleCollectionVersion} - does not match collection - ${JSON.stringify(collection)}`);
+  }
+
   return nameMatch && versionMatch;
 };
 
-const filterRulesbyCollection = (rules, collection = {}) => rules.filter(
-  (rule) => collectionRuleMatcher(rule, collection)
+const filterRulesbyCollection = (rules, collection = {}, logger = log) => rules.filter(
+  (rule) => collectionRuleMatcher(rule, collection, logger)
 );
 
 const filterRulesByRuleParams = (rules, ruleParams) => rules.filter(

@@ -278,11 +278,11 @@ resource "aws_api_gateway_deployment" "s3_credentials" {
   ]
 
   triggers = {
-    redeployment = sha1(join(",", list(
+    redeployment = sha1(join(",", tolist([
       jsonencode( aws_api_gateway_integration.s3_credentials_redirect[0] ),
       jsonencode( aws_api_gateway_integration.s3_credentials[0] ),
       jsonencode( aws_api_gateway_integration.s3_credentials_readme[0] ),
-      )))
+      ])))
   }
 
 
