@@ -221,6 +221,7 @@ const sidebars = {
       items: [
         'upgrade-notes/migrate_tea_standalone',
         'upgrade-notes/upgrade_tf_version_0.13.6',
+        'upgrade-notes/upgrade_tf_version_1.5.3',
         'upgrade-notes/upgrade-rds',
         'upgrade-notes/cumulus_distribution_migration',
         'upgrade-notes/update-task-file-schemas',
