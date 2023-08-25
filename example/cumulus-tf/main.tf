@@ -181,7 +181,7 @@ module "cumulus" {
     "nnageswa",
     "npauzenga",
     "vnguyen",
-   "rkwarten"
+    "rkwarten"
   ]
 
   archive_api_url             = var.archive_api_url
