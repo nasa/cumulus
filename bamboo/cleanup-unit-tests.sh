@@ -10,5 +10,5 @@ container_id=${container_id/-/}
 export COMPOSE_FILE=./bamboo/docker-compose.yml
 
 docker ps -a
-docker compose -p ${container_id} down
-docker compose -p ${container_id} rm -f
+docker-compose -p ${container_id} down
+docker-compose -p ${container_id} rm -f
