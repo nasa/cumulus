@@ -35,7 +35,7 @@ const logger = (logOptions) => new Logger({
  * @returns {Array<Object>} a list of discovered file objects
  */
 const listFiles = async (params) => {
-  const { providerConfig, useList, httpRequestTimeout = 300, path } = params;
+  const { providerConfig, useList, httpRequestTimeout = 3000, path } = params;
   const provider = buildProviderClient({
     ...providerConfig,
     useList,
