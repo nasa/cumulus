@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## [v18.0.0] 2023-08-28
+
 ### Notable Changes
 
 - **CUMULUS-3270**
@@ -7337,7 +7338,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v17.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.0.0...HEAD
+[v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
 [v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
