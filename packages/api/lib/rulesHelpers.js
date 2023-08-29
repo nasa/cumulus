@@ -537,7 +537,7 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
    * @returns {void}
    */
 async function addRule(item, payload) {
-  const name = `${process.env.stackName}-custom-${item.name}`;
+  const name = `${process.env.stackName}`;
   await CloudwatchEvents.putEvent(
     name,
     item.rule.value,
