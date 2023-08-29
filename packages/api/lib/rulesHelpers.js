@@ -578,7 +578,7 @@ function recordIsValid(rule) {
     error.message += 'Rule workflow is undefined.';
     throw error;
   }
-  if (!rule.rule.type) {
+  if (!rule.rule || !rule.rule.type) {
     error.message += 'Rule type is undefined.';
     throw error;
   }
