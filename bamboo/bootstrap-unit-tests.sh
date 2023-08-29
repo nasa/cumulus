@@ -10,14 +10,14 @@ export SSH_USERS=user:$(id -u):$(id -u)
 export COMPOSE_FILE=./bamboo/docker-compose.yml
 
 ## Set container_id for docker compose to use to identify the compose stack per planKey
-docker_command="docker exec -t ${container_id}_build_env_1 /bin/bash -c"
+docker_command="docker exec -t ${container_id}-build_env-1 /bin/bash -c"
 
 docker ps -a
 
 ## Setup the compose stack
-docker-compose -p ${container_id} down
-docker-compose -p ${container_id} rm -f
-docker-compose -p ${container_id} up -d
+docker compose -p ${container_id} down
+docker compose -p ${container_id} rm -f
+docker compose -p ${container_id} up -d
 
 docker ps -a
 
