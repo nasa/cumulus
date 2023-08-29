@@ -1,7 +1,10 @@
 'use strict';
 
 const fs = require('fs-extra');
+const cloneDeep = require('lodash/cloneDeep');
+const merge = require('lodash/merge');
 const omit = require('lodash/omit');
+const pick = require('lodash/pick');
 const test = require('ava');
 const sinon = require('sinon');
 const request = require('supertest');
@@ -44,7 +47,7 @@ const {
   createRuleTestRecords,
   createSqsQueues,
 } = require('../../lib/testUtils');
-const { post, put, del } = require('../../endpoints/rules');
+const { patch, post, put, del } = require('../../endpoints/rules');
 
 const rulesHelpers = require('../../lib/rulesHelpers');
 const AccessToken = require('../../models/access-tokens');
@@ -231,6 +234,14 @@ test('CUMULUS-911 POST with pathParameters and without an Authorization header r
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
+test('CUMULUS-911 PATCH with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
+  const response = await request(app)
+    .patch('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
+  assertions.isAuthorizationMissingResponse(t, response);
+});
+
 test('CUMULUS-911 PUT with pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .put('/rules/asdf')
@@ -281,6 +292,18 @@ test('CUMULUS-912 POST with pathParameters and with an invalid access token retu
 });
 
 test.todo('CUMULUS-912 POST with pathParameters and with an unauthorized user returns an unauthorized response');
+
+test('CUMULUS-912 PATCH with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
+  const response = await request(app)
+    .patch('/rules/asdf')
+    .set('Accept', 'application/json')
+    .set('Authorization', 'Bearer ThisIsAnInvalidAuthorizationToken')
+    .expect(401);
+
+  assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test.todo('CUMULUS-912 PATCH with pathParameters and with an unauthorized user returns an unauthorized response');
 
 test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
@@ -709,12 +732,18 @@ test.serial('post() does not write to PostgreSQL if writing to Elasticsearch fai
   ));
 });
 
-test('PUT replaces a rule', async (t) => {
+test.serial('PATCH updates an existing rule in all data stores', async (t) => {
   const {
     esRulesClient,
     rulePgModel,
     testKnex,
   } = t.context;
+  const oldMetaFields = {
+    nestedFieldOne: {
+      fieldOne: 'fieldone-data',
+    },
+  };
+
   const {
     originalPgRecord,
     originalEsRecord,
@@ -723,27 +752,46 @@ test('PUT replaces a rule', async (t) => {
     {
       queue_url: 'fake-queue-url',
       workflow,
+      meta: oldMetaFields,
     }
   );
-  const translatedPgRecord = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+  const originalApiRecord = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+  t.deepEqual(originalPgRecord.meta, oldMetaFields);
+  t.is(originalPgRecord.payload, null);
+  t.deepEqual(originalEsRecord.meta, oldMetaFields);
+  t.is(originalEsRecord.payload, undefined);
 
+  const updateMetaFields = {
+    nestedFieldOne: {
+      nestedFieldOneKey2: randomId('nestedFieldOneKey2'),
+    },
+    nestedFieldTwo: {
+      nestedFieldTwoKey1: randomId('nestedFieldTwoKey1'),
+    },
+  };
+  const updatePayload = {
+    foo: 'bar',
+  };
   const updateRule = {
-    ...omit(translatedPgRecord, ['queueUrl', 'provider', 'collection']),
+    ...omit(originalApiRecord, ['queueUrl', 'provider', 'collection', 'payload']),
     state: 'ENABLED',
+    meta: updateMetaFields,
+    payload: updatePayload,
     // these timestamps should not get used
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
 
   await request(app)
-    .put(`/rules/${updateRule.name}`)
+    .patch(`/rules/${updateRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updateRule)
     .expect(200);
 
   const actualPostgresRule = await rulePgModel.get(testKnex, { name: updateRule.name });
-  const updatedEsRecord = await esRulesClient.get(translatedPgRecord.name);
+  const updatedEsRecord = await esRulesClient.get(originalApiRecord.name);
+  const expectedMeta = merge(cloneDeep(oldMetaFields), updateMetaFields);
 
   // PG and ES records have the same timestamps
   t.true(actualPostgresRule.updated_at > originalPgRecord.updated_at);
@@ -754,20 +802,93 @@ test('PUT replaces a rule', async (t) => {
     {
       ...originalEsRecord,
       state: 'ENABLED',
-      createdAt: actualPostgresRule.created_at.getTime(),
+      meta: expectedMeta,
+      payload: updatePayload,
+      createdAt: originalPgRecord.created_at.getTime(),
       updatedAt: actualPostgresRule.updated_at.getTime(),
       timestamp: updatedEsRecord.timestamp,
     }
   );
-  t.like(actualPostgresRule, {
-    ...omit(originalPgRecord, ['queue_url']),
-    enabled: true,
-    created_at: new Date(originalPgRecord.created_at),
-    updated_at: actualPostgresRule.updated_at,
-  });
+  t.deepEqual(
+    actualPostgresRule,
+    {
+      ...originalPgRecord,
+      enabled: true,
+      meta: expectedMeta,
+      payload: updatePayload,
+      created_at: originalPgRecord.created_at,
+      updated_at: actualPostgresRule.updated_at,
+    }
+  );
 });
 
-test.serial('put() sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
+test.serial('PATCH nullifies expected fields for existing rule in all datastores', async (t) => {
+  const {
+    esRulesClient,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+  const oldMetaFields = {
+    nestedFieldOne: {
+      fieldOne: 'fieldone-data',
+    },
+  };
+
+  const {
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queue_url: 'fake-queue-url',
+      workflow,
+      meta: oldMetaFields,
+      execution_name_prefix: 'testRule',
+      payload: { foo: 'bar' },
+      value: randomId('value'),
+    }
+  );
+  const originalApiRecord = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+
+  const updateRule = {
+    name: originalApiRecord.name,
+    workflow: originalApiRecord.workflow,
+    executionNamePrefix: null,
+    meta: null,
+    payload: null,
+    queueUrl: null,
+    state: null,
+    type: null,
+    value: null,
+    createdAt: null,
+    updatedAt: null,
+  };
+
+  await request(app)
+    .patch(`/rules/${updateRule.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updateRule)
+    .expect(200);
+
+  const actualPostgresRule = await rulePgModel.get(testKnex, { name: updateRule.name });
+  const updatedEsRecord = await esRulesClient.get(originalApiRecord.name);
+  const apiRule = await translatePostgresRuleToApiRule(actualPostgresRule, testKnex);
+
+  const expectedApiRule = {
+    ...pick(originalApiRecord, ['name', 'workflow', 'createdAt', 'state', 'rule']),
+    updatedAt: apiRule.updatedAt,
+  };
+  t.deepEqual(apiRule, expectedApiRule);
+
+  const expectedEsRecord = {
+    ...expectedApiRule,
+    _id: updatedEsRecord._id,
+    timestamp: updatedEsRecord.timestamp,
+  };
+  t.deepEqual(updatedEsRecord, expectedEsRecord);
+});
+
+test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
   const snsStub = sinon.stub(awsServices, 'sns')
     .returns({
       listSubscriptionsByTopic: () => ({
@@ -817,31 +938,29 @@ test.serial('put() sets SNS rule to "disabled" and removes source mapping ARN', 
   t.truthy(originalPgRecord.arn);
   t.is(originalEsRecord.rule.arn, originalPgRecord.arn);
 
-  const translatedPgRecord = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
-
   const updateRule = {
-    ...translatedPgRecord,
+    name: originalPgRecord.name,
     state: 'DISABLED',
   };
 
   await request(app)
-    .put(`/rules/${updateRule.name}`)
+    .patch(`/rules/${updateRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send(updateRule)
     .expect(200);
 
-  const updatedPostgresRule = await rulePgModel.get(testKnex, { name: updateRule.name });
-  const updatedEsRecord = await esRulesClient.get(translatedPgRecord.name);
+  const updatedPostgresRule = await rulePgModel.get(testKnex, { name: originalPgRecord.name });
+  const updatedEsRecord = await esRulesClient.get(originalPgRecord.name);
 
   t.is(updatedPostgresRule.arn, null);
   t.is(updatedEsRecord.rule.arn, undefined);
 });
 
-test('PUT returns 404 for non-existent rule', async (t) => {
+test('PATCH returns 404 for non-existent rule', async (t) => {
   const name = 'new_make_coffee';
   const response = await request(app)
-    .put(`/rules/${name}`)
+    .patch(`/rules/${name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .send({ name })
@@ -852,10 +971,10 @@ test('PUT returns 404 for non-existent rule', async (t) => {
   t.falsy(record);
 });
 
-test('PUT returns 400 for name mismatch between params and payload',
+test('PATCH returns 400 for name mismatch between params and payload',
   async (t) => {
     const response = await request(app)
-      .put(`/rules/${randomString()}`)
+      .patch(`/rules/${randomString()}`)
       .set('Accept', 'application/json')
       .set('Authorization', `Bearer ${jwtAuthToken}`)
       .send({ name: randomString() })
@@ -866,7 +985,7 @@ test('PUT returns 400 for name mismatch between params and payload',
     t.falsy(record);
   });
 
-test('PUT returns a 400 response if record is missing workflow property', async (t) => {
+test('PATCH returns a 400 response if record is missing workflow property', async (t) => {
   const {
     originalApiRule,
   } = await createRuleTestRecords(
@@ -877,20 +996,22 @@ test('PUT returns a 400 response if record is missing workflow property', async 
     }
   );
 
-  // Set required property to null to trigger create error
-  originalApiRule.workflow = null;
+  const updateRule = {
+    name: originalApiRule.name,
+    workflow: null,
+  };
 
   const response = await request(app)
-    .put(`/rules/${originalApiRule.name}`)
+    .patch(`/rules/${originalApiRule.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(originalApiRule)
+    .send(updateRule)
     .expect(400);
   const { message } = response.body;
   t.true(message.includes('The record has validation errors. Rule workflow is undefined'));
 });
 
-test('PUT returns a 400 response if record is missing type property', async (t) => {
+test('PATCH returns a 400 response if record is missing type property', async (t) => {
   const {
     originalApiRule,
     originalPgRecord,
@@ -901,18 +1022,26 @@ test('PUT returns a 400 response if record is missing type property', async (t) 
       workflow,
     }
   );
+
+  const updateRule = {
+    name: originalApiRule.name,
+    rule: {
+      type: null,
+    },
+  };
+
   originalApiRule.rule.type = null;
   const response = await request(app)
-    .put(`/rules/${originalPgRecord.name}`)
+    .patch(`/rules/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(originalApiRule)
+    .send(updateRule)
     .expect(400);
   const { message } = response.body;
   t.true(message.includes('The record has validation errors. Rule type is undefined.'));
 });
 
-test('PUT returns a 400 response if rule name is invalid', async (t) => {
+test('PATCH returns a 400 response if rule name is invalid', async (t) => {
   const {
     originalApiRule,
     originalPgRecord,
@@ -923,18 +1052,21 @@ test('PUT returns a 400 response if rule name is invalid', async (t) => {
       workflow,
     }
   );
-  originalApiRule.name = 'bad rule name';
+  const updateRule = {
+    name: 'bad rule name',
+  };
   const response = await request(app)
-    .put(`/rules/${originalPgRecord.name}`)
+    .patch(`/rules/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(originalApiRule)
+    .send(updateRule)
     .expect(400);
   const { message } = response.body;
   t.true(message.includes(originalApiRule.name));
+  t.true(message.includes(updateRule.name));
 });
 
-test('PUT returns a 400 response if rule type is invalid', async (t) => {
+test('PATCH returns a 400 response if rule type is invalid', async (t) => {
   const {
     originalApiRule,
     originalPgRecord,
@@ -945,20 +1077,26 @@ test('PUT returns a 400 response if rule type is invalid', async (t) => {
       workflow,
     }
   );
-  originalApiRule.rule.type = 'invalid';
+
+  const updateRule = {
+    name: originalApiRule.name,
+    rule: {
+      type: 'invalid',
+    },
+  };
 
   const response = await request(app)
-    .put(`/rules/${originalPgRecord.name}`)
+    .patch(`/rules/${originalPgRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .send(originalApiRule)
+    .send(updateRule)
     .expect(400);
 
   const { message } = response.body;
   t.true(message.includes('Rule type \'invalid\' not supported.'));
 });
 
-test('put() does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
+test('PATCH does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalApiRule,
@@ -978,7 +1116,7 @@ test('put() does not write to Elasticsearch if writing to PostgreSQL fails', asy
   };
 
   const updatedRule = {
-    ...originalApiRule,
+    name: originalApiRule.name,
     queueUrl: 'queue-2',
   };
 
@@ -996,7 +1134,7 @@ test('put() does not write to Elasticsearch if writing to PostgreSQL fails', asy
   const response = buildFakeExpressResponse();
 
   await t.throwsAsync(
-    put(expressRequest, response),
+    patch(expressRequest, response),
     { message: 'something bad' }
   );
 
@@ -1014,7 +1152,7 @@ test('put() does not write to Elasticsearch if writing to PostgreSQL fails', asy
   );
 });
 
-test('put() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
+test('PATCH does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
   const { testKnex } = t.context;
   const {
     originalApiRule,
@@ -1033,7 +1171,7 @@ test('put() does not write to PostgreSQL if writing to Elasticsearch fails', asy
   };
 
   const updatedRule = {
-    ...originalApiRule,
+    name: originalApiRule.name,
     queueUrl: 'queue-2',
   };
 
@@ -1051,7 +1189,7 @@ test('put() does not write to PostgreSQL if writing to Elasticsearch fails', asy
   const response = buildFakeExpressResponse();
 
   await t.throwsAsync(
-    put(expressRequest, response),
+    patch(expressRequest, response),
     { message: 'something bad' }
   );
 
@@ -1069,7 +1207,7 @@ test('put() does not write to PostgreSQL if writing to Elasticsearch fails', asy
   );
 });
 
-test.serial('put() creates the same updated SNS rule in PostgreSQL/Elasticsearch', async (t) => {
+test.serial('PATCH creates the same updated SNS rule in PostgreSQL/Elasticsearch', async (t) => {
   const {
     pgProvider,
     pgCollection,
@@ -1100,7 +1238,7 @@ test.serial('put() creates the same updated SNS rule in PostgreSQL/Elasticsearch
   t.truthy(originalEsRecord.rule.value);
   t.truthy(originalPgRecord.value);
   const updateRule = {
-    ...originalPgRecord,
+    name: originalPgRecord.name,
     rule: {
       type: 'sns',
       value: topic2.TopicArn,
@@ -1114,7 +1252,7 @@ test.serial('put() creates the same updated SNS rule in PostgreSQL/Elasticsearch
     body: updateRule,
   };
   const response = buildFakeExpressResponse();
-  await put(expressRequest, response);
+  await patch(expressRequest, response);
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
   const updatedEsRule = await t.context.esRulesClient.get(
@@ -1148,7 +1286,7 @@ test.serial('put() creates the same updated SNS rule in PostgreSQL/Elasticsearch
   });
 });
 
-test.serial('put() creates the same updated Kinesis rule in PostgreSQL/Elasticsearch', async (t) => {
+test.serial('PATCH creates the same updated Kinesis rule in PostgreSQL/Elasticsearch', async (t) => {
   const {
     pgProvider,
     pgCollection,
@@ -1181,7 +1319,7 @@ test.serial('put() creates the same updated Kinesis rule in PostgreSQL/Elasticse
   t.truthy(originalPgRecord.log_event_arn);
 
   const updateRule = {
-    ...originalPgRecord,
+    name: originalPgRecord.name,
     rule: {
       type: 'kinesis',
       value: kinesisArn2,
@@ -1197,7 +1335,7 @@ test.serial('put() creates the same updated Kinesis rule in PostgreSQL/Elasticse
 
   const response = buildFakeExpressResponse();
 
-  await put(expressRequest, response);
+  await patch(expressRequest, response);
 
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
@@ -1239,7 +1377,7 @@ test.serial('put() creates the same updated Kinesis rule in PostgreSQL/Elasticse
   });
 });
 
-test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async (t) => {
+test.serial('PATCH creates the same SQS rule in PostgreSQL/Elasticsearch', async (t) => {
   const {
     pgProvider,
     pgCollection,
@@ -1282,7 +1420,7 @@ test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async
   t.deepEqual(originalEsRecord.meta, expectedMeta);
 
   const updateRule = {
-    ...originalPgRecord,
+    name: originalPgRecord.name,
     rule: {
       type: 'sqs',
       value: queueUrl2,
@@ -1295,7 +1433,7 @@ test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async
     body: updateRule,
   };
   const response = buildFakeExpressResponse();
-  await put(expressRequest, response);
+  await patch(expressRequest, response);
 
   const updatedPgRule = await t.context.rulePgModel
     .get(t.context.testKnex, { name: updateRule.name });
@@ -1323,7 +1461,7 @@ test.serial('put() creates the same SQS rule in PostgreSQL/Elasticsearch', async
   });
 });
 
-test.serial('put() keeps initial trigger information if writing to PostgreSQL fails', async (t) => {
+test.serial('PATCH keeps initial trigger information if writing to PostgreSQL fails', async (t) => {
   const {
     pgProvider,
     pgCollection,
@@ -1356,7 +1494,7 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
   t.truthy(originalPgRecord.value);
 
   const updateRule = {
-    ...originalPgRecord,
+    name: originalPgRecord.name,
     rule: {
       type: 'sns',
       value: topic2.TopicArn,
@@ -1381,7 +1519,7 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
   const response = buildFakeExpressResponse();
 
   await t.throwsAsync(
-    put(expressRequest, response),
+    patch(expressRequest, response),
     { message: 'PG fail' }
   );
 
@@ -1414,7 +1552,7 @@ test.serial('put() keeps initial trigger information if writing to PostgreSQL fa
   });
 });
 
-test.serial('put() keeps initial trigger information if writing to Elasticsearch fails', async (t) => {
+test.serial('PATCH keeps initial trigger information if writing to Elasticsearch fails', async (t) => {
   const {
     pgProvider,
     pgCollection,
@@ -1447,7 +1585,7 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
   t.truthy(originalPgRecord.value);
 
   const updateRule = {
-    ...originalPgRecord,
+    name: originalPgRecord.name,
     rule: {
       type: 'sns',
       value: topic2.TopicArn,
@@ -1471,7 +1609,7 @@ test.serial('put() keeps initial trigger information if writing to Elasticsearch
   const response = buildFakeExpressResponse();
 
   await t.throwsAsync(
-    put(expressRequest, response),
+    patch(expressRequest, response),
     { message: 'ES fail' }
   );
 

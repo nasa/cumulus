@@ -5,7 +5,6 @@
 const get = require('lodash/get');
 const set = require('lodash/set');
 const cloneDeep = require('lodash/cloneDeep');
-const merge = require('lodash/merge');
 
 const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
@@ -606,59 +605,54 @@ async function invokeRerun(rule) {
  * Updates rule trigger for rule
  *
  * @param {RuleRecord} original - Rule to update trigger for
- * @param {Object} updates      - Updates for rule trigger
- * @param {string} updates.state
-*  @param {Object} updates.rule
- * @param {unknown} updates.rule.value
- * @param {Knex} knex           - Knex DB Client
+ * @param {RuleRecord} updated  - Updated rule for rule trigger
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
-async function updateRuleTrigger(original, updates) {
-  let clonedRuleItem = cloneDeep(original);
-  let mergedRule = merge(clonedRuleItem, updates);
-  recordIsValid(mergedRule);
+async function updateRuleTrigger(original, updated) {
+  let resultRule = cloneDeep(updated);
+  recordIsValid(resultRule);
 
-  const stateChanged = updates.state && updates.state !== original.state;
-  const valueUpdated = updates.rule.value !== original.rule.value;
-  const enabled = mergedRule.state === 'ENABLED';
+  const stateChanged = updated.state && updated.state !== original.state;
+  const valueUpdated = updated.rule && updated.rule.value !== original.rule.value;
+  const enabled = resultRule.state === 'ENABLED';
 
-  switch (mergedRule.rule.type) {
+  switch (resultRule.rule.type) {
   case 'scheduled': {
-    const payload = await buildPayload(mergedRule);
-    await addRule(mergedRule, payload);
+    const payload = await buildPayload(resultRule);
+    await addRule(resultRule, payload);
     break;
   }
   case 'kinesis':
     if (valueUpdated) {
-      const updatedRuleItemArns = await addKinesisEventSources(mergedRule);
-      mergedRule = updateKinesisRuleArns(mergedRule,
+      const updatedRuleItemArns = await addKinesisEventSources(resultRule);
+      resultRule = updateKinesisRuleArns(resultRule,
         updatedRuleItemArns);
     }
     break;
   case 'sns': {
     if (valueUpdated || stateChanged) {
-      if (enabled && stateChanged && mergedRule.rule.arn) {
+      if (enabled && stateChanged && resultRule.rule.arn) {
         throw new Error('Including rule.arn is not allowed when enabling a disabled rule');
       }
 
       let snsSubscriptionArn;
       if (enabled) {
-        snsSubscriptionArn = await addSnsTrigger(mergedRule);
+        snsSubscriptionArn = await addSnsTrigger(resultRule);
       }
-      mergedRule = updateSnsRuleArn(mergedRule, snsSubscriptionArn);
+      resultRule = updateSnsRuleArn(resultRule, snsSubscriptionArn);
     }
     break;
   }
   case 'sqs':
-    clonedRuleItem = await validateAndUpdateSqsRule(mergedRule);
+    resultRule = await validateAndUpdateSqsRule(resultRule);
     break;
   case 'onetime':
     break;
   default:
-    throw new ValidationError(`Rule type \'${mergedRule.rule.type}\' not supported.`);
+    throw new ValidationError(`Rule type \'${resultRule.rule.type}\' not supported.`);
   }
 
-  return mergedRule;
+  return resultRule;
 }
 
 /**

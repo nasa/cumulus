@@ -2,6 +2,9 @@
 
 const router = require('express-promise-router')();
 
+const cloneDeep = require('lodash/cloneDeep');
+const merge = require('lodash/merge');
+
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
 const {
@@ -22,6 +25,8 @@ const {
   invokeRerun,
   updateRuleTrigger,
 } = require('../lib/rulesHelpers');
+
+const schemas = require('../lib/schemas.js');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
 
@@ -121,6 +126,106 @@ async function post(req, res) {
 }
 
 /**
+ * Update existing granule *or* create new granule
+ *
+ * @param {Object} req - express request object
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} promise of an express response object.
+ */
+
+/**
+ * Perform updates to an existing rule
+ *
+ * @param {object} params                   - params object
+ * @param {object} params.res               - express response object
+ * @param {object} params.oldApiRule        - API 'rule' to update
+ * @param {object} params.apiRule           - updated API rule
+ * @param {object} params.rulePgModel       - @cumulus/db compatible rule module instance
+ * @param {object} params.knex              - Knex object
+ * @param {object} params.esClient          - Elasticsearch client
+ * @returns {Promise<object>} - promise of an express response object.
+ */
+async function patchRule(params) {
+  const {
+    res,
+    oldApiRule,
+    apiRule,
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = params;
+
+  log.debug(`rules.patchRule oldApiRule: ${JSON.stringify(oldApiRule)}, apiRule: ${JSON.stringify(apiRule)}`);
+  let translatedRule;
+
+  // If rule type is onetime no change is allowed unless it is a rerun
+  if (apiRule.action === 'rerun') {
+    return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
+  }
+
+  const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
+  const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRuleWithTrigger, knex);
+  log.debug(`rules.patchRule apiRuleWithTrigger: ${JSON.stringify(apiRuleWithTrigger)}`);
+
+  await createRejectableTransaction(knex, async (trx) => {
+    const [pgRule] = await rulePgModel.upsert(trx, apiPgRule);
+    log.debug(`rules.patchRule pgRule: ${JSON.stringify(pgRule)}`);
+    translatedRule = await translatePostgresRuleToApiRule(pgRule, knex);
+    await indexRule(esClient, translatedRule, process.env.ES_INDEX);
+  });
+
+  log.info(`rules.patchRule translatedRule: ${JSON.stringify(translatedRule)}`);
+  if (['kinesis', 'sns'].includes(oldApiRule.rule.type)) {
+    await deleteRuleResources(knex, oldApiRule);
+  }
+  return res.send(translatedRule);
+}
+
+/**
+ * Updates an existing rule.
+ *
+ * @param {Object} req - express request object
+ * @param {string} req.params.name - name of the rule to replace
+ * @param {Object} req.body - complete replacement rule
+ * @param {Object} res - express response object
+ * @returns {Promise<Object>} the promise of express response object, which
+ *    is a Bad Request (400) if the rule's name property does not match the
+ *    name request parameter, or a Not Found (404) if there is no existing rule
+ *    with the specified name
+ */
+async function patch(req, res) {
+  const {
+    rulePgModel = new RulePgModel(),
+    knex = await getKnexClient(),
+    esClient = await Search.es(),
+  } = req.testContext || {};
+
+  const { params: { name }, body } = req;
+  let apiRule = { ...body, updatedAt: Date.now() };
+
+  if (name !== apiRule.name) {
+    return res.boom.badRequest(`Expected rule name to be '${name}', but found`
+      + ` '${body.name}' in payload`);
+  }
+
+  try {
+    const oldRule = await rulePgModel.get(knex, { name });
+    const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
+
+    apiRule.createdAt = oldRule.created_at;
+    apiRule = merge(cloneDeep(oldApiRule), apiRule);
+
+    return await patchRule({ res, oldApiRule, apiRule, knex, esClient, rulePgModel });
+  } catch (error) {
+    log.error('Unexpected error when updating rule:', error);
+    if (error instanceof RecordDoesNotExist) {
+      return res.boom.notFound(`Rule '${name}' not found`);
+    }
+    throw error;
+  }
+}
+
+/**
  * Replaces an existing rule.
  *
  * @param {Object} req - express request object
@@ -141,8 +246,19 @@ async function put(req, res) {
 
   const { params: { name }, body } = req;
 
-  const apiRule = { ...body };
-  let translatedRule;
+  // Nullify fields not passed in - we want to remove anything not specified by the user
+  const nullifiedRuleTemplate = Object.keys(
+    schemas.rule.properties
+  ).reduce((acc, cur) => {
+    acc[cur] = null;
+    return acc;
+  }, {});
+
+  const apiRule = {
+    ...nullifiedRuleTemplate,
+    ...body,
+    updatedAt: Date.now(),
+  };
 
   if (name !== apiRule.name) {
     return res.boom.badRequest(`Expected rule name to be '${name}', but found`
@@ -153,24 +269,9 @@ async function put(req, res) {
     const oldRule = await rulePgModel.get(knex, { name });
     const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
 
-    apiRule.updatedAt = Date.now();
     apiRule.createdAt = oldRule.created_at;
-    // If rule type is onetime no change is allowed unless it is a rerun
-    if (apiRule.action === 'rerun') {
-      return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
-    }
-    const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
-    const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRuleWithTrigger, knex);
 
-    await createRejectableTransaction(knex, async (trx) => {
-      const [pgRule] = await rulePgModel.upsert(trx, apiPgRule);
-      translatedRule = await translatePostgresRuleToApiRule(pgRule, knex);
-      await indexRule(esClient, translatedRule, process.env.ES_INDEX);
-    });
-    if (['kinesis', 'sns'].includes(oldApiRule.rule.type)) {
-      await deleteRuleResources(knex, oldApiRule);
-    }
-    return res.send(translatedRule);
+    return await patchRule({ res, oldApiRule, apiRule, knex, esClient, rulePgModel });
   } catch (error) {
     log.error('Unexpected error when updating rule:', error);
     if (error instanceof RecordDoesNotExist) {
@@ -235,12 +336,14 @@ async function del(req, res) {
 
 router.get('/:name', get);
 router.get('/', list);
+router.patch('/:name', patch);
 router.put('/:name', put);
 router.post('/', post);
 router.delete('/:name', del);
 
 module.exports = {
   router,
+  patch,
   post,
   put,
   del,
