@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 ### Notable Changes
 
+**CUMULUS-3392**
+-modified Cloudwatch rule by removing `custom`
+
+
 - **CUMULUS-3270**
   - update python lambdas to use python3.10
   - update dependencies to use python3.10 including cumulus-message-adapter, cumulus-message-adapter-python and cumulus-process-py
