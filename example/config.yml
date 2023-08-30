@@ -39,3 +39,6 @@ vkn-tf:
 
 np:
   bucket: npauzenga-internal
+
+nnaga-tf:
+  bucket: nnaga-internal

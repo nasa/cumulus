@@ -1,4 +1,3 @@
-const { GranuleNotPublished } = require('@cumulus/errors');
 const { CMR } = require('@cumulus/cmr-client');
 const log = require('@cumulus/common/log');
 const {
@@ -29,7 +28,8 @@ const models = require('../models');
 const _removeGranuleFromCmr = async (granule, collectionId) => {
   log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, colletion_id: ${collectionId}`);
   if (!granule.published || !granule.cmr_link) {
-    throw new GranuleNotPublished(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
+    log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
+    return;
   }
 
   const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
@@ -37,7 +37,9 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
   const metadata = await cmr.getGranuleMetadata(granule.cmr_link);
 
   // Use granule UR to delete from CMR
-  await cmr.deleteGranule(metadata.title, collectionId);
+  if (metadata) {
+    await cmr.deleteGranule(metadata.title, collectionId);
+  }
 };
 
 /**

@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const sinon = require('sinon');
+const omit = require('lodash/omit');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -621,4 +622,32 @@ test('_getMutableFieldNames() returns correct fields for completed status', (t) 
   const updateFields = granuleModel._getMutableFieldNames(item);
 
   t.deepEqual(updateFields, Object.keys(item));
+});
+
+test('update() updates granule', async (t) => {
+  const { granuleModel } = t.context;
+  const granule = fakeGranuleFactoryV2({ published: true, cmrLink: randomString() });
+  await granuleModel.create(granule);
+
+  const updatedGranule = await granuleModel.update(
+    { granuleId: granule.granuleId },
+    { published: false },
+    ['cmrLink']
+  );
+
+  t.false(updatedGranule.published);
+  t.falsy(updatedGranule.cmrLink);
+  const omitList = ['cmrLink', 'published', 'updatedAt'];
+  t.deepEqual(omit(updatedGranule, omitList), omit(granule, omitList));
+});
+
+test('update() returns undefined if granule does not exist', async (t) => {
+  const { granuleModel } = t.context;
+  const updatedGranule = await granuleModel.update(
+    { granuleId: randomString() },
+    { published: false },
+    ['cmrLink']
+  );
+
+  t.deepEqual(updatedGranule, undefined);
 });

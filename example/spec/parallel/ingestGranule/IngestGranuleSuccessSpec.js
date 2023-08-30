@@ -1275,7 +1275,6 @@ describe('The S3 Ingest Granules workflow', () => {
           await getGranule({
             prefix: config.stackName,
             granuleId: inputPayload.granules[0].granuleId,
-            expectedStatusCodes: 404,
           });
         } catch (error) {
           granuleResponseError = error;
