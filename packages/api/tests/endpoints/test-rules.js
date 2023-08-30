@@ -766,6 +766,7 @@ test.serial('PATCH updates an existing rule in all data stores', async (t) => {
   const updateMetaFields = {
     nestedFieldOne: {
       nestedFieldOneKey2: randomId('nestedFieldOneKey2'),
+      'key.with.period': randomId('key.with.period'),
     },
     nestedFieldTwo: {
       nestedFieldTwoKey1: randomId('nestedFieldTwoKey1'),
@@ -1696,6 +1697,7 @@ test.serial('PUT replaces an existing rule in all data stores', async (t) => {
   const updateMetaFields = {
     nestedFieldOne: {
       nestedFieldOneKey2: randomId('nestedFieldOneKey2'),
+      'key.with.period': randomId('key.with.period'),
     },
     nestedFieldTwo: {
       nestedFieldTwoKey1: randomId('nestedFieldTwoKey1'),

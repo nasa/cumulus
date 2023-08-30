@@ -126,14 +126,6 @@ async function post(req, res) {
 }
 
 /**
- * Update existing granule *or* create new granule
- *
- * @param {Object} req - express request object
- * @param {Object} res - express response object
- * @returns {Promise<Object>} promise of an express response object.
- */
-
-/**
  * Perform updates to an existing rule
  *
  * @param {object} params                   - params object
