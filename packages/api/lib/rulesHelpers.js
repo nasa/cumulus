@@ -2,9 +2,10 @@
 
 'use strict';
 
-const get = require('lodash/get');
-const set = require('lodash/set');
 const cloneDeep = require('lodash/cloneDeep');
+const get = require('lodash/get');
+const isNull = require('lodash/isNull');
+const set = require('lodash/set');
 
 const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
@@ -18,11 +19,13 @@ const { ValidationError } = require('@cumulus/errors');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 
 const { listRules } = require('@cumulus/api-client/rules');
-const { removeNilProperties } = require('@cumulus/common/util');
+const { omitDeepBy, removeNilProperties } = require('@cumulus/common/util');
 
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 const { getSnsTriggerPermissionId } = require('./snsRuleHelpers');
+const { recordIsValid } = require('./schema');
+const ruleSchema = require('./schemas').rule;
 
 /**
  * @typedef {import('@cumulus/types/api/rules').RuleRecord} RuleRecord
@@ -567,7 +570,7 @@ async function addRule(item, payload) {
  * @param {RuleRecord} rule - Rule to check validation
  * @returns {void}          - Returns if record is valid, throws error otherwise
  */
-function recordIsValid(rule) {
+function validateRecord(rule) {
   const error = new Error('The record has validation errors. ');
   error.name = 'SchemaValidationError';
   if (!rule.name) {
@@ -582,6 +585,8 @@ function recordIsValid(rule) {
     error.message += 'Rule type is undefined.';
     throw error;
   }
+
+  recordIsValid(omitDeepBy(rule, isNull), ruleSchema, false);
 }
 
 /**
@@ -610,7 +615,7 @@ async function invokeRerun(rule) {
  */
 async function updateRuleTrigger(original, updated) {
   let resultRule = cloneDeep(updated);
-  recordIsValid(resultRule);
+  validateRecord(resultRule);
 
   const stateChanged = updated.state && updated.state !== original.state;
   const valueUpdated = updated.rule && updated.rule.value !== original.rule.value;
@@ -678,7 +683,7 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   }
 
   // Validate rule before kicking off workflows or adding event source mappings
-  recordIsValid(newRuleItem);
+  validateRecord(newRuleItem);
 
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {

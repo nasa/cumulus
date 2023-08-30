@@ -633,7 +633,8 @@ test('POST returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
   const { message } = response.body;
   t.is(response.status, 400);
-  t.true(message.includes('Rule type \'invalid\' not supported.'));
+  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  t.truthy(message.match(regexp));
 });
 
 test.serial('POST returns a 500 response if workflow definition file does not exist', async (t) => {
@@ -860,7 +861,6 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
     rule: {
       value: null,
     },
-    state: null,
     createdAt: null,
     updatedAt: null,
   };
@@ -1114,7 +1114,8 @@ test('PATCH returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
 
   const { message } = response.body;
-  t.true(message.includes('Rule type \'invalid\' not supported.'));
+  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  t.truthy(message.match(regexp));
 });
 
 test('PATCH does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
@@ -1787,7 +1788,6 @@ test.serial('PUT removes existing fields if not specified or set to null', async
     executionNamePrefix: null,
     meta: null,
     queueUrl: null,
-    state: null,
     rule: {
       type: originalApiRule.rule.type,
     },
@@ -2027,7 +2027,8 @@ test('PUT returns a 400 response if rule type is invalid', async (t) => {
     .expect(400);
 
   const { message } = response.body;
-  t.true(message.includes('Rule type \'invalid\' not supported.'));
+  const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  t.truthy(message.match(regexp));
 });
 
 test('PUT does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
@@ -2151,6 +2152,7 @@ test.serial('PUT creates the same updated SNS rule in PostgreSQL/Elasticsearch',
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
   const {
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
@@ -2172,7 +2174,7 @@ test.serial('PUT creates the same updated SNS rule in PostgreSQL/Elasticsearch',
   t.truthy(originalEsRecord.rule.value);
   t.truthy(originalPgRecord.value);
   const updateRule = {
-    ...originalPgRecord,
+    ...originalApiRule,
     rule: {
       type: 'sns',
       value: topic2.TopicArn,
@@ -2181,7 +2183,7 @@ test.serial('PUT creates the same updated SNS rule in PostgreSQL/Elasticsearch',
 
   const expressRequest = {
     params: {
-      name: originalPgRecord.name,
+      name: originalApiRule.name,
     },
     body: updateRule,
   };
@@ -2230,6 +2232,7 @@ test.serial('PUT creates the same updated Kinesis rule in PostgreSQL/Elasticsear
   const kinesisArn2 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis2_')}`;
 
   const {
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
@@ -2253,7 +2256,7 @@ test.serial('PUT creates the same updated Kinesis rule in PostgreSQL/Elasticsear
   t.truthy(originalPgRecord.log_event_arn);
 
   const updateRule = {
-    ...originalPgRecord,
+    ...originalApiRule,
     rule: {
       type: 'kinesis',
       value: kinesisArn2,
@@ -2262,7 +2265,7 @@ test.serial('PUT creates the same updated Kinesis rule in PostgreSQL/Elasticsear
 
   const expressRequest = {
     params: {
-      name: originalPgRecord.name,
+      name: originalApiRule.name,
     },
     body: updateRule,
   };
@@ -2324,6 +2327,7 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
   const { queueUrl: queueUrl2 } = await createSqsQueues(queue2);
 
   const {
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
@@ -2353,7 +2357,7 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
   t.deepEqual(originalEsRecord.meta, expectedMeta);
 
   const updateRule = {
-    ...originalPgRecord,
+    ...originalApiRule,
     rule: {
       type: 'sqs',
       value: queueUrl2,
@@ -2361,7 +2365,7 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
   };
   const expressRequest = {
     params: {
-      name: originalPgRecord.name,
+      name: originalApiRule.name,
     },
     body: updateRule,
   };
@@ -2404,6 +2408,7 @@ test.serial('PUT keeps initial trigger information if writing to PostgreSQL fail
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
   const {
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
@@ -2427,7 +2432,7 @@ test.serial('PUT keeps initial trigger information if writing to PostgreSQL fail
   t.truthy(originalPgRecord.value);
 
   const updateRule = {
-    ...originalPgRecord,
+    ...originalApiRule,
     rule: {
       type: 'sns',
       value: topic2.TopicArn,
@@ -2436,7 +2441,7 @@ test.serial('PUT keeps initial trigger information if writing to PostgreSQL fail
 
   const expressRequest = {
     params: {
-      name: originalPgRecord.name,
+      name: originalApiRule.name,
     },
     body: updateRule,
     testContext: {
@@ -2495,6 +2500,7 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
   const topic2 = await awsServices.sns().createTopic({ Name: randomId('topic2_') }).promise();
 
   const {
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   } = await createRuleTestRecords(
@@ -2518,7 +2524,7 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
   t.truthy(originalPgRecord.value);
 
   const updateRule = {
-    ...originalPgRecord,
+    ...originalApiRule,
     rule: {
       type: 'sns',
       value: topic2.TopicArn,
@@ -2527,7 +2533,7 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
 
   const expressRequest = {
     params: {
-      name: originalPgRecord.name,
+      name: originalApiRule.name,
     },
     body: updateRule,
     testContext: {

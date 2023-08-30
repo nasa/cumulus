@@ -212,7 +212,7 @@ async function patch(req, res) {
     const oldRule = await rulePgModel.get(knex, { name });
     const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
 
-    apiRule.createdAt = oldRule.created_at;
+    apiRule.createdAt = oldApiRule.createdAt;
     apiRule = merge(cloneDeep(oldApiRule), apiRule);
 
     return await patchRule({ res, oldApiRule, apiRule, knex, esClient, rulePgModel });
@@ -269,7 +269,7 @@ async function put(req, res) {
     const oldRule = await rulePgModel.get(knex, { name });
     const oldApiRule = await translatePostgresRuleToApiRule(oldRule, knex);
 
-    apiRule.createdAt = oldRule.created_at;
+    apiRule.createdAt = oldApiRule.createdAt;
 
     return await patchRule({ res, oldApiRule, apiRule, knex, esClient, rulePgModel });
   } catch (error) {

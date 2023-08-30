@@ -1,8 +1,18 @@
 /**
  * Simple utility functions
+ *
  * @module util
  */
 
+// eslint-disable-next-line lodash/import-scope
+import type {
+  PropertyName,
+  PartialObject,
+  ValueKeyIteratee,
+  NumericDictionary,
+  Dictionary,
+} from 'lodash';
+import isPlainObject from 'lodash/isplainobject';
 import curry from 'lodash/curry';
 import isNil from 'lodash/isNil';
 import omitBy from 'lodash/omitBy';
@@ -68,3 +78,37 @@ export const isOneOf = curry(
 export const returnNullOrUndefinedOrDate = (
   dateVal: string | number | null | undefined
 ) => (isNil(dateVal) ? dateVal : new Date(dateVal));
+
+interface OmitDeepBy {
+  <T>(object: Dictionary<T> | null | undefined, predicate?: ValueKeyIteratee<T>): Dictionary<T>;
+  <T>(
+    object: NumericDictionary<T> | null | undefined,
+    predicate?: ValueKeyIteratee<T>
+  ): NumericDictionary<T>;
+  <T extends object>(
+    object: T | null | undefined,
+    predicate: ValueKeyIteratee<T[keyof T]>
+  ): PartialObject<T>;
+}
+
+export const omitDeepBy: OmitDeepBy = (object: any, cb: any) => {
+  function omitByDeepByOnOwnProps(obj: any) {
+    if (!Array.isArray(obj) && !isPlainObject(obj)) {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((element) => omitDeepBy(element, cb));
+    }
+
+    const temp = {};
+    for (const [key, value] of Object.entries<{
+      [x: string]: PropertyName | object;
+    }>(obj)) {
+      (temp as any)[key] = omitDeepBy(value, cb);
+    }
+    return omitBy(temp, cb);
+  }
+
+  return omitByDeepByOnOwnProps(object);
+};
