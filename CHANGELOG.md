@@ -25,7 +25,7 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
 ```bash
  curl --request PUT https://example.com/rules/repeat_test \
- --header 'Cumulus-API-Version': '2'\
+ --header 'Cumulus-API-Version: 2'\
  --header 'Authorization: Bearer ReplaceWithToken'\
  --data ...
 ```
@@ -235,7 +235,7 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
 ```bash
  curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
- --header 'Cumulus-API-Version': '2'\
+ --header 'Cumulus-API-Version: 2'\
  --header 'Authorization: Bearer ReplaceWithToken'\
  --data ...
 ```

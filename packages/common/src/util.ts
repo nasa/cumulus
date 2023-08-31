@@ -12,7 +12,7 @@ import type {
   NumericDictionary,
   Dictionary,
 } from 'lodash';
-import isPlainObject from 'lodash/isplainobject';
+import isPlainObject from 'lodash/isPlainObject';
 import curry from 'lodash/curry';
 import isNil from 'lodash/isNil';
 import omitBy from 'lodash/omitBy';
