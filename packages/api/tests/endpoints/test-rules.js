@@ -7,7 +7,6 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const test = require('ava');
 const sinon = require('sinon');
-const request = require('supertest');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
@@ -52,6 +51,9 @@ const { patch, post, put, del } = require('../../endpoints/rules');
 const rulesHelpers = require('../../lib/rulesHelpers');
 const AccessToken = require('../../models/access-tokens');
 const assertions = require('../../lib/assertions');
+const { request } = require('../helpers/request');
+
+const { version } = require('../../lib/version');
 
 [
   'AccessTokensTable',
@@ -1410,7 +1412,7 @@ test.serial('PATCH creates the same SQS rule in PostgreSQL/Elasticsearch', async
   const queue2 = randomId('queue');
 
   const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
-  const { queueUrl: queueUrl2 } = await createSqsQueues(queue2);
+  const { queueUrl: queueUrl2 } = await createSqsQueues(queue2, 4, '100');
 
   const {
     originalPgRecord,
@@ -1447,6 +1449,10 @@ test.serial('PATCH creates the same SQS rule in PostgreSQL/Elasticsearch', async
       type: 'sqs',
       value: queueUrl2,
     },
+    meta: {
+      retries: 2,
+      visibilityTimeout: null,
+    },
   };
   const expressRequest = {
     params: {
@@ -1463,6 +1469,11 @@ test.serial('PATCH creates the same SQS rule in PostgreSQL/Elasticsearch', async
     updateRule.name
   );
 
+  const expectedMetaUpdate = {
+    visibilityTimeout: 100,
+    retries: 2,
+  };
+
   t.deepEqual(
     updatedEsRule,
     {
@@ -1473,6 +1484,7 @@ test.serial('PATCH creates the same SQS rule in PostgreSQL/Elasticsearch', async
         type: 'sqs',
         value: queueUrl2,
       },
+      meta: expectedMetaUpdate,
     }
   );
   t.deepEqual(updatedPgRule, {
@@ -1480,6 +1492,7 @@ test.serial('PATCH creates the same SQS rule in PostgreSQL/Elasticsearch', async
     updated_at: updatedPgRule.updated_at,
     type: 'sqs',
     value: queueUrl2,
+    meta: expectedMetaUpdate,
   });
 });
 
@@ -2326,7 +2339,7 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
   const queue2 = randomId('queue');
 
   const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
-  const { queueUrl: queueUrl2 } = await createSqsQueues(queue2);
+  const { queueUrl: queueUrl2 } = await createSqsQueues(queue2, 4, '100');
 
   const {
     originalApiRule,
@@ -2364,6 +2377,9 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
       type: 'sqs',
       value: queueUrl2,
     },
+    meta: {
+      retries: 2,
+    },
   };
   const expressRequest = {
     params: {
@@ -2379,7 +2395,10 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
   const updatedEsRule = await t.context.esRulesClient.get(
     updateRule.name
   );
-
+  const expectedMetaUpdate = {
+    visibilityTimeout: 100,
+    retries: 2,
+  };
   t.deepEqual(
     updatedEsRule,
     {
@@ -2390,6 +2409,7 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
         type: 'sqs',
         value: queueUrl2,
       },
+      meta: expectedMetaUpdate,
     }
   );
   t.deepEqual(updatedPgRule, {
@@ -2397,6 +2417,7 @@ test.serial('PUT creates the same SQS rule in PostgreSQL/Elasticsearch', async (
     updated_at: updatedPgRule.updated_at,
     type: 'sqs',
     value: queueUrl2,
+    meta: expectedMetaUpdate,
   });
 });
 
@@ -2581,6 +2602,70 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     type: 'sns',
     value: topic1.TopicArn,
   });
+});
+
+test.serial('PUT returns 400 for version value less than the configured value', async (t) => {
+  const fakeRule = fakeRuleFactoryV2();
+  const response = await request(app)
+    .put(`/rules/${fakeRule.name}`)
+    .set('Cumulus-API-Version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(fakeRule)
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
+});
+
+test.serial('PATCH returns 400 for version value less than the configured value', async (t) => {
+  const fakeRule = fakeRuleFactoryV2();
+  const response = await request(app)
+    .patch(`/rules/${fakeRule.name}`)
+    .set('Cumulus-API-Version', '0')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ state: 'ENABLED' })
+    .expect(400);
+  t.is(response.status, 400);
+  t.true(response.text.includes("This API endpoint requires 'Cumulus-API-Version' header"));
+});
+
+test.serial('PUT returns 200 for version value greater than the configured value', async (t) => {
+  const {
+    originalApiRule,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      workflow,
+    }
+  );
+  const response = await request(app)
+    .put(`/rules/${originalApiRule.name}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ ...originalApiRule, state: 'ENABLED' })
+    .expect(200);
+  t.is(response.status, 200);
+});
+
+test.serial('PATCH returns 200 for version value greater than the configured value', async (t) => {
+  const {
+    originalApiRule,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      workflow,
+    }
+  );
+  const response = await request(app)
+    .patch(`/rules/${originalApiRule.name}`)
+    .set('Cumulus-API-Version', `${version + 1}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send({ state: 'ENABLED' })
+    .expect(200);
+  t.is(response.status, 200);
 });
 
 test('DELETE returns a 404 if PostgreSQL and Elasticsearch rule cannot be found', async (t) => {

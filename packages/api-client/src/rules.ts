@@ -69,6 +69,7 @@ export const replaceRule = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/rules/${ruleName}`,
       body: JSON.stringify(replacementRule),
@@ -109,6 +110,7 @@ export const updateRule = async (params: {
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/rules/${ruleName}`,
       body: JSON.stringify(updateParams),

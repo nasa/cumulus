@@ -18,6 +18,9 @@ const {
 const { Search } = require('@cumulus/es-client/search');
 const { indexRule, deleteRule } = require('@cumulus/es-client/indexer');
 
+const {
+  requireApiVersion,
+} = require('../app/middleware');
 const { isBadRequestError } = require('../lib/errors');
 const {
   createRuleTrigger,
@@ -195,7 +198,7 @@ async function patch(req, res) {
   const { params: { name }, body } = req;
   let apiRule = { ...body, updatedAt: Date.now() };
 
-  if (name !== apiRule.name) {
+  if (apiRule.name && name !== apiRule.name) {
     return res.boom.badRequest(`Expected rule name to be '${name}', but found`
       + ` '${body.name}' in payload`);
   }
@@ -328,8 +331,8 @@ async function del(req, res) {
 
 router.get('/:name', get);
 router.get('/', list);
-router.patch('/:name', patch);
-router.put('/:name', put);
+router.patch('/:name', requireApiVersion(2), patch);
+router.put('/:name', requireApiVersion(2), put);
 router.post('/', post);
 router.delete('/:name', del);
 

@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### MIGRATION notes
+
+#### Rules API Endpoint Versioning
+
+As part of the work on CUMULUS-3095, we have added a required header for the
+rules PUT/PATCH endpoints -- to ensure that older clients/utilities do not
+unexpectedly make destructive use of those endpoints, a validation check of a
+header value against supported versions has been implemented.
+
+Moving forward, if a breaking change is made to an existing endpoint that
+requires user updates, as part of that update we will set the current version of
+the core API and require a header that confirms the client is compatible with
+the version required or greater.
+
+In this instance, the rules PUT/PATCH
+endpoints will require a `Cumulus-API-Version` value of at least `2`.
+
+```bash
+ curl --request PUT https://example.com/rules/repeat_test \
+ --header 'Cumulus-API-Version': '2'\
+ --header 'Authorization: Bearer ReplaceWithToken'\
+ --data ...
+```
+
+Users/clients that do not make use of these endpoints will not be impacted.
+
 ### Notable Changes
 
 - **CUMULUS-3095**
