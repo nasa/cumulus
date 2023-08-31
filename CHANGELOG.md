@@ -39,18 +39,17 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated `PUT` rules endpoint to replace rule.
   - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
 
+## [v18.0.0] 2023-08-28
+
 ### Notable Changes
 
 - **CUMULUS-3270**
   - update python lambdas to use python3.10
   - update dependencies to use python3.10 including cumulus-message-adapter, cumulus-message-adapter-python and cumulus-process-py
-
-## Notable Changes
-
 - **CUMULUS-3259**
   - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
 
-## Changes
+### Changed
 
 - **CUMULUS-3366**
   - Added logging to the `collectionRuleMatcher` Rules Helper, which is used by the sqs-message-consumer and message-consumer Lambdas,
@@ -81,7 +80,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
     - Upstream/downstream terraform modules will need to utilize an AWS provider
       that matches this range
 
-## Breaking Changes
+### Breaking Changes
 
 - **CUMULUS-3258**
   - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
@@ -91,13 +90,13 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
   - Updated all terraform AWS providers to ~> 5.0
 
-## Changes
+### Changed
 
 - **CUMULUS-3258**
   - Update all Core integration tests/integrations to be compatible with Orca >=
     v8.1.0 only
 
-## Fixed
+### Fixed
 
 - **CUMULUS-3319**
   - Removed @cumulus/api/models/schema and changed all references to
@@ -7369,7 +7368,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v17.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.0.0...HEAD
+[v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
 [v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
