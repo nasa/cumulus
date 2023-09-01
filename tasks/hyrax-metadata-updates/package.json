@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/hyrax-metadata-updates",
-  "version": "15.0.0",
+  "version": "18.0.0",
   "description": "Update granule metadata with hooks to OPeNDAP URL",
   "main": "index.js",
   "directories": {
@@ -9,7 +9,8 @@
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/hyrax-metadata-updates",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nasa/cumulus.git"
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "tasks/hyrax-metadata-updates"
   },
   "publishConfig": {
     "access": "public"
@@ -39,18 +40,18 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/cmr-client": "15.0.0",
-    "@cumulus/cmrjs": "15.0.0",
-    "@cumulus/common": "15.0.0",
+    "@cumulus/aws-client": "18.0.0",
+    "@cumulus/cmr-client": "18.0.0",
+    "@cumulus/cmrjs": "18.0.0",
+    "@cumulus/common": "18.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/errors": "15.0.0",
+    "@cumulus/errors": "18.0.0",
     "libxmljs": "^0.19.7",
     "lodash": "^4.17.21",
     "xml2js": "0.5.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "15.0.0",
+    "@cumulus/schemas": "18.0.0",
     "jsonwebtoken": "^9.0.0",
     "nock": "^12.0.1",
     "rewire": "^6.0.0"

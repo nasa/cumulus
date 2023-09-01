@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0,!= 3.14.0"
+      version = "~> 5.0"
     }
   }
 }
@@ -33,6 +33,7 @@ resource "aws_ecs_task_definition" "default" {
       privileged        = var.privileged
       environment       = [for k, v in var.environment : { name = k, value = v }]
       image             = var.image
+      healthCheck       = var.health_check
       memoryReservation = var.memory_reservation
       command           = var.command
       logConfiguration = {

@@ -2,7 +2,7 @@
 
 Cumulus uses RDS Postgres for database storage. Cumulus enforces schemas on record creation and update using the [`ajv` package](https://github.com/epoberezkin/ajv).
 
-The data models managed by Cumulus and their schema definitions can be found in the [Cumulus source code](./packages/api/models/schemas.js).
+The data models managed by Cumulus and their schema definitions can be found in the [Cumulus source code](./packages/api/lib/schemas.js).
 
 ## Documenting changes
 

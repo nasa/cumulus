@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/post-to-cmr",
-  "version": "15.0.0",
+  "version": "18.0.0",
   "description": "Post a given granule to CMR",
   "main": "index.js",
   "directories": {
@@ -9,7 +9,8 @@
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/post-to-cmr",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "tasks/post-to-cmr"
   },
   "publishConfig": {
     "access": "public"
@@ -28,22 +29,21 @@
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
-    "serial": true,
     "timeout": "15m"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/cmrjs": "15.0.0",
-    "@cumulus/common": "15.0.0",
+    "@cumulus/aws-client": "18.0.0",
+    "@cumulus/cmrjs": "18.0.0",
+    "@cumulus/common": "18.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/launchpad-auth": "15.0.0",
+    "@cumulus/errors": "18.0.0",
+    "@cumulus/launchpad-auth": "18.0.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/cmr-client": "15.0.0",
-    "@cumulus/schemas": "15.0.0"
+    "@cumulus/cmr-client": "18.0.0",
+    "@cumulus/schemas": "18.0.0"
   }
 }

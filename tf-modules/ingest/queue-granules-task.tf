@@ -1,7 +1,7 @@
 resource "aws_lambda_function" "queue_granules_task" {
   function_name    = "${var.prefix}-QueueGranules"
-  filename         = "${path.module}/../../tasks/queue-granules/dist/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/../../tasks/queue-granules/dist/lambda.zip")
+  filename         = "${path.module}/../../tasks/queue-granules/dist/webpack/lambda.zip"
+  source_code_hash = filebase64sha256("${path.module}/../../tasks/queue-granules/dist/webpack/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"

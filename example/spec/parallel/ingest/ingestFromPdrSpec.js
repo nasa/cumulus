@@ -23,8 +23,9 @@
 
 const flatten = require('lodash/flatten');
 const cryptoRandomString = require('crypto-random-string');
+const path = require('path');
 
-const { deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
+const { buildS3Uri, deleteS3Object, s3ObjectExists } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getPdr } = require('@cumulus/api-client/pdrs');
@@ -41,6 +42,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { getExecution } = require('@cumulus/api-client/executions');
+const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 const {
@@ -145,6 +147,7 @@ describe('Ingesting from PDR', () => {
     await waitForGranuleAndDelete(
       config.stackName,
       testDataGranuleId,
+      encodedConstructCollectionId(addedCollections[0].name, addedCollections[0].version),
       'completed'
     );
     await apiTestUtils.deletePdr({
@@ -476,7 +479,7 @@ describe('Ingesting from PDR', () => {
 
             // the output of the CheckStatus is used to determine the task of choice
             const checkStatusTaskName = 'CheckStatus';
-            const successStepName = 'WorkflowSucceeded';
+            const successStepName = 'SendPAN';
             const pdrStatusReportTaskName = 'PdrStatusReport';
 
             let choiceVerified = false;
@@ -512,6 +515,32 @@ describe('Ingesting from PDR', () => {
             }
             expect(choiceVerified).toBeTrue();
           }
+        });
+      });
+
+      describe('SendPan lambda function', () => {
+        let lambdaOutput;
+        beforeAll(async () => {
+          try {
+            lambdaOutput = await lambdaStep.getStepOutput(parsePdrExecutionArn, 'SendPan');
+          } catch (error) {
+            beforeAllFailed = error;
+          }
+        });
+
+        // SfSnsReport lambda is used in the workflow multiple times, apparently, only the first output
+        it('has expected pan output', async () => {
+          if (beforeAllFailed) fail(beforeAllFailed);
+          const panName = lambdaOutput.payload.pdr.name.replace(/\.pdr/gi, '.pan');
+          const panKey = path.join(addedCollections[0].meta.panPath, panName);
+          const expectedPanUri = buildS3Uri(config.bucket, panKey);
+          expect(lambdaOutput.payload.pan.uri).toEqual(expectedPanUri);
+          const panExists = await s3ObjectExists({
+            Bucket: config.bucket,
+            Key: panKey,
+          });
+          expect(panExists).toEqual(true);
+          await deleteS3Object(config.bucket, panKey);
         });
       });
     });

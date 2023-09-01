@@ -16,7 +16,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["files", "granuleId"],
+        "required": ["granuleId"],
         "properties": {
           "type": { "type": "string" },
           "granuleId": { "type": "string" },
@@ -25,7 +25,7 @@
           "provider": { "type": "string" },
           "collectionId": { "type": "string" },
           "status": { "type": "string" },
-          "updatedAt": { "type": "string" },
+          "updatedAt": { "type": "integer" },
           "files": { "type": "array" }
         }
       }

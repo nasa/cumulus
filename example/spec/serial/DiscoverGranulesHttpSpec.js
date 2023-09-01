@@ -19,6 +19,7 @@ const {
 } = require('../helpers/testUtils');
 const { buildHttpOrHttpsProvider, createProvider } = require('../helpers/Providers');
 const { waitForGranuleAndDelete } = require('../helpers/granuleUtils');
+const { encodedConstructCollectionId } = require('../helpers/Collections');
 
 const workflowName = 'DiscoverGranules';
 
@@ -114,6 +115,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          encodedConstructCollectionId(collection.name, collection.version),
           'completed'
         );
       }

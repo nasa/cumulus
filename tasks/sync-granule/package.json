@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "15.0.0",
+  "version": "18.0.0",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -9,7 +9,8 @@
   "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/sync-granule",
   "repository": {
     "type": "git",
-    "url": "https://github.com/nasa/cumulus"
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "tasks/sync-granule"
   },
   "publishConfig": {
     "access": "public"
@@ -30,7 +31,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "ava": {
-    "serial": true,
     "verbose": true,
     "files": [
       "!tests/fixtures/**/*"
@@ -38,19 +38,19 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/aws-client": "15.0.0",
-    "@cumulus/collection-config-store": "15.0.0",
-    "@cumulus/common": "15.0.0",
+    "@cumulus/aws-client": "18.0.0",
+    "@cumulus/collection-config-store": "18.0.0",
+    "@cumulus/common": "18.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/errors": "15.0.0",
-    "@cumulus/ingest": "15.0.0",
-    "@cumulus/message": "15.0.0",
+    "@cumulus/errors": "18.0.0",
+    "@cumulus/ingest": "18.0.0",
+    "@cumulus/message": "18.0.0",
     "lodash": "^4.17.21",
     "p-map": "^2.1.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "15.0.0",
-    "@cumulus/test-data": "15.0.0"
+    "@cumulus/schemas": "18.0.0",
+    "@cumulus/test-data": "18.0.0"
   }
 }
