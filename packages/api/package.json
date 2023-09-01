@@ -91,7 +91,7 @@
     "json2csv": "^4.5.1",
     "jsonpath-plus": "^1.1.0",
     "jsonwebtoken": "^9.0.0",
-    "knex": "2.4.1",
+    "knex": "2.5.0",
     "lodash": "^4.17.21",
     "moment": "2.29.4",
     "morgan": "^1.9.1",
