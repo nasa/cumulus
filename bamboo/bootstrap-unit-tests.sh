@@ -9,19 +9,18 @@ set -ex
 export SSH_USERS=user:$(id -u):$(id -u)
 export COMPOSE_FILE=./bamboo/docker-compose.yml
 
-## Set container_id for docker-compose to use to identify the compose stack per planKey
-docker_command="docker exec -t ${container_id}_build_env_1 /bin/bash -c"
+## Set container_id for docker compose to use to identify the compose stack per planKey
+docker_command="docker exec -t ${container_id}-build_env-1 /bin/bash -c"
 
 docker ps -a
 
 ## Setup the compose stack
-docker-compose -p ${container_id} down
-docker-compose -p ${container_id} rm -f
-docker-compose -p ${container_id} up -d
+docker compose -p ${container_id} down
+docker compose -p ${container_id} rm -f
+docker compose -p ${container_id} up -d
 
 docker ps -a
-
-while ! docker container inspect ${container_id}\_build_env_1; do
+while ! docker container inspect ${container_id}-build_env-1; do
   echo 'Waiting for build env to be available';
   docker ps -a
   sleep 5;
@@ -30,8 +29,8 @@ done
 ## Setup the build env container once it's started
 $docker_command "npm install --error --no-progress -g nyc; cd $UNIT_TEST_BUILD_DIR; git fetch --all; git checkout $GIT_SHA"
 # Copy build cache of compiled TS code into cached bootstrap dir, if necessary
-docker cp $TS_BUILD_CACHE_FILE "${container_id}_build_env_1:$UNIT_TEST_BUILD_DIR"
-docker cp bamboo/extract-ts-build-cache.sh "${container_id}_build_env_1:$UNIT_TEST_BUILD_DIR/bamboo"
+docker cp $TS_BUILD_CACHE_FILE "${container_id}-build_env-1:$UNIT_TEST_BUILD_DIR"
+docker cp bamboo/extract-ts-build-cache.sh "${container_id}-build_env-1:$UNIT_TEST_BUILD_DIR/bamboo"
 
 # Extract build cache of compiled TS files
 $docker_command "cd $UNIT_TEST_BUILD_DIR; TS_BUILD_CACHE_FILE=$TS_BUILD_CACHE_FILE ./bamboo/extract-ts-build-cache.sh"

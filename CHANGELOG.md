@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+### Notable Changes
+
+- **CUMULUS-3270**
+  - update python lambdas to use python3.10
+  - update dependencies to use python3.10 including cumulus-message-adapter, cumulus-message-adapter-python and cumulus-process-py
+
+## Notable Changes
+
+- **CUMULUS-3259**
+  - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
+
+## Changes
+
+- **CUMULUS-3366**
+  - Added logging to the `collectionRuleMatcher` Rules Helper, which is used by the sqs-message-consumer and message-consumer Lambdas,
+    to report when an incoming message's collection does not match any rules.
 
 ## [v17.0.0] 2023-08-09
 
@@ -122,7 +138,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Update SQS consumer logic to catch ExecutionAlreadyExists error and
     delete SQS message accordingly.
   - Add ReportBatchItemFailures to event source mapping start_sf_mapping
+- **CUMULUS-3357**
+  - `@cumulus/queue-granules` is now written in TypeScript
+  - `@cumulus/schemas` can now generate TypeScript interfaces for the task input, output and config.
 - Added missing name to throttle_queue_watcher Cloudwatch event in `throttled-queue.tf`
+
 
 ### Fixed
 
