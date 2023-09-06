@@ -30,7 +30,7 @@ export const translatePostgresCollectionToApiCollection = (
 /**
 * Translates a NewCollectionRecord API collection object to a `PostgresCollectionRecord` object
 * @param {NewCollectionRecord} record - API collection record to translate
-* @returns {PostgresCollectionRecord} - Translated record
+* @returns {PostgresCollection} - Translated record
 */
 export const translateApiCollectionToPostgresCollection = (
   record: NewCollectionRecord

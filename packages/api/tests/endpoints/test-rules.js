@@ -757,6 +757,7 @@ test.serial('PATCH updates an existing rule in all data stores', async (t) => {
       queue_url: 'fake-queue-url',
       workflow,
       meta: oldMetaFields,
+      tags: ['tag1', 'tag2'],
     }
   );
 
@@ -851,6 +852,7 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
       execution_name_prefix: 'testRule',
       payload: { foo: 'bar' },
       value: randomId('value'),
+      tags: ['tag1', 'tag2'],
     }
   );
 
@@ -866,6 +868,7 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
     },
     createdAt: null,
     updatedAt: null,
+    tags: null,
   };
 
   await request(app)
@@ -906,6 +909,7 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
       queue_url: null,
       type: originalApiRule.rule.type,
       value: null,
+      tags: null,
       created_at: originalPgRecord.created_at,
       updated_at: actualPostgresRule.updated_at,
     }
@@ -1699,6 +1703,7 @@ test.serial('PUT replaces an existing rule in all data stores', async (t) => {
       queue_url: 'fake-queue-url',
       workflow,
       meta: oldMetaFields,
+      tags: ['tag1', 'tag2'],
     }
   );
 
@@ -1719,12 +1724,14 @@ test.serial('PUT replaces an existing rule in all data stores', async (t) => {
   const updatePayload = {
     foo: 'bar',
   };
-  const removedFields = ['queueUrl', 'queue_url', 'provider', 'collection', 'payload'];
+  const updateTags = ['tag2', 'tag3'];
+  const removedFields = ['queueUrl', 'queue_url', 'provider', 'collection'];
   const updateRule = {
     ...omit(originalApiRule, removedFields),
     state: 'ENABLED',
     meta: updateMetaFields,
     payload: updatePayload,
+    tags: updateTags,
     // these timestamps should not get used
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -1751,6 +1758,7 @@ test.serial('PUT replaces an existing rule in all data stores', async (t) => {
       state: 'ENABLED',
       meta: updateMetaFields,
       payload: updatePayload,
+      tags: updateTags,
       createdAt: originalApiRule.createdAt,
       updatedAt: updatedEsRecord.updatedAt,
       timestamp: updatedEsRecord.timestamp,
@@ -1763,6 +1771,7 @@ test.serial('PUT replaces an existing rule in all data stores', async (t) => {
       enabled: true,
       meta: updateMetaFields,
       payload: updatePayload,
+      tags: updateTags,
       queue_url: null,
       created_at: originalPgRecord.created_at,
       updated_at: actualPostgresRule.updated_at,
@@ -1794,10 +1803,11 @@ test.serial('PUT removes existing fields if not specified or set to null', async
       execution_name_prefix: 'testRule',
       payload: { foo: 'bar' },
       value: randomId('value'),
+      tags: ['tag1', 'tag2'],
     }
   );
 
-  const removedFields = ['provider', 'collection', 'payload'];
+  const removedFields = ['provider', 'collection', 'payload', 'tags'];
   const updateRule = {
     ...omit(originalApiRule, removedFields),
     executionNamePrefix: null,
@@ -1848,6 +1858,7 @@ test.serial('PUT removes existing fields if not specified or set to null', async
       queue_url: null,
       type: originalApiRule.rule.type,
       value: null,
+      tags: null,
       created_at: originalPgRecord.created_at,
       updated_at: actualPostgresRule.updated_at,
     }

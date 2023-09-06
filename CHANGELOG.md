@@ -40,6 +40,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated `PUT` rules endpoint to replace rule.
   - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
 
+### Fixed
+
+- **CUMULUS-3095**
+  - Added back `rule` schema validation which is missing after RDS phase 3.
+  - Fixed a bug for creating rule with tags.
+
 ## [v18.0.0] 2023-08-28
 
 ### Notable Changes

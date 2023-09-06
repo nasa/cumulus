@@ -19,8 +19,9 @@ export interface PostgresRule {
   updated_at: Date | undefined,
 }
 
-export interface PostgresRuleRecord extends PostgresRule {
+export interface PostgresRuleRecord extends Omit<PostgresRule, 'tags'> {
   cumulus_id: number,
   created_at: Date,
   updated_at: Date,
+  tags: string[],
 }
