@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "18.0.1-alpha.1",
+  "version": "18.0.0",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -55,11 +55,11 @@
     "@cumulus/cmr-client": "18.0.0",
     "@cumulus/cmrjs": "18.0.0",
     "@cumulus/collection-config-store": "18.0.0",
-    "@cumulus/common": "18.0.1-alpha.0",
-    "@cumulus/db": "18.0.1-alpha.0",
+    "@cumulus/common": "18.0.0",
+    "@cumulus/db": "18.0.0",
     "@cumulus/distribution-utils": "18.0.0",
     "@cumulus/errors": "18.0.0",
-    "@cumulus/es-client": "18.0.1-alpha.0",
+    "@cumulus/es-client": "18.0.0",
     "@cumulus/ingest": "18.0.0",
     "@cumulus/launchpad-auth": "18.0.0",
     "@cumulus/logger": "18.0.0",

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/es-client",
-  "version": "18.0.1-alpha.0",
+  "version": "18.0.0",
   "description": "Utilities for working with Elasticsearch",
   "keywords": [
     "CUMULUS",
