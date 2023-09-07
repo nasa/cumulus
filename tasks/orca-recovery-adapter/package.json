@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/orca-recovery-adapter",
-  "version": "17.0.0",
+  "version": "18.0.0",
   "description": "Adapter to invoke orca recovery workflow",
   "main": "dist/index.js",
   "private": true,
@@ -38,14 +38,14 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "17.0.0",
-    "@cumulus/common": "17.0.0",
+    "@cumulus/aws-client": "18.0.0",
+    "@cumulus/common": "18.0.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/logger": "17.0.0",
-    "@cumulus/message": "17.0.0",
+    "@cumulus/logger": "18.0.0",
+    "@cumulus/message": "18.0.0",
     "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@cumulus/schemas": "17.0.0"
+    "@cumulus/schemas": "18.0.0"
   }
 }
