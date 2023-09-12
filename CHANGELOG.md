@@ -39,14 +39,14 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added `PATCH` rules endpoint to update rule which works as the existing `PUT` endpoint.
   - Updated `PUT` rules endpoint to replace rule.
   - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
+  - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
+    `meta` and `payload`, and fixed `rule` field mapping.
 
 ### Fixed
 
 - **CUMULUS-3095**
   - Added back `rule` schema validation which is missing after RDS phase 3.
   - Fixed a bug for creating rule with tags.
-  - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
-  `meta` and `payload`, and fixed `rule` field mapping.
 
 ## [v18.0.0] 2023-08-28
 

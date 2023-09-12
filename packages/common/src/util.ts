@@ -79,6 +79,25 @@ export const returnNullOrUndefinedOrDate = (
   dateVal: string | number | null | undefined
 ) => (isNil(dateVal) ? dateVal : new Date(dateVal));
 
+/**
+ * This is from https://github.com/siberiacancode/lodash-omitdeep/blob/main/src/omitDeepBy/omitDeepBy.ts
+ * That repo uses outdated lodash packages.
+ */
+/**
+ * The opposite of `_.pickBy`; this method creates an object composed of the
+ * own and inherited enumerable properties of `object` that `predicate`
+ * doesn't return truthy for.
+ *
+ * @param {object} object - The source object.
+ * @param [predicate=_.identity] - The function invoked per property.
+ * @returns Returns the new object.
+ * @example
+ *
+ * const object = { 'a': 1, 'b': null, 'c': { 'a': 1, 'b': null } };
+ *
+ * omitByDeep(object, _.isNil);
+ * // => { 'a': 1, 'c': { 'a': 1 } }
+ */
 interface OmitDeepBy {
   <T>(object: Dictionary<T> | null | undefined, predicate?: ValueKeyIteratee<T>): Dictionary<T>;
   <T>(

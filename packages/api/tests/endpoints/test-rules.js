@@ -1126,6 +1126,37 @@ test('PATCH returns a 400 response if rule type is invalid', async (t) => {
   t.truthy(message.match(regexp));
 });
 
+test('PATCH returns a 400 response if rule value is not specified for non-onetime rule', async (t) => {
+  const {
+    originalApiRule,
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queue_url: 'fake-queue-url',
+      workflow,
+    }
+  );
+
+  const updateRule = {
+    name: originalApiRule.name,
+    rule: {
+      type: 'sns',
+    },
+  };
+
+  const response = await request(app)
+    .patch(`/rules/${originalPgRecord.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updateRule)
+    .expect(400);
+
+  const { message } = response.body;
+  const regexp = new RegExp('Rule value is undefined for sns rule');
+  t.truthy(message.match(regexp));
+});
+
 test('PATCH does not write to Elasticsearch if writing to PostgreSQL fails', async (t) => {
   const { testKnex } = t.context;
   const {
@@ -2055,6 +2086,31 @@ test('PUT returns a 400 response if rule type is invalid', async (t) => {
 
   const { message } = response.body;
   const regexp = new RegExp('The record has validation errors:.*rule.type.*should be equal to one of the allowed values');
+  t.truthy(message.match(regexp));
+});
+
+test('PUT returns a 400 response if rule value is not specified for non-onetime rule', async (t) => {
+  const {
+    originalApiRule,
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      queue_url: 'fake-queue-url',
+      workflow,
+    }
+  );
+  originalApiRule.rule.type = 'kinesis';
+
+  const response = await request(app)
+    .put(`/rules/${originalPgRecord.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(originalApiRule)
+    .expect(400);
+
+  const { message } = response.body;
+  const regexp = new RegExp('Rule value is undefined for kinesis rule');
   t.truthy(message.match(regexp));
 });
 

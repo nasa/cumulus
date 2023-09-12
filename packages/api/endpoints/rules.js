@@ -179,11 +179,11 @@ async function patchRule(params) {
 /**
  * Updates an existing rule.
  *
- * @param {Object} req - express request object
+ * @param {object} req - express request object
  * @param {string} req.params.name - name of the rule to replace
- * @param {Object} req.body - complete replacement rule
- * @param {Object} res - express response object
- * @returns {Promise<Object>} the promise of express response object, which
+ * @param {object} req.body - complete replacement rule
+ * @param {object} res - express response object
+ * @returns {Promise<object>} the promise of express response object, which
  *    is a Bad Request (400) if the rule's name property does not match the
  *    name request parameter, or a Not Found (404) if there is no existing rule
  *    with the specified name
