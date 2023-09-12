@@ -585,12 +585,13 @@ function validateRecord(rule) {
     error.message += 'Rule type is undefined.';
     throw error;
   }
+
+  recordIsValid(omitDeepBy(rule, isNull), ruleSchema, false);
+
   if (rule.rule.type !== 'onetime' && !rule.rule.value) {
     error.message += `Rule value is undefined for ${rule.rule.type} rule`;
     throw error;
   }
-
-  recordIsValid(omitDeepBy(rule, isNull), ruleSchema, false);
 }
 
 /**
