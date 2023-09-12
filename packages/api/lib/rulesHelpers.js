@@ -305,7 +305,7 @@ async function deleteRuleResources(knex, rule) {
   switch (type) {
   case 'scheduled': {
     const targetId = 'lambdaTarget';
-    const name = `${process.env.stackName}-${rule.name}`;//-custom-
+    const name = `${process.env.stackName}-${rule.name}`;
     await CloudwatchEvents.deleteTarget(targetId, name);
     await CloudwatchEvents.deleteEvent(name);
     break;
