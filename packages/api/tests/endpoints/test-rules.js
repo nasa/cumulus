@@ -293,7 +293,14 @@ test('CUMULUS-912 POST with pathParameters and with an invalid access token retu
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.todo('CUMULUS-912 POST with pathParameters and with an unauthorized user returns an unauthorized response');
+test('POST with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const response = await request(app)
+    .post('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  assertions.isAuthorizationMissingResponse(t, response);
+});
 
 test('CUMULUS-912 PATCH with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
@@ -305,7 +312,14 @@ test('CUMULUS-912 PATCH with pathParameters and with an invalid access token ret
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.todo('CUMULUS-912 PATCH with pathParameters and with an unauthorized user returns an unauthorized response');
+test('PATCH with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const response = await request(app)
+    .patch('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  assertions.isAuthorizationMissingResponse(t, response);
+});
 
 test('CUMULUS-912 PUT with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
@@ -317,7 +331,14 @@ test('CUMULUS-912 PUT with pathParameters and with an invalid access token retur
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.todo('CUMULUS-912 PUT with pathParameters and with an unauthorized user returns an unauthorized response');
+test('PUT with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const response = await request(app)
+    .put('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  assertions.isAuthorizationMissingResponse(t, response);
+});
 
 test('CUMULUS-912 DELETE with pathParameters and with an invalid access token returns an unauthorized response', async (t) => {
   const response = await request(app)
@@ -329,7 +350,14 @@ test('CUMULUS-912 DELETE with pathParameters and with an invalid access token re
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test.todo('CUMULUS-912 DELETE with pathParameters and with an unauthorized user returns an unauthorized response');
+test('DELETE with pathParameters and with an unauthorized user returns an unauthorized response', async (t) => {
+  const response = await request(app)
+    .delete('/rules/asdf')
+    .set('Accept', 'application/json')
+    .expect(401);
+
+  assertions.isAuthorizationMissingResponse(t, response);
+});
 
 test.serial('default returns list of rules', async (t) => {
   const response = await request(app)
