@@ -99,7 +99,7 @@ export async function removeLock(
  * @param {object} provider - provider object
  * @param {string} provider.id - provider id
  * @param {number} provider.globalConnectionLimit - provider globalConnectionLimit
- * @param {number} provider.maxDownloadTimeInSecond - provider maxDownloadTimeInSecond for a granule
+ * @param {number} provider.maxDownloadTime - provider maxDownloadTime for a granule
  * @param {string} granuleId - id of downloading granule
  * @param {number} counter - retry counter
  * @returns {Promise<boolean>}
@@ -109,12 +109,12 @@ export async function proceed(
   provider: {
     id: string,
     globalConnectionLimit?: number,
-    maxDownloadTimeInSecond?: number,
+    maxDownloadTime?: number,
   },
   granuleId: string,
   counter = 0
 ): Promise<boolean> {
-  const { globalConnectionLimit, maxDownloadTimeInSecond } = provider;
+  const { globalConnectionLimit, maxDownloadTime } = provider;
   if (globalConnectionLimit === undefined) {
     return true;
   }
@@ -125,7 +125,7 @@ export async function proceed(
     return false;
   }
 
-  const count = await countLock(bucket, provider.id, maxDownloadTimeInSecond);
+  const count = await countLock(bucket, provider.id, maxDownloadTime);
 
   if (count >= globalConnectionLimit) {
     log.debug(`The "${provider.id}" provider's globalConnectionLimit of "${provider.globalConnectionLimit}" has been reached.`);
