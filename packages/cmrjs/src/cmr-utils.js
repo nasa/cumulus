@@ -1,7 +1,6 @@
 'use strict';
 
 const got = require('got');
-const flatten = require('lodash/flatten');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const set = require('lodash/set');
@@ -487,7 +486,7 @@ function constructOnlineAccessUrl({
 }
 
 /**
- * Construct a list of online access urls.
+ * Construct a list of online access urls grouped by link type.
  *
  * @param {Object} params - input parameters
  * @param {Array<Object>} params.files - array of file objects
@@ -498,7 +497,7 @@ function constructOnlineAccessUrl({
  *                                                               for all distribution bucketss
  * @param {boolean} params.useDirectS3Type - indicate if direct s3 access type is used
  * @returns {Promise<[{URL: string, URLDescription: string}]>} an array of
- *    online access url objects
+ *    online access url objects grouped by link type.
  */
 function constructOnlineAccessUrls({
   files,
