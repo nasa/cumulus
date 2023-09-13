@@ -153,7 +153,7 @@ test('translateApiRuleToPostgresRule handles optional fields', async (t) => {
   );
 });
 
-test('translatePostgresRuleToApiRule converts Postgres rule to API rule', async (t) => {
+test('translatePostgresRuleToApiRule converts Postgres rule record to API rule', async (t) => {
   const pgRecord = {
     name: 'testRule',
     workflow: 'testWorkflow',
@@ -171,7 +171,7 @@ test('translatePostgresRuleToApiRule converts Postgres rule to API rule', async 
       visibility: 30,
       more: 'meta',
     },
-    tags: JSON.stringify([]),
+    tags: ['tag1', 'tag2'],
     queue_url: 'https://sqs.us-west-2.amazonaws.com/123456789012/my-queue',
     created_at: new Date(),
     updated_at: new Date(),
@@ -203,7 +203,7 @@ test('translatePostgresRuleToApiRule converts Postgres rule to API rule', async 
       value: pgRecord.value,
     },
     executionNamePrefix: pgRecord.execution_name_prefix,
-    tags: [],
+    tags: pgRecord.tags,
     createdAt: pgRecord.created_at.getTime(),
     updatedAt: pgRecord.updated_at.getTime(),
   };
