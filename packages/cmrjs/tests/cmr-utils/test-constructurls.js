@@ -281,6 +281,79 @@ test('constructOnlineAccessUrls throws error if URL type is distribution and dis
   }));
 });
 
+test('constructOnlineAccessUrls returns expected array grouped by URL type starting with distribution files', (t) => {
+  const movedFiles = [
+    {
+      key: 'another/path/protected.hdf',
+      bucket: t.context.bucketConfig.protected.name,
+      type: 'data',
+    },
+    {
+      key: 'hidden/secretfile.gpg',
+      bucket: t.context.bucketConfig.private.name,
+      type: 'data',
+    },
+    {
+      key: 'another/path/public.dmrpp',
+      bucket: t.context.bucketConfig.public.name,
+      type: 'metadata',
+    },
+    {
+      key: 'path/publicfile.jpg',
+      bucket: t.context.bucketConfig.public.name,
+      type: 'browse',
+    },
+  ];
+
+  const expected = [
+    {
+      URL: `${distEndpoint}/${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      Description: 'Download protected.hdf',
+      URLDescription: 'Download protected.hdf',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `${distEndpoint}/${t.context.bucketConfig.public.name}/another/path/public.dmrpp`,
+      Description: 'Download public.dmrpp',
+      URLDescription: 'Download public.dmrpp',
+      Type: 'EXTENDED METADATA',
+    },
+    {
+      URL: `${distEndpoint}/${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      Description: 'Download publicfile.jpg',
+      URLDescription: 'Download publicfile.jpg',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+    {
+      URL: `s3://${t.context.bucketConfig.protected.name}/another/path/protected.hdf`,
+      Description: 'This link provides direct download access via S3 to the granule',
+      URLDescription: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET DATA',
+    },
+    {
+      URL: `s3://${t.context.bucketConfig.public.name}/another/path/public.dmrpp`,
+      Description: 'This link provides direct download access via S3 to the granule',
+      URLDescription: 'This link provides direct download access via S3 to the granule',
+      Type: 'EXTENDED METADATA',
+    },
+    {
+      URL: `s3://${t.context.bucketConfig.public.name}/path/publicfile.jpg`,
+      Description: 'This link provides direct download access via S3 to the granule',
+      URLDescription: 'This link provides direct download access via S3 to the granule',
+      Type: 'GET RELATED VISUALIZATION',
+    },
+  ];
+
+  const actual = constructOnlineAccessUrls({
+    files: movedFiles,
+    distEndpoint,
+    bucketTypes: t.context.bucketTypes,
+    distributionBucketMap: t.context.distributionBucketMap,
+  });
+
+  t.deepEqual(actual, expected);
+});
+
 test('constructRelatedUrls returns expected array when called with file list and cmrGranuleUrlType is not set and useDirectS3Type is not set', (t) => {
   const movedFiles = [
     {
