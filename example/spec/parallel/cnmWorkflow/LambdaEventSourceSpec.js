@@ -3,7 +3,7 @@
 const replace = require('lodash/replace');
 
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
-const { updateRule } = require('@cumulus/api-client/rules');
+const { replaceRule } = require('@cumulus/api-client/rules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getWorkflowFileKey } = require('@cumulus/common/workflows');
 const {
@@ -124,10 +124,10 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
         // Disable rule
         console.log(`Disabling rule ${rules[1].name}`);
 
-        await updateRule({
+        await replaceRule({
           prefix: testConfig.stackName,
           ruleName: rules[1].name,
-          updateParams: {
+          replacementRule: {
             ...rules[1],
             state: 'DISABLED',
           },
