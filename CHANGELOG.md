@@ -6,11 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Changed 
-
-- **CUMULUS-3392**
-  - Modify cloudwatch rule by deleting `custom`
-
 ## [v18.0.0] 2023-08-28
 
 ### Notable Changes
