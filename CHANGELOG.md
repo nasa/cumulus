@@ -5,12 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
+- **CUMULUS-3392**
+- Modify cloudwatch rule by deleting `custom`
+
+## Changed
+- Modify cloudwatch rule by deleting `custom`
 
 ## [v18.0.0] 2023-08-28
 
 ### Notable Changes
-- **CUMULUS-3392**
-- Modify cloudwatch rule by deleting `custom`
+
 
 - **CUMULUS-3270**
   - update python lambdas to use python3.10
