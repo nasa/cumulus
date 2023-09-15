@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 export const up = async (knex: Knex): Promise<void> =>
   await knex.schema.table('providers', (table) => {
     table
-      .specificType('max_download_time', 'number')
+      .integer('max_download_time')
       .comment('Maximum download time in seconds for all files of a granule');
   });
 

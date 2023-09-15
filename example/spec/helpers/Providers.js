@@ -59,6 +59,7 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
     host: await getProviderHost(),
     port: fakeProviderPortMap[protocol],
     globalConnectionLimit: 10,
+    maxDownloadTime: 360,
   };
 
   if (protocol === 'https') {

@@ -1,6 +1,7 @@
 export interface ApiProvider {
   id: string,
   globalConnectionLimit?: number,
+  maxDownloadTime?: number,
   protocol: string,
   host: string,
   port?: number,

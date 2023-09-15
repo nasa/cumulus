@@ -42,6 +42,13 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
     `meta` and `payload`, and fixed `rule` field mapping.
 
+### Added
+
+- **CUMULUS-3218**
+  - Added optional `maxDownloadTime` field to `provider` schema
+  - Added `max_download_time` column to PostgreSQL `providers` table
+  - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
+
 ### Fixed
 
 - **CUMULUS-3095**

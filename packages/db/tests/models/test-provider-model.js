@@ -96,3 +96,23 @@ test('ProviderPgModel.upsert() creates provider with allowed_redirects', async (
     updatedRecord
   );
 });
+
+test('ProviderPgModel.upsert() creates provider with max_download_time', async (t) => {
+  const {
+    knex,
+    providerPgModel,
+    providerRecord,
+  } = t.context;
+
+  const updatedRecord = {
+    ...providerRecord,
+    max_download_time: 600,
+  };
+
+  await providerPgModel.upsert(knex, updatedRecord);
+  const actualRecord = await providerPgModel.get(knex, updatedRecord);
+  t.like(
+    actualRecord,
+    updatedRecord
+  );
+});

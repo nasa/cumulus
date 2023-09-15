@@ -42,6 +42,7 @@ export async function checkOldLocks(
     if (!lock.Key) {
       throw new TypeError(`Could not find Key on ${JSON.stringify(lock)}`);
     }
+    log.debug(`Removing expired lock ${JSON.stringify(lock)}`);
     return deleteS3Object(bucket, lock.Key);
   }));
 
