@@ -6,11 +6,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-### Changed 
-
-- **CUMULUS-3392**
-  - Modify cloudwatch rule by deleting `custom`
-
 ### MIGRATION notes
 
 #### Rules API Endpoint Versioning
@@ -57,6 +52,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 - **CUMULUS-3351**
   - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
+- **CUMULUS-3392**
+  - Modify cloudwatch rule by deleting `custom`
 
 ## [v18.0.0] 2023-08-28
 
