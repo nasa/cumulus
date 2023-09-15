@@ -241,7 +241,6 @@ describe('The SNS-type rule', () => {
           prefix: config.stackName,
           ruleName,
           updateParams: {
-            ...createdRule.record,
             state: 'DISABLED',
           },
         });
@@ -269,14 +268,12 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const updateParams = {
-          ...updatedRule,
-          state: 'ENABLED',
-        };
         const putRuleResponse = await updateRule({
           prefix: config.stackName,
           ruleName,
-          updateParams,
+          updateParams: {
+            state: 'ENABLED',
+          },
         });
         updatedRule = JSON.parse(putRuleResponse.body);
       } catch (error) {
@@ -304,7 +301,6 @@ describe('The SNS-type rule', () => {
         const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName }).promise();
         newTopicArn = TopicArn;
         const updateParams = {
-          ...createdRule.record,
           rule: {
             value: TopicArn,
             type: 'sns',
