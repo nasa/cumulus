@@ -765,7 +765,7 @@ test.serial('deleteRuleResources correctly deletes resources for scheduled rule'
       }),
     });
   const scheduledRule = fakeRuleFactoryV2(params);
-  const name = `${process.env.stackName}-custom-${scheduledRule.name}`;
+  const name = `${process.env.stackName}-${scheduledRule.name}`;
   const deleteRuleSpy = sinon.spy(awsServices.cloudwatchevents(), 'deleteRule');
   const removeTargetsSpy = sinon.spy(awsServices.cloudwatchevents(), 'removeTargets');
 
