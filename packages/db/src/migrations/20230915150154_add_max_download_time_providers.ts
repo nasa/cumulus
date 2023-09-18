@@ -4,7 +4,7 @@ export const up = async (knex: Knex): Promise<void> =>
   await knex.schema.table('providers', (table) => {
     table
       .integer('max_download_time')
-      .comment('Maximum download time in seconds for all files of a granule');
+      .comment('Maximum download time in seconds for all granule files on a sync granule task');
   });
 
 export const down = async (knex: Knex): Promise<void> => {

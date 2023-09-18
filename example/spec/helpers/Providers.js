@@ -37,6 +37,7 @@ const buildFtpProvider = async (postfix = '') => {
     username: 'testuser',
     password: 'testpass',
     globalConnectionLimit: 10,
+    maxDownloadTime: 500,
   };
 
   if (process.env.PROVIDER_FTP_PORT) {
