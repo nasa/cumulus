@@ -108,4 +108,7 @@ module "archive" {
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
 
   tags = var.tags
+
+  add_report_topic_policy = var.add_report_topic_policy
+  metrics_account_id = var.metrics_account_id
 }

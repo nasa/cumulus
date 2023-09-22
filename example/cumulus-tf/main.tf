@@ -165,6 +165,9 @@ module "cumulus" {
   default_log_retention_days = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
+  add_report_topic_policy = var.add_report_topic_policy
+  metrics_account_id = var.metrics_account_id
+
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [

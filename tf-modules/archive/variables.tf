@@ -376,3 +376,13 @@ variable "default_log_retention_days" {
   default = 30
   description = "default value that user chooses for their log retention periods"
 }
+
+variable "add_report_topic_policy" {
+  type = bool
+  default = false
+}
+
+variable "metrics_account_id" {
+  type = list
+  default = []
+}
