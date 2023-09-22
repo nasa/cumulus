@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
+### Fixed
+
+- **CUMULUS-3393**
+  - Fixed `PUT` collection endpoint to update collection configuration in S3.
+
 ## [v16.1.1] 2023-08-03
 
 ### Notable Changes
