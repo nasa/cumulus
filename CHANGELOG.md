@@ -49,18 +49,20 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
-### Fixed
-
-- **CUMULUS-3095**
-  - Added back `rule` schema validation which is missing after RDS phase 3.
-  - Fixed a bug for creating rule with tags.
-
 ### Changed
 
 - **CUMULUS-3351**
   - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
 - **CUMULUS-3392**
   - Modify cloudwatch rule by deleting `custom`
+
+### Fixed
+
+- **CUMULUS-3095**
+  - Added back `rule` schema validation which is missing after RDS phase 3.
+  - Fixed a bug for creating rule with tags.
+- **CUMULUS-3393**
+  - Fixed `PUT` collection endpoint to update collection configuration in S3.
 
 ## [v18.0.0] 2023-08-28
 
