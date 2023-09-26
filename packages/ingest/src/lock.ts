@@ -19,15 +19,15 @@ export interface Lock {
  *
  * @param {object} bucket - The AWS S3 bucket with the locks to check
  * @param {Array} locks - The list of locks in the bucket
- * @param {number} retentionTimeInSecond - lock retention time in second, default is 300
+ * @param {number} retentionTimeInSeconds - lock retention time in seconds, default is 300
  * @returns {integer} - Number of locks remaining in bucket
  */
 export async function checkOldLocks(
   bucket: string,
   locks: Lock[] = [],
-  retentionTimeInSecond: number = 300
+  retentionTimeInSeconds: number = 300
 ): Promise<number> {
-  const expirationTimestamp = Date.now() - (retentionTimeInSecond * 1000);
+  const expirationTimestamp = Date.now() - (retentionTimeInSeconds * 1000);
 
   const expiredLocks = locks.filter(
     (lock) => {
@@ -54,20 +54,20 @@ export async function checkOldLocks(
  *
  * @param {object} bucket - The AWS S3 bucket to check
  * @param {string} providerName - The provider name
- * @param {number} retentionTimeInSecond - lock retention time in second, default is 300
+ * @param {number} retentionTimeInSeconds - lock retention time in seconds, default is 300
  * @returns {integer} - Number of current locks in the bucket
  */
 export async function countLock(
   bucket: string,
   providerName: string,
-  retentionTimeInSecond?: number
+  retentionTimeInSeconds?: number
 ): Promise<number> {
   const locks = await listS3ObjectsV2({
     Bucket: bucket,
     Prefix: `${lockPrefix}/${providerName}`,
   });
 
-  return checkOldLocks(bucket, locks, retentionTimeInSecond);
+  return checkOldLocks(bucket, locks, retentionTimeInSeconds);
 }
 
 async function addLock(
@@ -122,7 +122,7 @@ export async function proceed(
 
   // Fail if lock is not removed after 270 tries.
   if (counter > 270) {
-    log.debug(`The "${provider.id}" provider no lock available after ${counter} retries`);
+    log.debug(`The "${provider.id}" provider has no lock available after ${counter} retries`);
     return false;
   }
 
