@@ -282,6 +282,7 @@ function fakeProviderFactory(options = {}) {
   return {
     id: randomId('id'),
     globalConnectionLimit: 1,
+    maxDownloadTime: 100,
     protocol: 'http',
     host: randomId('host'),
     port: 80,

@@ -12,6 +12,7 @@ export interface PostgresProvider {
   cumulus_id?: number | null,
   global_connection_limit?: number | null,
   host: string,
+  max_download_time?: number | null,
   name: string,
   password?: string,
   port?: number | null,
