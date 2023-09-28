@@ -110,5 +110,5 @@ module "archive" {
   tags = var.tags
 
   add_report_topic_policy = var.add_report_topic_policy
-  metrics_account_id = var.metrics_account_id
+  report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
 }

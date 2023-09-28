@@ -133,4 +133,4 @@ additional_log_groups_to_elk = {
 #    causing future terraform plans to differ. To avoid this problem,
 #    specify the full ARN.
 # add_report_topic_policy = true
-# metrics_account_id = ["arn:aws:iam::12345678:user/FederatedUser"]
+# report_sns_topic_subscriber_arns = ["arn:aws:iam::12345678:user/FederatedUser"]

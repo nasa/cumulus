@@ -14,31 +14,14 @@ resource "aws_sns_topic_policy" "report_executions_topic_policy" {
 data "aws_iam_policy_document" "report_execution_sns_topic_policy" {
   statement {
     actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.metrics_account_id))
-    }
-
-    resources = [
-      aws_sns_topic.report_executions_topic.arn,
-    ]
-  }
-
-  statement {
-    actions = [
-      "SNS:Subscribe",
-      "SNS:SetTopicAttributes",
-      "SNS:RemovePermission",
-      "SNS:Receive",
-      "SNS:Publish",
-      "SNS:ListSubscriptionsByTopic",
       "SNS:GetTopicAttributes",
-      "SNS:DeleteTopic",
+      "SNS:SetTopicAttributes",
       "SNS:AddPermission",
+      "SNS:RemovePermission",
+      "SNS:DeleteTopic",
+      "SNS:Subscribe",
+      "SNS:ListSubscriptionsByTopic",
+      "SNS:Publish"
     ]
 
     condition {
@@ -62,6 +45,22 @@ data "aws_iam_policy_document" "report_execution_sns_topic_policy" {
     ]
 
     sid = "__default_statement_ID"
+  }
+    statement {
+    actions = [
+      "sns:Subscribe",
+    ]
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+    }
+
+    resources = [
+      aws_sns_topic.report_pdrs_topic.arn,
+    ]
+    sid = "__custom_sns_statement_ID"
   }
 }
 
@@ -79,34 +78,16 @@ resource "aws_sns_topic_policy" "report_granules_topic_policy" {
 }
 
 data "aws_iam_policy_document" "report_granules_sns_topic_policy" {
-  statement {
+    statement {
     actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.metrics_account_id))
-    }
-
-    resources = [
-      aws_sns_topic.report_granules_topic.arn,
-    ]
-  }
-  policy_id = "__default_policy_ID"
-
-  statement {
-    actions = [
-      "SNS:Subscribe",
-      "SNS:SetTopicAttributes",
-      "SNS:RemovePermission",
-      "SNS:Receive",
-      "SNS:Publish",
-      "SNS:ListSubscriptionsByTopic",
       "SNS:GetTopicAttributes",
-      "SNS:DeleteTopic",
+      "SNS:SetTopicAttributes",
       "SNS:AddPermission",
+      "SNS:RemovePermission",
+      "SNS:DeleteTopic",
+      "SNS:Subscribe",
+      "SNS:ListSubscriptionsByTopic",
+      "SNS:Publish"
     ]
 
     condition {
@@ -130,6 +111,22 @@ data "aws_iam_policy_document" "report_granules_sns_topic_policy" {
     ]
 
     sid = "__default_statement_ID"
+  }
+  statement {
+    actions = [
+      "sns:Subscribe",
+    ]
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+    }
+
+    resources = [
+      aws_sns_topic.report_granules_topic.arn,
+    ]
+    sid = "__custom_sns_statement_ID"
   }
 }
 
@@ -149,32 +146,14 @@ resource "aws_sns_topic_policy" "report_pdrs_topic_policy" {
 data "aws_iam_policy_document" "report_pdrs_sns_topic_policy" {
   statement {
     actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.metrics_account_id))
-    }
-
-    resources = [
-      aws_sns_topic.report_pdrs_topic.arn,
-    ]
-  }
-  policy_id = "__default_policy_ID"
-
-  statement {
-    actions = [
-      "SNS:Subscribe",
-      "SNS:SetTopicAttributes",
-      "SNS:RemovePermission",
-      "SNS:Receive",
-      "SNS:Publish",
-      "SNS:ListSubscriptionsByTopic",
       "SNS:GetTopicAttributes",
-      "SNS:DeleteTopic",
+      "SNS:SetTopicAttributes",
       "SNS:AddPermission",
+      "SNS:RemovePermission",
+      "SNS:DeleteTopic",
+      "SNS:Subscribe",
+      "SNS:ListSubscriptionsByTopic",
+      "SNS:Publish"
     ]
 
     condition {
@@ -198,6 +177,23 @@ data "aws_iam_policy_document" "report_pdrs_sns_topic_policy" {
     ]
 
     sid = "__default_statement_ID"
+  }
+
+  statement {
+    actions = [
+      "sns:Subscribe",
+    ]
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+    }
+
+    resources = [
+      aws_sns_topic.report_pdrs_topic.arn,
+    ]
+    sid = "__custom_sns_statement_ID"
   }
 }
 # Report collections
@@ -216,32 +212,14 @@ resource "aws_sns_topic_policy" "report_collections_topic_policy" {
 data "aws_iam_policy_document" "report_collections_sns_topic_policy" {
   statement {
     actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.metrics_account_id))
-    }
-
-    resources = [
-      aws_sns_topic.report_collections_topic.arn,
-    ]
-  }
-  policy_id = "__default_policy_ID"
-
-  statement {
-    actions = [
-      "SNS:Subscribe",
-      "SNS:SetTopicAttributes",
-      "SNS:RemovePermission",
-      "SNS:Receive",
-      "SNS:Publish",
-      "SNS:ListSubscriptionsByTopic",
       "SNS:GetTopicAttributes",
-      "SNS:DeleteTopic",
+      "SNS:SetTopicAttributes",
       "SNS:AddPermission",
+      "SNS:RemovePermission",
+      "SNS:DeleteTopic",
+      "SNS:Subscribe",
+      "SNS:ListSubscriptionsByTopic",
+      "SNS:Publish"
     ]
 
     condition {
@@ -265,5 +243,21 @@ data "aws_iam_policy_document" "report_collections_sns_topic_policy" {
     ]
 
     sid = "__default_statement_ID"
+  }
+  statement {
+    actions = [
+      "sns:Subscribe",
+    ]
+    effect = "Allow"
+
+    principals {
+      type        = "AWS"
+      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+    }
+
+    resources = [
+      aws_sns_topic.report_collections_topic.arn,
+    ]
+    sid = "__custom_sns_statement_ID"
   }
 }

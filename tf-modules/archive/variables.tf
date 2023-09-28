@@ -382,7 +382,7 @@ variable "add_report_topic_policy" {
   default = false
 }
 
-variable "metrics_account_id" {
+variable "report_sns_topic_subscriber_arns" {
   type = list
-  default = []
+  default = ["*"]
 }
