@@ -58,7 +58,7 @@ data "aws_iam_policy_document" "report_execution_sns_topic_policy" {
       resources = [
         aws_sns_topic.report_executions_topic.arn,
       ]
-      sid = "prdsTopicSubscriberStatementId"
+      sid = "subscriberStatementId"
     }
   }
 }
@@ -123,7 +123,7 @@ data "aws_iam_policy_document" "report_granules_sns_topic_policy" {
       resources = [
         aws_sns_topic.report_granules_topic.arn,
       ]
-      sid = "granulesTopicSubscriberStatementId"
+      sid = "subscriberStatementId"
     }
   }
 }
@@ -189,7 +189,7 @@ data "aws_iam_policy_document" "report_pdrs_sns_topic_policy" {
       resources = [
         aws_sns_topic.report_pdrs_topic.arn,
       ]
-      sid = "pdrsTopicSubscriberStatementId"
+      sid = "subscriberStatementId"
     }
   }
 }
@@ -253,7 +253,7 @@ data "aws_iam_policy_document" "report_collections_sns_topic_policy" {
       resources = [
         aws_sns_topic.report_collections_topic.arn,
       ]
-      sid = "collectionsTopicSubscriberStatementId"
+      sid = "subscriberStatementId"
     }
   }
 }
