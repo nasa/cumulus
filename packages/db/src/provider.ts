@@ -22,6 +22,7 @@ export const nullifyUndefinedProviderValues = (
     'username',
     'password',
     'global_connection_limit',
+    'max_download_time',
     'private_key',
     'cm_key_id',
     'certificate_uri',
