@@ -625,4 +625,5 @@ variable "default_log_retention_days" {
 variable "report_sns_topic_subscriber_arns" {
   type = list
   default = null
+  description = "Account ARNs to supply to report SNS topics policy with subscribe action"
 }
