@@ -478,12 +478,7 @@ variable "default_log_retention_days" {
   description = "default value that user chooses for their log retention periods"
 }
 
-variable "add_report_topic_policy" {
-  type = bool
-  default = false
-}
-
 variable "report_sns_topic_subscriber_arns" {
   type = list
-  default = ["*"]
+  default = null
 }

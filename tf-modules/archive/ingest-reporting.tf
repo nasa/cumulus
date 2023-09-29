@@ -5,8 +5,6 @@ resource "aws_sns_topic" "report_executions_topic" {
 }
 
 resource "aws_sns_topic_policy" "report_executions_topic_policy" {
-  count = var.add_report_topic_policy ? 1 : 0
-
   arn = aws_sns_topic.report_executions_topic.arn
   policy = data.aws_iam_policy_document.report_execution_sns_topic_policy.json
 }
@@ -46,21 +44,22 @@ data "aws_iam_policy_document" "report_execution_sns_topic_policy" {
 
     sid = "__default_statement_ID"
   }
-    statement {
-    actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+  dynamic "statement" {
+    for_each = var.report_sns_topic_subscriber_arns != null ? [1] : []
+    content {
+      actions = [
+        "sns:Subscribe",
+      ]
+      effect = "Allow"
+      principals {
+        type        = "AWS"
+        identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+      }
+      resources = [
+        aws_sns_topic.report_pdrs_topic.arn,
+      ]
+      sid = "subscriberStatementId"
     }
-
-    resources = [
-      aws_sns_topic.report_pdrs_topic.arn,
-    ]
-    sid = "__custom_sns_statement_ID"
   }
 }
 
@@ -71,14 +70,12 @@ resource "aws_sns_topic" "report_granules_topic" {
 }
 
 resource "aws_sns_topic_policy" "report_granules_topic_policy" {
-  count = var.add_report_topic_policy ? 1 : 0
-
   arn = aws_sns_topic.report_granules_topic.arn
   policy = data.aws_iam_policy_document.report_granules_sns_topic_policy.json
 }
 
 data "aws_iam_policy_document" "report_granules_sns_topic_policy" {
-    statement {
+  statement {
     actions = [
       "SNS:GetTopicAttributes",
       "SNS:SetTopicAttributes",
@@ -112,21 +109,22 @@ data "aws_iam_policy_document" "report_granules_sns_topic_policy" {
 
     sid = "__default_statement_ID"
   }
-  statement {
-    actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+  dynamic "statement" {
+    for_each = var.report_sns_topic_subscriber_arns != null ? [1] : []
+    content {
+      actions = [
+        "sns:Subscribe",
+      ]
+      effect = "Allow"
+      principals {
+        type        = "AWS"
+        identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+      }
+      resources = [
+        aws_sns_topic.report_granules_topic.arn,
+      ]
+      sid = "subscriberStatementId"
     }
-
-    resources = [
-      aws_sns_topic.report_granules_topic.arn,
-    ]
-    sid = "__custom_sns_statement_ID"
   }
 }
 
@@ -137,8 +135,6 @@ resource "aws_sns_topic" "report_pdrs_topic" {
 }
 
 resource "aws_sns_topic_policy" "report_pdrs_topic_policy" {
-  count = var.add_report_topic_policy ? 1 : 0
-
   arn = aws_sns_topic.report_pdrs_topic.arn
   policy = data.aws_iam_policy_document.report_pdrs_sns_topic_policy.json
 }
@@ -179,21 +175,22 @@ data "aws_iam_policy_document" "report_pdrs_sns_topic_policy" {
     sid = "__default_statement_ID"
   }
 
-  statement {
-    actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+  dynamic "statement" {
+    for_each = var.report_sns_topic_subscriber_arns != null ? [1] : []
+    content {
+      actions = [
+        "sns:Subscribe",
+      ]
+      effect = "Allow"
+      principals {
+        type        = "AWS"
+        identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+      }
+      resources = [
+        aws_sns_topic.report_pdrs_topic.arn,
+      ]
+      sid = "subscriberStatementId"
     }
-
-    resources = [
-      aws_sns_topic.report_pdrs_topic.arn,
-    ]
-    sid = "__custom_sns_statement_ID"
   }
 }
 # Report collections
@@ -203,10 +200,8 @@ resource "aws_sns_topic" "report_collections_topic" {
 }
 
 resource "aws_sns_topic_policy" "report_collections_topic_policy" {
-  count = var.add_report_topic_policy ? 1 : 0
-
   arn = aws_sns_topic.report_collections_topic.arn
-  policy = data.aws_iam_policy_document.report_collections_sns_topic_policy.json
+  policy =  data.aws_iam_policy_document.report_collections_sns_topic_policy.json
 }
 
 data "aws_iam_policy_document" "report_collections_sns_topic_policy" {
@@ -244,20 +239,21 @@ data "aws_iam_policy_document" "report_collections_sns_topic_policy" {
 
     sid = "__default_statement_ID"
   }
-  statement {
-    actions = [
-      "sns:Subscribe",
-    ]
-    effect = "Allow"
-
-    principals {
-      type        = "AWS"
-      identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+  dynamic "statement" {
+    for_each = var.report_sns_topic_subscriber_arns != null ? [1] : []
+    content {
+      actions = [
+        "sns:Subscribe",
+      ]
+      effect = "Allow"
+      principals {
+        type        = "AWS"
+        identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
+      }
+      resources = [
+        aws_sns_topic.report_collections_topic.arn,
+      ]
+      sid = "subscriberStatementId"
     }
-
-    resources = [
-      aws_sns_topic.report_collections_topic.arn,
-    ]
-    sid = "__custom_sns_statement_ID"
   }
 }
