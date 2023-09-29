@@ -56,9 +56,9 @@ data "aws_iam_policy_document" "report_execution_sns_topic_policy" {
         identifiers = distinct(compact(var.report_sns_topic_subscriber_arns))
       }
       resources = [
-        aws_sns_topic.report_pdrs_topic.arn,
+        aws_sns_topic.report_executions_topic.arn,
       ]
-      sid = "subscriberStatementId"
+      sid = "prdsTopicSubscriberStatementId"
     }
   }
 }
@@ -123,7 +123,7 @@ data "aws_iam_policy_document" "report_granules_sns_topic_policy" {
       resources = [
         aws_sns_topic.report_granules_topic.arn,
       ]
-      sid = "subscriberStatementId"
+      sid = "granulesTopicSubscriberStatementId"
     }
   }
 }
@@ -189,7 +189,7 @@ data "aws_iam_policy_document" "report_pdrs_sns_topic_policy" {
       resources = [
         aws_sns_topic.report_pdrs_topic.arn,
       ]
-      sid = "subscriberStatementId"
+      sid = "pdrsTopicSubscriberStatementId"
     }
   }
 }
@@ -253,7 +253,7 @@ data "aws_iam_policy_document" "report_collections_sns_topic_policy" {
       resources = [
         aws_sns_topic.report_collections_topic.arn,
       ]
-      sid = "subscriberStatementId"
+      sid = "collectionsTopicSubscriberStatementId"
     }
   }
 }
