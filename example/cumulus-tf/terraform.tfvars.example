@@ -126,3 +126,12 @@ additional_log_groups_to_elk = {
   "LogDescriptor" = "log_group_name"
 }
 */
+
+# Optional, configure if needed. Adds policies to SNS report topics to support
+#   cloud metrics integration.
+#
+#  If a Principal is specified as just an AWS account ID rather than an ARN,
+#    AWS silently converts it to the ARN for the root user,
+#    causing future terraform plans to differ. To avoid this problem,
+#    specify the full ARN.
+# report_sns_topic_subscriber_arns = ["arn:aws:iam::12345678:user/FederatedUser"]

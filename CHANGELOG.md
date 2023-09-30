@@ -55,6 +55,9 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
 - **CUMULUS-3392**
   - Modify cloudwatch rule by deleting `custom`
+- **CUMULUS-3377**
+  - Added configuration option to cumulus-tf/terraform.tfvars to include sns:Subscribe access policy for
+    executions, granules, collections, and PDRs report topics.
 
 ### Fixed
 
