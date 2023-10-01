@@ -5,72 +5,75 @@ import { Context } from 'aws-lambda';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
 import { Granule, GranuleFile, HandlerInput, HandlerEvent } from './types';
 
-const calculateGranuleFileChecksum = async (params: {
+/**
+ * Calculate checksum for a granule file.
+ */
+const calculateGranuleFileChecksum = async ({
+                                              s3,
+                                              algorithm,
+                                              granuleFile: { bucket, key }
+                                            }: {
   s3: { getObject: S3.GetObjectMethod },
   algorithm: string,
   granuleFile: GranuleFile
-}) => {
-  const { s3, algorithm, granuleFile } = params;
-
-  const { bucket, key } = granuleFile;
-
+}): Promise<string> => {
   return await S3.calculateObjectHash({ s3, algorithm, bucket, key });
 };
 
 const granuleFileHasPartialChecksum = (granuleFile: GranuleFile) =>
-  (granuleFile.checksumType && !granuleFile.checksum)
-  || (granuleFile.checksum && !granuleFile.checksumType);
+    (granuleFile.checksumType && !granuleFile.checksum)
+    || (granuleFile.checksum && !granuleFile.checksumType);
 
 const granuleFileHasChecksum = (granuleFile: GranuleFile) =>
-  granuleFile.checksumType && granuleFile.checksum;
+    granuleFile.checksumType && granuleFile.checksum;
 
 const granuleFileDoesNotHaveBucketAndKey = (granuleFile: GranuleFile) =>
-  !granuleFile.bucket || !granuleFile.key;
+    !granuleFile.bucket || !granuleFile.key;
 
 const skipGranuleFileUpdate = (granuleFile: GranuleFile) =>
-  granuleFileHasChecksum(granuleFile)
-  || granuleFileHasPartialChecksum(granuleFile)
-  || granuleFileDoesNotHaveBucketAndKey(granuleFile);
+    granuleFileHasChecksum(granuleFile)
+    || granuleFileHasPartialChecksum(granuleFile)
+    || granuleFileDoesNotHaveBucketAndKey(granuleFile);
 
-export const addChecksumToGranuleFile = async (params: {
+/**
+ * Add checksum to a granule file.
+ */
+export const addChecksumToGranuleFile = async ({
+                                                 s3,
+                                                 algorithm,
+                                                 granuleFile
+                                               }: {
   s3: { getObject: S3.GetObjectMethod },
   algorithm: string,
   granuleFile: GranuleFile
-}) => {
-  const { s3, algorithm, granuleFile } = params;
-
+}): Promise<GranuleFile> => {
   if (skipGranuleFileUpdate(granuleFile)) {
     return granuleFile;
   }
 
-  const checksum = await calculateGranuleFileChecksum({
-    s3,
-    algorithm,
-    granuleFile,
-  });
+  const checksum = await calculateGranuleFileChecksum({ s3, algorithm, granuleFile });
 
-  return <GranuleFile>{
+  return {
     ...granuleFile,
     checksumType: algorithm,
     checksum,
   };
 };
 
-const addFileChecksumsToGranule = async (params: {
+/**
+ * Add checksums to all files of a granule.
+ */
+const addFileChecksumsToGranule = async ({
+                                           s3,
+                                           algorithm,
+                                           granule
+                                         }: {
   s3: { getObject: S3.GetObjectMethod },
   algorithm: string,
   granule: Granule
-}) => {
-  const { s3, granule, algorithm } = params;
-
+}): Promise<Granule> => {
   const filesWithChecksums = await Promise.all(
-    params.granule.files.map(
-      (granuleFile) => addChecksumToGranuleFile({
-        s3: s3,
-        algorithm,
-        granuleFile,
-      })
-    )
+      granule.files.map((file) => addChecksumToGranuleFile({ s3, algorithm, granuleFile: file }))
   );
 
   return {
@@ -79,25 +82,28 @@ const addFileChecksumsToGranule = async (params: {
   };
 };
 
-export const handler = async (event: HandlerEvent) => {
+/**
+ * Main handler function.
+ */
+export const handler = async (event: HandlerEvent): Promise<HandlerInput> => {
   const { config, input } = event;
+  const s3 = awsClients.s3();
   const granulesWithChecksums = await Promise.all(
-    input.granules.map(
-      (granule) => addFileChecksumsToGranule({
-        s3: awsClients.s3(),
-        algorithm: config.algorithm,
-        granule,
-      })
-    )
+      input.granules.map((granule) => addFileChecksumsToGranule({ s3, algorithm: config.algorithm, granule }))
   );
 
-  return <HandlerInput>{
+  return {
     ...input,
     granules: granulesWithChecksums,
   };
 };
 
+/**
+ * CMA handler function.
+ */
 export const cmaHandler = async (
-  event: CumulusMessage | CumulusRemoteMessage,
-  context: Context
-) => await runCumulusTask(handler, event, context);
+    event: CumulusMessage | CumulusRemoteMessage,
+    context: Context
+): Promise<HandlerInput> => {
+  return await runCumulusTask(handler, event, context);
+};
