@@ -50,7 +50,10 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
 ### Changed
-
+- **CUMULUS-3177**
+  - changed removeFromCmr function for granule bulkDelete to not return and instead catch the error
+    when the granule is not found in CMR
+  - updated unit and integration tests to reflect the above changes
 - **CUMULUS-3351**
   - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
 - **CUMULUS-3392**

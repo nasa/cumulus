@@ -25,19 +25,25 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
  * @private
  */
 const _removeGranuleFromCmr = async (granule, collectionId) => {
+  let metadata = false;
   log.info(`granules.removeGranuleFromCmrByGranule granule_id: ${granule.granule_id}, colletion_id: ${collectionId}`);
   if (!granule.published || !granule.cmr_link) {
     log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
-    return;
   }
 
   const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  const metadata = await cmr.getGranuleMetadata(granule.cmr_link);
+  if (granule.published && granule.cmr_link) {
+    metadata = await cmr.getGranuleMetadata(granule.cmr_link);
+  }
 
   // Use granule UR to delete from CMR
   if (metadata) {
-    await cmr.deleteGranule(metadata.title, collectionId);
+    try {
+      await cmr.deleteGranule(metadata.title, collectionId);
+    } catch (error) {
+      log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
+    }
   }
 };
 
