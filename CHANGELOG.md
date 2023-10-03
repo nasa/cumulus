@@ -42,11 +42,30 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
     `meta` and `payload`, and fixed `rule` field mapping.
 
+### Added
+
+- **CUMULUS-3218**
+  - Added optional `maxDownloadTime` field to `provider` schema
+  - Added `max_download_time` column to PostgreSQL `providers` table
+  - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
+
+### Changed
+
+- **CUMULUS-3351**
+  - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
+- **CUMULUS-3392**
+  - Modify cloudwatch rule by deleting `custom`
+- **CUMULUS-3377**
+  - Added configuration option to cumulus-tf/terraform.tfvars to include sns:Subscribe access policy for
+    executions, granules, collections, and PDRs report topics.
+
 ### Fixed
 
 - **CUMULUS-3095**
   - Added back `rule` schema validation which is missing after RDS phase 3.
   - Fixed a bug for creating rule with tags.
+- **CUMULUS-3393**
+  - Fixed `PUT` collection endpoint to update collection configuration in S3.
 
 ## [v18.0.0] 2023-08-28
 

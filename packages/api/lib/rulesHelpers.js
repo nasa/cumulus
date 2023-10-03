@@ -307,7 +307,7 @@ async function deleteRuleResources(knex, rule) {
   switch (type) {
   case 'scheduled': {
     const targetId = 'lambdaTarget';
-    const name = `${process.env.stackName}-custom-${rule.name}`;
+    const name = `${process.env.stackName}-${rule.name}`;
     await CloudwatchEvents.deleteTarget(targetId, name);
     await CloudwatchEvents.deleteEvent(name);
     break;
@@ -547,7 +547,7 @@ function updateKinesisRuleArns(ruleItem, ruleArns) {
    * @returns {void}
    */
 async function addRule(item, payload) {
-  const name = `${process.env.stackName}-custom-${item.name}`;
+  const name = `${process.env.stackName}-${item.name}`;
   await CloudwatchEvents.putEvent(
     name,
     item.rule.value,
