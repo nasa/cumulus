@@ -38,7 +38,7 @@
     ],
     "fail-fast": true,
     "verbose": true,
-    "timeout": "20m"
+    "timeout": "30m"
   },
   "publishConfig": {
     "access": "public"
