@@ -64,6 +64,9 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3095**
   - Added back `rule` schema validation which is missing after RDS phase 3.
   - Fixed a bug for creating rule with tags.
+- **CUMULUS-3286**
+  - Fixed `@cumulus/cmrjs/cmr-utils/getGranuleTemporalInfo` and `@cumulus/message/Granules/getGranuleCmrTemporalInfo`
+    to handle non-existing cmr file.
 - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 
