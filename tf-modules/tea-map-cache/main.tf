@@ -28,7 +28,7 @@ resource "aws_lambda_function" "tea_cache" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "tea_cache_memory_size", 512)
   timeout          = 120
   environment {
     variables = {

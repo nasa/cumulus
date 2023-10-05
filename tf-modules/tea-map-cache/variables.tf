@@ -32,6 +32,8 @@ variable "deploy_to_ngap" {
   type        = bool
 }
 
+# Optional
+
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "Optional retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
@@ -42,4 +44,13 @@ variable "default_log_retention_days" {
   type = number
   default = 30
   description = "Optional default value that user chooses for their log retention periods"
+}
+
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  type = map(string)
+  default = {
+    db_migration_memory_size = 256
+    tea_cache_memory_size = 256
+  }
 }

@@ -13,7 +13,7 @@ resource "aws_lambda_function" "fallback_consumer" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 100
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "fallback_consumer_memory_size", 512)
   dead_letter_config {
     target_arn = aws_sqs_queue.kinesis_failure.arn
   }
@@ -44,7 +44,7 @@ resource "aws_lambda_function" "kinesis_inbound_event_logger" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 300
-  memory_size      = 128
+  memory_size      = lookup(var.lambda_memory_sizes, "kinesis_inbound_event_logger_memory_size", 512)
   environment {
     variables = {
       stackName       = var.prefix
@@ -71,7 +71,7 @@ resource "aws_lambda_function" "kinesis_outbound_event_logger" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 300
-  memory_size      = 512
+  memory_size      = lookup(var.lambda_memory_sizes, "kinesis_outbound_event_logger_memory_size", 512)
   environment {
     variables = {
       stackName       = var.prefix
@@ -98,7 +98,7 @@ resource "aws_lambda_function" "manual_consumer" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 100
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "manual_consumer_memory_size", 512)
   environment {
     variables = {
       stackName                = var.prefix
@@ -128,7 +128,7 @@ resource "aws_lambda_function" "message_consumer" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 100
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "message_consumer_memory_size", 512)
   environment {
     variables = {
       stackName                = var.prefix
@@ -159,7 +159,7 @@ resource "aws_lambda_function" "schedule_sf" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 100
-  memory_size      = 192
+  memory_size      = lookup(var.lambda_memory_sizes, "schedule_sf_memory_size", 512)
   dead_letter_config {
     target_arn = aws_sqs_queue.schedule_sf_dead_letter_queue.arn
   }
@@ -190,7 +190,7 @@ resource "aws_lambda_function" "sf_semaphore_down" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 100
-  memory_size      = 512
+  memory_size      = lookup(var.lambda_memory_sizes, "sf_semaphore_down_memory_size", 512)
   environment {
     variables = {
       stackName       = var.prefix
@@ -217,7 +217,7 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_memory_sizes, "sf_sqs_report_task_timeout", 512)
+  timeout          = lookup(var.lambda_timeouts, "sf_sqs_report_task_timeout", 512)
   memory_size      = lookup(var.lambda_memory_sizes, "sf_sqs_report_task_memory_size", 512)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
@@ -250,7 +250,7 @@ resource "aws_lambda_function" "sqs2sf" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = local.sqs2sf_timeout
-  memory_size      = 128
+  memory_size      = lookup(var.lambda_memory_sizes, "sqs2sf_memory_size", 512)
   environment {
     variables = {
       stackName       = var.prefix
@@ -277,7 +277,7 @@ resource "aws_lambda_function" "sqs2sfThrottle" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 200
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "sqs2sfThrottle_memory_size", 512)
   environment {
     variables = {
       stackName       = var.prefix
@@ -306,7 +306,7 @@ resource "aws_lambda_function" "sqs_message_consumer" {
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
   timeout          = 100
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "sqs_message_consumer_memory_size", 512)
   environment {
     variables = {
       stackName                = var.prefix

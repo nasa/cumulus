@@ -6,7 +6,7 @@ resource "aws_lambda_function" "python_reference_task" {
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "python3.10"
   timeout          = 300
-  memory_size      = 1556
+  memory_size      = lookup(var.lambda_memory_sizes, "python_reference_task_memory_size", 1556)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

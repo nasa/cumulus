@@ -6,7 +6,7 @@ resource "aws_lambda_function" "index_from_database" {
   role             = aws_iam_role.index_from_database.arn
   runtime          = "nodejs16.x"
   timeout          = 300
-  memory_size      = 512
+  memory_size      = lookup(var.lambda_memory_sizes, "index_from_database_memory_size", 512)
   environment {
     variables = {
       CMR_ENVIRONMENT             = var.cmr_environment

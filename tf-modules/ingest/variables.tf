@@ -160,9 +160,20 @@ variable "tags" {
 }
 
 variable "lambda_memory_sizes" {
-  description = "Configurable map of memory sizes for ingest task lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
   type = map(string)
-  default = {}
+  default = {
+    sqs_message_consumer_memory_size = 256
+    sqs2sf_memory_size = 256
+    sf_sqs_report_task_memory_size = 256
+    sf_semaphore_down_memory_size = 256
+    schedule_sf_memory_size = 256
+    message_consumer_memory_size = 256
+    manual_consumer_memory_size = 256
+    kinesis_outbound_event_logger_memory_size = 256
+    kinesis_inbound_event_logger_memory_size = 256
+    fallback_consumer_memory_size = 256
+  }
 }
 
 variable "lambda_timeouts" {

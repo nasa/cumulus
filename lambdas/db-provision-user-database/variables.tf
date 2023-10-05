@@ -58,3 +58,12 @@ variable "dbRecreation" {
   default     = false
 }
 
+# Optional 
+
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  type = map(string)
+  default = {
+    provision_database_memory_size = 256
+  }
+}

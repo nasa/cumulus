@@ -45,6 +45,14 @@ variable "deploy_s3_credentials_endpoint" {
   description  = "Option to deploy the s3 credentials endpoint."
 }
 
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  type = map(string)
+  default = {
+    s3_credentials_memory_size = 256
+  }
+}
+
 variable "log_destination_arn" {
   type        = string
   default     = null

@@ -6,7 +6,7 @@ resource "aws_lambda_function" "process_dead_letter_archive" {
   handler          = "index.handler"
   runtime          = "nodejs16.x"
   timeout          = 300
-  memory_size      = 512
+  memory_size      = lookup(var.lambda_memory_sizes, "process_dead_letter_archive_memory_size", 512)
 
   environment {
     variables = {

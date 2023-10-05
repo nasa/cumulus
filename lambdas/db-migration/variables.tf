@@ -22,6 +22,14 @@ variable "lambda_timeout" {
   default = 900
 }
 
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  type = map(string)
+  default = {
+    db_migration_memory_size = 256
+  }
+}
+
 variable "subnet_ids" {
   type    = list(string)
   default = []
