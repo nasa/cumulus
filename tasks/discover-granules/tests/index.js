@@ -190,8 +190,8 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     // State sample files
     const files = [
       'granule-1.nc', 'granule-1.nc.md5',
-      'granule-2.nc', 'granule-2.nc.md5',
-      'granule-3.nc', 'granule-3.nc.md5',
+      'granule-2.nc', 'granule-2.nc.md5', 'granule-2.nc.cmr.json',
+      'granule-3.nc', 'granule-3.nc.md5', 'granule-3.nc.cmr.json', 'granule-3.nc.xml',
     ];
 
     config.sourceBucketName = randomString();
@@ -215,6 +215,126 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
       await recursivelyDeleteS3Bucket(config.sourceBucketName);
     }
   };
+
+  test('discover granules with allFilesPresent set to true',
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName,
+    };
+    // Adds cmr.json files to collection config
+    config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json)$"
+    config.collection.meta =  {
+      "allFilesPresent": true
+    }
+    config.collection.files = [
+      {
+        "regex": ".*.nc.cmr.json$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json",
+        "bucket": "protected",
+        "type": "metadata"
+      },
+      {
+        "regex": ".*.nc$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+        "bucket": "protected",
+        "type": "data"
+      },
+      {
+        "regex": ".*.nc.md5$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+        "bucket": "public",
+        "type": "metadata"
+      }
+    ]
+  }, async (t, output) => {
+    await validateOutput(t, output);
+    t.is(output.granules.length, 2);
+    output.granules.forEach(({ files }) => t.is(files.length, 3));
+  }));
+
+test('discover granules with allFilesPresent set to true with files missing',
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName,
+    };
+    // Adds cmr.json files to collection config
+    config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.png)$"
+    config.collection.meta =  {
+      "allFilesPresent": true
+    }
+    config.collection.files = [
+      {
+        "regex": ".*.nc.cmr.json$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json",
+        "bucket": "protected",
+        "type": "metadata"
+      },
+      {
+        "regex": ".*.nc$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+        "bucket": "protected",
+        "type": "data"
+      },
+      {
+        "regex": ".*.nc.md5$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+        "bucket": "public",
+        "type": "metadata"
+      },
+      {
+        "regex": ".*.nc.png$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+        "bucket": "public",
+        "type": "metadata"
+      }
+    ]
+  }, async (t, output) => {
+    await validateOutput(t, output);
+    t.is(output.granules.length, 0);
+    output.granules.forEach(({ files }) => t.is(files.length, 0));
+  }));
+
+test('discover granules with allFilesPresent set to true with extra files for granule',
+  discoverGranulesUsingS3(({ context: { event: { config } } }) => {
+    config.provider = {
+      id: 'MODAPS',
+      protocol: 's3',
+      host: config.sourceBucketName,
+    };
+    // Adds cmr.json and .xml granuleId
+    config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.xml)$"
+    config.collection.meta =  {
+      "allFilesPresent": true
+    }
+    config.collection.files = [
+      {
+        "regex": ".*.nc.cmr.json$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json",
+        "bucket": "protected",
+        "type": "metadata"
+      },
+      {
+        "regex": ".*.nc$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
+        "bucket": "protected",
+        "type": "data"
+      },
+      {
+        "regex": ".*.nc.md5$",
+        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
+        "bucket": "public",
+        "type": "metadata"
+      }
+    ]
+  }, async (t, output) => {
+    await validateOutput(t, output);
+    t.is(output.granules.length, 2);
+    output.granules.forEach(({ files }) => t.is(files.length, 3));
+  }));
 
 test('discover granules using S3',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
