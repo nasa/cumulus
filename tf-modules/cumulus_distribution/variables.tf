@@ -83,6 +83,12 @@ variable "lambda_subnet_ids" {
   description = "VPC subnets used by Lambda functions"
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "oauth_provider" {
   type        = string
   default     = "cognito"

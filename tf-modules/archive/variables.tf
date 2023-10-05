@@ -225,6 +225,12 @@ variable "lambda_memory_sizes" {
   }
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "lambda_subnet_ids" {
   type    = list(string)
   default = []

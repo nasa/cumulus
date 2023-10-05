@@ -54,3 +54,9 @@ variable "lambda_memory_sizes" {
     tea_cache_memory_size = 256
   }
 }
+
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}

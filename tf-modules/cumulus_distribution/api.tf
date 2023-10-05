@@ -47,7 +47,7 @@ resource "aws_lambda_function" "api" {
   handler          = "index.handler"
   role             = aws_iam_role.lambda_distribution_api_gateway.arn
   runtime          = "nodejs16.x"
-  timeout          = 100
+  timeout          = lookup(var.lambda_timeouts, "api_timeout", 100)
   environment {
     variables = local.api_env_variables
   }

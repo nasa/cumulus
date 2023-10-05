@@ -407,6 +407,7 @@ variable "orca_s3_secret_key" {
 }
 
 variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
   type = map(string)
   default = {}
 }

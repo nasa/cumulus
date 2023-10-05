@@ -5,7 +5,7 @@ resource "aws_lambda_function" "start_async_operation" {
   handler          = "index.handler"
   role             = aws_iam_role.start_async_operation.arn
   runtime          = "nodejs16.x"
-  timeout          = 300
+  timeout          = lookup(var.lambda_timeouts, "start_async_operation_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "start_async_operation_memory_size", 960)
   environment {
     variables = {

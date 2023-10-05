@@ -58,7 +58,7 @@ resource "aws_lambda_function" "replay_sqs_messages" {
   role             = aws_iam_role.replay_sqs_messages_role.arn
   handler          = "index.handler"
   runtime          = "nodejs16.x"
-  timeout          = 300
+  timeout          = lookup(var.lambda_timeouts, "replay_sqs_messages_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "replay_sqs_messages_memory_size", 512)
 
   environment {

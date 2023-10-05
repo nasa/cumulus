@@ -5,7 +5,7 @@ resource "aws_lambda_function" "index_from_database" {
   handler          = "index.handler"
   role             = aws_iam_role.index_from_database.arn
   runtime          = "nodejs16.x"
-  timeout          = 300
+  timeout          = lookup(var.lambda_timeouts, "index_from_database_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "index_from_database_memory_size", 512)
   environment {
     variables = {

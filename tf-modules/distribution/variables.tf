@@ -53,6 +53,12 @@ variable "lambda_memory_sizes" {
   }
 }
 
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
+
 variable "log_destination_arn" {
   type        = string
   default     = null

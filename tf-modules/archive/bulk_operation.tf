@@ -5,7 +5,7 @@ resource "aws_lambda_function" "bulk_operation" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = 300
+  timeout          = lookup(var.lambda_timeouts, "bulk_operation_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "bulk_operation_memory_size", 512)
   environment {
     variables = {

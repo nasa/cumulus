@@ -23,6 +23,8 @@ module "tea_map_cache" {
   deploy_to_ngap             = var.deploy_to_ngap
   default_log_retention_days = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
+  lambda_timeouts            = var.lambda_timeouts
+  lambda_memory_sizes        = var.lambda_memory_sizes
 }
 
 data "aws_lambda_invocation" "tea_map_cache" {
@@ -137,7 +139,7 @@ resource "aws_lambda_function" "s3_credentials" {
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda[0].arn
   runtime          = "nodejs16.x"
-  timeout          = 50
+  timeout          = lookup(var.lambda_timeouts, "s3_credentials_timeout", 50)
   memory_size      = lookup(var.lambda_memory_sizes, "s3_credentials_memory_size", 512)
 
   vpc_config {
