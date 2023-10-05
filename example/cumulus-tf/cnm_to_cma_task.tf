@@ -27,7 +27,7 @@ resource "aws_lambda_function" "cnm_to_cma_task" {
   handler          = "gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams"
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "java8"
-  timeout          = lookup(var.lambda_timeouts, "cnm_to_cma_timeout", 300)
+  timeout          = lookup(var.lambda_timeouts, "cnm_to_cma_task_timeout", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "cnm_to_cma_task_memory_size", 512)
   source_code_hash = aws_s3_bucket_object.cnm_to_cma_lambda_zip.etag
 

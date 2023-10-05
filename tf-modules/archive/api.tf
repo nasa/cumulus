@@ -174,7 +174,7 @@ resource "aws_lambda_function" "api" {
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "api_timeout", 100)
+  timeout          = lookup(var.lambda_timeouts, "archive_api_timeout", 100)
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})
   }
