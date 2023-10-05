@@ -6,7 +6,78 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
-## Changes
+### MIGRATION notes
+
+#### Rules API Endpoint Versioning
+
+As part of the work on CUMULUS-3095, we have added a required header for the
+rules PUT/PATCH endpoints -- to ensure that older clients/utilities do not
+unexpectedly make destructive use of those endpoints, a validation check of a
+header value against supported versions has been implemented.
+
+Moving forward, if a breaking change is made to an existing endpoint that
+requires user updates, as part of that update we will set the current version of
+the core API and require a header that confirms the client is compatible with
+the version required or greater.
+
+In this instance, the rules PUT/PATCH
+endpoints will require a `Cumulus-API-Version` value of at least `2`.
+
+```bash
+ curl --request PUT https://example.com/rules/repeat_test\
+ --header 'Cumulus-API-Version: 2'\
+ --header 'Content-Type: application/json'\
+ --header 'Authorization: Bearer ReplaceWithToken'\
+ --data ...
+```
+
+Users/clients that do not make use of these endpoints will not be impacted.
+
+### Notable Changes
+
+- **CUMULUS-3095**
+  - Added `PATCH` rules endpoint to update rule which works as the existing `PUT` endpoint.
+  - Updated `PUT` rules endpoint to replace rule.
+  - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
+  - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
+    `meta` and `payload`, and fixed `rule` field mapping.
+
+### Added
+
+- **CUMULUS-3218**
+  - Added optional `maxDownloadTime` field to `provider` schema
+  - Added `max_download_time` column to PostgreSQL `providers` table
+  - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
+
+### Changed
+
+- **CUMULUS-3351**
+  - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
+- **CUMULUS-3392**
+  - Modify cloudwatch rule by deleting `custom`
+- **CUMULUS-3377**
+  - Added configuration option to cumulus-tf/terraform.tfvars to include sns:Subscribe access policy for
+    executions, granules, collections, and PDRs report topics.
+
+### Fixed
+
+- **CUMULUS-3095**
+  - Added back `rule` schema validation which is missing after RDS phase 3.
+  - Fixed a bug for creating rule with tags.
+- **CUMULUS-3393**
+  - Fixed `PUT` collection endpoint to update collection configuration in S3.
+
+## [v18.0.0] 2023-08-28
+
+### Notable Changes
+
+- **CUMULUS-3270**
+  - update python lambdas to use python3.10
+  - update dependencies to use python3.10 including cumulus-message-adapter, cumulus-message-adapter-python and cumulus-process-py
+- **CUMULUS-3259**
+  - Updated Terraform version from 0.13.6 to 1.5.3. Please see the [instructions to upgrade your deployments](https://github.com/nasa/cumulus/blob/master/docs/upgrade-notes/upgrading-tf-version-1.5.3.md).
+
+### Changed
 
 - **CUMULUS-3366**
   - Added logging to the `collectionRuleMatcher` Rules Helper, which is used by the sqs-message-consumer and message-consumer Lambdas,
@@ -37,7 +108,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Upstream/downstream terraform modules will need to utilize an AWS provider
       that matches this range
 
-## Breaking Changes
+### Breaking Changes
 
 - **CUMULUS-3258**
   - Update @cumulus/api/lib/orca/getOrcaRecoveryStatusByGranuleCollection
@@ -47,13 +118,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
   - Updated all terraform AWS providers to ~> 5.0
 
-## Changes
+### Changed
 
 - **CUMULUS-3258**
   - Update all Core integration tests/integrations to be compatible with Orca >=
     v8.1.0 only
 
-## Fixed
+### Fixed
 
 - **CUMULUS-3319**
   - Removed @cumulus/api/models/schema and changed all references to
@@ -192,7 +263,8 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
 ```bash
  curl --request PUT https://example.com/granules/granuleId.A19990103.006.1000\
- --header 'Cumulus-API-Version': '2'\
+ --header 'Cumulus-API-Version: 2'\
+ --header 'Content-Type: application/json'\
  --header 'Authorization: Bearer ReplaceWithToken'\
  --data ...
 ```
@@ -7325,7 +7397,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v17.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.0.0...HEAD
+[v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
 [v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0

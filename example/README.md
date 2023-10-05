@@ -36,7 +36,7 @@ Verify that the correct version of Terraform is installed (version number should
 
 ```shell
 $ terraform --version
-Terraform v0.13.6
+Terraform v1.5.3
 ```
 
 If you want to install Terraform manually,

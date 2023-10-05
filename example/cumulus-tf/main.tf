@@ -6,7 +6,7 @@ terraform {
     }
     null = {
       source  = "hashicorp/null"
-      version = "~> 2.1"
+      version = "~> 3.1.0"
     }
   }
 }
@@ -165,6 +165,8 @@ module "cumulus" {
   default_log_retention_days = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
 
+  report_sns_topic_subscriber_arns = var.report_sns_topic_subscriber_arns
+
   # Archive API settings
   token_secret = var.token_secret
   archive_api_users = [
@@ -180,8 +182,10 @@ module "cumulus" {
     "mobrien84",
     "nnageswa",
     "npauzenga",
-    "vnguyen"
+    "vnguyen",
+    "rkwarten"
   ]
+
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port
   private_archive_api_gateway = var.private_archive_api_gateway

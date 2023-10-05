@@ -36,7 +36,50 @@ export const postRule = async (params: {
 };
 
 /**
- * Update a rule in the rules API
+ * Replace a rule via PUT request.  Existing values will be removed if not specified
+ * or set to null.
+ * PUT /rules/${ruleName}
+ *
+ * @param {Object} params              - params
+ * @param {string} params.prefix       - the prefix configured for the stack
+ * @param {Object} params.ruleName     - the rule to update
+ * @param {Object} params.replacementRule  - complete replacement rule
+ * @param {Function} params.callback   - async function to invoke the api lambda
+ *                                       that takes a prefix / user payload.  Defaults
+ *                                       to cumulusApiClient.invokeApi
+ * @returns {Promise<Object>}          - promise that resolves to the output of the API lambda
+ */
+export const replaceRule = async (params: {
+  prefix: string,
+  ruleName: string,
+  replacementRule: NewRuleRecord & { action?: 'rerun' },
+  callback?: InvokeApiFunction
+}): Promise<ApiGatewayLambdaHttpProxyResponse> => {
+  const {
+    prefix,
+    ruleName,
+    replacementRule,
+    callback = invokeApi,
+  } = params;
+
+  return await callback({
+    prefix,
+    payload: {
+      httpMethod: 'PUT',
+      resource: '/{proxy+}',
+      headers: {
+        'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
+      },
+      path: `/rules/${ruleName}`,
+      body: JSON.stringify(replacementRule),
+    },
+  });
+};
+
+/**
+ * Update a rule via PATCH request.  Existing values will not be overwritten if not
+ * specified, null values will be removed.
  *
  * @param {Object} params              - params
  * @param {string} params.prefix       - the prefix configured for the stack
@@ -63,10 +106,11 @@ export const updateRule = async (params: {
   return await callback({
     prefix,
     payload: {
-      httpMethod: 'PUT',
+      httpMethod: 'PATCH',
       resource: '/{proxy+}',
       headers: {
         'Content-Type': 'application/json',
+        'Cumulus-API-Version': '2',
       },
       path: `/rules/${ruleName}`,
       body: JSON.stringify(updateParams),
