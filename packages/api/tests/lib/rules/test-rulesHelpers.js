@@ -765,7 +765,7 @@ test.serial('deleteRuleResources correctly deletes resources for scheduled rule'
       }),
     });
   const scheduledRule = fakeRuleFactoryV2(params);
-  const name = `${process.env.stackName}-custom-${scheduledRule.name}`;
+  const name = `${process.env.stackName}-${scheduledRule.name}`;
   const deleteRuleSpy = sinon.spy(awsServices.cloudwatchevents(), 'deleteRule');
   const removeTargetsSpy = sinon.spy(awsServices.cloudwatchevents(), 'removeTargets');
 
@@ -1357,7 +1357,7 @@ test('Creating an invalid rule does not create workflow triggers', async (t) => 
 
   await t.throwsAsync(
     () => createRuleTrigger(rule),
-    { name: 'ValidationError' }
+    { name: 'SchemaValidationError' }
   );
 });
 
@@ -1815,12 +1815,18 @@ test.serial('Updating a rule trigger with an "onetime" rule type returns updated
     state: 'ENABLED',
     rule: {
       type: 'onetime',
-      field: 'testField',
+      value: 'testField',
     },
   });
   // create rule trigger
   const createdRule = await createRuleTrigger(fakeRule);
-  const updatedRule = { ...createdRule, field: 'newTestField' };
+  const updatedRule = {
+    ...createdRule,
+    rule: {
+      type: 'onetime',
+      value: 'newTestField',
+    },
+  };
   const updatedRuleTriggerOutput = await updateRuleTrigger(createdRule, updatedRule);
   t.deepEqual(updatedRuleTriggerOutput, updatedRule);
 });
@@ -1834,7 +1840,7 @@ test.serial('Updating a rule trigger with an invalid rule type throws an error',
     },
   });
   // create rule trigger
-  await t.throwsAsync(createRuleTrigger(fakeRule), { name: 'ValidationError' });
+  await t.throwsAsync(createRuleTrigger(fakeRule), { name: 'SchemaValidationError' });
 });
 
 // update rule resources tests
@@ -2016,9 +2022,9 @@ test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
   const sqsRule = await createRuleTrigger(rule);
   t.deepEqual(sqsRule.rule.value, queues.queueUrl);
 
-  const newQueues = await createSqsQueues(randomString());
+  const newQueues = await createSqsQueues(randomString(), 2, '200');
   const updatedRule = {
-    ...sqsRule,
+    ...omit(sqsRule, ['meta']),
     rule: {
       ...rule.rule,
       value: newQueues.queueUrl,
@@ -2026,6 +2032,7 @@ test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
   };
   const updatedSqsRule = await updateRuleTrigger(sqsRule, updatedRule, t.context.testKnex);
   t.is(updatedSqsRule.rule.value, newQueues.queueUrl);
+  t.deepEqual(updatedSqsRule.meta, { visibilityTimeout: 200, retries: 3 });
   t.teardown(async () => {
     await SQS.deleteQueue(queues.queueUrl);
     await SQS.deleteQueue(newQueues.queueUrl);

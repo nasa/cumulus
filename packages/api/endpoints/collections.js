@@ -182,6 +182,10 @@ async function put(req, res) {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
     esClient = await Search.es(),
+    collectionConfigStore = new CollectionConfigStore(
+      process.env.system_bucket,
+      process.env.stackName
+    ),
   } = req.testContext || {};
 
   const { name, version } = req.params;
@@ -218,6 +222,7 @@ async function put(req, res) {
       apiPgCollection = translatePostgresCollectionToApiCollection(pgCollection);
       await indexCollection(esClient, apiPgCollection, process.env.ES_INDEX);
       await publishCollectionUpdateSnsMessage(apiPgCollection);
+      await collectionConfigStore.put(name, version, apiPgCollection);
     });
   } catch (error) {
     log.debug(`Failed to update collection with name ${name}, version ${version} and payload ${JSON.stringify(collection)} . Error: ${JSON.stringify(error)}`);

@@ -37,6 +37,7 @@ const buildFtpProvider = async (postfix = '') => {
     username: 'testuser',
     password: 'testpass',
     globalConnectionLimit: 10,
+    maxDownloadTime: 500,
   };
 
   if (process.env.PROVIDER_FTP_PORT) {
@@ -59,6 +60,7 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
     host: await getProviderHost(),
     port: fakeProviderPortMap[protocol],
     globalConnectionLimit: 10,
+    maxDownloadTime: 360,
   };
 
   if (protocol === 'https') {
