@@ -227,28 +227,28 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
 
 /**
  * Checks if all files from a collection are present for files from a granuleId
- * 
- * 
+ *
+ *
  * @param {Object} config - the event config
  * @param {Object} filesByGranuleId - Object with granuleId for keys with an array of
  *                                    matching files for each
  * @param {string} granuleId - the Id of a granule
  * @returns {Boolean} - returns true if all file in collection config are present for granuleId
  */
- const checkGranuleHasAllFiles = (config, filesByGranuleId, granuleId) => {
+const checkGranuleHasAllFiles = (config, filesByGranuleId, granuleId) => {
   return filesByGranuleId[granuleId].length >= config.collection.files.length;
- }
+}
 
 /**
  * Filters out granules that are missing files from a collection
- * 
- * 
+ *
+ *
  * @param {Object} params.filesByGranuleId - Object with granuleId for keys with an array of
  *                                           matching files for each
  * @param {Object} params.config - the event config
  * @returns {Array.string} - returns granuleIds that contain all files from a collection
  */
- const filterGranulesWithoutAllFiles = ({ filesByGranuleId, config}) => {
+const filterGranulesWithoutAllFiles = ({ filesByGranuleId, config }) => {
   const checkResults = Object.keys(filesByGranuleId).filter(
     checkGranuleHasAllFiles.bind(this, config, filesByGranuleId)
   );
@@ -257,10 +257,10 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
 
 /**
  * Handles granules without all files present according to the allFilesPresent boolean
- * 
+ *
  * allFilesPresent = true : granules missing files will be removed
  * allFilesPresent = false: ignore missing files in granules
- * 
+ *
  * @param {Object} params.filesByGranuleId - Object with granuleId for keys with an array of
  *                                           matching files for each
  * @param {Boolean} params.allFilesPresent - boolean that defines whether or not all files should
@@ -268,7 +268,7 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
  * @param {Object} params.config - the event config
  * @returns {Object} returns filesByGranuleId with all the granules missing files removed
  */
- const handleGranulesWithoutAllFilesPresent = ({ filesByGranuleId, allFilesPresent, config}) => {
+const handleGranulesWithoutAllFilesPresent = ({ filesByGranuleId, allFilesPresent, config }) => {
   if (!allFilesPresent) {
     return filesByGranuleId;
   }

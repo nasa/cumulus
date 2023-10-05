@@ -48,6 +48,11 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added optional `maxDownloadTime` field to `provider` schema
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
+- **CUMULUS-3368**
+  - Added `allFilesPresent` field for `collection.meta` that defines whether or not all files
+    should be present in a granule before it can be discovered. If `allFilesPresent` is true,
+    the granules missing files will be removed. Otherwise, the default behavior is discover-granules
+    will ignore missing files in granules.
 
 ### Changed
 

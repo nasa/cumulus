@@ -216,7 +216,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     }
   };
 
-  test('discover granules with allFilesPresent set to true',
+test('discover granules with allFilesPresent set to true',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     config.provider = {
       id: 'MODAPS',
@@ -225,7 +225,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     };
     // Adds cmr.json files to collection config
     config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json)$"
-    config.collection.meta =  {
+    config.collection.meta = {
       "allFilesPresent": true
     }
     config.collection.files = [
@@ -254,7 +254,7 @@ const discoverGranulesUsingS3 = (configure, assert = assertDiscoveredGranules) =
     output.granules.forEach(({ files }) => t.is(files.length, 3));
   }));
 
-test('discover granules with allFilesPresent set to true with files missing',
+test('discover granules task discovers no granules when allFilesPresent is set to true with files missing',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     config.provider = {
       id: 'MODAPS',
@@ -263,7 +263,7 @@ test('discover granules with allFilesPresent set to true with files missing',
     };
     // Adds cmr.json files to collection config
     config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.png)$"
-    config.collection.meta =  {
+    config.collection.meta = {
       "allFilesPresent": true
     }
     config.collection.files = [
@@ -298,7 +298,7 @@ test('discover granules with allFilesPresent set to true with files missing',
     output.granules.forEach(({ files }) => t.is(files.length, 0));
   }));
 
-test('discover granules with allFilesPresent set to true with extra files for granule',
+test('discover granules task discovers granules with allFilesPresent set to true with extra files for granule',
   discoverGranulesUsingS3(({ context: { event: { config } } }) => {
     config.provider = {
       id: 'MODAPS',
@@ -307,7 +307,7 @@ test('discover granules with allFilesPresent set to true with extra files for gr
     };
     // Adds cmr.json and .xml granuleId
     config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.xml)$"
-    config.collection.meta =  {
+    config.collection.meta = {
       "allFilesPresent": true
     }
     config.collection.files = [
