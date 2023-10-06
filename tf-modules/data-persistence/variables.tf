@@ -97,9 +97,7 @@ variable "db_migration_lambda_timeout" {
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
   type = map(string)
-  default = {
-    db_migration_lambda_timeout = 900
-  }
+  default = {}
 }
 
 variable "lambda_memory_sizes" {

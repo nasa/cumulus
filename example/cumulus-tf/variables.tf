@@ -415,11 +415,7 @@ variable "lambda_timeouts" {
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
   type = map(string)
-  default = {
-    cnm_to_cma_task_memory_size = 256
-    lzards_api_client_test_memory_size = 256
-    python_reference_task_memory_size = 1556
-  }
+  default = {}
 }
 
 variable "optional_dynamo_tables" {

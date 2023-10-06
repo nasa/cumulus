@@ -213,16 +213,7 @@ variable "es_request_concurrency" {
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
   type = map(string)
-  default = {
-    write_db_dlq_records_to_s3_memory_size = 256
-    custom_bootstrap_memory_size = 256
-    process_dead_letter_archive_memory_size = 256
-    index_from_database_memory_size = 256
-    bulk_operation_memory_size = 256
-    clean_executions_memory_size = 256
-    create_reconciliation_report_memory_size = 256
-    replay_sqs_messages_memory_size = 256
-  }
+  default = {}
 }
 
 variable "lambda_timeouts" {

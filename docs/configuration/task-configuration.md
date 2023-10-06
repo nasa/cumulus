@@ -80,7 +80,7 @@ Currently the following values are supported:
 - discover_granules_task_timeout
 - discover_pdrs_task_timeout
 - fake_processing_task_timeout
-- fall_back_consumer_timeout
+- fallback_consumer_timeout
 - files_to_granules_task_timeout
 - hello_world_task_timeout
 - hyrax_metadata_update_tasks_timeout
@@ -145,7 +145,7 @@ Currently the following values are supported:
 - discover_granules_task_memory_size
 - discover_pdrs_task_memory_size
 - fake_processing_task_memory_size
-- fall_back_consumer_memory_size
+- fallback_consumer_memory_size
 - hyrax_metadata_updates_task_memory_size
 - index_from_database_memory_size
 - kinesis_inbound_event_logger_memory_size
