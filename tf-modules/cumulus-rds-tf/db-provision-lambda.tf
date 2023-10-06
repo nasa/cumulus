@@ -16,4 +16,6 @@ module "provision_database" {
   subnet_ids                             = var.subnets
   tags                                   = var.tags
   vpc_id                                 = var.vpc_id
+  lambda_timeouts                        = var.lambda_timeouts
+  lambda_memory_sizes                    = var.lambda_memory_sizes
 }

@@ -25,4 +25,6 @@ module "rds_cluster" {
   cluster_identifier  = var.cluster_identifier
   tags                = var.tags
   snapshot_identifier = var.snapshot_identifier
+  lambda_timeouts = var.lambda_timeouts
+  lambda_memory_sizes = var.lambda_memory_sizes
 }
