@@ -236,8 +236,9 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
  * @returns {Boolean} - returns true if all file in collection config are present for granuleId
  */
 const checkGranuleHasAllFiles = (config, filesByGranuleId, granuleId) => {
-  return filesByGranuleId[granuleId].length >= config.collection.files.length;
-}
+  const granuleHasAllFiles = filesByGranuleId[granuleId].length >= config.collection.files.length;
+  return granuleHasAllFiles;
+};
 
 /**
  * Filters out granules that are missing files from a collection
@@ -275,11 +276,10 @@ const handleGranulesWithoutAllFilesPresent = ({ filesByGranuleId, allFilesPresen
   const filteredKeys = filterGranulesWithoutAllFiles({
     granuleIds: Object.keys(filesByGranuleId),
     filesByGranuleId,
-    config
+    config,
   });
   return pick(filesByGranuleId, filteredKeys);
-
-}
+};
 
 /**
  * Filters granule duplicates from a list of granuleIds according to the
@@ -377,7 +377,7 @@ const discoverGranules = async ({ config }) => {
   filesByGranuleId = handleGranulesWithoutAllFilesPresent({
     filesByGranuleId,
     allFilesPresent,
-    config
+    config,
   });
 
   const discoveredGranules = map(filesByGranuleId, buildGranule(config));

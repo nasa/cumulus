@@ -224,30 +224,30 @@ test('discover granules with allFilesPresent set to true',
       host: config.sourceBucketName,
     };
     // Adds cmr.json files to collection config
-    config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json)$"
+    config.collection.granuleIdExtraction = '^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json)$';
     config.collection.meta = {
-      "allFilesPresent": true
-    }
+      allFilesPresent: true,
+    };
     config.collection.files = [
       {
-        "regex": ".*.nc.cmr.json$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json",
-        "bucket": "protected",
-        "type": "metadata"
+        regex: '.*.nc.cmr.json$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json',
+        bucket: 'protected',
+        type: 'metadata',
       },
       {
-        "regex": ".*.nc$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
-        "bucket": "protected",
-        "type": "data"
+        regex: '.*.nc$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc',
+        bucket: 'protected',
+        type: 'data',
       },
       {
-        "regex": ".*.nc.md5$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
-        "bucket": "public",
-        "type": "metadata"
-      }
-    ]
+        regex: '.*.nc.md5$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5',
+        bucket: 'public',
+        type: 'metadata',
+      },
+    ];
   }, async (t, output) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 2);
@@ -262,36 +262,36 @@ test('discover granules task discovers no granules when allFilesPresent is set t
       host: config.sourceBucketName,
     };
     // Adds cmr.json files to collection config
-    config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.png)$"
+    config.collection.granuleIdExtraction = '^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.png)$';
     config.collection.meta = {
-      "allFilesPresent": true
-    }
+      allFilesPresent: true,
+    };
     config.collection.files = [
       {
-        "regex": ".*.nc.cmr.json$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json",
-        "bucket": "protected",
-        "type": "metadata"
+        regex: '.*.nc.cmr.json$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json',
+        bucket: 'protected',
+        type: 'metadata',
       },
       {
-        "regex": ".*.nc$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
-        "bucket": "protected",
-        "type": "data"
+        regex: '.*.nc$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc',
+        bucket: 'protected',
+        type: 'data',
       },
       {
-        "regex": ".*.nc.md5$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
-        "bucket": "public",
-        "type": "metadata"
+        regex: '.*.nc.md5$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5',
+        bucket: 'public',
+        type: 'metadata',
       },
       {
-        "regex": ".*.nc.png$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
-        "bucket": "public",
-        "type": "metadata"
-      }
-    ]
+        regex: '.*.nc.png$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5',
+        bucket: 'public',
+        type: 'metadata',
+      },
+    ];
   }, async (t, output) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 0);
@@ -306,30 +306,30 @@ test('discover granules task discovers granules with allFilesPresent set to true
       host: config.sourceBucketName,
     };
     // Adds cmr.json and .xml granuleId
-    config.collection.granuleIdExtraction = "^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.xml)$"
+    config.collection.granuleIdExtraction = '^(.*)\\.(nc|nc\\.md5|nc\\.cmr\\.json|nc\\.xml)$';
     config.collection.meta = {
-      "allFilesPresent": true
-    }
+      allFilesPresent: true,
+    };
     config.collection.files = [
       {
-        "regex": ".*.nc.cmr.json$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json",
-        "bucket": "protected",
-        "type": "metadata"
+        regex: '.*.nc.cmr.json$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.cmr.json',
+        bucket: 'protected',
+        type: 'metadata',
       },
       {
-        "regex": ".*.nc$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc",
-        "bucket": "protected",
-        "type": "data"
+        regex: '.*.nc$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc',
+        bucket: 'protected',
+        type: 'data',
       },
       {
-        "regex": ".*.nc.md5$",
-        "sampleFileName": "20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5",
-        "bucket": "public",
-        "type": "metadata"
-      }
-    ]
+        regex: '.*.nc.md5$',
+        sampleFileName: '20170603090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.nc.md5',
+        bucket: 'public',
+        type: 'metadata',
+      },
+    ];
   }, async (t, output) => {
     await validateOutput(t, output);
     t.is(output.granules.length, 2);
