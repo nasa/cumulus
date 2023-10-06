@@ -7,6 +7,7 @@ const {
 } = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { GranuleNotPublishedError } = require('@cumulus/errors');
 
 /**
  * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
@@ -33,17 +34,19 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
 
   const cmrSettings = await cmrjsCmrUtils.getCmrSettings();
   const cmr = new CMR(cmrSettings);
-  if (granule.cmr_link) {
+  try {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
+  } catch (error) {
+    if (error instanceof GranuleNotPublishedError) {
+      log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} does not have a cmr link, so it's metadata cannt be retrieved`);
+    } else {
+      throw error;
+    }
   }
 
   // Use granule UR to delete from CMR
   if (metadata) {
-    try {
-      await cmr.deleteGranule(metadata.title, collectionId);
-    } catch (error) {
-      log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} is not published to CMR, so cannot be removed from CMR`);
-    }
+    await cmr.deleteGranule(metadata.title, collectionId);
   }
 };
 
