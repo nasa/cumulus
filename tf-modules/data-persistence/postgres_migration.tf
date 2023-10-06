@@ -8,5 +8,5 @@ module "db_migration" {
   vpc_id                     = var.vpc_id
   rds_security_group_id      = var.rds_security_group_id
   lambda_timeouts            = var.lambda_timeouts
-  lambda_memory_sizes        = var.lambda_timeouts
+  lambda_memory_sizes        = var.lambda_memory_sizes
 }
