@@ -216,6 +216,10 @@ module.exports.collection = {
         description: 'chunk size of the S3 multipart uploads for the collection',
         type: 'number',
       },
+      allFilesPresent: {
+        description: 'boolean flag used for DiscoverGranules task. If the collection is configured with `allFilesPresent` set to `true`, the task will remove granules\'s missing files. Otherwise, the default behavior ignores missing files in granules.',
+        type: 'boolean',
+      },
     },
     tags: {
       title: 'Optional tags for search',
