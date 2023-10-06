@@ -37,8 +37,8 @@ module "provision_database" {
   rds_user_password                      = var.rds_user_password == "" ? random_string.db_pass.result : var.rds_user_password
   rds_connection_timing_configuration    = var.rds_connection_timing_configuration
   dbRecreation                           = true
-  lambda_timeouts = var.lambda_timeouts
-  lambda_memory_sizes = var.lambda_memory_sizes
+  lambda_timeouts                        = var.lambda_timeouts
+  lambda_memory_sizes                    = var.lambda_memory_sizes
 }
 
 module "data_persistence" {

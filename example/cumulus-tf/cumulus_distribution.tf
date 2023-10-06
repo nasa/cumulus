@@ -43,5 +43,4 @@ module "cumulus_distribution" {
   default_log_retention_days       = var.default_log_retention_days
   cloudwatch_log_retention_periods = var.cloudwatch_log_retention_periods
   lambda_timeouts       = var.lambda_timeouts
-  lambda_memory_sizes   = var.lambda_memory_sizes
 }

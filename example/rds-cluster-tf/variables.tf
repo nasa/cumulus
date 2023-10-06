@@ -78,3 +78,19 @@ variable "subnets_tag_name" {
   default = "Private application *"
 }
 
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  type = map(string)
+  default = {}
+}
+
+variable "lambda_subnet_ids" {
+  type = list(string)
+  default = []
+}
+
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  type = map(string)
+  default = {}
+}
