@@ -35,12 +35,10 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
   const cmr = new CMR(cmrSettings);
   if (granule.cmr_link) {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
-  } else {
-    return;
   }
 
   // Use granule UR to delete from CMR
-  if (metadata !== undefined) {
+  if (metadata) {
     try {
       await cmr.deleteGranule(metadata.title, collectionId);
     } catch (error) {
