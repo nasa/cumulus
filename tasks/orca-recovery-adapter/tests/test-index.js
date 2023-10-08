@@ -124,7 +124,11 @@ const fakePayload = {
 test.serial('invokeOrcaRecoveryWorkflow() successfully invokes orca recovery workflow', async (t) => {
   process.env.orca_sfn_recovery_workflow_arn = randomId('recoveryWorkflowArn');
   const result = await invokeOrcaRecoveryWorkflow(fakePayload);
-  t.deepEqual(result, JSON.parse(fakeDescribeExecutionResponse.output));
+  const expectedResult = {
+    granules: fakePayload.input.granules,
+    recoveryOutput: JSON.parse(fakeDescribeExecutionResponse.output),
+  };
+  t.deepEqual(result, expectedResult);
 });
 
 test.serial('invokeOrcaRecoveryWorkflow() throws error if it fails to start orca workflow', async (t) => {
