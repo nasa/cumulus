@@ -67,6 +67,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3286**
   - Fixed `@cumulus/cmrjs/cmr-utils/getGranuleTemporalInfo` and `@cumulus/message/Granules/getGranuleCmrTemporalInfo`
     to handle non-existing cmr file.
+  - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
+    `queryFields`.
 - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 
