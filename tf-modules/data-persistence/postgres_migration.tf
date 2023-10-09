@@ -7,6 +7,4 @@ module "db_migration" {
   tags                       = merge(var.tags, { Deployment = var.prefix })
   vpc_id                     = var.vpc_id
   rds_security_group_id      = var.rds_security_group_id
-  lambda_timeouts            = var.lambda_timeouts
-  lambda_memory_sizes        = var.lambda_memory_sizes
 }

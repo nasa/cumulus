@@ -28,7 +28,7 @@ resource "aws_lambda_function" "cnm_to_cma_task" {
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "java8"
   timeout          = 300
-  memory_size      = 512
+  memory_size      = 128
   source_code_hash = aws_s3_bucket_object.cnm_to_cma_lambda_zip.etag
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
