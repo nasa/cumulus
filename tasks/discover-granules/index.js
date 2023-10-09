@@ -25,14 +25,14 @@ const logger = (logOptions) => new Logger({
 /**
  * Fetch a list of files from the provider
  *
- * @param {Object} params
- * @param {Object} params.providerConfig - the connection config for the provider
+ * @param {object} params
+ * @param {object} params.providerConfig - the connection config for the provider
  * @param {bool}   params.useList - flag to tell ftp server to use 'LIST'
  *   instead  of 'STAT'
  * @param {number} [params.httpRequestTimeout=300] - seconds for http provider
  *   to wait before timing out
  * @param {string} params.path - the provider path to search
- * @returns {Array<Object>} a list of discovered file objects
+ * @returns {Array<object>} a list of discovered file objects
  */
 const listFiles = async (params) => {
   const { providerConfig, useList, httpRequestTimeout = 300, path } = params;
@@ -56,7 +56,7 @@ const listFiles = async (params) => {
  *
  * @param {RegExp} granuleIdRegex - a regular expression where the first
  * matching group is the granule id
- * @param {Object} file - a file containing a `name` property
+ * @param {object} file - a file containing a `name` property
  * @returns {string|null} returns the granule id, if one could be extracted,
  * or null otherwise
  */
@@ -76,8 +76,8 @@ const granuleIdOfFile = curry(
  *
  * @param {RegExp} granuleIdRegex - a regular expression where the first
  * matching group is the granule id
- * @param {Array<Object>} files - a list of files containing a `name` property
- * @returns {Object<Array>} the files, grouped by granule id
+ * @param {Array<object>} files - a list of files containing a `name` property
+ * @returns {object<Array>} the files, grouped by granule id
  */
 const groupFilesByGranuleId = (granuleIdRegex, files) => {
   const result = groupBy(files, granuleIdOfFile(granuleIdRegex));
@@ -88,10 +88,10 @@ const groupFilesByGranuleId = (granuleIdRegex, files) => {
 /**
  * Find the collection file config associated with the file
  *
- * @param {Array<Object>} collectionFileConfigs - a list of collection file
+ * @param {Array<object>} collectionFileConfigs - a list of collection file
  * configs
- * @param {Object} file - a file
- * @returns {Object|undefined} returns the matching collection file config, or
+ * @param {object} file - a file
+ * @returns {object|undefined} returns the matching collection file config, or
  * `undefined` if a matching config could not be found
  */
 const getCollectionFileConfig = (collectionFileConfigs, file) =>
@@ -100,9 +100,9 @@ const getCollectionFileConfig = (collectionFileConfigs, file) =>
 /**
  * Check to see if a file has an associated collection file config
  *
- * @param {Array<Object>} collectionFileConfigs - a list of collection file
+ * @param {Array<object>} collectionFileConfigs - a list of collection file
  * configs
- * @param {Object} file - a file
+ * @param {object} file - a file
  * @returns {boolean}
  */
 const fileHasCollectionFileConfig = curry(
@@ -137,10 +137,10 @@ const returnAllFiles = (config) => {
  * with the file. If one is found, add `bucket`, `url_path`, and `type`
  * properties to the file.
  *
- * @param {Object} config - a config object containing `buckets` and
+ * @param {object} config - a config object containing `buckets` and
  * `collection` properties
- * @param {Object} file - a file object
- * @returns {Object} a file object, possibly with three additional properties
+ * @param {object} file - a file object
+ * @returns {object} a file object, possibly with three additional properties
  */
 const updateFileFromCollectionFileConfig = curry(
   ({ buckets, collection }, file) => {
@@ -229,11 +229,11 @@ const checkGranuleHasNoDuplicate = async (granuleId, duplicateHandling) => {
  * Checks if all files from a collection are present for files from a granuleId
  *
  *
- * @param {Object} config - the event config
- * @param {Object} filesByGranuleId - Object with granuleId for keys with an array of
+ * @param {object} config - the event config
+ * @param {object} filesByGranuleId - Object with granuleId for keys with an array of
  *                                    matching files for each
  * @param {string} granuleId - the Id of a granule
- * @returns {Boolean} - returns true if all file in collection config are present for granuleId
+ * @returns {boolean} - returns true if all file in collection config are present for granuleId
  */
 const checkGranuleHasAllFiles = (config, filesByGranuleId, granuleId) => {
   const granuleHasAllFiles = filesByGranuleId[granuleId].length >= config.collection.files.length;
@@ -262,14 +262,16 @@ const filterGranulesWithoutAllFiles = ({ filesByGranuleId, config }) => {
  * allFilesPresent = true : granules missing files will be removed
  * allFilesPresent = false: ignore missing files in granules
  *
- * @param {Object} params.filesByGranuleId - Object with granuleId for keys with an array of
+ * @param {object} params.filesByGranuleId - Object with granuleId for keys with an array of
  *                                           matching files for each
- * @param {Boolean} params.allFilesPresent - boolean that defines whether or not all files should
- *                                           be present in a granule before it can be discovered
- * @param {Object} params.config - the event config
- * @returns {Object} returns filesByGranuleId with all the granules missing files removed
+ * @param {object} params.config - the event config
+ * @returns {object} returns filesByGranuleId with all the granules missing files removed
  */
-const handleGranulesWithoutAllFilesPresent = ({ filesByGranuleId, allFilesPresent, config }) => {
+const handleGranulesWithoutAllFilesPresent = ({ filesByGranuleId, config }) => {
+  let allFilesPresent = false;
+  if (config.collection.meta) {
+    allFilesPresent = config.collection.meta.allFilesPresent || false;
+  }
   if (!allFilesPresent) {
     return filesByGranuleId;
   }
@@ -314,8 +316,8 @@ const filterDuplicates = async ({ granuleIds, duplicateHandling, concurrency }) 
  * error:              Duplicates encountered will result in a thrown error
  * replace, version:   Duplicates will be ignored
  *
- * @param {Object} params - params object
- * @param {Object} params.filesByGranuleId - Object with granuleId for keys with an array of
+ * @param {object} params - params object
+ * @param {object} params.filesByGranuleId - Object with granuleId for keys with an array of
  *                                    matching files for each
  *
  * @param {string} params.duplicateHandling - flag that defines this function's behavior
@@ -323,7 +325,7 @@ const filterDuplicates = async ({ granuleIds, duplicateHandling, concurrency }) 
  * @param {number} params.concurrency - granule duplicate filtering max concurrency
  *                                      (`skip` or `error` handling only)
  *
- * @returns {Object} returns filesByGranuleId with applicable duplciates removed
+ * @returns {object} returns filesByGranuleId with applicable duplciates removed
  */
 const handleDuplicates = async ({ filesByGranuleId, duplicateHandling, concurrency }) => {
   logger().info(`Running discoverGranules with duplicateHandling set to ${duplicateHandling}`);
@@ -370,13 +372,8 @@ const discoverGranules = async ({ config }) => {
     concurrency: get(config, 'concurrency', 3),
   });
 
-  let allFilesPresent = false;
-  if (config.collection.meta) {
-    allFilesPresent = config.collection.meta.allFilesPresent || false;
-  }
   filesByGranuleId = handleGranulesWithoutAllFilesPresent({
     filesByGranuleId,
-    allFilesPresent,
     config,
   });
 
@@ -389,9 +386,9 @@ const discoverGranules = async ({ config }) => {
 /**
  * Lambda handler.
  *
- * @param {Object} event      - a Cumulus Message
- * @param {Object} context    - an AWS Lambda context
- * @returns {Promise<Object>} - Returns output from task.
+ * @param {object} event      - a Cumulus Message
+ * @param {object} context    - an AWS Lambda context
+ * @returns {Promise<object>} - Returns output from task.
  *                              See schemas/output.json for detailed output schema
  */
 const handler = async (event, context) => await runCumulusTask(discoverGranules, event, context);
