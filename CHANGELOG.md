@@ -19,8 +19,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **@aws-sdk upgrade**
   - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
-
   - Updated mapping for collection Elasticsearch records to prevent dynamic field for keys under `meta`.
+- **CUMULUS-3286**
+  - Fixed `@cumulus/cmrjs/cmr-utils/getGranuleTemporalInfo` and `@cumulus/message/Granules/getGranuleCmrTemporalInfo`
+    to handle non-existing cmr file.
+  - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
+    `queryFields`.
 - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 

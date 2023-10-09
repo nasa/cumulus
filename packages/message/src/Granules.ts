@@ -8,10 +8,12 @@
  * const Granules = require('@cumulus/message/Granules');
  */
 
+import isEmpty from 'lodash/isEmpty';
 import isInteger from 'lodash/isInteger';
 import isUndefined from 'lodash/isUndefined';
 import mapValues from 'lodash/mapValues';
 import omitBy from 'lodash/omitBy';
+import pick from 'lodash/pick';
 
 import { CumulusMessageError } from '@cumulus/errors';
 import { Message } from '@cumulus/types';
@@ -171,7 +173,8 @@ function isGranuleTemporalInfo(
 }
 
 /**
- * Get granule temporal information from argument or directly from CMR.
+ * Get granule temporal information from argument, directly from CMR
+ * file or from granule object.
  *
  * Converts temporal information timestamps to a standardized ISO string
  * format for compatibility across database systems.
@@ -196,6 +199,11 @@ export const getGranuleCmrTemporalInfo = async ({
   const temporalInfo = isGranuleTemporalInfo(cmrTemporalInfo)
     ? { ...cmrTemporalInfo }
     : await cmrUtils.getGranuleTemporalInfo(granule);
+
+  if (isEmpty(temporalInfo)) {
+    return pick(granule, ['beginningDateTime', 'endingDateTime', 'productionDateTime', 'lastUpdateDateTime']);
+  }
+
   return mapValues(
     temporalInfo,
     convertDateToISOStringPreservingNull
