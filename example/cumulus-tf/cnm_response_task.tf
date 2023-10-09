@@ -27,8 +27,8 @@ resource "aws_lambda_function" "cnm_response_task" {
   handler          = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role             = module.cumulus.lambda_processing_role_arn
   runtime          = "java8"
-  timeout          = lookup(var.lambda_timeouts, "cnm_response_task_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "cnm_response_task_memory_size", 512)
+  timeout          = 300
+  memory_size      = 512
   source_code_hash = aws_s3_bucket_object.cnm_response_lambda_zip.etag
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]

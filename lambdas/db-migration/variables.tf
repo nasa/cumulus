@@ -16,16 +16,10 @@ variable "rds_security_group_id" {
   default = ""
 }
 
-variable "lambda_timeouts" {
-  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
-  type = map(string)
-  default = {}
-}
-
-variable "lambda_memory_sizes" {
-  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
-  type = map(string)
-  default = {}
+variable "lambda_timeout" {
+  description = "Timeout in seconds for the database schema migration lambda.   Defaults to 900 seconds"
+  type = number
+  default = 900
 }
 
 variable "subnet_ids" {
