@@ -5,8 +5,8 @@ resource "aws_lambda_function" "custom_bootstrap" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "custom_bootstrap_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "custom_bootstrap_memory_size", 512)
+  timeout          = lookup(var.lambda_timeouts, "CustomBootstrap", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "CustomBootstrap", 512)
   environment {
     variables = {
       stackName                     = var.prefix

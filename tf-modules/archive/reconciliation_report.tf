@@ -7,8 +7,8 @@ resource "aws_lambda_function" "create_reconciliation_report" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "create_reconciliation_report_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "create_reconciliation_report_memory_size", 512)
+  timeout          = lookup(var.lambda_timeouts, "CreateReconciliationReport", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "CreateReconciliationReport", 512)
   environment {
     variables = {
       CMR_ENVIRONMENT                  = var.cmr_environment

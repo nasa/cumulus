@@ -139,8 +139,8 @@ resource "aws_lambda_function" "s3_credentials" {
   handler          = "index.handler"
   role             = aws_iam_role.s3_credentials_lambda[0].arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "s3_credentials_timeout", 50)
-  memory_size      = lookup(var.lambda_memory_sizes, "s3_credentials_memory_size", 512)
+  timeout          = lookup(var.lambda_timeouts, "s3-credentials-endpoint", 50)
+  memory_size      = lookup(var.lambda_memory_sizes, "s3-credentials-endpoint", 512)
 
   vpc_config {
     subnet_ids         = var.subnet_ids

@@ -5,8 +5,8 @@ resource "aws_lambda_function" "send_pan_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "send_pan_task_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "send_pan_task_memory_size", 512)
+  timeout          = lookup(var.lambda_timeouts, "SendPan", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "SendPan", 512)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

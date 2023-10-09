@@ -15,8 +15,8 @@ resource "aws_lambda_function" "provision_database" {
   handler          = "index.handler"
   role             = aws_iam_role.db_provision.arn
   runtime          = "nodejs16.x"
-  memory_size      = lookup(var.lambda_memory_sizes, "provision_database_memory_size", 512)
-  timeout          = lookup(var.lambda_timeouts, "provision_database_timeout", 500)
+  memory_size      = lookup(var.lambda_memory_sizes, "ProvisionPostgresDatabase", 512)
+  timeout          = lookup(var.lambda_timeouts, "ProvisionPostgresDatabase", 500)
   environment {
     variables = {
       acquireTimeoutMillis      = var.rds_connection_timing_configuration.acquireTimeoutMillis
