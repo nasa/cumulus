@@ -51,7 +51,7 @@ resource "aws_lambda_function" "api" {
   environment {
     variables = local.api_env_variables
   }
-  memory_size = 960
+  memory_size = lookup(var.lambda_memory_sizes, "DistributionApiEndpoints", 960)
   tags        = var.tags
 
   dynamic "vpc_config" {

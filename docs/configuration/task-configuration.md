@@ -58,7 +58,7 @@ elasticsearch_client_config = {
 
 ## lambda_timeouts
 
-An optinal configurable map of timeouts for cumulus lambdas in the form:
+An optional configurable map of timeouts (in seconds) for cumulus lambdas in the form:
 
 ```hcl
 lambda_timeouts = {

@@ -127,7 +127,7 @@ resource "aws_lambda_function" "message_consumer" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "messageConsumer", 100)
+  timeout          = lookup(var.lambda_timeouts, "messageConsumer", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "messageConsumer", 512)
   environment {
     variables = {
@@ -217,7 +217,7 @@ resource "aws_lambda_function" "sf_sqs_report_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "SfSqsReport", 512)
+  timeout          = lookup(var.lambda_timeouts, "SfSqsReport", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "SfSqsReport", 512)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
@@ -249,7 +249,7 @@ resource "aws_lambda_function" "sqs2sf" {
   handler          = "index.sqs2sfEventSourceHandler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = local.sqs2sf_timeout
+  timeout          = lookup(var.lambda_timeouts, "sqs2sf", local.sqs2sf_timeout)
   memory_size      = lookup(var.lambda_memory_sizes, "sqs2sf", 512)
   environment {
     variables = {

@@ -83,6 +83,12 @@ variable "lambda_subnet_ids" {
   description = "VPC subnets used by Lambda functions"
 }
 
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas"
+  type = map(string)
+  default = {}
+}
+
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(string)
