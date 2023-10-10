@@ -9,9 +9,11 @@ const { promisify } = require('util');
 const pickAll = require('lodash/fp/pickAll');
 const {
   buildS3Uri,
+  createBucket,
   getS3Object,
   parseS3Uri,
   promiseS3Upload,
+  putJsonS3Object,
   recursivelyDeleteS3Bucket,
   s3GetObjectTagging,
   s3TagSetToQueryString,
@@ -102,6 +104,12 @@ test.before(async (t) => {
   t.context.distributionBucketMap = Object.fromEntries(
     Object.values(bucketsJson).map(({ name }) => [name, name])
   );
+
+  t.context.cmrFileBucket = randomId('bucket');
+  await createBucket(t.context.cmrFileBucket);
+  await putJsonS3Object(t.context.cmrFileBucket, 'test.cmr.json', { foo: 'bar' });
+  await putJsonS3Object(t.context.cmrFileBucket, 'test.cmr.xml', { foo: 'bar' });
+  await putJsonS3Object(t.context.cmrFileBucket, 'test.cmr_iso.xml', { foo: 'bar' });
 });
 
 test.after.always(async (t) => {
@@ -114,6 +122,7 @@ test.after.always(async (t) => {
       SecretId: cmrPasswordSecret,
       ForceDeleteWithoutRecovery: true,
     }).promise(),
+    await recursivelyDeleteS3Bucket(t.context.cmrFileBucket),
   ]);
 
   t.context.launchpadStub.restore();
@@ -741,7 +750,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr.json',
       }],
     });
@@ -768,7 +777,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr.json',
       }],
     });
@@ -795,7 +804,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr.json',
       }],
     });
@@ -822,7 +831,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr.json',
       }],
     });
@@ -849,7 +858,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr.xml',
       }],
     });
@@ -876,7 +885,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr.xml',
       }],
     });
@@ -903,7 +912,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr_iso.xml',
       }],
     });
@@ -930,7 +939,7 @@ test.serial('getGranuleTemporalInfo returns temporal information from granule CM
     const temporalInfo = await getGranuleTemporalInfo({
       granuleId: 'testGranuleId',
       files: [{
-        bucket: 'bucket',
+        bucket: t.context.cmrFileBucket,
         key: 'test.cmr_iso.xml',
       }],
     });
@@ -947,6 +956,18 @@ test.serial('getGranuleTemporalInfo returns empty object if cmr file s3 url is n
     files: [{
       path: 'path',
       name: 'test.cmr_iso.xml',
+    }],
+  });
+
+  t.deepEqual(temporalInfo, {});
+});
+
+test.serial('getGranuleTemporalInfo returns empty object if cmr file s3 does not exist', async (t) => {
+  const temporalInfo = await getGranuleTemporalInfo({
+    granuleId: 'testGranuleId',
+    files: [{
+      path: t.context.cmrFileBucket,
+      name: 'not-exist.cmr_iso.xml',
     }],
   });
 
