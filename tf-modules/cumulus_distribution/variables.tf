@@ -84,7 +84,7 @@ variable "lambda_subnet_ids" {
 }
 
 variable "lambda_timeouts" {
-  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  description = "Configurable map of timeouts for lambdas"
   type = map(string)
   default = {}
 }

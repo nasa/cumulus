@@ -52,10 +52,10 @@ Users/clients that do not make use of these endpoints will not be impacted.
 ### Fixed
 
 - **CUMULUS-3427**
-  - fixed issue where some lambda and task memory sizes and timeouts were not configurable by 
-    making them configurable through terraform
+  - fixed issue where some lambda and task memory sizes and timeouts were not configurable by making them configurable through terraform
   - fixed spelling issues related to the naming of the configuration variables
   - updated documentation with new configurations
+  - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 
 ### Changed
 

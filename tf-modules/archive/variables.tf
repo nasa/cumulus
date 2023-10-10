@@ -211,13 +211,13 @@ variable "es_request_concurrency" {
 }
 
 variable "lambda_memory_sizes" {
-  description = "Configurable map of memory sizes for lambdas in the form <lambda_identifier>_memory_size: <memory_size>"
+  description = "Configurable map of memory sizes for lambdas"
   type = map(string)
   default = {}
 }
 
 variable "lambda_timeouts" {
-  description = "Configurable map of timeouts for lambdas in the form <lambda_identifier>_timeout: <timeout>"
+  description = "Configurable map of timeouts for lambdas"
   type = map(string)
   default = {}
 }

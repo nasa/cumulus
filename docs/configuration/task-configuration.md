@@ -58,14 +58,15 @@ elasticsearch_client_config = {
 
 ## lambda_timeouts
 
-A configurable map of timeouts (in seconds) for cumulus ingest module task lambdas in the form:
+An optinal configurable map of timeouts (in seconds) for cumulus lambdas in the form:
 
 ```hcl
-<lambda_identifier>_timeout: <timeout>
-  type = map(string)
+lambda_timeouts = {
+  <lambda_name> = <timeout>
+}
 ```
 
-Currently the following values are supported:
+Currently the following lambdas are supported:
 
 - AddMissingFileChecksums
 - ApiEndpoints
@@ -123,11 +124,12 @@ lambda_timeouts = {
 
 ## lambda_memory_sizes
 
-A configurable map of memory sizes (in MBs) for cumulus ingest module task lambdas in the form:
+An optional configurable map of memory sizes (in MBs) for cumulus lambdas in the form:
 
 ```hcl
-<lambda_identifier>_memory_size: <memory_size>
-  type = map(string)
+lambda_memory_sizes = {
+  <lambda_name> = <memory_size>
+}
 ```
 
 Currently the following values are supported:
@@ -183,6 +185,6 @@ Currently the following values are supported:
 
 ```tf
 lambda_memory_sizes = {
-  SyncGranule = 1036
+  SyncGranule = 256
 }
 ```
