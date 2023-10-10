@@ -87,8 +87,8 @@ module "cumulus" {
 
   vpc_id            = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
 
-  lambda_subnet_ids = local.subnet_ids
-  lambda_timeouts = var.lambda_timeouts
+  lambda_subnet_ids   = local.subnet_ids
+  lambda_timeouts     = var.lambda_timeouts
   lambda_memory_sizes = var.lambda_memory_sizes
 
   rds_security_group                     = local.rds_security_group
