@@ -58,61 +58,13 @@ elasticsearch_client_config = {
 
 ## lambda_timeouts
 
-An optinal configurable map of timeouts (in seconds) for cumulus lambdas in the form:
+An optinal configurable map of timeouts for cumulus lambdas in the form:
 
 ```hcl
 lambda_timeouts = {
   <lambda_name> = <timeout>
 }
 ```
-
-Currently the following lambdas are supported:
-
-- AddMissingFileChecksums
-- ApiEndpoints
-- bulkOperation
-- cleanExecutions
-- CreateReconciliationreport
-- CustomBootstrap
-- DiscoverGranules
-- DiscoverPdrs
-- DistributionApiEndpoints
-- FakeProcessing
-- fallbackConsumer
-- FilesToGranules
-- HelloWorld
-- HyraxMetadataUpdates
-- IndexFromDatabase
-- KinesisInboundEventLogger
-- KinesisOutboundEventLogger
-- LzardsBackup
-- manualConsumer
-- messageConsumer
-- MoveGranules
-- OrcaCopyToArchiveAdapter
-- OrcaRecoveryAdapter
-- ParsePdr
-- PdrStatusCheck
-- PostToCmr
-- PrivateApiLambda
-- processDeadLetterArchive
-- ProvisionPostgresDatabase
-- QueueGranules
-- QueuePdrs
-- QueueWorkflow
-- replaySqsMessages
-- s3-credentials-endpoint
-- ScheduleSF
-- SendPan
-- sfSemaphoreDown
-- SfSqsReport
-- sqs2sfThrottle
-- sqsMessageConsumer
-- sqsMessageRemover
-- StartAsyncOperations
-- SyncGranule
-- TeaCache
-- UpdateCmrAccessConstraints
 
 ### Example
 
@@ -131,55 +83,6 @@ lambda_memory_sizes = {
   <lambda_name> = <memory_size>
 }
 ```
-
-Currently the following values are supported:
-
-- AddMissingFileChecksums
-- bulkOperation
-- cleanExecutions
-- CreateReconciliationReport
-- CustomBootstrap
-- DiscoverGranules
-- DiscoverPdrs
-- FakeProcessing
-- fallbackConsumer
-- FilesToGranules
-- HelloWorld
-- HyraxMetadataUpdates
-- IndexFromDatabase
-- KinesisInboundEventLogger
-- KinesisOutboundEventLogger
-- LzardsBackup
-- manualConsumer
-- messageConsumer
-- MoveGranules
-- OrcaCopyToArchiveAdapter
-- OrcaRecoveryAdapter
-- ParsePdr
-- PdrStatusCheck
-- PostToCmr
-- processDeadLetterArchive
-- ProvisionPostgresDatabase
-- QueueGranules
-- QueuePdrs
-- QueueWorkflow
-- replaySqsMessages
-- s3-credentials-endpoint
-- ScheduleSF
-- SendPan
-- sfEventSqsToDbRecords
-- sfSemaphoreDown
-- SfSqsReport
-- sqs2sf
-- sqs2sfThrottle
-- sqsMessageConsumer
-- sqsMessageRemover
-- StartAsyncOperation
-- SyncGranule
-- TeaCache
-- UpdateCmrAccessConstraints
-- UpdateGranuleCmrMetadataFileLinks
-- writeDbRecordsDLQtoS3
 
 ### Example
 
