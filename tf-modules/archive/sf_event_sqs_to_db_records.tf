@@ -56,6 +56,13 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
 
   statement {
     actions = [
+      "s3:ListBucket*"
+    ]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
+  }
+
+  statement {
+    actions = [
       "s3:GetObject*",
     ]
     resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
