@@ -109,6 +109,16 @@ variable "enable_upgrade" {
   default = true
 }
 
+variable "auto_pause" {
+  type = bool
+  default = true
+}
+
+variable "seconds_until_auto_pause" {
+  type = number
+  default = 300
+}
+
 variable "max_capacity" {
   type = number
   default = 4
