@@ -2059,6 +2059,9 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
     testExecutionCumulusId,
   } = t.context;
   const timestamp = Date.now();
+  const oldQueryFields = {
+    foo: Math.random(),
+  };
   const { newPgGranule, esRecord } = await createGranuleAndFiles({
     dbClient: knex,
     esClient,
@@ -2067,6 +2070,7 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
       status: 'running',
       execution: executionUrl,
       timestamp: Date.now(),
+      queryFields: oldQueryFields,
     },
   });
   const newApiGranule = await translatePostgresGranuleToApiGranule({
@@ -2075,9 +2079,9 @@ test.serial('PATCH updates an existing granule in all data stores', async (t) =>
   });
 
   t.is(newPgGranule.status, 'running');
-  t.is(newPgGranule.query_fields, null);
+  t.deepEqual(newPgGranule.query_fields, oldQueryFields);
   t.is(esRecord.status, 'running');
-  t.is(esRecord.queryFields, undefined);
+  t.deepEqual(esRecord.queryFields, oldQueryFields);
 
   const newQueryFields = {
     foo: randomString(),
@@ -3562,7 +3566,6 @@ test.serial('PUT replaces an existing granule in all data stores, removing exist
     executionUrl,
     knex,
   } = t.context;
-  console.log('foobar');
   const {
     apiGranule,
     newPgGranule,

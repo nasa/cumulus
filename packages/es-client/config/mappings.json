@@ -266,6 +266,10 @@
       "published": {
         "type": "boolean"
       },
+      "queryFields": {
+        "type": "object",
+        "dynamic": false
+      },
       "duration": {
         "type": "float"
       },
@@ -348,6 +352,10 @@
       },
       "published": {
         "type": "boolean"
+      },
+      "queryFields": {
+        "type": "object",
+        "dynamic": false
       },
       "duration": {
         "type": "float"
