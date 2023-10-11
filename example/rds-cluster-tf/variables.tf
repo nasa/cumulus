@@ -84,11 +84,6 @@ variable "lambda_memory_sizes" {
   default = {}
 }
 
-variable "lambda_subnet_ids" {
-  type = list(string)
-  default = []
-}
-
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(string)
