@@ -408,14 +408,28 @@ variable "orca_s3_secret_key" {
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(string)
-  default = {}
+  type = map(number)
+  default = {
+    cleanExecutions = 400           # archive
+    DistributionApiEndpoints = 400  # cumulus_distribution
+    s3-credentials-endpoint  = 400  # distribution
+    HelloWorld = 400                # ingest
+    s3-replicator = 400             # s3-replicator
+    TeaCache = 400                  # tea-map-cache   
+  }
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(string)
-  default = {}
+  type = map(number)
+  default = {
+    cleanExecutions = 896           # archive
+    DistributionApiEndpoints = 896  # cumulus_distribution
+    s3-credentials-endpoint  = 896  # distribution
+    HelloWorld = 896                # ingest
+    s3-replicator = 896             # s3-replicator
+    TeaCache = 896                  # tea-map-cache  
+  }
 }
 
 variable "optional_dynamo_tables" {

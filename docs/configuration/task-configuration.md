@@ -88,6 +88,6 @@ lambda_memory_sizes = {
 
 ```tf
 lambda_memory_sizes = {
-  SyncGranule = 256
+  SyncGranule = 1024
 }
 ```

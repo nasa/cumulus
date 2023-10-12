@@ -43,3 +43,9 @@ variable "source_bucket" {
 variable "source_prefix" {
   type = string
 }
+
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas"
+  type = map(string)
+  default = {}
+}

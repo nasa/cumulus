@@ -52,8 +52,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 ### Fixed
 
 - **CUMULUS-3427**
-  - fixed spelling issues related to the naming of the configuration variables
-  - updated documentation with new configurations
+  - fixed issue where some lambda and task memory sizes and timeouts were not configurable
   - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 
 ### Changed

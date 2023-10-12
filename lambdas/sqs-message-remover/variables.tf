@@ -19,13 +19,13 @@ variable "lambda_processing_role_arn" {
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
-  type = map(string)
+  type = map(number)
   default = {}
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(string)
+  type = map(number)
   default = {}
 }
 
