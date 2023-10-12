@@ -46,6 +46,6 @@ variable "source_prefix" {
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
-  type = map(string)
+  type = map(number)
   default = {}
 }
