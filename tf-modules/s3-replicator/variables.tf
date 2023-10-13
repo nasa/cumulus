@@ -49,3 +49,9 @@ variable "lambda_timeouts" {
   type = map(number)
   default = {}
 }
+
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas"
+  type = map(number)
+  default = {}
+}
