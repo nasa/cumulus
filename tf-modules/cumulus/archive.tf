@@ -54,6 +54,8 @@ module "archive" {
   launchpad_api         = var.launchpad_api
   launchpad_certificate = var.launchpad_certificate
   launchpad_passphrase  = var.launchpad_passphrase
+  lambda_timeouts       = var.lambda_timeouts
+  lambda_memory_sizes   = var.lambda_memory_sizes
 
   orca_api_uri       = var.orca_api_uri
 

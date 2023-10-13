@@ -6,8 +6,8 @@ resource "aws_lambda_function" "orca_copy_to_archive_adapter_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "orca_copy_to_archive_adapter_task_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "orca_copy_to_archive_adapter_task_memory_size", 512)
+  timeout          = lookup(var.lambda_timeouts, "OrcaCopyToArchiveAdapter", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "OrcaCopyToArchiveAdapter", 512)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

@@ -149,11 +149,11 @@ resource "aws_lambda_function" "private_api" {
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
   runtime          = "nodejs16.x"
-  timeout          = 100
+  timeout          = lookup(var.lambda_timeouts, "PrivateApiLambda", 100)
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
   }
-  memory_size = 1280
+  memory_size = lookup(var.lambda_memory_sizes, "PrivateApiLambda", 1280)
   tags        = var.tags
 
   dynamic "vpc_config" {
@@ -174,11 +174,11 @@ resource "aws_lambda_function" "api" {
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
   runtime          = "nodejs16.x"
-  timeout          = 100
+  timeout          = lookup(var.lambda_timeouts, "ApiEndpoints", 100)
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="public"})
   }
-  memory_size = 1280
+  memory_size = lookup(var.lambda_memory_sizes, "ApiEndpoints", 1280)
   tags        = var.tags
 
   reserved_concurrent_executions = var.api_reserved_concurrency

@@ -6,8 +6,8 @@ resource "aws_lambda_function" "parse_pdr_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "parse_pdr_task_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "parse_pdr_task_memory_size", 1024)
+  timeout          = lookup(var.lambda_timeouts, "ParsePdr", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "ParsePdr", 1024)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

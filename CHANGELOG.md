@@ -49,6 +49,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
+### Fixed
+
+- **CUMULUS-3427**
+  - fixed issue where some lambda and task memory sizes and timeouts were not configurable
+  - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+
 ### Changed
 
 - **CUMULUS-3351**
