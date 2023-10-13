@@ -38,7 +38,8 @@ resource "aws_lambda_function" "s3_replicator" {
   role          = aws_iam_role.replicator_lambda_role.arn
   handler       = "index.handler"
   runtime       = "nodejs16.x"
-  timeout       = 300
+  timeout       = lookup(var.lambda_timeouts, "s3-replicator", 300)
+  memory_size   = lookup(var.lambda_memory_size, "s3-replicator", 512)
 
   source_code_hash = data.archive_file.replicator_package.output_base64sha256
 
