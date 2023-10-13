@@ -409,27 +409,13 @@ variable "orca_s3_secret_key" {
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
-  default = {
-    cleanExecutions = 400           # archive
-    DistributionApiEndpoints = 400  # cumulus_distribution
-    s3-credentials-endpoint  = 400  # distribution
-    HelloWorld = 400                # ingest
-    s3-replicator = 400             # s3-replicator
-    TeaCache = 400                  # tea-map-cache   
-  }
+  default = {}
 }
 
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
   type = map(number)
-  default = {
-    cleanExecutions = 896           # archive
-    DistributionApiEndpoints = 896  # cumulus_distribution
-    s3-credentials-endpoint  = 896  # distribution
-    HelloWorld = 896                # ingest
-    s3-replicator = 896             # s3-replicator
-    TeaCache = 896                  # tea-map-cache  
-  }
+  default = {}
 }
 
 variable "optional_dynamo_tables" {
@@ -465,26 +451,7 @@ variable "subnets_tag_name" {
 variable "cloudwatch_log_retention_periods" {
   type = map(number)
   description = "retention periods for the respective cloudwatch log group, these values will be used instead of default retention days"
-  default = {
-    thin-egress-app-EgressLambda = 7
-    ApiEndpoints = 7
-    AsyncOperationEcsLogs = 7
-    DiscoverPdrs = 7
-    DistributionApiEndpoints = 7
-    EcsLogs = 7
-    granuleFilesCacheUpdater = 7
-    HyraxMetadataUpdates = 7
-    ParsePdr = 7
-    PostToCmr = 7
-    PrivateApiLambda = 7
-    publishExecutions = 7
-    publishGranules = 7
-    QueuePdrs = 7
-    QueueWorkflow = 7
-    replaySqsMessages = 7
-    SyncGranule = 7
-    UpdateCmrAccessConstraints = 7
-  }
+  default = {}
 }
 
 variable "default_log_retention_days" {
