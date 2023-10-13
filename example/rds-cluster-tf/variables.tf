@@ -81,11 +81,15 @@ variable "subnets_tag_name" {
 variable "lambda_memory_sizes" {
   description = "Configurable map of memory sizes for lambdas"
   type = map(number)
-  default = {}
+  default = {
+    ProvisionPostgresDatabase = 384 # cumulus-rds-tf
+  }
 }
 
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
-  default = {}
+  default = {
+    ProvisionPostgresDatabase = 100 # cumulus-rds-tf
+  }
 }
