@@ -17,4 +17,6 @@ module "sqs_message_remover_lambda" {
   # is this necessary or should we move towards least privileges
   # for the lambda?
   lambda_processing_role_arn = var.lambda_processing_role_arn
+  lambda_timeouts       = var.lambda_timeouts
+  lambda_memory_sizes   = var.lambda_memory_sizes
 }

@@ -5,8 +5,8 @@ resource "aws_lambda_function" "sqs_message_remover" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = 100
-  memory_size      = 256
+  timeout          = lookup(var.lambda_timeouts, "sqsMessageRemover", 100)
+  memory_size      = lookup(var.lambda_memory_sizes, "sqsMessageRemover", 512)
   environment {
     variables = {
       stackName        = var.prefix
