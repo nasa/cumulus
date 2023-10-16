@@ -8,4 +8,4 @@ fi
 
 echo "***Extracting build cache of compiled TS code"
 
-tar xvf $TS_BUILD_CACHE_FILE
+tar -xf $TS_BUILD_CACHE_FILE

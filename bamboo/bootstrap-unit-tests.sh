@@ -12,14 +12,12 @@ export COMPOSE_FILE=./bamboo/docker-compose.yml
 ## Set container_id for docker compose to use to identify the compose stack per planKey
 docker_command="docker exec -t ${container_id}-build_env-1 /bin/bash -c"
 
-docker ps -a
 
 ## Setup the compose stack
 docker compose -p ${container_id} down
 docker compose -p ${container_id} rm -f
-docker compose -p ${container_id} up -d
+docker compose -p ${container_id} up -d --quiet-pull
 
-docker ps -a
 while ! docker container inspect ${container_id}-build_env-1; do
   echo 'Waiting for build env to be available';
   docker ps -a
