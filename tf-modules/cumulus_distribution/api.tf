@@ -47,11 +47,11 @@ resource "aws_lambda_function" "api" {
   handler          = "index.handler"
   role             = aws_iam_role.lambda_distribution_api_gateway.arn
   runtime          = "nodejs16.x"
-  timeout          = 100
+  timeout          = lookup(var.lambda_timeouts, "DistributionApiEndpoints", 100)
   environment {
     variables = local.api_env_variables
   }
-  memory_size = 960
+  memory_size = lookup(var.lambda_memory_sizes, "DistributionApiEndpoints", 960)
   tags        = var.tags
 
   dynamic "vpc_config" {

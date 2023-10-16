@@ -5,8 +5,8 @@ resource "aws_lambda_function" "update_granules_cmr_metadata_file_links_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "update_granules_cmr_metadata_file_links_task_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "update_granules_cmr_metadata_file_links_task_memory_size", 1024)
+  timeout          = lookup(var.lambda_timeouts, "UpdateGranulesCmrMetadataFileLinks", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "UpdateGranulesCmrMetadataFileLinks", 1024)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

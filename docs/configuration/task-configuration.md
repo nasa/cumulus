@@ -58,75 +58,36 @@ elasticsearch_client_config = {
 
 ## lambda_timeouts
 
-A configurable map of timeouts (in seconds) for cumulus ingest module task lambdas in the form:
+An optional configurable map of timeouts (in seconds) for cumulus lambdas in the form:
 
 ```hcl
-<lambda_identifier>_timeout: <timeout>
-  type = map(string)
+lambda_timeouts = {
+  <lambda_name> = <timeout>
+}
 ```
-
-Currently the following values are supported:
-
-- add_missing_file_checksums_task_timeout
-- discover_granules_task_timeout
-- discover_pdrs_task_timeout
-- fake_processing_task_timeout
-- files_to_granules_task_timeout
-- hello_world_task_timeout
-- hyrax_metadata_update_tasks_timeout
-- lzards_backup_task_timeout
-- move_granules_task_timeout
-- parse_pdr_task_timeout
-- pdr_status_check_task_timeout
-- post_to_cmr_task_timeout
-- queue_granules_task_timeout
-- queue_pdrs_task_timeout
-- queue_workflow_task_timeout
-- sf_sqs_report_task_timeout
-- sync_granule_task_timeout
-- update_granules_cmr_metadata_file_links_task_timeout
 
 ### Example
 
 ```tf
 lambda_timeouts = {
-  discover_granules_task_timeout = 300
+  sqsMessageRemover = 300
 }
 ```
 
 ## lambda_memory_sizes
 
-A configurable map of memory sizes (in MBs) for cumulus ingest module task lambdas in the form:
+An optional configurable map of memory sizes (in MBs) for cumulus lambdas in the form:
 
 ```hcl
-<lambda_identifier>_memory_size: <memory_size>
-  type = map(string)
+lambda_memory_sizes = {
+  <lambda_name> = <memory_size>
+}
 ```
-
-Currently the following values are supported:
-
-- add_missing_file_checksums_task_memory_size
-- discover_granules_task_memory_size
-- discover_pdrs_task_memory_size
-- fake_processing_task_memory_size
-- hyrax_metadata_updates_task_memory_size
-- lzards_backup_task_memory_size
-- move_granules_task_memory_size
-- parse_pdr_task_memory_size
-- pdr_status_check_task_memory_size
-- post_to_cmr_task_memory_size
-- queue_granules_task_memory_size
-- queue_pdrs_task_memory_size
-- queue_workflow_task_memory_size
-- sf_sqs_report_task_memory_size
-- sync_granule_task_memory_size
-- update_cmr_acess_constraints_task_memory_size
-- update_granules_cmr_metadata_file_links_task_memory_size
 
 ### Example
 
 ```tf
 lambda_memory_sizes = {
-  queue_granules_task_memory_size = 1036
+  SyncGranule = 1024
 }
 ```
