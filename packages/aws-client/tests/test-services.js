@@ -214,7 +214,7 @@ test('lambda() service defaults to localstack in test mode', async (t) => {
     endpoint,
   } = localStackAwsClientOptions(Lambda);
   t.deepEqual(
-    await lambda.config.credentials,
+    await lambda.config.credentials(),
     credentials
   );
   const serviceConfigEndpoint = await lambda.config.endpoint();
