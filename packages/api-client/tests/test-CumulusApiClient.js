@@ -22,18 +22,16 @@ test.before((t) => {
 test.serial('invokeApi invokes the lambda with the expected Payload and FunctionName', async (t) => {
   const Payload = {
     FunctionName: `${t.context.testPrefix}-PrivateApiLambda`,
-    Payload: JSON.stringify(t.context.testPayload),
+    Payload: new TextEncoder().encode(JSON.stringify(t.context.testPayload)),
   };
 
   fakeServices.lambda = () => ({
     invoke: (payloadObject) => {
       const passedPayload = payloadObject;
-      return {
-        promise: () => {
-          t.deepEqual(Payload, passedPayload);
-          return Promise.resolve({ Payload: JSON.stringify(t.context.testLambdaReturn) });
-        },
-      };
+      t.deepEqual(Payload, passedPayload);
+      return Promise.resolve({
+        Payload: new TextEncoder().encode(JSON.stringify(t.context.testLambdaReturn)),
+      });
     },
   });
 
@@ -52,11 +50,9 @@ test.serial('invokeApi retries on timeout failure, then throws error on failure'
   fakeServices.lambda = () => ({
     invoke: () => {
       lambdaInvocations += 1;
-      return {
-        promise: () => Promise.resolve({
-          Payload: JSON.stringify({ errorMessage: 'Task timed out' }),
-        }),
-      };
+      return Promise.resolve({
+        Payload: new TextEncoder().encode(JSON.stringify({ errorMessage: 'Task timed out' })),
+      });
     },
   });
 
@@ -78,16 +74,14 @@ test.serial('invokeApi retries on status code failure, then throws expected erro
   fakeServices.lambda = () => ({
     invoke: () => {
       lambdaInvocations += 1;
-      return {
-        promise: () => Promise.resolve({
-          Payload: JSON.stringify({
-            statusCode: 500,
-            body: JSON.stringify({
-              message: 'API failure',
-            }),
+      return Promise.resolve({
+        Payload: new TextEncoder().encode(JSON.stringify({
+          statusCode: 500,
+          body: JSON.stringify({
+            message: 'API failure',
           }),
-        }),
-      };
+        })),
+      });
     },
   });
 
@@ -112,16 +106,14 @@ test.serial('invokeApi respects expected non-200 status code', async (t) => {
   fakeServices.lambda = () => ({
     invoke: () => {
       lambdaInvocations += 1;
-      return {
-        promise: () => Promise.resolve({
-          Payload: JSON.stringify({
-            statusCode: 202,
-            body: JSON.stringify({
-              message: 'success',
-            }),
+      return Promise.resolve({
+        Payload: new TextEncoder().encode(JSON.stringify({
+          statusCode: 202,
+          body: JSON.stringify({
+            message: 'success',
           }),
-        }),
-      };
+        })),
+      });
     },
   });
 
@@ -144,16 +136,14 @@ test.serial('invokeApi respects multiple accepted status codes', async (t) => {
   fakeServices.lambda = () => ({
     invoke: () => {
       lambdaInvocations += 1;
-      return {
-        promise: () => Promise.resolve({
-          Payload: JSON.stringify({
-            statusCode: lambdaInvocations === 1 ? 201 : 200,
-            body: JSON.stringify({
-              message: 'success',
-            }),
+      return Promise.resolve({
+        Payload: new TextEncoder().encode(JSON.stringify({
+          statusCode: lambdaInvocations === 1 ? 201 : 200,
+          body: JSON.stringify({
+            message: 'success',
           }),
-        }),
-      };
+        })),
+      });
     },
   });
 
