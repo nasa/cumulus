@@ -56,6 +56,13 @@ data "aws_iam_policy_document" "sf_event_sqs_to_db_records_lambda" {
 
   statement {
     actions = [
+      "s3:ListBucket*"
+    ]
+    resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}"]
+  }
+
+  statement {
+    actions = [
       "s3:GetObject*",
     ]
     resources = [for b in local.allowed_buckets: "arn:aws:s3:::${b}/*"]
@@ -166,7 +173,7 @@ resource "aws_lambda_function" "sf_event_sqs_to_db_records" {
   handler          = "index.handler"
   runtime          = "nodejs16.x"
   timeout          = local.sf_event_sqs_lambda_timeout
-  memory_size      = 1024
+  memory_size      = lookup(var.lambda_memory_sizes, "sfEventSqsToDbRecords", 1024)
 
   dead_letter_config {
     target_arn = aws_sqs_queue.sf_event_sqs_to_db_records_dead_letter_queue.arn
@@ -213,7 +220,7 @@ resource "aws_lambda_function" "write_db_dlq_records_to_s3" {
   handler          = "index.handler"
   runtime          = "nodejs16.x"
   timeout          = local.sf_event_sqs_lambda_timeout
-  memory_size      = 256
+  memory_size      = lookup(var.lambda_memory_sizes, "writeDbRecordsDLQtoS3", 512)
 
   environment {
     variables = {

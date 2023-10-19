@@ -6,8 +6,8 @@ resource "aws_lambda_function" "queue_pdrs_task" {
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "queue_pdrs_task_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "queue_pdrs_task_memory_size", 1024)
+  timeout          = lookup(var.lambda_timeouts, "QueuePdrs", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "QueuePdrs", 1024)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

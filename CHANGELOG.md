@@ -49,6 +49,12 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
+### Fixed
+
+- **CUMULUS-3427**
+  - fixed issue where some lambda and task memory sizes and timeouts were not configurable
+  - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+
 ### Changed
 
 - **CUMULUS-3351**
@@ -64,6 +70,11 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3095**
   - Added back `rule` schema validation which is missing after RDS phase 3.
   - Fixed a bug for creating rule with tags.
+- **CUMULUS-3286**
+  - Fixed `@cumulus/cmrjs/cmr-utils/getGranuleTemporalInfo` and `@cumulus/message/Granules/getGranuleCmrTemporalInfo`
+    to handle non-existing cmr file.
+  - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
+    `queryFields`.
 - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 
