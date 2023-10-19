@@ -41,7 +41,7 @@ async function requestTemporaryCredentialsFromNgap({
   return await lambda.invoke({
     FunctionName: lambdaFunctionName,
     Payload,
-  }).promise();
+  });
 }
 
 /**
@@ -146,8 +146,7 @@ async function fetchPolicyForUser(edlUser, cmrProvider, lambda) {
   return lambda.invoke({
     FunctionName: process.env.STS_POLICY_HELPER_LAMBDA,
     Payload,
-  }).promise()
-    .then((lambdaReturn) => JSON.parse(lambdaReturn.Payload));
+  }).then((lambdaReturn) => JSON.parse(new TextDecoder('utf-8').decode(lambdaReturn.Payload)));
 }
 
 /**
@@ -183,11 +182,12 @@ async function s3credentials(req, res) {
     policy,
   });
 
-  const creds = JSON.parse(credentials.Payload);
+  const decodedOuputPayload = new TextDecoder('utf-8').decode(credentials.Payload);
+  const creds = JSON.parse(decodedOuputPayload);
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
-    log.error(credentials.Payload);
+    log.error(decodedOuputPayload);
     return res.boom.failedDependency(
-      `Unable to retrieve credentials from Server: ${credentials.Payload}`
+      `Unable to retrieve credentials from Server: ${decodedOuputPayload}`
     );
   }
   return res.send(creds);

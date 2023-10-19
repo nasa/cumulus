@@ -1,6 +1,7 @@
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
+import { Lambda } from '@aws-sdk/client-lambda';
 import { S3 } from '@aws-sdk/client-s3';
 import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
 import * as AWS from 'aws-sdk';
@@ -12,7 +13,7 @@ export const ecs = awsClient(AWS.ECS, '2014-11-13');
 export const ec2 = awsClient(AWS.EC2, '2016-11-15');
 export const s3 = awsClient(S3, '2006-03-01');
 export const kinesis = awsClient(AWS.Kinesis, '2013-12-02');
-export const lambda = awsClient(AWS.Lambda, '2015-03-31');
+export const lambda = awsClient(Lambda, '2015-03-31');
 export const sqs = awsClient(AWS.SQS, '2012-11-05');
 export const cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
 export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');

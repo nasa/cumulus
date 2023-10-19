@@ -45,7 +45,7 @@ const policyErrorMessage = 'The resource you requested does not exist.';
 
 async function shouldCatchPolicyError(consumerName, expectedStatementId) {
   try {
-    const policy = await lambda().getPolicy({ FunctionName: consumerName }).promise();
+    const policy = await lambda().getPolicy({ FunctionName: consumerName });
     const statement = JSON.parse(policy.Policy).Statement;
     if (!statement.some((s) => s.Sid === expectedStatementId)) return policyErrorMessage;
     return undefined;
@@ -131,7 +131,7 @@ describe('The SNS-type rule', () => {
         FunctionName: consumerName,
         StatementId: expectedStatementId,
       };
-      await lambda().removePermission(permissionParams).promise();
+      await lambda().removePermission(permissionParams);
     } catch (error) {
       // If the deletion test passed, this _should_ fail.  This is just handling
       // the case where the deletion test did not properly clean this up.
@@ -182,7 +182,7 @@ describe('The SNS-type rule', () => {
       if (beforeAllFailed) fail(beforeAllFailed);
       const response = await lambda().getPolicy({
         FunctionName: consumerName,
-      }).promise();
+      });
       const { Policy } = response;
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
@@ -342,7 +342,7 @@ describe('The SNS-type rule', () => {
 
     it('adds the new policy and subscription', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      const { Policy } = await lambda().getPolicy({ FunctionName: consumerName }).promise();
+      const { Policy } = await lambda().getPolicy({ FunctionName: consumerName });
       const { Statement } = JSON.parse(Policy);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBeGreaterThan(0);
       expect(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(putRule))).toBeTrue();
@@ -361,7 +361,7 @@ describe('The SNS-type rule', () => {
         const subscriptionParams = {
           TopicArn,
           Protocol: 'lambda',
-          Endpoint: (await lambda().getFunction({ FunctionName: consumerName }).promise()).Configuration.FunctionArn,
+          Endpoint: (await lambda().getFunction({ FunctionName: consumerName })).Configuration.FunctionArn,
           ReturnSubscriptionArn: true,
         };
         const { SubscriptionArn } = await SNS.subscribe(subscriptionParams).promise();

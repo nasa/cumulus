@@ -112,15 +112,15 @@ describe('Ingesting from PDR', () => {
       try {
         testData = await lambda().invoke({
           FunctionName: functionName,
-          Payload: JSON.stringify({
+          Payload: new TextEncoder().encode(JSON.stringify({
             prefix: config.stackName,
-          }),
-        }).promise();
+          })),
+        });
       } catch (error) {
         console.log(error);
       }
 
-      const { newGranuleId, filePaths } = JSON.parse(testData.Payload);
+      const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
       if (!newGranuleId || !filePaths) {
         throw new Error('FTP Server setup failed', testData);
       }
@@ -190,12 +190,12 @@ describe('Ingesting from PDR', () => {
     // TODO Inovke cleanup lambda
     const deletionRequest = await lambda().invoke({
       FunctionName: functionName,
-      Payload: JSON.stringify({
+      Payload: new TextEncoder().encode(JSON.stringify({
         prefix: config.stackName,
         command: 'delete',
         filePaths: testFilePaths,
-      }),
-    }).promise();
+      })),
+    });
     if (deletionRequest.StatusCode !== 200) {
       throw new Error(deletionRequest);
     }

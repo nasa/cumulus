@@ -79,7 +79,7 @@ const createCloudwatchRuleWithTarget = async ({
 
   const { Configuration } = await lambda().getFunction({
     FunctionName: functionName,
-  }).promise();
+  });
 
   await cloudwatchevents().putTargets({
     Rule: ruleName,
@@ -95,7 +95,7 @@ const createCloudwatchRuleWithTarget = async ({
     Principal: 'events.amazonaws.com',
     StatementId: rulePermissionId,
     SourceArn: RuleArn,
-  }).promise();
+  });
 };
 
 const deleteCloudwatchRuleWithTargets = async ({
@@ -114,7 +114,7 @@ const deleteCloudwatchRuleWithTargets = async ({
   await lambda().removePermission({
     FunctionName: functionName,
     StatementId: rulePermissionId,
-  }).promise();
+  });
 
   return cloudwatchevents().deleteRule({
     Name: ruleName,
@@ -241,7 +241,7 @@ describe('the sf-starter lambda function', () => {
           EventSourceArn: queueArn,
           FunctionName: sfStarterName,
           Enabled: true,
-        }).promise();
+        });
         mappingUUID = UUID;
       });
 
@@ -337,15 +337,15 @@ describe('the sf-starter lambda function', () => {
       const { Payload } = await lambda().invoke({
         FunctionName: `${config.stackName}-sqs2sfThrottle`,
         InvocationType: 'RequestResponse',
-        Payload: JSON.stringify({
+        Payload: new TextEncoder().encode(JSON.stringify({
           queueUrl: maxQueueUrl,
           messageLimit: totalNumMessages,
-        }),
-      }).promise();
+        })),
+      });
 
       messagesConsumed = Number.parseInt(Payload, 10);
       if (Number.isNaN(messagesConsumed)) {
-        console.log('payload returned from sqs2sfThrottle', JSON.stringify(Payload));
+        console.log('payload returned from sqs2sfThrottle', JSON.stringify(new TextDecoder('utf-8').decode(Payload)));
       }
       // Can't test that the messages consumed is exactly the number the
       // maximum allowed because of eventual consistency in SQS

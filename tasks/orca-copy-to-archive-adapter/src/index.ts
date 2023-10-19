@@ -39,7 +39,7 @@ export const invokeOrcaCopyToArchive = async (
     throw new Error(errorString);
   }
 
-  return JSON.parse(response.Payload?.toString('base64') ?? '{}');
+  return JSON.parse(new TextDecoder('utf-8').decode(response.Payload) || '{}');
 };
 
 /**
