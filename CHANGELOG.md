@@ -57,8 +57,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Changed
 - **CUMULUS-3177**
-  - changed removeFromCmr function for granule bulkDelete to not return and instead catch the error
-    when the granule is not found in CMR
+  - changed `_removeGranuleFromCmr` function for granule `bulkDelete` to not throw an error and instead catch the error when the granule is not found in CMR
 - **CUMULUS-3351**
   - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
 - **CUMULUS-3392**
