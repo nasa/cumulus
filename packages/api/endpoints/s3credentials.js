@@ -29,14 +29,14 @@ async function requestTemporaryCredentialsFromNgap({
   policy = undefined,
   roleSessionName,
 }) {
-  const Payload = JSON.stringify({
+  const Payload = new TextEncoder().encode(JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
     duration: '3600', // one hour max allowed by AWS.
     rolesession: roleSessionName, // <- shows up in S3 server access logs
     userid: userId, // <- used by NGAP
     policy,
-  });
+  }));
 
   return await lambda.invoke({
     FunctionName: lambdaFunctionName,
@@ -119,11 +119,11 @@ function formatAllowedBucketKeys(cmrAllowedBucketKeyList) {
     pathlist.push(bucketKeyPair.keypath);
   });
 
-  return JSON.stringify({
+  return new TextEncoder().encode(JSON.stringify({
     accessmode: 'Allow',
     bucketlist,
     pathlist,
-  });
+  }));
 }
 
 /**

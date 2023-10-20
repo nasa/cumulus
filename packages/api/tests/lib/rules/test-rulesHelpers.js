@@ -1018,7 +1018,7 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
     awsServices.lambda().getPolicy({
       FunctionName: process.env.messageConsumer,
     }),
-    { code: 'ResourceNotFoundException' }
+    { name: 'ResourceNotFoundException' }
   );
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
