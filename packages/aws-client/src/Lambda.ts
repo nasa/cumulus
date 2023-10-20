@@ -14,7 +14,7 @@ const log = new Logger({ sender: 'aws-client/Lambda' });
  * @param {string} name - Lambda function name
  * @param {any} payload - the payload to the Lambda function
  * @param {string} type - the invocation type
- * @returns {Promise<AWS.Lambda.InvocationResponse>}
+ * @returns {Promise<InvokeCommandOutput>}
  * @alias module:Lambda.invoke
  */
 export const invoke = async (name: string, payload: unknown, type: InvocationType = 'Event') => {
