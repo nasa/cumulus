@@ -189,7 +189,7 @@ test.serial('unpublishGranule does not throw an error when the granule is not pu
     cmrLink: undefined,
   });
   const granuleNotPublishedError = new Error('Granule not published Error');
-  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves(granuleNotPublishedError);
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').rejects(granuleNotPublishedError);
 
   t.teardown(() => {
     cmrMetadataStub.restore();
