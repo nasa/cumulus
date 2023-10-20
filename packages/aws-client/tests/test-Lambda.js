@@ -1,6 +1,5 @@
 'use strict';
 
-const sinon = require('sinon');
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 const fs = require('fs-extra');
