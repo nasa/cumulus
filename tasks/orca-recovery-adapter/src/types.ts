@@ -16,7 +16,7 @@ export interface HandlerInput {
 
 export interface HandlerOutput {
   granules: Granule[],
-  copied_to_orca: [string]
+  recoveryOutput: unknown
 }
 
 export interface HandlerEvent {
