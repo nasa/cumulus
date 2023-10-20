@@ -147,6 +147,72 @@ test.serial('unpublishGranule() removing a granule from CMR succeeds if the gran
   );
 });
 
+test.serial('unpublishGranule throws an error when an unexpected error is encountered', async (t) => {
+  const {
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInPG(t, {
+    published: false,
+    cmrLink: undefined,
+  });
+  const unexpectedError = new Error('Unexpected CMR error');
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').throws(unexpectedError);
+
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+  });
+
+  await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
+    {
+      published: false,
+      cmr_link: null,
+    }
+  );
+
+  await t.throwsAsync(
+    unpublishGranule({
+      knex: t.context.knex,
+      pgGranuleRecord: originalPgGranule,
+    })
+  );
+  t.true(cmrMetadataStub.called);
+});
+
+test.serial('unpublishGranule does not throw an error when the granule is not published or has no cmr link', async (t) => {
+  const {
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInPG(t, {
+    published: false,
+    cmrLink: undefined,
+  });
+  const granuleNotPublishedError = new Error('Granule not published Error');
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').resolves(granuleNotPublishedError);
+
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+  });
+
+  await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
+    {
+      published: false,
+      cmr_link: null,
+    }
+  );
+
+  await t.notThrowsAsync(
+    unpublishGranule({
+      knex: t.context.knex,
+      pgGranuleRecord: originalPgGranule,
+    })
+  );
+  t.true(cmrMetadataStub.called);
+});
+
 test.serial('unpublishGranule() succeeds with PG granule', async (t) => {
   const { fakeCollection } = t.context;
 
