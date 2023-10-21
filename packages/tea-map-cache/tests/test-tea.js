@@ -4,7 +4,7 @@ const test = require('ava');
 const proxyquire = require('proxyquire').noPreserveCache();
 
 test('getTeaBucketPath returns a mapped bucket path on an expected response from TEA', async (t) => {
-  const { getTeaBucketPath } = proxyquire('../dist/tea', {
+  const { getTeaBucketPath } = proxyquire('../dist/src/tea', {
     got: {
       default: {
         get: (_param) => Promise.resolve({ body: '["fake-bucket-redirect/path"]' }),
@@ -20,7 +20,7 @@ test('getTeaBucketPath returns a mapped bucket path on an expected response from
 });
 
 test('getTeaBucketPath throws error if multiple paths are returned', async (t) => {
-  const { getTeaBucketPath } = proxyquire('../dist/tea', {
+  const { getTeaBucketPath } = proxyquire('../dist/src/tea', {
     got: {
       default: {
         get: (_param) => Promise.resolve({ body: '["fake-bucket-redirect/path", "some-other-path"]' }),
@@ -34,7 +34,7 @@ test('getTeaBucketPath throws error if multiple paths are returned', async (t) =
 });
 
 test('getTeaBucketPath returns empty string if TEA throws a 404', async (t) => {
-  const { getTeaBucketPath } = proxyquire('../dist/tea', {
+  const { getTeaBucketPath } = proxyquire('../dist/src/tea', {
     got: {
       default: {
         get: () => {
@@ -54,7 +54,7 @@ test('getTeaBucketPath returns empty string if TEA throws a 404', async (t) => {
 });
 
 test('getTeaBucketPath throws an error empty string if non-bucket-search 404 is thrown', async (t) => {
-  const { getTeaBucketPath } = proxyquire('../dist/tea', {
+  const { getTeaBucketPath } = proxyquire('../dist/src/tea', {
     got: {
       default: {
         get: () => {
