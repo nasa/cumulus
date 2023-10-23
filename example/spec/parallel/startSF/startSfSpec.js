@@ -258,7 +258,7 @@ describe('the sf-starter lambda function', () => {
               if (error.name === 'ResourceInUseException') {
                 console.log(`Waiting for eventSourceMapping eligible for deletion, get message ${error.message}`);
                 throw error;
-              } else if (error !== 'ResourceNotFoundException') {
+              } else if (error.name !== 'ResourceNotFoundException') {
                 throw new pRetry.AbortError(error);
               }
             }
