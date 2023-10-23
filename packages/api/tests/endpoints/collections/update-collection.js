@@ -367,6 +367,7 @@ test.serial('PUT updates collection configuration store via name and version', a
       process: randomString(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      meta: { foo: randomString() },
     }
   );
 
@@ -375,7 +376,7 @@ test.serial('PUT updates collection configuration store via name and version', a
     updatedAt: Date.now(),
     createdAt: Date.now(),
     duplicateHandling: 'error',
-    meta: { foo: randomString() },
+    meta: { foo: { nestedKey: randomString() } },
   };
 
   const res = await request(app)
