@@ -136,7 +136,7 @@ describe('The SyncGranule task with a granule file using an alternate bucket', (
   });
 
   afterAll(async () => {
-    const parsedPayload = JSON.parse(syncGranuleOutput.Payload);
+    const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(syncGranuleOutput.Payload));
     const fullTaskOutput = await pullStepFunctionEvent(parsedPayload);
 
     const file = fullTaskOutput.payload.granules[0].files[0];

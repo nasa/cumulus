@@ -70,6 +70,7 @@
     "@cumulus/test-processing": "18.0.0"
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.0.0"
+    "@cumulus/test-data": "18.0.0",
+    "@aws-sdk/client-lambda": "^3.58.0"
   }
 }
