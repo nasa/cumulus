@@ -1,0 +1,33 @@
+{
+  "title": "orca-recovery-adapter Lambda Output",
+  "description": "The output for the orca-recovery-adapter Lambda.",
+  "type": "object",
+  "required": [
+    "granules",
+    "recoveryOutput"
+  ],
+  "properties": {
+    "granules": {
+      "type": "array",
+      "description": "The 'granules' property from the input.",
+      "items": {
+        "type": "object",
+        "required": [
+          "granuleId",
+          "files"
+        ],
+        "properties": {
+          "granuleId": {
+            "description": "The granule's ID.",
+            "type": "string"
+          },
+          "files": "{{files}}"
+        }
+      }
+    },
+    "recoveryOutput": {
+      "description": "The output from orca recovery workflow",
+      "type": "object"
+    }
+  }
+}

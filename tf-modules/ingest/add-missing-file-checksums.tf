@@ -5,8 +5,8 @@ resource "aws_lambda_function" "add_missing_file_checksums_task" {
   handler          = "index.cmaHandler"
   role             = var.lambda_processing_role_arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "add_missing_file_checksums_task_timeout", 300)
-  memory_size      = lookup(var.lambda_memory_sizes, "add_missing_file_checksums_task_memory_size", 512)
+  timeout          = lookup(var.lambda_timeouts, "AddMissingFileChecksums", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "AddMissingFileChecksums", 512)
 
   layers = [var.cumulus_message_adapter_lambda_layer_version_arn]
 

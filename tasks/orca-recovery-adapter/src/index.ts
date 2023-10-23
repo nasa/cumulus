@@ -110,7 +110,8 @@ export const invokeOrcaRecoveryWorkflow = async (
   if (executionResult?.status === 'FAILED') {
     throw new Error(`Error execute ${childWorkflowArn}, result from execution ${JSON.stringify(executionResult)}`);
   }
-  return executionResult?.outputDetails?.included ? JSON.parse(executionResult.output ?? '{}') : undefined;
+  const recoveryOutput = executionResult?.outputDetails?.included ? JSON.parse(executionResult.output ?? '{}') : undefined;
+  return { ...event.input, recoveryOutput };
 };
 
 /**
