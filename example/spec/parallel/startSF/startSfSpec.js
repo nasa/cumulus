@@ -1,7 +1,6 @@
 'use strict';
 
 const pRetry = require('p-retry');
-const { ResourceNotFoundException, ResourceInUseException } = require('@aws-sdk/client-lambda');
 const { sleep } = require('@cumulus/common');
 const {
   lambda,
@@ -255,10 +254,11 @@ describe('the sf-starter lambda function', () => {
                 UUID: mappingUUID,
               });
             } catch (error) {
-              if (error instanceof ResourceInUseException) {
+              console.log(`Caught error while deleting eventSourceMapping ${error.code}, ${error.name}, ${error.message}`);
+              if (error.name === 'ResourceInUseException') {
                 console.log(`Waiting for eventSourceMapping eligible for deletion, get message ${error.message}`);
                 throw error;
-              } else if (!(error instanceof ResourceNotFoundException)) {
+              } else if (error !== 'ResourceNotFoundException') {
                 throw new pRetry.AbortError(error);
               }
             }
