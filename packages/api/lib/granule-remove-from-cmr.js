@@ -7,7 +7,7 @@ const {
 } = require('@cumulus/db');
 const cmrjsCmrUtils = require('@cumulus/cmrjs/cmr-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { GranuleNotPublishedError } = require('@cumulus/errors');
+const { GranuleNotPublished } = require('@cumulus/errors');
 
 /**
  * @typedef {import('@cumulus/db').PostgresCollectionRecord} PostgresCollectionRecord
@@ -38,7 +38,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
   try {
     metadata = await cmr.getGranuleMetadata(granule.cmr_link);
   } catch (error) {
-    if (error instanceof GranuleNotPublishedError) {
+    if (error instanceof GranuleNotPublished) {
       log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} does not have a CMR link, so its metadata cannot be retrieved`);
     } else {
       throw error;
