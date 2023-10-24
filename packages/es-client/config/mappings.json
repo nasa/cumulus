@@ -28,6 +28,10 @@
           }
         }
       },
+      "meta": {
+        "type": "object",
+        "dynamic": false
+      },
       "timestamp": {
         "type": "date"
       }
