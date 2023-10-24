@@ -54,6 +54,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3427**
   - fixed issue where some lambda and task memory sizes and timeouts were not configurable
   - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+- **@aws-sdk upgrade**
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
 
 ### Changed
 - **CUMULUS-3177**
@@ -79,6 +81,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
     to handle non-existing cmr file.
   - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
     `queryFields`.
+  - Updated mapping for collection Elasticsearch records to prevent dynamic field for keys under `meta`.
 - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 
