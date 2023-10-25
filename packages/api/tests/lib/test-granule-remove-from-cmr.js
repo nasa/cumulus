@@ -20,7 +20,7 @@ const {
   fakeCollectionRecordFactory,
   migrationDir,
 } = require('@cumulus/db');
-
+const { GranuleNotPublished } = require('@cumulus/errors');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 
@@ -152,8 +152,8 @@ test.serial('unpublishGranule throws an error when an unexpected error is return
     originalPgGranule,
     pgGranuleCumulusId,
   } = await createGranuleInPG(t, {
-    published: false,
-    cmrLink: undefined,
+    published: true,
+    cmrLink: 'example.com',
   });
   const unexpectedError = new Error('Unexpected CMR error');
   const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').throws(unexpectedError);
@@ -162,15 +162,6 @@ test.serial('unpublishGranule throws an error when an unexpected error is return
     cmrMetadataStub.restore();
   });
 
-  await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
-  t.like(
-    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
-    {
-      published: false,
-      cmr_link: null,
-    }
-  );
-
   await t.throwsAsync(
     unpublishGranule({
       knex: t.context.knex,
@@ -178,24 +169,38 @@ test.serial('unpublishGranule throws an error when an unexpected error is return
     })
   );
   t.true(cmrMetadataStub.called);
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
+    {
+      published: false,
+      cmr_link: null,
+    }
+  );
 });
 
-test.serial('unpublishGranule doesnt throw an error when a granule isnt published', async (t) => {
+test.serial('unpublishGranule doesnt throw an error when a granule isnt published but has published set to true', async (t) => {
   const {
     originalPgGranule,
     pgGranuleCumulusId,
   } = await createGranuleInPG(t, {
-    published: false,
-    cmrLink: undefined,
+    published: true,
+    cmrLink: 'example.com',
   });
-  const granuleError = new Error('Granule not published Error');
-  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').rejects(granuleError);
+
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').rejects(GranuleNotPublished);
 
   t.teardown(() => {
     cmrMetadataStub.restore();
   });
 
-  await unpublishGranule({ knex: t.context.knex, pgGranuleRecord: originalPgGranule });
+  await t.notThrowsAsync(
+    unpublishGranule({
+      knex: t.context.knex,
+      pgGranuleRecord: originalPgGranule,
+    })
+  );
+
   t.like(
     await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
     {
@@ -204,12 +209,6 @@ test.serial('unpublishGranule doesnt throw an error when a granule isnt publishe
     }
   );
 
-  await t.notThrowsAsync(
-    unpublishGranule({
-      knex: t.context.knex,
-      pgGranuleRecord: originalPgGranule,
-    })
-  );
   t.true(cmrMetadataStub.called);
 });
 
