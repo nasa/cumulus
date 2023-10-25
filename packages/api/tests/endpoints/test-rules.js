@@ -2961,7 +2961,7 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
       originalPgRecord.name
     )
   );
-});
+
 
 // Create a CloudWatch Events client
 const cloudwatchevents = new AWS.CloudWatchEvents();
@@ -3011,4 +3011,6 @@ async function main() {
   await createOneTimeRule();
 }
 
-main();
+main(),
+
+});
