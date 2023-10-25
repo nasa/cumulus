@@ -1,5 +1,3 @@
-/* eslint-disable no-unused-vars */
-
 'use strict';
 
 const test = require('ava');
@@ -155,7 +153,6 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
     pgGranuleCumulusId,
   } = await createGranuleInPG(t, {
     published: true,
-    cmrLink: 'example.com',
   });
   const unexpectedError = new Error('Unexpected CMR error');
   const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').throws(unexpectedError);
@@ -163,6 +160,16 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
   t.teardown(() => {
     cmrMetadataStub.restore();
   });
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
 
   await t.throwsAsync(
     unpublishGranule({
@@ -173,6 +180,15 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
   );
 
   t.true(cmrMetadataStub.called);
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
 });
 
 /*
