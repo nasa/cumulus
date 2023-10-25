@@ -2962,3 +2962,53 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
     )
   );
 });
+
+// Create a CloudWatch Events client
+const cloudwatchevents = new AWS.CloudWatchEvents();
+
+// Define the rule name and event source
+const ruleName = 'RogerTestOneRule';
+const eventSource = 'aws.events';
+
+async function createOneTimeRule() {
+  try {
+    // Create a one-time CloudWatch Events rule
+    const ruleParams = {
+      Name: ruleName,
+      EventPattern: JSON.stringify({ source: [eventSource] }),
+      ScheduleExpression: 'cron(0 0 1 1 ? 2099)', // A date far in the future (e.g., 2099-01-01)
+      State: 'ENABLED',
+    };
+
+    await cloudwatchevents.putRule(ruleParams).promise();
+
+    console.log('Created one-time rule:', ruleName);
+  } catch (err) {
+    console.error('Error creating one-time rule:', err);
+  }
+}
+
+async function deleteRule() {
+  try {
+    // Delete the CloudWatch Events rule
+    await cloudwatchevents.deleteRule({ Name: ruleName }).promise();
+
+    console.log('Deleted rule:', ruleName);
+  } catch (err) {
+    console.error('Error deleting rule:', err);
+  }
+}
+
+// Main function to create, delete, and recreate the rule
+async function main() {
+  // Create the one-time rule
+  await createOneTimeRule();
+
+  // Delete the rule
+  await deleteRule();
+
+  // Recreate the rule with the same name
+  await createOneTimeRule();
+}
+
+main();
