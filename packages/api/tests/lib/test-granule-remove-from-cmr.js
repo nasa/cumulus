@@ -162,19 +162,32 @@ test.serial('unpublishGranule throws an error when an unexpected error is return
     cmrMetadataStub.restore();
   });
 
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+
   await t.throwsAsync(
     unpublishGranule({
       knex: t.context.knex,
       pgGranuleRecord: originalPgGranule,
-    })
+    }),
+    { message: 'Unexpected CMR error' }
   );
-  t.true(cmrMetadataStub.called);
 
+  t.true(cmrMetadataStub.called);
   t.like(
-    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
     {
-      published: false,
-      cmr_link: null,
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
     }
   );
 });
@@ -194,6 +207,16 @@ test.serial('unpublishGranule doesnt throw an error when a granule isnt publishe
     cmrMetadataStub.restore();
   });
 
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+
   await t.notThrowsAsync(
     unpublishGranule({
       knex: t.context.knex,
@@ -201,15 +224,16 @@ test.serial('unpublishGranule doesnt throw an error when a granule isnt publishe
     })
   );
 
+  t.true(cmrMetadataStub.called);
   t.like(
-    await t.context.granulePgModel.get(t.context.knex, { cumulus_id: pgGranuleCumulusId }),
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
     {
-      published: false,
-      cmr_link: null,
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
     }
   );
-
-  t.true(cmrMetadataStub.called);
 });
 
 test.serial('unpublishGranule() succeeds with PG granule', async (t) => {
