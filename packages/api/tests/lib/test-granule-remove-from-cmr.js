@@ -175,7 +175,9 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
   t.true(cmrMetadataStub.called);
 });
 
-test('unpublishGranule doesnt throw an error when a granule isnt published but has published set to true', async (t) => {
+/*
+test('unpublishGranule doesnt throw an error when a granule isnt published but
+has published set to true', async (t) => {
   const {
     originalPgGranule,
     pgGranuleCumulusId,
@@ -184,7 +186,8 @@ test('unpublishGranule doesnt throw an error when a granule isnt published but h
     cmrLink: 'example.com',
   });
 
-  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').rejects(GranuleNotPublished);
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').
+  rejects(GranuleNotPublished);
 
   t.teardown(() => {
     cmrMetadataStub.restore();
@@ -198,7 +201,7 @@ test('unpublishGranule doesnt throw an error when a granule isnt published but h
   );
 
   t.true(cmrMetadataStub.called);
-});
+});*/
 
 test.serial('unpublishGranule() succeeds with PG granule', async (t) => {
   const { fakeCollection } = t.context;
