@@ -1,0 +1,5 @@
+aws events put-rule \
+-- name EC2ShutdownRule \
+--event-pattern '{"source": ["aws.ec2"], "detail": {"eventName" : ["StopInstances"]}}' \
+--state ENABLED \
+--description "Rule to trigger when an EC2 instance is stopped"

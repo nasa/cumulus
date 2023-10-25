@@ -1,0 +1,21 @@
+{
+    "source": [
+        "aws.ec2"
+    ],
+    "detail-type": [
+        "EC2 Instance State-changeNotification"
+    ],
+    "detail": {
+        "state": [
+            "pending",
+            "running",
+            "shutting-down",
+            "terminated",
+            "stopping",
+            "stopped"
+        ]
+    }
+}
+
+
+
