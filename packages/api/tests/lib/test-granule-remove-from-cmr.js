@@ -147,7 +147,6 @@ test.serial('unpublishGranule() removing a granule from CMR succeeds if the gran
   );
 });
 
-/*
 test.serial('unpublishGranule throws an error when an unexpected error is returned', async (t) => {
   const {
     originalPgGranule,
@@ -179,7 +178,7 @@ test.serial('unpublishGranule throws an error when an unexpected error is return
     })
   );
   t.true(cmrMetadataStub.called);
-});*/
+});
 
 test.serial('unpublishGranule doesnt throw an error when a granule isnt published', async (t) => {
   const {
