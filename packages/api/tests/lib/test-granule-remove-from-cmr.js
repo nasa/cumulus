@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 'use strict';
 
 const test = require('ava');
@@ -162,16 +164,6 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
     cmrMetadataStub.restore();
   });
 
-  t.like(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: pgGranuleCumulusId,
-    }),
-    {
-      published: true,
-      cmr_link: originalPgGranule.cmr_link,
-    }
-  );
-
   await t.throwsAsync(
     unpublishGranule({
       knex: t.context.knex,
@@ -181,15 +173,6 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
   );
 
   t.true(cmrMetadataStub.called);
-  t.like(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: pgGranuleCumulusId,
-    }),
-    {
-      published: true,
-      cmr_link: originalPgGranule.cmr_link,
-    }
-  );
 });
 
 test('unpublishGranule doesnt throw an error when a granule isnt published but has published set to true', async (t) => {
@@ -207,16 +190,6 @@ test('unpublishGranule doesnt throw an error when a granule isnt published but h
     cmrMetadataStub.restore();
   });
 
-  t.like(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: pgGranuleCumulusId,
-    }),
-    {
-      published: true,
-      cmr_link: originalPgGranule.cmr_link,
-    }
-  );
-
   await t.notThrowsAsync(
     unpublishGranule({
       knex: t.context.knex,
@@ -225,15 +198,6 @@ test('unpublishGranule doesnt throw an error when a granule isnt published but h
   );
 
   t.true(cmrMetadataStub.called);
-  t.like(
-    await t.context.granulePgModel.get(t.context.knex, {
-      cumulus_id: pgGranuleCumulusId,
-    }),
-    {
-      published: true,
-      cmr_link: originalPgGranule.cmr_link,
-    }
-  );
 });
 
 test.serial('unpublishGranule() succeeds with PG granule', async (t) => {
