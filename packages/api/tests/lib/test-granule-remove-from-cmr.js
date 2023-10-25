@@ -20,7 +20,6 @@ const {
   fakeCollectionRecordFactory,
   migrationDir,
 } = require('@cumulus/db');
-const { GranuleNotPublished } = require('@cumulus/errors');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 
@@ -190,34 +189,6 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
     }
   );
 });
-
-/*
-test('unpublishGranule doesnt throw an error when a granule isnt published but
-has published set to true', async (t) => {
-  const {
-    originalPgGranule,
-    pgGranuleCumulusId,
-  } = await createGranuleInPG(t, {
-    published: true,
-    cmrLink: 'example.com',
-  });
-
-  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').
-  rejects(GranuleNotPublished);
-
-  t.teardown(() => {
-    cmrMetadataStub.restore();
-  });
-
-  await t.notThrowsAsync(
-    unpublishGranule({
-      knex: t.context.knex,
-      pgGranuleRecord: originalPgGranule,
-    })
-  );
-
-  t.true(cmrMetadataStub.called);
-});*/
 
 test.serial('unpublishGranule() succeeds with PG granule', async (t) => {
   const { fakeCollection } = t.context;
