@@ -20,7 +20,7 @@ const {
   fakeCollectionRecordFactory,
   migrationDir,
 } = require('@cumulus/db');
-//const { GranuleNotPublished } = require('@cumulus/errors');
+const { GranuleNotPublished } = require('@cumulus/errors');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
 
@@ -147,7 +147,7 @@ test.serial('unpublishGranule() removing a granule from CMR succeeds if the gran
   );
 });
 
-test.serial('unpublishGranule throws an error when an unexpected error is returned', async (t) => {
+test('unpublishGranule throws an error when an unexpected error is returned', async (t) => {
   const {
     originalPgGranule,
     pgGranuleCumulusId,
@@ -192,9 +192,7 @@ test.serial('unpublishGranule throws an error when an unexpected error is return
   );
 });
 
-/*
-test.serial('unpublishGranule doesnt throw an error when a granule isnt published but
-has published set to true', async (t) => {
+test('unpublishGranule doesnt throw an error when a granule isnt published but has published set to true', async (t) => {
   const {
     originalPgGranule,
     pgGranuleCumulusId,
@@ -203,8 +201,7 @@ has published set to true', async (t) => {
     cmrLink: 'example.com',
   });
 
-  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').
-  rejects(GranuleNotPublished);
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').rejects(GranuleNotPublished);
 
   t.teardown(() => {
     cmrMetadataStub.restore();
@@ -237,7 +234,7 @@ has published set to true', async (t) => {
       cmr_link: originalPgGranule.cmr_link,
     }
   );
-});*/
+});
 
 test.serial('unpublishGranule() succeeds with PG granule', async (t) => {
   const { fakeCollection } = t.context;
