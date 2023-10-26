@@ -20,9 +20,9 @@ const {
   fakeCollectionRecordFactory,
   migrationDir,
 } = require('@cumulus/db');
+const { GranuleNotPublished } = require('@cumulus/errors');
 const { fakeGranuleFactoryV2 } = require('../../lib/testUtils');
 const { unpublishGranule } = require('../../lib/granule-remove-from-cmr');
-
 const testDbName = `granule_remove_cmr_${cryptoRandomString({ length: 10 })}`;
 
 const createGranuleInPG = async (t, params) => {
@@ -186,6 +186,47 @@ test('unpublishGranule throws an error when an unexpected error is returned', as
     {
       published: true,
       cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+});
+
+test.serial('unpublishGranule does not throw an error on GranuleNotPublished error', async (t) => {
+  const {
+    originalPgGranule,
+    pgGranuleCumulusId,
+  } = await createGranuleInPG(t, {
+    published: true,
+  });
+  const unexpectedError = new GranuleNotPublished();
+  const cmrMetadataStub = sinon.stub(CMR.prototype, 'getGranuleMetadata').throws(unexpectedError);
+
+  t.teardown(() => {
+    cmrMetadataStub.restore();
+  });
+
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: true,
+      cmr_link: originalPgGranule.cmr_link,
+    }
+  );
+
+  await unpublishGranule({
+    knex: t.context.knex,
+    pgGranuleRecord: originalPgGranule,
+  });
+
+  t.true(cmrMetadataStub.called);
+  t.like(
+    await t.context.granulePgModel.get(t.context.knex, {
+      cumulus_id: pgGranuleCumulusId,
+    }),
+    {
+      published: false,
+      cmr_link: null,
     }
   );
 });

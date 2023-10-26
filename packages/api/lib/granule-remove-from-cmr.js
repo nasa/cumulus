@@ -40,6 +40,7 @@ const _removeGranuleFromCmr = async (granule, collectionId) => {
   } catch (error) {
     if (error instanceof GranuleNotPublished) {
       log.warn(`Granule ${granule.granule_id} in Collection ${collectionId} does not have a CMR link, so its metadata cannot be retrieved`);
+      return;
     }
     throw error;
   }
