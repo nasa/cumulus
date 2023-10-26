@@ -2976,7 +2976,7 @@ async function createOneTimeRule() {
     const ruleParams = {
       Name: ruleName,
       EventPattern: JSON.stringify({ source: [eventSource] }),
-      ScheduleExpression: 'cron(0 0 1 1 ? 2099)', // A date far in the future (e.g., 2099-01-01)
+      ScheduleExpression: 'cron(0 0 1 1 ? 2099)', 
       State: 'ENABLED',
     };
 
@@ -3010,7 +3010,5 @@ async function main() {
   // Recreate the rule with the same name
   await createOneTimeRule();
 }
-
 main(),
-
 });
