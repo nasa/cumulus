@@ -90,6 +90,6 @@ variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
   default = {
-    ProvisionPostgresDatabase = 100 # cumulus-rds-tf
+    ProvisionPostgresDatabase = 600 # cumulus-rds-tf
   }
 }

@@ -80,6 +80,24 @@ Move granule files from staging to final location
 
 ---
 
+### [@cumulus/orca-copy-to-archive-adapter](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter)
+
+Adapter to invoke orca copy-to-archive lambda
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/orca-copy-to-archive-adapter) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/orca-copy-to-archive-adapter)
+
+---
+
+### [@cumulus/orca-recovery-adapter](https://github.com/nasa/cumulus/tree/master/tasks/orca-recovery-adapter)
+
+Adapter to invoke orca recovery workflow
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/orca-recovery-adapter/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/orca-recovery-adapter) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/orca-recovery-adapter)
+
+---
+
 ### [@cumulus/parse-pdr](https://github.com/nasa/cumulus/tree/master/tasks/parse-pdr)
 
 Download and Parse a given PDR
@@ -131,6 +149,15 @@ Add workflow to the queue
 
 - Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/queue-workflow/schemas).
 - Resources: [npm](https://npmjs.com/package/@cumulus/queue-workflow) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/queue-workflow)
+
+---
+
+### [@cumulus/send-pan](https://github.com/nasa/cumulus/tree/master/tasks/send-pan)
+
+Sends a PAN response after parsing a PDR.
+
+- Schemas: See this module's [schema definitions](https://github.com/nasa/cumulus/tree/master/tasks/send-pan/schemas).
+- Resources: [npm](https://npmjs.com/package/@cumulus/send-pan) | [source](https://github.com/nasa/cumulus) | [web](https://github.com/nasa/cumulus/tree/master/tasks/send-pan)
 
 ---
 
