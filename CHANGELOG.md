@@ -56,6 +56,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 - **@aws-sdk upgrade**
   - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
+- **CUMULUS-3293**
+  - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
 
 ### Changed
 
