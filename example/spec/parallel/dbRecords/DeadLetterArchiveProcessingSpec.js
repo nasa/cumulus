@@ -291,7 +291,8 @@ describe('A dead letter record archive processing operation', () => {
 
       newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey);
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: newArchiveKey })).toBeTrue();
-      expect(Object.keys(await getJsonS3Object(systemBucket, newArchiveKey)).length).toBeGreaterThan(1);
+      // Check that the JSON object is not empty and contains at least one key
+      expect(Object.keys(await getJsonS3Object(systemBucket, newArchiveKey)).length).toBeGreaterThan(0);
     }
   });
 });

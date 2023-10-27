@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Fixed
+
 - **CUMULUS-3293**
   - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
 
@@ -51,14 +52,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added optional `maxDownloadTime` field to `provider` schema
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
-
-### Fixed
-
-- **CUMULUS-3427**
-  - fixed issue where some lambda and task memory sizes and timeouts were not configurable
-  - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
-- **@aws-sdk upgrade**
-  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
 
 ### Changed
 
