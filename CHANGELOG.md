@@ -49,7 +49,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
 ### Changed
-
+- **CUMULUS-3177**
+  - changed `_removeGranuleFromCmr` function for granule `bulkDelete` to not throw an error and instead catch the error when the granule is not found in CMR
 - **CUMULUS-3095**
   - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
   - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
