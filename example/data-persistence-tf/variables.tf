@@ -105,6 +105,6 @@ variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
   default = {
-    ProvisionPostgresDatabase = 100 # data-persistence
+    ProvisionPostgresDatabase = 600 # data-persistence
   }
 }
