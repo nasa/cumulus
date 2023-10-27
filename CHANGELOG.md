@@ -11,6 +11,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
 
+### Fixed
+
+- **CUMULUS-3177**
+  - changed `_removeGranuleFromCmr` function for granule `bulkDelete` to not throw an error and instead catch the error when the granule is not found in CMR
+
+## [v18.1.0] 2023-10-25
+
 ### MIGRATION notes
 
 #### Rules API Endpoint Versioning
@@ -43,9 +50,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3095**
   - Added `PATCH` rules endpoint to update rule which works as the existing `PUT` endpoint.
   - Updated `PUT` rules endpoint to replace rule.
-  - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
-  - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
-    `meta` and `payload`, and fixed `rule` field mapping.
 
 ### Added
 
@@ -54,21 +58,19 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
-### Fixed
-
-- **CUMULUS-3427**
-  - fixed issue where some lambda and task memory sizes and timeouts were not configurable
-  - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
-
 ### Changed
 
+- **CUMULUS-3095**
+  - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
+  - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
+    `meta` and `payload`, and fixed `rule` field mapping.
 - **CUMULUS-3351**
   - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
-- **CUMULUS-3392**
-  - Modify cloudwatch rule by deleting `custom`
 - **CUMULUS-3377**
   - Added configuration option to cumulus-tf/terraform.tfvars to include sns:Subscribe access policy for
     executions, granules, collections, and PDRs report topics.
+- **CUMULUS-3392**
+  - Modify cloudwatch rule by deleting `custom`
 - **CUMULUS-3434**
   - Updated `@cumulus/orca-recovery-adapter` task to output both input granules and recovery output.
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.0.
@@ -83,8 +85,14 @@ Users/clients that do not make use of these endpoints will not be impacted.
     to handle non-existing cmr file.
   - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
     `queryFields`.
+  - Updated mapping for collection Elasticsearch records to prevent dynamic field for keys under `meta`.
 - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
+- **CUMULUS-3427**
+  - Fixed issue where some lambda and task memory sizes and timeouts were not configurable
+  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+- **@aws-sdk upgrade**
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
 
 ## [v18.0.0] 2023-08-28
 
@@ -7416,7 +7424,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
+[v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
 [v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1

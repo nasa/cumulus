@@ -75,7 +75,7 @@ class DynamoDbSearchQueue {
    * A DynamoDbSearchQueue instance stores the list of items to be returned in
    * the `this.items` array. When that list is empty, the `fetchItems()` method
    * is called to repopulate `this.items`. Typically, the new items are fetched
-   * using the AWS.DynamoDB.`DocumentClient.scan()` method.
+   * using the `DynamoDBDocument.scan()` method.
    *
    * DynamoDB scans up to 1 MB of items at a time and then filters that 1 MB to
    * look for matching items. If there are more items to be search beyond that
@@ -94,7 +94,7 @@ class DynamoDbSearchQueue {
    * items. It will continue to call `scan()` until one of those two conditions
    * has been satisfied.
    *
-   * Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#scan-property
+   * Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/DynamoDBDocument/
    *
    * @private
    */
