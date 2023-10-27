@@ -8,13 +8,14 @@
   },
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
-    "package": "cd dist && zip -r -q ./lambda.zip * && cd .. && zip -r -q ./dist/lambda.zip node_modules",
+    "package": "npm run prepare && npm run webpack && (cd dist && rm -f lambda.zip && node ../../../bin/zip.js lambda.zip index.js)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
+    "webpack": "../../node_modules/.bin/webpack",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {

@@ -40,13 +40,13 @@ const fakeOutput = {
 const fakeFailedLambdaName = randomId('fakeFailedLambdaName');
 const fakeLambdaResponse = {
   StatusCode: 200,
-  Payload: JSON.stringify(fakeOutput),
+  Payload: new TextEncoder().encode(JSON.stringify(fakeOutput)),
 };
 
 const fakeInvalidLambdaName = randomId('fakeInvalidLambdaName');
 const fakeFailedInvokeResponse = {
   StatusCode: 500,
-  Payload: JSON.stringify(new Error('invoke error')),
+  Payload: new TextEncoder().encode(JSON.stringify(new Error('invoke error'))),
 };
 
 const {
@@ -75,7 +75,7 @@ const fakePayload = {
 test.serial('invokeOrcaCopyToArchive() successfully invokes orca lambda', async (t) => {
   process.env.orca_lambda_copy_to_archive_arn = randomId('copy_to_archive_arn');
   const result = await invokeOrcaCopyToArchive(fakePayload);
-  t.deepEqual(result, JSON.parse(fakeLambdaResponse.Payload));
+  t.deepEqual(result, JSON.parse(new TextDecoder('utf-8').decode(fakeLambdaResponse.Payload)));
 });
 
 test.serial('invokeOrcaCopyToArchive() throws error if orca lambda failed', async (t) => {

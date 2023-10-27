@@ -11,11 +11,10 @@ const s3credentials = proxyquire(
   {
     '@cumulus/aws-client/services': {
       lambda: () => ({
-        invoke: () => ({
-          promise: () => Promise.resolve({
-            Payload: JSON.stringify(lambdaResponsePayload),
+        invoke: () =>
+          Promise.resolve({
+            Payload: new TextEncoder().encode(JSON.stringify(lambdaResponsePayload)),
           }),
-        }),
       }),
     },
   }

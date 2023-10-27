@@ -36,16 +36,14 @@ test.serial('s3credentials() with just a username sends the correct request to t
     invoke: ({ Payload }) => {
       lambdaInvocationCount += 1;
 
-      const parsedPayload = JSON.parse(Payload);
+      const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(Payload));
 
       t.is(parsedPayload.userid, 'my-user-name');
       t.is(parsedPayload.rolesession, 'my-user-name');
 
-      return {
-        promise: () => Promise.resolve({
-          Payload: JSON.stringify({}),
-        }),
-      };
+      return Promise.resolve({
+        Payload: new TextEncoder().encode(JSON.stringify({})),
+      });
     },
   };
 
@@ -72,16 +70,14 @@ test.serial('s3credentials() with a username and a client name sends the correct
     invoke: ({ Payload }) => {
       lambdaInvocationCount += 1;
 
-      const parsedPayload = JSON.parse(Payload);
+      const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(Payload));
 
       t.is(parsedPayload.userid, 'my-user-name');
       t.is(parsedPayload.rolesession, 'my-user-name@my-client-name');
 
-      return {
-        promise: () => Promise.resolve({
-          Payload: JSON.stringify({}),
-        }),
-      };
+      return Promise.resolve({
+        Payload: new TextEncoder().encode(JSON.stringify({})),
+      });
     },
   };
 
@@ -130,7 +126,7 @@ test('requestTemporaryCredentialsFromNgap() invokes the credentials lambda with 
       t.is(params.FunctionName, lambdaFunctionName);
 
       t.deepEqual(
-        JSON.parse(params.Payload),
+        JSON.parse(new TextDecoder('utf-8').decode(params.Payload)),
         {
           accesstype: 'sameregion',
           returntype: 'lowerCamel',
@@ -140,9 +136,7 @@ test('requestTemporaryCredentialsFromNgap() invokes the credentials lambda with 
         }
       );
 
-      return {
-        promise: () => Promise.resolve(),
-      };
+      return Promise.resolve();
     },
   };
 
@@ -217,14 +211,14 @@ test('allowedBucketKeys formats a list of buckets and bucket/keypaths into expec
   ];
 
   // shape of object expected by NGAP's policy helper lambda
-  const expected = JSON.stringify({
+  const expected = new TextEncoder().encode(JSON.stringify({
     accessmode: 'Allow',
     bucketlist: ['lonebucket', 'bucketstarpath', 'bucket', 'bucket', 'bucket2', undefined],
     pathlist: ['/', '/*', '/deep/star/path/*', '/withonepath', '/with/deep/path', undefined],
-  });
+  }));
 
   const actual = formatAllowedBucketKeys(bucketKeyList);
-  t.is(actual, expected);
+  t.deepEqual(actual, expected);
 });
 
 test.serial('fetchPolicyForUser returned undefined if endpoint not configured for ACL Credentials', async (t) => {
@@ -246,12 +240,10 @@ test.serial('fetchPolicyForUser calls NGAP\'s Policy Helper lambda with the corr
 
   const spy = sinon.spy();
   const fakeLambda = {
-    invoke: (payload) => ({
-      promise: () => {
-        spy(payload);
-        return { then: () => undefined };
-      },
-    }),
+    invoke: (payload) => {
+      spy(payload);
+      return { then: () => undefined };
+    },
   };
 
   // set up cmr call
@@ -266,11 +258,11 @@ test.serial('fetchPolicyForUser calls NGAP\'s Policy Helper lambda with the corr
 
   const expectedPayload = {
     FunctionName: stsFunction,
-    Payload: JSON.stringify({
+    Payload: new TextEncoder().encode(JSON.stringify({
       accessmode: 'Allow',
       bucketlist: [bucket1, bucket2],
       pathlist: [`/${path1}`, '/'],
-    }),
+    })),
   };
 
   await fetchPolicyForUser(edlUser, cmrProvider, fakeLambda);

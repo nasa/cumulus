@@ -93,7 +93,7 @@ test.before(async (t) => {
     Role: randomId('role'),
     Handler: 'index.handler',
     Runtime: 'nodejs16.x',
-  }).promise();
+  });
   process.env.messageConsumer = messageConsumer.FunctionName;
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
