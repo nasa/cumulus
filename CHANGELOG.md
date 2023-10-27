@@ -6,8 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2894**
+  - Update Lambda code to AWS SDK v3
+
 ### Fixed
 
+- **CUMULUS-3177**
+  - changed `_removeGranuleFromCmr` function for granule `bulkDelete` to not throw an error and instead catch the error when the granule is not found in CMR
 - **CUMULUS-3293**
   - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
 

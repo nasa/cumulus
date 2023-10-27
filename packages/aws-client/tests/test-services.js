@@ -4,6 +4,7 @@ const AWS = require('aws-sdk');
 const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { S3 } = require('@aws-sdk/client-s3');
+const { Lambda } = require('@aws-sdk/client-lambda');
 
 const services = require('../services');
 const { localStackAwsClientOptions } = require('../test-utils');
@@ -206,17 +207,25 @@ test('kms() service defaults to localstack in test mode', (t) => {
   t.is(kms.config.endpoint, endpoint);
 });
 
-test('lambda() service defaults to localstack in test mode', (t) => {
+test('lambda() service defaults to localstack in test mode', async (t) => {
   const lambda = services.lambda();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.Lambda);
+  } = localStackAwsClientOptions(Lambda);
   t.deepEqual(
-    lambda.config.credentials,
+    await lambda.config.credentials(),
     credentials
   );
-  t.is(lambda.config.endpoint, endpoint);
+  const serviceConfigEndpoint = await lambda.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
 test('s3() service defaults to localstack in test mode', async (t) => {
