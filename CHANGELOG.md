@@ -25,7 +25,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     to handle non-existing cmr file.
   - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
     `queryFields`.
-- **CUMULUS-3393**
+- **CUMULUS-3293**
+  - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
+  - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 
 ## [v16.1.1] 2023-08-03
