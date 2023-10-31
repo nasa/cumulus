@@ -187,6 +187,9 @@ test('processDeadLetterArchive saves failed dead letters to different S3 and rem
   // Check that failing message key exists in new location
   const savedDeadLetterExists = await S3.fileExists(bucket, s3KeyForFailedMessage);
   t.truthy(savedDeadLetterExists);
+
+  const fileContents = await S3.getJsonS3Object(bucket, s3KeyForFailedMessage);
+  t.true(Object.keys(fileContents).length > 0);
 });
 
 test.serial('processDeadLetterArchive does not remove message from archive S3 path if transfer to new archive path fails', async (t) => {
@@ -202,8 +205,8 @@ test.serial('processDeadLetterArchive does not remove message from archive S3 pa
     if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
     throw new Error('write failure');
   };
-  const s3Stub = sinon.stub(S3, 's3PutObject').throws(
-    new Error('Failed to put object')
+  const s3Stub = sinon.stub(S3, 's3CopyObject').throws(
+    new Error('Failed to copy object')
   );
 
   const output = await processDeadLetterArchive({
