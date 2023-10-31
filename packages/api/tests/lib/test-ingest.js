@@ -3,7 +3,7 @@ const sinon = require('sinon');
 
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
-const { snsUtils } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
 const { createBucket } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -63,7 +63,7 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-  const { TopicArn } = snsUtils.sendSNSMessage({ Name: randomString() }, 'CreateTopicCommand');
+  const { TopicArn } = sendSNSMessage({ Name: randomString() }, 'CreateTopicCommand');
   t.context.granules_sns_topic_arn = TopicArn;
   process.env.granule_sns_topic_arn = t.context.granules_sns_topic_arn;
 
@@ -141,7 +141,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await snsUtils.sendSNSMessage({ TopicArn: t.context.granules_sns_topic_arn }, 'DeleteTopicCommand');
+  await sendSNSMessage({ TopicArn: t.context.granules_sns_topic_arn }, 'DeleteTopicCommand');
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {

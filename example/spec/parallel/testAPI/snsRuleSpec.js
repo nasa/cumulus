@@ -24,7 +24,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
-const { snsUtils } = require('@cumulus/aws-client/services');
+const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
 const {
   waitForRuleInList,
 } = require('../../helpers/ruleUtils');
@@ -37,7 +37,7 @@ const {
 } = require('../../helpers/testUtils');
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
-  const subs = await snsUtils.sendSNSMessage({ TopicArn: snsTopicArn }, 'ListSubscriptionByTopicCommand');
+  const subs = await sendSNSMessage({ TopicArn: snsTopicArn }, 'ListSubscriptionByTopicCommand');
   return subs.Subscriptions.length;
 }
 
@@ -106,7 +106,7 @@ describe('The SNS-type rule', () => {
 
       await addCollections(config.stackName, config.bucket, collectionsDir,
         testSuffix, testId);
-      const { TopicArn } = await snsUtils.sendSNSMessage({ Name: snsTopicName }, 'CreateTopicCommand');
+      const { TopicArn } = await sendSNSMessage({ Name: snsTopicName }, 'CreateTopicCommand');
       snsTopicArn = TopicArn;
       snsRuleDefinition.rule.value = TopicArn;
       const postRuleResponse = await postRule({
@@ -122,7 +122,7 @@ describe('The SNS-type rule', () => {
   });
 
   afterAll(async () => {
-    await snsUtils.sendSNSMessage({ TopicArn: snsTopicArn }, 'DeleteTopicCommand');
+    await sendSNSMessage({ TopicArn: snsTopicArn }, 'DeleteTopicCommand');
 
     try {
       const permissionParams = {
@@ -194,7 +194,7 @@ describe('The SNS-type rule', () => {
       if (beforeAllFailed) return;
       try {
         const messagePublishTime = Date.now() - 1000 * 30;
-        await snsUtils.sendSNSMessage({ Message: snsMessage, TopicArn: snsTopicArn }, 'PublishCommand');
+        await sendSNSMessage({ Message: snsMessage, TopicArn: snsTopicArn }, 'PublishCommand');
 
         console.log('originalPayload.testId', testId);
         helloWorldExecutionArn = await findExecutionArn(
@@ -295,7 +295,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await snsUtils.sendSNSMessage({ Name: newValueTopicName }, 'CreateTopicCommand');
+        const { TopicArn } = await sendSNSMessage({ Name: newValueTopicName }, 'CreateTopicCommand');
         newTopicArn = TopicArn;
         const updateParams = {
           rule: {
@@ -323,7 +323,7 @@ describe('The SNS-type rule', () => {
           state: 'DISABLED',
         },
       });
-      await snsUtils.sendSNSMessage({ TopicArn: newTopicArn }, 'DeleteTopicCommand');
+      await sendSNSMessage({ TopicArn: newTopicArn }, 'DeleteTopicCommand');
     });
 
     it('saves the new rule.value', () => {
@@ -353,7 +353,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await snsUtils.sendSNSMessage({ Name: newValueTopicName }, 'CreateTopicCommand');
+        const { TopicArn } = await sendSNSMessage({ Name: newValueTopicName }, 'CreateTopicCommand');
         newTopicArn = TopicArn;
         const subscriptionParams = {
           TopicArn,
@@ -361,7 +361,7 @@ describe('The SNS-type rule', () => {
           Endpoint: (await lambda().getFunction({ FunctionName: consumerName }).promise()).Configuration.FunctionArn,
           ReturnSubscriptionArn: true,
         };
-        const { SubscriptionArn } = await snsUtils.sendSNSMessage(subscriptionParams, 'SubscribeCommand');
+        const { SubscriptionArn } = await sendSNSMessage(subscriptionParams, 'SubscribeCommand');
         subscriptionArn = SubscriptionArn;
         const updateParams = {
           ...createdRule.record,
@@ -411,7 +411,7 @@ describe('The SNS-type rule', () => {
     });
 
     afterAll(async () => {
-      await snsUtils.sendSNSMessage({ TopicArn: newTopicArn }, 'DeleteTopicCommand');
+      await sendSNSMessage({ TopicArn: newTopicArn }, 'DeleteTopicCommand');
     });
 
     it('is removed from the rules API', () => {

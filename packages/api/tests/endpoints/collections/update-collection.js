@@ -6,7 +6,7 @@ const {
   s3,
   sqs,
 } = require('@cumulus/aws-client/services');
-const { snsUtils } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
@@ -90,7 +90,7 @@ test.before(async (t) => {
 });
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await snsUtils.sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -102,13 +102,13 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-  const { SubscriptionArn } = snsUtils.sendSNSMessage({
+  const { SubscriptionArn } = sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
   }, 'SubscribeCommand');
 
-  snsUtils.sendSNSMessage({
+  sendSNSMessage({
     TopicArn,
     Token: SubscriptionArn,
   }, 'ConfirmSubscriptionCommand');
@@ -117,7 +117,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await snsUtils.sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
+  await sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
 });
 
 test.after.always(async (t) => {

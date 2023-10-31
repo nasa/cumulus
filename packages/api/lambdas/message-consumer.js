@@ -3,7 +3,7 @@
 const Ajv = require('ajv');
 const get = require('lodash/get');
 const set = require('lodash/set');
-const { snsUtils } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
 const log = require('@cumulus/common/log');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const {
@@ -41,7 +41,7 @@ async function publishRecordToFallbackTopic(record) {
   const fallbackArn = process.env.FallbackTopicArn;
   log.info('publishing bad kinesis record to Topic:', fallbackArn);
   log.info('record:', JSON.stringify(record));
-  return await snsUtils.sendSNSMessage({
+  return await sendSNSMessage({
     TopicArn: fallbackArn,
     Message: JSON.stringify(record),
   }, 'PublishCommand');

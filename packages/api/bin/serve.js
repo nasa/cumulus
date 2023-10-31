@@ -19,7 +19,7 @@ const {
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { snsUtils } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
 const { ReconciliationReport } = require('../models');
 
 const testUtils = require('../lib/testUtils');
@@ -64,7 +64,7 @@ async function prepareServices(stackName, bucket) {
     index: process.env.ES_INDEX,
   });
   await s3().createBucket({ Bucket: bucket });
-  const { TopicArn } = await snsUtils.sendSNSMessage({ Name: randomId('topicName') }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: randomId('topicName') }, 'CreateTopicCommand');
   process.env.collection_sns_topic_arn = TopicArn;
 }
 
