@@ -27,8 +27,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     `queryFields`.
 - **CUMULUS-3293**
   - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
-  - **CUMULUS-3393**
+- **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
+- **CUMULUS-3467**
+  - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
 
 ## [v16.1.1] 2023-08-03
 
