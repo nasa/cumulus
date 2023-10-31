@@ -12,6 +12,7 @@ const {
   translatePostgresGranuleToApiGranule,
 } = require('@cumulus/db');
 const { createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
+const { snsUtils } = require('@cumulus/aws-client/SNS');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { Search } = require('@cumulus/es-client/search');
 const {
@@ -19,7 +20,6 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const {
-  sns,
   sqs,
 } = require('@cumulus/aws-client/services');
 
@@ -51,7 +51,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = snsUtils.sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -63,23 +63,21 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = snsUtils.sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
-
-  await sns().confirmSubscription({
+  }, 'SubscribeCommand');
+  await snsUtils.sendSNSMessage({
     TopicArn,
     Token: SubscriptionArn,
-  }).promise();
+  }, 'ConfirmSubscriptionCommand');
 });
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await snsUtils.sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
 });
 
 test.after.always(async (t) => {

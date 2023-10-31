@@ -1,6 +1,6 @@
 'use strict';
 
-const { publishSnsMessage } = require('@cumulus/aws-client/SNS');
+const snsUtils = require('@cumulus/aws-client/SNS');
 const { envUtils } = require('@cumulus/common');
 const Logger = require('@cumulus/logger');
 
@@ -44,14 +44,14 @@ const publishSnsMessageByDataType = async (record, dataType, eventType) => {
   logger.info(`About to publish SNS message for ${messageTypeInfo} to topic ARN ${topicArn}: ${JSON.stringify(record)}`);
   if (dataType === 'collection') {
     const messageToPublish = constructCollectionSnsMessage(record, eventType);
-    await publishSnsMessage(topicArn, messageToPublish);
+    await snsUtils.publishSnsMessage(topicArn, messageToPublish);
   }
   if (dataType === 'granule') {
     const messageToPublish = constructGranuleSnsMessage(record, eventType);
-    await publishSnsMessage(topicArn, messageToPublish);
+    await snsUtils.publishSnsMessage(topicArn, messageToPublish);
   }
   if (dataType === 'pdr' || dataType === 'execution') {
-    await publishSnsMessage(topicArn, record);
+    await snsUtils.publishSnsMessage(topicArn, record);
   }
   return undefined;
 };

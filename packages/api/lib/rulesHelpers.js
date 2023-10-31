@@ -12,15 +12,14 @@ const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Logger = require('@cumulus/logger');
 const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
+const { snsUtils } = require('@cumulus/aws-client/SNS');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const { RulePgModel } = require('@cumulus/db');
 const { ValidationError } = require('@cumulus/errors');
 const { getRequiredEnvVar } = require('@cumulus/common/env');
-
 const { listRules } = require('@cumulus/api-client/rules');
 const { omitDeepBy, removeNilProperties } = require('@cumulus/common/util');
-
 const { handleScheduleEvent } = require('../lambdas/sf-scheduler');
 const { isResourceNotFoundException, ResourceNotFoundError } = require('./errors');
 const { getSnsTriggerPermissionId } = require('./snsRuleHelpers');
@@ -293,7 +292,7 @@ async function deleteSnsTrigger(knex, rule) {
     SubscriptionArn: rule.rule.arn,
   };
   log.info(`Successfully deleted SNS subscription for ARN ${rule.rule.arn}.`);
-  return awsServices.sns().unsubscribe(subscriptionParams).promise();
+  return snsUtils.sendSNSMessage(subscriptionParams, 'UnsubscribeCommand');
 }
 
 /**
@@ -455,10 +454,10 @@ async function checkForSnsSubscriptions(ruleItem) {
   let subscriptionArn;
   /* eslint-disable no-await-in-loop */
   do {
-    const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
+    const subsResponse = await snsUtils.sendSNSMessage(({
       TopicArn: ruleItem.rule.value,
       NextToken: token,
-    }).promise();
+    }), 'ListSubscriptionByTopicCOmmand');
     token = subsResponse.NextToken;
     if (subsResponse.Subscriptions) {
       /* eslint-disable no-loop-func */
@@ -501,7 +500,7 @@ async function addSnsTrigger(item) {
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
-    const r = await awsServices.sns().subscribe(subscriptionParams).promise();
+    const r = await snsUtils.sendSNSMessage(subscriptionParams, 'SubscribeCommand');
     subscriptionArn = r.SubscriptionArn;
     // create permission to invoke lambda
     const permissionParams = {

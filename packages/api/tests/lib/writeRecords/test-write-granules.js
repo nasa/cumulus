@@ -34,10 +34,8 @@ const {
   createRejectableTransaction,
   translateApiFiletoPostgresFile,
 } = require('@cumulus/db');
-const {
-  sns,
-  sqs,
-} = require('@cumulus/aws-client/services');
+const { sqs } = require('@cumulus/aws-client/services');
+const { snsUtils } = require('@cumulus/aws-client/services/SNS');
 const {
   Search,
 } = require('@cumulus/es-client/search');
@@ -221,7 +219,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await snsUtils.sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -234,16 +232,16 @@ test.beforeEach(async (t) => {
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await snsUtils.sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  }, 'SubscribeCommand');
 
-  await sns().confirmSubscription({
+  await snsUtils.sendSNSMessage({
     TopicArn,
     Token: SubscriptionArn,
-  }).promise();
+  }, 'ConfirmSubscriptionCommand');
 
   t.context.stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${t.context.stateMachineName}`;
@@ -333,7 +331,7 @@ test.afterEach.always(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
 
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await snsUtils.sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
 
   await t.context.knex(TableNames.files).del();
   await t.context.knex(TableNames.granulesExecutions).del();

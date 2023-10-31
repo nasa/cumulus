@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+- **CUMULUS-2899**
+  - Updated SNS code to aws sdk v3
+
 ### MIGRATION notes
 
 #### Rules API Endpoint Versioning

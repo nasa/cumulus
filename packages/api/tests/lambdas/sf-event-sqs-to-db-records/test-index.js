@@ -10,9 +10,9 @@ const proxyquire = require('proxyquire');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
-  sns,
   sqs,
 } = require('@cumulus/aws-client/services');
+const { snsUtils } = require('@cumulus/aws-client/services/SNS');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -168,8 +168,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await sns().createTopic({ Name: executionsTopicName }).promise();
-  const pdrsTopic = await sns().createTopic({ Name: pdrsTopicName }).promise();
+  const executionsTopic = await snsUtils.sendSNSMessage({ Name: executionsTopicName }, 'CreateTopicCommand');
+  const pdrsTopic = await snsUtils.sendSNSMessage({ Name: pdrsTopicName }, 'CreateTopicCommand');
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -188,7 +188,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await snsUtils.sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -198,17 +198,16 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await snsUtils.sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  }, 'SubscribeCommand');
 
-  await sns().confirmSubscription({
+  await snsUtils.sendSNSMessage({
     TopicArn,
     Token: SubscriptionArn,
-  }).promise();
+  }, 'ConfirmSubscriptionCommand');
 
   process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
 
@@ -285,8 +284,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn }).promise();
-  await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
+  await snsUtils.sendSNSMessage({ TopicArn: ExecutionsTopicArn }, 'DeleteTopicCommand');
+  await snsUtils.sendSNSMessage({ TopicArn: PdrsTopicArn }, 'DeleteTopicCommand');
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {

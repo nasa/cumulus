@@ -4,9 +4,60 @@
 
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
+import {
+  PublishCommand,
+  SubscribeCommand,
+  UnsubscribeCommand,
+  ListSubscriptionsByTopicCommand,
+  CreateTopicCommand,
+  DeleteTopicCommand,
+  ConfirmSubscriptionCommand,
+} from '@aws-sdk/client-sns';
 import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });
+
+/**
+ * Helper function for sending SNS messages for sdk v3, mainly for testing purposes
+ *
+ * @param {any} messageParams - SNS message
+ * @param {string} messageType - Type of sns request
+ * @param {Object} retryOptions - options to control retry behavior when publishing
+ * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
+ * @returns {Promise<any>}
+ */
+export const sendSNSMessage = async (
+  messageParams: any,
+  messageType: string,
+  retryOptions = {}
+) =>
+  await pRetry(
+    async () => {
+      switch (messageType) {
+        case 'PublishCommand':
+          return await sns().send(new PublishCommand(messageParams));
+        case 'SubscribeCommand':
+          return await sns().send(new SubscribeCommand(messageParams));
+        case 'UnsubscribeCommand':
+          return await sns().send(new UnsubscribeCommand(messageParams));
+        case 'ListSubscriptionsByTopicCommand':
+          return await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
+        case 'CreateTopicCommand':
+          return await sns().send(new CreateTopicCommand(messageParams));
+        case 'DeleteTopicCommand':
+          return await sns().send(new DeleteTopicCommand(messageParams));
+        case 'ConfirmSubscriptionCommand':
+          return await sns().send(new ConfirmSubscriptionCommand(messageParams));
+        default:
+          throw new Error('Unknown SNS command');
+      }
+    },
+    {
+      maxTimeout: 100,
+      onFailedAttempt: (err) => log.debug(`SNSCOMMAND('${messageType}', '${JSON.stringify(messageParams)}') failed with ${err.retriesLeft} retries left: ${JSON.stringify(err)}`),
+      ...retryOptions,
+    }
+  );
 
 /**
  * Publish a message to an SNS topic. Does not catch
@@ -29,10 +80,12 @@ export const publishSnsMessage = async (
         throw new pRetry.AbortError('Missing SNS topic ARN');
       }
 
-      await sns().publish({
-        TopicArn: snsTopicArn,
-        Message: JSON.stringify(message),
-      }).promise();
+      await sns().send(
+        new PublishCommand({
+          TopicArn: snsTopicArn,
+          Message: JSON.stringify(message),
+        })
+      );
     },
     {
       maxTimeout: 5000,
