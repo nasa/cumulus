@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3177**
   - changed `_removeGranuleFromCmr` function for granule `bulkDelete` to not throw an error and instead catch the error when the granule is not found in CMR
+- **CUMULUS-3467**
+  - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
 
 ## [v18.1.0] 2023-10-25
 
