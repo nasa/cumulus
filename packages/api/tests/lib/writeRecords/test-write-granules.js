@@ -35,7 +35,7 @@ const {
   translateApiFiletoPostgresFile,
 } = require('@cumulus/db');
 const { sqs } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const {
   Search,
 } = require('@cumulus/es-client/search');

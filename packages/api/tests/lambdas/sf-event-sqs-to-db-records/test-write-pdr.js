@@ -19,7 +19,7 @@ const {
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
 const { sqs } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const {
   createTestIndex,
   cleanupTestIndex,

@@ -19,7 +19,7 @@ const {
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const { ReconciliationReport } = require('../models');
 
 const testUtils = require('../lib/testUtils');

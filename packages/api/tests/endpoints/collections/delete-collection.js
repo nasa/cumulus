@@ -6,7 +6,7 @@ const {
   s3,
   sqs,
 } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');

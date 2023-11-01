@@ -19,7 +19,7 @@ const {
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
 const { sqs } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const { generateExecutionApiRecordFromMessage } = require('@cumulus/message/Executions');
 
 const {

@@ -14,7 +14,7 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { sqs } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,

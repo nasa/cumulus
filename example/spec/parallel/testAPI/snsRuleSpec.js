@@ -24,7 +24,7 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const {
   waitForRuleInList,
 } = require('../../helpers/ruleUtils');

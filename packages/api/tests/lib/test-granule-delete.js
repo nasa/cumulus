@@ -2,7 +2,7 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { sqs } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 
 const { recordNotFoundString } = require('@cumulus/es-client/search');
 

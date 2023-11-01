@@ -47,7 +47,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 
 const { secretsManager, sfn, s3, sqs } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const { CMR } = require('@cumulus/cmr-client');
 const { metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const indexer = require('@cumulus/es-client/indexer');

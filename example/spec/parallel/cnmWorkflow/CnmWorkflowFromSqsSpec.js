@@ -5,7 +5,7 @@ const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
