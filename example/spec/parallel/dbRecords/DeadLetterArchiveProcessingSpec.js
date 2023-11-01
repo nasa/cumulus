@@ -27,7 +27,7 @@ const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executions');
 const { randomString } = require('@cumulus/common/test-utils');
-const { putJsonS3Object, s3ObjectExists, deleteS3Object } = require('@cumulus/aws-client/S3');
+const { putJsonS3Object, s3ObjectExists, deleteS3Object, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { generateNewArchiveKeyForFailedMessage } = require('@cumulus/api/lambdas/process-s3-dead-letter-archive');
 const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
@@ -291,6 +291,8 @@ describe('A dead letter record archive processing operation', () => {
 
       newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey);
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: newArchiveKey })).toBeTrue();
+      // Check that the JSON object is not empty and contains at least one key
+      expect(Object.keys(await getJsonS3Object(systemBucket, newArchiveKey)).length).toBeGreaterThan(0);
     }
   });
 });

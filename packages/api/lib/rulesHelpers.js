@@ -214,7 +214,7 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
       UUID: id[eventType],
     };
     log.info(`Deleting event source with UUID ${id[eventType]}`);
-    return awsServices.lambda().deleteEventSourceMapping(params).promise();
+    return awsServices.lambda().deleteEventSourceMapping(params);
   }
   log.info(`Event source mapping is shared with another rule. Will not delete kinesis event source for ${rule.name}`);
   return undefined;
@@ -279,7 +279,7 @@ async function deleteSnsTrigger(knex, rule) {
     StatementId: getSnsTriggerPermissionId(rule),
   };
   try {
-    await awsServices.lambda().removePermission(permissionParams).promise();
+    await awsServices.lambda().removePermission(permissionParams);
   } catch (error) {
     if (isResourceNotFoundException(error)) {
       throw new ResourceNotFoundError(error);
@@ -386,7 +386,7 @@ async function addKinesisEventSource(item, lambda) {
     FunctionName: lambda.name,
     EventSourceArn: item.rule.value,
   };
-  const listData = await awsServices.lambda().listEventSourceMappings(listParams).promise();
+  const listData = await awsServices.lambda().listEventSourceMappings(listParams);
   if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
     const currentMapping = listData.EventSourceMappings[0];
 
@@ -397,7 +397,7 @@ async function addKinesisEventSource(item, lambda) {
     return awsServices.lambda().updateEventSourceMapping({
       UUID: currentMapping.UUID,
       Enabled: true,
-    }).promise();
+    });
   }
 
   // create event source mapping
@@ -407,7 +407,7 @@ async function addKinesisEventSource(item, lambda) {
     StartingPosition: 'TRIM_HORIZON',
     Enabled: true,
   };
-  return awsServices.lambda().createEventSourceMapping(params).promise();
+  return awsServices.lambda().createEventSourceMapping(params);
 }
 
 /**
@@ -510,7 +510,7 @@ async function addSnsTrigger(item) {
       SourceArn: item.rule.value,
       StatementId: getSnsTriggerPermissionId(item),
     };
-    await awsServices.lambda().addPermission(permissionParams).promise();
+    await awsServices.lambda().addPermission(permissionParams);
   }
   return subscriptionArn;
 }

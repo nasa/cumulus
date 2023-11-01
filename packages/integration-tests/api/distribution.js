@@ -1,7 +1,7 @@
 'use strict';
 
 const { URL } = require('url');
-const { Lambda } = require('aws-sdk');
+const { lambda } = require('@cumulus/aws-client/services');
 const got = require('got');
 const jwt = require('jsonwebtoken');
 
@@ -15,7 +15,6 @@ const { getEarthdataAccessToken } = require('./EarthdataLogin');
 const log = new Logger({ sender: '@cumulus/api/distribution' });
 
 async function invokeDistributionApiLambda(path, headers) {
-  const lambda = new Lambda();
   const FunctionName = `${process.env.stackName}-DistributionApiEndpoints`;
 
   const event = {
@@ -41,12 +40,12 @@ async function invokeDistributionApiLambda(path, headers) {
     stageVariables: null,
   };
 
-  const data = await lambda.invoke({
+  const data = await lambda().invoke({
     FunctionName,
-    Payload: JSON.stringify(event),
-  }).promise();
+    Payload: new TextEncoder().encode(JSON.stringify(event)),
+  });
 
-  const payload = JSON.parse(data.Payload);
+  const payload = JSON.parse(new TextDecoder('utf-8').decode(data.Payload));
 
   return payload;
 }
@@ -69,7 +68,6 @@ async function invokeTEADistributionLambda(
   path,
   headers
 ) {
-  const lambda = new Lambda();
   const FunctionName = `${process.env.stackName}-thin-egress-app-EgressLambda`;
 
   const event = {
@@ -95,12 +93,12 @@ async function invokeTEADistributionLambda(
     stageVariables: null,
   };
 
-  const data = await lambda.invoke({
+  const data = await lambda().invoke({
     FunctionName,
-    Payload: JSON.stringify(event),
-  }).promise();
+    Payload: new TextEncoder().encode(JSON.stringify(event)),
+  });
 
-  const payload = JSON.parse(data.Payload);
+  const payload = JSON.parse(new TextDecoder('utf-8').decode(data.Payload));
 
   return payload;
 }
@@ -113,7 +111,6 @@ async function invokeTEADistributionLambda(
  * @returns {string} temporary credentials for s3 access
  */
 async function invokeS3CredentialsLambda(path, headers) {
-  const lambda = new Lambda();
   const FunctionName = `${process.env.stackName}-s3-credentials-endpoint`;
 
   const event = {
@@ -122,12 +119,12 @@ async function invokeS3CredentialsLambda(path, headers) {
     headers,
   };
 
-  const data = await lambda.invoke({
+  const data = await lambda().invoke({
     FunctionName,
-    Payload: JSON.stringify(event),
-  }).promise();
+    Payload: new TextEncoder().encode(JSON.stringify(event)),
+  });
 
-  const payload = JSON.parse(data.Payload);
+  const payload = JSON.parse(new TextDecoder('utf-8').decode(data.Payload));
 
   return payload;
 }

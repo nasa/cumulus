@@ -17,6 +17,7 @@
     "stackName": { "type": "string" },
     "executionNamePrefix": { "type": "string" },
     "workflow": { "type": "string" },
-    "workflowInput": { "type": "object" }
+    "workflowInput": { "type": "object" },
+    "childWorkflowMeta": { "type": "object" }
   }
 }

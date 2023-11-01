@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/update-cmr-access-constraints",
-  "version": "18.0.0",
+  "version": "18.1.0",
   "description": "Updates CMR metadata to set access constraints",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
@@ -35,13 +35,13 @@
     "verbose": true
   },
   "dependencies": {
-    "@cumulus/aws-client": "18.0.0",
-    "@cumulus/cmrjs": "18.0.0",
+    "@cumulus/aws-client": "18.1.0",
+    "@cumulus/cmrjs": "18.1.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
     "lodash": "^4.17.5"
   },
   "devDependencies": {
-    "@cumulus/common": "18.0.0",
-    "@cumulus/schemas": "18.0.0"
+    "@cumulus/common": "18.1.0",
+    "@cumulus/schemas": "18.1.0"
   }
 }

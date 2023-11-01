@@ -9,7 +9,7 @@ const { lambda } = require('@cumulus/aws-client/services');
  * @returns {Promise<unknown>} - details about an Event Source Mapping
  */
 async function getEventSourceMapping(uuid) {
-  return await lambda().getEventSourceMapping({ UUID: uuid }).promise();
+  return await lambda().getEventSourceMapping({ UUID: uuid });
 }
 
 /**
@@ -19,7 +19,7 @@ async function getEventSourceMapping(uuid) {
  * @returns {Promise<unknown>}
  */
 async function deleteEventSourceMapping(uuid) {
-  return await lambda().deleteEventSourceMapping({ UUID: uuid }).promise();
+  return await lambda().deleteEventSourceMapping({ UUID: uuid });
 }
 
 module.exports = {

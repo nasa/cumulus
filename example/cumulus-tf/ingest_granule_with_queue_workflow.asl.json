@@ -234,7 +234,8 @@
             "workflow": "{$.meta.workflow}",
             "queueUrl": "${start_sf_queue_url}",
             "provider": "{$.meta.provider}",
-            "collection": "{$.meta.collection}"
+            "collection": "{$.meta.collection}",
+            "childWorkflowMeta": { "file_etags": "{$.meta.file_etags}", "staticValue": "aStaticValue" }
           }
         }
       },
