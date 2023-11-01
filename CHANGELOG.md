@@ -166,6 +166,36 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
   - Updated thrown error to include information related to automatic failure behavior in addition to the stack trace.
 
+## [v16.1.2] 2023-11-01
+
+**Please note** changes in 16.1.2 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3218**
+  - Added optional `maxDownloadTime` field to `provider` schema
+  - Added `max_download_time` column to PostgreSQL `providers` table
+  - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
+
+### Fixed
+
+- **@aws-sdk upgrade**
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
+  - Updated mapping for collection Elasticsearch records to prevent dynamic field for keys under `meta`.
+- **CUMULUS-3286**
+  - Fixed `@cumulus/cmrjs/cmr-utils/getGranuleTemporalInfo` and `@cumulus/message/Granules/getGranuleCmrTemporalInfo`
+    to handle non-existing cmr file.
+  - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
+    `queryFields`.
+- **CUMULUS-3293**
+  - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
+- **CUMULUS-3393**
+  - Fixed `PUT` collection endpoint to update collection configuration in S3.
+- **CUMULUS-3467**
+  - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
+
 ## [v16.1.1] 2023-08-03
 
 ### Notable Changes
@@ -7432,7 +7462,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
-[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
+[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.2...v17.0.0
+[v16.1.2]: https://github.com/nasa/cumulus/compare/v16.1.1...v16.1.2
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
 [v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4

@@ -14,7 +14,7 @@ The data cookbooks assume you can configure providers, collections, and rules to
 
 ## Adding a page
 
-As shown in detail in the "Add a New Page and Sidebars" section in [Cumulus Docs: How To's](docs-how-to.md), you can add a new page to the data cookbook by creating a markdown (`.md`) file in the `docs/data-cookbooks` directory. The new page can then be linked to the sidebar by adding it to the `Data-Cookbooks` object in the `website/sidebar.json` file as `data-cookbooks/${id}`.
+As shown in detail in the "Add a New Page and Sidebars" section in [Cumulus Docs: How To's](../docs-how-to.md), you can add a new page to the data cookbook by creating a markdown (`.md`) file in the `docs/data-cookbooks` directory. The new page can then be linked to the sidebar by adding it to the `Data-Cookbooks` object in the `website/sidebar.json` file as `data-cookbooks/${id}`.
 
 ## More about workflows
 

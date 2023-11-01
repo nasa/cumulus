@@ -73,6 +73,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |:---:|:----|:------:|-----------|
 |id|string|Yes|Unique identifier for the provider|
 |globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider. This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|maxDownloadTime|integer|No|Maximum download time in seconds for all granule files on a sync granule task. The timeout is used together with globalConnectionLimit to limit concurrent downloads. |
 |protocol|string|Yes|The protocol for this provider. Must be `s3` for this provider type. |
 |host|string|Yes|S3 Bucket to pull data from |
 
@@ -82,6 +83,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |:---:|:----|:------:|-----------|
 |id|string|Yes|Unique identifier for the provider|
 |globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|maxDownloadTime|integer|No|Maximum download time in seconds for all granule files on a sync granule task. The timeout is used together with globalConnectionLimit to limit concurrent downloads. |
 |protocol|string|Yes|The protocol for this provider.  Must be `http` for this provider type |
 |host|string|Yes|The host to pull data from (e.g. `nasa.gov`)
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
@@ -96,6 +98,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |:---:|:----|:------:|-----------|
 |id|string|Yes|Unique identifier for the provider|
 |globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|maxDownloadTime|integer|No|Maximum download time in seconds for all granule files on a sync granule task. The timeout is used together with globalConnectionLimit to limit concurrent downloads. |
 |protocol|string|Yes|The protocol for this provider.  Must be `https` for this provider type |
 |host|string|Yes|The host to pull data from (e.g. `nasa.gov`) |
 |username|string|No|Configured username for basic authentication.   Cumulus encrypts this using KMS and uses it in a `Basic` auth header if needed for authentication |
@@ -110,6 +113,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |:---:|:----|:------:|-----------|
 |id|string|Yes|Unique identifier for the provider|
 |globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|maxDownloadTime|integer|No|Maximum download time in seconds for all granule files on a sync granule task. The timeout is used together with globalConnectionLimit to limit concurrent downloads. |
 |protocol|string|Yes|The protocol for this provider.  Must be `ftp` for this provider type |
 |host|string|Yes|The ftp host to pull data from (e.g. `nasa.gov`) |
 |username|string|No|Username to use to connect to the ftp server.  Cumulus encrypts this using KMS. Defaults to `anonymous` if not defined |
@@ -122,6 +126,7 @@ The Provider configuration is defined by a JSON object that takes different conf
 |:---:|:----|:------:|-----------|
 |id|string|Yes|Unique identifier for the provider|
 |globalConnectionLimit|integer|No|Integer specifying the connection limit for the provider.  This is the maximum number of connections Cumulus compatible ingest lambdas are expected to make to a provider.  Defaults to unlimited |
+|maxDownloadTime|integer|No|Maximum download time in seconds for all granule files on a sync granule task. The timeout is used together with globalConnectionLimit to limit concurrent downloads. |
 |protocol|string|Yes|The protocol for this provider.  Must be `sftp` for this provider type |
 |host|string|Yes|The ftp host to pull data from (e.g. `nasa.gov`) |
 |username|string|No|Username to use to connect to the sftp server.|
