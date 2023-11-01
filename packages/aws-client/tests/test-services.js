@@ -276,17 +276,25 @@ test('sfn() service defaults to localstack in test mode', (t) => {
   t.is(sfn.config.endpoint, endpoint);
 });
 
-test('sns() service defaults to localstack in test mode', (t) => {
+test('sns() service defaults to localstack in test mode', async (t) => {
   const sns = services.sns();
   const {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(SNSClient);
   t.deepEqual(
-    sns.config.credentials,
+    await sns.config.credentials(),
     credentials
   );
-  t.is(sns.config.endpoint, endpoint);
+  const snsEndpoint = await sns.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    snsEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('sqs() service defaults to localstack in test mode', (t) => {
