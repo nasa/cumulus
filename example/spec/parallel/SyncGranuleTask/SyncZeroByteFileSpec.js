@@ -66,9 +66,9 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
       const FunctionName = `${prefix}-SyncGranule`;
       const functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
-      }).promise();
+      });
 
-      const Payload = JSON.stringify({
+      const Payload = new TextEncoder().encode(JSON.stringify({
         cma: {
           task_config: {
             buckets: '{$.meta.buckets}',
@@ -116,10 +116,10 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
             },
           },
         },
-      });
+      }));
 
       syncGranuleOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }).promise(),
+        lambda().invoke({ FunctionName, Payload }),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
@@ -133,7 +133,7 @@ describe('The SyncGranule task with a 0 byte file to be synced', () => {
     else {
       expect(syncGranuleOutput.FunctionError).toBe(undefined);
 
-      const parsedPayload = JSON.parse(syncGranuleOutput.Payload);
+      const parsedPayload = JSON.parse(new TextDecoder('utf-8').decode(syncGranuleOutput.Payload));
       const fullTaskOutput = await pullStepFunctionEvent(parsedPayload);
 
       expect(fullTaskOutput.errorType).toBe(undefined);

@@ -13,7 +13,8 @@
             "bucket": "{$.meta.buckets.internal.name}",
             "stack": "{$.meta.stack}",
             "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}"
+            "launchpad": "{$.meta.launchpad}",
+            "etags": "{$.meta.file_etags}"
           }
         }
       },
@@ -58,7 +59,8 @@
             "workflow": "PublishGranuleQueue",
             "queueUrl": "${start_sf_queue_url}",
             "provider": "{$.meta.provider}",
-            "collection": "{$.meta.collection}"
+            "collection": "{$.meta.collection}",
+            "childWorkflowMeta": { "file_etags": "{$.meta.file_etags}", "staticValue": "aStaticValue" }
           }
         }
       },

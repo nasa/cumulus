@@ -81,9 +81,9 @@ test.before(async (t) => {
     },
   };
 
-  sinon.stub(lambda(), 'getFunctionConfiguration').returns({
-    promise: () => Promise.resolve(t.context.functionConfig),
-  });
+  sinon.stub(lambda(), 'getFunctionConfiguration').returns(
+    Promise.resolve(t.context.functionConfig)
+  );
 
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 });

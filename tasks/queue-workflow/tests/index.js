@@ -176,6 +176,7 @@ test.serial('The correct message is enqueued', async (t) => {
   );
   event.config.workflow = t.context.queuedWorkflow;
   event.config.workflowInput = { prop1: randomId('prop1'), prop2: randomId('prop2') };
+  event.config.childWorkflowMeta = { metakey1: randomId('metavalue1') };
 
   await validateConfig(t, event.config);
   await validateInput(t, event.input);
@@ -206,6 +207,7 @@ test.serial('The correct message is enqueued', async (t) => {
     },
     meta: {
       workflow_name: event.config.workflow,
+      ...event.config.childWorkflowMeta,
     },
     payload: {
       prop1: event.config.workflowInput.prop1,
