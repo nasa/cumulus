@@ -3,7 +3,7 @@
 const Ajv = require('ajv');
 const get = require('lodash/get');
 const set = require('lodash/set');
-const { sendSNSMessage } = require('@cumulus/aws-client/services/SNS');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const log = require('@cumulus/common/log');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const {

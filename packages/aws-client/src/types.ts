@@ -8,5 +8,5 @@ import { SNSClient } from '@aws-sdk/client-sns';
 import { Lambda } from '@aws-sdk/client-lambda';
 
 export type AWSClientTypes = APIGatewayClient | DynamoDB
-| DynamoDBClient | DynamoDBStreamsClient | S3 | SNSClient | 
+| DynamoDBClient | DynamoDBStreamsClient | S3 | SNSClient |
 Lambda | AWS.Service | AWS.DynamoDB.DocumentClient;
