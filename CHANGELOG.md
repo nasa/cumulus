@@ -167,6 +167,10 @@ Users/clients that do not make use of these endpoints will not be impacted.
 
 ## [v16.1.2] 2023-11-01
 
+**Please note** changes in 16.1.2 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
 ### Added
 
 - **CUMULUS-3218**
