@@ -28,6 +28,7 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const CollectionConfigStore = require('@cumulus/collection-config-store');
 const {
   InvalidRegexError,
   UnmatchedRegexError,
@@ -356,6 +357,42 @@ test.serial('PUT replaces an existing collection in all data stores with correct
   // PG and ES records have the same timestamps
   t.is(actualPgCollection.created_at.getTime(), updatedEsRecord.createdAt);
   t.is(actualPgCollection.updated_at.getTime(), updatedEsRecord.updatedAt);
+});
+
+test.serial('PUT updates collection configuration store via name and version', async (t) => {
+  const { originalCollection } = await createCollectionTestRecords(
+    t.context,
+    {
+      duplicateHandling: 'replace',
+      process: randomString(),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      meta: { foo: randomString() },
+    }
+  );
+
+  const updatedCollection = {
+    ...originalCollection,
+    updatedAt: Date.now(),
+    createdAt: Date.now(),
+    duplicateHandling: 'error',
+    meta: { foo: { nestedKey: randomString() } },
+  };
+
+  const res = await request(app)
+    .put(`/collections/${originalCollection.name}/${originalCollection.version}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(updatedCollection)
+    .expect(200);
+
+  const collectionConfigStore = new CollectionConfigStore(
+    process.env.system_bucket,
+    process.env.stackName
+  );
+
+  t.deepEqual(await collectionConfigStore.get(originalCollection.name, originalCollection.version),
+    res.body);
 });
 
 test.serial('PUT returns 404 for non-existent collection', async (t) => {

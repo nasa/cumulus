@@ -138,9 +138,11 @@ describe('The S3 Ingest Granules workflow', () => {
 
       // copiedToOrca contains a list of the file s3uri in primary buckets
       const copiedOver = await Promise.all(
-        filesCopiedToOrca.map((s3uri) => {
+        filesCopiedToOrca.map(async (s3uri) => {
           expect(excludedFileExtensions.filter((type) => s3uri.endsWith(type)).length).toBe(0);
-          return s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parseS3Uri(s3uri).Key });
+          const parsedS3Uri = parseS3Uri(s3uri);
+          await deleteS3Object(parsedS3Uri.Bucket, parsedS3Uri.Key);
+          return s3ObjectExists({ Bucket: config.buckets.glacier.name, Key: parsedS3Uri.Key });
         })
       );
       copiedOver.forEach((check) => expect(check).toEqual(true));

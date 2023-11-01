@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/queue-pdrs",
-  "version": "16.1.1",
+  "version": "16.1.2",
   "description": "Add discovered PDRs to a queue",
   "main": "index.js",
   "directories": {
@@ -32,11 +32,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "16.1.1",
-    "@cumulus/common": "16.1.1",
+    "@cumulus/aws-client": "16.1.2",
+    "@cumulus/common": "16.1.2",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/ingest": "16.1.1",
-    "@cumulus/message": "16.1.1",
+    "@cumulus/ingest": "16.1.2",
+    "@cumulus/message": "16.1.2",
     "lodash": "^4.17.21"
   }
 }

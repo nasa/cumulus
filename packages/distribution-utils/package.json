@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/distribution-utils",
-  "version": "16.1.1",
+  "version": "16.1.2",
   "description": "Cumulus Distribution utilities",
   "keywords": [
     "CUMULUS"
@@ -34,9 +34,9 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "16.1.1",
-    "@cumulus/common": "16.1.1",
-    "@cumulus/errors": "16.1.1",
+    "@cumulus/aws-client": "16.1.2",
+    "@cumulus/common": "16.1.2",
+    "@cumulus/errors": "16.1.2",
     "url-join": "^1.1.0"
   },
   "devDependencies": {

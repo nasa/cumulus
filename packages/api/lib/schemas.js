@@ -619,6 +619,11 @@ module.exports.provider = {
       title: 'Concurrent Connection Limit',
       type: 'integer',
     },
+    maxDownloadTime: {
+      title: 'Maximum download time in seconds for all granule files on a sync granule task',
+      type: 'integer',
+      description: 'The timeout is used together with globalConnectionLimit to limit concurrent downloads',
+    },
     protocol: {
       title: 'Protocol',
       type: 'string',
