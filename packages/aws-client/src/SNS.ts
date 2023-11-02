@@ -22,17 +22,13 @@ const log = new Logger({ sender: 'aws-client/sns' });
  *
  * @param {any} messageParams - SNS message
  * @param {string} messageType - Type of sns request
- * @param {Object} retryOptions - options to control retry behavior when publishing
- * a message fails. See https://github.com/tim-kos/node-retry#retryoperationoptions
  * @returns {Promise<any>}
  */
 export const sendSNSMessage = async (
   messageParams: any,
   messageType: string,
-  retryOptions = {}
-) =>
-  await pRetry(
-    async () => {
+) => 
+    {
       switch (messageType) {
         case 'PublishCommand':
           return await sns().send(new PublishCommand(messageParams));
@@ -51,13 +47,7 @@ export const sendSNSMessage = async (
         default:
           throw new Error('Unknown SNS command');
       }
-    },
-    {
-      maxTimeout: 1000,
-      onFailedAttempt: (err) => log.debug(`SNSCOMMAND('${messageType}', '${JSON.stringify(messageParams)}') failed with ${JSON.stringify(err)}, retries left: ${err.retriesLeft}`),
-      ...retryOptions,
-    }
-  );
+    };
 
 /**
  * Publish a message to an SNS topic. Does not catch
