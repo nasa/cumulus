@@ -30,7 +30,8 @@ The last step should be the `QueuePublishWorkflow` step. It should be configured
           "workflow": "{$.meta.workflow}",
           "queueUrl": "${start_sf_queue_url}",
           "provider": "{$.meta.provider}",
-          "collection": "{$.meta.collection}"
+          "collection": "{$.meta.collection}",
+          "childWorkflowMeta": { "file_etags": "{$.meta.file_etags}", "staticValue": "aStaticValue" }
         }
       }
     },
@@ -97,7 +98,8 @@ Then, configure the `QueueWorkflow` task similarly to its configuration in the i
           "workflow": "PublishGranuleQueue",
           "queueUrl": "${start_sf_queue_url}",
           "provider": "{$.meta.provider}",
-          "collection": "{$.meta.collection}"
+          "collection": "{$.meta.collection}",
+          "childWorkflowMeta": { "file_etags": "{$.meta.file_etags}", "staticValue": "aStaticValue" }
         }
       }
     },
