@@ -53,7 +53,7 @@ export const sendSNSMessage = async (
       }
     },
     {
-      maxTimeout: 5000,
+      maxTimeout: 1000,
       onFailedAttempt: (err) => log.debug(`SNSCOMMAND('${messageType}', '${JSON.stringify(messageParams)}') failed with ${JSON.stringify(err)}, retries left: ${err.retriesLeft}`),
       ...retryOptions,
     }
