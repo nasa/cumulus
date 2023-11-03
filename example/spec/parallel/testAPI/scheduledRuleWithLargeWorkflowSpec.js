@@ -110,7 +110,7 @@ describe('When I create a scheduled rule that targets a state machine with > 9k 
     if (beforeAllError) fail(beforeAllError);
   });
 
-  it('the triggered execzution has the requested prefix', () => {
+  it('the triggered execution has the requested prefix', () => {
     if (beforeAllError) fail(beforeAllError);
     expect(executionName.startsWith(executionNamePrefix)).toBeTrue();
   });

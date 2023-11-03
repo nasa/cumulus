@@ -125,7 +125,7 @@ async function buildPayload(rule) {
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
   if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
 
-  const definition = await s3Utils.getJsonS3Object(
+  const fullDefinition = await s3Utils.getJsonS3Object(
     bucket,
     workflowFileKey
   );
@@ -133,7 +133,10 @@ async function buildPayload(rule) {
 
   return {
     template,
-    definition,
+    definition: {
+      name: fullDefinition.name,
+      arn: fullDefinition.arn,
+    },
     provider: rule.provider,
     collection: rule.collection,
     meta: get(rule, 'meta', {}),
