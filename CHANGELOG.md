@@ -23,7 +23,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed overriden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
     account for AWS character limits.
 - **CUMULUS-3479**
-  - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lmabda_memory_sizes`
+  - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
 
 ## [v18.1.0] 2023-10-25
 
