@@ -30,16 +30,18 @@ export const invokeOrcaCopyToArchive = async (
 
   const payload = pick(event, ['input', 'config']);
   const response = await invoke(functionName, payload, 'RequestResponse');
+  const responsePayload = response && response.Payload
+    ? new TextDecoder('utf-8').decode(response.Payload) : '{}';
 
-  log.debug(`invokeOrcaCopyToArchive returns ${response && response.Payload}`);
+  log.debug(`invokeOrcaCopyToArchive returns ${response && responsePayload}`);
 
   if (!isObject(response) || response.StatusCode !== 200) {
-    const errorString = `Failed to invoke orca lambda ${functionName}, response ${response && response.Payload}`;
+    const errorString = `Failed to invoke orca lambda ${functionName}, response ${response && responsePayload}`;
     log.error(errorString);
     throw new Error(errorString);
   }
 
-  return JSON.parse(response.Payload?.toString('base64') ?? '{}');
+  return JSON.parse(responsePayload);
 };
 
 /**

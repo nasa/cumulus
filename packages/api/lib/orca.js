@@ -23,7 +23,7 @@ async function postRequestToOrca({ orcaApiUri = process.env.orca_api_uri, path, 
   }
 
   try {
-    return await got.post(
+    const response = await got.post(
       `${orcaApiUri}/${path}`,
       {
         json: body || {},
@@ -31,6 +31,9 @@ async function postRequestToOrca({ orcaApiUri = process.env.orca_api_uri, path, 
         throwHttpErrors: false,
       }
     );
+    const { statusCode, body: responseBody } = response;
+    log.debug(`ORCA api returned ${statusCode}: ${JSON.stringify(responseBody)}`);
+    return response;
   } catch (error) {
     log.error('postRequestToOrca encountered error:', error);
     throw error;

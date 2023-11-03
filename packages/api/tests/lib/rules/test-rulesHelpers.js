@@ -69,7 +69,7 @@ const createEventSourceMapping = async (rule) => {
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true,
     };
-    return awsServices.lambda().createEventSourceMapping(params).promise();
+    return awsServices.lambda().createEventSourceMapping(params);
   });
   return await Promise.all(eventSourceMapping);
 };
@@ -77,7 +77,7 @@ const createEventSourceMapping = async (rule) => {
 const getKinesisEventMappings = async () => {
   const mappingPromises = eventLambdas.map((lambda) => {
     const mappingParms = { FunctionName: lambda };
-    return awsServices.lambda().listEventSourceMappings(mappingParms).promise();
+    return awsServices.lambda().listEventSourceMappings(mappingParms);
   });
   return await Promise.all(mappingPromises);
 };
@@ -94,7 +94,7 @@ const deleteKinesisEventSourceMappings = async () => {
   );
 
   return await Promise.all(allEventMappings.map((e) =>
-    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID }).promise()));
+    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID })));
 };
 
 test.before(async (t) => {
@@ -126,7 +126,7 @@ test.before(async (t) => {
     Role: randomId('role'),
     Handler: 'index.handler',
     Runtime: 'nodejs16.x',
-  }).promise();
+  });
   process.env.messageConsumer = lambda.FunctionName;
   process.env.messageConsumerArn = lambda.FunctionArn;
 
@@ -1005,7 +1005,7 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
 
   const { Policy } = await awsServices.lambda().getPolicy({
     FunctionName: process.env.messageConsumer,
-  }).promise();
+  });
   const { Statement } = JSON.parse(Policy);
   t.true(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(ruleWithTrigger)));
 
@@ -1017,8 +1017,8 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   await t.throwsAsync(
     awsServices.lambda().getPolicy({
       FunctionName: process.env.messageConsumer,
-    }).promise(),
-    { code: 'ResourceNotFoundException' }
+    }),
+    { name: 'ResourceNotFoundException' }
   );
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
 });
@@ -1478,8 +1478,7 @@ test.serial('Recreating rule triggers for a kinesis type rule over a disabled ru
       .updateEventSourceMapping({
         UUID: mapping.EventSourceMappings[0].UUID,
         Enabled: false,
-      })
-      .promise());
+      }));
 
   // Recreate rule triggers
   await createRuleTrigger(kinesisRule);

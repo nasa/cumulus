@@ -1,8 +1,8 @@
-import { ECS, Lambda } from 'aws-sdk';
+import { ECS } from 'aws-sdk';
 import { Knex } from 'knex';
-
+import { FunctionConfiguration } from '@aws-sdk/client-lambda';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
-import { EnvironmentVariables } from 'aws-sdk/clients/lambda';
+
 import {
   getKnexClient,
   translateApiAsyncOperationToPostgresAsyncOperation,
@@ -34,13 +34,13 @@ type StartEcsTaskReturnType = Promise<PromiseResult<ECS.RunTaskResponse, AWSErro
 
 export const getLambdaConfiguration = async (
   functionName: string
-): Promise<Lambda.FunctionConfiguration> => lambda().getFunctionConfiguration({
+): Promise<FunctionConfiguration> => lambda().getFunctionConfiguration({
   FunctionName: functionName,
-}).promise();
+});
 
 export const getLambdaEnvironmentVariables = (
-  configuration: Lambda.FunctionConfiguration
-): EnvironmentVariables[] => Object.entries(configuration?.Environment?.Variables ?? {}).map(
+  configuration: FunctionConfiguration
+): Record<string, string>[] => Object.entries(configuration?.Environment?.Variables ?? {}).map(
   (obj) => ({
     name: obj[0],
     value: obj[1],
@@ -90,7 +90,7 @@ export const startECSTask = async ({
     { name: 'asyncOperationId', value: id },
     { name: 'lambdaName', value: lambdaName },
     { name: 'payloadUrl', value: `s3://${payloadBucket}/${payloadKey}` },
-  ] as EnvironmentVariables[];
+  ] as Record<string, string>[];
   let taskVars = envVars;
 
   const callerLambdaConfig = await getLambdaConfiguration(callerLambdaName);

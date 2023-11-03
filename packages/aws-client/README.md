@@ -298,7 +298,7 @@ Describe a Kinesis stream.
 ## Lambda
 <a name="module_Lambda.invoke"></a>
 
-### Lambda.invoke(name, payload, type) ⇒ <code>Promise.&lt;AWS.Lambda.InvocationResponse&gt;</code>
+### Lambda.invoke(name, payload, type) ⇒ <code>Promise.&lt;InvokeCommandOutput&gt;</code>
 Invoke a Lambda function
 
 **Kind**: static method of [<code>Lambda</code>](#module_Lambda)  

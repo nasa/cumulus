@@ -24,7 +24,7 @@ const localStackPorts = {
   iam: 4566,
   kinesis: 4566,
   kms: 4566,
-  lambda: 4566,
+  Lambda: 4566,
   redshift: 4566,
   route53: 4566,
   S3: 4566,

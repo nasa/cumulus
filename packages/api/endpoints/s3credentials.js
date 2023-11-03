@@ -29,19 +29,19 @@ async function requestTemporaryCredentialsFromNgap({
   policy = undefined,
   roleSessionName,
 }) {
-  const Payload = JSON.stringify({
+  const Payload = new TextEncoder().encode(JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
     duration: '3600', // one hour max allowed by AWS.
     rolesession: roleSessionName, // <- shows up in S3 server access logs
     userid: userId, // <- used by NGAP
     policy,
-  });
+  }));
 
   return await lambda.invoke({
     FunctionName: lambdaFunctionName,
     Payload,
-  }).promise();
+  });
 }
 
 /**
@@ -119,11 +119,11 @@ function formatAllowedBucketKeys(cmrAllowedBucketKeyList) {
     pathlist.push(bucketKeyPair.keypath);
   });
 
-  return JSON.stringify({
+  return new TextEncoder().encode(JSON.stringify({
     accessmode: 'Allow',
     bucketlist,
     pathlist,
-  });
+  }));
 }
 
 /**
@@ -146,8 +146,7 @@ async function fetchPolicyForUser(edlUser, cmrProvider, lambda) {
   return lambda.invoke({
     FunctionName: process.env.STS_POLICY_HELPER_LAMBDA,
     Payload,
-  }).promise()
-    .then((lambdaReturn) => JSON.parse(lambdaReturn.Payload));
+  }).then((lambdaReturn) => JSON.parse(new TextDecoder('utf-8').decode(lambdaReturn.Payload)));
 }
 
 /**
@@ -183,11 +182,12 @@ async function s3credentials(req, res) {
     policy,
   });
 
-  const creds = JSON.parse(credentials.Payload);
+  const decodedOuputPayload = new TextDecoder('utf-8').decode(credentials.Payload);
+  const creds = JSON.parse(decodedOuputPayload);
   if (Object.keys(creds).some((key) => ['errorMessage', 'errorType', 'stackTrace'].includes(key))) {
-    log.error(credentials.Payload);
+    log.error(decodedOuputPayload);
     return res.boom.failedDependency(
-      `Unable to retrieve credentials from Server: ${credentials.Payload}`
+      `Unable to retrieve credentials from Server: ${decodedOuputPayload}`
     );
   }
   return res.send(creds);

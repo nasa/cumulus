@@ -69,8 +69,6 @@ test.before(async (t) => {
   t.context.rulePgModel = new RulePgModel();
   t.context.granulePgModel = new GranulePgModel();
 
-  process.env.stackName = randomId('stack');
-  process.env.system_bucket = randomId('bucket');
   await s3().createBucket({ Bucket: process.env.system_bucket });
 
   const { esIndex, esClient } = await createTestIndex();

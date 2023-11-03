@@ -11,6 +11,7 @@ import {
   CreateTableInput,
   DeleteTableInput,
   ScanInput,
+  Select,
 } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocument,
@@ -83,7 +84,7 @@ export const scan = improveStackTrace(
     },
     fields?: string,
     limit?: number,
-    select: string,
+    select: Select,
     startKey?: ScanInput['ExclusiveStartKey']
   }) => {
     const {

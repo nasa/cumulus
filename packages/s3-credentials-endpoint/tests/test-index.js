@@ -83,13 +83,11 @@ test.after.always(async () => {
 
 test.serial('An authorized s3credential request invokes NGAPs request for credentials with username from accessToken cookie', async (t) => {
   const username = randomId('username');
-  const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
+  const fakeCredential = { Payload: new TextEncoder().encode(JSON.stringify({ fake: 'credential' })) };
 
   const spy = sinon.spy(() => Promise.resolve(fakeCredential));
   const stub = sinon.stub(awsServices, 'lambda').callsFake(() => ({
-    invoke: (params) => ({
-      promise: () => spy(params),
-    }),
+    invoke: (params) => spy(params),
   }));
 
   const accessTokenRecord = fakeAccessTokenFactory({ username });
@@ -97,13 +95,13 @@ test.serial('An authorized s3credential request invokes NGAPs request for creden
 
   process.env.STS_CREDENTIALS_LAMBDA = 'Fake-NGAP-Credential-Dispensing-Lambda';
   const FunctionName = process.env.STS_CREDENTIALS_LAMBDA;
-  const Payload = JSON.stringify({
+  const Payload = new TextEncoder().encode(JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
     duration: '3600',
     rolesession: username,
     userid: username,
-  });
+  }));
 
   await request(distributionApp)
     .get('/s3credentials')
@@ -241,24 +239,22 @@ test.serial('An s3credential request with DISABLE_S3_CREDENTIALS set to true res
 
 test.serial('An s3credential request with a valid bearer token invokes NGAPs request for credentials with username from token', async (t) => {
   const username = t.context.stubbedAccessToken.username;
-  const fakeCredential = { Payload: JSON.stringify({ fake: 'credential' }) };
+  const fakeCredential = { Payload: new TextEncoder().encode(JSON.stringify({ fake: 'credential' })) };
 
   const spy = sinon.spy(() => Promise.resolve(fakeCredential));
   const stub = sinon.stub(awsServices, 'lambda').callsFake(() => ({
-    invoke: (params) => ({
-      promise: () => spy(params),
-    }),
+    invoke: (params) => spy(params),
   }));
 
   process.env.STS_CREDENTIALS_LAMBDA = 'Fake-NGAP-Credential-Dispensing-Lambda';
   const FunctionName = process.env.STS_CREDENTIALS_LAMBDA;
-  const Payload = JSON.stringify({
+  const Payload = new TextEncoder().encode(JSON.stringify({
     accesstype: 'sameregion',
     returntype: 'lowerCamel',
     duration: '3600',
     rolesession: username,
     userid: username,
-  });
+  }));
 
   await request(distributionApp)
     .get('/s3credentials')
