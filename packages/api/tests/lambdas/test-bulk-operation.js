@@ -212,7 +212,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -224,7 +224,7 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-  const { SubscriptionArn } = sendSNSMessage({
+  const { SubscriptionArn } = await sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
