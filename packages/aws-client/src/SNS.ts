@@ -12,8 +12,8 @@ import {
   CreateTopicCommand,
   DeleteTopicCommand,
   ConfirmSubscriptionCommand,
+  SNSClient,
 } from '@aws-sdk/client-sns';
-import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
@@ -28,21 +28,22 @@ export const sendSNSMessage = async (
   messageParams: any,
   messageType: string
 ) => {
+  const snsClient = new SNSClient({});
   switch (messageType) {
     case 'PublishCommand':
-      return await sns().send(new PublishCommand(messageParams));
+      return await snsClient.send(new PublishCommand(messageParams));
     case 'SubscribeCommand':
-      return await sns().send(new SubscribeCommand(messageParams));
+      return await snsClient.send(new SubscribeCommand(messageParams));
     case 'UnsubscribeCommand':
-      return await sns().send(new UnsubscribeCommand(messageParams));
+      return await snsClient.send(new UnsubscribeCommand(messageParams));
     case 'ListSubscriptionsByTopicCommand':
-      return await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
+      return await snsClient.send(new ListSubscriptionsByTopicCommand(messageParams));
     case 'CreateTopicCommand':
-      return await sns().send(new CreateTopicCommand(messageParams));
+      return await snsClient.send(new CreateTopicCommand(messageParams));
     case 'DeleteTopicCommand':
-      return await sns().send(new DeleteTopicCommand(messageParams));
+      return await snsClient.send(new DeleteTopicCommand(messageParams));
     case 'ConfirmSubscriptionCommand':
-      return await sns().send(new ConfirmSubscriptionCommand(messageParams));
+      return await snsClient.send(new ConfirmSubscriptionCommand(messageParams));
     default:
       throw new Error('Unknown SNS command');
   }
@@ -68,13 +69,10 @@ export const publishSnsMessage = async (
       if (!snsTopicArn) {
         throw new pRetry.AbortError('Missing SNS topic ARN');
       }
-
-      await sns().send(
-        new PublishCommand({
-          TopicArn: snsTopicArn,
-          Message: JSON.stringify(message),
-        })
-      );
+      await sendSNSMessage({
+        TopicArn: snsTopicArn,
+        Message: JSON.stringify(message),
+      }, 'PublishCommand');
     },
     {
       maxTimeout: 5000,
