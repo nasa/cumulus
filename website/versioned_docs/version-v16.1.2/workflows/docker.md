@@ -8,12 +8,12 @@ The software used for processing data amongst DAAC's is developed in a variety o
 
 ## Using Docker
 
-Docker images are run using the `docker` command and can be used to build a Docker image from a Dockerfile, fetch an existing image from a remote repository, or run an existing image. In Cumulus, `docker-compose` is used to help developers by making it easy to build images locally and test them.
+Docker images are run using the `docker` command and can be used to build a Docker image from a Dockerfile, fetch an existing image from a remote repository, or run an existing image. In Cumulus, `docker compose` is used to help developers by making it easy to build images locally and test them.
 
-To run a command using docker-compose use:
+To run a command using docker compose use:
 
 ```bash
-docker-compose run *command*
+docker compose run *command*
 ```
 
 where *command* is one of
@@ -34,13 +34,13 @@ pip install awscli
 aws ecr get-login --region us-east-1 | source /dev/stdin
 ```
 
-As long as you have permissions to access the NASA Cumulus AWS account, this will allow you to pull images from AWS ECR, and push rebuilt or new images there as well. Docker-compose may also be used to push images.
+As long as you have permissions to access the NASA Cumulus AWS account, this will allow you to pull images from AWS ECR, and push rebuilt or new images there as well. docker compose may also be used to push images.
 
 ```bash
-docker-compose push
+docker compose push
 ```
 
-Which will push the built image to AWS ECR. Note that the image built by docker-compose will have is the `:latest` tag, and will overwrite the `:latest` tagged docker image on the registry.  This file should be updated to push to a different tag if overwriting is not desired.
+Which will push the built image to AWS ECR. Note that the image built by docker compose will have is the `:latest` tag, and will overwrite the `:latest` tagged docker image on the registry.  This file should be updated to push to a different tag if overwriting is not desired.
 
 In normal use-cases for most production images on either repository,  CircleCI takes care of this building and deploying process
 
@@ -194,10 +194,10 @@ The docker image for a process can be used on the retrieved test data. First cre
 mkdir data/test-output
 ```
 
-Then run the docker image using docker-compose.
+Then run the docker image using docker compose.
 
 ```bash
-docker-compose run test
+docker compose run test
 ```
 
 This will process the data in the data/input directory and put the output into data/test-output. Repositories also include Python based tests which will validate this newly created output to the contents of data/output. Use Python's Nose tool to run the included tests.
