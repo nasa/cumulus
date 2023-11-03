@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## [v18.1.1] 2023-11-27
+
+### Fixed
+
+- **CUMULUS-3474**
+  - Fixed overriden changes to `rules.buildPayload' to restore changes from
+    ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+    account for AWS character limits.
+
 ## [v18.1.0] 2023-10-25
 
 ### MIGRATION notes
@@ -7414,7 +7423,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.1.1...HEAD
+[v18.1.1]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.1.1
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
 [v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
