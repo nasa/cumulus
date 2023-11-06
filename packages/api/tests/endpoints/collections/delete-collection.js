@@ -102,7 +102,7 @@ test.beforeEach(async (t) => {
   await t.context.collectionPgModel.create(t.context.testKnex, t.context.testCollection);
 
   const topicName = randomString();
-  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -114,7 +114,7 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-  const { SubscriptionArn } = await sendSNSMessage({
+  const { SubscriptionArn } = sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
@@ -128,7 +128,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
+  sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
 });
 
 test.after.always(async (t) => {

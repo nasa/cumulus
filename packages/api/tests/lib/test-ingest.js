@@ -141,7 +141,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await sendSNSMessage({ TopicArn: t.context.granules_sns_topic_arn }, 'DeleteTopicCommand');
+  sendSNSMessage({ TopicArn: t.context.granules_sns_topic_arn }, 'DeleteTopicCommand');
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {

@@ -168,8 +168,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await sendSNSMessage({ Name: executionsTopicName }, 'CreateTopicCommand');
-  const pdrsTopic = await sendSNSMessage({ Name: pdrsTopicName }, 'CreateTopicCommand');
+  const executionsTopic = sendSNSMessage({ Name: executionsTopicName }, 'CreateTopicCommand');
+  const pdrsTopic = sendSNSMessage({ Name: pdrsTopicName }, 'CreateTopicCommand');
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -188,7 +188,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -198,13 +198,13 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-  const { SubscriptionArn } = await sendSNSMessage({
+  const { SubscriptionArn } = sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
   }, 'SubscribeCommand');
 
-  await sendSNSMessage({
+  sendSNSMessage({
     TopicArn,
     Token: SubscriptionArn,
   }, 'ConfirmSubscriptionCommand');
@@ -284,8 +284,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await sendSNSMessage({ TopicArn: ExecutionsTopicArn }, 'DeleteTopicCommand');
-  await sendSNSMessage({ TopicArn: PdrsTopicArn }, 'DeleteTopicCommand');
+  sendSNSMessage({ TopicArn: ExecutionsTopicArn }, 'DeleteTopicCommand');
+  sendSNSMessage({ TopicArn: PdrsTopicArn }, 'DeleteTopicCommand');
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {

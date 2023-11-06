@@ -448,16 +448,16 @@ async function addKinesisEventSources(rule) {
  *  subExists - boolean
  *  existingSubscriptionArn - ARN of subscription
  */
-async function checkForSnsSubscriptions(ruleItem) {
+function checkForSnsSubscriptions(ruleItem) {
   let token;
   let subExists = false;
   let subscriptionArn;
   /* eslint-disable no-await-in-loop */
   do {
-    const subsResponse = await sendSNSMessage(({
+    const subsResponse = sendSNSMessage(({
       TopicArn: ruleItem.rule.value,
       NextToken: token,
-    }), 'ListSubscriptionByTopicCOmmand');
+    }), 'ListSubscriptionsByTopicCOmmand');
     token = subsResponse.NextToken;
     if (subsResponse.Subscriptions) {
       /* eslint-disable no-loop-func */
@@ -500,7 +500,7 @@ async function addSnsTrigger(item) {
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
-    const r = await sendSNSMessage(subscriptionParams, 'SubscribeCommand');
+    const r = sendSNSMessage(subscriptionParams, 'SubscribeCommand');
     subscriptionArn = r.SubscriptionArn;
     // create permission to invoke lambda
     const permissionParams = {

@@ -37,11 +37,11 @@ function validateMessage(event, originalMessageSource, messageSchema) {
  * @param {Object} record - errored record
  * @returns {Promise<Object>} - SNS publish response
  */
-async function publishRecordToFallbackTopic(record) {
+function publishRecordToFallbackTopic(record) {
   const fallbackArn = process.env.FallbackTopicArn;
   log.info('publishing bad kinesis record to Topic:', fallbackArn);
   log.info('record:', JSON.stringify(record));
-  return await sendSNSMessage({
+  return sendSNSMessage({
     TopicArn: fallbackArn,
     Message: JSON.stringify(record),
   }, 'PublishCommand');

@@ -129,7 +129,7 @@ test.beforeEach(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.pdr_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -141,13 +141,13 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-  const { SubscriptionArn } = await sendSNSMessage({
+  const { SubscriptionArn } = sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
   }, 'SubscribeCommand');
 
-  await sendSNSMessage({
+  sendSNSMessage({
     TopicArn,
     Token: SubscriptionArn,
   }, 'ConfirmSubscriptionCommand');
@@ -156,7 +156,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
+  sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
 });
 
 test.after.always(async (t) => {
