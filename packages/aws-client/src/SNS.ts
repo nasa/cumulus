@@ -4,7 +4,6 @@
 
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
-import AWS from 'aws-sdk';
 import {
   PublishCommand,
   SubscribeCommand,
@@ -14,10 +13,11 @@ import {
   DeleteTopicCommand,
   ConfirmSubscriptionCommand,
   SNSClient,
-  SNSClientConfig
+  SNSClientConfig,
 } from '@aws-sdk/client-sns';
 
 const log = new Logger({ sender: 'aws-client/sns' });
+const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
 
 /**
  * Helper function for sending SNS messages for sdk v3, mainly for testing purposes
@@ -30,7 +30,14 @@ export const sendSNSMessage = async (
   messageParams: any,
   messageType: string
 ) => {
-  const snsClient = new SNSClient(AWS.config as SNSClientConfig);
+  const config = {
+    region: getRegion(),
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  };
+  const snsClient = new SNSClient(config as SNSClientConfig);
   switch (messageType) {
     case 'PublishCommand':
       return await snsClient.send(new PublishCommand(messageParams));
