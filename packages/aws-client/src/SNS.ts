@@ -16,6 +16,7 @@ import {
 } from '@aws-sdk/client-sns';
 
 const log = new Logger({ sender: 'aws-client/sns' });
+const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
 
 /**
  * Helper function for sending SNS messages for sdk v3, mainly for testing purposes
@@ -28,7 +29,7 @@ export const sendSNSMessage = async (
   messageParams: any,
   messageType: string
 ) => {
-  const snsClient = new SNSClient({});
+  const snsClient = new SNSClient({ region: getRegion() });
   switch (messageType) {
     case 'PublishCommand':
       return await snsClient.send(new PublishCommand(messageParams));
