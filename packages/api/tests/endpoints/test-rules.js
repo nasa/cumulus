@@ -3021,4 +3021,33 @@ test('POST creates a rule in all data stores', async (t) => {
   );
   t.like(esRecord, translatedPgRecord);
  );
+ test('DELETE deletes a rule', async (t) => {
+  const {
+    originalPgRecord,
+  } = await createRuleTestRecords(
+    t.context,
+    {
+      workflow,
+    }
+  );
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
+
+  const response = await request(app)
+    .delete(`/rules/${originalPgRecord.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { message } = response.body;
+  const dbRecords = await t.context.rulePgModel
+    .search(t.context.testKnex, { name: originalPgRecord.name });
+
+  t.is(dbRecords.length, 0);
+  t.is(message, 'Record deleted');
+  t.false(
+    await t.context.esRulesClient.exists(
+      originalPgRecord.name
+    )
+  );
+});
 });
