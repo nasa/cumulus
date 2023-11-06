@@ -2993,12 +2993,12 @@ test('POST creates a rule in all data stores', async (t) => {
   };
 
   await collectionPgModel.create(
-    testKnex,
+    testKnex1,
     translateApiCollectionToPostgresCollection(fakeCollection)
   );
 
   await providerPgModel.create(
-    testKnex,
+    testKnex1,
     await translateApiProviderToPostgresProvider(fakeProvider)
   );
 
@@ -3011,10 +3011,10 @@ test('POST creates a rule in all data stores', async (t) => {
 
   const { message } = response.body;
   const fetchedPostgresRecord = await rulePgModel
-    .get(testKnex, { name: newRule.name });
+    .get(testKnex1, { name: newRule.name });
 
   t.is(message, 'Record saved');
-  const translatedPgRecord = await translatePostgresRuleToApiRule(fetchedPostgresRecord, testKnex);
+  const translatedPgRecord = await translatePostgresRuleToApiRule(fetchedPostgresRecord, testKnex1);
 
   const esRecord = await t.context.esRulesClient.get(
     newRule.name
@@ -3030,7 +3030,7 @@ test('POST creates a rule in all data stores', async (t) => {
       workflow,
     }
   );
-  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex1, { name: originalPgRecord.name }));
 
   const response = await request(app)
     .delete(`/rules/${originalPgRecord.name}`)
@@ -3040,7 +3040,7 @@ test('POST creates a rule in all data stores', async (t) => {
 
   const { message } = response.body;
   const dbRecords = await t.context.rulePgModel
-    .search(t.context.testKnex, { name: originalPgRecord.name });
+    .search(t.context.testKnex1, { name: originalPgRecord.name });
 
   t.is(dbRecords.length, 0);
   t.is(message, 'Record deleted');
