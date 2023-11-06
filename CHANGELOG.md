@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
 - **CUMULUS-3467**
   - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
+- **CUMULUS-3474**
+  - Fixed overriden changes to `rules.buildPayload' to restore changes from
+    ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+    account for AWS character limits.
 
 ## [v18.1.0] 2023-10-25
 
