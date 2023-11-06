@@ -69,7 +69,7 @@ export const publishSnsMessage = async (
       if (!snsTopicArn) {
         throw new pRetry.AbortError('Missing SNS topic ARN');
       }
-      await sendSNSMessage({
+      sendSNSMessage({
         TopicArn: snsTopicArn,
         Message: JSON.stringify(message),
       }, 'PublishCommand');

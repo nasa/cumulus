@@ -52,8 +52,8 @@ test.afterEach(async (t) => {
 
   await Promise.all([
     sqs().deleteQueue({ QueueUrl }).promise(),
-    sendSNSMessage({ TopicArn }, 'DeleteTopicCommand'),
   ]);
+  sendSNSMessage({ TopicArn }, 'DeleteTopicCommand');
 });
 
 test.serial('publishSnsMessageByDataType() does not publish an execution SNS message if execution_sns_topic_arn is undefined', async (t) => {
