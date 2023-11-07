@@ -12,8 +12,8 @@ import {
   CreateTopicCommand,
   DeleteTopicCommand,
   ConfirmSubscriptionCommand,
-  SNSClient,
 } from '@aws-sdk/client-sns';
+import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 /**
@@ -27,30 +27,29 @@ export const sendSNSMessage = async (
   messageParams: any,
   messageType: string
 ) => {
-  const snsClient = new SNSClient({});
   let command;
   switch (messageType) {
     case 'PublishCommand':
       command = new PublishCommand(messageParams);
-      return await snsClient.send(command);
+      return await sns().send(command);
     case 'SubscribeCommand':
       command = new SubscribeCommand(messageParams);
-      return await snsClient.send(command);
+      return await sns().send(command);
     case 'UnsubscribeCommand':
       command = new UnsubscribeCommand(messageParams);
-      return await snsClient.send(command);
+      return await sns().send(command);
     case 'ListSubscriptionsByTopicCommand':
       command = new ListSubscriptionsByTopicCommand(messageParams);
-      return await snsClient.send(command);
+      return await sns().send(command);
     case 'CreateTopicCommand':
       command = new CreateTopicCommand(messageParams);
-      return await snsClient.send(command);
+      return await sns().send(command);
     case 'DeleteTopicCommand':
       command = new DeleteTopicCommand(messageParams);
-      return await snsClient.send(command);
+      return await sns().send(command);
     case 'ConfirmSubscriptionCommand':
       command = new ConfirmSubscriptionCommand(messageParams);
-      return await snsClient.send(command);
+      return await sns().send(command);
     default:
       throw new Error('Unknown SNS command');
   }

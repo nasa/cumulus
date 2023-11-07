@@ -55,6 +55,10 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
 Users/clients that do not make use of these endpoints will not be impacted.
 
+### Breaking Changes
+- **CUMULUS-3427**
+  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+
 ### Notable Changes
 
 - **CUMULUS-3095**
@@ -100,7 +104,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 - **CUMULUS-3427**
   - Fixed issue where some lambda and task memory sizes and timeouts were not configurable
-  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 - **@aws-sdk upgrade**
   - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
 
