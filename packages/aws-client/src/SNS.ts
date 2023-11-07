@@ -28,21 +28,29 @@ export const sendSNSMessage = async (
   messageType: string
 ) => {
   const snsClient = new SNSClient({});
+  let command;
   switch (messageType) {
     case 'PublishCommand':
-      return await snsClient.send(new PublishCommand(messageParams));
+      command = new PublishCommand(messageParams);
+      return await snsClient.send(command);
     case 'SubscribeCommand':
-      return await snsClient.send(new SubscribeCommand(messageParams));
+      command = new SubscribeCommand(messageParams);
+      return await snsClient.send(command);
     case 'UnsubscribeCommand':
-      return await snsClient.send(new UnsubscribeCommand(messageParams));
+      command = new UnsubscribeCommand(messageParams);
+      return await snsClient.send(command);
     case 'ListSubscriptionsByTopicCommand':
-      return await snsClient.send(new ListSubscriptionsByTopicCommand(messageParams));
+      command = new ListSubscriptionsByTopicCommand(messageParams);
+      return await snsClient.send(command);
     case 'CreateTopicCommand':
-      return await snsClient.send(new CreateTopicCommand(messageParams));
+      command = new CreateTopicCommand(messageParams);
+      return await snsClient.send(command);
     case 'DeleteTopicCommand':
-      return await snsClient.send(new DeleteTopicCommand(messageParams));
+      command = new DeleteTopicCommand(messageParams);
+      return await snsClient.send(command);
     case 'ConfirmSubscriptionCommand':
-      return await snsClient.send(new ConfirmSubscriptionCommand(messageParams));
+      command = new ConfirmSubscriptionCommand(messageParams);
+      return await snsClient.send(command);
     default:
       throw new Error('Unknown SNS command');
   }
