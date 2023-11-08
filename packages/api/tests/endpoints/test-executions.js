@@ -215,7 +215,6 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-
   const { SubscriptionArn } = sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
