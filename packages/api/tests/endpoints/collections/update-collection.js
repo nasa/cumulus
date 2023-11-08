@@ -107,6 +107,7 @@ test.beforeEach(async (t) => {
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
+    ReturnSubscriptionArn: true,
   }, 'SubscribeCommand');
 
   sendSNSMessage({
