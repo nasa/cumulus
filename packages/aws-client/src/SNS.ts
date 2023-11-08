@@ -26,26 +26,17 @@ const log = new Logger({ sender: 'aws-client/sns' });
  */
 export const sendMessage = async (
   command: any,
-  messageType: string,
-  retryOptions = {}
-) =>
-  await pRetry(
-    async () => {
-      let response;
-      try {
-        response = await sns().send(command);
-      } catch (error) {
-        log.error(`Error invoking ${messageType} SNS command`, error);
-        throw error;
-      }
-      return response;
-    },
-    {
-      maxTimeout: 1000,
-      onFailedAttempt: (err) => log.debug(`SNS Command failed with ${err.retriesLeft} retries left: ${JSON.stringify(err)}`),
-      ...retryOptions,
-    }
-  );
+  messageType: string
+) => {
+  let response;
+  try {
+    response = await sns().send(command);
+  } catch (error) {
+    log.error(`Error invoking ${messageType} SNS command`, error);
+    throw error;
+  }
+  return response;
+};
 
 /**
  * Helper function for sending SNS messages for sdk v3, decides by type
