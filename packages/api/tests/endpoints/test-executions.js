@@ -216,14 +216,14 @@ test.beforeEach(async (t) => {
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
   const { SubscriptionArn } = sendSNSMessage({
-    TopicArn,
+    TopicArn: TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
     ReturnSubscriptionArn: true,
   }, 'SubscribeCommand');
 
   sendSNSMessage({
-    TopicArn,
+    TopicArn: TopicArn,
     Token: SubscriptionArn,
   }, 'ConfirmSubscriptionCommand');
 

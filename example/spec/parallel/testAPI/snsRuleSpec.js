@@ -37,7 +37,7 @@ const {
 } = require('../../helpers/testUtils');
 
 function getNumberOfTopicSubscriptions(snsTopicArn) {
-  const subs = sendSNSMessage({ TopicArn: snsTopicArn }, 'ListSubscriptionByTopicCommand');
+  const subs = sendSNSMessage({ TopicArn: snsTopicArn }, 'ListSubscriptionsByTopicCommand');
   return subs.Subscriptions.length;
 }
 
@@ -356,7 +356,7 @@ describe('The SNS-type rule', () => {
         const { TopicArn } = sendSNSMessage({ Name: newValueTopicName }, 'CreateTopicCommand');
         newTopicArn = TopicArn;
         const subscriptionParams = {
-          TopicArn,
+          TopicArn: TopicArn,
           Protocol: 'lambda',
           Endpoint: (await lambda().getFunction({ FunctionName: consumerName })).Configuration.FunctionArn,
           ReturnSubscriptionArn: true,
