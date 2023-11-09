@@ -120,6 +120,7 @@
     }
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.1.0"
+    "@cumulus/test-data": "18.1.0",
+    "ava": "^5.3.1"
   }
 }
