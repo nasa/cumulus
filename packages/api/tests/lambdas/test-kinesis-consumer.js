@@ -109,7 +109,7 @@ test.beforeEach((t) => {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
   };
-  publishStub = sinon.stub(snsClient, 'send').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
+  publishStub = sinon.stub('sendSNSMessage').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
 
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
