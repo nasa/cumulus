@@ -5,7 +5,7 @@ const test = require('ava');
 const proxyquire = require('proxyquire');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
-const { s3 } = require('@cumulus/aws-client/services');
+const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
@@ -18,6 +18,8 @@ const { handler } = proxyquire('../../lambdas/message-consumer', {
     queueMessageForRule: queueMessageStub,
   },
 });
+
+const snsClient = sns();
 
 const testCollectionName = 'test-collection';
 
@@ -107,7 +109,7 @@ test.beforeEach((t) => {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
   };
-  publishStub = sinon.stub('sendSNSMessage').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
+  publishStub = sinon.stub(snsClient, 'send').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
 
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
@@ -239,7 +241,7 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
 
 test.serial('An error publishing falllback record for Kinesis message should re-throw error from validation', async (t) => {
   publishStub.restore();
-  publishStub = sinon.stub('sendSNSMessage').callsFake(() => {
+  publishStub = sinon.stub(snsClient, 'send').callsFake(() => {
     throw new Error('fail');
   });
 
