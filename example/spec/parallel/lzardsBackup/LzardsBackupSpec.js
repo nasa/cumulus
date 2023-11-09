@@ -48,7 +48,7 @@ describe('The Lzards Backup Task ', () => {
       lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
       functionConfig = await lambda().getFunctionConfiguration({
         FunctionName,
-      }).promise();
+      });
       granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
@@ -72,7 +72,7 @@ describe('The Lzards Backup Task ', () => {
         }
       );
 
-      const Payload = JSON.stringify(
+      const Payload = new TextEncoder().encode(JSON.stringify(
         {
           cma: {
             ReplaceConfig: {
@@ -160,10 +160,10 @@ describe('The Lzards Backup Task ', () => {
             },
           },
         }
-      );
+      ));
 
       lzardsBackupOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }).promise(),
+        lambda().invoke({ FunctionName, Payload }),
         (functionConfig.Timeout + 10) * 1000
       );
 
@@ -182,7 +182,7 @@ describe('The Lzards Backup Task ', () => {
   });
 
   it('has the expected backup information', () => {
-    const backupStatus = JSON.parse(lzardsBackupOutput.Payload).meta.backupStatus;
+    const backupStatus = JSON.parse(new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)).meta.backupStatus;
     console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
     expect(backupStatus[0].status).toBe('COMPLETED');
     expect(backupStatus[0].statusCode).toBe(201);
@@ -196,13 +196,13 @@ describe('The Lzards Backup Task ', () => {
     it('throws an error when no search parameters are provided', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        const lzardsGetPayload = JSON.stringify({ searchParams: {} });
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({ searchParams: {} }));
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
           (functionConfig.Timeout + 10) * 1000
         );
 
-        const payload = JSON.parse(lzardsApiGetOutput.Payload);
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
 
         expect(lzardsApiGetOutput.FunctionError).toBe('Unhandled');
         expect(payload.errorMessage).toBe('The required searchParams is not provided or empty');
@@ -212,18 +212,18 @@ describe('The Lzards Backup Task ', () => {
     it('returns info for a request for a single granule successfully backed up to lzards', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        const lzardsGetPayload = JSON.stringify({
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
             'metadata[collection]': `${collection.name}___${collection.version}`,
             'metadata[granuleId]': granuleId,
           },
-        });
+        }));
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
           (functionConfig.Timeout + 50) * 1000
         );
 
-        const payload = JSON.parse(lzardsApiGetOutput.Payload);
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(3);
@@ -236,21 +236,21 @@ describe('The Lzards Backup Task ', () => {
     it('returns info for a request with date range provided', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        const lzardsGetPayload = JSON.stringify({
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
             pageLimit: 25,
             'metadata[provider]': provider,
             'metadata[createdAt][gte]': thirtyMinutesAgo,
             'metadata[createdAt][lte]': twoMinutesAgo,
           },
-        });
+        }));
 
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
           (functionConfig.Timeout + 10) * 1000
         );
 
-        const payload = JSON.parse(lzardsApiGetOutput.Payload);
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(3);
@@ -263,19 +263,19 @@ describe('The Lzards Backup Task ', () => {
     it('returns no results for granules not backed up', async () => {
       if (beforeAllFailed) fail('beforeAll() failed');
       else {
-        const lzardsGetPayload = JSON.stringify({
+        const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({
           searchParams: {
             'metadata[collection]': 'notBackedUpCollectionName',
             'metadata[granuleId]': granuleId,
           },
-        });
+        }));
 
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }).promise(),
+          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
           (functionConfig.Timeout + 10) * 1000
         );
 
-        const payload = JSON.parse(lzardsApiGetOutput.Payload);
+        const payload = JSON.parse(new TextDecoder('utf-8').decode(lzardsApiGetOutput.Payload));
 
         expect(lzardsApiGetOutput.FunctionError).toBe(undefined);
         expect(payload.count).toBe(0);

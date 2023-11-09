@@ -12,6 +12,7 @@ const { s3 } = require('@cumulus/aws-client/services');
 const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   addCollections,
+  getExecutionInputObject,
   getOnlineResources,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
@@ -467,6 +468,12 @@ describe('The S3 Ingest Granules workflow', () => {
         publishGranuleExecutionArn
       );
       expect(publishGranuleExecutionStatus).toEqual('SUCCEEDED');
+    });
+
+    it('passes through childWorkflowMeta to the PublishGranuleQueue execution', async () => {
+      const executionInput = await getExecutionInputObject(publishGranuleExecutionArn);
+      expect(executionInput.meta.staticValue).toEqual('aStaticValue');
+      expect(executionInput.meta.file_tags).toEqual(lambdaOutput.meta.file_tags);
     });
   });
 

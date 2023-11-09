@@ -9,9 +9,9 @@ async function invokeStartAsyncOperationLambda(event) {
 
   await lambda().invoke({
     FunctionName: process.env.StartAsyncOperationLambda,
-    Payload: JSON.stringify(event),
+    Payload: new TextEncoder().encode(JSON.stringify(event)),
     InvocationType: 'Event',
-  }).promise();
+  });
 }
 module.exports = {
   invokeStartAsyncOperationLambda,

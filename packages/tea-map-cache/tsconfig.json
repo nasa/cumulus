@@ -1,7 +1,15 @@
 {
-    "extends": "../../tsconfig.json",
-    "compilerOptions": {
-      "outDir": "./dist"
-    },
-    "include": ["./src/*.ts"]
-  }
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "target": "es2021",
+    "lib": [
+      "DOM",
+      "es2021"
+    ],
+    "outDir": "dist/src",
+    "strictNullChecks": true
+  },
+  "include": [
+    "src"
+  ]
+}

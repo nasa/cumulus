@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Changed
+
+- **CUMULUS-2894**
+  - Update Lambda code to AWS SDK v3
+
+### Fixed
+
+- **CUMULUS-3177**
+  - changed `_removeGranuleFromCmr` function for granule `bulkDelete` to not throw an error and instead catch the error when the granule is not found in CMR
+- **CUMULUS-3293**
+  - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
+- **CUMULUS-3467**
+  - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
+- **CUMULUS-3474**
+  - Fixed overriden changes to `rules.buildPayload' to restore changes from
+    ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+    account for AWS character limits.
+
+## [v18.1.0] 2023-10-25
+
 ### MIGRATION notes
 
 #### Rules API Endpoint Versioning
@@ -38,9 +58,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3095**
   - Added `PATCH` rules endpoint to update rule which works as the existing `PUT` endpoint.
   - Updated `PUT` rules endpoint to replace rule.
-  - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
-  - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
-    `meta` and `payload`, and fixed `rule` field mapping.
 
 ### Added
 
@@ -49,23 +66,19 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Added `max_download_time` column to PostgreSQL `providers` table
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
-### Fixed
-
-- **CUMULUS-3427**
-  - fixed issue where some lambda and task memory sizes and timeouts were not configurable
-  - changed the naming conventions for memory size and timeouts configuration to simply the lambda name
-- **@aws-sdk upgrade**
-  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
-
 ### Changed
 
+- **CUMULUS-3095**
+  - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
+  - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
+    `meta` and `payload`, and fixed `rule` field mapping.
 - **CUMULUS-3351**
   - Updated `constructOnlineAccessUrls()` to group CMR online access URLs by link type.
-- **CUMULUS-3392**
-  - Modify cloudwatch rule by deleting `custom`
 - **CUMULUS-3377**
   - Added configuration option to cumulus-tf/terraform.tfvars to include sns:Subscribe access policy for
     executions, granules, collections, and PDRs report topics.
+- **CUMULUS-3392**
+  - Modify cloudwatch rule by deleting `custom`
 - **CUMULUS-3434**
   - Updated `@cumulus/orca-recovery-adapter` task to output both input granules and recovery output.
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.0.
@@ -83,6 +96,11 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated mapping for collection Elasticsearch records to prevent dynamic field for keys under `meta`.
 - **CUMULUS-3393**
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
+- **CUMULUS-3427**
+  - Fixed issue where some lambda and task memory sizes and timeouts were not configurable
+  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+- **@aws-sdk upgrade**
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
 
 ## [v18.0.0] 2023-08-28
 
@@ -150,6 +168,36 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
   - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
   - Updated thrown error to include information related to automatic failure behavior in addition to the stack trace.
+
+## [v16.1.2] 2023-11-01
+
+**Please note** changes in 16.1.2 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Added
+
+- **CUMULUS-3218**
+  - Added optional `maxDownloadTime` field to `provider` schema
+  - Added `max_download_time` column to PostgreSQL `providers` table
+  - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
+
+### Fixed
+
+- **@aws-sdk upgrade**
+  - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
+  - Updated mapping for collection Elasticsearch records to prevent dynamic field for keys under `meta`.
+- **CUMULUS-3286**
+  - Fixed `@cumulus/cmrjs/cmr-utils/getGranuleTemporalInfo` and `@cumulus/message/Granules/getGranuleCmrTemporalInfo`
+    to handle non-existing cmr file.
+  - Updated mapping for granule and deletedgranule Elasticsearch records to prevent dynamic field for keys under
+    `queryFields`.
+- **CUMULUS-3293**
+  - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
+- **CUMULUS-3393**
+  - Fixed `PUT` collection endpoint to update collection configuration in S3.
+- **CUMULUS-3467**
+  - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
 
 ## [v16.1.1] 2023-08-03
 
@@ -7414,9 +7462,11 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.0.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
+[v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
-[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.1...v17.0.0
+[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.2...v17.0.0
+[v16.1.2]: https://github.com/nasa/cumulus/compare/v16.1.1...v16.1.2
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
 [v15.0.4]: https://github.com/nasa/cumulus/compare/v15.0.3...v15.0.4
