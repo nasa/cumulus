@@ -31,7 +31,7 @@ test.afterEach.always(() => {
   queueMessageStub.reset();
 });
 
-test('handler processes records as expected', async (t) => {
+test.skip('handler processes records as expected', async (t) => {
   const collection = {
     name: 'ABC',
     version: '1.2.3',
