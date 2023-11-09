@@ -1303,8 +1303,8 @@ test.serial('PATCH creates the same updated SNS rule in PostgreSQL/Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
-  const topic2 = sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic2 = await sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
 
   const {
     originalPgRecord,
@@ -1567,8 +1567,8 @@ test.serial('PATCH keeps initial trigger information if writing to PostgreSQL fa
     pgCollection,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
-  const topic2 = sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic2 = await sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
 
   const {
     originalPgRecord,
@@ -1658,8 +1658,8 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
-  const topic2 = sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic2 = await sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
 
   const {
     originalPgRecord,
@@ -2260,8 +2260,8 @@ test.serial('PUT creates the same updated SNS rule in PostgreSQL/Elasticsearch',
     pgCollection,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
-  const topic2 = sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic2 = await sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
 
   const {
     originalApiRule,
@@ -2524,8 +2524,8 @@ test.serial('PUT keeps initial trigger information if writing to PostgreSQL fail
     pgCollection,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
-  const topic2 = sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic2 = await sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
 
   const {
     originalApiRule,
@@ -2616,8 +2616,8 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     pgCollection,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
-  const topic2 = sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic2 = await sendSNSMessage({ Name: randomId('topic2_') }, 'CreateTopicCommand');
 
   const {
     originalApiRule,

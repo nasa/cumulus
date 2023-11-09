@@ -295,7 +295,7 @@ async function deleteSnsTrigger(knex, rule) {
     SubscriptionArn: rule.rule.arn,
   };
   log.info(`Successfully deleted SNS subscription for ARN ${rule.rule.arn}.`);
-  return sendSNSMessage(subscriptionParams, 'UnsubscribeCommand');
+  return await sendSNSMessage(subscriptionParams, 'UnsubscribeCommand');
 }
 
 /**
@@ -451,13 +451,13 @@ async function addKinesisEventSources(rule) {
  *  subExists - boolean
  *  existingSubscriptionArn - ARN of subscription
  */
-function checkForSnsSubscriptions(ruleItem) {
+async function checkForSnsSubscriptions(ruleItem) {
   let token;
   let subExists = false;
   let subscriptionArn;
   /* eslint-disable no-await-in-loop */
   do {
-    const subsResponse = sendSNSMessage(({
+    const subsResponse = await sendSNSMessage(({
       TopicArn: ruleItem.rule.value,
       NextToken: token,
     }), 'ListSubscriptionsByTopicCOmmand');
@@ -503,7 +503,7 @@ async function addSnsTrigger(item) {
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
-    const r = sendSNSMessage(subscriptionParams, 'SubscribeCommand');
+    const r = await sendSNSMessage(subscriptionParams, 'SubscribeCommand');
     subscriptionArn = r.SubscriptionArn;
     // create permission to invoke lambda
     const permissionParams = {

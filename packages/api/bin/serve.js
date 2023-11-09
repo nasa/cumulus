@@ -64,7 +64,7 @@ async function prepareServices(stackName, bucket) {
     index: process.env.ES_INDEX,
   });
   await s3().createBucket({ Bucket: bucket });
-  const { TopicArn } = sendSNSMessage({ Name: randomId('topicName') }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: randomId('topicName') }, 'CreateTopicCommand');
   process.env.collection_sns_topic_arn = TopicArn;
 }
 

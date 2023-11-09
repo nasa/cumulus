@@ -24,10 +24,10 @@ const log = new Logger({ sender: 'aws-client/sns' });
  * @param {string} messageType - Type of sns command
  * @returns {Promise<any>}
  */
-export const sendMessage = async (
+export const sendMessage = async function (
   command: any,
   messageType: string
-) => {
+) {
   let response;
   try {
     response = await sns().send(command);
@@ -45,10 +45,10 @@ export const sendMessage = async (
  * @param {string} messageType - Type of sns request
  * @returns {Promise<any>}
  */
-export const sendSNSMessage = async (
+export const sendSNSMessage = async function (
   messageParams: any,
   messageType: string
-) => {
+) {
   let command;
   switch (messageType) {
     case 'PublishCommand':

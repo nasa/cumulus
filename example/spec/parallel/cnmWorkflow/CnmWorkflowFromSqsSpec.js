@@ -81,10 +81,10 @@ async function cleanUp() {
     deleteFolder(config.bucket, testDataFolder),
     deleteQueue(queues.sourceQueueUrl),
     deleteQueue(queues.deadLetterQueueUrl),
+    sendSNSMessage({ TopicArn: cnmResponseStream }, 'DeleteTopicCommand'),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
   ]);
-  sendSNSMessage({ TopicArn: cnmResponseStream }, 'DeleteTopicCommand');
 }
 
 const waitForQueueMessageCount = (queueUrl, expectedCount) =>
@@ -180,7 +180,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
 
       // create SNS topic for cnm response
       const snsTopicName = timestampedName(`${config.stackName}_CnmSqsTestTopic`);
-      const { TopicArn } = sendSNSMessage({ Name: snsTopicName }, 'CreateTopicCommand');
+      const { TopicArn } = await sendSNSMessage({ Name: snsTopicName }, 'CreateTopicCommand');
       cnmResponseStream = TopicArn;
       config.cnmResponseStream = cnmResponseStream;
 

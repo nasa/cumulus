@@ -24,7 +24,7 @@ test.before((t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });
@@ -35,14 +35,14 @@ test.beforeEach(async (t) => {
     AttributeNames: ['QueueArn'],
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
-  const { SubscriptionArn } = sendSNSMessage({
+  const { SubscriptionArn } = await sendSNSMessage({
     TopicArn: TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
     ReturnSubscriptionArn: true,
   }, 'SubscribeCommand');
 
-  sendSNSMessage({
+  await sendSNSMessage({
     TopicArn: TopicArn,
     Token: SubscriptionArn,
   }, 'ConfirmSubscriptionCommand');
@@ -54,7 +54,7 @@ test.afterEach(async (t) => {
   await Promise.all([
     sqs().deleteQueue({ QueueUrl }).promise(),
   ]);
-  sendSNSMessage({ TopicArn: TopicArn }, 'DeleteTopicCommand');
+  await sendSNSMessage({ TopicArn: TopicArn }, 'DeleteTopicCommand');
 });
 
 test.serial('publishSnsMessageByDataType() does not publish an execution SNS message if execution_sns_topic_arn is undefined', async (t) => {

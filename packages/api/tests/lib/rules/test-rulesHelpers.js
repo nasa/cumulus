@@ -149,15 +149,15 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   t.context.sandbox = sinon.createSandbox();
-  const topic = sendSNSMessage({ Name: randomId('sns') }, 'CreateTopicCommand');
+  const topic = await sendSNSMessage({ Name: randomId('sns') }, 'CreateTopicCommand');
   t.context.snsTopicArn = topic.TopicArn;
   await deleteKinesisEventSourceMappings();
 });
 
-test.afterEach.always((t) => {
+test.afterEach.always(async (t) => {
   listRulesStub.reset();
   t.context.sandbox.restore();
-  sendSNSMessage({ TopicArn: t.context.snsTopicArn }, 'DeleteTopicCommand');
+  await sendSNSMessage({ TopicArn: t.context.snsTopicArn }, 'DeleteTopicCommand');
 });
 
 test.after.always(async (t) => {
@@ -983,7 +983,7 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
     testKnex,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -1029,7 +1029,7 @@ test.serial('deleteRuleResources() does not throw if a rule is passed in without
     testKnex,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -1047,7 +1047,7 @@ test.serial('deleteRuleResources() does not throw if a rule is passed in without
   const origSnsCheck = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(origSnsCheck.subExists);
 
-  sendSNSMessage({ SubscriptionArn: ruleWithTrigger.rule.arn }, 'UnsubscribeCommand');
+  await sendSNSMessage({ SubscriptionArn: ruleWithTrigger.rule.arn }, 'UnsubscribeCommand');
   const snsCheck = await checkForSnsSubscriptions(ruleWithTrigger);
   t.false(snsCheck.subExists);
   await t.notThrowsAsync(deleteRuleResources(testKnex, ruleWithTrigger));
@@ -1106,7 +1106,7 @@ test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s su
     testKnex,
   } = t.context;
 
-  const topic1 = sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic1 = await sendSNSMessage({ Name: randomId('topic1_') }, 'CreateTopicCommand');
 
   const snsRule = fakeRuleFactoryV2({
     workflow,
@@ -1235,7 +1235,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
     ),
   ]);
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-  const { TopicArn } = sendSNSMessage({ Name: randomId('topic') }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: randomId('topic') }, 'CreateTopicCommand');
 
   const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
     name: randomId('rule1'),
@@ -1290,9 +1290,9 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
     SubscriptionArn: ruleWithTrigger.rule.arn,
   }));
 
-  t.teardown(() => {
+  t.teardown(async () => {
     unsubscribeSpy.restore();
-    sendSNSMessage({
+    await sendSNSMessage({
       TopicArn: TopicArn,
     }, 'DeleteTopicCommand');
   });
@@ -1650,7 +1650,7 @@ test('Creating a disabled SNS rule creates no event source mapping', async (t) =
 });
 
 test.serial('Creating an enabled SNS rule creates an event source mapping', async (t) => {
-  const { TopicArn } = sendSNSMessage({
+  const { TopicArn } = await sendSNSMessage({
     Name: randomId('topic'),
   }, 'CreateTopicCommand');
 
@@ -1700,12 +1700,12 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     ReturnSubscriptionArn: true,
   }));
   t.true(addPermissionSpy.called);
-  t.teardown(() => {
+  t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
     subscribeSpy.restore();
     addPermissionSpy.restore();
-    sendSNSMessage({ TopicArn: TopicArn }, 'DeleteTopicCommand');
+    await sendSNSMessage({ TopicArn: TopicArn }, 'DeleteTopicCommand');
   });
 });
 
@@ -2040,8 +2040,8 @@ test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
 test.serial('Updating an SNS rule updates the event source mapping', async (t) => {
   const snsTopicArn = randomString();
   const newSnsTopicArn = randomString();
-  const { TopicArn } = sendSNSMessage({ Name: snsTopicArn }, 'CreateTopicCommand');
-  const { TopicArn: TopicArn2 } = sendSNSMessage({ Name: newSnsTopicArn }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: snsTopicArn }, 'CreateTopicCommand');
+  const { TopicArn: TopicArn2 } = await sendSNSMessage({ Name: newSnsTopicArn }, 'CreateTopicCommand');
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
@@ -2096,16 +2096,16 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
   t.is(updatedSnsRule.rule.value, TopicArn2);
   t.not(updatedSnsRule.rule.arn, rule.rule.arn);
 
-  t.teardown(() => {
+  t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
-    sendSNSMessage({ TopicArn: TopicArn2 }, 'DeleteTopicCommand');
+    await sendSNSMessage({ TopicArn: TopicArn2 }, 'DeleteTopicCommand');
   });
 });
 
 test.serial('Updating an SNS rule to "disabled" removes the event source mapping ARN', async (t) => {
   const snsTopicArn = randomString();
-  const { TopicArn } = sendSNSMessage({ Name: snsTopicArn }, 'CreateTopicCommand');
+  const { TopicArn } = await sendSNSMessage({ Name: snsTopicArn }, 'CreateTopicCommand');
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
@@ -2154,10 +2154,10 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
   t.true(Object.prototype.hasOwnProperty.call(updatedSnsRule.rule, 'arn'));
   t.is(updatedSnsRule.rule.arn, undefined);
 
-  t.teardown(() => {
+  t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
-    sendSNSMessage({ TopicArn: TopicArn }, 'DeleteTopicCommand');
+    await sendSNSMessage({ TopicArn: TopicArn }, 'DeleteTopicCommand');
   });
 });
 
