@@ -109,7 +109,7 @@ test.beforeEach((t) => {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
   };
-  publishStub = sinon.stub(snsClient, 'send').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
+  publishStub = sinon.stub(snsClient, 'publish').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
 
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
@@ -241,7 +241,7 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
 
 test.serial('An error publishing falllback record for Kinesis message should re-throw error from validation', async (t) => {
   publishStub.restore();
-  publishStub = sinon.stub(snsClient, 'send').callsFake(() => {
+  publishStub = sinon.stub(snsClient, 'publish').callsFake(() => {
     throw new Error('fail');
   });
 
