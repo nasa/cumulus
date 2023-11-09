@@ -109,7 +109,7 @@ test.beforeEach((t) => {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
   };
-  publishStub = sinon.stub(snsClient, 'send').returns({ promise: () => Promise.resolve(t.context.publishResponse) });
+  publishStub = sinon.stub(snsClient, 'send').returns(Promise.resolve(t.context.publishResponse));
 
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
@@ -139,6 +139,7 @@ test.serial('it should enqueue a message for each associated rule', async (t) =>
   });
 });
 
+// is failing
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message does not include a collection', async (t) => {
   const invalidMessage = JSON.stringify({ noCollection: 'in here' });
   const invalidRecord = { kinesis: { data: Buffer.from(invalidMessage).toString('base64') } };
@@ -166,6 +167,7 @@ test.serial('An SNS fallback retry, should throw an error if message does not in
   t.is(error.errors[0].message, 'should have required property \'collection\'');
 });
 
+// is failing
 test.serial('A kinesis message, should publish the invalid records to fallbackSNS if the message collection has wrong data type', async (t) => {
   const invalidMessage = JSON.stringify({ collection: {} });
   const invalidRecord = { kinesis: { data: Buffer.from(invalidMessage).toString('base64') } };
@@ -194,6 +196,7 @@ test.serial('An SNS Fallback retry, should throw an error if message collection 
   t.is(error.errors[0].message, 'should be string');
 });
 
+// is failing
 test.serial('A kinesis message, should publish the invalid record to fallbackSNS if message is invalid json', async (t) => {
   const invalidMessage = '{';
   const invalidRecord = { kinesis: { data: Buffer.from(invalidMessage).toString('base64') } };
