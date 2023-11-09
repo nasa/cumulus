@@ -3021,7 +3021,7 @@ test.serial('Creating, deleting, and creating a rule with the same name succeeds
   );
   t.like(esRecord, translatedPgRecord);
 
- 
+  
   t.true(await t.context.rulePgModel.exists(t.context.testKnex1, { name: originalPgRecord.name }));
 
   const deleteResponse = await request(app)
