@@ -31,11 +31,11 @@ export const sendMessage = async function (
   let response;
   try {
     response = await sns().send(command);
-    return response;
   } catch (error) {
     log.error(`Error invoking ${messageType} SNS command`, error);
     throw error;
   }
+  return response;
 };
 
 /**
@@ -53,25 +53,25 @@ export const sendSNSMessage = async function (
   switch (messageType) {
     case 'PublishCommand':
       command = new PublishCommand(messageParams);
-      return await sendMessage(command, messageType);
+      return sendMessage(command, messageType);
     case 'SubscribeCommand':
       command = new SubscribeCommand(messageParams);
-      return await sendMessage(command, messageType);
+      return sendMessage(command, messageType);
     case 'UnsubscribeCommand':
       command = new UnsubscribeCommand(messageParams);
-      return await sendMessage(command, messageType);
+      return sendMessage(command, messageType);
     case 'ListSubscriptionsByTopicCommand':
       command = new ListSubscriptionsByTopicCommand(messageParams);
-      return await sendMessage(command, messageType);
+      return sendMessage(command, messageType);
     case 'CreateTopicCommand':
       command = new CreateTopicCommand(messageParams);
-      return await sendMessage(command, messageType);
+      return sendMessage(command, messageType);
     case 'DeleteTopicCommand':
       command = new DeleteTopicCommand(messageParams);
-      return await sendMessage(command, messageType);
+      return sendMessage(command, messageType);
     case 'ConfirmSubscriptionCommand':
       command = new ConfirmSubscriptionCommand(messageParams);
-      return await sendMessage(command, messageType);
+      return sendMessage(command, messageType);
     default:
       throw new Error('Unknown SNS command');
   }
