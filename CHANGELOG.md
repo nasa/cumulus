@@ -68,7 +68,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Updated `@cumulus/ingest/lock` to check expired locks based on `provider.maxDownloadTime`
 
 ### Changed
-
+- **CUMULUS-2925**
+  - Updated `@cumulus//cumulus/packages/api-test-rules` to have`Onetimerule` to delete rule and `recreate` rules.
 - **CUMULUS-3095**
   - Updated `@cumulus/api-client/rules` to have`replaceRule` and `updateRule` methods.
   - Updated mapping for rule Elasticsearch records to prevent dynamic field for keys under
