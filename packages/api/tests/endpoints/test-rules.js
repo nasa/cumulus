@@ -2962,6 +2962,7 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
     )
   );
 });
+
 test.serial('Creating, deleting, and creating a rule with the same name succeeds', async(t) => {
   const {
     collectionPgModel,
