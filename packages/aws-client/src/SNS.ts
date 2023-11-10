@@ -98,3 +98,14 @@ export const publishSnsMessage = async (
       ...retryOptions,
     }
   );
+
+module.exports = {
+  publishSnsMessage,
+  sendCreateTopicCommand,
+  sendDeleteTopicCommand,
+  sendConfirmSubscriptionCommand,
+  sendListSubscriptionsCommand,
+  sendSubscribeCommand,
+  sendUnsubscribeCommand,
+  sendPublishCommand,
+};

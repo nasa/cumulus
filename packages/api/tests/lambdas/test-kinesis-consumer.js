@@ -3,10 +3,10 @@
 const sinon = require('sinon');
 const test = require('ava');
 const proxyquire = require('proxyquire');
-const { sendPublishCommand } = require('@cumulus/aws-client/SNS');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3, sns } = require('@cumulus/aws-client/services');
 const { recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
+const { snsUtils } = require('@cumulus/aws-client/SNS');
 const { fakeRuleFactoryV2 } = require('../../lib/testUtils');
 
 const sandbox = sinon.createSandbox();
@@ -109,7 +109,7 @@ test.beforeEach((t) => {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
   };
-  publishStub = sinon.stub(sendPublishCommand).returns({ promise: () =>
+  publishStub = sinon.stub(snsUtils, 'sendPublishCommand').returns({ promise: () =>
     Promise.resolve(t.context.publishResponse) });
 
   process.env.stackName = randomString();
