@@ -2962,3 +2962,103 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
     )
   );
 });
+test.serial('Creating, deleting, and creating a rule with the same name succeeds', async(t) => {
+  const {
+    collectionPgModel,
+    newRule,
+    providerPgModel,
+    rulePgModel,
+    testKnex,
+  } = t.context;
+
+  const fakeCollection = fakeCollectionFactory();
+  const fakeProvider = fakeProviderFactory({
+    encrypted: true,
+    privateKey: 'key',
+    cmKeyId: 'key-id',
+    certificateUri: 'uri',
+    createdAt: new Date(2020, 11, 17),
+    updatedAt: new Date(2020, 12, 2),
+  });
+
+  newRule.provider = fakeProvider.id;
+  newRule.collection = {
+    name: fakeCollection.name,
+    version: fakeCollection.version,
+  };
+
+  newRule.rule = {
+    type: 'kinesis',
+    value: `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis')}`,
+  };
+
+  await collectionPgModel.create(
+    testKnex,
+    translateApiCollectionToPostgresCollection(fakeCollection)
+  );
+
+  await providerPgModel.create(
+    testKnex,
+    await translateApiProviderToPostgresProvider(fakeProvider)
+  );
+
+  const response = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
+  const { message } = response.body;
+  const fetchedPostgresRecord = await rulePgModel
+    .get(testKnex, { name: newRule.name });
+
+  t.is(message, 'Record saved');
+  const translatedPgRecord = await translatePostgresRuleToApiRule(fetchedPostgresRecord, testKnex);
+
+  const esRecord = await t.context.esRulesClient.get(
+    newRule.name
+  );
+  t.like(esRecord, translatedPgRecord);
+});
+
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
+
+  const deleteResponse = await request(app)
+    .delete(`/rules/${originalPgRecord.name}`)
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+
+  const dbRecords = await t.context.rulePgModel
+    .search(t.context.testKnex, { name: originalPgRecord.name });
+
+  t.is(dbRecords.length, 0);
+  t.is(deleteResponse.body.message, 'Record deleted');
+  t.false(
+    await t.context.esRulesClient.exists(
+      originalPgRecord.name
+    )
+  );
+  const duplicateResponse = await request(app)
+    .post('/rules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .send(newRule)
+    .expect(200);
+
+  const fetchedPgRecord = await rulePgModel
+    .get(testKnex, { name: newRule.name });
+
+    t.is(duplicateResponse.body.message, 'Record saved');
+  const translatedRecord = await translatePostgresRuleToApiRule(fetchedPgRecord, testKnex);
+
+  const esRecord1 = await t.context.esRulesClient.get(
+    newRule.name
+  );
+  t.like(esRecord1, translatedRecord);
+
+
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex1, { name: originalPgRecord.name }));
+});
