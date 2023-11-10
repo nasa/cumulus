@@ -283,7 +283,6 @@ test('sns() service defaults to localstack in test mode', async (t) => {
     endpoint,
   } = localStackAwsClientOptions(SNSClient);
   t.deepEqual(
-    sns.config.credentials,
     await sns.config.credentials(),
     credentials
   );
