@@ -2963,7 +2963,7 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
   );
 });
 
-test.serial('Creating, deleting, and creating a rule with the same name succeeds', async(t) => {
+test.serial('Creating, deleting, and creating a rule with the same name succeeds', async (t) => {
   const {
     collectionPgModel,
     newRule,
@@ -3021,25 +3021,25 @@ test.serial('Creating, deleting, and creating a rule with the same name succeeds
     newRule.name
   );
   t.like(esRecord, translatedPgRecord);
-});
 
-  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
+  t.true(
+    await t.context.rulePgModel.exists(t.context.testKnex, { name: fetchedPostgresRecord.name })
+  );
 
   const deleteResponse = await request(app)
-    .delete(`/rules/${originalPgRecord.name}`)
+    .delete(`/rules/${fetchedPostgresRecord.name}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-
   const dbRecords = await t.context.rulePgModel
-    .search(t.context.testKnex, { name: originalPgRecord.name });
+    .search(t.context.testKnex, { name: fetchedPostgresRecord.name });
 
   t.is(dbRecords.length, 0);
   t.is(deleteResponse.body.message, 'Record deleted');
   t.false(
     await t.context.esRulesClient.exists(
-      originalPgRecord.name
+      fetchedPostgresRecord.name
     )
   );
   const duplicateResponse = await request(app)
@@ -3052,7 +3052,7 @@ test.serial('Creating, deleting, and creating a rule with the same name succeeds
   const fetchedPgRecord = await rulePgModel
     .get(testKnex, { name: newRule.name });
 
-    t.is(duplicateResponse.body.message, 'Record saved');
+  t.is(duplicateResponse.body.message, 'Record saved');
   const translatedRecord = await translatePostgresRuleToApiRule(fetchedPgRecord, testKnex);
 
   const esRecord1 = await t.context.esRulesClient.get(
@@ -3060,6 +3060,5 @@ test.serial('Creating, deleting, and creating a rule with the same name succeeds
   );
   t.like(esRecord1, translatedRecord);
 
-
-  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: originalPgRecord.name }));
+  t.true(await t.context.rulePgModel.exists(t.context.testKnex, { name: fetchedPgRecord.name }));
 });
