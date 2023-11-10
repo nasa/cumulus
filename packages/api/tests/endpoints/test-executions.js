@@ -13,7 +13,8 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
-const { sns, sqs } = require('@cumulus/aws-client/services');
+const { sqs } = require('@cumulus/aws-client/services');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   AsyncOperationPgModel,
@@ -202,7 +203,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.execution_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -215,16 +216,17 @@ test.beforeEach(async (t) => {
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
-    TopicArn,
+  const { SubscriptionArn } = await sendSNSMessage({
+    TopicArn: TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+    ReturnSubscriptionArn: true,
+  }, 'SubscribeCommand');
 
-  await sns().confirmSubscription({
-    TopicArn,
+  await sendSNSMessage({
+    TopicArn: TopicArn,
     Token: SubscriptionArn,
-  }).promise();
+  }, 'ConfirmSubscriptionCommand');
 
   const {
     esClient,

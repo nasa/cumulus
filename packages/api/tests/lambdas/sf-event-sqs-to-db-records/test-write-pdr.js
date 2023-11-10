@@ -18,7 +18,8 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
-const { sns, sqs } = require('@cumulus/aws-client/services');
+const { sqs } = require('@cumulus/aws-client/services');
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 const {
   createTestIndex,
   cleanupTestIndex,
@@ -128,7 +129,7 @@ test.beforeEach(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
   process.env.pdr_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -141,22 +142,23 @@ test.beforeEach(async (t) => {
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sendSNSMessage({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+    ReturnSubscriptionArn: true,
+  }, 'SubscribeCommand');
 
-  await sns().confirmSubscription({
+  await sendSNSMessage({
     TopicArn,
     Token: SubscriptionArn,
-  }).promise();
+  }, 'ConfirmSubscriptionCommand');
 });
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sendSNSMessage({ TopicArn: TopicArn }, 'DeleteTopicCommand');
 });
 
 test.after.always(async (t) => {

@@ -1,7 +1,7 @@
 'use strict';
 
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { s3, sns } = require('@cumulus/aws-client/services');
+const { s3 } = require('@cumulus/aws-client/services');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
@@ -19,6 +19,8 @@ const {
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
+
+const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
 
 const { ReconciliationReport } = require('../models');
 
@@ -65,7 +67,7 @@ async function prepareServices(stackName, bucket) {
   });
   await s3().createBucket({ Bucket: bucket });
 
-  const { TopicArn } = await sns().createTopic({ Name: randomId('topicName') }).promise();
+  const { TopicArn } = await sendSNSMessage({ Name: randomId('topicName') }, 'CreateTopicCommand');
   process.env.collection_sns_topic_arn = TopicArn;
 }
 
