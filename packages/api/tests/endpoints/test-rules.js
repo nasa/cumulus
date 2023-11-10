@@ -949,17 +949,17 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
 test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
   const snsStub = sinon.stub(awsServices, 'sns')
     .returns({
-      listSubscriptionsByTopic: () => (
-        Promise.resolve({
+      listSubscriptionsByTopic: () => ({
+        promise: () => Promise.resolve({
           Subscriptions: [{
             Endpoint: process.env.messageConsumer,
             SubscriptionArn: randomString(),
           }],
-        })
-      ),
-      unsubscribe: () => (
-        Promise.resolve()
-      ),
+        }),
+      }),
+      unsubscribe: () => ({
+        promise: () => Promise.resolve(),
+      }),
     });
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
