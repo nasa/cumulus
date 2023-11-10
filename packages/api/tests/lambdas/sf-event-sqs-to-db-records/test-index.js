@@ -12,7 +12,10 @@ const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const {
   sqs,
 } = require('@cumulus/aws-client/services');
-const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
+const { sendCreateTopicCommand,
+  sendSubscribeCommand,
+  sendConfirmSubscriptionCommand,
+  sendDeleteTopicCommand } = require('@cumulus/aws-client/SNS');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -168,8 +171,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await sendSNSMessage({ Name: executionsTopicName }, 'CreateTopicCommand');
-  const pdrsTopic = await sendSNSMessage({ Name: pdrsTopicName }, 'CreateTopicCommand');
+  const executionsTopic = await sendCreateTopicCommand({ Name: executionsTopicName });
+  const pdrsTopic = await sendCreateTopicCommand({ Name: pdrsTopicName });
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -188,7 +191,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sendSNSMessage({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = await sendCreateTopicCommand({ Name: topicName });
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -199,17 +202,17 @@ test.beforeEach(async (t) => {
   }).promise();
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sendSNSMessage({
+  const { SubscriptionArn } = await sendSubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
     ReturnSubscriptionArn: true,
-  }, 'SubscribeCommand');
+  });
 
-  await sendSNSMessage({
+  await sendConfirmSubscriptionCommand({
     TopicArn: TopicArn,
     Token: SubscriptionArn,
-  }, 'ConfirmSubscriptionCommand');
+  });
 
   process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
 
@@ -286,8 +289,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await sendSNSMessage({ TopicArn: ExecutionsTopicArn }, 'DeleteTopicCommand');
-  await sendSNSMessage({ TopicArn: PdrsTopicArn }, 'DeleteTopicCommand');
+  await sendDeleteTopicCommand({ TopicArn: ExecutionsTopicArn });
+  await sendDeleteTopicCommand({ TopicArn: PdrsTopicArn });
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {

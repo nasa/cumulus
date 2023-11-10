@@ -12,52 +12,58 @@ import {
   CreateTopicCommand,
   DeleteTopicCommand,
   ConfirmSubscriptionCommand,
+  PublishCommandInput,
+  SubscribeCommandInput,
+  UnsubscribeCommandInput,
+  ListSubscriptionsByTopicCommandInput,
+  CreateTopicCommandInput,
+  DeleteTopicCommandInput,
+  ConfirmSubscriptionCommandInput,
 } from '@aws-sdk/client-sns';
 import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
-/**
- * Helper function for sending SNS messages for sdk v3, decides by type
- *
- * @param {any} messageParams - SNS message
- * @param {string} messageType - Type of sns request
- * @returns {Promise<any>}
- */
-export const sendSNSMessage = async function (
-  messageParams: any,
-  messageType: string
+export const sendPublishCommand = async function (
+  messageParams: PublishCommandInput
 ) {
-  let command;
-  try {
-    switch (messageType) {
-      case 'PublishCommand':
-        command = new PublishCommand(messageParams);
-        return await sns().send(command);
-      case 'SubscribeCommand':
-        command = new SubscribeCommand(messageParams);
-        return await sns().send(command);
-      case 'UnsubscribeCommand':
-        command = new UnsubscribeCommand(messageParams);
-        return await sns().send(command);
-      case 'ListSubscriptionsByTopicCommand':
-        command = new ListSubscriptionsByTopicCommand(messageParams);
-        return await sns().send(command);
-      case 'CreateTopicCommand':
-        command = new CreateTopicCommand(messageParams);
-        return await sns().send(command);
-      case 'DeleteTopicCommand':
-        command = new DeleteTopicCommand(messageParams);
-        return await sns().send(command);
-      case 'ConfirmSubscriptionCommand':
-        command = new ConfirmSubscriptionCommand(messageParams);
-        return await sns().send(command);
-      default:
-        return undefined;
-    }
-  } catch (error) {
-    throw new Error(`SNS Command${messageType} failed with ${error}`);
-  }
+  return await sns().send(new PublishCommand(messageParams));
+};
+
+export const sendSubscribeCommand = async function (
+  messageParams: SubscribeCommandInput
+) {
+  return await sns().send(new SubscribeCommand(messageParams));
+};
+
+export const sendUnsubscribeCommand = async function (
+  messageParams: UnsubscribeCommandInput
+) {
+  return await sns().send(new UnsubscribeCommand(messageParams));
+};
+
+export const sendListSubscriptionsCommand = async function (
+  messageParams: ListSubscriptionsByTopicCommandInput
+) {
+  return await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
+};
+
+export const sendCreateTopicCommand = async function (
+  messageParams: CreateTopicCommandInput
+) {
+  return await sns().send(new CreateTopicCommand(messageParams));
+};
+
+export const sendDeleteTopicCommand = async function (
+  messageParams: DeleteTopicCommandInput
+) {
+  return await sns().send(new DeleteTopicCommand(messageParams));
+};
+
+export const sendConfirmSubscriptionCommand = async function (
+  messageParams: ConfirmSubscriptionCommandInput
+) {
+  return await sns().send(new ConfirmSubscriptionCommand(messageParams));
 };
 
 /**
@@ -81,10 +87,10 @@ export const publishSnsMessage = async (
         throw new pRetry.AbortError('Missing SNS topic ARN');
       }
 
-      sendSNSMessage({
+      sendPublishCommand({
         TopicArn: snsTopicArn,
         Message: JSON.stringify(message),
-      }, 'PublishCommand');
+      });
     },
     {
       maxTimeout: 5000,

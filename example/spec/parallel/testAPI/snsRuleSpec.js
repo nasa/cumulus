@@ -24,7 +24,11 @@ const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');
 const { getSnsTriggerPermissionId } = require('@cumulus/api/lib/snsRuleHelpers');
-const { sendSNSMessage } = require('@cumulus/aws-client/SNS');
+const { sendListSubscriptionsCommand,
+  sendCreateTopicCommand,
+  sendDeleteTopicCommand,
+  sendPublishCommand,
+  sendSubscribeCommand } = require('@cumulus/aws-client/SNS');
 const {
   waitForRuleInList,
 } = require('../../helpers/ruleUtils');
@@ -37,7 +41,7 @@ const {
 } = require('../../helpers/testUtils');
 
 async function getNumberOfTopicSubscriptions(snsTopicArn) {
-  const subs = await sendSNSMessage({ TopicArn: snsTopicArn }, 'ListSubscriptionsByTopicCommand');
+  const subs = await sendListSubscriptionsCommand({ TopicArn: snsTopicArn });
   return subs.Subscriptions.length;
 }
 
@@ -106,7 +110,7 @@ describe('The SNS-type rule', () => {
 
       await addCollections(config.stackName, config.bucket, collectionsDir,
         testSuffix, testId);
-      const { TopicArn } = await sendSNSMessage({ Name: snsTopicName }, 'CreateTopicCommand');
+      const { TopicArn } = await sendCreateTopicCommand({ Name: snsTopicName });
       snsTopicArn = TopicArn;
       snsRuleDefinition.rule.value = TopicArn;
       const postRuleResponse = await postRule({
@@ -122,7 +126,7 @@ describe('The SNS-type rule', () => {
   });
 
   afterAll(async () => {
-    await sendSNSMessage({ TopicArn: snsTopicArn }, 'DeleteTopicCommand');
+    await sendDeleteTopicCommand({ TopicArn: snsTopicArn });
 
     try {
       const permissionParams = {
@@ -195,7 +199,7 @@ describe('The SNS-type rule', () => {
       try {
         const messagePublishTime = Date.now() - 1000 * 30;
 
-        await sendSNSMessage({ Message: snsMessage, TopicArn: snsTopicArn }, 'PublishCommand');
+        await sendPublishCommand({ Message: snsMessage, TopicArn: snsTopicArn });
 
         console.log('originalPayload.testId', testId);
         helloWorldExecutionArn = await findExecutionArn(
@@ -296,7 +300,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await sendSNSMessage({ Name: newValueTopicName }, 'CreateTopicCommand');
+        const { TopicArn } = await sendCreateTopicCommand({ Name: newValueTopicName });
         newTopicArn = TopicArn;
         const updateParams = {
           rule: {
@@ -324,7 +328,7 @@ describe('The SNS-type rule', () => {
           state: 'DISABLED',
         },
       });
-      await sendSNSMessage({ TopicArn: newTopicArn }, 'DeleteTopicCommand');
+      await sendDeleteTopicCommand({ TopicArn: newTopicArn });
     });
 
     it('saves the new rule.value', () => {
@@ -354,7 +358,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await sendSNSMessage({ Name: newValueTopicName }, 'CreateTopicCommand');
+        const { TopicArn } = await sendCreateTopicCommand({ Name: newValueTopicName });
         newTopicArn = TopicArn;
         const subscriptionParams = {
           TopicArn,
@@ -362,7 +366,7 @@ describe('The SNS-type rule', () => {
           Endpoint: (await lambda().getFunction({ FunctionName: consumerName })).Configuration.FunctionArn,
           ReturnSubscriptionArn: true,
         };
-        const { SubscriptionArn } = await sendSNSMessage(subscriptionParams, 'SubscribeCommand');
+        const { SubscriptionArn } = await sendSubscribeCommand(subscriptionParams);
         subscriptionArn = SubscriptionArn;
         const updateParams = {
           ...createdRule.record,
@@ -412,7 +416,7 @@ describe('The SNS-type rule', () => {
     });
 
     afterAll(async () => {
-      await sendSNSMessage({ TopicArn: newTopicArn }, 'DeleteTopicCommand');
+      await sendDeleteTopicCommand({ TopicArn: newTopicArn });
     });
 
     it('is removed from the rules API', () => {
