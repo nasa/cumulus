@@ -1031,7 +1031,7 @@ test.serial('deleteRuleResources() does not throw if a rule is passed in without
     testKnex,
   } = t.context;
 
-  const topic1 = await sendCreateTopicCommand({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic1 = await sendCreateTopicCommand({ Name: randomId('topic1_') });
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -1108,7 +1108,7 @@ test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s su
     testKnex,
   } = t.context;
 
-  const topic1 = await sendCreateTopicCommand({ Name: randomId('topic1_') }, 'CreateTopicCommand');
+  const topic1 = await sendCreateTopicCommand({ Name: randomId('topic1_') });
 
   const snsRule = fakeRuleFactoryV2({
     workflow,
@@ -2107,7 +2107,7 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
 
 test.serial('Updating an SNS rule to "disabled" removes the event source mapping ARN', async (t) => {
   const snsTopicArn = randomString();
-  const { TopicArn } = await sendCreateTopicCommand({ Name: snsTopicArn }, 'CreateTopicCommand');
+  const { TopicArn } = await sendCreateTopicCommand({ Name: snsTopicArn });
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
