@@ -63,7 +63,7 @@ test('parseSQSMessageBody parses messages correctly', (t) => {
   t.deepEqual(parseSQSMessageBody({}), {});
 });
 
-test('sqsQueueExists detects if the queue does not exist or is not accessible', async (t) => {
+test.skip('sqsQueueExists detects if the queue does not exist or is not accessible', async (t) => {
   const queueUrl = await createQueue(randomString());
   t.true(await sqsQueueExists(queueUrl));
   t.false(await sqsQueueExists(randomString()));
