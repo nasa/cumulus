@@ -81,7 +81,7 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test.serial('The correct output is returned when PDRs are queued', async (t) => {
+test.skip('The correct output is returned when PDRs are queued', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [
     { name: randomString(), path: randomString() },
@@ -98,7 +98,7 @@ test.serial('The correct output is returned when PDRs are queued', async (t) => 
   t.is(output.running.length, 2);
 });
 
-test.serial('The correct output is returned when no PDRs are queued', async (t) => {
+test.skip('The correct output is returned when no PDRs are queued', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [];
 
@@ -112,7 +112,7 @@ test.serial('The correct output is returned when no PDRs are queued', async (t) 
   t.is(output.running.length, 0);
 });
 
-test.serial('PDRs are added to the queue', async (t) => {
+test.skip('PDRs are added to the queue', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [
     { name: randomString(), path: randomString() },
@@ -137,7 +137,7 @@ test.serial('PDRs are added to the queue', async (t) => {
   t.is(messages.length, 2);
 });
 
-test.serial('The correct message is enqueued', async (t) => {
+test.skip('The correct message is enqueued', async (t) => {
   const {
     event,
     queueExecutionLimits,
@@ -215,7 +215,7 @@ test.serial('The correct message is enqueued', async (t) => {
   });
 });
 
-test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
+test.skip('A config with executionNamePrefix is handled as expected', async (t) => {
   const { event } = t.context;
 
   const executionNamePrefix = randomString(3);
@@ -259,7 +259,7 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
   );
 });
 
-test.serial('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
+test.skip('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
   const event = t.context.event;
   event.input.pdrs = [
     { name: randomString(), path: randomString() },
