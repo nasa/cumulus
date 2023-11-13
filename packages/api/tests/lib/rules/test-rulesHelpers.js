@@ -1295,7 +1295,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
   t.teardown(async () => {
     unsubscribeSpy.restore();
     await sendDeleteTopicCommand({
-      TopicArn: TopicArn,
+      TopicArn,
     });
   });
 });
@@ -1707,7 +1707,7 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     snsStub.restore();
     subscribeSpy.restore();
     addPermissionSpy.restore();
-    await sendDeleteTopicCommand({ TopicArn: TopicArn });
+    await sendDeleteTopicCommand({ TopicArn });
   });
 });
 
@@ -2159,7 +2159,7 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
   t.teardown(async () => {
     lambdaStub.restore();
     snsStub.restore();
-    await sendDeleteTopicCommand({ TopicArn: TopicArn });
+    await sendDeleteTopicCommand({ TopicArn });
   });
 });
 

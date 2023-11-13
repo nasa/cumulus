@@ -210,7 +210,7 @@ test.beforeEach(async (t) => {
   });
 
   await sendConfirmSubscriptionCommand({
-    TopicArn: TopicArn,
+    TopicArn,
     Token: SubscriptionArn,
   });
 

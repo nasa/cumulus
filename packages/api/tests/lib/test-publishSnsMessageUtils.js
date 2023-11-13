@@ -57,7 +57,7 @@ test.afterEach(async (t) => {
 
   await Promise.all([
     sqs().deleteQueue({ QueueUrl }).promise(),
-    sendDeleteTopicCommand({ TopicArn: TopicArn }),
+    sendDeleteTopicCommand({ TopicArn }),
   ]);
 });
 

@@ -107,14 +107,14 @@ test.beforeEach(async (t) => {
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sendSubscribeCommand({
-    TopicArn: TopicArn,
+    TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
     ReturnSubscriptionArn: true,
   });
 
   await sendConfirmSubscriptionCommand({
-    TopicArn: TopicArn,
+    TopicArn,
     Token: SubscriptionArn,
   });
 });
@@ -122,7 +122,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sendDeleteTopicCommand({ TopicArn: TopicArn });
+  await sendDeleteTopicCommand({ TopicArn });
 });
 
 test.after.always(async (t) => {

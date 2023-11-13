@@ -130,7 +130,7 @@ const createCloudwatchEventMessage = ({
 const assertInvalidSqsQueueUpdateEvent = (t, output) =>
   t.is(output, 'Not a valid event for updating SQS queue');
 
-test.skip('sqsMessageRemover lambda does nothing for an event with a RUNNING status', async (t) => {
+test('sqsMessageRemover lambda does nothing for an event with a RUNNING status', async (t) => {
   const output = await updateSqsQueue(
     createCloudwatchEventMessage({
       status: 'RUNNING',
@@ -140,7 +140,7 @@ test.skip('sqsMessageRemover lambda does nothing for an event with a RUNNING sta
   assertInvalidSqsQueueUpdateEvent(t, output);
 });
 
-test.skip('sqsMessageRemover lambda does nothing for a workflow message when eventSource.type is not set to sqs', async (t) => {
+test('sqsMessageRemover lambda does nothing for a workflow message when eventSource.type is not set to sqs', async (t) => {
   let output = await updateSqsQueue(
     createCloudwatchEventMessage({
       status: 'SUCCEEDED',
@@ -160,7 +160,7 @@ test.skip('sqsMessageRemover lambda does nothing for a workflow message when eve
   assertInvalidSqsQueueUpdateEvent(t, output);
 });
 
-test.skip('sqsMessageRemover lambda does nothing for a workflow message when eventSource.deleteCompletedMessage is not true', async (t) => {
+test('sqsMessageRemover lambda does nothing for a workflow message when eventSource.deleteCompletedMessage is not true', async (t) => {
   const eventSource = createEventSource({ deleteCompletedMessage: false });
   const output = await updateSqsQueue(
     createCloudwatchEventMessage({
@@ -172,7 +172,7 @@ test.skip('sqsMessageRemover lambda does nothing for a workflow message when eve
   assertInvalidSqsQueueUpdateEvent(t, output);
 });
 
-test.skip('sqsMessageRemover lambda does nothing for a workflow message when eventSource.workflow_name is not current workflow', async (t) => {
+test('sqsMessageRemover lambda does nothing for a workflow message when eventSource.workflow_name is not current workflow', async (t) => {
   const eventSource = createEventSource({});
   const output = await updateSqsQueue(
     createCloudwatchEventMessage({
@@ -185,7 +185,7 @@ test.skip('sqsMessageRemover lambda does nothing for a workflow message when eve
   assertInvalidSqsQueueUpdateEvent(t, output);
 });
 
-test.skip('sqsMessageRemover lambda removes message from queue when workflow succeeded', async (t) => {
+test('sqsMessageRemover lambda removes message from queue when workflow succeeded', async (t) => {
   process.env.system_bucket = randomString();
   await createBucket(process.env.system_bucket);
 
@@ -213,7 +213,7 @@ test.skip('sqsMessageRemover lambda removes message from queue when workflow suc
   await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
 });
 
-test.skip('sqsMessageRemover lambda updates message visibilityTimeout when workflow failed', async (t) => {
+test('sqsMessageRemover lambda updates message visibilityTimeout when workflow failed', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() }),
@@ -243,7 +243,7 @@ test.skip('sqsMessageRemover lambda updates message visibilityTimeout when workf
   await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
 });
 
-test.skip('sqsMessageRemover lambda removes message from S3 when workflow succeeded', async (t) => {
+test.serial('sqsMessageRemover lambda removes message from S3 when workflow succeeded', async (t) => {
   process.env.system_bucket = randomString();
   process.env.stackName = randomString();
   await createBucket(process.env.system_bucket);

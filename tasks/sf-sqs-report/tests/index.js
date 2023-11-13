@@ -18,7 +18,7 @@ test.after.always(() => {
   delete process.env.reporting_queue_arn;
 });
 
-test.skip('task returns payload as output', async (t) => {
+test('task returns payload as output', async (t) => {
   const event = {
     input: {
       meta: { topic_arn: 'test_topic_arn' },
@@ -31,7 +31,7 @@ test.skip('task returns payload as output', async (t) => {
   t.deepEqual(output, event.input.payload);
 });
 
-test.skip('task returns empty object when no payload is present on input to the task', async (t) => {
+test('task returns empty object when no payload is present on input to the task', async (t) => {
   const input = {
     meta: {
       topic_arn: 'test_topic_arn',

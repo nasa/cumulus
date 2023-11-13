@@ -66,7 +66,7 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test.skip('the queue receives a correctly formatted workflow message without a PDR', async (t) => {
+test.serial('the queue receives a correctly formatted workflow message without a PDR', async (t) => {
   const granule = { granuleId: '1', files: [] };
   const {
     queueExecutionLimit,
@@ -134,7 +134,7 @@ test.skip('the queue receives a correctly formatted workflow message without a P
   t.deepEqual(expectedMessage, actualMessage);
 });
 
-test.skip('the queue receives a correctly formatted workflow message with a PDR', async (t) => {
+test.serial('the queue receives a correctly formatted workflow message with a PDR', async (t) => {
   const granule = { granuleId: '1', files: [] };
   const {
     queueExecutionLimit,
@@ -208,7 +208,7 @@ test.skip('the queue receives a correctly formatted workflow message with a PDR'
   t.deepEqual(expectedMessage, actualMessage);
 });
 
-test.skip('enqueueGranuleIngestMessage does not transform granule objects ', async (t) => {
+test.serial('enqueueGranuleIngestMessage does not transform granule objects ', async (t) => {
   const granule = {
     granuleId: randomId(),
     dataType: randomString(),
@@ -267,7 +267,7 @@ test.skip('enqueueGranuleIngestMessage does not transform granule objects ', asy
   t.deepEqual(actualMessage.payload, expectedPayload);
 });
 
-test.skip('enqueueGranuleIngestMessage uses the executionNamePrefix if specified', async (t) => {
+test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specified', async (t) => {
   const {
     queueUrl,
     templateBucket,
@@ -322,7 +322,7 @@ test.skip('enqueueGranuleIngestMessage uses the executionNamePrefix if specified
   t.true(executionName.length > executionNamePrefix.length);
 });
 
-test.skip('enqueueParsePdrMessage uses the executionNamePrefix if specified', async (t) => {
+test.serial('enqueueParsePdrMessage uses the executionNamePrefix if specified', async (t) => {
   const {
     queueUrl,
     templateBucket,
@@ -356,7 +356,7 @@ test.skip('enqueueParsePdrMessage uses the executionNamePrefix if specified', as
   t.true(executionName.length > executionNamePrefix.length);
 });
 
-test.skip('enqueueParsePdrMessage does not overwrite the collection or provider with additionalCustomMeta if specified', async (t) => {
+test.serial('enqueueParsePdrMessage does not overwrite the collection or provider with additionalCustomMeta if specified', async (t) => {
   const {
     queueUrl,
     templateBucket,
@@ -408,7 +408,7 @@ test.skip('enqueueParsePdrMessage does not overwrite the collection or provider 
   t.deepEqual(provider, messageProvider);
 });
 
-test.skip('enqueueGranuleIngestMessage does not overwrite the collection or provider with additionalCustomMeta if specified', async (t) => {
+test.serial('enqueueGranuleIngestMessage does not overwrite the collection or provider with additionalCustomMeta if specified', async (t) => {
   const {
     queueUrl,
     templateBucket,

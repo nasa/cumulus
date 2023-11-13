@@ -219,14 +219,14 @@ test.beforeEach(async (t) => {
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sendSubscribeCommand({
-    TopicArn: TopicArn,
+    TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
     ReturnSubscriptionArn: true,
   });
 
   await sendConfirmSubscriptionCommand({
-    TopicArn: TopicArn,
+    TopicArn,
     Token: SubscriptionArn,
   });
 

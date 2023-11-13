@@ -335,7 +335,7 @@ test.afterEach.always(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
 
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sendDeleteTopicCommand({ TopicArn: TopicArn });
+  await sendDeleteTopicCommand({ TopicArn });
 
   await t.context.knex(TableNames.files).del();
   await t.context.knex(TableNames.granulesExecutions).del();

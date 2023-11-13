@@ -54,7 +54,7 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 
-test.skip('archiveSqsMessageToS3 archives an SQS message', async (t) => {
+test.serial('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   const { stackName, queues } = t.context;
   const body = { testdata: randomString() };
   const message = await SQS.sendSQSMessage(
@@ -73,7 +73,7 @@ test.skip('archiveSqsMessageToS3 archives an SQS message', async (t) => {
   t.deepEqual(body, s3data);
 });
 
-test.skip('archiveSqsMessageToS3 does not archive message if queueName cannot be derived from queueUrl', async (t) => {
+test.serial('archiveSqsMessageToS3 does not archive message if queueName cannot be derived from queueUrl', async (t) => {
   const { queues } = t.context;
   const body = { testdata: randomString() };
   await SQS.sendSQSMessage(
@@ -93,7 +93,7 @@ test.skip('archiveSqsMessageToS3 does not archive message if queueName cannot be
   );
 });
 
-test.skip('deleteArchivedMessageFromS3 deletes archived message in S3', async (t) => {
+test.serial('deleteArchivedMessageFromS3 deletes archived message in S3', async (t) => {
   const { queues } = t.context;
   const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);
@@ -125,7 +125,7 @@ test.skip('deleteArchivedMessageFromS3 deletes archived message in S3', async (t
   }));
 });
 
-test.skip('deleteArchivedMessageFromS3 does delete archived message if queueName cannot be derived from queueUrl', async (t) => {
+test.serial('deleteArchivedMessageFromS3 does delete archived message if queueName cannot be derived from queueUrl', async (t) => {
   const { queues } = t.context;
   const message = { testdata: randomString() };
   await createBucket(process.env.system_bucket);

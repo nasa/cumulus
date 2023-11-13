@@ -111,7 +111,7 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test.skip('The correct output is returned when granules are queued without a PDR', async (t) => {
+test.serial('The correct output is returned when granules are queued without a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -141,7 +141,7 @@ test.skip('The correct output is returned when granules are queued without a PDR
   t.falsy(output.pdr);
 });
 
-test.skip('The correct output is returned when granules are queued with a PDR', async (t) => {
+test.serial('The correct output is returned when granules are queued with a PDR', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -172,7 +172,7 @@ test.skip('The correct output is returned when granules are queued with a PDR', 
   t.deepEqual(output.pdr, event.input.pdr);
 });
 
-test.skip('The correct output is returned when no granules are queued', async (t) => {
+test.serial('The correct output is returned when no granules are queued', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -194,7 +194,7 @@ test.skip('The correct output is returned when no granules are queued', async (t
   t.is(output.running.length, 0);
 });
 
-test.skip('Granules are added to the queue', async (t) => {
+test.serial('Granules are added to the queue', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -232,7 +232,7 @@ test.skip('Granules are added to the queue', async (t) => {
   t.is(messages.length, 2);
 });
 
-test.skip('The correct message is enqueued without a PDR', async (t) => {
+test.serial('The correct message is enqueued without a PDR', async (t) => {
   const {
     event,
     queueUrl,
@@ -359,7 +359,7 @@ test.skip('The correct message is enqueued without a PDR', async (t) => {
   );
 });
 
-test.skip('granules are enqueued with createdAt values added to granules that are missing them', async (t) => {
+test.serial('granules are enqueued with createdAt values added to granules that are missing them', async (t) => {
   const {
     event,
   } = t.context;
@@ -424,7 +424,7 @@ test.skip('granules are enqueued with createdAt values added to granules that ar
   t.is(createdAt, message2.payload.granules[0].createdAt);
 });
 
-test.skip('The correct message is enqueued with a PDR', async (t) => {
+test.serial('The correct message is enqueued with a PDR', async (t) => {
   const {
     event,
     queueUrl,
@@ -567,7 +567,7 @@ test.skip('The correct message is enqueued with a PDR', async (t) => {
   );
 });
 
-test.skip('If a granule has a provider property, that provider is used', async (t) => {
+test.serial('If a granule has a provider property, that provider is used', async (t) => {
   const dataType = randomString();
   const version = randomString();
   const collectionConfig = { foo: 'bar' };
@@ -621,7 +621,7 @@ test.skip('If a granule has a provider property, that provider is used', async (
   t.deepEqual(parsedBody.meta.provider, provider);
 });
 
-test.skip('A default concurrency of 3 is used', async (t) => {
+test.serial('A default concurrency of 3 is used', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -651,7 +651,7 @@ test.skip('A default concurrency of 3 is used', async (t) => {
   )));
 });
 
-test.skip('A configured concurrency is used', async (t) => {
+test.serial('A configured concurrency is used', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -684,7 +684,7 @@ test.skip('A configured concurrency is used', async (t) => {
   )));
 });
 
-test.skip('A config with executionNamePrefix is handled as expected', async (t) => {
+test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
   const { event } = t.context;
 
   const dataType = `data-type-${randomString().slice(0, 6)}`;
@@ -739,7 +739,7 @@ test.skip('A config with executionNamePrefix is handled as expected', async (t) 
   );
 });
 
-test.skip('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
+test.serial('If a childWorkflowMeta is provided, it is passed through to the message builder and merged into the new message meta', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -789,7 +789,7 @@ test.skip('If a childWorkflowMeta is provided, it is passed through to the messa
   );
 });
 
-test.skip('createdAt for queued granule is equal to enqueueGranuleIngestMessage date when granules do not have createdAt set', async (t) => {
+test.serial('createdAt for queued granule is equal to enqueueGranuleIngestMessage date when granules do not have createdAt set', async (t) => {
   const { event } = t.context;
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
@@ -817,7 +817,7 @@ test.skip('createdAt for queued granule is equal to enqueueGranuleIngestMessage 
   );
 });
 
-test.skip('updatedGranuleBatchCreatedAt updates batch granule object with correct createdAt values', (t) => {
+test.serial('updatedGranuleBatchCreatedAt updates batch granule object with correct createdAt values', (t) => {
   const testGranuleBatch = [
     {
       granuleId: 1,
@@ -840,7 +840,7 @@ test.skip('updatedGranuleBatchCreatedAt updates batch granule object with correc
   t.deepEqual(actual, expected);
 });
 
-test.skip('hitting defaults for branch coverage', async (t) => {
+test.serial('hitting defaults for branch coverage', async (t) => {
   const dataType = `data-type-${randomString().slice(0, 6)}`;
   const version = '6';
   const collectionConfig = { foo: 'bar' };
@@ -861,7 +861,7 @@ test.skip('hitting defaults for branch coverage', async (t) => {
   t.is(pMapSpy.getCalls().length, 1);
 });
 
-test.skip('does not change collection id on granule', async (t) => {
+test.serial('does not change collection id on granule', async (t) => {
   const { event } = t.context;
 
   event.input.granules = [
@@ -927,7 +927,7 @@ test.skip('does not change collection id on granule', async (t) => {
   );
 });
 
-test.skip('handles different collections', async (t) => {
+test.serial('handles different collections', async (t) => {
   const { event } = t.context;
 
   event.input.granules = [
@@ -994,7 +994,7 @@ test.skip('handles different collections', async (t) => {
   );
 });
 
-test.skip('handles different providers', async (t) => {
+test.serial('handles different providers', async (t) => {
   const { event } = t.context;
 
   event.input.granules = [
@@ -1062,7 +1062,7 @@ test.skip('handles different providers', async (t) => {
   );
 });
 
-test.skip('queueGranules throws an error when no dataType, version, or collectionId are provided in input', async (t) => {
+test.serial('queueGranules throws an error when no dataType, version, or collectionId are provided in input', async (t) => {
   const { event } = t.context;
   const granuleId1 = randomString();
   event.input.granules = [
@@ -1082,7 +1082,7 @@ test.skip('queueGranules throws an error when no dataType, version, or collectio
     });
 });
 
-test.skip('queueGranules does not throw an error when updatedAt is provided and is not provided', async (t) => {
+test.serial('queueGranules does not throw an error when updatedAt is provided and is not provided', async (t) => {
   const { event } = t.context;
   event.input.granules = [
     {
@@ -1096,7 +1096,7 @@ test.skip('queueGranules does not throw an error when updatedAt is provided and 
   await t.notThrowsAsync(queueGranules(event));
 });
 
-test.skip('queueGranules throws an error when the updatedAt field is not an Integer value', async (t) => {
+test.serial('queueGranules throws an error when the updatedAt field is not an Integer value', async (t) => {
   const { event } = t.context;
   const firstGranuleId = randomString();
   const firstInvalidUpdatedAt = '12/25/2022';

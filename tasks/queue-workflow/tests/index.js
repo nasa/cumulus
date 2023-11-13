@@ -92,7 +92,7 @@ test.afterEach(async (t) => {
   ]);
 });
 
-test.skip('The correct output is returned when workflow is queued', async (t) => {
+test.serial('The correct output is returned when workflow is queued', async (t) => {
   const event = t.context.event;
   event.config.workflow = t.context.workflow;
 
@@ -106,7 +106,7 @@ test.skip('The correct output is returned when workflow is queued', async (t) =>
   t.deepEqual(output.workflow, event.config.workflow);
 });
 
-test.skip('Workflow is added to the queue', async (t) => {
+test.serial('Workflow is added to the queue', async (t) => {
   const event = t.context.event;
   event.config.workflow = t.context.queuedWorkflow;
 
@@ -128,7 +128,7 @@ test.skip('Workflow is added to the queue', async (t) => {
   t.is(messages.length, 1);
 });
 
-test.skip('Workflow is added to the input queue', async (t) => {
+test.serial('Workflow is added to the input queue', async (t) => {
   const event = t.context.event;
   event.config.workflow = t.context.queuedWorkflow;
   event.input.queueUrl = await createQueue(randomId('inputQueueUrl'));
@@ -161,7 +161,7 @@ test.skip('Workflow is added to the input queue', async (t) => {
   t.is(inputQueueMessages.length, 1);
 });
 
-test.skip('The correct message is enqueued', async (t) => {
+test.serial('The correct message is enqueued', async (t) => {
   const {
     event,
     queueExecutionLimits,
@@ -220,7 +220,7 @@ test.skip('The correct message is enqueued', async (t) => {
   t.deepEqual(message, expectedMessage);
 });
 
-test.skip('A config with executionNamePrefix is handled as expected', async (t) => {
+test.serial('A config with executionNamePrefix is handled as expected', async (t) => {
   const { event } = t.context;
 
   const executionNamePrefix = randomId(3);
