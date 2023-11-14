@@ -24,47 +24,33 @@ import { sns } from './services';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
-export const sendPublishCommand = async function (
+export const sendPublishCommand = async (
   messageParams: PublishCommandInput
-) {
-  return await sns().send(new PublishCommand(messageParams));
-};
+) => await sns().send(new PublishCommand(messageParams));
 
-export const sendSubscribeCommand = async function (
+export const sendSubscribeCommand = async (
   messageParams: SubscribeCommandInput
-) {
-  return await sns().send(new SubscribeCommand(messageParams));
-};
+) => await sns().send(new SubscribeCommand(messageParams));
 
-export const sendUnsubscribeCommand = async function (
+export const sendUnsubscribeCommand = async (
   messageParams: UnsubscribeCommandInput
-) {
-  return await sns().send(new UnsubscribeCommand(messageParams));
-};
+) => await sns().send(new UnsubscribeCommand(messageParams));
 
-export const sendListSubscriptionsCommand = async function (
+export const sendListSubscriptionsCommand = async (
   messageParams: ListSubscriptionsByTopicCommandInput
-) {
-  return await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
-};
+) => await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
 
-export const sendCreateTopicCommand = async function (
+export const sendCreateTopicCommand = async (
   messageParams: CreateTopicCommandInput
-) {
-  return await sns().send(new CreateTopicCommand(messageParams));
-};
+) => await sns().send(new CreateTopicCommand(messageParams));
 
-export const sendDeleteTopicCommand = async function (
+export const sendDeleteTopicCommand = async (
   messageParams: DeleteTopicCommandInput
-) {
-  return await sns().send(new DeleteTopicCommand(messageParams));
-};
+) => await sns().send(new DeleteTopicCommand(messageParams));
 
-export const sendConfirmSubscriptionCommand = async function (
+export const sendConfirmSubscriptionCommand = async (
   messageParams: ConfirmSubscriptionCommandInput
-) {
-  return await sns().send(new ConfirmSubscriptionCommand(messageParams));
-};
+) => await sns().send(new ConfirmSubscriptionCommand(messageParams));
 
 /**
  * Publish a message to an SNS topic. Does not catch

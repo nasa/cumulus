@@ -105,7 +105,7 @@ test.beforeEach(async (t) => {
   await t.context.collectionPgModel.create(t.context.testKnex, t.context.testCollection);
 
   const topicName = randomString();
-  const { TopicArn } = await sendCreateTopicCommand({ Name: topicName }, 'CreateTopicCommand');
+  const { TopicArn } = await sendCreateTopicCommand({ Name: topicName });
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -123,7 +123,7 @@ test.beforeEach(async (t) => {
     Protocol: 'sqs',
     Endpoint: QueueArn,
     ReturnSubscriptionArn: true,
-  }, 'SubscribeCommand');
+  });
 
   await sendConfirmSubscriptionCommand({
     TopicArn,
