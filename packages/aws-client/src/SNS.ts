@@ -26,31 +26,73 @@ const log = new Logger({ sender: 'aws-client/sns' });
 
 export const sendPublishCommand = async (
   messageParams: PublishCommandInput
-) => await sns().send(new PublishCommand(messageParams));
+) => {
+  try {
+    await sns().send(new PublishCommand(messageParams));
+  } catch (error) {
+    throw new Error(`SNS Publish command error: ${error}`);
+  }
+};
 
 export const sendSubscribeCommand = async (
   messageParams: SubscribeCommandInput
-) => await sns().send(new SubscribeCommand(messageParams));
+) => {
+  try {
+    await sns().send(new SubscribeCommand(messageParams));
+  } catch (error) {
+    throw new Error(`SNS Subscribe command error: ${error}`);
+  }
+};
 
 export const sendUnsubscribeCommand = async (
   messageParams: UnsubscribeCommandInput
-) => await sns().send(new UnsubscribeCommand(messageParams));
+) => {
+  try {
+    await sns().send(new UnsubscribeCommand(messageParams));
+  } catch (error) {
+    throw new Error(`SNS Unsubscribe command error: ${error}`);
+  }
+};
 
 export const sendListSubscriptionsCommand = async (
   messageParams: ListSubscriptionsByTopicCommandInput
-) => await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
+) => {
+  try {
+    await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
+  } catch (error) {
+    throw new Error(`SNS ListSubscriptionsByTopic command error: ${error}`);
+  }
+};
 
 export const sendCreateTopicCommand = async (
   messageParams: CreateTopicCommandInput
-) => await sns().send(new CreateTopicCommand(messageParams));
+) => {
+  try {
+    await sns().send(new CreateTopicCommand(messageParams));
+  } catch (error) {
+    throw new Error(`SNS CreateTopic command error: ${error}`);
+  }
+};
 
 export const sendDeleteTopicCommand = async (
   messageParams: DeleteTopicCommandInput
-) => await sns().send(new DeleteTopicCommand(messageParams));
+) => {
+  try {
+    await sns().send(new DeleteTopicCommand(messageParams));
+  } catch (error) {
+    throw new Error(`SNS DeleteTopic command error: ${error}`);
+  }
+};
 
 export const sendConfirmSubscriptionCommand = async (
   messageParams: ConfirmSubscriptionCommandInput
-) => await sns().send(new ConfirmSubscriptionCommand(messageParams));
+) => {
+  try {
+    await sns().send(new ConfirmSubscriptionCommand(messageParams));
+  } catch (error) {
+    throw new Error(`SNS ConfirmSubscription command error: ${error}`);
+  }
+};
 
 /**
  * Publish a message to an SNS topic. Does not catch
