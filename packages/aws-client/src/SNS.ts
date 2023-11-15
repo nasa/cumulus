@@ -28,7 +28,7 @@ export const sendPublishCommand = async (
   messageParams: PublishCommandInput
 ) => {
   try {
-    await sns().send(new PublishCommand(messageParams));
+    return await sns().send(new PublishCommand(messageParams));
   } catch (error) {
     throw new Error(`SNS Publish command error: ${error}`);
   }
@@ -38,7 +38,7 @@ export const sendSubscribeCommand = async (
   messageParams: SubscribeCommandInput
 ) => {
   try {
-    await sns().send(new SubscribeCommand(messageParams));
+    return await sns().send(new SubscribeCommand(messageParams));
   } catch (error) {
     throw new Error(`SNS Subscribe command error: ${error}`);
   }
@@ -48,7 +48,7 @@ export const sendUnsubscribeCommand = async (
   messageParams: UnsubscribeCommandInput
 ) => {
   try {
-    await sns().send(new UnsubscribeCommand(messageParams));
+    return await sns().send(new UnsubscribeCommand(messageParams));
   } catch (error) {
     throw new Error(`SNS Unsubscribe command error: ${error}`);
   }
@@ -58,7 +58,7 @@ export const sendListSubscriptionsCommand = async (
   messageParams: ListSubscriptionsByTopicCommandInput
 ) => {
   try {
-    await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
+    return await sns().send(new ListSubscriptionsByTopicCommand(messageParams));
   } catch (error) {
     throw new Error(`SNS ListSubscriptionsByTopic command error: ${error}`);
   }
@@ -68,7 +68,7 @@ export const sendCreateTopicCommand = async (
   messageParams: CreateTopicCommandInput
 ) => {
   try {
-    await sns().send(new CreateTopicCommand(messageParams));
+    return await sns().send(new CreateTopicCommand(messageParams));
   } catch (error) {
     throw new Error(`SNS CreateTopic command error: ${error}`);
   }
@@ -78,7 +78,7 @@ export const sendDeleteTopicCommand = async (
   messageParams: DeleteTopicCommandInput
 ) => {
   try {
-    await sns().send(new DeleteTopicCommand(messageParams));
+    return await sns().send(new DeleteTopicCommand(messageParams));
   } catch (error) {
     throw new Error(`SNS DeleteTopic command error: ${error}`);
   }
@@ -88,7 +88,7 @@ export const sendConfirmSubscriptionCommand = async (
   messageParams: ConfirmSubscriptionCommandInput
 ) => {
   try {
-    await sns().send(new ConfirmSubscriptionCommand(messageParams));
+    return await sns().send(new ConfirmSubscriptionCommand(messageParams));
   } catch (error) {
     throw new Error(`SNS ConfirmSubscription command error: ${error}`);
   }
