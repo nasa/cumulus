@@ -27,7 +27,7 @@ module "orca" {
   vpc_id                   = local.vpc_id
 
   ## OPTIONAL
-  # tags                     = var.tags
+  tags                     = var.tags
 
   ## --------------------------
   ## ORCA Variables
