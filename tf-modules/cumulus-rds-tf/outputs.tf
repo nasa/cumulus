@@ -3,7 +3,7 @@ output "security_group_id" {
 }
 
 output "rds_endpoint" {
-  value = aws_rds_cluster.cumulus.endpoint
+  value = var.manage_engine_version ? aws_rds_cluster.cumulus_managed_engine_version[*].endpoint : aws_rds_cluster.cumulus[*].endpoint
 }
 
 output "admin_db_login_secret_arn" {

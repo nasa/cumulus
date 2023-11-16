@@ -21,7 +21,7 @@ module "rds_cluster" {
   vpc_id              = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
   subnets             = var.subnets != null ? var.subnets : data.aws_subnets.subnet_ids[0].ids
   engine_version      = var.engine_version
-  deletion_protection = true
+  deletion_protection = var.deletion_protection
   cluster_identifier  = var.cluster_identifier
   tags                = var.tags
   snapshot_identifier = var.snapshot_identifier

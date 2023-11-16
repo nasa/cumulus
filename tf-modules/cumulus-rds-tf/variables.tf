@@ -88,13 +88,13 @@ variable "vpc_id" {
 variable "engine_version" {
   description = "Postgres engine version for serverless cluster"
   type        = string
-  default     = "11.13"
+  default     = "13.9"
 }
 
 variable "parameter_group_family" {
   description = "Database family to use for creating database parameter group"
   type = string
-  default = "aurora-postgresql11"
+  default = "aurora-postgresql13"
 }
 
 variable "max_capacity" {
@@ -170,4 +170,15 @@ variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
   default = {}
+}
+
+variable "allow_major_version_upgrade" {
+  type = bool
+  default = false
+}
+
+variable "manage_engine_version" {
+  description = "Configurable flag to allow engine version to be managed"
+  type = bool
+  default = false
 }

@@ -63,7 +63,7 @@ variable "tags" {
 variable "engine_version" {
   description = "Postgres engine version for Serverless cluster"
   type        = string
-  default     = "10.12"
+  default     = "13.9"
 }
 
 variable "vpc_tag_name" {
@@ -92,4 +92,15 @@ variable "lambda_timeouts" {
   default = {
     ProvisionPostgresDatabase = 600 # cumulus-rds-tf
   }
+}
+
+variable "manage_engine_version" {
+  description = "Configurable flag to allow engine version to be managed"
+  type = bool
+  default = false
+}
+
+variable "allow_major_version_upgrade" {
+  type = bool
+  default = false
 }
