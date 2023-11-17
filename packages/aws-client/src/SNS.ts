@@ -5,6 +5,7 @@
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 import { sns } from './services';
+import { PublishCommand } from '@aws-sdk/client-sns';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
@@ -29,10 +30,10 @@ export const publishSnsMessage = async (
         throw new pRetry.AbortError('Missing SNS topic ARN');
       }
 
-      await sns().publish({
+      await sns().send(new PublishCommand({
         TopicArn: snsTopicArn,
         Message: JSON.stringify(message),
-      });
+      }));
     },
     {
       maxTimeout: 5000,
