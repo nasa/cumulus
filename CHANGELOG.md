@@ -28,6 +28,7 @@ If you manually upgraded your database engine and the cluster is now on version 
 
 ```terraform
 parameter_group_family = "aurora-postgresql13"
+engine_version = 13.9
 ```
 
 **Please Note**: When you apply this update, the original PostgreSQL v11 parameter group will be removed, and recreated using PG13 defaults/configured terraform values and it will also update the database cluster to use the new configuration.
