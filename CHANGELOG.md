@@ -22,8 +22,6 @@ manually set parameter group not managed by terraform.
 
 There are several options that AWS provides for upgrading your cluster engine. For more information, visit their [documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
 
-#### Parameter Group Upgrade
-
 If you manually upgraded your database engine and the cluster is now on version 13.9+, to continue using the `cumulus-rds-tf` module *once upgraded*, update following module configuration values if set, or allow their defaults to be utilized:
 
 ```terraform
@@ -37,6 +35,9 @@ engine_version = 13.9
 
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
+- **CUMULUS-3432**
+  - Update `cumulus-rds-tf` `engine_version` to `13.9`
+  - Update `cumulus-rds-tf` `parameter_group_family` to `aurora-postgresql13`
 
 ### Fixed
 
