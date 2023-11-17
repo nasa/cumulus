@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### MIGRATION notes
+
+From this release forward, Cumulus Core will be tested against PostgreSQL v13. Existing release compatibility testing was done for release 11.18. Users
+should migrate their datastores to Aurora PostgreSQL 13.9+ compatible data stores as soon as possible.
+
+#### Engine Upgrade
+
+Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
+database clusters forcibly upgraded at the next maintenance window after February 29, 2024.
+
+Our guidance to mitigate this issue is to do a manual (outside of
+terraform) upgrade. This will result in the cluster being upgraded with a
+manually set parameter group not managed by terraform.
+
+There are several options that AWS provides for upgrading your cluster engine. For more information, visit their [documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
+
+#### Parameter Group Upgrade
+
+If you manually upgraded your database engine and the cluster is now on version 13.9+, to continue using the `cumulus-rds-tf` module *once upgraded*, update following module configuration values if set, or allow their defaults to be utilized:
+
+```terraform
+parameter_group_family = "aurora-postgresql13"
+```
+
+**Please Note**: When you apply this update, the original PostgreSQL v11 parameter group will be removed, and recreated using PG13 defaults/configured terraform values and it will also update the database cluster to use the new configuration.
+
 ### Changed
 
 - **CUMULUS-2894**
