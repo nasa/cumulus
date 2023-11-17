@@ -226,12 +226,12 @@ test.beforeEach(async (t) => {
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
@@ -332,7 +332,7 @@ test.beforeEach(async (t) => {
 test.afterEach.always(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
 
-  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl });
   await sns().deleteTopic({ TopicArn }).promise();
 
   await t.context.knex(TableNames.files).del();
@@ -603,7 +603,7 @@ test.serial('writeGranulesFromMessage() saves granule records to PostgreSQL/Elas
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   t.is(Messages.length, 1);
 });
 
@@ -1951,7 +1951,7 @@ test.serial('writeGranulesFromMessage() does not write to PostgreSQL/Elasticsear
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   t.is(Messages, undefined);
 });
 
@@ -1995,7 +1995,7 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   t.is(Messages, undefined);
 });
 
@@ -2425,7 +2425,7 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   t.is(Messages, undefined);
 });
 
@@ -4795,7 +4795,7 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL/
     QueueUrl,
     MaxNumberOfMessages: 2,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   const snsMessageBody = JSON.parse(Messages[1].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
@@ -5001,7 +5001,7 @@ test.serial('_writeGranule() successfully publishes an SNS message', async (t) =
     knexOrTransaction: knex,
   });
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
   t.is(Messages.length, 1);
 
   const snsMessageBody = JSON.parse(Messages[0].Body);

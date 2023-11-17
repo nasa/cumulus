@@ -133,12 +133,12 @@ test.beforeEach(async (t) => {
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
@@ -155,7 +155,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl });
   await sns().deleteTopic({ TopicArn }).promise();
 });
 
@@ -511,7 +511,7 @@ test.serial('writePdr() successfully publishes an SNS message', async (t) => {
     knex,
   });
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
   t.is(Messages.length, 1);
 
@@ -546,6 +546,6 @@ test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is 
     }),
     { message: 'Topic does not exist' }
   );
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
   t.is(Messages, undefined);
 });

@@ -363,7 +363,7 @@ async function validateAndUpdateSqsRule(rule) {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
   };
-  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams);
   if (!attributes.Attributes.RedrivePolicy) {
     throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
   }

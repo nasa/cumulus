@@ -353,12 +353,12 @@ test.beforeEach(async (t) => {
   t.context.TopicArn = TopicArn;
 
   const QueueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns()
@@ -379,7 +379,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl });
   await sns().deleteTopic({ TopicArn }).promise();
 });
 
@@ -1297,8 +1297,7 @@ test.serial('DELETE publishes an SNS message after a successful granule delete',
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
@@ -1913,8 +1912,7 @@ test.serial('create (POST) publishes an SNS message upon successful granule crea
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   t.is(Messages.length, 1);
 });
 
@@ -2714,8 +2712,7 @@ test.serial('PATCH publishes an SNS message after a successful granule update', 
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   const snsMessageBody = JSON.parse(Messages[0].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
@@ -2886,8 +2883,7 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   t.is(Messages, undefined);
 });
 
@@ -2947,8 +2943,7 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
     .receiveMessage({
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   t.is(Messages, undefined);
 });
 

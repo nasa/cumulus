@@ -196,7 +196,7 @@ test.beforeEach(async (t) => {
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl: t.context.queues.queueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
@@ -270,8 +270,8 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await sqs().deleteQueue({ QueueUrl: t.context.queues.queueUrl }).promise();
-  await sqs().deleteQueue({ QueueUrl: t.context.queues.deadLetterQueueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.queueUrl });
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.deadLetterQueueUrl });
 });
 
 test.after.always(async (t) => {
@@ -387,8 +387,7 @@ test.serial('Lambda sends message to DLQ when writeRecords() throws an error', a
     .receiveMessage({
       QueueUrl: t.context.queues.deadLetterQueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   const dlqMessage = JSON.parse(Messages[0].Body);
   t.deepEqual(dlqMessage, sqsEvent.Records[0]);
 });

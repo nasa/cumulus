@@ -899,7 +899,7 @@ test.serial('deleteRuleResources does nothing when the rule is an SQS rule', asy
   ];
   await Promise.all(
     queuesToDelete.map(
-      (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl }).promise()
+      (queueUrl) => awsServices.sqs().deleteQueue({ QueueUrl: queueUrl })
     )
   );
 });

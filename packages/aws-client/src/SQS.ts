@@ -8,10 +8,10 @@ import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import * as url from 'url';
 import { SQSRecord } from 'aws-lambda';
+import { QueueAttributeName } from '@aws-sdk/client-sqs';
 
 import { sqs } from './services';
 import { inTestMode } from './test-utils';
-import { improveStackTrace } from './utils';
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
 export interface SQSMessage extends AWS.SQS.Message {
@@ -26,7 +26,7 @@ export const getQueueUrl = (sourceArn: string, queueName: string) => {
 };
 
 export const getQueueUrlByName = async (queueName: string) => {
-  const response = await sqs().getQueueUrl({ QueueName: queueName }).promise();
+  const response = await sqs().getQueueUrl({ QueueName: queueName });
   return response.QueueUrl;
 };
 
@@ -41,9 +41,10 @@ export const getQueueUrlByName = async (queueName: string) => {
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
     QueueName,
-  })
-    .on('error', (error) => log.error(error))
-    .promise();
+  }).catch((error) => {
+    log.error(error);
+    throw error;
+  });
 
   if (inTestMode()) {
     if (createQueueResponse.QueueUrl === undefined) {
@@ -72,9 +73,10 @@ export async function createQueue(QueueName: string) {
 export const deleteQueue = (queueUrl: string) =>
   sqs().deleteQueue({
     QueueUrl: queueUrl,
-  })
-    .on('error', (error) => log.error(error))
-    .promise();
+  }).catch((error) => {
+    log.error(error);
+    throw error;
+  });
 
 export const getQueueAttributes = async (queueName: string) => {
   const queueUrl = await getQueueUrlByName(queueName);
@@ -86,7 +88,7 @@ export const getQueueAttributes = async (queueName: string) => {
   const response = await sqs().getQueueAttributes({
     AttributeNames: ['All'],
     QueueUrl: queueUrl,
-  }).promise();
+  });
 
   return {
     ...response.Attributes,
@@ -104,21 +106,21 @@ export const getQueueAttributes = async (queueName: string) => {
  * @returns {Promise} resolves when the messsage has been sent
 
  **/
-export const sendSQSMessage = improveStackTrace(
-  (queueUrl: string, message: string | object, logOverride: Logger) => {
-    const logger = logOverride || log;
-    let messageBody;
-    if (isString(message)) messageBody = message;
-    else if (isObject(message)) messageBody = JSON.stringify(message);
-    else throw new Error('body type is not accepted');
+export const sendSQSMessage = (queueUrl: string, message: string | object, logOverride: Logger) => {
+  const logger = logOverride || log;
+  let messageBody;
+  if (isString(message)) messageBody = message;
+  else if (isObject(message)) messageBody = JSON.stringify(message);
+  else throw new Error('body type is not accepted');
 
-    return sqs().sendMessage({
-      MessageBody: messageBody,
-      QueueUrl: queueUrl,
-    }).on('error', (error) => logger.error(error))
-      .promise();
-  }
-);
+  return sqs().sendMessage({
+    MessageBody: messageBody,
+    QueueUrl: queueUrl,
+  }).catch((error) => {
+    logger.error(error);
+    throw error;
+  });
+};
 
 type ReceiveSQSMessagesOptions = {
   numOfMessages?: number,
@@ -144,7 +146,7 @@ export const receiveSQSMessages = async (
 ): Promise<SQSMessage[]> => {
   const params = {
     QueueUrl: queueUrl,
-    AttributeNames: ['All'],
+    AttributeNames: [QueueAttributeName.All],
     // 0 is a valid value for VisibilityTimeout
     VisibilityTimeout: isNil(options.visibilityTimeout) ? 30 : options.visibilityTimeout,
     WaitTimeSeconds: options.waitTimeSeconds || 0,
@@ -152,7 +154,10 @@ export const receiveSQSMessages = async (
   };
 
   const messages = await sqs().receiveMessage(params)
-    .on('error', (error) => log.error(error)).promise();
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
 
   return <SQSMessage[]>(messages.Messages ?? []);
 };
@@ -169,12 +174,12 @@ export const parseSQSMessageBody = (
  * @param {integer} receiptHandle - the unique identifier of the sQS message
  * @returns {Promise} an AWS SQS response
  */
-export const deleteSQSMessage = improveStackTrace(
-  (QueueUrl: string, ReceiptHandle: string) =>
-    sqs().deleteMessage({ QueueUrl, ReceiptHandle })
-      .on('error', (error) => log.error(error))
-      .promise()
-);
+export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) =>
+  sqs().deleteMessage({ QueueUrl, ReceiptHandle })
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
 
 /**
  * Test if an SQS queue exists
@@ -191,7 +196,7 @@ export const sqsQueueExists = async (queueUrl: string) => {
   }
 
   try {
-    await sqs().getQueueUrl({ QueueName }).promise();
+    await sqs().getQueueUrl({ QueueName });
     return true;
   } catch (error) {
     if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') {

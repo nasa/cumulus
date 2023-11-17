@@ -67,7 +67,7 @@ test('sqsQueueExists detects if the queue does not exist or is not accessible', 
   const queueUrl = await createQueue(randomString());
   t.true(await sqsQueueExists(queueUrl));
   t.false(await sqsQueueExists(randomString()));
-  await sqs().deleteQueue({ QueueUrl: queueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl: queueUrl });
 });
 
 test('getQueueNameFromUrl extracts queue name from a queue URL', (t) => {
