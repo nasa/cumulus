@@ -168,8 +168,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await sns().createTopic({ Name: executionsTopicName }).promise();
-  const pdrsTopic = await sns().createTopic({ Name: pdrsTopicName }).promise();
+  const executionsTopic = await sns().createTopic({ Name: executionsTopicName });
+  const pdrsTopic = await sns().createTopic({ Name: pdrsTopicName });
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -188,7 +188,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sns().createTopic({ Name: topicName });
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -203,12 +203,12 @@ test.beforeEach(async (t) => {
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
   await sns().confirmSubscription({
     TopicArn,
     Token: SubscriptionArn,
-  }).promise();
+  });
 
   process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
 
@@ -285,8 +285,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn }).promise();
-  await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
+  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn });
+  await sns().deleteTopic({ TopicArn: PdrsTopicArn });
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {

@@ -64,7 +64,7 @@ test.before(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
-  const { TopicArn } = await sns().createTopic({ Name: randomString() }).promise();
+  const { TopicArn } = await sns().createTopic({ Name: randomString() });
   t.context.granules_sns_topic_arn = TopicArn;
   process.env.granule_sns_topic_arn = t.context.granules_sns_topic_arn;
 
@@ -142,7 +142,7 @@ test.after.always(async (t) => {
     knexAdmin: t.context.knexAdmin,
     testDbName,
   });
-  await sns().deleteTopic({ TopicArn: t.context.granules_sns_topic_arn }).promise();
+  await sns().deleteTopic({ TopicArn: t.context.granules_sns_topic_arn });
 });
 
 test.serial('reingestGranule pushes a message with the correct queueUrl', async (t) => {
