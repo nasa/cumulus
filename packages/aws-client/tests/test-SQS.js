@@ -87,5 +87,5 @@ test('sendSQSMessage logs errors', async (t) => {
   );
 
   t.is(testConsole.stderrLogEntries.length, 1);
-  t.regex(testConsole.stderrLogEntries[0].message, /fakequeue/);
+  t.regex(testConsole.stderrLogEntries[0].message, /The specified queue does not exist/);
 });
