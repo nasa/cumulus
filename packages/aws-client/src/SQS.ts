@@ -6,12 +6,10 @@ import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
-import * as url from 'url';
 import { SQSRecord } from 'aws-lambda';
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
 
 import { sqs } from './services';
-import { inTestMode } from './test-utils';
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
 export interface SQSMessage extends AWS.SQS.Message {
@@ -45,27 +43,6 @@ export async function createQueue(QueueName: string) {
     log.error(error);
     throw error;
   });
-
-  if (inTestMode()) {
-    if (createQueueResponse.QueueUrl === undefined) {
-      throw new Error('Did not receive a QueueUrl');
-    }
-
-    // Properly set the Queue URL.  This is needed because LocalStack always
-    // returns the QueueUrl as "localhost", even if that is not where it should
-    // actually be found.  CI breaks without this.
-    const returnedQueueUrl = url.parse(createQueueResponse.QueueUrl);
-
-    // eslint-disable-next-line unicorn/no-null
-    returnedQueueUrl.host = null;
-
-    if (!process.env.LOCALSTACK_HOST) {
-      throw new Error('The LOCALSTACK_HOST environment variable must be set');
-    }
-    returnedQueueUrl.hostname = process.env.LOCALSTACK_HOST;
-
-    return url.format(returnedQueueUrl);
-  }
 
   return createQueueResponse.QueueUrl;
 }
@@ -199,7 +176,7 @@ export const sqsQueueExists = async (queueUrl: string) => {
     await sqs().getQueueUrl({ QueueName });
     return true;
   } catch (error) {
-    if (error.code === 'AWS.SimpleQueueService.NonExistentQueue') {
+    if (error.name === 'QueueDoesNotExist') {
       log.warn(`Queue ${QueueName} does not exist`);
       return false;
     }
