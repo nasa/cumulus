@@ -119,7 +119,7 @@ test('multipartCopyObject() fails when the chunkSize is smaller than the minimum
     }),
     {
       name: 'EntityTooSmall',
-      message: 'Your proposed upload is smaller than the minimum allowed object size.',
+      message: 'Your proposed upload is smaller than the minimum allowed size',
     }
   );
 });
