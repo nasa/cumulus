@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import { KMSClient, EncryptCommand, DecryptCommand, EncryptCommandInput, DecryptCommandInput } from '@aws-sdk/client-kms';
 import { createErrorType } from '@cumulus/errors';
 import { deprecate } from './util';
 
@@ -8,31 +8,31 @@ export class KMS {
   static async encrypt(text: string, kmsId: string) {
     deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.encrypt');
 
-    const params = {
+    const params: EncryptCommandInput = {
       KeyId: kmsId,
-      Plaintext: text,
+      Plaintext: new Uint8Array(Buffer.from(text)),
     };
 
-    const kms = new AWS.KMS();
-    const { CiphertextBlob } = await kms.encrypt(params).promise();
+    const kms = new KMSClient();
+    const { CiphertextBlob } = await kms.send(new EncryptCommand(params));
 
     if (!CiphertextBlob) {
       throw new Error('Encryption failed, undefined CiphertextBlob returned');
     }
 
-    return CiphertextBlob.toString('base64');
+    return CiphertextBlob.toString();
   }
 
   static async decrypt(text: string) {
     deprecate('@cumulus/common/key-pair-provider', '1.17.0', '@cumulus/aws-client/KMS.decryptBase64String');
 
-    const params = {
+    const params: DecryptCommandInput = {
       CiphertextBlob: Buffer.from(text, 'base64'),
     };
 
-    const kms = new AWS.KMS();
+    const kms = new KMSClient();
     try {
-      const { Plaintext } = await kms.decrypt(params).promise();
+      const { Plaintext } = await kms.send(new DecryptCommand(params));
 
       if (!Plaintext) {
         throw new Error('Decryption failed, undefined Plaintext returned');

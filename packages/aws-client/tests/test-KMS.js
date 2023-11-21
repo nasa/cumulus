@@ -5,7 +5,7 @@ const { kms } = require('../services');
 const KMS = require('../KMS');
 
 test.before(async (t) => {
-  const createKeyResponse = await kms().createKey({}).promise();
+  const createKeyResponse = await kms().createKey({});
   t.context.KeyId = createKeyResponse.KeyMetadata.KeyId;
 });
 
@@ -15,7 +15,7 @@ test('createKey() creates a key', async (t) => {
   await t.notThrowsAsync(
     kms().describeKey({
       KeyId: createKeyResponse.KeyMetadata.KeyId,
-    }).promise()
+    })
   );
 });
 
@@ -24,8 +24,7 @@ test('encrypt() properly encrypts a value', async (t) => {
 
   const plaintext = await kms().decrypt({
     CiphertextBlob: Buffer.from(ciphertext, 'base64'),
-  }).promise()
-    .then(({ Plaintext }) => Plaintext.toString());
+  }).then(({ Plaintext }) => Plaintext.toString());
 
   t.is(plaintext, 'asdf');
 });
@@ -33,7 +32,7 @@ test('encrypt() properly encrypts a value', async (t) => {
 test('decryptBase64String() properly decrypts a value', async (t) => {
   const { KeyId } = t.context;
 
-  const ciphertext = await kms().encrypt({ KeyId, Plaintext: 'asdf' }).promise()
+  const ciphertext = await kms().encrypt({ KeyId, Plaintext: 'asdf' })
     .then(({ CiphertextBlob }) => CiphertextBlob.toString('base64'));
 
   const plaintext = await KMS.decryptBase64String(ciphertext);
