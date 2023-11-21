@@ -25,7 +25,7 @@
     "@cumulus/integration-tests": "18.1.0",
     "@cumulus/logger": "18.1.0",
     "@cumulus/test-data": "18.1.0",
-    "aws-sdk": "^2.585.0",
+    "aws-sdk": "2.1490.0",
     "fs-extra": "^9.0.0",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",
     "lodash": "^4.17.20"
