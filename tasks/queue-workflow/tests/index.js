@@ -148,7 +148,7 @@ test.serial('Workflow is added to the input queue', async (t) => {
   });
   const configQueueMessages = receiveConfigQueueMessageResponse.Messages;
 
-  t.is(configQueueMessages, undefined);
+  t.is(configQueueMessages.length, 0);
 
   // Get messages from the input queue
   const receiveInputQueueMessageResponse = await sqs().receiveMessage({
