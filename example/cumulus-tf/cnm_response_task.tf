@@ -1,5 +1,5 @@
 locals {
-  cnm_response_version  = "2.0.3"
+  cnm_response_version  = "2.1.1-alpha.2-SNAPSHOT"
   cnm_response_filename = "cnmResponse-${local.cnm_response_version}.zip"
 }
 
@@ -26,7 +26,7 @@ resource "aws_lambda_function" "cnm_response_task" {
   s3_key           = aws_s3_bucket_object.cnm_response_lambda_zip.id
   handler          = "gov.nasa.cumulus.CNMResponse::handleRequestStreams"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "java8"
+  runtime          = "java11"
   timeout          = 300
   memory_size      = 256
   source_code_hash = aws_s3_bucket_object.cnm_response_lambda_zip.etag
