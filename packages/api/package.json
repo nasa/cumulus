@@ -72,7 +72,7 @@
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
-    "aws-sdk": "^2.585.0",
+    "aws-sdk": "2.1490.0",
     "aws-serverless-express": "^3.3.5",
     "body-parser": "^1.18.3",
     "commander": "^2.15.0",

@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v16.1.3] 2024-1-15
 
+### Changed
+
+- **CUMULUS_3499
+  - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
+    pin expected to be changed with the resolution to CUMULUS-2900
+
 ### Fixed
 
 - **CUMULUS-3474**
