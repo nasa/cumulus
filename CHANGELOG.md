@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ### Changed
-
+- **CUMULUS-2895**
+  - Update KMS code to AWS SDK v3
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
 
