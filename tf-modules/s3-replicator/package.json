@@ -18,7 +18,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "aws-sdk": "^2.585.0"
+    "aws-sdk": "2.1490.0"
   },
   "private": true
 }
