@@ -99,7 +99,7 @@ resource "aws_secretsmanager_secret" "lzards_launchpad_passphrase" {
 resource "aws_secretsmanager_secret_version" "lzards_launchpad_passphrase" {
   count         = length(var.lzards_launchpad_passphrase) == 0 ? 0 : 1
   secret_id     = aws_secretsmanager_secret.lzards_launchpad_passphrase[0].id
-  secret_string = var.launchpad_passphrase
+  secret_string = var.lzards_launchpad_passphrase
 }
 
 data "aws_iam_policy_document" "lzards_processing_role_get_secrets" {

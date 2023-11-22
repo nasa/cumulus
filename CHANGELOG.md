@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     account for AWS character limits.
 - **CUMULUS-3479**
   - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
+- **CUMULUS-????**
+  - Fixed secret value for `lzards_launchpad_passphrase` which was getting the value from `var.launchpad_passphrase` instead of `var.lzards_launchpad_passphrase`.
 
 ## [v18.1.0] 2023-10-25
 
