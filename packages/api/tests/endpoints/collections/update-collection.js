@@ -109,10 +109,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   }).promise();
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
@@ -496,7 +493,7 @@ test.serial('PUT does not write to Elasticsearch or publish SNS message if writi
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('PUT does not write to PostgreSQL or publish SNS message if writing to Elasticsearch fails', async (t) => {
@@ -557,7 +554,7 @@ test.serial('PUT does not write to PostgreSQL or publish SNS message if writing 
     WaitTimeSeconds: 10,
   });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('PUT throws InvalidRegexError for invalid granuleIdExtraction', async (t) => {

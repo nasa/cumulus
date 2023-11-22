@@ -205,10 +205,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   }).promise();
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 
   process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
 

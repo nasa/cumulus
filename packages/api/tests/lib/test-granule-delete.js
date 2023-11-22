@@ -120,10 +120,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   }).promise();
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
