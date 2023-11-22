@@ -85,16 +85,20 @@ test.before(async (t) => {
     PG_DATABASE: testDbName,
   };
 
-  const messageConsumer = await awsServices.lambda().createFunction({
-    Code: {
-      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
-    },
-    FunctionName: randomId('messageConsumer'),
-    Role: randomId('role'),
-    Handler: 'index.handler',
-    Runtime: 'nodejs16.x',
-  });
-  process.env.messageConsumer = messageConsumer.FunctionName;
+  await Promise.all(
+    ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
+      const lambdaCreated = await awsServices.lambda().createFunction({
+        Code: {
+          ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+        },
+        FunctionName: randomId(name),
+        Role: `arn:aws:iam::123456789012:role/${randomString()}`,
+        Handler: 'index.handler',
+        Runtime: 'nodejs16.x',
+      });
+      process.env[name] = lambdaCreated.FunctionName;
+    })
+  );
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.testKnex = knex;
