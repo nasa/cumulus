@@ -91,7 +91,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -108,18 +108,18 @@ test.beforeEach(async (t) => {
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }).promise();
 
   await sns().confirmSubscription({
     TopicArn,
     Token: SubscriptionArn,
-  });
+  }).promise();
 });
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn });
+  await sns().deleteTopic({ TopicArn }).promise();
 });
 
 test.after.always(async (t) => {
