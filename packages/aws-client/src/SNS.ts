@@ -4,8 +4,8 @@
 
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
-import { PublishCommand } from '@aws-sdk/client-sns';
 import { sns } from './services';
+import { PublishCommand } from '@aws-sdk/client-sns';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
