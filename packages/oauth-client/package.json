@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/oauth-client",
-  "version": "16.0.0",
+  "version": "16.0.1",
   "description": "A generic auth client",
   "homepage": "https://github.com/nasa/cumulus/tree/master/packages/oauth-client#readme",
   "repository": {

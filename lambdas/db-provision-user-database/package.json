@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/db-provision-user-database-lambda",
-  "version": "16.0.0",
+  "version": "16.0.1",
   "description": "A Lambda function used for provisioning user databases",
   "engines": {
     "node": ">=16.19.0"
@@ -24,8 +24,8 @@
     "timeout": "2m"
   },
   "dependencies": {
-    "@cumulus/common": "16.0.0",
-    "@cumulus/db": "16.0.0",
+    "@cumulus/common": "16.0.1",
+    "@cumulus/db": "16.0.1",
     "knex": "2.4.1",
     "pg": "~8.10"
   },
