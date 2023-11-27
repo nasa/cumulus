@@ -2,6 +2,7 @@ const test = require('ava');
 
 const AWS = require('aws-sdk');
 const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
+const { CloudWatchEvents } = require('@aws-sdk/client-cloudwatch-events');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { S3 } = require('@aws-sdk/client-s3');
 const { Lambda } = require('@aws-sdk/client-lambda');
@@ -45,7 +46,7 @@ test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatchEvents);
+  } = localStackAwsClientOptions(CloudWatchEvents);
   t.deepEqual(
     cloudwatchevents.config.credentials,
     credentials
