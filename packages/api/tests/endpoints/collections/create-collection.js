@@ -110,10 +110,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  });
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
@@ -558,7 +555,7 @@ test.serial('POST does not write to Elasticsearch/SNS if writing to PostgreSQL f
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('POST does not write to PostgreSQL/SNS if writing to Elasticsearch fails', async (t) => {
@@ -593,5 +590,5 @@ test.serial('POST does not write to PostgreSQL/SNS if writing to Elasticsearch f
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });

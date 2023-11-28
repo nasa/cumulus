@@ -221,10 +221,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  });
+  t.context.SubscriptionArn = SubscriptionArn;
 
   const {
     esClient,

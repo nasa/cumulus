@@ -240,10 +240,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  });
+  t.context.SubscriptionArn = SubscriptionArn;
 
   t.context.stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${t.context.stateMachineName}`;
@@ -1952,7 +1949,8 @@ test.serial('writeGranulesFromMessage() does not write to PostgreSQL/Elasticsear
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
   }).promise();
-  t.is(Messages, undefined);
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/Elasticsearch/SNS if Elasticsearch write fails', async (t) => {
@@ -1996,7 +1994,8 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
   }).promise();
-  t.is(Messages, undefined);
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() writes a granule and marks as failed if any file writes fail', async (t) => {
@@ -2426,7 +2425,8 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
   }).promise();
-  t.is(Messages, undefined);
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('writeGranulesFromMessage() does not persist file records to Postgres if the workflow status is "running"', async (t) => {
