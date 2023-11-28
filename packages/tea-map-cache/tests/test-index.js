@@ -4,7 +4,7 @@ const test = require('ava');
 const proxyquire = require('proxyquire').noPreserveCache();
 
 test('tea-map-cache handler writes the expected bucketmap', async (t) => {
-  const { handler } = proxyquire('../dist/index.js', {
+  const { handler } = proxyquire('../dist/src', {
     './tea': {
       getTeaBucketPath: () => Promise.resolve('tea_bucket_path'),
     },
