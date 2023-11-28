@@ -15,7 +15,7 @@ test.serial('create, invoke and delete function', async (t) => {
       ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
     },
     FunctionName: functionName,
-    Role: randomString(),
+    Role: `arn:aws:iam::123456789012:role/${randomString()}`,
     Handler: 'index.handler',
     Runtime: 'nodejs16.x',
   });
