@@ -369,12 +369,7 @@ test.beforeEach(async (t) => {
     })
     .promise();
 
-  await sns()
-    .confirmSubscription({
-      TopicArn,
-      Token: SubscriptionArn,
-    })
-    .promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
@@ -2888,7 +2883,8 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
       WaitTimeSeconds: 10,
     })
     .promise();
-  t.is(Messages, undefined);
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if writing to Elasticsearch fails', async (t) => {
@@ -2949,7 +2945,8 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
       WaitTimeSeconds: 10,
     })
     .promise();
-  t.is(Messages, undefined);
+
+  t.is(Messages.length, 0);
 });
 
 test.serial('PATCH adds granule if it does not exist and returns a 201 status', async (t) => {
@@ -3876,7 +3873,7 @@ test.serial('default paginates correctly with search_after', async (t) => {
   t.is(newResults.length, 1);
   t.is(newMeta.page, 2);
   t.truthy(newMeta.searchContext);
-
+  console.log(`default paginates granuleIds: ${JSON.stringify(granuleIds)}, results: ${results[0].granuleId}, ${newResults[0].granuleId}`);
   t.true(granuleIds.includes(results[0].granuleId));
   t.true(granuleIds.includes(newResults[0].granuleId));
   t.not(results[0].granuleId, newResults[0].granuleId);

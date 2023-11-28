@@ -41,10 +41,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   }).promise();
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
@@ -68,7 +65,7 @@ test.serial('publishSnsMessageByDataType() does not publish an execution SNS mes
     { message: 'The execution_sns_topic_arn environment variable must be set' }
   );
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('publishSnsMessageByDataType() publishes an SNS message for execution', async (t) => {
@@ -109,7 +106,7 @@ test.serial('publishSnsMessageByDataType() does not publish a collection SNS mes
   );
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Create', async (t) => {
@@ -222,7 +219,7 @@ test.serial('publishSnsMessageByDataType() does not publish a PDR SNS message if
   );
 
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (t) => {
@@ -259,7 +256,7 @@ test.serial('constructCollectionSnsMessage throws if eventType is not provided',
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('constructCollectionSnsMessage throws if eventType is invalid', async (t) => {
@@ -276,7 +273,7 @@ test.serial('constructCollectionSnsMessage throws if eventType is invalid', asyn
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('constructGranuleSnsMessage throws if eventType is not provided', async (t) => {
@@ -297,7 +294,7 @@ test.serial('constructGranuleSnsMessage throws if eventType is not provided', as
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('constructGranuleSnsMessage throws if eventType is invalid', async (t) => {
@@ -319,5 +316,5 @@ test.serial('constructGranuleSnsMessage throws if eventType is invalid', async (
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });

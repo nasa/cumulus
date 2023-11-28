@@ -25,7 +25,7 @@ const deleteStack = async (StackName) => {
 };
 
 test('describeCfStack() returns the stack information', async (t) => {
-  const StackName = cryptoRandomString({ length: 10 });
+  const StackName = `prefix-${cryptoRandomString({ length: 10 })}`;
 
   await cf().createStack({
     StackName,
@@ -49,7 +49,7 @@ test('describeCfStack() throws an exception for stack that does not exist', (t) 
   t.throwsAsync(() => CloudFormation.describeCfStack('test')));
 
 test('describeCfStackResources() returns resources for stack', async (t) => {
-  const StackName = cryptoRandomString({ length: 10 });
+  const StackName = `prefix-${cryptoRandomString({ length: 10 })}`;
 
   await cf().createStack({
     StackName,
@@ -78,7 +78,7 @@ test('getCfStackParameterValues() returns empty object if no stack is found', as
 });
 
 test('getCfStackParameterValues() returns object excluding keys for missing parameters', async (t) => {
-  const StackName = cryptoRandomString({ length: 10 });
+  const StackName = `prefix-${cryptoRandomString({ length: 10 })}`;
 
   await cf().createStack({
     StackName,
@@ -99,7 +99,7 @@ test('getCfStackParameterValues() returns object excluding keys for missing para
 });
 
 test('getCfStackParameterValues() returns requested stack parameters', async (t) => {
-  const StackName = cryptoRandomString({ length: 10 });
+  const StackName = `prefix-${cryptoRandomString({ length: 10 })}`;
 
   await cf().createStack({
     StackName,

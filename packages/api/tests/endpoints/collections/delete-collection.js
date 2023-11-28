@@ -121,10 +121,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   }).promise();
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
@@ -437,7 +434,7 @@ test.serial('del() does not remove from Elasticsearch or publish SNS message if 
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('del() does not remove from PostgreSQL or publish SNS message if removing from Elasticsearch fails', async (t) => {
@@ -488,7 +485,7 @@ test.serial('del() does not remove from PostgreSQL or publish SNS message if rem
     WaitTimeSeconds: 10,
   }).promise();
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('del() deletes a collection and removes its configuration store via name and version', async (t) => {

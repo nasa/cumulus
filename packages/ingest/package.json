@@ -46,7 +46,7 @@
     "@cumulus/logger": "18.1.0",
     "@cumulus/message": "18.1.0",
     "@cumulus/sftp-client": "18.1.0",
-    "aws-sdk": "2.1490.0",
+    "aws-sdk": "^2.1492.0",
     "cksum": "^1.3.0",
     "encodeurl": "^1.0.2",
     "fs-extra": "^5.0.0",
