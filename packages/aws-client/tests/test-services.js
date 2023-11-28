@@ -5,7 +5,7 @@ const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { S3 } = require('@aws-sdk/client-s3');
 const { Lambda } = require('@aws-sdk/client-lambda');
-const { SNSClient } = require('@aws-sdk/client-sns');
+const { SNS } = require('@aws-sdk/client-sns');
 
 const services = require('../services');
 const { localStackAwsClientOptions } = require('../test-utils');
@@ -281,7 +281,7 @@ test('sns() service defaults to localstack in test mode', async (t) => {
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(SNSClient);
+  } = localStackAwsClientOptions(SNS);
   t.deepEqual(
     await sns.config.credentials(),
     credentials
