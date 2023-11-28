@@ -41,17 +41,27 @@ test('cf() service defaults to localstack in test mode', (t) => {
   t.is(cf.config.endpoint, endpoint);
 });
 
-test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
+test('cloudwatchevents() service defaults to localstack in test mode', async (t) => {
   const cloudwatchevents = services.cloudwatchevents();
   const {
     credentials,
     endpoint,
   } = localStackAwsClientOptions(CloudWatchEvents);
+
   t.deepEqual(
-    cloudwatchevents.config.credentials,
+    await cloudwatchevents.config.credentials(),
     credentials
   );
-  t.is(cloudwatchevents.config.endpoint, endpoint);
+
+  const serviceConfigEndpoint = await cloudwatchevents.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
 test('cloudwatchlogs() service defaults to localstack in test mode', (t) => {
