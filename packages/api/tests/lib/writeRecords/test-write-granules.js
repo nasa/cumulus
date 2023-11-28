@@ -1949,6 +1949,7 @@ test.serial('writeGranulesFromMessage() does not write to PostgreSQL/Elasticsear
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
   });
+
   t.is(Messages.length, 0);
 });
 
@@ -1993,6 +1994,7 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
   });
+
   t.is(Messages.length, 0);
 });
 
@@ -2423,6 +2425,7 @@ test.serial('writeGranulesFromMessage() does not write a granule to Postgres or 
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
   });
+
   t.is(Messages.length, 0);
 });
 

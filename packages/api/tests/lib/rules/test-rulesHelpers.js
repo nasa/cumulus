@@ -118,17 +118,20 @@ test.before(async (t) => {
     }),
   ]);
 
-  const lambda = await awsServices.lambda().createFunction({
-    Code: {
-      ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
-    },
-    FunctionName: randomId('messageConsumer'),
-    Role: randomId('role'),
-    Handler: 'index.handler',
-    Runtime: 'nodejs16.x',
-  });
-  process.env.messageConsumer = lambda.FunctionName;
-  process.env.messageConsumerArn = lambda.FunctionArn;
+  await Promise.all(
+    ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
+      const lambdaCreated = await awsServices.lambda().createFunction({
+        Code: {
+          ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
+        },
+        FunctionName: randomId(name),
+        Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
+        Handler: 'index.handler',
+        Runtime: 'nodejs16.x',
+      });
+      process.env[name] = lambdaCreated.FunctionName;
+    })
+  );
 
   eventLambdas = [process.env.messageConsumer, process.env.KinesisInboundEventLogger];
 
@@ -1885,7 +1888,6 @@ test.serial('Updating a kinesis type rule workflow does not affect value or even
 
   // Clean Up
   t.teardown(async () => {
-    await deleteRuleResources(testKnex, createdRule);
     await deleteRuleResources(testKnex, updatedRule);
   });
 });

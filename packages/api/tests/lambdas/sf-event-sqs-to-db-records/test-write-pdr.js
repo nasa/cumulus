@@ -543,6 +543,7 @@ test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is 
     }),
     { message: /Invalid parameter: TopicArn/ }
   );
+
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
   t.is(Messages.length, 0);
 });

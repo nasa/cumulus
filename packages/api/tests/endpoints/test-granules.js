@@ -2879,6 +2879,7 @@ test.serial('PATCH() does not write to DynamoDB/Elasticsearch/SNS if writing to 
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
     });
+
   t.is(Messages.length, 0);
 });
 
@@ -2939,6 +2940,7 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
       QueueUrl: t.context.QueueUrl,
       WaitTimeSeconds: 10,
     });
+
   t.is(Messages.length, 0);
 });
 

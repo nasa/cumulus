@@ -92,7 +92,7 @@ test.before(async (t) => {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
         FunctionName: randomId(name),
-        Role: `arn:aws:iam::123456789012:role/${randomString()}`,
+        Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
       });

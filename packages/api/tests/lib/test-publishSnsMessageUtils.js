@@ -64,6 +64,7 @@ test.serial('publishSnsMessageByDataType() does not publish an execution SNS mes
     publishSnsMessageByDataType(newExecution, 'execution'),
     { message: 'The execution_sns_topic_arn environment variable must be set' }
   );
+
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
   t.is(Messages.length, 0);
 });
