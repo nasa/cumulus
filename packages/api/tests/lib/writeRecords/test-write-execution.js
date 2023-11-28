@@ -72,10 +72,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  });
+  t.context.SubscriptionArn = SubscriptionArn;
 
   const stateMachineName = cryptoRandomString({ length: 5 });
   t.context.stateMachineArn = `arn:aws:states:us-east-1:12345:stateMachine:${stateMachineName}`;

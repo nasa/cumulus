@@ -21,6 +21,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     2.1.1-aplha.2-SNAPSHOT
   - Update example deployment to deploy cnmToGranule lambda
     version 1.7.0-alpha.2-SNAPSHOT
+- **CUMULUS-3502**
+  - Upgraded localstack to v3.0.0 to support recent aws-sdk releases
 
 ### Fixed
 
