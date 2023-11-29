@@ -8,8 +8,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS_3499
+  - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
+    pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
+- **CUMULUS-3352**
+  - Update example project to use CMA v2.0.3 for integration testing
+  - Update example deployment to deploy cnmResponse lambda version
+    2.1.1-aplha.2-SNAPSHOT
+  - Update example deployment to deploy cnmToGranule lambda
+    version 1.7.0-alpha.2-SNAPSHOT
+- **CUMULUS-3502**
+  - Upgraded localstack to v3.0.0 to support recent aws-sdk releases
 
 ### Fixed
 
@@ -19,6 +30,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Process Dead Letter Archive is fixed to properly copy objects from `/sqs/` to `/failed-sqs/` location
 - **CUMULUS-3467**
   - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
+- **CUMULUS-3474**
+  - Fixed overriden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+    account for AWS character limits.
+- **CUMULUS-3479**
+  - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
 
 ## [v18.1.0] 2023-10-25
 

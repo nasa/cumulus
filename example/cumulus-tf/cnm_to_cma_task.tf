@@ -1,5 +1,5 @@
 locals {
-  cnm_to_cma_version  = "1.5.4"
+  cnm_to_cma_version  = "1.7.0-alpha.2-SNAPSHOT"
   cnm_to_cma_filename = "cnmToGranule-${local.cnm_to_cma_version}.zip"
 }
 
@@ -7,6 +7,7 @@ resource "null_resource" "get_cnmToGranule" {
   triggers = {
     always_run = local.cnm_to_cma_version
   }
+
   provisioner "local-exec" {
     command = "curl -s -L -o ${local.cnm_to_cma_filename} https://github.com/podaac/cumulus-cnm-to-granule/releases/download/v${local.cnm_to_cma_version}/${local.cnm_to_cma_filename}"
   }
@@ -26,7 +27,7 @@ resource "aws_lambda_function" "cnm_to_cma_task" {
   s3_key           = aws_s3_bucket_object.cnm_to_cma_lambda_zip.id
   handler          = "gov.nasa.cumulus.CnmToGranuleHandler::handleRequestStreams"
   role             = module.cumulus.lambda_processing_role_arn
-  runtime          = "java8"
+  runtime          = "java11"
   timeout          = 300
   memory_size      = 128
   source_code_hash = aws_s3_bucket_object.cnm_to_cma_lambda_zip.etag

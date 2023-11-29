@@ -35,7 +35,7 @@
     "@cumulus/es-client": "18.1.0",
     "@cumulus/logger": "18.1.0",
     "@cumulus/types": "18.1.0",
-    "@aws-sdk/client-lambda": "^3.58.0",
+    "@aws-sdk/client-lambda": "^3.447.0",
     "knex": "2.4.1",
     "uuid": "8.3.2"
   },
