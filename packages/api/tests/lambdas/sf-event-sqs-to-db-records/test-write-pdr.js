@@ -147,10 +147,7 @@ test.beforeEach(async (t) => {
     Endpoint: QueueArn,
   }).promise();
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
@@ -544,8 +541,8 @@ test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is 
       executionCumulusId: executionCumulusId,
       knex,
     }),
-    { message: 'Topic does not exist' }
+    { message: /Invalid parameter: TopicArn/ }
   );
   const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
