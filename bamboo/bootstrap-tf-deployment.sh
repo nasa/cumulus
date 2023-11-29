@@ -27,7 +27,8 @@ echo "terraform {
     dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
   }
 }" >> ci_backend.tf
-
+../terraform destroy \
+  -auto-approve=true
 # Initialize deployment
 ../terraform init \
   -input=false
@@ -66,7 +67,8 @@ echo "terraform {
     dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
   }
 }" >> ci_backend.tf
-
+../terraform destroy \
+  -auto-approve=true
 # Initialize deployment
 ../terraform init \
   -input=false
