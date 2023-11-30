@@ -102,7 +102,7 @@ test.beforeEach(async (t) => {
   await t.context.collectionPgModel.create(t.context.testKnex, t.context.testCollection);
 
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sns().createTopic({ Name: topicName });
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -119,7 +119,7 @@ test.beforeEach(async (t) => {
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -127,7 +127,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sns().deleteTopic({ TopicArn });
 });
 
 test.after.always(async (t) => {

@@ -5,6 +5,7 @@ import { Lambda } from '@aws-sdk/client-lambda';
 import { S3 } from '@aws-sdk/client-s3';
 import { SQS } from '@aws-sdk/client-sqs';
 import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
+import { SNS } from '@aws-sdk/client-sns';
 import * as AWS from 'aws-sdk';
 
 import awsClient from './client';
@@ -28,7 +29,7 @@ export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOpti
   );
 export const sfn = awsClient(AWS.StepFunctions, '2016-11-23');
 export const cf = awsClient(AWS.CloudFormation, '2010-05-15');
-export const sns = awsClient(AWS.SNS, '2010-03-31');
+export const sns = awsClient(SNS, '2010-03-31');
 export const secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 export const systemsManager = awsClient(AWS.SSM, '2017-10-17');
 export const kms = awsClient(AWS.KMS, '2014-11-01');
