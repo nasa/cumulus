@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
+- **CUMULUS-2900**
+  - Update SQS code to AWS SDK v3
 - **CUMULUS-3352**
   - Update example project to use CMA v2.0.3 for integration testing
   - Update example deployment to deploy cnmResponse lambda version

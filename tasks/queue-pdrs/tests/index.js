@@ -77,7 +77,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
+    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }),
   ]);
 });
 
@@ -131,7 +131,7 @@ test.serial('PDRs are added to the queue', async (t) => {
     QueueUrl: t.context.event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
   const messages = receiveMessageResponse.Messages;
 
   t.is(messages.length, 2);
@@ -174,7 +174,7 @@ test.serial('The correct message is enqueued', async (t) => {
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
   t.is(messages.length, 2);
@@ -240,7 +240,7 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
 
   const messages = receiveMessageResponse.Messages;
 
@@ -285,7 +285,7 @@ test.serial('If a childWorkflowMeta is provided, it is passed through to the mes
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
 
   const messages = receiveMessageResponse.Messages;
 

@@ -42,13 +42,13 @@ async function createSqsQueues(
     },
   };
   const { QueueUrl: deadLetterQueueUrl } = await awsServices.sqs()
-    .createQueue(deadLetterQueueParms).promise();
+    .createQueue(deadLetterQueueParms);
   const qAttrParams = {
     QueueUrl: deadLetterQueueUrl,
     AttributeNames: ['QueueArn'],
   };
   const { Attributes: { QueueArn: deadLetterQueueArn } } = await awsServices.sqs()
-    .getQueueAttributes(qAttrParams).promise();
+    .getQueueAttributes(qAttrParams);
 
   // source queue
   const queueName = `${queueNamePrefix}Queue`;
@@ -63,7 +63,7 @@ async function createSqsQueues(
     },
   };
 
-  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms).promise();
+  const { QueueUrl: queueUrl } = await awsServices.sqs().createQueue(queueParms);
   return { deadLetterQueueUrl, queueUrl };
 }
 
@@ -79,7 +79,7 @@ async function getSqsQueueMessageCounts(queueUrl) {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
   };
-  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams);
   const {
     ApproximateNumberOfMessages: numberOfMessagesAvailable,
     ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible,
@@ -192,7 +192,7 @@ test('sqsMessageRemover lambda removes message from queue when workflow succeede
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() }),
-  }).promise();
+  });
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
   const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
@@ -210,14 +210,14 @@ test('sqsMessageRemover lambda removes message from queue when workflow succeede
   t.is(numberOfMessages.numberOfMessagesAvailable, 0);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
-  await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
+  await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl });
 });
 
 test('sqsMessageRemover lambda updates message visibilityTimeout when workflow failed', async (t) => {
   const sqsQueues = await createSqsQueues(randomString());
   await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: JSON.stringify({ testdata: randomString() }),
-  }).promise();
+  });
 
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
   const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
@@ -240,7 +240,7 @@ test('sqsMessageRemover lambda updates message visibilityTimeout when workflow f
   t.is(numberOfMessages.numberOfMessagesAvailable, 1);
   t.is(numberOfMessages.numberOfMessagesNotVisible, 0);
 
-  await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl }).promise();
+  await awsServices.sqs().deleteQueue({ QueueUrl: sqsQueues.queueUrl });
 });
 
 test.serial('sqsMessageRemover lambda removes message from S3 when workflow succeeded', async (t) => {
@@ -253,7 +253,7 @@ test.serial('sqsMessageRemover lambda removes message from S3 when workflow succ
 
   await awsServices.sqs().sendMessage({
     QueueUrl: sqsQueues.queueUrl, MessageBody: msgBody,
-  }).promise();
+  });
   const sqsOptions = { numOfMessages: 10, visibilityTimeout: 120, waitTimeSeconds: 20 };
   const receiveMessageResponse = await receiveSQSMessages(sqsQueues.queueUrl, sqsOptions);
   const { MessageId: messageId, ReceiptHandle: receiptHandle } = receiveMessageResponse[0];

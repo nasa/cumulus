@@ -94,7 +94,7 @@ async function dispatch(queueUrl, message) {
         ReceiptHandle: message.ReceiptHandle,
         VisibilityTimeout: 5,
       };
-      return sqs().changeMessageVisibility(params).promise();
+      return sqs().changeMessageVisibility(params);
     }
 
     if (messageReceiveCount !== 1) {

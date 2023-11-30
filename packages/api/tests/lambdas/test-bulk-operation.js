@@ -217,12 +217,12 @@ test.beforeEach(async (t) => {
   t.context.TopicArn = TopicArn;
 
   const QueueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
@@ -236,7 +236,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl });
   await sns().deleteTopic({ TopicArn });
   sandbox.resetHistory();
 });
