@@ -44,7 +44,7 @@ async function publishRecordToFallbackTopic(record) {
   return await sns().publish({
     TopicArn: fallbackArn,
     Message: JSON.stringify(record),
-  }).promise();
+  });
 }
 
 /**

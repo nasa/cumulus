@@ -400,13 +400,13 @@ async function createSqsQueues(
     },
   };
   const { QueueUrl: deadLetterQueueUrl } = await sqs()
-    .createQueue(deadLetterQueueParms).promise();
+    .createQueue(deadLetterQueueParms);
   const qAttrParams = {
     QueueUrl: deadLetterQueueUrl,
     AttributeNames: ['QueueArn'],
   };
   const { Attributes: { QueueArn: deadLetterQueueArn } } = await sqs()
-    .getQueueAttributes(qAttrParams).promise();
+    .getQueueAttributes(qAttrParams);
 
   // source queue
   const queueName = `${queueNamePrefix}Queue`;
@@ -421,7 +421,7 @@ async function createSqsQueues(
     },
   };
 
-  const { QueueUrl: queueUrl } = await sqs().createQueue(queueParms).promise();
+  const { QueueUrl: queueUrl } = await sqs().createQueue(queueParms);
   return { deadLetterQueueUrl, queueName, queueUrl };
 }
 
@@ -437,7 +437,7 @@ async function getSqsQueueMessageCounts(queueUrl) {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
   };
-  const attributes = await sqs().getQueueAttributes(qAttrParams).promise();
+  const attributes = await sqs().getQueueAttributes(qAttrParams);
   const {
     ApproximateNumberOfMessages: numberOfMessagesAvailable,
     ApproximateNumberOfMessagesNotVisible: numberOfMessagesNotVisible,

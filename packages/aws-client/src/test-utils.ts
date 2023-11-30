@@ -30,8 +30,8 @@ const localStackPorts = {
   S3: 4566,
   secretsmanager: 4566,
   ses: 4566,
-  sns: 4566,
-  sqs: 4566,
+  SNS: 4566,
+  SQS: 4566,
   ssm: 4566,
   sts: 4566,
 };

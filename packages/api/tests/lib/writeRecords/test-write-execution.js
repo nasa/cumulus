@@ -53,24 +53,24 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sns().createTopic({ Name: topicName });
   process.env.execution_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
   t.context.SubscriptionArn = SubscriptionArn;
 
@@ -115,8 +115,8 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sqs().deleteQueue({ QueueUrl });
+  await sns().deleteTopic({ TopicArn });
 });
 
 test.after.always(async (t) => {
@@ -680,7 +680,7 @@ test.serial('writeExecutionRecordFromMessage() successfully publishes an SNS mes
 
   await writeExecutionRecordFromMessage({ cumulusMessage, knex });
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
   t.is(Messages.length, 1);
 
@@ -712,7 +712,7 @@ test.serial('writeExecutionRecordFromApi() successfully publishes an SNS message
     knex,
   });
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
   t.is(Messages.length, 1);
 

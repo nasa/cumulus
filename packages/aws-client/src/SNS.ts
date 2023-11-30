@@ -32,7 +32,7 @@ export const publishSnsMessage = async (
       await sns().publish({
         TopicArn: snsTopicArn,
         Message: JSON.stringify(message),
-      }).promise();
+      });
     },
     {
       maxTimeout: 5000,
