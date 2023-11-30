@@ -5,6 +5,8 @@ const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { S3 } = require('@aws-sdk/client-s3');
 const { Lambda } = require('@aws-sdk/client-lambda');
+const { SNS } = require('@aws-sdk/client-sns');
+const { SQS } = require('@aws-sdk/client-sqs');
 
 const services = require('../services');
 const { localStackAwsClientOptions } = require('../test-utils');
@@ -275,30 +277,47 @@ test('sfn() service defaults to localstack in test mode', (t) => {
   t.is(sfn.config.endpoint, endpoint);
 });
 
-test('sns() service defaults to localstack in test mode', (t) => {
+test('sns() service defaults to localstack in test mode', async (t) => {
   const sns = services.sns();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.SNS);
+  } = localStackAwsClientOptions(SNS);
   t.deepEqual(
-    sns.config.credentials,
+    await sns.config.credentials(),
     credentials
   );
-  t.is(sns.config.endpoint, endpoint);
+
+  const snsEndpoint = await sns.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    snsEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
-test('sqs() service defaults to localstack in test mode', (t) => {
+test('sqs() service defaults to localstack in test mode', async (t) => {
   const sqs = services.sqs();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.SQS);
+  } = localStackAwsClientOptions(SQS);
   t.deepEqual(
-    sqs.config.credentials,
+    await sqs.config.credentials(),
     credentials
   );
-  t.is(sqs.config.endpoint, endpoint);
+  const serviceConfigEndpoint = await sqs.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
 test('sts() service defaults to localstack in test mode', (t) => {
