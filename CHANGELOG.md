@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     version 1.7.0-alpha.2-SNAPSHOT
 - **CUMULUS-3502**
   - Upgraded localstack to v3.0.0 to support recent aws-sdk releases and update unit tests.
+- **test-release**
+  - Release npm packages 18.2.0-alpha.0 for dashboard localstack upgrade
 
 ### Fixed
 
