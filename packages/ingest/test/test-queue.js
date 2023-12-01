@@ -62,7 +62,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise(),
+    sqs().deleteQueue({ QueueUrl: t.context.queueUrl }),
   ]);
 });
 
@@ -106,7 +106,7 @@ test.serial('the queue receives a correctly formatted workflow message without a
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1,
-    }).promise();
+    });
   } catch (error) {
     t.fail(error);
   }
@@ -178,7 +178,7 @@ test.serial('the queue receives a correctly formatted workflow message with a PD
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1,
-    }).promise();
+    });
   } catch (error) {
     t.fail(error);
   }
@@ -258,7 +258,7 @@ test.serial('enqueueGranuleIngestMessage does not transform granule objects ', a
       QueueUrl: queueUrl,
       MaxNumberOfMessages: 10,
       WaitTimeSeconds: 1,
-    }).promise();
+    });
   } catch (error) {
     t.fail(error);
   }
@@ -312,7 +312,7 @@ test.serial('enqueueGranuleIngestMessage uses the executionNamePrefix if specifi
     QueueUrl: queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
 
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
 
@@ -346,7 +346,7 @@ test.serial('enqueueParsePdrMessage uses the executionNamePrefix if specified', 
     QueueUrl: queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
 
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
 
@@ -397,7 +397,7 @@ test.serial('enqueueParsePdrMessage does not overwrite the collection or provide
     QueueUrl: queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
 
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
 
@@ -459,7 +459,7 @@ test.serial('enqueueGranuleIngestMessage does not overwrite the collection or pr
     QueueUrl: queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
 
   const actualMessage = JSON.parse(receiveMessageResponse.Messages[0].Body);
 

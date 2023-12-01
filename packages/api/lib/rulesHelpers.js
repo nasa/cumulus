@@ -296,7 +296,7 @@ async function deleteSnsTrigger(knex, rule) {
     SubscriptionArn: rule.rule.arn,
   };
   log.info(`Successfully deleted SNS subscription for ARN ${rule.rule.arn}.`);
-  return awsServices.sns().unsubscribe(subscriptionParams).promise();
+  return awsServices.sns().unsubscribe(subscriptionParams);
 }
 
 /**
@@ -363,7 +363,7 @@ async function validateAndUpdateSqsRule(rule) {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
   };
-  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams);
   if (!attributes.Attributes.RedrivePolicy) {
     throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
   }
@@ -461,7 +461,7 @@ async function checkForSnsSubscriptions(ruleItem) {
     const subsResponse = await awsServices.sns().listSubscriptionsByTopic({
       TopicArn: ruleItem.rule.value,
       NextToken: token,
-    }).promise();
+    });
     token = subsResponse.NextToken;
     if (subsResponse.Subscriptions) {
       /* eslint-disable no-loop-func */
@@ -504,7 +504,7 @@ async function addSnsTrigger(item) {
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
-    const r = await awsServices.sns().subscribe(subscriptionParams).promise();
+    const r = await awsServices.sns().subscribe(subscriptionParams);
     subscriptionArn = r.SubscriptionArn;
     // create permission to invoke lambda
     const permissionParams = {
