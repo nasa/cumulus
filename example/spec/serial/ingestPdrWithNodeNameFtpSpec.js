@@ -119,7 +119,7 @@ describe('Ingesting from PDR', () => {
       } catch (error) {
         console.log(error);
       }
-
+      console.log('testData::::', testData);
       const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
       if (!newGranuleId || !filePaths) {
         throw new Error('FTP Server setup failed', testData);
