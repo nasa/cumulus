@@ -81,13 +81,13 @@ describe('Ingesting from PDR', () => {
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
       provider = { id: `s3_provider${testSuffix}` };
       testDataFolder = createTestDataPath(testId);
-      console.log('deleting providers');
+
       const ftpProvider = await buildFtpProvider(`${randomString(4)}-${testSuffix}`);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, config.pdrNodeNameProviderBucket);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, ftpProvider.host);
 
       nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
-      console.log('creating S3 provider');
+
       await providersApi.createProvider({
         prefix: config.stackName,
         provider: {
@@ -96,18 +96,18 @@ describe('Ingesting from PDR', () => {
           host: config.pdrNodeNameProviderBucket,
         },
       });
-      console.log('creating FTP provider');
+
       // Create FTP provider
-      const providerResult = await providersApi.createProvider({
+      await providersApi.createProvider({
         prefix: config.stackName,
         provider: ftpProvider,
       });
-      console.log('providerResult::::', JSON.stringify(providerResult));
+
       await Promise.all([
         waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime }),
         waitForProviderRecordInOrNotInList(config.stackName, ftpProvider.id, true, { timestamp__from: ingestTime }),
       ]);
-      console.log('line 110');
+
       let testData;
       try {
         testData = await lambda().invoke({
@@ -138,13 +138,13 @@ describe('Ingesting from PDR', () => {
           { old: 'MOD09GQ.A2016358.h13v04.006.2016360104606', new: newGranuleId },
         ]
       );
-      console.log('line 141');
+
       // populate collections, providers and test data
       const populatePromises = await Promise.all([
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
         addProviders(config.stackName, config.bucket, providersDir, config.bucket, testSuffix),
       ]);
-      console.log('line 147');
+
       addedCollection = populatePromises[0][0];
       if (addedCollection === undefined) {
         console.log('populatePromises %j', populatePromises);
