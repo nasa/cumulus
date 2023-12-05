@@ -84,15 +84,12 @@ async function updateAndUploadTestFileToBucket(params) {
     key = key.replace(targetReplacementRegex, targetReplacementString);
   }
 
-  const response = await s3().putObject({
+  return await s3().putObject({
     Bucket: bucket,
     Key: `${prefix}/${key}`,
     Body: data,
     ContentType: mime.lookup(key) || undefined,
   });
-
-  console.log('response from upload to bucket:::', response);
-  return response;
 }
 
 /**
