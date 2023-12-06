@@ -88,7 +88,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   await Promise.all([
     recursivelyDeleteS3Bucket(t.context.templateBucket),
-    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }).promise(),
+    sqs().deleteQueue({ QueueUrl: t.context.event.config.queueUrl }),
   ]);
 });
 
@@ -122,7 +122,7 @@ test.serial('Workflow is added to the queue', async (t) => {
     QueueUrl: t.context.event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
   const messages = receiveMessageResponse.Messages;
 
   t.is(messages.length, 1);
@@ -145,17 +145,17 @@ test.serial('Workflow is added to the input queue', async (t) => {
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
   const configQueueMessages = receiveConfigQueueMessageResponse.Messages;
 
-  t.is(configQueueMessages, undefined);
+  t.is(configQueueMessages.length, 0);
 
   // Get messages from the input queue
   const receiveInputQueueMessageResponse = await sqs().receiveMessage({
     QueueUrl: event.input.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
   const inputQueueMessages = receiveInputQueueMessageResponse.Messages;
 
   t.is(inputQueueMessages.length, 1);
@@ -190,7 +190,7 @@ test.serial('The correct message is enqueued', async (t) => {
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
   const messages = receiveMessageResponse.Messages.map((message) => JSON.parse(message.Body));
 
   t.is(messages.length, 1);
@@ -240,7 +240,7 @@ test.serial('A config with executionNamePrefix is handled as expected', async (t
     QueueUrl: event.config.queueUrl,
     MaxNumberOfMessages: 10,
     WaitTimeSeconds: 1,
-  }).promise();
+  });
 
   const messages = receiveMessageResponse.Messages;
 

@@ -168,8 +168,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await sns().createTopic({ Name: executionsTopicName }).promise();
-  const pdrsTopic = await sns().createTopic({ Name: pdrsTopicName }).promise();
+  const executionsTopic = await sns().createTopic({ Name: executionsTopicName });
+  const pdrsTopic = await sns().createTopic({ Name: pdrsTopicName });
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -188,7 +188,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sns().createTopic({ Name: topicName });
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -196,19 +196,16 @@ test.beforeEach(async (t) => {
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl: t.context.queues.queueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 
   process.env.DeadLetterQueue = t.context.queues.deadLetterQueueUrl;
 
@@ -270,8 +267,8 @@ test.beforeEach(async (t) => {
 });
 
 test.afterEach.always(async (t) => {
-  await sqs().deleteQueue({ QueueUrl: t.context.queues.queueUrl }).promise();
-  await sqs().deleteQueue({ QueueUrl: t.context.queues.deadLetterQueueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.queueUrl });
+  await sqs().deleteQueue({ QueueUrl: t.context.queues.deadLetterQueueUrl });
 });
 
 test.after.always(async (t) => {
@@ -285,8 +282,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn }).promise();
-  await sns().deleteTopic({ TopicArn: PdrsTopicArn }).promise();
+  await sns().deleteTopic({ TopicArn: ExecutionsTopicArn });
+  await sns().deleteTopic({ TopicArn: PdrsTopicArn });
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {
@@ -387,8 +384,7 @@ test.serial('Lambda sends message to DLQ when writeRecords() throws an error', a
     .receiveMessage({
       QueueUrl: t.context.queues.deadLetterQueueUrl,
       WaitTimeSeconds: 10,
-    })
-    .promise();
+    });
   const dlqMessage = JSON.parse(Messages[0].Body);
   t.deepEqual(dlqMessage, sqsEvent.Records[0]);
 });

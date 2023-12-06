@@ -33,11 +33,26 @@ engine_version = 13.9
 
 ### Changed
 
+- *CUMULUS-2899**
+  - Updated SNS code to aws sdk v3
+- **CUMULUS_3499
+  - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
+    pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
 - **CUMULUS-3432**
   - Update `cumulus-rds-tf` `engine_version` to `13.9`
   - Update `cumulus-rds-tf` `parameter_group_family` to `aurora-postgresql13`
+- **CUMULUS-2900**
+  - Update SQS code to AWS SDK v3
+- **CUMULUS-3352**
+  - Update example project to use CMA v2.0.3 for integration testing
+  - Update example deployment to deploy cnmResponse lambda version
+    2.1.1-aplha.2-SNAPSHOT
+  - Update example deployment to deploy cnmToGranule lambda
+    version 1.7.0-alpha.2-SNAPSHOT
+- **CUMULUS-3502**
+  - Upgraded localstack to v3.0.0 to support recent aws-sdk releases and update unit tests.
 
 ### Fixed
 
@@ -48,9 +63,10 @@ engine_version = 13.9
 - **CUMULUS-3467**
   - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
 - **CUMULUS-3474**
-  - Fixed overriden changes to `rules.buildPayload' to restore changes from
-    ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+  - Fixed overriden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
     account for AWS character limits.
+- **CUMULUS-3479**
+  - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
 
 ## [v18.1.0] 2023-10-25
 
@@ -81,6 +97,9 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
 Users/clients that do not make use of these endpoints will not be impacted.
 
+### Breaking Changes
+- **CUMULUS-3427**
+  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 ### Notable Changes
 
 - **CUMULUS-3095**
@@ -126,7 +145,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 - **CUMULUS-3427**
   - Fixed issue where some lambda and task memory sizes and timeouts were not configurable
-  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 - **@aws-sdk upgrade**
   - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
 

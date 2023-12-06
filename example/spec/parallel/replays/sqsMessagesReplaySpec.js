@@ -35,7 +35,7 @@ describe('The replay SQS messages API endpoint', () => {
 
       const { QueueUrl } = await sqs().createQueue({
         QueueName: queueName,
-      }).promise();
+      });
       queueUrl = QueueUrl;
 
       const sqsMessage = await sendSQSMessage(queueUrl, message);
@@ -58,7 +58,7 @@ describe('The replay SQS messages API endpoint', () => {
     await deleteS3Object(config.bucket, key);
     await sqs().deleteQueue({
       QueueUrl: queueUrl,
-    }).promise();
+    });
   });
 
   it('starts an AsyncOperation and returns an AsyncOperation ID when a valid SQS replay request is made', async () => {

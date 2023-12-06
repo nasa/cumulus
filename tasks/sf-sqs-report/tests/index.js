@@ -10,7 +10,7 @@ let bucket;
 test.before(async () => {
   bucket = randomString();
   const queueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName: queueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName: queueName });
   process.env.reporting_queue_url = QueueUrl;
 });
 
