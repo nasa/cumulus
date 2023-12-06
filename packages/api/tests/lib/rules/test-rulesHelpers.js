@@ -1284,7 +1284,8 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
   }));
 
   await t.throwsAsync(
-    rulesHelpers.deleteSnsTrigger(t.context.testKnex, ruleWithTrigger), {
+    rulesHelpers.deleteSnsTrigger(t.context.testKnex, ruleWithTrigger),
+    {
       instanceOf: ResourceNotFoundError,
       message: `${errorMessage} ${resourceNotFoundInfo}`,
     }

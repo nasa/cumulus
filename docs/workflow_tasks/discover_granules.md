@@ -38,7 +38,7 @@ Below are expanded descriptions of selected config keys:
 
 #### Provider
 
-A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.  Used to define connection information for a location to scan for granule discovery.
+A Cumulus [provider](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) object.  Used to define connection information for a location to scan for granule discovery.
 
 #### Buckets
 
@@ -46,7 +46,7 @@ A list of buckets with types that will be used to assign bucket targets based on
 
 #### Collection
 
-A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.   The collection object utilizes the collection type key to generate types in the output object on discovery.
+A Cumulus [collection](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) object.    Used to define granule file groupings and granule metadata for discovered files.   The collection object utilizes the collection type key to generate types in the output object on discovery.
 
 #### DuplicateGranuleHandling
 
@@ -90,4 +90,4 @@ The default value is 3.
 
 ## Task Outputs
 
-This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/models/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.
+This task outputs an assembled array of Cumulus [granule](https://github.com/nasa/cumulus/blob/master/packages/api/lib/schemas.js) objects as the payload for the next task, and returns only the expected payload for the next task.

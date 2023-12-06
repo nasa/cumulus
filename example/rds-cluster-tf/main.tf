@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 3.14.1"
+      version = "~> 5.0"
     }
   }
 }
@@ -19,7 +19,7 @@ module "rds_cluster" {
   db_admin_password   = var.db_admin_password
   region              = var.region
   vpc_id              = var.vpc_id != null ? var.vpc_id : data.aws_vpc.application_vpc[0].id
-  subnets             = var.subnets != null ? var.subnets : data.aws_subnet_ids.subnet_ids[0].ids
+  subnets             = var.subnets != null ? var.subnets : data.aws_subnets.subnet_ids[0].ids
   engine_version      = var.engine_version
   deletion_protection = true
   cluster_identifier  = var.cluster_identifier
