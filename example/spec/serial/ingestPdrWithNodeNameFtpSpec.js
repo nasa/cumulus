@@ -128,7 +128,7 @@ describe('Ingesting from PDR', () => {
       console.log('testData::::', testData);
 
       const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
-      console.log('payload:::', JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
+      console.log('payload:::', JSON.parse(new TextDecoder('utf-8').decode(testData.Payload)));
       console.log('newGranuleId:::', newGranuleId);
       console.log('filePaths:::', filePaths);
       if (!newGranuleId || !filePaths) {
