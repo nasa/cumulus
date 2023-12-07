@@ -102,7 +102,6 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "orca_s3_secret_key=$AWS_SECRET_ACCESS_KEY"
 
 ../terraform destroy \
-  -input=false \
   -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
   -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
