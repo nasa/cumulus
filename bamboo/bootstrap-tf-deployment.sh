@@ -106,6 +106,7 @@ A="{ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTE
 echo $auto
 
 ../terraform destroy \
+  -auto-approve \
   -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
   -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
