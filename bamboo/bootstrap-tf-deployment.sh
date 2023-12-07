@@ -103,7 +103,6 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
 
 
 A="{ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }"
-echo $auto
 
 ../terraform destroy \
   -auto-approve \
