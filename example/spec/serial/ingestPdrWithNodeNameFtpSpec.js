@@ -81,14 +81,14 @@ describe('Ingesting from PDR', () => {
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
       provider = { id: `s3_provider${testSuffix}` };
       testDataFolder = createTestDataPath(testId);
-
+      console.log('line 84');
       const ftpProvider = await buildFtpProvider(`${randomString(4)}-${testSuffix}`);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, config.pdrNodeNameProviderBucket);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, ftpProvider.host);
 
       nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
-
-      await providersApi.createProvider({
+      console.log('about to create provider');
+      const resp = await providersApi.createProvider({
         prefix: config.stackName,
         provider: {
           id: nodeNameProviderId,
@@ -97,16 +97,21 @@ describe('Ingesting from PDR', () => {
         },
       });
 
+      console.log('createProvider response::::', resp);
+
       // Create FTP provider
       await providersApi.createProvider({
         prefix: config.stackName,
         provider: ftpProvider,
       });
+      console.log('line 107');
 
-      await Promise.all([
+      const providerPromises = await Promise.all([
         waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime }),
         waitForProviderRecordInOrNotInList(config.stackName, ftpProvider.id, true, { timestamp__from: ingestTime }),
       ]);
+
+      console.log('providerPromises::::', providerPromises);
 
       let testData;
       try {
@@ -119,13 +124,17 @@ describe('Ingesting from PDR', () => {
       } catch (error) {
         console.log(error);
       }
+      console.log('line 127');
+      console.log('testData::::', testData);
 
       const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
       if (!newGranuleId || !filePaths) {
         throw new Error('FTP Server setup failed', testData);
       }
+
+      console.log('line 135');
       testFilePaths = filePaths;
-      await updateAndUploadTestDataToBucket(
+      const bucketResp = await updateAndUploadTestDataToBucket(
         config.bucket,
         s3data,
         testDataFolder,
@@ -138,7 +147,8 @@ describe('Ingesting from PDR', () => {
           { old: 'MOD09GQ.A2016358.h13v04.006.2016360104606', new: newGranuleId },
         ]
       );
-
+      console.log('bucketResp:::', bucketResp);
+      console.log('line 141::::'); // not getting here
       // populate collections, providers and test data
       const populatePromises = await Promise.all([
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
