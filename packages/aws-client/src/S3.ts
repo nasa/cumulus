@@ -19,7 +19,7 @@ import {
   CreateMultipartUploadRequest,
   DeleteObjectRequest,
   GetObjectCommandInput,
-  GetObjectOutput,
+  GetObjectCommandOutput,
   HeadObjectOutput,
   ListObjectsRequest,
   ListObjectsV2Output,
@@ -50,7 +50,7 @@ import { improveStackTrace } from './utils';
 
 const log = new Logger({ sender: 'aws-client/s3' });
 
-export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObjectOutput>;
+export type GetObjectMethod = (params: GetObjectCommandInput) => Promise<GetObjectCommandOutput>;
 
 const buildDeprecationMessage = (
   name: string,
@@ -469,7 +469,7 @@ export const s3PutObjectTagging = (Bucket: string, Key: string, ObjectTagging: T
 export const getObject = (
   s3Client: S3,
   params: GetObjectCommandInput
-): Promise<GetObjectOutput> => s3Client.getObject(params);
+): Promise<GetObjectCommandOutput> => s3Client.getObject(params);
 
 /**
  * Get an object from S3, waiting for it to exist and, if specified, have the
@@ -484,7 +484,7 @@ export const waitForObject = (
   s3Client: S3,
   params: GetObjectCommandInput,
   retryOptions: pRetry.Options = {}
-): Promise<GetObjectOutput> =>
+): Promise<GetObjectCommandOutput> =>
   pRetry(
     async () => {
       try {
