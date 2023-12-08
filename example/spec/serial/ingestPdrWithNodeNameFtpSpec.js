@@ -81,14 +81,13 @@ describe('Ingesting from PDR', () => {
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
       provider = { id: `s3_provider${testSuffix}` };
       testDataFolder = createTestDataPath(testId);
-      console.log('line 84');
       const ftpProvider = await buildFtpProvider(`${randomString(4)}-${testSuffix}`);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, config.pdrNodeNameProviderBucket);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, ftpProvider.host);
 
       nodeNameProviderId = `provider-${randomString(4)}-${testSuffix}`;
-      console.log('about to create provider');
-      const resp = await providersApi.createProvider({
+
+      await providersApi.createProvider({
         prefix: config.stackName,
         provider: {
           id: nodeNameProviderId,
@@ -97,21 +96,16 @@ describe('Ingesting from PDR', () => {
         },
       });
 
-      console.log('createProvider response::::', resp);
-
       // Create FTP provider
       await providersApi.createProvider({
         prefix: config.stackName,
         provider: ftpProvider,
       });
-      console.log('line 107');
 
-      const providerPromises = await Promise.all([
+      await Promise.all([
         waitForProviderRecordInOrNotInList(config.stackName, nodeNameProviderId, true, { timestamp__from: ingestTime }),
         waitForProviderRecordInOrNotInList(config.stackName, ftpProvider.id, true, { timestamp__from: ingestTime }),
       ]);
-
-      console.log('providerPromises::::', providerPromises);
 
       let testData;
       try {
@@ -124,8 +118,6 @@ describe('Ingesting from PDR', () => {
       } catch (error) {
         console.log(error);
       }
-      console.log('line 127');
-      console.log('testData::::', testData);
 
       const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
       console.log('payload:::', JSON.parse(new TextDecoder('utf-8').decode(testData.Payload)));
