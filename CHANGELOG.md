@@ -10,7 +10,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2888**
   - Update CloudWatch Events code to AWS SDK v3
-  - Update archiver dependency to fix security vulnerability
 - **CUMULUS-2899**
   - Updated SNS code to aws sdk v3
 - **CUMULUS_3499**
