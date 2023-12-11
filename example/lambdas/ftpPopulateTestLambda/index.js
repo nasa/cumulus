@@ -70,7 +70,7 @@ const uploadFtpGranuleDataForDiscovery = async ({ prefix }) => {
   const newGranuleId = randomStringFromRegex(granuleRegex);
 
   const hostConfig = {
-    host: process.env.PROVIDER_HOST || await fetchFakeProviderIp(),
+    host: await fetchFakeProviderIp(),
     user: 'testuser',
     pass: 'testpass',
   };

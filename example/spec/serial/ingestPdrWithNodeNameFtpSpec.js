@@ -120,17 +120,13 @@ describe('Ingesting from PDR', () => {
       }
 
       const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
-      console.log('payload:::', JSON.parse(new TextDecoder('utf-8').decode(testData.Payload)));
-      console.log('newGranuleId:::', newGranuleId);
-      console.log('filePaths:::', filePaths);
+
       if (!newGranuleId || !filePaths) {
-        console.log('line 135');
         throw new Error('FTP Server setup failed', testData);
       }
 
-      console.log('line 135');
       testFilePaths = filePaths;
-      const bucketResp = await updateAndUploadTestDataToBucket(
+      await updateAndUploadTestDataToBucket(
         config.bucket,
         s3data,
         testDataFolder,
@@ -143,8 +139,7 @@ describe('Ingesting from PDR', () => {
           { old: 'MOD09GQ.A2016358.h13v04.006.2016360104606', new: newGranuleId },
         ]
       );
-      console.log('bucketResp:::', bucketResp);
-      console.log('line 141::::'); // not getting here
+
       // populate collections, providers and test data
       const populatePromises = await Promise.all([
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
