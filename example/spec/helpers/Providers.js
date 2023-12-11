@@ -27,9 +27,7 @@ const fetchFakeS3ProviderBuckets = async () => {
   return { fakeS3ProviderBucket, altFakeS3ProviderBucket };
 };
 
-// Instead of setting the host as an ENV, look up the VPC ID (er whatever the value is)
-// Nate has something to do in the IP sprint
-const getProviderHost = async () => process.env.PROVIDER_HOST || await fetchFakeProviderIp(); // Is this necessary in uploadFtpGranuleDataForDiscovery?
+const getProviderHost = async () => process.env.PROVIDER_HOST || await fetchFakeProviderIp();
 
 const buildFtpProvider = async (postfix = '') => {
   const provider = {
