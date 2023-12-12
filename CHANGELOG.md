@@ -39,6 +39,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     account for AWS character limits.
 - **CUMULUS-3479**
   - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
+- **CUMULUS-3510**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
 
 ## [v18.1.0] 2023-10-25
 
