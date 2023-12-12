@@ -36,7 +36,6 @@ const {
   createRuleTrigger,
   deleteRuleResources,
   updateRuleTrigger,
-  validateAndUpdateSqsRule,
 } = require('../../../lib/rulesHelpers');
 const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
