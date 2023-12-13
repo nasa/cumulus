@@ -9,9 +9,10 @@ import { SNS } from '@aws-sdk/client-sns';
 import * as AWS from 'aws-sdk';
 
 import awsClient from './client';
+import { ECSClient } from '@aws-sdk/client-ecs';
 
 export const apigateway = awsClient(APIGatewayClient, '2015-07-09');
-export const ecs = awsClient(AWS.ECS, '2014-11-13');
+export const ecs = awsClient(ecs, '2014-11-13');
 export const ec2 = awsClient(AWS.EC2, '2016-11-15');
 export const s3 = awsClient(S3, '2006-03-01');
 export const kinesis = awsClient(AWS.Kinesis, '2013-12-02');

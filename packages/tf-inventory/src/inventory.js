@@ -74,7 +74,7 @@ async function listTfResources(stateFiles) {
  * and ec2Instances
  */
 async function listAwsResources() {
-  const ecsClusters = await aws.ecs().listClusters().promise();
+  const ecsClusters = await aws.ecs().listClusters();
 
   let ec2Instances = await aws.ec2().describeInstances().promise();
   ec2Instances = [].concat(...ec2Instances.Reservations.map((e) => e.Instances));
