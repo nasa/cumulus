@@ -8,23 +8,11 @@ cumulus-sit:
   apiUsername: jasmine
   pdrNodeNameProviderBucket: cumulus-sit-pdr-node-name-provider
 
-mvd-tf:
-  bucket: mvd-internal
-
-mvd-dev-tf:
-  bucket: mvd-internal
-
 jl-tf:
   bucket: jl-test-integration-internal
 
 jl-rds-tf:
   bucket: jl-test-integration-internal
-
-kk2-tf:
-  bucket: kk2-tf-internal
-
-jtran-tf:
-  bucket: jtran-internal
 
 vkn-tf:
   bucket: vkn-tf-internal
