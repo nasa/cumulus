@@ -14,13 +14,13 @@ export class KMS {
     };
 
     const kms = new AWS.KMS();
-    const { CiphertextBlob } = await kms.encrypt(params).promise();
+    const CiphertextBlob = await kms.encrypt(params);
 
     if (!CiphertextBlob) {
       throw new Error('Encryption failed, undefined CiphertextBlob returned');
     }
 
-    return CiphertextBlob.toString('base64');
+    return CiphertextBlob.toString();
   }
 
   static async decrypt(text: string) {
@@ -32,7 +32,7 @@ export class KMS {
 
     const kms = new AWS.KMS();
     try {
-      const { Plaintext } = await kms.decrypt(params).promise();
+      const Plaintext = await kms.decrypt(params);
 
       if (!Plaintext) {
         throw new Error('Decryption failed, undefined Plaintext returned');

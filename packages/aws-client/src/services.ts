@@ -1,6 +1,7 @@
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
+import { KMS } from '@aws-sdk/client-kms';
 import { Lambda } from '@aws-sdk/client-lambda';
 import { S3 } from '@aws-sdk/client-s3';
 import { SQS } from '@aws-sdk/client-sqs';
@@ -32,6 +33,6 @@ export const cf = awsClient(AWS.CloudFormation, '2010-05-15');
 export const sns = awsClient(SNS, '2010-03-31');
 export const secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 export const systemsManager = awsClient(AWS.SSM, '2017-10-17');
-export const kms = awsClient(AWS.KMS, '2014-11-01');
+export const kms = awsClient(KMS, '2014-11-01');
 export const es = awsClient(AWS.ES, '2015-01-01');
 export const sts = awsClient(AWS.STS, '2011-06-15');
