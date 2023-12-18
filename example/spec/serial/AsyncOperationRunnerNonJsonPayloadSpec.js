@@ -80,7 +80,7 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
           cluster,
           tasks: [taskArn],
         }
-      ).promise();
+      );
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,

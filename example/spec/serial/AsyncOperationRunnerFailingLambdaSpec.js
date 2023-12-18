@@ -76,7 +76,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
           cluster,
           tasks: [taskArn],
         }
-      ).promise();
+      );
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,

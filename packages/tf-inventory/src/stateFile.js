@@ -95,7 +95,7 @@ async function listTfStateFiles() {
 async function listClusterEC2Instances(clusterArn) {
   const clusterContainerInstances = await aws.ecs().listContainerInstances({
     cluster: clusterArn,
-  }).promise()
+  })
     .catch((error) => {
       console.log(`Error listing container instances for cluster ${clusterArn}: ${error}`);
       return [];
@@ -108,7 +108,7 @@ async function listClusterEC2Instances(clusterArn) {
   const containerInstances = await aws.ecs().describeContainerInstances({
     cluster: clusterArn,
     containerInstances: clusterContainerInstances.containerInstanceArns,
-  }).promise();
+  });
 
   return containerInstances.containerInstances.map((c) => c.ec2InstanceId);
 }

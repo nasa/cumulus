@@ -80,7 +80,7 @@ describe('The AsyncOperation task runner executing a successful lambda function'
           cluster,
           tasks: [taskArn],
         }
-      ).promise();
+      );
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,

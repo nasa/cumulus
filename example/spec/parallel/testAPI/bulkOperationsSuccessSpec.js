@@ -258,7 +258,7 @@ describe('POST /granules/bulk', () => {
         const describeTasksResponse = await ecs().describeTasks({
           cluster: clusterArn,
           tasks: [taskArn],
-        }).promise();
+        });
 
         expect(describeTasksResponse.tasks.length).toEqual(1);
       }
@@ -273,7 +273,7 @@ describe('POST /granules/bulk', () => {
             cluster: clusterArn,
             tasks: [taskArn],
           }
-        ).promise();
+        );
 
         const asyncOperation = await getAsyncOperation({
           prefix,

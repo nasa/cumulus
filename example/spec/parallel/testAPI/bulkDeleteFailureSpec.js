@@ -140,7 +140,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     const describeTasksResponse = await ecs().describeTasks({
       cluster: clusterArn,
       tasks: [taskArn],
-    }).promise();
+    });
 
     expect(describeTasksResponse.tasks.length).toEqual(1);
   });
@@ -154,7 +154,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
         cluster: clusterArn,
         tasks: [taskArn],
       }
-    ).promise();
+    );
 
     const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,

@@ -65,7 +65,7 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
           cluster,
           tasks: [taskArn],
         }
-      ).promise();
+      );
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,

@@ -73,7 +73,7 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
           cluster,
           tasks: [taskArn],
         }
-      ).promise();
+      );
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
