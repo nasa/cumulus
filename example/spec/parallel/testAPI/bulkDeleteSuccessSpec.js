@@ -254,7 +254,7 @@ describe('POST /granules/bulkDelete', () => {
       const describeTasksResponse = await ecs().describeTasks({
         cluster: clusterArn,
         tasks: [taskArn],
-      }).promise();
+      });
 
       expect(describeTasksResponse.tasks.length).toEqual(1);
     });
@@ -268,7 +268,7 @@ describe('POST /granules/bulkDelete', () => {
           cluster: clusterArn,
           tasks: [taskArn],
         }
-      ).promise();
+      );
 
       const asyncOperation = await getAsyncOperation({
         prefix,

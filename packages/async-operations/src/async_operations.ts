@@ -120,7 +120,7 @@ export const startECSTask = async ({
         },
       ],
     },
-  }).promise();
+  });
 };
 
 export const createAsyncOperation = async (
