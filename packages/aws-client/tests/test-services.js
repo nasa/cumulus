@@ -44,7 +44,7 @@ test('cf() service defaults to localstack in test mode', (t) => {
 });
 
 
-test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
+test('cloudwatchevents() service defaults to localstack in test mode', async (t) => {
   const cloudwatchevents = services.cloudwatchevents();
   const {
     credentials,
