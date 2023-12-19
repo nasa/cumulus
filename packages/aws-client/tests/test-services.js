@@ -156,7 +156,7 @@ test('ecs() service defaults to localstack in test mode',  async (t) => {
     await ecs.config.credentials()
     credentials
   );
-  const ecs = await ecs.config.endpoint();
+  const ecsEndpoint = await ecs.config.endpoint();
   const localstackEndpoint = new URL(endpoint);
   t.like(
     ecsEndpoint,
