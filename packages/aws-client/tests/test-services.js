@@ -156,10 +156,10 @@ test('ecs() service defaults to localstack in test mode', (t) => {
     await ecs.config.credentials()
     credentials
   );
-  const cloudFormationEndpoint = await cf.config.endpoint();
+  const ecs = await ecs.config.endpoint();
   const localstackEndpoint = new URL(endpoint);
   t.like(
-    cloudFormationEndpoint,
+    ecs,
     {
       hostname: localstackEndpoint.hostname,
       port: Number.parseInt(localstackEndpoint.port, 10),
