@@ -5,12 +5,14 @@
 // https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sfn#v2-compatible-style
 
 import {
+  DescribeExecutionInput,
   DescribeExecutionOutput,
+  DescribeStateMachineInput,
+  GetExecutionHistoryInput,
   GetExecutionHistoryOutput,
   HistoryEvent,
   ListExecutionsCommandInput,
 } from '@aws-sdk/client-sfn';
-
 
 import { sfn } from './services';
 
@@ -45,7 +47,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
  * @kind function
  */
 export const describeExecution = retryOnThrottlingException(
-  (params: AWS.StepFunctions.DescribeExecutionInput) =>
+  (params: DescribeExecutionInput) =>
     sfn().describeExecution(params)
 );
 
@@ -59,12 +61,12 @@ export const describeExecution = retryOnThrottlingException(
  * exponential backoff.
  *
  * @param {Object} params
- * @returns {Promise<Object>}
+ * @returns {Promise<DescribeStateMachineOutput>} DescribeStateMachineOutput
  *
  * @kind function
  */
 export const describeStateMachine = retryOnThrottlingException(
-  (params: AWS.StepFunctions.DescribeStateMachineInput) =>
+  (params: DescribeStateMachineInput) =>
     sfn().describeStateMachine(params)
 );
 
@@ -99,7 +101,7 @@ export const executionExists = (executionArn: string) =>
  */
 export const getExecutionHistory = retryOnThrottlingException(
   async (
-    params: AWS.StepFunctions.GetExecutionHistoryInput,
+    params: GetExecutionHistoryInput,
     previousResponse: { events: HistoryEvent[] } = {
       events: [],
     }
