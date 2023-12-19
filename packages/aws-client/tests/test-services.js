@@ -153,10 +153,18 @@ test('ecs() service defaults to localstack in test mode', (t) => {
     endpoint,
   } = localStackAwsClientOptions(ECS);
   t.deepEqual(
-    ecs.config.credentials,
+    await cf.config.credentials()
     credentials
   );
-  t.is(ecs.config.endpoint, endpoint);
+  const cloudFormationEndpoint = await cf.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    cloudFormationEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('ec2() service defaults to localstack in test mode', (t) => {
