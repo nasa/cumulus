@@ -8,7 +8,6 @@ export const inTestMode = () => process.env.NODE_ENV === 'test';
 
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
-  stepfunctions: 4566,
   APIGatewayClient: 4566,
   cloudformation: 4566,
   cloudwatch: 4566,
@@ -30,6 +29,7 @@ const localStackPorts = {
   S3: 4566,
   secretsmanager: 4566,
   ses: 4566,
+  SFN: 4566,
   SNS: 4566,
   SQS: 4566,
   ssm: 4566,

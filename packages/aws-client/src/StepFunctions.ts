@@ -2,8 +2,19 @@
  * @module StepFunctions
  */
 
+// https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sfn#v2-compatible-style
+
+import {
+  DescribeExecutionOutput,
+  GetExecutionHistoryOutput,
+  HistoryEvent,
+  ListExecutionsCommandInput,
+} from '@aws-sdk/client-sfn';
+
+
 import { sfn } from './services';
-import { improveStackTrace, retryOnThrottlingException } from './utils';
+
+import { retryOnThrottlingException } from './utils';
 import { inTestMode } from './test-utils';
 
 // Utility functions
@@ -29,14 +40,13 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
  * exponential backoff.
  *
  * @param {Object} params
- * @returns {Promise<Object>}
+ * @returns {Promise<DescribeExecutionOutput>} DescribeExecutionOutput
  *
  * @kind function
  */
-export const describeExecution = improveStackTrace(
-  retryOnThrottlingException(
-    (params: AWS.StepFunctions.DescribeExecutionInput) => sfn().describeExecution(params).promise()
-  )
+export const describeExecution = retryOnThrottlingException(
+  (params: AWS.StepFunctions.DescribeExecutionInput) =>
+    sfn().describeExecution(params)
 );
 
 /**
@@ -53,11 +63,9 @@ export const describeExecution = improveStackTrace(
  *
  * @kind function
  */
-export const describeStateMachine = improveStackTrace(
-  retryOnThrottlingException(
-    (params: AWS.StepFunctions.DescribeStateMachineInput) =>
-      sfn().describeStateMachine(params).promise()
-  )
+export const describeStateMachine = retryOnThrottlingException(
+  (params: AWS.StepFunctions.DescribeStateMachineInput) =>
+    sfn().describeStateMachine(params)
 );
 
 /**
@@ -89,42 +97,45 @@ export const executionExists = (executionArn: string) =>
  *
  * @kind function
  */
-export const getExecutionHistory = improveStackTrace(
-  retryOnThrottlingException(
-    async (
-      params: AWS.StepFunctions.GetExecutionHistoryInput,
-      previousResponse: { events: AWS.StepFunctions.HistoryEventList } = {
-        events: [],
-      }
-    ): Promise<{ events: AWS.StepFunctions.HistoryEventList }> => {
-      const response = await sfn().getExecutionHistory(params).promise();
-      const events = [
-        ...previousResponse.events,
-        ...response.events,
-      ];
-      // If there is a nextToken, recursively call this function to get all events
-      // in the execution history.
-      if (response.nextToken) {
-        return getExecutionHistory({
-          ...params,
-          nextToken: response.nextToken,
-        }, {
-          events,
-        });
-      }
-      return {
-        events,
-      };
+export const getExecutionHistory = retryOnThrottlingException(
+  async (
+    params: AWS.StepFunctions.GetExecutionHistoryInput,
+    previousResponse: { events: HistoryEvent[] } = {
+      events: [],
     }
-  )
+  ): Promise<{ events: HistoryEvent[] }> => {
+    const response: GetExecutionHistoryOutput
+      = await sfn().getExecutionHistory(params);
+
+    response.events = response.events || [];
+    const events = [
+      ...previousResponse.events,
+      ...response.events,
+    ];
+    // If there is a nextToken, recursively call this function to get all events
+    // in the execution history.
+    if (response.nextToken) {
+      return getExecutionHistory({
+        ...params,
+        nextToken: response.nextToken,
+      }, {
+        events,
+      });
+    }
+    return {
+      events,
+    };
+  }
 );
 
 export const getExecutionStatus = async (executionArn: string) => {
-  const [execution, executionHistory] = await Promise.all([
-    describeExecution({ executionArn }),
-    getExecutionHistory({ executionArn }),
-  ]);
+  const [execution, executionHistory]: [DescribeExecutionOutput, GetExecutionHistoryOutput]
+    = await Promise.all([
+      describeExecution({ executionArn }),
+      getExecutionHistory({ executionArn }),
+    ]);
 
+  execution.stateMachineArn = execution.stateMachineArn ?? '';
   const stateMachine = await describeStateMachine({
     stateMachineArn: execution.stateMachineArn,
   });
@@ -146,8 +157,6 @@ export const getExecutionStatus = async (executionArn: string) => {
  *
  * @kind function
  */
-export const listExecutions = improveStackTrace(
-  retryOnThrottlingException(
-    (params: AWS.StepFunctions.ListExecutionsInput) => sfn().listExecutions(params).promise()
-  )
+export const listExecutions = retryOnThrottlingException(
+  (params: ListExecutionsCommandInput) => sfn().listExecutions(params)
 );
