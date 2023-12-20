@@ -13,7 +13,7 @@ import { JSONPath } from 'jsonpath-plus';
 import get from 'lodash/get';
 import set from 'lodash/set';
 
-import { getExecutionHistory } from '@cumulus/aws-client/StepFunctions';
+import { getExecutionHistory, HistoryEvent } from '@cumulus/aws-client/StepFunctions';
 import { getStepExitedEvent, getTaskExitedEventOutput } from '@cumulus/common/execution-history';
 import { Message } from '@cumulus/types';
 import * as s3Utils from '@cumulus/aws-client/S3';
@@ -129,7 +129,7 @@ export const parseStepMessage = async (
  * @returns {string} name of the current stepfunction task or 'UnknownFailedStepName'.
  */
 export const getFailedStepName = (
-  events: AWS.StepFunctions.HistoryEvent[],
+  events: HistoryEvent[],
   failedStepEvent: { id: number }
 ) => {
   try {
@@ -150,13 +150,13 @@ export const getFailedStepName = (
 /**
  * Finds all failed execution events and returns the last one in the list.
  *
- * @param {Array<HistoryEventList>} events - array of AWS Stepfunction execution HistoryEvents
- * @returns {HistoryEventList | undefined} - the last lambda or activity that failed in the
+ * @param {HistoryEvent[]} events - array of AWS Stepfunction execution HistoryEvents
+ * @returns {HistoryEvent[] | undefined} - the last lambda or activity that failed in the
  * event array, or an empty array.
  */
 export const lastFailedEventStep = (
-  events: AWS.StepFunctions.HistoryEvent[]
-): AWS.StepFunctions.HistoryEvent | undefined => {
+  events: HistoryEvent[]
+): HistoryEvent | undefined => {
   const failures = events.filter((event) =>
     ['LambdaFunctionFailed', 'ActivityFailed'].includes(event.type));
   return failures.pop();

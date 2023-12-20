@@ -1,8 +1,8 @@
-import AWS from 'aws-sdk';
+import { HistoryEvent } from '@cumulus/aws-client/StepFunctions';
 
 export const getStepExitedEvent = (
-  events: AWS.StepFunctions.HistoryEvent[],
-  lastStepEvent: AWS.StepFunctions.HistoryEvent
+  events: HistoryEvent[],
+  lastStepEvent: HistoryEvent
 ) =>
   events.find(
     ({ type, previousEventId }) =>
@@ -10,5 +10,5 @@ export const getStepExitedEvent = (
   );
 
 export const getTaskExitedEventOutput = (
-  event: AWS.StepFunctions.HistoryEvent
+  event: HistoryEvent
 ) => event?.stateExitedEventDetails?.output;
