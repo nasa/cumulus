@@ -10,5 +10,5 @@ import { SNS } from '@aws-sdk/client-sns';
 import { SQS } from '@aws-sdk/client-sqs';
 
 export type AWSClientTypes = APIGatewayClient | DynamoDB
-  | DynamoDBClient | DynamoDBStreamsClient | Lambda | S3 | SFN | SNS | SQS
+| DynamoDBClient | DynamoDBStreamsClient | Lambda | S3 | SFN | SNS | SQS
 | AWS.Service | AWS.DynamoDB.DocumentClient;
