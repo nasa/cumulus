@@ -180,17 +180,15 @@ test.serial('iterateOverShardRecursively catches and logs failure of getRecords'
 
 test.serial('iterateOverShardRecursively recurs until MillisBehindLatest reaches 0', async (t) => {
   let recurred = false;
-  const getRecordsStub = sinon.stub(Kinesis, 'getRecords').callsFake(() => ({
-    promise: () => {
-      const response = {
-        Records: [{}],
-        NextShardIterator: '123456',
-        MillisBehindLatest: recurred ? 0 : 100,
-      };
-      recurred = true;
-      return Promise.resolve(response);
-    },
-  }));
+  const getRecordsStub = sinon.stub(Kinesis, 'getRecords').callsFake(() => {
+    const response = {
+      Records: [{}],
+      NextShardIterator: '123456',
+      MillisBehindLatest: recurred ? 0 : 100,
+    };
+    recurred = true;
+    return Promise.resolve(response);
+  });
   const processRecordStub = sinon.stub(messageConsumer, 'processRecord').returns(true);
   try {
     const existingPromiseList = [Promise.resolve(2), Promise.resolve(0)];

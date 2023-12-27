@@ -3,6 +3,7 @@
  */
 
 import pRetry from 'p-retry';
+import { DescribeStreamInput } from '@aws-sdk/client-kinesis';
 import { kinesis } from './services';
 
 /**
@@ -14,13 +15,13 @@ import { kinesis } from './services';
  * @returns {Promise<Object>} The stream description response
  */
 export const describeStream = (
-  params: AWS.Kinesis.DescribeStreamInput,
+  params: DescribeStreamInput,
   retryOptions: pRetry.Options = { retries: 0 }
 ) =>
   pRetry(
     async () => {
       try {
-        return await kinesis().describeStream(params).promise();
+        return await kinesis().describeStream(params);
       } catch (error) {
         if (error.code === 'ResourceNotFoundException') throw error;
         throw new pRetry.AbortError(error);

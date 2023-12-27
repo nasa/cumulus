@@ -133,7 +133,7 @@ async function iterateOverShardRecursively(streamArn, recordPromiseList, shardIt
   try {
     const response = await Kinesis.getRecords({
       ShardIterator: shardIterator,
-    }).promise();
+    });
     recordPromiseList.push(processRecordBatch(streamArn, response.Records, rules));
     if (response.MillisBehindLatest === 0 || !response.NextShardIterator) return recordPromiseList;
     const nextShardIterator = response.NextShardIterator;
@@ -156,9 +156,7 @@ async function iterateOverShardRecursively(streamArn, recordPromiseList, shardIt
 async function processShard(streamName, streamArn, shardId, rules) {
   const iteratorParams = setupIteratorParams(streamName, shardId);
   try {
-    const shardIterator = (
-      await Kinesis.getShardIterator(iteratorParams).promise()
-    ).ShardIterator;
+    const shardIterator = (await Kinesis.getShardIterator(iteratorParams)).ShardIterator;
     const tallyList = await Promise.all(
       await iterateOverShardRecursively(streamArn, [], shardIterator, rules)
     );
@@ -188,7 +186,7 @@ async function iterateOverStreamRecursivelyToDispatchShards(
   params,
   rules
 ) {
-  const listShardsResponse = (await Kinesis.listShards(params).promise().catch(log.error));
+  const listShardsResponse = await Kinesis.listShards(params).catch(log.error);
   if (!listShardsResponse || !listShardsResponse.Shards || listShardsResponse.Shards.length === 0) {
     log.error(`No shards found for params ${JSON.stringify(params)}.`);
     return shardPromiseList;

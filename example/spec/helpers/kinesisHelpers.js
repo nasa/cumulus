@@ -92,7 +92,7 @@ async function waitForActiveStream(streamName, initialDelaySecs = 10, maxRetries
  * @returns {Promise<Object>} - a kinesis delete stream proxy object.
  */
 async function deleteTestStream(streamName) {
-  return await kinesis().deleteStream({ StreamName: streamName }).promise();
+  return await kinesis().deleteStream({ StreamName: streamName });
 }
 
 /**
@@ -105,7 +105,7 @@ async function createKinesisStream(streamName) {
   return await pRetry(
     async () => {
       try {
-        return await kinesis().createStream({ StreamName: streamName, ShardCount: 1 }).promise();
+        return await kinesis().createStream({ StreamName: streamName, ShardCount: 1 });
       } catch (error) {
         if (error.code === 'LimitExceededException') throw error;
         throw new pRetry.AbortError(error);
@@ -168,7 +168,7 @@ async function getShardIterator(streamName) {
     StreamName: streamName,
   };
 
-  const shardIterator = await kinesis().getShardIterator(shardIteratorParams).promise();
+  const shardIterator = await kinesis().getShardIterator(shardIteratorParams);
   return shardIterator.ShardIterator;
 }
 
@@ -181,7 +181,7 @@ async function getShardIterator(streamName) {
  * @returns {Array} Array of records from kinesis stream.
  */
 async function getRecords(shardIterator, records = []) {
-  const data = await kinesis().getRecords({ ShardIterator: shardIterator }).promise();
+  const data = await kinesis().getRecords({ ShardIterator: shardIterator });
   records.push(...data.Records);
   if ((data.NextShardIterator !== null) && (data.MillisBehindLatest > 0)) {
     await sleep(waitPeriodMs);
@@ -202,7 +202,7 @@ async function putRecordOnStream(streamName, record) {
     Data: JSON.stringify(record),
     PartitionKey: '1',
     StreamName: streamName,
-  }).promise();
+  });
 }
 
 /**
