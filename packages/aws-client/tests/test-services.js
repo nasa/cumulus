@@ -43,8 +43,7 @@ test('cf() service defaults to localstack in test mode', (t) => {
   t.is(cf.config.endpoint, endpoint);
 });
 
-
-test('cloudwatchevents() service defaults to localstack in test mode', async (t) => {
+test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
   const cloudwatchevents = services.cloudwatchevents();
   const {
     credentials,
@@ -146,7 +145,7 @@ test('dynamodbstreams() service defaults to localstack in test mode', async (t) 
   );
 });
 
-test('ecs() service defaults to localstack in test mode',  async (t) => {
+test('ecs() service defaults to localstack in test mode', async (t) => {
   const ecs = services.ecs();
   const {
     credentials,
