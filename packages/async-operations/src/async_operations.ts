@@ -14,7 +14,6 @@ import Logger from '@cumulus/logger';
 import { ApiAsyncOperation, AsyncOperationType } from '@cumulus/types/api/async_operations';
 import { v4 as uuidv4 } from 'uuid';
 
-
 import type {
   AsyncOperationPgModelObject,
 } from './types';

@@ -153,7 +153,7 @@ test('ecs() service defaults to localstack in test mode',  async (t) => {
     endpoint,
   } = localStackAwsClientOptions(ECS);
   t.deepEqual(
-    await ecs.config.credentials()
+    await ecs.config.credentials(),
     credentials
   );
   const ecsEndpoint = await ecs.config.endpoint();
