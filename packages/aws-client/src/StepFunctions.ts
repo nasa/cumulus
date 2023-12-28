@@ -19,6 +19,8 @@ import { sfn } from './services';
 import { retryOnThrottlingException } from './utils';
 import { inTestMode } from './test-utils';
 
+export { HistoryEvent } from '@aws-sdk/client-sfn';
+
 // Utility functions
 
 export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =>
@@ -41,7 +43,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
  *
- * @param {Object} params
+ * @param {DescribeExecutionInput} params
  * @returns {Promise<DescribeExecutionOutput>} DescribeExecutionOutput
  *
  * @kind function
@@ -60,7 +62,7 @@ export const describeExecution = retryOnThrottlingException(
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
  *
- * @param {Object} params
+ * @param {DescribeStateMachineInput} params
  * @returns {Promise<DescribeStateMachineOutput>} DescribeStateMachineOutput
  *
  * @kind function
@@ -94,7 +96,7 @@ export const executionExists = (executionArn: string) =>
  * If a ThrottlingException is received, this function will retry using an
  * exponential backoff.
  *
- * @param {Object} params
+ * @param {GetExecutionHistoryInput} params
  * @returns {Promise<Object>}
  *
  * @kind function
@@ -131,13 +133,12 @@ export const getExecutionHistory = retryOnThrottlingException(
 );
 
 export const getExecutionStatus = async (executionArn: string) => {
-  const [execution, executionHistory]: [DescribeExecutionOutput, GetExecutionHistoryOutput]
+  const [execution, executionHistory]
     = await Promise.all([
       describeExecution({ executionArn }),
       getExecutionHistory({ executionArn }),
     ]);
 
-  execution.stateMachineArn = execution.stateMachineArn ?? '';
   const stateMachine = await describeStateMachine({
     stateMachineArn: execution.stateMachineArn,
   });
