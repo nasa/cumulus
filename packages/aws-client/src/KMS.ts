@@ -23,8 +23,10 @@ export const createKey = (params: CreateKeyCommandInput = {}) =>
  * @param {string} Plaintext - the string to be encrypted
  * @returns {Promise<string>} the Base 64 encoding of the encrypted value
  */
-export const encrypt = async (KeyId: string, Plaintext: Uint8Array) => {
-  const { CiphertextBlob } = await kms().encrypt({ KeyId, Plaintext });
+export const encrypt = async (KeyId: string, Plaintext: string) => {
+  const textEncoder = new TextEncoder();
+  const plaintext = textEncoder.encode(Plaintext);
+  const { CiphertextBlob } = await kms().encrypt({ KeyId, Plaintext: plaintext });
 
   if (CiphertextBlob === undefined) throw new Error('Returned CiphertextBlob is undefined');
 
