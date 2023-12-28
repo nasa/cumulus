@@ -212,10 +212,8 @@ test.serial('processShard catches and logs failure of getShardIterator', async (
 
 test.serial('processShard returns number of records processed from shard', async (t) => {
   const restoreKinesis = manualConsumer.__set__('Kinesis', {
-    getShardIterator: () => ({
-      promise: () => Promise.resolve({
-        ShardIterator: 'fakeIterator',
-      }),
+    getShardIterator: () => Promise.resolve({
+      ShardIterator: 'fakeIterator',
     }),
   });
   const logError = sinon.spy(log, 'error');
@@ -239,16 +237,14 @@ test.serial('iterateOverStreamRecursivelyToDispatchShards catches and logs listS
 test.serial('iterateOverStreamRecursivelyToDispatchShards recurs until listShards does not contain a NextToken', async (t) => {
   let recurred = false;
   const restoreKinesis = manualConsumer.__set__('Kinesis', {
-    listShards: () => ({
-      promise: () => {
-        const response = {
-          Shards: [{}],
-          NextToken: recurred ? undefined : '123456',
-        };
-        recurred = true;
-        return Promise.resolve(response);
-      },
-    }),
+    listShards: () => {
+      const response = {
+        Shards: [{}],
+        NextToken: recurred ? undefined : '123456',
+      };
+      recurred = true;
+      return Promise.resolve(response);
+    },
   });
   const restoreHandleShard = manualConsumer.__set__('processShard', () => Promise.resolve(1));
   const output = await manualConsumer.iterateOverStreamRecursivelyToDispatchShards('fakestream', 'fake-arn', [], {});
