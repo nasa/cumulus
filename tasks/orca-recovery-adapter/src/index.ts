@@ -96,7 +96,7 @@ export const invokeOrcaRecoveryWorkflow = async (
   };
 
   try {
-    await sfn().startExecution(workflowParams).promise();
+    await sfn().startExecution(workflowParams);
   } catch (error) {
     log.error(`Error starting ${childWorkflowArn}`, error);
     throw error;

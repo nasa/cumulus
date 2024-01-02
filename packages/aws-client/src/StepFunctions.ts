@@ -2,12 +2,11 @@
  * @module StepFunctions
  */
 
-// https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sfn#v2-compatible-style
-
 import {
   DescribeExecutionInput,
   DescribeExecutionOutput,
   DescribeStateMachineInput,
+  DescribeStateMachineOutput,
   GetExecutionHistoryInput,
   GetExecutionHistoryOutput,
   HistoryEvent,
@@ -19,7 +18,7 @@ import { sfn } from './services';
 import { retryOnThrottlingException } from './utils';
 import { inTestMode } from './test-utils';
 
-export { HistoryEvent } from '@aws-sdk/client-sfn';
+export { HistoryEvent, DescribeExecutionOutput } from '@aws-sdk/client-sfn';
 
 // Utility functions
 
@@ -49,7 +48,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
  * @kind function
  */
 export const describeExecution = retryOnThrottlingException(
-  (params: DescribeExecutionInput) =>
+  (params: DescribeExecutionInput): Promise<DescribeExecutionOutput> =>
     sfn().describeExecution(params)
 );
 
@@ -68,7 +67,7 @@ export const describeExecution = retryOnThrottlingException(
  * @kind function
  */
 export const describeStateMachine = retryOnThrottlingException(
-  (params: DescribeStateMachineInput) =>
+  (params: DescribeStateMachineInput): Promise<DescribeStateMachineOutput> =>
     sfn().describeStateMachine(params)
 );
 
@@ -97,7 +96,7 @@ export const executionExists = (executionArn: string) =>
  * exponential backoff.
  *
  * @param {GetExecutionHistoryInput} params
- * @returns {Promise<Object>}
+ * @returns {Promise<GetExecutionHistoryOutput>}
  *
  * @kind function
  */
