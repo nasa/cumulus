@@ -67,7 +67,7 @@ test.before(async (t) => {
     stubbedEcsRunTaskParams = params;
     if (!stubbedEcsRunTaskResult) throw new Error('stubbedEcsRunTaskResult has not yet been set');
     return stubbedEcsRunTaskResult;
-  }
+  };
 
   t.context.functionConfig = {
     Environment: {
