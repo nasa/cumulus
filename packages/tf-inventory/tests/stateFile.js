@@ -228,26 +228,19 @@ test.serial('listClusterEC2Instances returns lists of instance ids', async (t) =
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       describeContainerInstances: () => ({
-        promise: () =>
-          Promise.resolve({
-            containerInstances: [
-              {
-                ec2InstanceId: 'i-12345',
-              },
-              {
-                ec2InstanceId: 'i-23456',
-              },
-            ],
-          }),
+        containerInstances: [
+          {
+            ec2InstanceId: 'i-12345',
+          },
+          {
+            ec2InstanceId: 'i-23456',
+          },
+        ],
       }),
       listContainerInstances: () => ({
-        promise: () =>
-          Promise.resolve({
-            containerInstanceArns: ['arn1'],
-          }),
+        containerInstanceArns: ['arn1'],
       }),
     });
-
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, ['i-12345', 'i-23456']);
 
@@ -258,10 +251,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       listContainerInstances: () => ({
-        promise: () =>
-          Promise.resolve({
-            containerInstanceArns: null,
-          }),
+        containerInstanceArns: undefined,
       }),
     });
 
@@ -274,10 +264,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
 test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
-      listContainerInstances: () => ({
-        promise: () =>
-          Promise.resolve(null),
-      }),
+      listContainerInstances: () => (undefined),
     });
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');

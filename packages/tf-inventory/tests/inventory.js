@@ -50,10 +50,7 @@ test.before(() => {
   ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       listClusters: () => ({
-        promise: () =>
-          Promise.resolve({
-            clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
-          }),
+        clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
       }),
     });
 
