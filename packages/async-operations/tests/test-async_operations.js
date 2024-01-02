@@ -65,13 +65,9 @@ test.before(async (t) => {
   ecsClient = ecs();
   ecsClient.runTask = (params) => {
     stubbedEcsRunTaskParams = params;
-    return {
-      promise: () => {
-        if (!stubbedEcsRunTaskResult) return Promise.reject(new Error('stubbedEcsRunTaskResult has not yet been set'));
-        return Promise.resolve(stubbedEcsRunTaskResult);
-      },
-    };
-  };
+    if (!stubbedEcsRunTaskResult) throw new Error('stubbedEcsRunTaskResult has not yet been set');
+    return stubbedEcsRunTaskResult;
+  }
 
   t.context.functionConfig = {
     Environment: {
