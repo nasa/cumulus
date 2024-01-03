@@ -9,7 +9,11 @@ const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
 const { loadConfig } = require('../helpers/testUtils');
-
+function getAllMethods(obj = this) {
+  return Object.keys(obj)
+      .filter((key) => typeof obj[key] === 'function')
+      .map((key) => obj[key]);
+}
 describe('The AsyncOperation task runner running a non-existent lambda function', () => {
   let asyncOperation;
   let asyncOperationId;
@@ -58,7 +62,8 @@ describe('The AsyncOperation task runner running a non-existent lambda function'
       });
 
       const taskArn = runTaskResponse.tasks[0].taskArn;
-
+      const EECC = ecs();
+      console.log(getAllMethods(EECC));
       await ecs().waitFor(
         'tasksStopped',
         {
