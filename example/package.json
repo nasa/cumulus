@@ -70,6 +70,7 @@
     "@cumulus/test-processing": "18.1.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-ecs": "^3.485.0",
     "@cumulus/test-data": "18.1.0"
   }
 }
