@@ -132,7 +132,7 @@ async function createOrUseTestStream(streamName) {
   try {
     stream = await describeStream({ StreamName: streamName });
   } catch (error) {
-    if (error.code === 'ResourceNotFoundException') {
+    if (error.name === 'ResourceNotFoundException') {
       console.log('Creating a new stream:', streamName);
       stream = await createKinesisStream(streamName);
     } else {
@@ -199,7 +199,7 @@ async function getRecords(shardIterator, records = []) {
  */
 async function putRecordOnStream(streamName, record) {
   return await kinesis().putRecord({
-    Data: JSON.stringify(record),
+    Data: new TextEncoder().encode(JSON.stringify(record)),
     PartitionKey: '1',
     StreamName: streamName,
   });

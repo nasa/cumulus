@@ -70,7 +70,7 @@ test.serial('setupIteratorParams returns AT_TIMESTAMP iterator params if timesta
     StreamName: stream,
     ShardId: shardId,
     ShardIteratorType: 'AT_TIMESTAMP',
-    Timestamp: process.env.startTimestamp,
+    Timestamp: new Date(process.env.startTimestamp),
   };
   const actualParams = manualConsumer.setupIteratorParams(stream, shardId);
   delete process.env.startTimestamp;

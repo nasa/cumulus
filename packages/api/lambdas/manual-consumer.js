@@ -51,7 +51,7 @@ const setupIteratorParams = (stream, shardId) => {
   };
   if (process.env.startTimestamp) {
     params.ShardIteratorType = 'AT_TIMESTAMP';
-    params.Timestamp = process.env.startTimestamp;
+    params.Timestamp = new Date(process.env.startTimestamp);
   } else {
     params.ShardIteratorType = 'TRIM_HORIZON';
   }

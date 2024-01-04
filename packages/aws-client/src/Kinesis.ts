@@ -3,7 +3,7 @@
  */
 
 import pRetry from 'p-retry';
-import { DescribeStreamInput } from '@aws-sdk/client-kinesis';
+import { DescribeStreamInput, ResourceNotFoundException } from '@aws-sdk/client-kinesis';
 import { kinesis } from './services';
 
 /**
@@ -23,7 +23,7 @@ export const describeStream = (
       try {
         return await kinesis().describeStream(params);
       } catch (error) {
-        if (error.code === 'ResourceNotFoundException') throw error;
+        if (error instanceof ResourceNotFoundException) throw error;
         throw new pRetry.AbortError(error);
       }
     },
