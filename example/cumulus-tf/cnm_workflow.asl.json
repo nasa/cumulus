@@ -307,47 +307,6 @@
       },
       "Type": "Task",
       "Resource": "${hyrax_metadata_updates_task_arn}",
-      "Next": "CmrStep",
-      "Catch": [
-        {
-          "ErrorEquals": [
-            "States.ALL"
-          ],
-          "Next": "CnmResponseFail",
-          "ResultPath": "$.exception"
-        }
-      ],
-      "Retry": [
-        {
-          "BackoffRate": 2,
-          "ErrorEquals": [
-            "Lambda.ServiceException",
-            "Lambda.AWSLambdaException",
-            "Lambda.SdkClientException"
-          ],
-          "IntervalSeconds": 2,
-          "MaxAttempts": 6
-        }
-      ]
-    },
-    "CmrStep": {
-      "Parameters": {
-        "cma": {
-          "event.$": "$",
-          "ReplaceConfig": {
-            "FullMessage": true
-          },
-          "task_config": {
-            "bucket": "{$.meta.buckets.internal.name}",
-            "stack": "{$.meta.stack}",
-            "cmr": "{$.meta.cmr}",
-            "launchpad": "{$.meta.launchpad}",
-            "etags": "{$.meta.file_etags}"
-          }
-        }
-      },
-      "Type": "Task",
-      "Resource": "${post_to_cmr_task_arn}",
       "Next": "CnmResponse",
       "Catch": [
         {

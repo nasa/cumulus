@@ -1428,7 +1428,6 @@ describe('The S3 Ingest Granules workflow', () => {
           'MoveGranuleStep',
           'UpdateGranulesCmrMetadataFileLinksStep',
           'HyraxMetadataUpdatesTask',
-          'CmrStep',
           'WorkflowSucceeded',
           'BackupGranulesToLzards',
         ];
