@@ -637,7 +637,7 @@ test.serial('deleteKinesisEventSources does not throw when deleteKinesisEventSou
   class ResourceNotFoundException extends Error {
     constructor(...args) {
       super(...args);
-      this.code = 'ResourceNotFoundException';
+      this.name = 'ResourceNotFoundException';
     }
   }
   const deleteResult = await deleteKinesisEventSources(testKnex, kinesisRule, {
@@ -1305,7 +1305,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
 test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async (t) => {
   const errorMessage = 'Resource is not found in resource policy.';
   const error = new Error(errorMessage);
-  error.code = 'ResourceNotFoundException';
+  error.name = 'ResourceNotFoundException';
   const { snsTopicArn } = t.context;
   const lambdaStub = sinon.stub(awsServices.lambda(), 'removePermission').throws(error);
 

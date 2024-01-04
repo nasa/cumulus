@@ -258,7 +258,7 @@ async function deleteKinesisEventSources(knex, rule, testContext = {
     (lambda) => deleteKinesisEventSourceMethod(knex, rule, lambda.eventType, lambda.type).catch(
       (error) => {
         log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.code !== 'ResourceNotFoundException') throw error;
+        if (error.name !== 'ResourceNotFoundException') throw error;
       }
     )
   );
@@ -433,7 +433,7 @@ async function addKinesisEventSources(rule) {
     (lambda) => addKinesisEventSource(rule, lambda).catch(
       (error) => {
         log.error(`Error adding eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.code !== 'ResourceNotFoundException') throw error;
+        if (error.name !== 'ResourceNotFoundException') throw error;
       }
     )
   );
