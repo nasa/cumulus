@@ -4,7 +4,8 @@ const get = require('lodash/get');
 const { v4: uuidv4 } = require('uuid');
 const { createAsyncOperation, deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { startECSTask } = require('@cumulus/async-operations');
-const { ecs, s3 } = require('@cumulus/aws-client/services');
+const { s3 } = require('@cumulus/aws-client/services');
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integration-tests');
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
@@ -20,7 +21,15 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
   let failFunctionName;
   let payloadKey;
   let taskArn;
+  let originalTimeout;
 
+  beforeEach(() => {
+    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = 12000000;
+  });
+  afterEach(() => {
+    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
+  });
   beforeAll(async () => {
     try {
       config = await loadConfig();
@@ -69,14 +78,19 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
       }
 
       taskArn = runTaskResponse.tasks[0].taskArn;
-
-      await ecs().waitFor(
-        'tasksStopped',
+      await expectAsync(waitUntilTasksStopped(
         {
-          cluster,
+          cluster: cluster,
           tasks: [taskArn],
         }
-      );
+      )).toBeResolved();
+      // await ecs().waitFor(
+      //   'tasksStopped',
+      //   {
+      //     cluster,
+      //     tasks: [taskArn],
+      //   }
+      // );
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,

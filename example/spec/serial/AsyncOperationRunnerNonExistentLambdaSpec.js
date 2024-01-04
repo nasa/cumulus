@@ -10,10 +10,10 @@ const { getClusterArn, waitForAsyncOperationStatus } = require('@cumulus/integra
 const { findAsyncOperationTaskDefinitionForDeployment } = require('../helpers/ecsHelpers');
 const { loadConfig } = require('../helpers/testUtils');
 function getAllMethods(obj = this) {
-  console.log("ITs HERE");
-  return Object.keys(obj)
-    .filter((key) => obj[key].isFunction())
-    .map((key) => obj[key]);
+  const a = Object.keys(obj)
+  console.log("----------------");
+  console.log(a);
+  console.log("-------------------------");
 }
 describe('The AsyncOperation task runner running a non-existent lambda function', () => {
   let asyncOperation;
