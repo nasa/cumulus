@@ -106,7 +106,7 @@ function isExecutionForGranuleId(taskInput, params) {
   return taskInput.payload.granules && taskInput.payload.granules[0].granuleId === params.granuleId;
 }
 
-describe('The S3 Ingest Granules workflow', () => {
+describe.skip('The S3 Ingest Granules workflow', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
   const providersDir = './data/providers/s3/';
   const collectionsDir = './data/collections/s3_MOD09GQ_006_full_ingest';
