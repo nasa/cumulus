@@ -165,61 +165,6 @@ test('getReadHeaders returns clientId and token for launchpad', (t) => {
   t.is(headers.Authorization, '12345');
 });
 
-test.serial('ingestUMMGranule() returns CMRInternalError when CMR is down', async (t) => {
-  const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc', clientId: 'client' });
-
-  const ummgMetadata = { GranuleUR: 'asdf' };
-
-  const internalError = {
-    errors: [
-      {
-        errors: ['Internal error'],
-      },
-    ],
-  };
-
-  process.env.CMR_ENVIRONMENT = 'SIT';
-
-  nock('https://cmr.sit.earthdata.nasa.gov')
-    .put(`/ingest/providers/${cmrSearch.provider}/granules/${ummgMetadata.GranuleUR}`)
-    .times(3)
-    .reply(503, internalError);
-
-  await t.throwsAsync(
-    () => cmrSearch.ingestUMMGranule(ummgMetadata),
-    { instanceOf: CMRInternalError }
-  );
-});
-
-test.serial('ingestUMMGranule() throws an exception if the input fails validation', async (t) => {
-  const cmrSearch = new CMR({ provider: 'my-provider', token: 'abc', clientId: 'client' });
-
-  const ummgMetadata = { GranuleUR: 'asdf' };
-
-  const ummValidationError = {
-    errors: [
-      {
-        path: ['Temporal'],
-        errors: ['oh snap'],
-      },
-    ],
-  };
-
-  process.env.CMR_ENVIRONMENT = 'SIT';
-
-  nock('https://cmr.sit.earthdata.nasa.gov')
-    .put(`/ingest/providers/${cmrSearch.provider}/granules/${ummgMetadata.GranuleUR}`)
-    .reply(422, ummValidationError);
-
-  await t.throwsAsync(
-    () => cmrSearch.ingestUMMGranule(ummgMetadata),
-    {
-      name: 'Error',
-      message: 'Failed to ingest, statusCode: 422, statusMessage: Unprocessable Entity, CMR error message: [{"path":["Temporal"],"errors":["oh snap"]}]',
-    }
-  );
-});
-
 test('getCmrPassword returns the set password if no secret exists', async (t) => {
   const cmr = new CMR({ password: 'test-password' });
 

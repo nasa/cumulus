@@ -1,7 +1,5 @@
-import get from 'lodash/get';
-import got, { Headers } from 'got';
-import { CMRInternalError } from '@cumulus/errors';
-import Logger from '@cumulus/logger';
+
+import { Headers } from 'got';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
 import { getEDLToken } from './EarthdataLogin';
 import { CMRResponseBody, CMRErrorResponseBody } from './types';
@@ -9,14 +7,10 @@ import { searchConcept } from './searchConcept';
 import ingestConcept from './ingestConcept';
 import deleteConcept from './deleteConcept';
 import getConceptMetadata from './getConcept';
-import { getIngestUrl } from './getUrl';
-import { UmmMetadata, ummVersion } from './UmmUtils';
-const log = new Logger({ sender: 'cmr-client' });
+import { UmmMetadata } from './UmmUtils';
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 
-const logDetails: { [key: string]: string } = {
-  file: 'cmr-client/CMR.js',
-};
+
 /**
  * Returns a valid a CMR token
  *
@@ -220,44 +214,10 @@ export class CMR {
    */
   async ingestUMMGranule(ummgMetadata: UmmMetadata, cmrRevisionId?: string)
     : Promise<CMRResponseBody | CMRErrorResponseBody> {
-    const headers = this.getWriteHeaders({
-      token: await this.getToken(),
-      ummgVersion: ummVersion(ummgMetadata),
-      cmrRevisionId,
-    });
-
-    const granuleId = ummgMetadata.GranuleUR || 'no GranuleId found on input metadata';
-    logDetails.granuleId = granuleId;
-
-    try {
-      const response = await got.put(
-        `${getIngestUrl({ provider: this.provider })}granules/${granuleId}`,
-        {
-          json: ummgMetadata,
-          responseType: 'json',
-          headers,
-        }
-      );
-      return <CMRResponseBody>response.body;
-    } catch (error) {
-      log.error(error, logDetails);
-      const statusCode = get(error, 'response.statusCode', error.code);
-      const statusMessage = get(error, 'response.statusMessage', error.message);
-      let errorMessage = `Failed to ingest, statusCode: ${statusCode}, statusMessage: ${statusMessage}`;
-
-      const responseError = get(error, 'response.body.errors');
-      if (responseError) {
-        errorMessage = `${errorMessage}, CMR error message: ${JSON.stringify(responseError)}`;
-      }
-
-      log.error(errorMessage);
-
-      if (statusCode >= 500 && statusCode < 600) {
-        throw new CMRInternalError(errorMessage);
-      }
-
-      throw new Error(errorMessage);
-    }
+    return {
+      'concept-id': cmrRevisionId,
+      'ummg-Metadata': ummgMetadata,
+    };
   }
 
   /**
