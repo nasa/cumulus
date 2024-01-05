@@ -389,7 +389,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         console.log(`Fetching shard iterator for response stream  '${cnmResponseStreamName}'`);
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
-        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(new TextDecoder('utf-8').decode(r.Data)));
+        const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(new TextDecoder().decode(r.Data)));
         const responseRecord = parsedRecords.find((r) => r.identifier === recordIdentifier);
         expect(responseRecord.identifier).toEqual(recordIdentifier);
         expect(responseRecord.response.status).toEqual('SUCCESS');
@@ -493,7 +493,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
         responseStreamShardIterator = await getShardIterator(cnmResponseStreamName);
         const newResponseStreamRecords = await getRecords(responseStreamShardIterator);
         if (newResponseStreamRecords.length > 0) {
-          const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(new TextDecoder('utf-8').decode(r.Data)));
+          const parsedRecords = newResponseStreamRecords.map((r) => JSON.parse(new TextDecoder().decode(r.Data)));
           const responseRecord = parsedRecords.pop();
           expect(responseRecord.response.status).toEqual('FAILURE');
           expect(responseRecord.identifier).toBe(badRecord.identifier);
