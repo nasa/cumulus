@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import { kms } from '@cumulus/aws-client/services';
 import { createErrorType } from '@cumulus/errors';
 import { deprecate } from './util';
 
@@ -10,17 +10,16 @@ export class KMS {
 
     const params = {
       KeyId: kmsId,
-      Plaintext: text,
+      Plaintext: Uint8Array.from(Array.from(text).map((char) => char.charCodeAt(0))),
     };
 
-    const kms = new AWS.KMS();
-    const CiphertextBlob = await kms.encrypt(params);
+    const { CiphertextBlob } = await kms().encrypt(params);
 
     if (!CiphertextBlob) {
       throw new Error('Encryption failed, undefined CiphertextBlob returned');
     }
 
-    return CiphertextBlob.toString();
+    return Buffer.from(CiphertextBlob).toString('base64');
   }
 
   static async decrypt(text: string) {
@@ -30,15 +29,14 @@ export class KMS {
       CiphertextBlob: Buffer.from(text, 'base64'),
     };
 
-    const kms = new AWS.KMS();
     try {
-      const Plaintext = await kms.decrypt(params);
+      const { Plaintext } = await kms().decrypt(params);
 
       if (!Plaintext) {
         throw new Error('Decryption failed, undefined Plaintext returned');
       }
 
-      return Plaintext.toString();
+      return Buffer.from(Plaintext).toString();
     } catch (error) {
       if (error.toString().includes('InvalidCiphertextException')) {
         throw new KMSDecryptionFailed(

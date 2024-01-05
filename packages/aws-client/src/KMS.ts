@@ -25,7 +25,7 @@ export const createKey = (params: CreateKeyCommandInput = {}) =>
  */
 export const encrypt = async (KeyId: string, Plaintext: string) => {
   const { CiphertextBlob } = await kms().encrypt({ KeyId,
-    Plaintext: Uint8Array.from(Array.from(Plaintext).map((letter) => letter.charCodeAt(0))) });
+    Plaintext: Uint8Array.from(Array.from(Plaintext).map((char) => char.charCodeAt(0))) });
 
   if (CiphertextBlob === undefined) throw new Error('Returned CiphertextBlob is undefined');
   return Buffer.from(CiphertextBlob).toString('base64');
