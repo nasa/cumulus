@@ -5,6 +5,7 @@ const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { S3 } = require('@aws-sdk/client-s3');
 const { Lambda } = require('@aws-sdk/client-lambda');
+const { SFN } = require('@aws-sdk/client-sfn');
 const { SNS } = require('@aws-sdk/client-sns');
 const { SQS } = require('@aws-sdk/client-sqs');
 
@@ -264,17 +265,26 @@ test('secretsManager() service defaults to localstack in test mode', (t) => {
   t.is(secretsManager.config.endpoint, endpoint);
 });
 
-test('sfn() service defaults to localstack in test mode', (t) => {
+test('sfn() service defaults to localstack in test mode', async (t) => {
   const sfn = services.sfn();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.StepFunctions);
+  } = localStackAwsClientOptions(SFN);
   t.deepEqual(
-    sfn.config.credentials,
+    await sfn.config.credentials(),
     credentials
   );
-  t.is(sfn.config.endpoint, endpoint);
+
+  const sfnEndpoint = await sfn.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    sfnEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('sns() service defaults to localstack in test mode', async (t) => {
