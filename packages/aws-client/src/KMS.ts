@@ -24,13 +24,11 @@ export const createKey = (params: CreateKeyCommandInput = {}) =>
  * @returns {Promise<string>} the Base 64 encoding of the encrypted value
  */
 export const encrypt = async (KeyId: string, Plaintext: string) => {
-  const textEncoder = new TextEncoder();
-  const plaintext = textEncoder.encode(Plaintext);
-  const { CiphertextBlob } = await kms().encrypt({ KeyId, Plaintext: plaintext });
+  const { CiphertextBlob } = await kms().encrypt({ KeyId,
+    Plaintext: Uint8Array.from(Array.from(Plaintext).map((letter) => letter.charCodeAt(0))) });
 
   if (CiphertextBlob === undefined) throw new Error('Returned CiphertextBlob is undefined');
-
-  return CiphertextBlob.toString();
+  return Buffer.from(CiphertextBlob).toString('base64');
 };
 
 /**
@@ -46,5 +44,5 @@ export const decryptBase64String = async (ciphertext: string) => {
 
   if (Plaintext === undefined) return undefined;
 
-  return Plaintext.toString();
+  return Buffer.from(Plaintext).toString();
 };

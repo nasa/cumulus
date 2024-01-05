@@ -24,17 +24,13 @@ test('encrypt() properly encrypts a value', async (t) => {
 
   const plaintext = await kms().decrypt({
     CiphertextBlob: Buffer.from(ciphertext, 'base64'),
-  }).then(({ Plaintext }) => Plaintext.toString());
-
+  }).then(({ Plaintext }) => Buffer.from(Plaintext).toString());
   t.is(plaintext, 'asdf');
 });
 
 test('decryptBase64String() properly decrypts a value', async (t) => {
   const { KeyId } = t.context;
-
-  const ciphertext = await kms().encrypt({ KeyId, Plaintext: 'asdf' }).then(
-    ({ CiphertextBlob }) => CiphertextBlob.toString('base64')
-  );
+  const ciphertext = await KMS.encrypt(KeyId, 'asdf');
 
   const plaintext = await KMS.decryptBase64String(ciphertext);
   t.is(plaintext, 'asdf');
@@ -42,5 +38,5 @@ test('decryptBase64String() properly decrypts a value', async (t) => {
 
 test('decryptBase64String() throws an error if value is not encrypted', async (t) => {
   await t.throwsAsync(() => KMS.decryptBase64String('notencrypted'),
-    { code: 'InvalidCiphertextException' });
+    { name: 'InvalidCiphertextException' });
 });
