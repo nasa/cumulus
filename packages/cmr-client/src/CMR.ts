@@ -9,7 +9,6 @@ import getConceptMetadata from './getConcept';
 import { UmmMetadata } from './UmmUtils';
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 
-
 /**
  * Returns a valid a CMR token
  *
