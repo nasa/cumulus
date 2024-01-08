@@ -71,11 +71,12 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-../terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda" \
+../terraform import \
   -var "cmr_username=$CMR_USERNAME" \
   -var "cmr_password=$CMR_PASSWORD" \
   -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
-  -var "cmr_provider=CUMULUS" 
+  -var "cmr_provider=CUMULUS" \
+   module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda"
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
