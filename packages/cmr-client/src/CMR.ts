@@ -1,4 +1,3 @@
-
 import { Headers } from 'got';
 import * as secretsManagerUtils from '@cumulus/aws-client/SecretsManager';
 import { getEDLToken } from './EarthdataLogin';

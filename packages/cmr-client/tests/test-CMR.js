@@ -5,7 +5,6 @@ const nock = require('nock');
 const some = require('lodash/some');
 
 const awsServices = require('@cumulus/aws-client/services');
-const { CMRInternalError } = require('@cumulus/errors');
 
 const { CMR } = require('../CMR');
 
