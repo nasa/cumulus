@@ -70,9 +70,8 @@ echo "terraform {
 # Initialize deployment
 ../terraform init \
   -input=false
+
 ../terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda" \
-  -auto-approve \
-  -input=false \
   -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
   -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
   -var "cumulus_message_adapter_lambda_layer_version_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:$CMA_LAYER_VERSION" \
