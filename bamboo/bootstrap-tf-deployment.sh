@@ -71,7 +71,9 @@ echo "terraform {
 ../terraform init \
   -input=false
 
-../terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda"
+../terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda" \
+  -var "cmr_username=$CMR_USERNAME" \
+  -var "cmr_password=$CMR_PASSWORD"
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
