@@ -10,7 +10,7 @@ export class KMS {
 
     const params = {
       KeyId: kmsId,
-      Plaintext: Uint8Array.from(Array.from(text).map((char) => char.charCodeAt(0))),
+      Plaintext: new TextEncoder().encode(text),
     };
 
     const { CiphertextBlob } = await kms().encrypt(params);

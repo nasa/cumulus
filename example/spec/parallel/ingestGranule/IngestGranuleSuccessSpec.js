@@ -3,7 +3,7 @@
 const fs = require('fs-extra');
 const got = require('got');
 const path = require('path');
-// const { URL, resolve } = require('url');
+const { URL, resolve } = require('url');
 
 const difference = require('lodash/difference');
 const get = require('lodash/get');
@@ -21,13 +21,13 @@ const {
   waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-// const { generateChecksumFromStream } = require('@cumulus/checksum');
+const { generateChecksumFromStream } = require('@cumulus/checksum');
 const { randomId } = require('@cumulus/common/test-utils');
 const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const {
   addCollections,
   conceptExists,
-  // getOnlineResources,
+  getOnlineResources,
   waitForAsyncOperationStatus,
   waitForConceptExistsOutcome,
   waitForTestExecutionStart,
@@ -46,12 +46,12 @@ const {
   removeFromCMR,
   removePublishedGranule,
 } = require('@cumulus/api-client/granules');
-/*const {
+const {
   getDistributionFileUrl,
   getTEADistributionApiRedirect,
   getTEADistributionApiFileStream,
   getTEARequestHeaders,
-} = require('@cumulus/integration-tests/api/distribution');*/
+} = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 const { getPdr } = require('@cumulus/api-client/pdrs');
@@ -123,7 +123,7 @@ describe('The S3 Ingest Granules workflow', () => {
   let granuleCompletedMessageKey;
   let granuleRunningMessageKey;
   let inputPayload;
-  // let opendapFilePath;
+  let opendapFilePath;
   let pdrFilename;
   let postToCmrOutput;
   let provider;
@@ -251,7 +251,7 @@ describe('The S3 Ingest Granules workflow', () => {
           distribution_endpoint: process.env.DISTRIBUTION_ENDPOINT,
         }
       );
-      // opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/collections/C1218668453-CUMULUS/granules/${granuleId}`;
+      opendapFilePath = `https://opendap.uat.earthdata.nasa.gov/collections/C1218668453-CUMULUS/granules/${granuleId}`;
     } catch (error) {
       beforeAllError = error;
     }
@@ -590,7 +590,7 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  /*describe('the PostToCmr task', () => {
+  describe('the PostToCmr task', () => {
     let cmrResource;
     let ummCmrResource;
     let files;
@@ -727,7 +727,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
       checkFiles.forEach((fileCheck) => expect(fileCheck).toBeTrue());
     });
-  });*/
+  });
 
   describe('A Cloudwatch event', () => {
     let subTestSetupError;
