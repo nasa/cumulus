@@ -70,7 +70,7 @@ echo "terraform {
 # Initialize deployment
 ../terraform init \
   -input=false
-terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda"
+../terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda"
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
