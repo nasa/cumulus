@@ -70,7 +70,33 @@ echo "terraform {
 # Initialize deployment
 ../terraform init \
   -input=false
-../terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda"
+../terraform import module.cumulus.module.archive.aws_cloudwatch_log_group.private_api "/aws/lambda/ecarton-ci-tf-PrivateApiLambda" \
+  -auto-approve \
+  -input=false \
+  -var-file="../deployments/cumulus/$BASE_VAR_FILE" \
+  -var-file="../deployments/cumulus/$DEPLOYMENT.tfvars" \
+  -var "cumulus_message_adapter_lambda_layer_version_arn=arn:aws:lambda:us-east-1:$AWS_ACCOUNT_ID:layer:Cumulus_Message_Adapter:$CMA_LAYER_VERSION" \
+  -var "cmr_username=$CMR_USERNAME" \
+  -var "cmr_password=$CMR_PASSWORD" \
+  -var "cmr_client_id=cumulus-core-$DEPLOYMENT" \
+  -var "cmr_provider=CUMULUS" \
+  -var "cmr_environment=UAT" \
+  -var "csdap_client_id=$CSDAP_CLIENT_ID" \
+  -var "csdap_client_password=$CSDAP_CLIENT_PASSWORD" \
+  -var "launchpad_passphrase=$LAUNCHPAD_PASSPHRASE" \
+  -var "data_persistence_remote_state_config={ region: \"$AWS_REGION\", bucket: \"$TFSTATE_BUCKET\", key: \"$DATA_PERSISTENCE_KEY\" }" \
+  -var "region=$AWS_REGION" \
+  -var "vpc_id=$VPC_ID" \
+  -var "lambda_subnet_ids=[$AWS_LAMBDA_SUBNET]" \
+  -var "urs_client_id=$EARTHDATA_CLIENT_ID" \
+  -var "urs_client_password=$EARTHDATA_CLIENT_PASSWORD" \
+  -var "token_secret=$TOKEN_SECRET" \
+  -var "permissions_boundary_arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/$ROLE_BOUNDARY" \
+  -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
+  -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
+  -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \
+  -var "orca_s3_access_key=$AWS_ACCESS_KEY_ID" \
+  -var "orca_s3_secret_key=$AWS_SECRET_ACCESS_KEY" \
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
