@@ -26,8 +26,8 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
   describeExecutionPromise
     .then(() => true)
     .catch((error) => {
-      if (error.code === 'ExecutionDoesNotExist') return false;
-      if (inTestMode() && error.code === 'InvalidName') return false;
+      if (error.name === 'ExecutionDoesNotExist') return false;
+      if (inTestMode() && error.name === 'InvalidName') return false;
       throw error;
     });
 
