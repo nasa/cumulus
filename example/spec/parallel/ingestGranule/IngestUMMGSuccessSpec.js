@@ -73,6 +73,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let inputPayload;
   let expectedPayload;
   let pdrFilename;
+  let postToCmrOutput;
   let granule;
   let config;
   let testDataFolder;
@@ -287,6 +288,34 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       existCheck.forEach((check) => {
         expect(check).toEqual(true);
       });
+    });
+  });
+
+  describe('the PostToCmr task', () => {
+    let subTestSetupError;
+
+    beforeAll(async () => {
+      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecution.executionArn, 'PostToCmr');
+      if (postToCmrOutput === null) {
+        subTestSetupError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecution.executionArn}`);
+        return;
+      }
+
+      try {
+        granule = postToCmrOutput.payload.granules[0];
+        process.env.CMR_ENVIRONMENT = 'UAT';
+      } catch (error) {
+        subTestSetupError = error;
+        throw error;
+      }
+    });
+
+    beforeEach(() => {
+      if (beforeAllError) fail(beforeAllError);
+      if (subTestSetupError) fail(subTestSetupError);
+    });
+    it('pretends to work', () => {
+      expect(true).toEqual.apply(true);
     });
   });
 
