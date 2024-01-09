@@ -579,6 +579,33 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
+  describe('the PostToCmr task', () => {
+    let subTestSetupError;
+
+    beforeAll(async () => {
+      process.env.CMR_ENVIRONMENT = 'UAT';
+      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr');
+
+      if (postToCmrOutput === null) {
+        beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecutionArn}`);
+        return;
+      }
+
+      try {
+        failOnSetupError([beforeAllError]);
+      } catch (error) {
+        subTestSetupError = error;
+      }
+    });
+
+    beforeEach(() => {
+      failOnSetupError([beforeAllError, subTestSetupError]);
+    });
+    it('pretends to do a thing', () => {
+      expect(true).toEqual(true);
+    });
+  });
+
   describe('A Cloudwatch event', () => {
     let subTestSetupError;
 
