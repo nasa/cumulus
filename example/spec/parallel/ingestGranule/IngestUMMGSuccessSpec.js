@@ -1,13 +1,7 @@
 'use strict';
 
-const pRetry = require('p-retry');
-const { get } = require('lodash/fp');
 const fs = require('fs-extra');
 const path = require('path');
-const {
-  URL,
-  resolve,
-} = require('url');
 const mime = require('mime-types');
 
 const {
@@ -17,23 +11,14 @@ const {
   buildS3Uri,
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
-const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   addCollections,
-  conceptExists,
-  getOnlineResources,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const { moveGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const providersApi = require('@cumulus/api-client/providers');
-const {
-  getDistributionFileUrl,
-  getTEADistributionApiRedirect,
-  getTEADistributionApiFileStream,
-  getTEARequestHeaders,
-} = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
@@ -77,31 +62,7 @@ async function getUmmObject(fileLocation) {
   return ummFileJson;
 }
 
-const getOnlineResourcesWithRetries = async (granule) =>
-  await pRetry(
-    async () => {
-      let onlineResources;
-
-      try {
-        onlineResources = await getOnlineResources(granule);
-      } catch (error) {
-        throw new pRetry.AbortError(error);
-      }
-
-      if (onlineResources.length === 0) {
-        throw new Error('No online resources found');
-      }
-
-      return onlineResources;
-    },
-    { retries: 60, maxTimeout: 5000, factor: 1.05 }
-  );
-
 const cumulusDocUrl = 'https://nasa.github.io/cumulus/docs/cumulus-docs-readme';
-const isUMMGScienceUrl = (url) => url !== cumulusDocUrl &&
-  !url.endsWith('.cmr.json') &&
-  !url.includes('s3credentials') &&
-  !url.includes('opendap.uat.earthdata.nasa.gov');
 
 describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   const inputPayloadFilename = './spec/parallel/ingestGranule/IngestGranule.input.payload.json';
@@ -112,7 +73,6 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
   let inputPayload;
   let expectedPayload;
   let pdrFilename;
-  let postToCmrOutput;
   let granule;
   let config;
   let testDataFolder;

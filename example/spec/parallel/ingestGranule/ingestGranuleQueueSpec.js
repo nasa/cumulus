@@ -1,19 +1,15 @@
 'use strict';
 
 const fs = require('fs-extra');
-const path = require('path');
-const { URL, resolve } = require('url');
 
 const {
   s3GetObjectTagging,
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
-const { generateChecksumFromStream } = require('@cumulus/checksum');
 const {
   addCollections,
   getExecutionInputObject,
-  getOnlineResources,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const apiTestUtils = require('@cumulus/integration-tests/api/api');
@@ -22,12 +18,6 @@ const { deleteExecution, getExecution } = require('@cumulus/api-client/execution
 const { getPdr } = require('@cumulus/api-client/pdrs');
 const { getGranule, removePublishedGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
-const {
-  getDistributionFileUrl,
-  getTEADistributionApiRedirect,
-  getTEADistributionApiFileStream,
-  getTEARequestHeaders,
-} = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
@@ -78,7 +68,6 @@ describe('The S3 Ingest Granules workflow', () => {
   let expectedSyncGranulePayload;
   let inputPayload;
   let pdrFilename;
-  let postToCmrOutput;
   let provider;
   let publishGranuleExecutionArn;
   let testDataFolder;
