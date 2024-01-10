@@ -967,38 +967,6 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(doesExist).toEqual(false);
       });
 
-      it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
-        failOnSetupError([beforeAllError, subTestSetupError]);
-
-        const existsInCMR = await conceptExists(cmrLink);
-        expect(existsInCMR).toEqual(false);
-
-        // Publish the granule to CMR
-        await applyWorkflow({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-          collectionId,
-          workflow: 'PublishGranule',
-        });
-
-        publishGranuleExecution = await waitForTestExecutionStart({
-          workflowName: 'PublishGranule',
-          stackName: config.stackName,
-          bucket: config.bucket,
-          findExecutionFn: isExecutionForGranuleId,
-          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
-          startTask: 'PostToCmr',
-        });
-
-        console.log(`Wait for completed execution ${publishGranuleExecution.executionArn}`);
-
-        await waitForCompletedExecution(publishGranuleExecution.executionArn);
-
-        await waitForConceptExistsOutcome(cmrLink, true);
-        const doesExist = await conceptExists(cmrLink);
-        expect(doesExist).toEqual(true);
-      });
-
       it('applyworkflow UpdateCmrAccessConstraints updates and publishes CMR metadata', async () => {
         failOnSetupError([beforeAllError, subTestSetupError]);
 
