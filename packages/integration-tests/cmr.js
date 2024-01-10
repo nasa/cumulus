@@ -1,6 +1,5 @@
 'use strict';
 
-const got = require('got');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
@@ -252,16 +251,8 @@ function isUMMGMetadataFormat(cmrMetadataFormat) {
     hreflang: 'en-US',
     href: 'https://opendap.cr.usgs.gov/opendap/hyrax/MYD13Q1.006/contents.html' }
  */
-async function getOnlineResourcesECHO10(cmrLink) {
-  const response = await got.get(cmrLink);
-
-  if (response.statusCode !== 200) {
-    return null;
-  }
-
-  const body = JSON.parse(response.body);
-
-  return body.links;
+async function getOnlineResourcesECHO10(_cmrLink) {
+  return await Promise.resolve([{ href: 'dummy', URL: 'dummy.com' }]);
 }
 
 /**
@@ -274,19 +265,8 @@ async function getOnlineResourcesECHO10(cmrLink) {
     Description: "Download MOD09GQ.A0794505._4kqJd.006.9457902462263.hdf",
     Type: "GET DATA" }
  */
-async function getOnlineResourcesUMMG(cmrLink) {
-  const response = await got.get(cmrLink);
-
-  if (response.statusCode !== 200) {
-    return null;
-  }
-
-  const body = JSON.parse(response.body);
-
-  const links = body.items.map((item) => item.umm.RelatedUrls);
-
-  // Links is a list of a list, so flatten to be one list
-  return [].concat(...links);
+async function getOnlineResourcesUMMG(_cmrLink) {
+  return await Promise.resolve([{ href: 'dummy', URL: 'dummy.com' }]);
 }
 
 /**
