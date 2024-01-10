@@ -736,8 +736,6 @@ describe('The S3 Ingest Granules workflow', () => {
     describe('granule endpoint', () => {
       let granule;
       let cmrLink;
-      let publishGranuleExecution;
-      let updateCmrAccessConstraintsExecutionArn;
       let subTestSetupError;
 
       beforeAll(async () => {
@@ -754,13 +752,6 @@ describe('The S3 Ingest Granules workflow', () => {
         } catch (error) {
           subTestSetupError = error;
         }
-      });
-
-      afterAll(async () => {
-        const publishExecutionName = publishGranuleExecution.executionArn.split(':').pop();
-        await deleteExecution({ prefix: config.stackName, executionArn: publishGranuleExecution.executionArn });
-        await deleteExecution({ prefix: config.stackName, executionArn: updateCmrAccessConstraintsExecutionArn });
-        await deleteS3Object(config.bucket, `${config.stackName}/test-output/${publishExecutionName}.output`);
       });
 
       beforeEach(() => {
