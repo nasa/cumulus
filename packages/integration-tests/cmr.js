@@ -1,16 +1,11 @@
 'use strict';
 
 const got = require('got');
-const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
-const { sleep } = require('@cumulus/common');
 const log = require('@cumulus/common/log');
 const { getSearchUrl } = require('@cumulus/cmr-client');
-
-const THREE_SECONDS = 3000;
-const ONE_MINUTE = 60000;
 
 /**
  * Sample granule used to update fields and save as a .cmr.xml file
