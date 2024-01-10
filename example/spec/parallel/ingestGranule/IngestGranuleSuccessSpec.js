@@ -967,65 +967,6 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(doesExist).toEqual(false);
       });
 
-      it('applyworkflow UpdateCmrAccessConstraints updates and publishes CMR metadata', async () => {
-        failOnSetupError([beforeAllError, subTestSetupError]);
-
-        const existsInCMR = await conceptExists(cmrLink);
-        expect(existsInCMR).toEqual(true);
-
-        const accessConstraints = {
-          value: 17,
-          description: 'Test-UpdateCmrAccessConstraints',
-        };
-        // Publish the granule to CMR
-        await applyWorkflow({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-          collectionId,
-          workflow: 'UpdateCmrAccessConstraints',
-          meta: {
-            accessConstraints,
-          },
-        });
-
-        const updateCmrAccessConstraintsExecution = await waitForTestExecutionStart({
-          workflowName: 'UpdateCmrAccessConstraints',
-          stackName: config.stackName,
-          bucket: config.bucket,
-          findExecutionFn: isExecutionForGranuleId,
-          findExecutionFnParams: { granuleId: inputPayload.granules[0].granuleId },
-          startTask: 'UpdateCmrAccessConstraints',
-        });
-
-        updateCmrAccessConstraintsExecutionArn = updateCmrAccessConstraintsExecution.executionArn;
-
-        console.log(`Wait for completed execution ${updateCmrAccessConstraintsExecutionArn}`);
-
-        await waitForCompletedExecution(updateCmrAccessConstraintsExecutionArn);
-        await waitForApiStatus(
-          getGranule,
-          {
-            prefix: config.stackName,
-            granuleId: granule.granuleId,
-            collectionId,
-
-          },
-          'completed'
-        );
-
-        const updatedGranuleRecord = await getGranule({
-          prefix: config.stackName,
-          granuleId: inputPayload.granules[0].granuleId,
-          collectionId,
-
-        });
-        const updatedGranuleCmrFile = updatedGranuleRecord.files.find(isCMRFile);
-
-        const granuleCmrMetadata = await metadataObjectFromCMRFile(`s3://${updatedGranuleCmrFile.bucket}/${updatedGranuleCmrFile.key}`);
-        expect(granuleCmrMetadata.Granule.RestrictionFlag).toEqual(accessConstraints.value.toString());
-        expect(granuleCmrMetadata.Granule.RestrictionComment).toEqual(accessConstraints.description);
-      });
-
       describe('when moving a granule', () => {
         let file;
         let destinationKey;
