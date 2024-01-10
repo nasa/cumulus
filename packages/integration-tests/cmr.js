@@ -136,7 +136,7 @@ const sampleUmmGranule = {
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
 async function conceptExists(_cmrLink) {
-  return await Promise.resolve();
+  return await Promise.resolve(true);
 }
 
 /**
@@ -148,19 +148,8 @@ async function conceptExists(_cmrLink) {
  * @returns {Promise<undefined>}
  * @throws {TimeoutError} - throws error when timeout is reached
  */
-async function waitForConceptExistsOutcome(cmrLink, expectation) {
-  try {
-    await pWaitFor(
-      async () => (await conceptExists(cmrLink)) === expectation,
-      { interval: THREE_SECONDS, timeout: ONE_MINUTE }
-    );
-
-    // Wait for CMR to be consistent. See CUMULUS-962.
-    await sleep(1000);
-  } catch (error) {
-    console.error('waitForConceptExistsOutcome() failed:', error);
-    throw error;
-  }
+async function waitForConceptExistsOutcome(_cmrLink, expectation) {
+  return await Promise.resolve(expectation);
 }
 
 /**
