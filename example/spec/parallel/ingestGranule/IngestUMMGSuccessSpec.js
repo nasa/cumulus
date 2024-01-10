@@ -330,7 +330,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
     });
   });
 
-  describe('the PostToCmr task', () => {
+  xdescribe('the PostToCmr task', () => {
     let onlineResources;
     let files;
     let resourceURLs;

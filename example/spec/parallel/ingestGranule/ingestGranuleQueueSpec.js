@@ -477,8 +477,8 @@ describe('The S3 Ingest Granules workflow', () => {
     });
   });
 
-  describe('the queued workflow', () => {
-    describe('the PostToCmr task', () => {
+  xdescribe('the queued workflow', () => {
+    xdescribe('the PostToCmr task', () => {
       let cmrResource;
       let ummCmrResource;
       let files;

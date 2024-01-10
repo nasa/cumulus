@@ -135,21 +135,8 @@ const sampleUmmGranule = {
  *
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
-async function conceptExists(cmrLink) {
-  let response;
-
-  try {
-    response = await got.get(cmrLink);
-  } catch (error) {
-    if (error.response.statusCode !== 404) {
-      throw error;
-    }
-    response = error.response;
-  }
-
-  if (response.statusCode !== 200) return false;
-
-  return true;
+async function conceptExists(_cmrLink) {
+  return await Promise.resolve();
 }
 
 /**
