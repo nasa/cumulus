@@ -315,7 +315,7 @@ describe('The S3 Ingest Granules workflow configured to ingest UMM-G', () => {
       if (subTestSetupError) fail(subTestSetupError);
     });
     it('pretends to work', () => {
-      expect(true).toEqual.apply(true);
+      expect(true).toEqual(true);
     });
   });
 
