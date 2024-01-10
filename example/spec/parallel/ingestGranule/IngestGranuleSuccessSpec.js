@@ -21,7 +21,6 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomId } = require('@cumulus/common/test-utils');
-const { isCMRFile, metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const {
   addCollections,
   conceptExists,
@@ -36,7 +35,6 @@ const providersApi = require('@cumulus/api-client/providers');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
-  applyWorkflow,
   bulkReingestGranules,
   getGranule,
   moveGranule,
@@ -91,10 +89,6 @@ function failOnSetupError(setupErrors) {
     console.log(errors);
     fail(errors[0]);
   }
-}
-
-function isExecutionForGranuleId(taskInput, params) {
-  return taskInput.payload.granules && taskInput.payload.granules[0].granuleId === params.granuleId;
 }
 
 describe('The S3 Ingest Granules workflow', () => {
