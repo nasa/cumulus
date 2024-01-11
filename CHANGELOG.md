@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed overriden changes to `rules.buildPayload' to restore changes from
     ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
     account for AWS character limits.
+- **CUMULUS-3501**
+  - Updated CreateReconciliationReport lambda to save report record to Elasticsearch.
+  - Created docker image cumuluss/async-operation:48 from v16.1.2, and used it as default async_operation_image.
 - **CUMULUS-3510**
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
