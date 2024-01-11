@@ -7,6 +7,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## [v16.1.3] 2024-1-15
+=======
+- **CUMULUS-3540**
+  - stubbed cmr interfaces in integration tests allow integration tests to pass
+  - needed while cmr is failing to continue needed releases and progress
+  - this change should be reverted ASAP when cmr is working as needed again
 
 ### Fixed
 
