@@ -607,7 +607,7 @@ describe('The S3 Ingest Granules workflow', () => {
 
     beforeAll(async () => {
       process.env.CMR_ENVIRONMENT = 'UAT';
-      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr');
+      postToCmrOutput = await lambdaStep.getStepOutput(workflowExecutionArn, 'PostToCmr'); // postToCmrOutput is set here
 
       if (postToCmrOutput === null) {
         beforeAllError = new Error(`Failed to get the PostToCmr step's output for ${workflowExecutionArn}`);
@@ -809,7 +809,7 @@ describe('The S3 Ingest Granules workflow', () => {
     beforeAll(() => {
       failedExecutionArn = failingWorkflowExecution.executionArn;
       failedExecutionName = failedExecutionArn.split(':').pop();
-      executionName = postToCmrOutput.cumulus_meta.execution_name;
+      executionName = postToCmrOutput.cumulus_meta.execution_name; // set on line 610
 
       executionFailedKey = `${config.stackName}/test-output/${failedExecutionName}-failed.output`;
       executionCompletedKey = `${config.stackName}/test-output/${executionName}-completed.output`;
