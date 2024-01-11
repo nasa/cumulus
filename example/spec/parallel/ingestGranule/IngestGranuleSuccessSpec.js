@@ -1089,14 +1089,16 @@ describe('The S3 Ingest Granules workflow', () => {
         // Check that the granule was removed
         await waitForConceptExistsOutcome(cmrLink, false);
         const doesExist = await conceptExists(cmrLink);
-        expect(doesExist).toEqual(true); // because of dummied conceptExists
+        // because of stubbed conceptExists due to https://github.com/nasa/cumulus/pull/3544/
+        expect(doesExist).toEqual(true);
       });
 
       it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
         failOnSetupError([beforeAllError, subTestSetupError]);
 
         const existsInCMR = await conceptExists(cmrLink);
-        expect(existsInCMR).toEqual(true); // because of dummied conceptExists
+        // because of stubbed conceptExists due to https://github.com/nasa/cumulus/pull/3544/
+        expect(existsInCMR).toEqual(true);
 
         // Publish the granule to CMR
         await applyWorkflow({
