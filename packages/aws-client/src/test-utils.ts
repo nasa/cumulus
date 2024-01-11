@@ -13,7 +13,7 @@ const localStackPorts = {
   cloudformation: 4566,
   cloudwatch: 4566,
   cloudwatchevents: 4566,
-  cloudwatchlogs: 4566,
+  CloudWatchLogs: 4566,
   DynamoDB: 4566,
   DynamoDBClient: 4566,
   DynamoDBStreamsClient: 4566,

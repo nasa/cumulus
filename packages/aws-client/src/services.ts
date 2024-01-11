@@ -1,4 +1,5 @@
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
+import { CloudWatchLogs } from '@aws-sdk/client-cloudwatch-logs';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
 import { Lambda } from '@aws-sdk/client-lambda';
@@ -18,7 +19,7 @@ export const kinesis = awsClient(AWS.Kinesis, '2013-12-02');
 export const lambda = awsClient(Lambda, '2015-03-31');
 export const sqs = awsClient(SQS, '2012-11-05');
 export const cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
-export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
+export const cloudwatchlogs = awsClient(CloudWatchLogs, '2014-03-28');
 export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(DynamoDBStreamsClient, '2012-08-10');

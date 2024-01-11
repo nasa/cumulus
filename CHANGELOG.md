@@ -8,9 +8,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- *CUMULUS-2899**
+- **CUMULUS-2889**
+  - Updated Cloudwatch Logs code to aws sdk v3
+- **CUMULUS-2899**
   - Updated SNS code to aws sdk v3
-- **CUMULUS_3499
+- **CUMULUS_3499**
   - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
     pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
