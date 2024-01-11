@@ -1,11 +1,16 @@
 'use strict';
 
 const got = require('got');
+const pWaitFor = require('p-wait-for');
 const xml2js = require('xml2js');
 const { s3 } = require('@cumulus/aws-client/services');
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
+const { sleep } = require('@cumulus/common');
 const log = require('@cumulus/common/log');
 const { getSearchUrl } = require('@cumulus/cmr-client');
+
+const THREE_SECONDS = 3000;
+const ONE_MINUTE = 60000;
 
 /**
  * Sample granule used to update fields and save as a .cmr.xml file
@@ -130,10 +135,28 @@ const sampleUmmGranule = {
  *
  * @returns {boolean} true if the concept exists in CMR, false if not
  */
-async function conceptExists(_cmrLink) {
-  return await Promise.resolve(true);
+
+async function conceptExists(cmrLink) {
+  let response;
+
+  try {
+    response = await got.get(cmrLink);
+  } catch (error) {
+    if (error.response.statusCode !== 404) {
+      throw error;
+    }
+    response = error.response;
+  }
+
+  if (response.statusCode !== 200) return false;
+
+  return true;
 }
 
+async function conceptExistsFake(_cmrLink) {
+  // stub to avoid CMR failures. see module.exports block
+  return await Promise.resolve(true);
+}
 /**
  * Checks for granule in CMR until it get the desired outcome or hits
  * the number of retries.
@@ -143,10 +166,26 @@ async function conceptExists(_cmrLink) {
  * @returns {Promise<undefined>}
  * @throws {TimeoutError} - throws error when timeout is reached
  */
-async function waitForConceptExistsOutcome(_cmrLink, expectation) {
-  return await Promise.resolve(expectation);
+// eslint-disable-next-line no-unused-vars
+async function waitForConceptExistsOutcome(cmrLink, expectation) {
+  try {
+    await pWaitFor(
+      async () => (await conceptExists(cmrLink)) === expectation,
+      { interval: THREE_SECONDS, timeout: ONE_MINUTE }
+    );
+
+    // Wait for CMR to be consistent. See CUMULUS-962.
+    await sleep(1000);
+  } catch (error) {
+    console.error('waitForConceptExistsOutcome() failed:', error);
+    throw error;
+  }
 }
 
+async function waitForConceptExistsOutcomeFake(_cmrLink, expectation) {
+  // stub to avoid CMR failures. see module.exports block
+  return await Promise.resolve(expectation);
+}
 /**
  * Generate a granule xml string
  *
@@ -313,6 +352,7 @@ async function getOnlineResources({ cmrMetadataFormat, cmrConceptId, cmrLink }) 
 }
 
 async function getOnlineResourcesFake({ _cmrMetadataFormat, _cmrConceptId, _cmrLink }) {
+  // stub to avoid CMR failures. see module.exports block
   return await Promise.resolve([{ href: 'dummy', URL: 'dummy.com' }]);
 }
 /**
@@ -421,9 +461,9 @@ async function generateCmrFilesForGranules(
 }
 
 module.exports = {
-  conceptExists,
-  getOnlineResources: getOnlineResourcesFake,
+  conceptExists: conceptExistsFake, // revert to conceptExists once CMR is reliable
+  getOnlineResources: getOnlineResourcesFake, // revert to getOnlineResources once CMR is reliable
   generateCmrFilesForGranules,
   generateCmrXml,
-  waitForConceptExistsOutcome,
+  waitForConceptExistsOutcome: waitForConceptExistsOutcomeFake, // revert once CMR is reliable
 };
