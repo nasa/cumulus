@@ -7,11 +7,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## [v16.1.3] 2024-1-15
-=======
-- **CUMULUS-3540**
-  - stubbed cmr interfaces in integration tests allow integration tests to pass
-  - needed while cmr is failing to continue needed releases and progress
-  - this change should be reverted ASAP when cmr is working as needed again
 
 ### Fixed
 
@@ -19,6 +14,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Fixed overriden changes to `rules.buildPayload' to restore changes from
     ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
     account for AWS character limits.
+- **CUMULUS-3510**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
+- **CUMULUS-3540**
+  - stubbed cmr interfaces in integration tests allow integration tests to pass
+  - needed while cmr is failing to continue needed releases and progress
+  - this change should be reverted ASAP when cmr is working as needed again
 
 ## [v16.1.2] 2023-11-01
 

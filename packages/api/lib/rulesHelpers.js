@@ -3,6 +3,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const isNil = require('lodash/isNil');
 const set = require('lodash/set');
 const cloneDeep = require('lodash/cloneDeep');
 const merge = require('lodash/merge');
@@ -359,11 +360,12 @@ async function validateAndUpdateSqsRule(rule) {
   }
 
   // update rule meta
-  if (!get(rule, 'meta.visibilityTimeout')) {
+  if (isNil(get(rule, 'meta.visibilityTimeout'))) {
     set(rule, 'meta.visibilityTimeout', Number.parseInt(attributes.Attributes.VisibilityTimeout, 10));
   }
 
-  if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
+  if (isNil(get(rule, 'meta.retries'))) set(rule, 'meta.retries', 3);
+
   return rule;
 }
 
@@ -576,6 +578,13 @@ function recordIsValid(rule) {
   }
   if (!rule.rule.type) {
     error.message += 'Rule type is undefined.';
+    throw error;
+  }
+
+  recordIsValid(omitDeepBy(rule, isNil), ruleSchema, false);
+
+  if (rule.rule.type !== 'onetime' && !rule.rule.value) {
+    error.message += `Rule value is undefined for ${rule.rule.type} rule`;
     throw error;
   }
 }

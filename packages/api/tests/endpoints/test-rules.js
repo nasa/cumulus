@@ -468,6 +468,248 @@ test('POST creates a rule in all data stores', async (t) => {
   t.like(esRecord, translatedPgRecord);
 });
 
+test.serial('post() creates SNS rule with same trigger information in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sns',
+      value: topic1.TopicArn,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+    workflow,
+  });
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.truthy(pgRule.arn);
+  t.truthy(esRule.rule.arn);
+
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sns',
+        value: topic1.TopicArn,
+        arn: pgRule.arn,
+      },
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sns',
+    arn: esRule.rule.arn,
+    value: topic1.TopicArn,
+  });
+});
+
+test.serial('post() creates the same Kinesis rule with trigger information in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const kinesisArn1 = `arn:aws:kinesis:us-east-1:000000000000:${randomId('kinesis1_')}`;
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'kinesis',
+      value: kinesisArn1,
+    },
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+    workflow,
+  });
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.truthy(esRule.rule.arn);
+  t.truthy(esRule.rule.logEventArn);
+  t.truthy(pgRule.arn);
+  t.truthy(pgRule.log_event_arn);
+  t.like(
+    esRule,
+    {
+      ...rule,
+      rule: {
+        type: 'kinesis',
+        value: kinesisArn1,
+      },
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'kinesis',
+    value: kinesisArn1,
+  });
+});
+
+test.serial('post() creates the SQS rule with trigger information in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue1 = randomId('queue');
+  const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queueUrl1,
+    },
+    workflow,
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expectedMeta = {
+    visibilityTimeout: 300,
+    retries: 3,
+  };
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sqs',
+        value: queueUrl1,
+      },
+      meta: expectedMeta,
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sqs',
+    value: queueUrl1,
+    meta: expectedMeta,
+  });
+});
+
+test.serial('post() creates the SQS rule with the meta provided in PostgreSQL/Elasticsearch', async (t) => {
+  const {
+    pgProvider,
+    pgCollection,
+  } = t.context;
+
+  const queue1 = randomId('queue');
+  const { queueUrl: queueUrl1 } = await createSqsQueues(queue1);
+
+  const rule = fakeRuleFactoryV2({
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queueUrl1,
+    },
+    workflow,
+    collection: {
+      name: pgCollection.name,
+      version: pgCollection.version,
+    },
+    meta: {
+      retries: 0,
+      visibilityTimeout: 0,
+    },
+    provider: pgProvider.name,
+  });
+
+  const expectedMeta = {
+    visibilityTimeout: 0,
+    retries: 0,
+  };
+
+  const expressRequest = {
+    body: rule,
+  };
+
+  const response = buildFakeExpressResponse();
+
+  await post(expressRequest, response);
+
+  const pgRule = await t.context.rulePgModel
+    .get(t.context.testKnex, { name: rule.name });
+  const esRule = await t.context.esRulesClient.get(
+    rule.name
+  );
+
+  t.like(
+    esRule,
+    {
+      rule: {
+        type: 'sqs',
+        value: queueUrl1,
+      },
+      meta: expectedMeta,
+    }
+  );
+  t.like(pgRule, {
+    name: rule.name,
+    enabled: true,
+    type: 'sqs',
+    value: queueUrl1,
+    meta: expectedMeta,
+  });
+});
+
 test('POST creates a rule in PG with correct timestamps', async (t) => {
   const { newRule } = t.context;
 
