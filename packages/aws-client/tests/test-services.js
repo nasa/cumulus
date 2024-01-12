@@ -3,6 +3,8 @@ const test = require('ava');
 const AWS = require('aws-sdk');
 const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
+const { Kinesis } = require('@aws-sdk/client-kinesis');
+const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
 const { KMS } = require('@aws-sdk/client-kms');
 const { Lambda } = require('@aws-sdk/client-lambda');
@@ -184,17 +186,25 @@ test('es() service defaults to localstack in test mode', (t) => {
   t.is(es.config.endpoint, endpoint);
 });
 
-test('kinesis() service defaults to localstack in test mode', (t) => {
+test('kinesis() service defaults to localstack in test mode', async (t) => {
   const kinesis = services.kinesis();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.Kinesis);
+  } = localStackAwsClientOptions(Kinesis);
   t.deepEqual(
-    kinesis.config.credentials,
+    await kinesis.config.credentials(),
     credentials
   );
-  t.is(kinesis.config.endpoint, endpoint);
+  const serviceConfigEndpoint = await kinesis.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
 test('kms() service defaults to localstack in test mode', async (t) => {
