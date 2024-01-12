@@ -21,7 +21,7 @@ const isBadRequestError = (error) =>
   || isDynamoValidationException(error);
 
 const isResourceNotFoundException = (error) =>
-  error.code === 'ResourceNotFoundException';
+  [error.code, error.name].includes('ResourceNotFoundException');
 
 const TokenUnauthorizedUserError = createErrorType('TokenUnauthorizedUserError');
 

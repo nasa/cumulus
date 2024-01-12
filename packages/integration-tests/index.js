@@ -596,7 +596,7 @@ async function deleteRuleResources(rule) {
     ).catch(
       (error) => {
         console.log(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.code !== 'ResourceNotFoundException') throw error;
+        if (error.name !== 'ResourceNotFoundException') throw error;
       }
     )
   );
