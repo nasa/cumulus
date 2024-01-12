@@ -11,9 +11,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - this change should be reverted ASAP when cmr is working as needed again
 ### Changed
 
-- *CUMULUS-2899**
+- **CUMULUS-2899**
   - Updated SNS code to aws sdk v3
-- **CUMULUS_3499
+- **CUMULUS_3499**
   - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
     pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
@@ -26,6 +26,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     2.1.1-aplha.2-SNAPSHOT
   - Update example deployment to deploy cnmToGranule lambda
     version 1.7.0-alpha.2-SNAPSHOT
+- **CUMULUS-3501**
+  - Updated CreateReconciliationReport lambda to save report record to Elasticsearch.
+  - Created docker image cumuluss/async-operation:48 from v16.1.2, and used it as default async_operation_image.
 - **CUMULUS-3502**
   - Upgraded localstack to v3.0.0 to support recent aws-sdk releases and update unit tests.
 
