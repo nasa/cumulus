@@ -112,10 +112,10 @@ async function post(req, res) {
     }
     return res.send({ message: 'Record saved', record });
   } catch (error) {
+    log.error('Error occurred while trying to create rule:', error);
     if (isBadRequestError(error)) {
       return res.boom.badRequest(error.message);
     }
-    log.error('Error occurred while trying to create rule:', error);
     return res.boom.badImplementation(error.message);
   }
 }
