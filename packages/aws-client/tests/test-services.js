@@ -7,7 +7,6 @@ const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
 const { KMS } = require('@aws-sdk/client-kms');
-const { Lambda } = require('@aws-sdk/client-lambda');
 const { SNS } = require('@aws-sdk/client-sns');
 const { SQS } = require('@aws-sdk/client-sqs');
 
