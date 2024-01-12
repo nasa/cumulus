@@ -474,7 +474,7 @@ test.serial('post() creates SNS rule with same trigger information in PostgreSQL
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
+  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') }).promise();
 
   const rule = fakeRuleFactoryV2({
     state: 'ENABLED',
