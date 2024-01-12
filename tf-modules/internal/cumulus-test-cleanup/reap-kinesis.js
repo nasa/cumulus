@@ -5,15 +5,14 @@
 // handy script to delete any old test kinesis streams that are created but not
 // cleaned up.
 
-const aws = require('aws-sdk');
 const moment = require('moment');
-const kinesis = new aws.Kinesis();
+const { Kinesis } = require('@aws-sdk/client-kinesis');
 
+const kinesis = new Kinesis();
 const deleteOlderThanDays = 1;
 
 function getStreams() {
   return kinesis.listStreams({})
-    .promise()
     .then((result) => result.StreamNames);
 }
 
@@ -39,7 +38,7 @@ function randomInterval() {
 async function nukeStream(streamName) {
   console.log(`nuking: ${streamName}`);
   try {
-    return await kinesis.deleteStream({ StreamName: streamName }).promise();
+    return await kinesis.deleteStream({ StreamName: streamName });
   } catch (error) {
     if (error.code === 'LimitExceededException') {
       const delay = randomInterval();
