@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     version 1.7.0-alpha.2-SNAPSHOT
 - **CUMULUS-3502**
   - Upgraded localstack to v3.0.0 to support recent aws-sdk releases
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 ### Fixed
 
