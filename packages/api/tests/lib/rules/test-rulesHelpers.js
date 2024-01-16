@@ -637,7 +637,7 @@ test.serial('deleteKinesisEventSources does not throw when deleteKinesisEventSou
   class ResourceNotFoundException extends Error {
     constructor(...args) {
       super(...args);
-      this.code = 'ResourceNotFoundException';
+      this.name = 'ResourceNotFoundException';
     }
   }
   const deleteResult = await deleteKinesisEventSources(testKnex, kinesisRule, {
@@ -1305,7 +1305,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
 test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async (t) => {
   const errorMessage = 'Resource is not found in resource policy.';
   const error = new Error(errorMessage);
-  error.code = 'ResourceNotFoundException';
+  error.name = 'ResourceNotFoundException';
   const { snsTopicArn } = t.context;
   const lambdaStub = sinon.stub(awsServices.lambda(), 'removePermission').throws(error);
 
@@ -1564,6 +1564,25 @@ test('Creating a rule trigger for an SQS rule succeeds', async (t) => {
     meta: {
       visibilityTimeout: 100,
       retries: 4,
+    },
+  });
+  const sqsRule = await createRuleTrigger(rule);
+  t.deepEqual(sqsRule, rule);
+  t.teardown(async () => await SQS.deleteQueue(queues.queueUrl));
+});
+
+test('Creating a rule trigger for an SQS rule succeeds and allows 0 retries and 0 visibilityTimeout', async (t) => {
+  const queues = await createSqsQueues(randomString());
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'sqs',
+      value: queues.queueUrl,
+    },
+    state: 'ENABLED',
+    meta: {
+      visibilityTimeout: 0,
+      retries: 0,
     },
   });
   const sqsRule = await createRuleTrigger(rule);
@@ -2021,7 +2040,8 @@ test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
     },
   });
   const sqsRule = await createRuleTrigger(rule);
-  t.deepEqual(sqsRule.rule.value, queues.queueUrl);
+  t.is(sqsRule.rule.value, queues.queueUrl);
+  t.deepEqual(sqsRule.meta, rule.meta);
 
   const newQueues = await createSqsQueues(randomString(), 2, '200');
   const updatedRule = {
@@ -2034,6 +2054,45 @@ test.serial('Updating the queue for an SQS rule succeeds', async (t) => {
   const updatedSqsRule = await updateRuleTrigger(sqsRule, updatedRule, t.context.testKnex);
   t.is(updatedSqsRule.rule.value, newQueues.queueUrl);
   t.deepEqual(updatedSqsRule.meta, { visibilityTimeout: 200, retries: 3 });
+  t.teardown(async () => {
+    await SQS.deleteQueue(queues.queueUrl);
+    await SQS.deleteQueue(newQueues.queueUrl);
+  });
+});
+
+test.serial('Updating the queue for an SQS rule succeeds and allows 0 retries and 0 visibilityTimeout', async (t) => {
+  const queues = await createSqsQueues(randomString());
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    state: 'ENABLED',
+    rule: {
+      type: 'sqs',
+      value: queues.queueUrl,
+    },
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+  });
+  const sqsRule = await createRuleTrigger(rule);
+  t.is(sqsRule.rule.value, queues.queueUrl);
+  t.deepEqual(sqsRule.meta, rule.meta);
+
+  const newQueues = await createSqsQueues(randomString(), 2, '200');
+  const updatedRule = {
+    ...sqsRule,
+    rule: {
+      ...rule.rule,
+      value: newQueues.queueUrl,
+    },
+    meta: {
+      visibilityTimeout: 0,
+      retries: 0,
+    },
+  };
+  const updatedSqsRule = await updateRuleTrigger(sqsRule, updatedRule, t.context.testKnex);
+  t.is(updatedSqsRule.rule.value, newQueues.queueUrl);
+  t.deepEqual(updatedSqsRule.meta, updatedRule.meta);
   t.teardown(async () => {
     await SQS.deleteQueue(queues.queueUrl);
     await SQS.deleteQueue(newQueues.queueUrl);

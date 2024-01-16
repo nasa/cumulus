@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2888**
   - Update CloudWatch Events code to AWS SDK v3
+- **CUMULUS-2893**
+  - Updated Kinesis code to AWS SDK v3
+
+### Fixed
+
+## Release TBD
+
+### Changed
+
+- **CUMULUS-2887**
+  - Updated CloudFormation code to aws sdk v3
 - **CUMULUS-2899**
   - Updated SNS code to aws sdk v3
 - **CUMULUS_3499**
@@ -25,8 +36,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     2.1.1-aplha.2-SNAPSHOT
   - Update example deployment to deploy cnmToGranule lambda
     version 1.7.0-alpha.2-SNAPSHOT
+- **CUMULUS-3501**
+  - Updated CreateReconciliationReport lambda to save report record to Elasticsearch.
+  - Created docker image cumuluss/async-operation:48 from v16.1.2, and used it as default async_operation_image.
 - **CUMULUS-3502**
   - Upgraded localstack to v3.0.0 to support recent aws-sdk releases and update unit tests.
+- **CUMULUS-3540**
+  - stubbed cmr interfaces in integration tests allow integration tests to pass
+  - needed while cmr is failing to continue needed releases and progress
+  - this change should be reverted ASAP when cmr is working as needed again
 
 ### Fixed
 
@@ -41,6 +59,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     account for AWS character limits.
 - **CUMULUS-3479**
   - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
+- **CUMULUS-3510**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
 
 ## [v18.1.0] 2023-10-25
 
