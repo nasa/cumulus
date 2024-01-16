@@ -1,4 +1,5 @@
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
+import { CloudFormation } from '@aws-sdk/client-cloudformation';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
 import { Kinesis } from '@aws-sdk/client-kinesis';
@@ -30,7 +31,7 @@ export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOpti
     docClientOptions
   );
 export const sfn = awsClient(AWS.StepFunctions, '2016-11-23');
-export const cf = awsClient(AWS.CloudFormation, '2010-05-15');
+export const cf = awsClient(CloudFormation, '2010-05-15');
 export const sns = awsClient(SNS, '2010-03-31');
 export const secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');
 export const systemsManager = awsClient(AWS.SSM, '2017-10-17');
