@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 For the v16.1 release series, Cumulus Core will be tested against PostgreSQL v13. Users
 should migrate their datastores to Aurora PostgreSQL 13.12+ compatible data
 stores as soon as possible after upgrading to this release.
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 **IMPORTANT** -- When upgrading from v16.1.x users should update to a release
 following 18.2.0/the first forward release supporting Postgres v13, as versions
@@ -28,6 +30,16 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3444**
   - Update `cumulus-rds-tf` module to take additional parameters in support of
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
+
+## [v16.1.4] 2024-2-16
+
+Please note changes in 16.1.4 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases. Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Changed 
+- **CUMULUS_3547
+ - Update ECS Cluster EBS Volume Default Encryption Settings
 
 ## [v16.1.3] 2024-1-15
 
@@ -7337,7 +7349,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.3...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.4...HEAD
+[v16.1.4]: https://github.com/nasa/cumulus/compare/v16.1.3...v16.1.4
 [v16.1.3]: https://github.com/nasa/cumulus/compare/v16.1.2...v16.1.3
 [v16.1.2]: https://github.com/nasa/cumulus/compare/v16.1.1...v16.1.2
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1

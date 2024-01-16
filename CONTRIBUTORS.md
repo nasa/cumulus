@@ -36,6 +36,7 @@
 * Pat Cappelaere
 * Patrick Quinn
 * Phil Osip
+* Roger Kwarteng
 * Sara Chaparro Diaz
 * Sean Quinlan
 * Seth Vincent
