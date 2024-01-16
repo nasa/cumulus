@@ -24,6 +24,8 @@ const {
 const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGranuleQueue');
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
+const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
+const { Search } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
@@ -812,6 +814,7 @@ async function processRequest(params) {
     reportName,
     systemBucket,
     stackName,
+    esClient = await Search.es(),
     knex = await getKnexClient(env),
   } = params;
   const createStartTime = moment.utc();
@@ -828,8 +831,9 @@ async function processRequest(params) {
     status: 'Pending',
     location: buildS3Uri(systemBucket, reportKey),
   };
-  await reconciliationReportModel.create(reportRecord);
-  log.info(`Report added to database as pending: ${JSON.stringify(reportRecord)}.`);
+  let apiRecord = await reconciliationReportModel.create(reportRecord);
+  await indexReconciliationReport(esClient, apiRecord, process.env.ES_INDEX);
+  log.info(`Report added to database as pending: ${JSON.stringify(apiRecord)}.`);
 
   const concurrency = env.CONCURRENCY || 3;
 
@@ -853,7 +857,8 @@ async function processRequest(params) {
       // reportType is in ['Inventory', 'Granule Not Found']
       await createReconciliationReport(recReportParams);
     }
-    await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+    apiRecord = await reconciliationReportModel.updateStatus({ name: reportRecord.name }, 'Generated');
+    await indexReconciliationReport(esClient, { ...apiRecord, status: 'Generated' }, process.env.ES_INDEX);
   } catch (error) {
     log.error(`Error caught in createReconciliationReport creating ${reportType} report ${reportRecordName}. ${error}`);
     const updates = {
@@ -863,7 +868,12 @@ async function processRequest(params) {
         Cause: errorify(error),
       },
     };
-    await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    apiRecord = await reconciliationReportModel.update({ name: reportRecord.name }, updates);
+    await indexReconciliationReport(
+      esClient,
+      { ...apiRecord, ...updates },
+      process.env.ES_INDEX
+    );
     throw error;
   }
 

@@ -3,6 +3,7 @@
 'use strict';
 
 const get = require('lodash/get');
+const isNil = require('lodash/isNil');
 const set = require('lodash/set');
 const cloneDeep = require('lodash/cloneDeep');
 const merge = require('lodash/merge');
@@ -125,7 +126,7 @@ async function buildPayload(rule) {
   const exists = await s3Utils.fileExists(bucket, workflowFileKey);
   if (!exists) throw new Error(`Workflow doesn\'t exist: s3://${bucket}/${workflowFileKey} for ${rule.name}`);
 
-  const definition = await s3Utils.getJsonS3Object(
+  const fullDefinition = await s3Utils.getJsonS3Object(
     bucket,
     workflowFileKey
   );
@@ -133,7 +134,10 @@ async function buildPayload(rule) {
 
   return {
     template,
-    definition,
+    definition: {
+      name: fullDefinition.name,
+      arn: fullDefinition.arn,
+    },
     provider: rule.provider,
     collection: rule.collection,
     meta: get(rule, 'meta', {}),
@@ -356,11 +360,12 @@ async function validateAndUpdateSqsRule(rule) {
   }
 
   // update rule meta
-  if (!get(rule, 'meta.visibilityTimeout')) {
+  if (isNil(get(rule, 'meta.visibilityTimeout'))) {
     set(rule, 'meta.visibilityTimeout', Number.parseInt(attributes.Attributes.VisibilityTimeout, 10));
   }
 
-  if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
+  if (isNil(get(rule, 'meta.retries'))) set(rule, 'meta.retries', 3);
+
   return rule;
 }
 
