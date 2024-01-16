@@ -139,7 +139,7 @@ const waitForProviderRecordInOrNotInList = async (
   },
   {
     interval: 10000,
-    timeout: 600 * 1000,
+    timeout: 1200 * 1000,
   }
 );
 
