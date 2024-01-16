@@ -10,7 +10,7 @@ export const inTestMode = () => process.env.NODE_ENV === 'test';
 const localStackPorts = {
   stepfunctions: 4566,
   APIGatewayClient: 4566,
-  cloudformation: 4566,
+  CloudFormation: 4566,
   cloudwatch: 4566,
   cloudwatchevents: 4566,
   CloudWatchLogs: 4566,
@@ -22,7 +22,7 @@ const localStackPorts = {
   es: 4566,
   firehose: 4566,
   iam: 4566,
-  kinesis: 4566,
+  Kinesis: 4566,
   kms: 4566,
   Lambda: 4566,
   redshift: 4566,
