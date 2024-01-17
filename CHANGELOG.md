@@ -42,6 +42,8 @@ engine_version = 13.9
 
 ### Changed
 
+- **CUMULUS-2887**
+  - Updated CloudFormation code to aws sdk v3
 - **CUMULUS-2899**
   - Updated SNS code to aws sdk v3
 - **CUMULUS_3499**
