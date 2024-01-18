@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2888**
+  - Update CloudWatch Events code to AWS SDK v3
 - **CUMULUS-2893**
   - Updated Kinesis code to AWS SDK v3
 
