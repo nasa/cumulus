@@ -62,6 +62,7 @@ terraform values and it will also update the database cluster to use the new con
 - **CUMULUS-3432**
   - Update `cumulus-rds-tf` `engine_version` to `13.9`
   - Update `cumulus-rds-tf` `parameter_group_family` to `aurora-postgresql13`
+  - Update development/local stack postgres image version to postgres:13.9-alpine
 - **CUMULUS-2900**
   - Update SQS code to AWS SDK v3
 - **CUMULUS-3352**
