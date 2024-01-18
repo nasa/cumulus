@@ -3,6 +3,7 @@ const test = require('ava');
 const AWS = require('aws-sdk');
 const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { CloudWatchLogs } = require('@aws-sdk/client-cloudwatch-logs');
+const { CloudWatchEvents } = require('@aws-sdk/client-cloudwatch-events');
 const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
@@ -54,17 +55,27 @@ test('cf() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
+test('cloudwatchevents() service defaults to localstack in test mode', async (t) => {
   const cloudwatchevents = services.cloudwatchevents();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatchEvents);
+  } = localStackAwsClientOptions(CloudWatchEvents);
+
   t.deepEqual(
-    cloudwatchevents.config.credentials,
+    await cloudwatchevents.config.credentials(),
     credentials
   );
-  t.is(cloudwatchevents.config.endpoint, endpoint);
+
+  const serviceConfigEndpoint = await cloudwatchevents.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
 test('cloudwatchlogs() service defaults to localstack in test mode', async (t) => {

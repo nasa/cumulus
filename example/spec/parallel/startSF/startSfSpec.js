@@ -76,7 +76,7 @@ const createCloudwatchRuleWithTarget = async ({
         ],
       },
     }),
-  }).promise();
+  });
 
   const { Configuration } = await lambda().getFunction({
     FunctionName: functionName,
@@ -88,7 +88,7 @@ const createCloudwatchRuleWithTarget = async ({
       Id: ruleTargetId,
       Arn: Configuration.FunctionArn,
     }],
-  }).promise();
+  });
 
   return lambda().addPermission({
     Action: 'lambda:InvokeFunction',
@@ -110,7 +110,7 @@ const deleteCloudwatchRuleWithTargets = async ({
       ruleTargetId,
     ],
     Rule: ruleName,
-  }).promise();
+  });
 
   await lambda().removePermission({
     FunctionName: functionName,
@@ -119,7 +119,7 @@ const deleteCloudwatchRuleWithTargets = async ({
 
   return cloudwatchevents().deleteRule({
     Name: ruleName,
-  }).promise();
+  });
 };
 
 describe('the sf-starter lambda function', () => {
