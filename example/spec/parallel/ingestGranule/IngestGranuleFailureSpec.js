@@ -252,7 +252,7 @@ describe('The Ingest Granule failure workflow', () => {
         const isSchemaValidationError = (error.Error === 'CumulusMessageAdapterExecutionError') &&
           error.Cause.includes('jsonschema.exceptions.ValidationError');
         const isPostgresWriteError = error.Error.includes('Failed writing files to PostgreSQL') &&
-          error.Cause.includes('null value in column "bucket" violates not-null constraint');
+          error.Cause.includes('null value in column "bucket" of relation "files" violates not-null constraint');
         expect(isSchemaValidationError || isPostgresWriteError).toBeTrue();
       });
     });
