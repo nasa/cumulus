@@ -1,6 +1,7 @@
 import * as AWS from 'aws-sdk';
 
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
+import { CloudWatchEvents } from '@aws-sdk/client-cloudwatch-events';
 import { CloudFormation } from '@aws-sdk/client-cloudformation';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
 import { DynamoDB, DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -14,3 +15,8 @@ import { SQS } from '@aws-sdk/client-sqs';
 export type AWSClientTypes = APIGatewayClient | DynamoDB | CloudFormation
 | DynamoDBClient | DynamoDBStreamsClient | KMS | Kinesis | Lambda
 | S3 | SNS | SQS | AWS.Service | AWS.DynamoDB.DocumentClient;
+
+export type AWSClientTypes = APIGatewayClient | CloudFormation | CloudWatchEvents | DynamoDB
+| DynamoDBClient | DynamoDBStreamsClient | KMS | Kinesis | Lambda | S3 | SNS | SQS
+| AWS.Service | AWS.DynamoDB.DocumentClient;
+
