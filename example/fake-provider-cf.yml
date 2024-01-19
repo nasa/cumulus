@@ -99,7 +99,7 @@ Resources:
       IamInstanceProfile: !Ref InstanceProfile
       ImageId: !Ref LatestAmiId
       InstanceMonitoring: false
-      InstanceType: t3.micro
+      InstanceType: t3.small
       SecurityGroups:
         - !Ref SecurityGroup
       UserData:
