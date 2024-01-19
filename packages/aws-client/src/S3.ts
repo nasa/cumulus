@@ -336,9 +336,7 @@ export const getObjectReadStream = async (params: {
 }): Promise<Readable> => {
   // eslint-disable-next-line no-shadow
   const { s3: s3Client, bucket, key } = params;
-
   const response = await s3Client.getObject({ Bucket: bucket, Key: key });
-
   if (!response.Body) {
     throw new Error(`Could not get object for bucket ${bucket} and key ${key}`);
   }
