@@ -26,7 +26,7 @@ such as using the AWS console or CLI. For more information, visit their
 [documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
 
 Once you have manually upgraded your database engine and the cluster is now on
-version 13.9+, to continue using the `cumulus-rds-tf` module *once upgraded*,
+version 13.12+, to continue using the `cumulus-rds-tf` module *once upgraded*,
 update following module configuration values if set, or allow their defaults to
 be utilized:
 
