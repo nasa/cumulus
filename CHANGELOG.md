@@ -6,7 +6,48 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration Notes
+
+For the v16.1 release series, Cumulus Core will be tested against PostgreSQL v13. Users
+should migrate their datastores to Aurora PostgreSQL 13.12+ compatible data
+stores as soon as possible after upgrading to this release.
+
+**IMPORTANT** -- When upgrading from v16.1.x you you should update to a release
+following 18.2.0/the first forward release supporting Postgres v13, as versions
+between 16.1.x and 18.2.x+ are unsupported on Aurora Postgres v13.
+
+#### Engine Upgrade when using `cumulus-rds-tf`
+
+Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
+database clusters forcibly upgraded at the next maintenance window after February 29, 2024.
+
+To upgrade your engine version, we recommend a manual (outside of
+terraform) upgrade. This will result in the cluster being upgraded with a
+manually set parameter group not managed by terraform.
+
+There are several options that AWS provides for upgrading your cluster engine,
+such as using the AWS console or CLI. For more information, visit their
+[documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
+
+Once you have manually upgraded your database engine and the cluster is now on
+version 13.12+, to continue using the `cumulus-rds-tf` module *once upgraded*,
+update following module configuration values if set, or allow their defaults to
+be utilized:
+
+```terraform
+parameter_group_family = "aurora-postgresql13"
+engine_version = 13.12
+```
+
+**Please Note**: When you apply this update, the original PostgreSQL v11
+parameter group will be removed, and recreated using PG13 defaults/configured
+terraform values and it will also update the database cluster to use the new configuration.
+
 ## [v16.1.3] 2024-1-15
+
+Please note changes in 16.1.3 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases. Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
 
 ### Changed
 
