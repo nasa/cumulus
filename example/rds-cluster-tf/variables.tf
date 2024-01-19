@@ -63,7 +63,7 @@ variable "tags" {
 variable "engine_version" {
   description = "Postgres engine version for Serverless cluster"
   type        = string
-  default     = "13.9"
+  default     = "13.12"
 }
 
 variable "vpc_tag_name" {

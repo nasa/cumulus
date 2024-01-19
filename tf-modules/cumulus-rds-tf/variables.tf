@@ -88,7 +88,7 @@ variable "vpc_id" {
 variable "engine_version" {
   description = "Postgres engine version for serverless cluster"
   type        = string
-  default     = "13.9"
+  default     = "13.12"
 }
 
 variable "parameter_group_family" {

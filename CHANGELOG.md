@@ -32,7 +32,7 @@ be utilized:
 
 ```terraform
 parameter_group_family = "aurora-postgresql13"
-engine_version = 13.9
+engine_version = 13.12
 ```
 
 **Please Note**: When you apply this update, the original PostgreSQL v11
