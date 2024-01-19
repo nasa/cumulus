@@ -12,7 +12,7 @@ const localStackPorts = {
   APIGatewayClient: 4566,
   CloudFormation: 4566,
   cloudwatch: 4566,
-  cloudwatchevents: 4566,
+  CloudWatchEvents: 4566,
   cloudwatchlogs: 4566,
   DynamoDB: 4566,
   DynamoDBClient: 4566,
