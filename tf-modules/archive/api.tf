@@ -149,7 +149,7 @@ resource "aws_lambda_function" "private_api" {
   handler          = "index.handler"
   role             = aws_iam_role.lambda_api_gateway.arn
   runtime          = "nodejs16.x"
-  timeout          = lookup(var.lambda_timeouts, "PrivateApiLambda", 100)
+  timeout          = lookup(var.lambda_timeouts, "PrivateApiLambda", 900)
   environment {
     variables = merge(local.api_env_variables, {"auth_mode"="private"})
   }
