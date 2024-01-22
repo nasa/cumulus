@@ -77,7 +77,7 @@ test('getCfStackParameterValues() returns empty object if no stack is found', as
   t.deepEqual(parameters, {});
 });
 
-test.skip('getCfStackParameterValues() returns object excluding keys for missing parameters', async (t) => {
+test('getCfStackParameterValues() returns object excluding keys for missing parameters', async (t) => {
   const StackName = `prefix-${cryptoRandomString({ length: 10 })}`;
 
   await cf().createStack({
@@ -98,7 +98,7 @@ test.skip('getCfStackParameterValues() returns object excluding keys for missing
   await deleteStack(StackName);
 });
 
-test.skip('getCfStackParameterValues() returns requested stack parameters', async (t) => {
+test('getCfStackParameterValues() returns requested stack parameters', async (t) => {
   const StackName = `prefix-${cryptoRandomString({ length: 10 })}`;
 
   await cf().createStack({
