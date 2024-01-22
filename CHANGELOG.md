@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration Notes
+
+From this release forward, Cumulus Core will be tested against PostgreSQL v13. Users
+should migrate their datastores to Aurora PostgreSQL 13.9+ compatible data
+stores as soon as possible after upgrading to this release.
+
+#### Engine Upgrade
+
+Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
+database clusters forcibly upgraded at the next maintenance window after February 29, 2024.
+
+To upgrade your engine version, we recommend a manual (outside of
+terraform) upgrade. This will result in the cluster being upgraded with a
+manually set parameter group not managed by terraform.
+
+There are several options that AWS provides for upgrading your cluster engine,
+such as using the AWS console or CLI. For more information, visit their
+[documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
+
+Once you have manually upgraded your database engine and the cluster is now on
+version 13.12+, to continue using the `cumulus-rds-tf` module *once upgraded*,
+update following module configuration values if set, or allow their defaults to
+be utilized:
+
+```terraform
+parameter_group_family = "aurora-postgresql13"
+engine_version = 13.12
+```
+
+**Please Note**: When you apply this update, the original PostgreSQL v11
+parameter group will be removed, and recreated using PG13 defaults/configured
+terraform values and it will also update the database cluster to use the new configuration.
+
 ### Changed
 
 - **CUMULUS-2895**
@@ -30,6 +63,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
+- **CUMULUS-3432**
+  - Update `cumulus-rds-tf` `engine_version` to `13.9`
+  - Update `cumulus-rds-tf` `parameter_group_family` to `aurora-postgresql13`
+  - Update development/local stack postgres image version to postgres:13.9-alpine
 - **CUMULUS-2900**
   - Update SQS code to AWS SDK v3
 - **CUMULUS-3352**
@@ -208,7 +245,7 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed @cumulus/api/models/schema and changed all references to
     @cumulus/api/lib/schema in docs and related models
   - Removed @cumulus/api/models/errors.js
-  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result  in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
   - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
   - Updated thrown error to include information related to automatic failure behavior in addition to the stack trace.
 
