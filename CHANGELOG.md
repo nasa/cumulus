@@ -41,6 +41,8 @@ terraform values and it will also update the database cluster to use the new con
 
 ### Changed
 
+- **CUMULUS-2895**
+  - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
   - Update CloudWatch Events code to AWS SDK v3
 - **CUMULUS-2893**
