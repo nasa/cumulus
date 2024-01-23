@@ -15,10 +15,8 @@ test('createLogGroup() and deleteLogGroup create and delete the log group', asyn
   t.is(description.logGroups[0].logGroupName, logGroupName);
   await cloudwatchlogs().deleteLogGroup({ logGroupName });
   t.is(result.$metadata.httpStatusCode, 200);
-  const description_post_delete = await cloudwatchlogs().describeLogGroups({
+  const descriptionPostDelete = await cloudwatchlogs().describeLogGroups({
     logGroupNamePattern: logGroupName,
   });
-  t.is(description_post_delete.logGroups.length, 0);
+  t.is(descriptionPostDelete.logGroups.length, 0);
 });
-
-
