@@ -53,6 +53,7 @@ resource "aws_security_group_rule" "rds_security_group_allow_postgres" {
 }
 
 resource "aws_rds_cluster_parameter_group" "rds_cluster_group" {
+  count = var.enable_upgrade ? 0 : 1
   name   = "${var.prefix}-cluster-parameter-group"
   family = var.parameter_group_family
 
@@ -105,7 +106,7 @@ resource "aws_rds_cluster" "cumulus" {
   tags                            = var.tags
   final_snapshot_identifier       = "${var.cluster_identifier}-final-snapshot"
   snapshot_identifier             = var.snapshot_identifier
-  db_cluster_parameter_group_name = var.enable_upgrade ? aws_rds_cluster_parameter_group.rds_cluster_group_v13.id : aws_rds_cluster_parameter_group.rds_cluster_group.id
+  db_cluster_parameter_group_name = var.enable_upgrade ? aws_rds_cluster_parameter_group.rds_cluster_group_v13.id : aws_rds_cluster_parameter_group.rds_cluster_group[0].id
 
   lifecycle {
     ignore_changes = [engine_version]
