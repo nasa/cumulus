@@ -66,6 +66,20 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group" {
   }
 }
 
+resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
+  name   = "${var.prefix}-cluster-parameter-group-v13"
+  family = var.parameter_group_family_v13
+
+  dynamic "parameter" {
+    for_each = var.db_parameters
+    content {
+      apply_method = parameter.value["apply_method"]
+      name = parameter.value["name"]
+      value = parameter.value["value"]
+    }
+  }
+}
+
 resource "aws_rds_cluster" "cumulus" {
   depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group]
   cluster_identifier      = var.cluster_identifier
@@ -79,6 +93,7 @@ resource "aws_rds_cluster" "cumulus" {
   preferred_backup_window = var.backup_window
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
+
   scaling_configuration {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
@@ -90,7 +105,7 @@ resource "aws_rds_cluster" "cumulus" {
   tags                            = var.tags
   final_snapshot_identifier       = "${var.cluster_identifier}-final-snapshot"
   snapshot_identifier             = var.snapshot_identifier
-  db_cluster_parameter_group_name = aws_rds_cluster_parameter_group.rds_cluster_group.id
+  db_cluster_parameter_group_name = var.enable_upgrade ? aws_rds_cluster_parameter_group.rds_cluster_group_v13.id : aws_rds_cluster_parameter_group.rds_cluster_group.id
 
   lifecycle {
     ignore_changes = [engine_version]
