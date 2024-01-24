@@ -43,6 +43,8 @@ terraform values and it will also update the database cluster to use the new con
 
 - **CUMULUS-2888**
   - Update CloudWatch Events code to AWS SDK v3
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client
 - **CUMULUS-2893**
