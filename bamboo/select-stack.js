@@ -17,13 +17,8 @@ function determineIntegrationTestStackName(cb) {
   // uses github name
   const stacks = {
     'Charles Huang': 'ch-ci',
-    'Edwin Fenollal': 'ef-ci',
-    'Filip Graniczny': 'fg-ci',
     'Jenny Liu': 'jl-rds',
     jennyhliu: 'jl-rds',
-    kkelly51: 'kk-int',
-    'Katherine Kelly': 'kk-int',
-    'Jennifer Tran': 'jtran-int',
     'Jonathan Kovarik': 'jk',
     etcart: 'ecarton-ci',
     ecarton: 'ecarton-ci',
