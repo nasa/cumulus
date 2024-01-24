@@ -27,4 +27,5 @@ module "rds_cluster" {
   snapshot_identifier = var.snapshot_identifier
   lambda_timeouts     = var.lambda_timeouts
   lambda_memory_sizes = var.lambda_memory_sizes
+  enable_upgrade      = var.enable_upgrade
 }

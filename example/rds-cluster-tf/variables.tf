@@ -86,6 +86,12 @@ variable "lambda_memory_sizes" {
   }
 }
 
+variable "enable_upgrade" {
+  description = "Flag to enable use of updated parameter group"
+  type = bool
+  default = false
+}
+
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
