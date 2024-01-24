@@ -14,7 +14,7 @@ import { cf } from './services';
  * @returns {Promise<CloudFormation.Stack>} The resources belonging to the stack
  */
 export const describeCfStack = async (StackName: string) => {
-  const response = await cf().describeStacks({ StackName }).promise();
+  const response = await cf().describeStacks({ StackName });
 
   if (response.Stacks) return response.Stacks[0];
 
@@ -30,7 +30,7 @@ export const describeCfStack = async (StackName: string) => {
  * @returns {Promise<CloudFormation.StackResources>} The resources belonging to the stack
  */
 export const describeCfStackResources = async (StackName: string) => {
-  const response = await cf().describeStackResources({ StackName }).promise();
+  const response = await cf().describeStackResources({ StackName });
 
   return response.StackResources;
 };

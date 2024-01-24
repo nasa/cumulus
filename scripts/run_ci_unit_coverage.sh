@@ -1,4 +1,4 @@
-#!/bin/bash
+ #!/bin/bash
 touch ./test_output.txt
 tail -f ./test_output.txt &
 TAIL_PID=$!
