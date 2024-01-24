@@ -1,18 +1,18 @@
 ---
 id: upgrade-rds-cluster-tf-postgres-13
-title: Upgrade database cluster deployed via rds-cluster-tf
+title: Upgrade Database Cluster to PostgreSQL v13
 hide_title: false
 ---
 
 Cumulus Core as of version > 18.1.0, and for the stable support release 16.1.x *only* for versions > v16.1.3 now supports and is tested against Aurora Postgres v13.   All users should update their datastores to this version as part of an upgrade process upon upgrading to release version 18.2.0 or 16.1.4.
 
-It is recommended that users manually backup and/or consider cloning their datastore in order to recover the datastore if an upgrade goes awry.
-
 We recommend stopping all ingest rules if database downtime is required (e.g. you do not have a blue-green database solution or are using serverless V1) for the update  as any unavailability of the database may result in unexpected database write failures (resulting in records in the Dead Letter Archive), workflow failures or other unexpected failures.
 
 **It is also recommended that users test/evaluate the upgrade prior to performing it on their primary datastore in order to determine expected downtime and/or other related issues for their particular configuration.**
 
-## Users utilizing the `cumulus-rds-tf` module:
+## Users utilizing the `cumulus-rds-tf` module
+
+It is recommended that users manually backup and/or consider cloning their datastore in order to recover the datastore if an upgrade goes awry.
 
 Upgrading the Aurora Serverless v1 cluster will be done via AWS console in this document (but the equivalent steps can also be done via the AWS command line) and require manual steps to complete the upgrade:
 
