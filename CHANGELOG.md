@@ -18,30 +18,9 @@ between 16.1.x and 18.2.x+ are unsupported on Aurora Postgres v13.
 
 #### Engine Upgrade when using `cumulus-rds-tf`
 
-Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
-database clusters forcibly upgraded at the next maintenance window after February 29, 2024.
-
-To upgrade your engine version, we recommend a manual (outside of
-terraform) upgrade. This will result in the cluster being upgraded with a
-manually set parameter group not managed by terraform.
-
-There are several options that AWS provides for upgrading your cluster engine,
-such as using the AWS console or CLI. For more information, visit their
-[documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
-
-Once you have manually upgraded your database engine and the cluster is now on
-version 13.12+, to continue using the `cumulus-rds-tf` module *once upgraded*,
-update following module configuration values if set, or allow their defaults to
-be utilized:
-
-```terraform
-parameter_group_family = "aurora-postgresql13"
-engine_version = 13.12
-```
-
-**Please Note**: When you apply this update, the original PostgreSQL v11
-parameter group will be removed, and recreated using PG13 defaults/configured
-terraform values and it will also update the database cluster to use the new configuration.
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
+upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
 ## [v16.1.3] 2024-1-15
 
