@@ -92,13 +92,13 @@ variable "engine_version" {
 }
 
 variable "parameter_group_family" {
-  description = "Database family to use for creating database parameter group under postgres 11"
+  description = "Database family to use for creating database parameter group"
   type = string
   default = "aurora-postgresql11"
 }
 
 variable "parameter_group_family_v13" {
-  description = "Database family to use for creating database parameter group under postgres 13"
+  description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
   type = string
   default = "aurora-postgresql13"
 }
@@ -106,7 +106,7 @@ variable "parameter_group_family_v13" {
 variable "enable_upgrade" {
   description = "Flag to enable use of updated parameter group for postgres v13"
   type = bool
-  default = false
+  default = true
 }
 
 variable "max_capacity" {

@@ -17,7 +17,7 @@ It is recommended that users manually backup and/or consider cloning their datas
 Upgrading the Aurora Serverless v1 cluster will be completed via AWS console in this document and require manual steps to complete the upgrade:
 
 - Ensure a supported version (> 18.1.0 *or* 16.1.4 or a later patch version) is deployed.
-- Deploy the newest version of the `cumulus-rds-tf` module.  This will *only* deploy a `v13` version of your current parameter group configuration, named `<prefix>-cluster-parameter-group-v13`.
+- Deploy the newest version of the `cumulus-rds-tf` module, ensuring `enable_upgrade` is set to false.   This will *only* deploy a `v13` version of your current parameter group configuration, named `<prefix>-cluster-parameter-group-v13`.
 - Shut down all ingest and other usage of the database cluster by 3rd party applications if appropriate.
 - Once this is done, utilize the AWS RDS console to `modify` the database cluster, and update the following settings:
   - Set `Engine Version`  to the currently available Serverless v1 Postgres v13 engine (PostgreSQL 13.12 as of this instruction set’s authoring)
@@ -37,5 +37,5 @@ Upgrading the Aurora Serverless v1 cluster will be completed via AWS console in 
     ```
 
 - On update completion, validate database cluster appears to have restarted with the expected configuration, non-cumulus databases, etc.
-- Modify the `enable_upgrade` `rds-cluster-tf` module variable to `true`, and run `terraform plan` to ensure there are no changes in the module.
+- Modify the `enable_upgrade` `rds-cluster-tf` module variable to `true`, and run `terraform plan` (and optionally apply) to ensure there are no changes in the module, and the postgres v11 compatible parameter group is cleaned up.
 - Resume use of the database cluster.
