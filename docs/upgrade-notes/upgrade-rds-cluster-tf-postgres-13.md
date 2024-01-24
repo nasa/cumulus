@@ -14,7 +14,7 @@ We recommend stopping all ingest rules if database downtime is required (e.g. yo
 
 It is recommended that users manually backup and/or consider cloning their datastore in order to recover the datastore if an upgrade goes awry.
 
-Upgrading the Aurora Serverless v1 cluster will be done via AWS console in this document (but the equivalent steps can also be done via the AWS command line) and require manual steps to complete the upgrade:
+Upgrading the Aurora Serverless v1 cluster will be completed via AWS console in this document and require manual steps to complete the upgrade:
 
 - Ensure a supported version (> 18.1.0 *or* 16.1.4 or a later patch version) is deployed.
 - Deploy the newest version of the `cumulus-rds-tf` module.  This will *only* deploy a `v13` version of your current parameter group configuration, named `<prefix>-cluster-parameter-group-v13`.
