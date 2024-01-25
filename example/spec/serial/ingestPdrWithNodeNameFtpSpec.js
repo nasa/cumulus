@@ -81,7 +81,6 @@ describe('Ingesting from PDR', () => {
       pdrFilename = `${testSuffix.slice(1)}_${origPdrFilename}`;
       provider = { id: `s3_provider${testSuffix}` };
       testDataFolder = createTestDataPath(testId);
-
       const ftpProvider = await buildFtpProvider(`${randomString(4)}-${testSuffix}`);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, config.pdrNodeNameProviderBucket);
       await deleteProvidersAndAllDependenciesByHost(config.stackName, ftpProvider.host);
@@ -121,9 +120,11 @@ describe('Ingesting from PDR', () => {
       }
 
       const { newGranuleId, filePaths } = JSON.parse(new TextDecoder('utf-8').decode(testData.Payload));
+
       if (!newGranuleId || !filePaths) {
         throw new Error('FTP Server setup failed', testData);
       }
+
       testFilePaths = filePaths;
       await updateAndUploadTestDataToBucket(
         config.bucket,

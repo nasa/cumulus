@@ -1,8 +1,12 @@
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
+import { CloudFormation } from '@aws-sdk/client-cloudformation';
 import { DynamoDB } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
+import { Kinesis } from '@aws-sdk/client-kinesis';
+import { KMS } from '@aws-sdk/client-kms';
 import { Lambda } from '@aws-sdk/client-lambda';
+import { CloudWatchEvents } from '@aws-sdk/client-cloudwatch-events';
 import { S3 } from '@aws-sdk/client-s3';
 import { SFN } from '@aws-sdk/client-sfn';
 import { SQS } from '@aws-sdk/client-sqs';
@@ -12,9 +16,9 @@ import * as AWS from 'aws-sdk';
 import awsClient from './client';
 
 export const apigateway = awsClient(APIGatewayClient, '2015-07-09');
-export const cf = awsClient(AWS.CloudFormation, '2010-05-15');
+export const cf = awsClient(CloudFormation, '2010-05-15');
 export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
-export const cloudwatchevents = awsClient(AWS.CloudWatchEvents, '2014-02-03');
+export const cloudwatchevents = awsClient(CloudWatchEvents, '2015-10-07');
 export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(DynamoDBStreamsClient, '2012-08-10');
@@ -26,8 +30,8 @@ export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOpti
 export const ec2 = awsClient(AWS.EC2, '2016-11-15');
 export const ecs = awsClient(AWS.ECS, '2014-11-13');
 export const es = awsClient(AWS.ES, '2015-01-01');
-export const kinesis = awsClient(AWS.Kinesis, '2013-12-02');
-export const kms = awsClient(AWS.KMS, '2014-11-01');
+export const kinesis = awsClient(Kinesis, '2013-12-02');
+export const kms = awsClient(KMS, '2014-11-01');
 export const lambda = awsClient(Lambda, '2015-03-31');
 export const s3 = awsClient(S3, '2006-03-01');
 export const secretsManager = awsClient(AWS.SecretsManager, '2017-10-17');

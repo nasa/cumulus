@@ -18,7 +18,7 @@ const { cf } = require('../services');
  */
 const deleteStack = async (StackName) => {
   try {
-    await cf().deleteStack({ StackName }).promise();
+    await cf().deleteStack({ StackName });
   } catch (error) {
     console.log(`Failed to delete stack ${StackName}: ${error}`);
   }
@@ -36,7 +36,7 @@ test('describeCfStack() returns the stack information', async (t) => {
         },
       },
     }),
-  }).promise();
+  });
 
   const actualStack = await CloudFormation.describeCfStack(StackName);
 
@@ -60,7 +60,7 @@ test('describeCfStackResources() returns resources for stack', async (t) => {
         },
       },
     }),
-  }).promise();
+  });
 
   const actualStackResources = await CloudFormation.describeCfStackResources(StackName);
 
@@ -89,7 +89,7 @@ test('getCfStackParameterValues() returns object excluding keys for missing para
         },
       },
     }),
-  }).promise();
+  });
 
   const parameters = await CloudFormation.getCfStackParameterValues('test', ['foo']);
 
@@ -118,7 +118,7 @@ test('getCfStackParameterValues() returns requested stack parameters', async (t)
       { ParameterKey: 'foo', ParameterValue: 'bar' },
       { ParameterKey: 'key', ParameterValue: 'value' },
     ],
-  }).promise();
+  });
 
   const parameters = await CloudFormation.getCfStackParameterValues(StackName, ['foo', 'key']);
 

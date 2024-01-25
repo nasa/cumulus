@@ -2,6 +2,7 @@
  * @module CloudwatchEvents
  */
 
+import { RuleState } from '@aws-sdk/client-cloudwatch-events';
 import { cloudwatchevents } from './services';
 
 /**
@@ -17,7 +18,7 @@ import { cloudwatchevents } from './services';
 export const putEvent = (
   name: string,
   schedule: string,
-  state: string,
+  state: RuleState,
   description?: string,
   role?: string
 ) =>
@@ -27,16 +28,16 @@ export const putEvent = (
     RoleArn: role,
     ScheduleExpression: schedule,
     State: state,
-  }).promise();
+  });
 
 export const deleteEvent = (name: string) =>
-  cloudwatchevents().deleteRule({ Name: name }).promise();
+  cloudwatchevents().deleteRule({ Name: name });
 
 export const deleteTarget = (id: string, rule: string) =>
   cloudwatchevents().removeTargets({
     Ids: [id],
     Rule: rule,
-  }).promise();
+  });
 
 export const putTarget = (rule: string, id: string, arn: string, input: string) =>
   cloudwatchevents().putTargets({
@@ -48,4 +49,4 @@ export const putTarget = (rule: string, id: string, arn: string, input: string) 
         Input: input,
       },
     ],
-  }).promise();
+  });

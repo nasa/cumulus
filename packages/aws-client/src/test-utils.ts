@@ -9,9 +9,9 @@ export const inTestMode = () => process.env.NODE_ENV === 'test';
 // From https://github.com/localstack/localstack/blob/master/README.md
 const localStackPorts = {
   APIGatewayClient: 4566,
-  cloudformation: 4566,
+  CloudFormation: 4566,
   cloudwatch: 4566,
-  cloudwatchevents: 4566,
+  CloudWatchEvents: 4566,
   cloudwatchlogs: 4566,
   DynamoDB: 4566,
   DynamoDBClient: 4566,
@@ -21,8 +21,8 @@ const localStackPorts = {
   es: 4566,
   firehose: 4566,
   iam: 4566,
-  kinesis: 4566,
-  kms: 4566,
+  Kinesis: 4566,
+  KMS: 4566,
   Lambda: 4566,
   redshift: 4566,
   route53: 4566,

@@ -45,8 +45,12 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.447.0",
+    "@aws-sdk/client-cloudwatch-events": "^3.447.0",
+    "@aws-sdk/client-cloudformation": "^3.447.0",
     "@aws-sdk/client-dynamodb": "^3.447.0",
     "@aws-sdk/client-dynamodb-streams": "^3.447.0",
+    "@aws-sdk/client-kms": "^3.447.0",
+    "@aws-sdk/client-kinesis": "^3.447.0",
     "@aws-sdk/client-lambda": "^3.447.0",
     "@aws-sdk/client-s3": "^3.447.0",
     "@aws-sdk/client-sfn": "^3.447.0",

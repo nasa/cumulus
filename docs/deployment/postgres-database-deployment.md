@@ -6,7 +6,7 @@ hide_title: false
 
 ## Overview
 
-Cumulus deployments require an Aurora [PostgreSQL 11](https://www.postgresql.org/) compatible database to be provided as the primary data store for Cumulus with Elasticsearch for non-authoritative querying/state data for the API and other applications that require more complex queries. Note that Cumulus is tested with an Aurora Postgres database.
+Cumulus deployments require an Aurora [PostgreSQL 13](https://www.postgresql.org/) compatible database to be provided as the primary data store for Cumulus with Elasticsearch for non-authoritative querying/state data for the API and other applications that require more complex queries. Note that Cumulus is tested with an Aurora Postgres database.
 
 Users are *strongly* encouraged to plan for and implement a database solution that scales to their use requirements, meets their security posture and maintenance needs and/or allows for multi-tenant cluster usage.
 
@@ -16,7 +16,7 @@ configured [Aurora Serverless](https://aws.amazon.com/rds/aurora/serverless/) cl
 
 To that end, Cumulus provides a terraform module
 [`cumulus-rds-tf`](https://github.com/nasa/cumulus/tree/master/tf-modules/cumulus-rds-tf)
-that will deploy an AWS RDS Aurora Serverless PostgreSQL 11 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
+that will deploy an AWS RDS Aurora Serverless PostgreSQL 13 compatible [database cluster](https://aws.amazon.com/rds/aurora/postgresql-features/), and optionally provision a single deployment database with credentialed secrets for use with Cumulus.
 
 We have provided an example terraform deployment using this module in the [Cumulus template-deploy repository](https://github.com/nasa/cumulus-template-deploy/tree/master/rds-cluster-tf) on GitHub.
 
