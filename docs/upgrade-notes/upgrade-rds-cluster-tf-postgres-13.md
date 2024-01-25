@@ -4,7 +4,9 @@ title: Upgrade Database Cluster to PostgreSQL v13
 hide_title: false
 ---
 
-Cumulus Core as of version > 18.1.0, and for the stable support release 16.1.x *only* for versions > v16.1.3 now supports and is tested against Aurora Postgres v13.   All users should update their datastores to this version as part of an upgrade process upon upgrading to release version 18.2.0 or 16.1.4.
+Cumulus Core as of version > 18.1.0** now supports and is tested against Aurora Postgres v13.   All users should update their datastores to this version as part of an upgrade process upon upgrading to release version 18.2.0.
+
+**This update was also backported to the 16.1.x release chain starting with v16.1.3.
 
 We recommend stopping all ingest rules if database downtime is required (e.g. you do not have a blue-green database solution or are using serverless V1) for the update  as any unavailability of the database may result in unexpected database write failures (resulting in records in the Dead Letter Archive), workflow failures or other unexpected failures.
 
