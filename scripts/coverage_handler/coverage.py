@@ -252,15 +252,15 @@ coverage runs 'nyc npm test' and sets thresholds in the local nyc config
         "if validating, don't fail if coverage is < g above threshold."
         "if updating, set threshold to t-(g/2).",
     )
-    # parser.add_argument(
-    #     "--noRerun",
-    #     type=bool,
-    #     const=True,
-    #     default=False,
-    #     nargs="?",
-    #     help="use existing coverage report instead of generating new"
-    #     "if unset, will rerun tests to generate report",
-    # )
+    parser.add_argument(
+        "--noRerun",
+        type=bool,
+        const=True,
+        default=False,
+        nargs="?",
+        help="use existing coverage report instead of generating new"
+        "if unset, will rerun tests to generate report",
+    )
     parser.add_argument(
         "--update",
         type=bool,
