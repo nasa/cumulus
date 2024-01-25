@@ -32,7 +32,7 @@ function determineIntegrationTestStackName(cb) {
     'Naga Nages': 'nnaga-ci',
     vpnguye2: 'vkn-ci',
     'Roger Kwarteng': 'rkwarten-ci',
-
+    'Paul Pilone': 'ppilone',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
