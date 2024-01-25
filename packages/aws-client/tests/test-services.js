@@ -2,11 +2,13 @@ const test = require('ava');
 
 const AWS = require('aws-sdk');
 const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
+const { CloudWatchEvents } = require('@aws-sdk/client-cloudwatch-events');
 const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
+const { KMS } = require('@aws-sdk/client-kms');
 const { SNS } = require('@aws-sdk/client-sns');
 const { SQS } = require('@aws-sdk/client-sqs');
 
@@ -53,17 +55,27 @@ test('cf() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('cloudwatchevents() service defaults to localstack in test mode', (t) => {
+test('cloudwatchevents() service defaults to localstack in test mode', async (t) => {
   const cloudwatchevents = services.cloudwatchevents();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatchEvents);
+  } = localStackAwsClientOptions(CloudWatchEvents);
+
   t.deepEqual(
-    cloudwatchevents.config.credentials,
+    await cloudwatchevents.config.credentials(),
     credentials
   );
-  t.is(cloudwatchevents.config.endpoint, endpoint);
+
+  const serviceConfigEndpoint = await cloudwatchevents.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });
 
 test('cloudwatchlogs() service defaults to localstack in test mode', (t) => {
@@ -215,17 +227,26 @@ test('kinesis() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('kms() service defaults to localstack in test mode', (t) => {
+test('kms() service defaults to localstack in test mode', async (t) => {
   const kms = services.kms();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.KMS);
+  } = localStackAwsClientOptions(KMS);
   t.deepEqual(
-    kms.config.credentials,
+    await kms.config.credentials(),
     credentials
   );
-  t.is(kms.config.endpoint, endpoint);
+
+  const kmsEndpoint = await kms.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    kmsEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('lambda() service defaults to localstack in test mode', async (t) => {
