@@ -49,6 +49,8 @@ terraform values and it will also update the database cluster to use the new con
   - Updated Kinesis code to AWS SDK v3
 
 ### Fixed
+- **CUMULUS-3562**
+  - Removed unnecessary dev dependency jsdoc-to-html
 
 ## Release TBD
 
