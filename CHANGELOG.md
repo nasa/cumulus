@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2898**
+  - Update Step Functions code to AWS SDK v3
 - *CUMULUS-2899**
   - Updated SNS code to aws sdk v3
 - **CUMULUS_3499
