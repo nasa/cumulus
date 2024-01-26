@@ -16,10 +16,8 @@ if [[ $(git describe --exact-match HEAD 2>/dev/null |sed -n '1p') =~ ^v[0-9]+.* 
 fi
 
 if [[ $commit_message_contains_skip_audit_flag = false && $commit_matches_version_tag = false && $SKIP_AUDIT != true ]]; then
-  npm install -g lerna@5.6.2 audit-ci@6.6.1 
-  npm run clean
-  
-  npm install --omit=dev --no-audit --no-scripts
+  npm install --no-audit --no-scripts
+  npm run install-locks;
   npm run audit;
 else
   >&2 echo "******Skipping audit due to commit message/version tag/env var being present"
