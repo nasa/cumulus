@@ -1,5 +1,6 @@
 'use strict';
 
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const get = require('lodash/get');
 const pAll = require('p-all');
 
@@ -262,13 +263,17 @@ describe('POST /granules/bulkDelete', () => {
     it('eventually generates the correct output', async () => {
       expect(beforeAllSucceeded).toBeTrue();
 
-      await ecs().waitFor(
-        'tasksStopped',
-        {
-          cluster: clusterArn,
-          tasks: [taskArn],
-        }
+      await waitUntilTasksStopped(
+        { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
+        { cluster: clusterArn, tasks: [taskArn] }
       );
+      // await ecs().waitFor(
+      //   'tasksStopped',
+      //   {
+      //     cluster: clusterArn,
+      //     tasks: [taskArn],
+      //   }
+      // );
 
       const asyncOperation = await getAsyncOperation({
         prefix,
