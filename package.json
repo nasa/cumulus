@@ -70,7 +70,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "archiver": "^4.0.2",
-    "crypto-js": "^4.0.0",
+    "crypto-js": "^4.2.0",
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
