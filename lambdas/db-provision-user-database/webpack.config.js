@@ -25,6 +25,7 @@ module.exports = {
   mode: 'production',
   entry: './dist/lambda/index.js',
   output: {
+    chunkFormat: false,
     libraryTarget: 'commonjs2',
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist', 'webpack')
