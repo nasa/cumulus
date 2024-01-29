@@ -41,6 +41,8 @@ terraform values and it will also update the database cluster to use the new con
 
 ### Changed
 
+- **CUMULUS-3564**
+  - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
