@@ -22,17 +22,6 @@ Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
-### Changed
-
-- **CUMULUS-3564**
-  - Update webpack configuration to explicitly disable chunking
-- **CUMULUS-2895**
-  - Updated KMS code to aws sdk v3
-- **CUMULUS-2888**
-  - Update CloudWatch Events code to AWS SDK v3
-- **CUMULUS-2893**
-  - Updated Kinesis code to AWS SDK v3
-
 ## [v16.1.3] 2024-1-15
 
 Please note changes in 16.1.3 may not yet be released in future versions, as this
