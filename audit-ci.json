@@ -13,6 +13,9 @@
     "jsonwebtoken",
     "cacheable-request",
     "http-cache-semantics",
+    "lodash.pick",
+    "crypto-js"
+    "http-cache-semantics",
     "jsdoc-to-markdown",
     "lodash.pick"
   ]
