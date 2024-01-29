@@ -20,6 +20,9 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 ### Changed
 
+- **CUMULUS-3444**
+  - Update `cumulus-rds-tf` module to take additional parameters in support of
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2895**
