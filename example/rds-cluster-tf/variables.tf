@@ -78,24 +78,20 @@ variable "subnets_tag_name" {
   default = "Private application *"
 }
 
-variable "lambda_memory_sizes" {
-  description = "Configurable map of memory sizes for lambdas"
-  type = map(number)
-  default = {
-    ProvisionPostgresDatabase = 384 # cumulus-rds-tf
-  }
-}
-
 variable "enable_upgrade" {
   description = "Flag to enable use of updated parameter group"
   type = bool
   default = false
 }
 
-variable "lambda_timeouts" {
-  description = "Configurable map of timeouts for lambdas"
-  type = map(number)
-  default = {
-    ProvisionPostgresDatabase = 600 # cumulus-rds-tf
-  }
+variable "parameter_group_family" {
+  description = "Database family to use for creating database parameter group"
+  type = string
+  default = "aurora-postgresql11"
+}
+
+variable "parameter_group_family_v13" {
+  description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
+  type = string
+  default = "aurora-postgresql13"
 }
