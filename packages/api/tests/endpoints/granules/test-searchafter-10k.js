@@ -36,7 +36,7 @@ test.after.always(async (t) => {
   await t.context.esClient.indices.delete({ index: t.context.esIndex });
 });
 
-test.skip('CUMULUS-2930 /GET granules allows searching past 10K results windows with searchContext', async (t) => {
+test.serial('CUMULUS-2930 /GET granules allows searching past 10K results windows with searchContext', async (t) => {
   const numGranules = 12 * 1000;
 
   // create granules in batches of 1000

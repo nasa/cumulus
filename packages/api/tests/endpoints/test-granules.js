@@ -401,7 +401,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.skip('default lists and paginates correctly with search_after', async (t) => {
+test.serial('default lists and paginates correctly with search_after', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
     .get('/granules')
