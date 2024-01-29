@@ -39,5 +39,5 @@ Upgrading the Aurora Serverless v1 cluster will be completed via AWS console in 
     ```
 
 - On update completion, validate database cluster appears to have restarted with the expected configuration, non-cumulus databases, etc.
-- Modify the `enable_upgrade` `rds-cluster-tf` module variable to `true`, and run `terraform plan` (and optionally apply) to ensure there are no changes in the module, and the postgres v11 compatible parameter group is cleaned up.
+- Update the `enable_upgrade` `rds-cluster-tf` module variable to `true`, and run `terraform init` and `terraform apply` to ensure the postgres v11 compatible parameter group is cleaned up. This should be the only change so double-check the changeset or run `terraform plan` to be sure.
 - Resume use of the database cluster.
