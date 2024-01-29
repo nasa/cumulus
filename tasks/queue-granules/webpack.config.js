@@ -4,6 +4,7 @@ module.exports = {
   mode: 'production',
   entry: './dist/src/index.js',
   output: {
+    chunkFormat: false,
     libraryTarget: 'commonjs2',
     path: path.resolve(__dirname, 'dist', 'webpack'),
     filename: 'index.js'
