@@ -5,7 +5,6 @@ module.exports = {
   entry: './dist/src/index.js',
   output: {
     chunkFormat: false,
-    chunkFormat: false,
     libraryTarget: 'commonjs2',
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js'
