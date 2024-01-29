@@ -12,6 +12,8 @@
     "knex",
     "jsonwebtoken",
     "cacheable-request",
-    "http-cache-semantics"
+    "http-cache-semantics",
+    "lodash.pick",
+    "crypto-js"
   ]
 }
