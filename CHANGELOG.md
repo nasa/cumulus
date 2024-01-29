@@ -52,7 +52,8 @@ terraform values and it will also update the database cluster to use the new con
 
 ### Fixed
 - **CUMULUS-3562**
-  - Removed unnecessary dev dependency jsdoc-to-html
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
 
 ## Release TBD
 
