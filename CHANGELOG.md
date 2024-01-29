@@ -12,7 +12,7 @@ From this release forward, Cumulus Core will be tested against PostgreSQL v13. U
 should migrate their datastores to Aurora PostgreSQL 13.9+ compatible data
 stores as soon as possible after upgrading to this release.
 
-#### Engine Upgrade
+#### Database Upgrade
 
 Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
