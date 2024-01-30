@@ -43,6 +43,8 @@ terraform values and it will also update the database cluster to use the new con
 
 - **CUMULUS-2898**
   - Update Step Functions code to AWS SDK v3
+- **CUMULUS-3564**
+  - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
@@ -51,6 +53,9 @@ terraform values and it will also update the database cluster to use the new con
   - Updated Kinesis code to AWS SDK v3
 
 ### Fixed
+- **CUMULUS-3562**
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
 
 ## Release TBD
 
