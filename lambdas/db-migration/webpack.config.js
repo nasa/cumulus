@@ -33,6 +33,7 @@ module.exports = {
   mode: 'development',
   entry: './dist/lambda/index.js',
   output: {
+    chunkFormat: false,
     library: {
       type: 'commonjs2'
     },

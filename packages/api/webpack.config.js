@@ -71,6 +71,7 @@ module.exports = {
     }),
   ],
   output: {
+    chunkFormat: false,
     libraryTarget: 'commonjs2',
     filename: '[name]/index.js',
     devtoolModuleFilenameTemplate: (info) => {
