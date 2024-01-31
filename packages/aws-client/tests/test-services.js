@@ -34,14 +34,14 @@ test('apigateway() service defaults to localstack in test mode', async (t) => {
   t.is(apiGatewayServiceConfig.protocol, endpointConfig.protocol);
 });
 
-test('cf() service defaults to localstack in test mode', async (t) => {
-  const cf = services.cf();
+test('ecs() service defaults to localstack in test mode', async (t) => {
+  const ecs = services.ecs();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(CloudFormation);
+  } = localStackAwsClientOptions(ECS);
   t.deepEqual(
-    await cf.config.credentials(),
+    await ecs.config.credentials(),
     credentials
   );
 
