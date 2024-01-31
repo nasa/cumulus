@@ -23,7 +23,6 @@ export const lambda = awsClient(Lambda, '2015-03-31');
 export const cloudwatchevents = awsClient(CloudWatchEvents, '2015-10-07');
 export const sqs = awsClient(SQS, '2012-11-05');
 export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
-export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(DynamoDBStreamsClient, '2012-08-10');
 export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOptions?: object) =>

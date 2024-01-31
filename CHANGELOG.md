@@ -18,6 +18,12 @@ Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
+### Breaking Changes
+
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
 ### Changed
 
 - **CUMULUS-3444**
