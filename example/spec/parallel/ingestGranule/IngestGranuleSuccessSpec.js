@@ -644,17 +644,15 @@ describe('The S3 Ingest Granules workflow', () => {
     beforeEach(() => {
       failOnSetupError([beforeAllError, subTestSetupError]);
     });
-    it('pretends to work', () => {
-      expect(true).toEqual(true);
-    });
-    xit('publishes the granule metadata to CMR', async () => {
+
+    it('publishes the granule metadata to CMR', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       const result = await conceptExists(granule.cmrLink);
       expect(granule.published).toEqual(true);
       expect(result).not.toEqual(false);
     });
 
-    xit('updates the CMR metadata online resources with the final metadata location', () => {
+    it('updates the CMR metadata online resources with the final metadata location', () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       console.log('parallel resourceURLs:', resourceURLs);
       console.log('s3CredsUrl:', s3CredsUrl);
@@ -667,7 +665,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(resourceURLs).toContain(opendapFilePath);
     });
 
-    xit('updates the CMR metadata "online resources" with the proper types and urls', () => {
+    it('updates the CMR metadata "online resources" with the proper types and urls', () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       const resource = ummCmrResource;
       const expectedTypes = [
@@ -691,7 +689,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(resource.map((r) => r.Type).sort()).toEqual(expectedTypes.sort());
     });
 
-    xit('includes the Earthdata login ID for requests to protected science files', async () => {
+    it('includes the Earthdata login ID for requests to protected science files', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       const filepath = `/${files[0].bucket}/${files[0].key}`;
       const s3SignedUrl = await getTEADistributionApiRedirect(filepath, teaRequestHeaders);
@@ -699,7 +697,7 @@ describe('The S3 Ingest Granules workflow', () => {
       expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
     });
 
-    xit('downloads the requested science file for authorized requests', async () => {
+    it('downloads the requested science file for authorized requests', async () => {
       failOnSetupError([beforeAllError, subTestSetupError]);
       const scienceFileUrls = resourceURLs
         .filter((url) =>
@@ -1089,16 +1087,14 @@ describe('The S3 Ingest Granules workflow', () => {
         // Check that the granule was removed
         await waitForConceptExistsOutcome(cmrLink, false);
         const doesExist = await conceptExists(cmrLink);
-        // because of stubbed conceptExists due to https://github.com/nasa/cumulus/pull/3544/
-        expect(doesExist).toEqual(true);
+        expect(doesExist).toEqual(false);
       });
 
       it('applyWorkflow PublishGranule publishes the granule to CMR', async () => {
         failOnSetupError([beforeAllError, subTestSetupError]);
 
         const existsInCMR = await conceptExists(cmrLink);
-        // because of stubbed conceptExists due to https://github.com/nasa/cumulus/pull/3544/
-        expect(existsInCMR).toEqual(true);
+        expect(existsInCMR).toEqual(false);
 
         // Publish the granule to CMR
         await applyWorkflow({
