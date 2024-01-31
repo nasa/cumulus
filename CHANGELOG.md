@@ -12,35 +12,17 @@ From this release forward, Cumulus Core will be tested against PostgreSQL v13. U
 should migrate their datastores to Aurora PostgreSQL 13.9+ compatible data
 stores as soon as possible after upgrading to this release.
 
-#### Engine Upgrade
+#### Database Upgrade
 
-Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
-database clusters forcibly upgraded at the next maintenance window after February 29, 2024.
-
-To upgrade your engine version, we recommend a manual (outside of
-terraform) upgrade. This will result in the cluster being upgraded with a
-manually set parameter group not managed by terraform.
-
-There are several options that AWS provides for upgrading your cluster engine,
-such as using the AWS console or CLI. For more information, visit their
-[documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
-
-Once you have manually upgraded your database engine and the cluster is now on
-version 13.12+, to continue using the `cumulus-rds-tf` module *once upgraded*,
-update following module configuration values if set, or allow their defaults to
-be utilized:
-
-```terraform
-parameter_group_family = "aurora-postgresql13"
-engine_version = 13.12
-```
-
-**Please Note**: When you apply this update, the original PostgreSQL v11
-parameter group will be removed, and recreated using PG13 defaults/configured
-terraform values and it will also update the database cluster to use the new configuration.
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
+upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
 ### Changed
 
+- **CUMULUS-3444**
+  - Update `cumulus-rds-tf` module to take additional parameters in support of
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2895**
