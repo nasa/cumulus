@@ -532,16 +532,14 @@ describe('The S3 Ingest Granules workflow', () => {
         if (beforeAllError) fail(beforeAllError);
         if (subTestSetupError) fail(subTestSetupError);
       });
-      it('pretends to work', () => {
-        expect(true).toEqual(true);
-      });
-      xit('publishes the granule metadata to CMR', () => {
+
+      it('publishes the granule metadata to CMR', () => {
         if (subTestSetupError) fail(subTestSetupError);
         if (beforeAllError) fail(beforeAllError);
         expect(granule.published).toEqual(true);
       });
 
-      xit('updates the CMR metadata online resources with the final metadata location', () => {
+      it('updates the CMR metadata online resources with the final metadata location', () => {
         if (subTestSetupError) fail(subTestSetupError);
         if (beforeAllError) fail(beforeAllError);
 
@@ -555,7 +553,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(resourceURLs).toContain(s3CredsUrl);
       });
 
-      xit('updates the CMR metadata "online resources" with the proper types and urls', () => {
+      it('updates the CMR metadata "online resources" with the proper types and urls', () => {
         if (subTestSetupError) fail(subTestSetupError);
         if (beforeAllError) fail(beforeAllError);
         const resource = ummCmrResource;
@@ -577,7 +575,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(resource.map((r) => r.Type).sort()).toEqual(expectedTypes.sort());
       });
 
-      xit('includes the Earthdata login ID for requests to protected science files', async () => {
+      it('includes the Earthdata login ID for requests to protected science files', async () => {
         if (subTestSetupError) fail(subTestSetupError);
         if (beforeAllError) fail(beforeAllError);
         const filepath = `/${files[0].bucket}/${files[0].key}`;
@@ -586,7 +584,7 @@ describe('The S3 Ingest Granules workflow', () => {
         expect(earthdataLoginParam).toEqual(process.env.EARTHDATA_USERNAME);
       });
 
-      xit('downloads the requested science file for authorized requests', async () => {
+      it('downloads the requested science file for authorized requests', async () => {
         if (subTestSetupError) fail(subTestSetupError);
         if (beforeAllError) fail(beforeAllError);
         const scienceFileUrls = resourceURLs
