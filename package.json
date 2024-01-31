@@ -24,7 +24,7 @@
     "test": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test",
     "test:ci": "./scripts/run_ci_unit_coverage.sh",
     "test:coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test:coverage",
-    "coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 --since master coverage -- -- ",
+    "coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 --since master coverage -- ",
     "tsc": "lerna run tsc",
     "tsc:listEmittedFiles": "lerna run tsc:listEmittedFiles --stream --no-prefix",
     "package": "lerna run package",
@@ -71,7 +71,7 @@
   "dependencies": {
     "archiver": "^4.0.2",
     "bootstrap": "^5.3.2",
-    "crypto-js": "^4.0.0",
+    "crypto-js": "^4.2.0",
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
@@ -125,7 +125,7 @@
     "js-yaml": "^3.13.1",
     "jsdoc-to-markdown": "7.1.1",
     "latest-version": "^4.0.0",
-    "lerna": "5.6.2",
+    "lerna": "^6.6.2",
     "lodash": "^4.17.21",
     "markdownlint-cli": "^0.31.1",
     "md5": "^2.2.1",
