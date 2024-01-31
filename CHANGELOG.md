@@ -53,6 +53,9 @@ terraform values and it will also update the database cluster to use the new con
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.2 to address security group issues.
 
 ### Fixed
+- **CUMULUS-3562**
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
 
 ## Release TBD
 
