@@ -49,6 +49,8 @@ terraform values and it will also update the database cluster to use the new con
   - Update CloudWatch Events code to AWS SDK v3
 - **CUMULUS-2893**
   - Updated Kinesis code to AWS SDK v3
+- **CUMULUS-3497**
+  - Updated `example/cumulus-tf/orca.tf` to use v9.0.2 to address security group issues.
 
 ### Fixed
 
