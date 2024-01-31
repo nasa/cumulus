@@ -39,6 +39,12 @@ engine_version = 13.12
 parameter group will be removed, and recreated using PG13 defaults/configured
 terraform values and it will also update the database cluster to use the new configuration.
 
+### Breaking Changes
+
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
 ### Changed
 
 - **CUMULUS-3564**
