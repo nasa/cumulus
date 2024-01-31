@@ -80,14 +80,6 @@ describe('The AsyncOperation task runner with a non-JSON payload', () => {
         { cluster: cluster, tasks: [taskArn] }
       );
 
-      // await ecs().waitFor(
-      //   'tasksStopped',
-      //   {
-      //     cluster,
-      //     tasks: [taskArn],
-      //   }
-      // );
-
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'TASK_FAILED',

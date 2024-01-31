@@ -274,14 +274,6 @@ describe('POST /granules/bulk', () => {
           { cluster: clusterArn, tasks: [taskArn] }
         );
 
-        // await ecs().waitFor(
-        //   'tasksStopped',
-        //   {
-        //     cluster: clusterArn,
-        //     tasks: [taskArn],
-        //   }
-        // );
-
         const asyncOperation = await getAsyncOperation({
           prefix,
           asyncOperationId: postBulkOperationsBody.id,

@@ -73,14 +73,6 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
         { cluster: cluster, tasks: [taskArn] }
       );
 
-      // await ecs().waitFor(
-      //   'tasksStopped',
-      //   {
-      //     cluster,
-      //     tasks: [taskArn],
-      //   }
-      // );
-
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'RUNNER_FAILED',

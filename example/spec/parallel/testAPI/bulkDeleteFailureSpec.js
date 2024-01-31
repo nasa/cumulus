@@ -153,13 +153,6 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
       { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
       { cluster: clusterArn, tasks: [taskArn] }
     );
-    // await ecs().waitFor(
-    //   'tasksStopped',
-    //   {
-    //     cluster: clusterArn,
-    //     tasks: [taskArn],
-    //   }
-    // );
 
     const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,

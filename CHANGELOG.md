@@ -40,7 +40,8 @@ parameter group will be removed, and recreated using PG13 defaults/configured
 terraform values and it will also update the database cluster to use the new configuration.
 
 ### Changed
-- *CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
+- **CUMULUS-2891**
   - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3

@@ -81,14 +81,6 @@ describe('The AsyncOperation task runner executing a successful lambda function'
         { cluster: cluster, tasks: [taskArn] }
       );
 
-      // await ecs().waitFor(
-      //   'tasksStopped',
-      //   {
-      //     cluster,
-      //     tasks: [taskArn],
-      //   }
-      // );
-
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
         status: 'SUCCEEDED',
