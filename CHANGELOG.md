@@ -40,6 +40,10 @@ parameter group will be removed, and recreated using PG13 defaults/configured
 terraform values and it will also update the database cluster to use the new configuration.
 
 ### Changed
+
+- **CUMULUS-3564**
+  - Update webpack configuration to explicitly disable chunking
+- **CUMULUS-2891**
   - Updated ECS code to aws sdk v3
 - **CUMULUS-2891**
   - Updated ECS code to aws sdk v3
@@ -49,8 +53,14 @@ terraform values and it will also update the database cluster to use the new con
   - Update CloudWatch Events code to AWS SDK v3
 - **CUMULUS-2893**
   - Updated Kinesis code to AWS SDK v3
+- **CUMULUS-3555**
+  - Revert 3540, un-stubbing cmr facing tests
+  - Raise memory_size of ftpPopulateTestLambda to 512MB
 
 ### Fixed
+- **CUMULUS-3562**
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
 
 ## Release TBD
 

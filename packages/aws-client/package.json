@@ -44,7 +44,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@aws-sdk/client-api-gateway": "^3.447.0",
+    "@aws-sdk/client-api-gateway": "^3.499.0",
     "@aws-sdk/client-cloudwatch-events": "^3.447.0",
     "@aws-sdk/client-cloudformation": "^3.447.0",
     "@aws-sdk/client-dynamodb": "^3.447.0",
