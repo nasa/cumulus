@@ -22,15 +22,7 @@ describe('The AsyncOperation task runner executing a failing lambda function', (
   let failFunctionName;
   let payloadKey;
   let taskArn;
-  let originalTimeout;
 
-  beforeEach(() => {
-    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = 12000000;
-  });
-  afterEach(() => {
-    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
-  });
   beforeAll(async () => {
     try {
       config = await loadConfig();
