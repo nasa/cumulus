@@ -22,7 +22,7 @@ async function getStateFilesFromTable(tableName) {
 
     // Check that the table holds state files and actually has items
     if (tableInfo.Table.AttributeDefinitions[0].AttributeName === 'LockID'
-      && tableInfo.Table.ItemCount > 0) {
+        && tableInfo.Table.ItemCount > 0) {
       let stateFiles = [];
       const scanQueue = new DynamoDbSearchQueue({ TableName: tableName });
 
@@ -95,6 +95,10 @@ async function listTfStateFiles() {
 async function listClusterEC2Instances(clusterArn) {
   const clusterContainerInstances = await aws.ecs().listContainerInstances({
     cluster: clusterArn,
+    .catch((error) => {
+      console.log(`Error listing container instances for cluster ${clusterArn}: ${error}`);
+      return [];
+    }),
   });
   if (!clusterContainerInstances || !clusterContainerInstances.containerInstanceArns) {
     return [];

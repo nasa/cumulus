@@ -251,7 +251,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
       listContainerInstances: () => ({
-        containerInstanceArns: undefined,
+        containerInstanceArns: null,
       }),
     });
 
@@ -264,7 +264,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
 test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
-      listContainerInstances: () => (undefined),
+      listContainerInstances: () => (null),
     });
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
