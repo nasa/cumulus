@@ -227,6 +227,7 @@ const sidebars = {
         'upgrade-notes/update-cma-2.0.2',
         'upgrade-notes/upgrade-rds-phase-3-release',
         'upgrade-notes/rds-phase-3-data-migration-guidance',
+        'upgrade-notes/upgrade-rds-cluster-tf-postgres-13',
       ],
     },
     {
