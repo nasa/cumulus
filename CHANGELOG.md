@@ -24,6 +24,15 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
 
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
 ### Changed
 
 - **CUMULUS-3444**
