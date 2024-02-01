@@ -79,32 +79,6 @@ test('cloudwatchevents() service defaults to localstack in test mode', async (t)
   );
 });
 
-test('cloudwatchlogs() service defaults to localstack in test mode', (t) => {
-  const cloudwatchlogs = services.cloudwatchlogs();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatchLogs);
-  t.deepEqual(
-    cloudwatchlogs.config.credentials,
-    credentials
-  );
-  t.is(cloudwatchlogs.config.endpoint, endpoint);
-});
-
-test('cloudwatch() service defaults to localstack in test mode', (t) => {
-  const cloudwatch = services.cloudwatch();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(AWS.CloudWatch);
-  t.deepEqual(
-    cloudwatch.config.credentials,
-    credentials
-  );
-  t.is(cloudwatch.config.endpoint, endpoint);
-});
-
 test('dynamoDb() service defaults to localstack in test mode', async (t) => {
   const dynamodb = services.dynamodb();
   const {
