@@ -93,17 +93,22 @@ async function listTfStateFiles() {
  * @returns {Promise<Array<string>>} - ec2 instance ids
  */
 async function listClusterEC2Instances(clusterArn) {
-  const clusterContainerInstances = await aws.ecs().listContainerInstances({
-    cluster: clusterArn,
-    .catch((error) => {
-      console.log(`Error listing container instances for cluster ${clusterArn}: ${error}`);
-      return [];
-    }),
-  });
-  if (!clusterContainerInstances || !clusterContainerInstances.containerInstanceArns) {
+  
+  try {
+    const clusterContainerInstances = await aws.ecs().listContainerInstances({
+      cluster: clusterArn,
+    },)
+
+  } catch (error) {
+    console.log(`Error listing container instances for cluster ${clusterArn}: ${error}`);
     return [];
   }
 
+  
+  if (!clusterContainerInstances || !clusterContainerInstances.containerInstanceArns) {
+    return [];
+  }
+ 
   const containerInstances = await aws.ecs().describeContainerInstances({
     cluster: clusterArn,
     containerInstances: clusterContainerInstances.containerInstanceArns,
