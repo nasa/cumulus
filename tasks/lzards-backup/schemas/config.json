@@ -17,6 +17,10 @@
       "description": "Indicates if the task will fail when file backup request fails",
       "type": "boolean",
       "default": false
+    },
+    "lzardsProvider": {
+      "description": "lzardsProvider to use in the LZARDS backup request.   Overrides the global terraform `lzards_provider` deployment-set configuration",
+      "type": "string"
     }
   }
 }
