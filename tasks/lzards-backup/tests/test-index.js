@@ -96,6 +96,46 @@ const env = { ...process.env };
 
 const testDbName = randomString(12);
 
+async function setupDefaultPostRequestToLzardsTest(params = {}) {
+  const accessUrl = 'fakeUrl';
+  const authToken = 'fakeToken';
+  const collection = 'fakeCollectionString';
+  const file = { bucket: 'fakeBucket', key: 'fakeKey', checksumType: 'md5', checksum: 'fakeChecksum' };
+  const granuleId = 'fakeGranuleId';
+  const lzardsApi = 'fakeApi';
+  const provider = 'fakeProvider';
+  const now = new Date().getTime();
+  const tenMinutesAgo = now - (1000 * 60 * 10);
+  const createdAt = tenMinutesAgo;
+
+  process.env.lzards_api = lzardsApi;
+  process.env.lzards_provider = params.lzardsEnvProvider;
+
+  const actual = await index.postRequestToLzards({
+    accessUrl,
+    authToken,
+    collection,
+    file,
+    granuleId,
+    provider,
+    createdAt,
+    lzardsApi,
+    lzardsProvider: params.lzardsProvider,
+  });
+
+  return {
+    accessUrl,
+    actual,
+    collection,
+    granuleId,
+    provider,
+    createdAt,
+    authToken,
+    file,
+    lzardsApi,
+  };
+}
+
 test.before(async (t) => {
   process.env = {
     ...process.env,
@@ -431,51 +471,51 @@ test('getGranuleCollection throws error if version and name are not defined', as
 });
 
 test.serial('postRequestToLzards creates the expected query', async (t) => {
-  const accessUrl = 'fakeUrl';
-  const authToken = 'fakeToken';
-  const collection = 'fakeCollectionString';
-  const file = { bucket: 'fakeBucket', key: 'fakeKey', checksumType: 'md5', checksum: 'fakeChecksum' };
-  const granuleId = 'fakeGranuleId';
-  const lzardsApi = 'fakeApi';
-  const lzardsProviderName = 'fakeProvider';
-  const provider = 'fakeProvider';
-  const now = new Date().getTime();
-  const tenMinutesAgo = now - (1000 * 60 * 10);
-  const createdAt = tenMinutesAgo;
+  const lzardsEnvProvider = 'fakeProvider';
+  const setupObj = await setupDefaultPostRequestToLzardsTest({ lzardsEnvProvider });
 
-  process.env.lzards_provider = lzardsProviderName;
-  process.env.lzards_api = lzardsApi;
-
-  const actual = await index.postRequestToLzards({
-    accessUrl,
-    authToken,
-    collection,
-    file,
-    granuleId,
-    provider,
-    createdAt,
-    lzardsApi,
-    lzardsProviderName,
-  });
-
-  t.is(actual, fakePostReturn);
-  t.deepEqual(gotPostStub.getCalls()[0].args, [lzardsApi, {
+  t.is(setupObj.actual, fakePostReturn);
+  t.deepEqual(gotPostStub.getCalls()[0].args, [setupObj.lzardsApi, {
     json: {
-      provider: lzardsProviderName,
-      objectUrl: accessUrl,
-      expectedMd5Hash: file.checksum,
+      provider: lzardsEnvProvider,
+      objectUrl: setupObj.accessUrl,
+      expectedMd5Hash: setupObj.file.checksum,
       metadata: {
-        filename: `s3://${file.bucket}/${file.key}`,
-        collection,
-        granuleId,
-        provider,
-        createdAt,
+        filename: `s3://${setupObj.file.bucket}/${setupObj.file.key}`,
+        collection: setupObj.collection,
+        granuleId: setupObj.granuleId,
+        provider: setupObj.provider,
+        createdAt: setupObj.createdAt,
       },
     },
     headers: {
-      Authorization: `Bearer ${authToken}`,
+      Authorization: `Bearer ${setupObj.authToken}`,
     },
   }]);
+});
+
+test.serial('postRequestToLzards uses the correct provider override when env variable and lzardsProvider argument is set', async (t) => {
+  const lzardsProvider = 'overrideProvider';
+  const lzardsEnvProvider = 'fakeProvider';
+  const setupObj = await setupDefaultPostRequestToLzardsTest({ lzardsProvider, lzardsEnvProvider });
+
+  t.is(setupObj.actual, fakePostReturn);
+  t.deepEqual(gotPostStub.getCalls()[0].args[1].json.provider, lzardsProvider);
+});
+
+test.serial('postRequestToLzards uses the correct provider override when lzardsProvider argument is set', async (t) => {
+  const lzardsEnvProvider = 'fakeProvider';
+  const setupObj = await setupDefaultPostRequestToLzardsTest({ lzardsEnvProvider });
+
+  t.is(setupObj.actual, fakePostReturn);
+  t.deepEqual(gotPostStub.getCalls()[0].args[1].json.provider, lzardsEnvProvider);
+});
+
+test.serial('postRequestToLzards uses empty string value when neither value is set', async (t) => {
+  const setupObj = await setupDefaultPostRequestToLzardsTest();
+
+  t.is(setupObj.actual, fakePostReturn);
+  t.deepEqual(gotPostStub.getCalls()[0].args[1].json.provider, '');
 });
 
 test.serial('postRequestToLzards creates the expected query with SHA256 checksum', async (t) => {
