@@ -7,19 +7,6 @@ const awsServices = require('../services');
 const { throttleOnce } = require('../test-utils');
 const StepFunctions = require('../StepFunctions');
 
-const runWithStubbedAndThrottledSfnOperation = async (operation, response, fn) => {
-  const operationBefore = awsServices.sfn()[operation];
-  try {
-    const promise = throttleOnce(() => Promise.resolve(response));
-
-    awsServices.sfn()[operation] = () => ({ promise });
-
-    return await fn();
-  } finally {
-    awsServices.sfn()[operation] = operationBefore;
-  }
-};
-
 test.serial('getExecutionHistory() retries if a ThrottlingException occurs', async (t) => {
   const expectedResponse = { events: [{ test: 'test1' }] };
   const promise = throttleOnce(() => Promise.resolve(expectedResponse));
@@ -29,7 +16,7 @@ test.serial('getExecutionHistory() retries if a ThrottlingException occurs', asy
       getExecutionHistory: () => {
         promiseSpy();
         return promise();
-      }
+      },
     });
 
   try {
@@ -49,8 +36,8 @@ test.serial('getExecutionHistory() returns non-paginated list of events', async 
   };
   const stub = sinon.stub(awsServices, 'sfn')
     .returns({
-      getExecutionHistory: () => 
-        Promise.resolve(firstResponse)
+      getExecutionHistory: () =>
+        Promise.resolve(firstResponse),
     });
 
   try {
@@ -97,7 +84,7 @@ test.serial('getExecutionHistory() returns full, paginated list of events', asyn
         }
 
         return Promise.resolve(thirdResponse);
-      }
+      },
     });
 
   try {
@@ -121,7 +108,7 @@ test.serial('describeExecution() retries if a ThrottlingException occurs', async
       describeExecution: () => {
         promiseSpy();
         return promise();
-      }
+      },
     });
 
   try {
@@ -142,7 +129,7 @@ test.serial('listExecutions() retries if a ThrottlingException occurs', async (t
       listExecutions: () => {
         promiseSpy();
         return promise();
-      }
+      },
     });
 
   try {
@@ -163,7 +150,7 @@ test.serial('describeStateMachine() retries if a ThrottlingException occurs', as
       describeStateMachine: () => {
         promiseSpy();
         return promise();
-      }
+      },
     });
 
   try {
@@ -206,9 +193,9 @@ test('getExecutionStatus() throws exception if the execution does not exist', as
   const executionArn = 'arn:aws:states:us-east-1:123456789012:execution:MyStackIngestAndPublishGranuleStateMachine:c154d37a-98e5-4ca9-9653-35f4ae9b59d3';
 
   try {
-    const [execution, executionHistory, stateMachine] = await StepFunctions.getExecutionStatus(executionArn)
+    await StepFunctions.getExecutionStatus(executionArn);
     t.fail();
-  } catch(error) {
+  } catch (error) {
     t.pass();
   }
 });
@@ -232,14 +219,14 @@ test.serial('getExecutionStatus() retries if a ThrottlingException occurs in des
       describeStateMachine: () => {
         promiseSpy();
         return promise3();
-      }
+      },
     });
 
   try {
-    const fullExpectedResponse = { 
+    const fullExpectedResponse = {
       execution: expectedResponse,
       executionHistory: expectedResponse,
-      stateMachine: expectedResponse
+      stateMachine: expectedResponse,
     };
 
     const response = await StepFunctions.getExecutionStatus();
@@ -259,7 +246,7 @@ test.serial('getExecutionHistory() continues gracefully when sfn().getExecutionH
       getExecutionHistory: () => {
         promiseSpy();
         return promise();
-      }
+      },
     });
 
   try {
