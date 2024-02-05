@@ -277,5 +277,5 @@ test.serial('POST /replays/sqs returns an error if SQS queue does not exist', as
     .send({ queueName: 'some-queue' })
     .expect(400);
   t.false(t.context.asyncOperationStartStub.called);
-  t.true(response.body.message.includes('AWS.SimpleQueueService.NonExistentQueue'));
+  t.true(response.body.message.includes('QueueDoesNotExist'));
 });

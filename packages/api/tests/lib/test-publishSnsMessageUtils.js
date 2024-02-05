@@ -23,36 +23,33 @@ test.before((t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sns().createTopic({ Name: topicName });
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
 
   await Promise.all([
-    sqs().deleteQueue({ QueueUrl }).promise(),
-    sns().deleteTopic({ TopicArn }).promise(),
+    sqs().deleteQueue({ QueueUrl }),
+    sns().deleteTopic({ TopicArn }),
   ]);
 });
 
@@ -67,8 +64,9 @@ test.serial('publishSnsMessageByDataType() does not publish an execution SNS mes
     publishSnsMessageByDataType(newExecution, 'execution'),
     { message: 'The execution_sns_topic_arn environment variable must be set' }
   );
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-  t.is(Messages, undefined);
+
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
+  t.is(Messages.length, 0);
 });
 
 test.serial('publishSnsMessageByDataType() publishes an SNS message for execution', async (t) => {
@@ -84,7 +82,7 @@ test.serial('publishSnsMessageByDataType() publishes an SNS message for executio
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
   t.is(Messages.length, 1);
 
@@ -108,8 +106,8 @@ test.serial('publishSnsMessageByDataType() does not publish a collection SNS mes
     { message: 'The collection_sns_topic_arn environment variable must be set' }
   );
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-  t.is(Messages, undefined);
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
+  t.is(Messages.length, 0);
 });
 
 test.serial('publishSnsMessageByDataType() publishes a collection SNS message for the event type Create', async (t) => {
@@ -121,7 +119,7 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
   t.is(Messages.length, 1);
 
@@ -141,7 +139,7 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   t.is(Messages.length, 1);
 
   const snsMessage = JSON.parse(Messages[0].Body);
@@ -161,7 +159,7 @@ test.serial('publishSnsMessageByDataType() publishes a collection SNS message fo
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
   t.is(Messages.length, 1);
 
   const snsMessage = JSON.parse(Messages[0].Body);
@@ -198,7 +196,7 @@ test.serial('publishSnsMessageByDataType() publishes an SNS message for the gran
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
   t.is(Messages.length, 1);
 
@@ -221,8 +219,8 @@ test.serial('publishSnsMessageByDataType() does not publish a PDR SNS message if
     { message: 'The pdr_sns_topic_arn environment variable must be set' }
   );
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
-  t.is(Messages, undefined);
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
+  t.is(Messages.length, 0);
 });
 
 test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (t) => {
@@ -235,7 +233,7 @@ test.serial('publishSnsMessageByDataType() publishes a PDR SNS message', async (
   });
   await publishSnsMessageByDataType(newPdr, 'pdr');
 
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 }).promise();
+  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
 
   t.is(Messages.length, 1);
 
@@ -257,9 +255,9 @@ test.serial('constructCollectionSnsMessage throws if eventType is not provided',
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('constructCollectionSnsMessage throws if eventType is invalid', async (t) => {
@@ -274,9 +272,9 @@ test.serial('constructCollectionSnsMessage throws if eventType is invalid', asyn
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('constructGranuleSnsMessage throws if eventType is not provided', async (t) => {
@@ -295,9 +293,9 @@ test.serial('constructGranuleSnsMessage throws if eventType is not provided', as
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('constructGranuleSnsMessage throws if eventType is invalid', async (t) => {
@@ -317,7 +315,7 @@ test.serial('constructGranuleSnsMessage throws if eventType is invalid', async (
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });

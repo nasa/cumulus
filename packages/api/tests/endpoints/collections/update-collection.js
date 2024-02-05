@@ -90,35 +90,32 @@ test.before(async (t) => {
 });
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName }).promise();
+  const { TopicArn } = await sns().createTopic({ Name: topicName });
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
   const QueueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  }).promise();
+  });
 
-  await sns().confirmSubscription({
-    TopicArn,
-    Token: SubscriptionArn,
-  }).promise();
+  t.context.SubscriptionArn = SubscriptionArn;
 });
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
-  await sns().deleteTopic({ TopicArn }).promise();
+  await sqs().deleteQueue({ QueueUrl });
+  await sns().deleteTopic({ TopicArn });
 });
 
 test.after.always(async (t) => {
@@ -214,7 +211,7 @@ test.serial('PUT replaces an existing collection and sends an SNS message', asyn
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
   t.is(Messages.length, 1);
 
@@ -494,9 +491,9 @@ test.serial('PUT does not write to Elasticsearch or publish SNS message if writi
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('PUT does not write to PostgreSQL or publish SNS message if writing to Elasticsearch fails', async (t) => {
@@ -555,9 +552,9 @@ test.serial('PUT does not write to PostgreSQL or publish SNS message if writing 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
-  t.is(Messages, undefined);
+  t.is(Messages.length, 0);
 });
 
 test.serial('PUT throws InvalidRegexError for invalid granuleIdExtraction', async (t) => {

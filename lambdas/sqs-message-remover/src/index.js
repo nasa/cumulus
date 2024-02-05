@@ -73,7 +73,7 @@ async function updateSqsQueue(event) {
       ReceiptHandle: receiptHandle,
       VisibilityTimeout: 5,
     };
-    await sqs().changeMessageVisibility(params).promise();
+    await sqs().changeMessageVisibility(params);
   } else {
     // delete SQS message from the source queue when the workflow succeeded
     logger.debug(`remove message ${receiptHandle} from queue ${queueUrl}`);

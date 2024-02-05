@@ -92,7 +92,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach.always(
   (t) =>
-    awsServices.sqs().deleteQueue({ QueueUrl: t.context.queueUrl }).promise()
+    awsServices.sqs().deleteQueue({ QueueUrl: t.context.queueUrl })
 );
 
 test.after.always(() => manager.deleteTable());

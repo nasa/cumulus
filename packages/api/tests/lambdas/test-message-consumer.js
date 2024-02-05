@@ -7,7 +7,7 @@ const proxyquire = require('proxyquire');
 const { randomString } = require('@cumulus/common/test-utils');
 
 const sandbox = sinon.createSandbox();
-const stubPromiseReturn = { promise: () => Promise.resolve() };
+const stubPromiseReturn = Promise.resolve();
 const fetchEnabledRulesStub = sandbox.stub();
 const publishMessageStub = sandbox.stub().returns(stubPromiseReturn);
 const queueMessageStub = sandbox.stub().resolves(true);

@@ -6,19 +6,91 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration Notes
+
+From this release forward, Cumulus Core will be tested against PostgreSQL v13. Users
+should migrate their datastores to Aurora PostgreSQL 13.9+ compatible data
+stores as soon as possible after upgrading to this release.
+
+#### Database Upgrade
+
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
+upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
+
+### Breaking Changes
+
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
 ### Changed
 
-- **CUMULUS_3499
+- **CUMULUS-3444**
+  - Update `cumulus-rds-tf` module to take additional parameters in support of
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
+- **CUMULUS-3564**
+  - Update webpack configuration to explicitly disable chunking
+- **CUMULUS-2895**
+  - Updated KMS code to aws sdk v3
+- **CUMULUS-2888**
+  - Update CloudWatch Events code to AWS SDK v3
+- **CUMULUS-2893**
+  - Updated Kinesis code to AWS SDK v3
+- **CUMULUS-3555**
+  - Revert 3540, un-stubbing cmr facing tests
+  - Raise memory_size of ftpPopulateTestLambda to 512MB
+
+### Fixed
+- **CUMULUS-3580
+  - Fixed secret value for `lzards_launchpad_passphrase` which was getting the value from `var.launchpad_passphrase` instead of `var.lzards_launchpad_passphrase`.
+- **CUMULUS-3562**
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
+
+## Release TBD
+
+### Changed
+
+- **CUMULUS-2887**
+  - Updated CloudFormation code to aws sdk v3
+- **CUMULUS-2899**
+  - Updated SNS code to aws sdk v3
+- **CUMULUS_3499**
   - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
     pin expected to be changed with the resolution to CUMULUS-2900
 - **CUMULUS-2894**
   - Update Lambda code to AWS SDK v3
+- **CUMULUS-3432**
+  - Update `cumulus-rds-tf` `engine_version` to `13.9`
+  - Update `cumulus-rds-tf` `parameter_group_family` to `aurora-postgresql13`
+  - Update development/local stack postgres image version to postgres:13.9-alpine
+- **CUMULUS-2900**
+  - Update SQS code to AWS SDK v3
 - **CUMULUS-3352**
   - Update example project to use CMA v2.0.3 for integration testing
   - Update example deployment to deploy cnmResponse lambda version
     2.1.1-aplha.2-SNAPSHOT
   - Update example deployment to deploy cnmToGranule lambda
     version 1.7.0-alpha.2-SNAPSHOT
+- **CUMULUS-3501**
+  - Updated CreateReconciliationReport lambda to save report record to Elasticsearch.
+  - Created docker image cumuluss/async-operation:48 from v16.1.2, and used it as default async_operation_image.
+- **CUMULUS-3502**
+  - Upgraded localstack to v3.0.0 to support recent aws-sdk releases and update unit tests.
+- **CUMULUS-3540**
+  - stubbed cmr interfaces in integration tests allow integration tests to pass
+  - needed while cmr is failing to continue needed releases and progress
+  - this change should be reverted ASAP when cmr is working as needed again
 
 ### Fixed
 
@@ -33,8 +105,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     account for AWS character limits.
 - **CUMULUS-3479**
   - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
-- **CUMULUS-????**
-  - Fixed secret value for `lzards_launchpad_passphrase` which was getting the value from `var.launchpad_passphrase` instead of `var.lzards_launchpad_passphrase`.
+- **CUMULUS-3510**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
 
 ## [v18.1.0] 2023-10-25
 
@@ -65,6 +138,9 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 
 Users/clients that do not make use of these endpoints will not be impacted.
 
+### Breaking Changes
+- **CUMULUS-3427**
+  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 ### Notable Changes
 
 - **CUMULUS-3095**
@@ -110,7 +186,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Fixed `PUT` collection endpoint to update collection configuration in S3.
 - **CUMULUS-3427**
   - Fixed issue where some lambda and task memory sizes and timeouts were not configurable
-  - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
 - **@aws-sdk upgrade**
   - Fixed TS compilation error on aws-client package caused by @aws-sdk/client-dynamodb 3.433.0 upgrade
 
@@ -177,9 +252,38 @@ Users/clients that do not make use of these endpoints will not be impacted.
   - Removed @cumulus/api/models/schema and changed all references to
     @cumulus/api/lib/schema in docs and related models
   - Removed @cumulus/api/models/errors.js
-  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
+  - Updated API granule write logic to cause postgres schema/db write failures on an individual granule file write to result  in a thrown error/400 return instead of a 200 return and a 'silent' update of the granule to failed status.
   - Update api/lib/_writeGranule/_writeGranulefiles logic to allow for schema failures on individual granule writes via an optional method parameter in _writeGranules, and an update to the API granule write calls.
   - Updated thrown error to include information related to automatic failure behavior in addition to the stack trace.
+
+## [v16.1.3] 2024-1-15
+
+**Please note** changes in 16.1.3 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Changed
+
+- **CUMULUS_3499
+  - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
+    pin expected to be changed with the resolution to CUMULUS-2900
+
+### Fixed
+
+- **CUMULUS-3474**
+  - Fixed overriden changes to `rules.buildPayload' to restore changes from
+    ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+    account for AWS character limits.
+- **CUMULUS-3501**
+  - Updated CreateReconciliationReport lambda to save report record to Elasticsearch.
+  - Created docker image cumuluss/async-operation:48 from v16.1.2, and used it as default async_operation_image.
+- **CUMULUS-3510**
+  - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
+    in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
+- **CUMULUS-3540**
+  - stubbed cmr interfaces in integration tests allow integration tests to pass
+  - needed while cmr is failing to continue needed releases and progress
+  - this change should be reverted ASAP when cmr is working as needed again
 
 ## [v16.1.2] 2023-11-01
 
@@ -7477,7 +7581,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 [unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
-[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.2...v17.0.0
+[v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.3...v17.0.0
+[v16.1.3]: https://github.com/nasa/cumulus/compare/v16.1.2...v16.1.3
 [v16.1.2]: https://github.com/nasa/cumulus/compare/v16.1.1...v16.1.2
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
 [v16.0.0]: https://github.com/nasa/cumulus/compare/v15.0.4...v16.0.0
