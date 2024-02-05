@@ -10,7 +10,7 @@ import { S3 } from '@aws-sdk/client-s3';
 import { SQS } from '@aws-sdk/client-sqs';
 import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
 import { SNS } from '@aws-sdk/client-sns';
-import { ECS } from '@aws-sdk/client-ecs';
+import { ecs } from '@aws-sdk/client-ecs';
 import * as AWS from 'aws-sdk';
 
 import awsClient from './client';
