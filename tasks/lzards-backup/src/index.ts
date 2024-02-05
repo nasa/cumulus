@@ -164,6 +164,11 @@ export const postRequestToLzards = async (params: {
   } = params;
 
   const configuredLzardsProvider = getLzardsProviderOrDefault(lzardsProvider);
+  if (!configuredLzardsProvider) {
+    log.warn(
+      'Warning - no LZARDS provider set in the configuration object or Cumulus `lzards_provider` configuration.  Backup may fail.'
+    );
+  }
   const lzardsApiUrl = getRequiredEnvVar('lzards_api');
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
 
