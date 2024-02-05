@@ -1,10 +1,11 @@
 'use strict';
 
+import { getLaunchpadToken } from '@cumulus/launchpad-auth';
 import { LzardsApiGetRequestParameters } from './types';
 import { GetAuthTokenError } from './errors';
+
 const { getRequiredEnvVar } = require('@cumulus/common/env');
 const { getSecretString } = require('@cumulus/aws-client/SecretsManager');
-const { getLaunchpadToken } = require('@cumulus/launchpad-auth');
 const got = require('got');
 const Logger = require('@cumulus/logger');
 const isEmpty = require('lodash/isEmpty');
