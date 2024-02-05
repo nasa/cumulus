@@ -3,7 +3,6 @@
 'use strict';
 
 const { ecs, dynamodb, s3 } = require('@cumulus/aws-client/services');
-const { clusterContainerInstances } = require('@cumulus/aws-client/services');
 const groupBy = require('lodash/groupBy');
 const { getObject, parseS3Uri, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -94,8 +93,9 @@ async function listTfStateFiles() {
  * @returns {Promise<Array<string>>} - ec2 instance ids
  */
 async function listClusterEC2Instances(clusterArn) {
+  let clusterContainerInstances;
   try {
-    const clusterContainerInstances = await ecs().listContainerInstances({
+    clusterContainerInstances = await ecs().listContainerInstances({
       cluster: clusterArn,
     });
   } catch (error) {
