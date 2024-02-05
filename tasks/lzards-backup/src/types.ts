@@ -60,3 +60,8 @@ export interface GetCollectionFunctionParams {
     version: string,
   },
 }
+
+export interface BackupConfig extends HandlerConfig{
+  roleCreds: AWS.STS.AssumeRoleResponse,
+  authToken: string,
+}

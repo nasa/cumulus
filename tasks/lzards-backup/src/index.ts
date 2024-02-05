@@ -31,12 +31,13 @@ import {
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
 import {
-  MakeBackupFileRequestResult,
+  ApiGranule,
+  BackupConfig,
   HandlerEvent,
+  MakeBackupFileRequestResult,
   MessageGranule,
   MessageGranuleFilesObject,
   MessageGranuleFromStepOutput,
-  ApiGranule,
 } from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
@@ -194,13 +195,7 @@ export const postRequestToLzards = async (params: {
 };
 
 export const makeBackupFileRequest = async (params: {
-  backupConfig: { // Todo this should use a common type
-    roleCreds: AWS.STS.AssumeRoleResponse,
-    authToken: string,
-    urlType: string,
-    cloudfrontEndpoint?: string,
-    lzardsProvider?: string,
-  },
+  backupConfig: BackupConfig
   collectionId: string,
   file: MessageGranuleFilesObject,
   granuleId: string,
@@ -299,13 +294,7 @@ export const getGranuleCollection = async (params: {
 
 export const backupGranule = async (params: {
   granule: MessageGranule,
-  backupConfig: { // TODO this should just extend the defined type
-    roleCreds: AWS.STS.AssumeRoleResponse,
-    authToken: string,
-    urlType: string,
-    cloudfrontEndpoint?: string,
-    lzardsProvider?: string,
-  },
+  backupConfig: BackupConfig,
 }) => {
   let granuleCollection : CollectionRecord;
   let collectionId: string = '';
