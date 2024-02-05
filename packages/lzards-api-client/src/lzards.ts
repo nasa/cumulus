@@ -39,7 +39,6 @@ export async function getAuthToken(
  * Submit query to LZARDS
  *
  * @param {Object}   params
- * @param {string}   params.lzardsApiUri - LZARDS endpoint url
  * @param {Object}   params.searchParams -  object containing search parameters to pass to lzards
  * @param {Function} params.getAuthTokenFunction - function used to get a launchpad auth token
  * @returns {Promise<Object>} - resolves to the LZARDS return
