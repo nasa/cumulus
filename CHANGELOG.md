@@ -46,8 +46,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - Update CloudWatch Events code to AWS SDK v3
 - **CUMULUS-2893**
   - Updated Kinesis code to AWS SDK v3
-- **CUMULUS-3497**
-  - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3555**
   - Revert 3540, un-stubbing cmr facing tests
   - Raise memory_size of ftpPopulateTestLambda to 512MB
