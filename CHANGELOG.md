@@ -33,7 +33,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
-  -
+  
   - Minor refactor of `@cumulus/lzards-api-client` to:
    - Use proper ESS import for `@cumulus/launchpad-auth`
    - Update incorrect docstring
