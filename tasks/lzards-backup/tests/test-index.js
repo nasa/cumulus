@@ -494,7 +494,7 @@ test.serial('postRequestToLzards creates the expected query', async (t) => {
   }]);
 });
 
-test.serial('postRequestToLzards uses the correct provider override when env variable and lzardsProvider argument is set', async (t) => {
+test.serial('postRequestToLzards uses the correct provider override when lzards_provider ENV variable and lzardsProvider argument is set', async (t) => {
   const lzardsProvider = 'overrideProvider';
   const lzardsEnvProvider = 'fakeProvider';
   const setupObj = await setupDefaultPostRequestToLzardsTest({ lzardsProvider, lzardsEnvProvider });
@@ -503,7 +503,7 @@ test.serial('postRequestToLzards uses the correct provider override when env var
   t.deepEqual(gotPostStub.getCalls()[0].args[1].json.provider, lzardsProvider);
 });
 
-test.serial('postRequestToLzards uses the correct provider override when lzardsProvider argument is set', async (t) => {
+test.serial('postRequestToLzards uses the correct provider override when lzards_provider ENV variable is set', async (t) => {
   const lzardsEnvProvider = 'fakeProvider';
   const setupObj = await setupDefaultPostRequestToLzardsTest({ lzardsEnvProvider });
 
