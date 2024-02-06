@@ -18,14 +18,15 @@ Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
+
 ### Breaking Changes
 
+- **CUMULUS-3456**
+  - Added cumulusError field to DeadLetterArchive body to hold captured error
+  - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
-
-### Breaking Changes
-
 - **CUMULUS-2889**
   - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
     client from the `@cumulus/aws-client` package.
