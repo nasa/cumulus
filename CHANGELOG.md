@@ -31,7 +31,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 - **CUMULUS-3245**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
-    deploy-level configuration value or utilize `lzardsProvider` as part of the task
+    terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
   -
   - Minor refactor of `@cumulus/lzards-api-client` to:
