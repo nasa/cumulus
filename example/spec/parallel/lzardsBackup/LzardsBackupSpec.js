@@ -14,7 +14,7 @@ const { encodedConstructCollectionId } = require('../../helpers/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Lzards Backup Task ', () => {
-  let beforeAllFailed = false;
+  let beforeAllFailed;
   let granuleId;
   let collection;
   let config;
@@ -34,6 +34,7 @@ describe('The Lzards Backup Task ', () => {
 
   const testSetup = async (configOverride = {}) => {
     try {
+      beforeAllFailed = false;
       config = await loadConfig();
       prefix = config.stackName;
       ingestBucket = config.buckets.protected.name;
