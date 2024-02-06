@@ -40,7 +40,8 @@
       "rewritePaths": {
         "tests/": "dist/tests/"
       }
-    }
+    },
+    "failFast": true
   },
   "dependencies": {
     "@cumulus/aws-client": "18.1.0",

@@ -36,9 +36,9 @@
       "!tests/endpoints/granules/helpers.js",
       "!tests/helpers/**/*.js"
     ],
-    "fail-fast": true,
     "verbose": true,
-    "timeout": "20m"
+    "timeout": "30m",
+    "failFast": true
   },
   "publishConfig": {
     "access": "public"

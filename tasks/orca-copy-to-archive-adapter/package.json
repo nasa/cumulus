@@ -33,7 +33,8 @@
       "tests/*"
     ],
     "timeout": "2m",
-    "verbose": true
+    "verbose": true,
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

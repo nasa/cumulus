@@ -23,7 +23,8 @@
     "files": [
       "!test/fixtures/**/*"
     ],
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "keywords": [
     "GIBS",

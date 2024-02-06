@@ -38,7 +38,8 @@
       "rewritePaths": {
         "tests/": "dist/tests/"
       }
-    }
+    },
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

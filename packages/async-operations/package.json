@@ -22,7 +22,7 @@
     "files": [
       "tests/**/*.js"
     ],
-    "fail-fast": true,
+    "failFast": true,
     "verbose": true,
     "timeout": "2m"
   },
