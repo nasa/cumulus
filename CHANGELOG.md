@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
+## [v18.2.0] 2023-02-02
+
 ### Migration Notes
 
 From this release forward, Cumulus Core will be tested against PostgreSQL v13. Users
@@ -17,21 +28,6 @@ stores as soon as possible after upgrading to this release.
 Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
-
-### Breaking Changes
-
-- **CUMULUS-2890**
-  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
-    from the `@cumulus/aws-client` package.
-
-### Breaking Changes
-
-- **CUMULUS-2889**
-  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
-    client from the `@cumulus/aws-client` package.
-- **CUMULUS-2890**
-  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
-    from the `@cumulus/aws-client` package.
 
 ### Changed
 - **CUMULUS-3492**
@@ -50,16 +46,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3555**
   - Revert 3540, un-stubbing cmr facing tests
   - Raise memory_size of ftpPopulateTestLambda to 512MB
-
-### Fixed
-- **CUMULUS-3562**
-  - updated crypto-js to 4.2.0
-  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
-
-## Release TBD
-
-### Changed
-
 - **CUMULUS-2887**
   - Updated CloudFormation code to aws sdk v3
 - **CUMULUS-2899**
@@ -100,13 +86,16 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3467**
   - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
 - **CUMULUS-3474**
-  - Fixed overriden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+  - Fixed overridden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
     account for AWS character limits.
 - **CUMULUS-3479**
   - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
 - **CUMULUS-3510**
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
+- **CUMULUS-3562**
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
 
 ## [v18.1.0] 2023-10-25
 
@@ -7577,7 +7566,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.0...HEAD
+[v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
 [v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.3...v17.0.0
