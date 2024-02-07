@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
