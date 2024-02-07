@@ -121,6 +121,72 @@ const writeRecords = async ({
   });
 };
 
+function extractCollection(cumulusMessage) {
+  try {
+    return cumulusMessage.meta.collection.name;
+  } catch {
+    return null;
+  }
+}
+
+function extractGranules(cumulusMessage) {
+  try {
+    return cumulusMessage.payload.granules.map((granule) => granule.granuleId);
+  } catch {
+    return null;
+  }
+}
+
+function extractExecution(executionEvent) {
+  try {
+    return executionEvent.detail.executionArn;
+  } catch {
+    return null;
+  }
+}
+
+function extractStateMachine(executionEvent) {
+  try {
+    return executionEvent.detail.stateMachineArn;
+  } catch {
+    return null;
+  }
+}
+
+function extractLambda(executionEvent) {
+  try {
+    return executionEvent.lambda;
+  } catch {
+    return null;
+  }
+}
+
+async function formatCumulusDLQMessage(message, error) {
+  const executionEvent = parseSQSMessageBody(message);
+  const errorString = error.toString();
+  const execution = extractExecution(executionEvent) || 'none';
+  const stateMachine = extractStateMachine(executionEvent) || 'none';
+  let collection;
+  let granule;
+  try {
+    const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+    collection = extractCollection(cumulusMessage) || 'none';
+    granule = extractGranules(cumulusMessage) || 'none';
+  } catch {
+    collection = 'none';
+    granule = 'none';
+  }
+
+  return {
+    ...message,
+    error: errorString,
+    collection,
+    granule,
+    execution,
+    stateMachine,
+  };
+}
+
 const handler = async (event) => {
   const knex = await getKnexClient({
     env: {
@@ -145,13 +211,10 @@ const handler = async (event) => {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
-
+      const dlqMessage = await formatCumulusDLQMessage(message, error);
       return sendSQSMessage(
         process.env.DeadLetterQueue,
-        {
-          ...message,
-          error: error.toString(),
-        }
+        dlqMessage
       );
     }
   }));

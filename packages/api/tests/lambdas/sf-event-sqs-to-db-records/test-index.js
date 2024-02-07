@@ -386,11 +386,7 @@ test.serial('Lambda sends message to DLQ when writeRecords() throws an error', a
       WaitTimeSeconds: 10,
     });
   const dlqMessage = JSON.parse(Messages[0].Body);
-  const expectedMessage = {
-    ...sqsEvent.Records[0],
-    error: 'Error: Intentional failure: test case',
-  };
-  t.deepEqual(dlqMessage, expectedMessage);
+  t.like(dlqMessage, sqsEvent.Records[0]);
 });
 
 test.serial('Lambda returns partial batch response to reprocess messages when getCumulusMessageFromExecutionEvent() throws an error', async (t) => {
@@ -489,7 +485,47 @@ test.serial('writeRecords() discards an out of order message that has an older s
   t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
 });
 
-test.serial('Lambda captures error', async (t) => {
+test.serial('Lambda captures metadata on error', async (t) => {
+  const {
+    handlerResponse,
+    sqsEvent,
+  } = await runHandler({
+    ...t.context,
+    cumulusMessages: [
+      { ...t.context.cumulusMessage, fail: true },
+    ],
+  });
+
+  t.is(handlerResponse.batchItemFailures.length, 0);
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
+  const { Messages } = await sqs()
+    .receiveMessage({
+      QueueUrl: t.context.queues.deadLetterQueueUrl,
+      WaitTimeSeconds: 10,
+      MaxNumberOfMessages: 3,
+    });
+
+  // console.log(Messages[1]);
+  const expectedMessage0 = sqsEvent.Records[0];
+  t.deepEqual(
+    JSON.parse(Messages[0].Body),
+    {
+      ...expectedMessage0,
+      error: 'Error: Intentional failure: test case',
+      granule: [t.context.granule.granuleId],
+      execution: t.context.executionArn,
+      collection: toCamel(t.context.collection.name),
+      stateMachine: t.context.stateMachineArn,
+    }
+  );
+});
+
+test.serial('Lambda reports "none" on metadata collection failure', async (t) => {
   const {
     handlerResponse,
     sqsEvent,
@@ -511,11 +547,61 @@ test.serial('Lambda captures error', async (t) => {
     .receiveMessage({
       QueueUrl: t.context.queues.deadLetterQueueUrl,
       WaitTimeSeconds: 10,
+      MaxNumberOfMessages: 3,
     });
-  const dlqMessage = JSON.parse(Messages[0].Body);
-  const expectedMessage = {
-    ...sqsEvent.Records[0],
-    error: 'Error: Intentional failure: test case',
-  };
-  t.deepEqual(dlqMessage, expectedMessage);
+
+  // console.log(Messages[1]);
+  const expectedMessage0 = sqsEvent.Records[0];
+  t.deepEqual(
+    JSON.parse(Messages[0].Body),
+    {
+      ...expectedMessage0,
+      error: 'Error: Intentional failure: test case',
+      granule: 'none',
+      execution: t.context.executionArn,
+      collection: 'none',
+      stateMachine: t.context.stateMachineArn,
+    }
+  );
+});
+
+
+test.serial('Lambda reports "none" on metadata collection 2', async (t) => {
+  const {
+    handlerResponse,
+    sqsEvent,
+  } = await runHandler({
+    ...t.context,
+    cumulusMessages: [
+      { a: 'dssd' },
+    ],
+  });
+
+  t.is(handlerResponse.batchItemFailures.length, 0);
+  const {
+    numberOfMessagesAvailable,
+    numberOfMessagesNotVisible,
+  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
+  t.is(numberOfMessagesAvailable, 1);
+  t.is(numberOfMessagesNotVisible, 0);
+  const { Messages } = await sqs()
+    .receiveMessage({
+      QueueUrl: t.context.queues.deadLetterQueueUrl,
+      WaitTimeSeconds: 10,
+      MaxNumberOfMessages: 3,
+    });
+
+  // console.log(Messages[1]);
+  const expectedMessage0 = sqsEvent.Records[0];
+  t.deepEqual(
+    JSON.parse(Messages[0].Body),
+    {
+      ...expectedMessage0,
+      error: 'CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time',
+      granule: 'none',
+      execution: t.context.executionArn,
+      collection: 'none',
+      stateMachine: t.context.stateMachineArn,
+    }
+  );
 });
