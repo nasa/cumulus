@@ -40,10 +40,10 @@ async function handler(event) {
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
-      Body: {
+      Body: JSON.stringify({
         ...messageBody,
         cumulusError,
-      },
+      }),
     });
   }));
 }
