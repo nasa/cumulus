@@ -35,6 +35,10 @@
       "timestamp": {
         "type": "date"
       }
+    },
+    "meta": {
+      "type": "object",
+      "dynamic": false
     }
   },
   "asyncOperation": {
