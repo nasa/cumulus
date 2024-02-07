@@ -33,6 +33,7 @@ function determineIntegrationTestStackName(cb) {
     vpnguye2: 'vkn-ci',
     'Roger Kwarteng': 'rkwarten-ci',
     'Paul Pilone': 'ppilone-ci',
+    'Tim Clark': 'teclark-ci',
   };
 
   return git('.').log({ '--max-count': '1' }, (e, r) => {
