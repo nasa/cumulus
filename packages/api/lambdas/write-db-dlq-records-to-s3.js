@@ -9,13 +9,7 @@ const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 
-function determineError(sqsMessage) {
-  try {
-    return sqsMessage.error;
-  } catch {
-    return 'None';
-  }
-}
+
 
 function determineExecutionName(cumulusMessageObject) {
   try {
@@ -32,7 +26,6 @@ async function handler(event) {
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     const messageBody = parseSQSMessageBody(sqsMessage);
-    const cumulusError = determineError(sqsMessage);
     const cumulusMessageObject = await unwrapDeadLetterCumulusMessage(messageBody);
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
@@ -40,10 +33,7 @@ async function handler(event) {
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
-      Body: JSON.stringify({
-        ...messageBody,
-        cumulusError,
-      }),
+      Body: JSON.stringify(sqsMessage),
     });
   }));
 }
