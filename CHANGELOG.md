@@ -15,6 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
 
+### Changed
+
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
@@ -30,6 +35,7 @@ upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
 ### Changed
+
 - **CUMULUS-3492**
   - add teclark to select-stack.js
 - **CUMULUS-3444**
