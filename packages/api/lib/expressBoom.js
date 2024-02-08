@@ -15,36 +15,38 @@
 // TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-// This module was ported from the original express-boom project as it is
-// no longer being maintained:
+// This module was ported/refactored from the original express-boom project as it is
+// no longer being maintained: https://github.com/scottcorgan/express-boom
 
 const boom = require('@hapi/boom');
 const helperMethods = ['wrap', 'create'];
 
-module.exports = function () {
-  return function (req, res, next) {
-    if (res.boom) throw new Error('boom already exists on response object');
+module.exports = () => (req, res, next) => {
+  if (res.boom) throw new Error('boom already exists on response object');
 
-    res.boom = {};
+  res.boom = {};
 
-    Object.getOwnPropertyNames(boom).forEach(function (key) {
-      if (typeof boom[key] !== 'function') return;
+  Object.getOwnPropertyNames(boom).forEach((key) => {
+    // eslint-disable-next-line lodash/prefer-lodash-typecheck
+    if (typeof boom[key] !== 'function') return;
 
-      if (helperMethods.indexOf(key) !== -1) {
-        res.boom[key] = function () {
-          return boom[key].apply(boom, arguments);
-        };
-      } else {
-        res.boom[key] = function () {
-          var boomed = boom[key].apply(boom, arguments);
+    if (helperMethods.includes(key)) {
+      res.boom[key] = (...args) => boom[key](...args);
+    } else {
+      res.boom[key] = (...args) => {
+        const boomed = boom[key](...args);
 
-          var boomedPayloadAndAdditionalResponse = Object.assign(boomed.output.payload, arguments[1])
+        const boomedPayloadAndAdditionalResponse = Object.assign(
+          boomed.output.payload,
+          args[1]
+        );
 
-          return res.status(boomed.output.statusCode).send(boomedPayloadAndAdditionalResponse);
-        };
-      }
-    });
+        return res
+          .status(boomed.output.statusCode)
+          .send(boomedPayloadAndAdditionalResponse);
+      };
+    }
+  });
 
-    next();
-  };
+  next();
 };
