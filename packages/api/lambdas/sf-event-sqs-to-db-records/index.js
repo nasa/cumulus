@@ -163,8 +163,8 @@ const handler = async (event) => {
 
   await Promise.all(sqsMessages.map(async (message) => {
     let cumulusMessage;
-    const executionEvent = parseSQSMessageBody(message);
     try {
+      const executionEvent = parseSQSMessageBody(message);
       cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
     } catch (error) {
       log.error(`Writing message failed on getting message from execution event: ${JSON.stringify(message)}`, error);
