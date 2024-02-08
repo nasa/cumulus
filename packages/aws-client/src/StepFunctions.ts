@@ -48,8 +48,9 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
  * @kind function
  */
 export const describeExecution = retryOnThrottlingException(
-  async (params: DescribeExecutionInput): Promise<DescribeExecutionOutput> => 
-    sfn().describeExecution(params)
+  (params: DescribeExecutionInput): Promise<DescribeExecutionOutput> => {
+    return sfn().describeExecution(params);
+  }
 );
 
 /**
