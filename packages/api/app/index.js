@@ -19,7 +19,6 @@ const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
 const boom = require('../lib/expressBoom');
 
-
 const log = new Logger({ sender: '@api/index' });
 
 // Load Environment Variables
