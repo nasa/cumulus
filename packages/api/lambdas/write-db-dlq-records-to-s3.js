@@ -9,8 +9,6 @@ const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 
-
-
 function determineExecutionName(cumulusMessageObject) {
   try {
     return getMessageExecutionName(cumulusMessageObject);

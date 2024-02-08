@@ -565,7 +565,6 @@ test.serial('Lambda reports "none" on metadata collection failure', async (t) =>
   );
 });
 
-
 test.serial('Lambda reports "none" on metadata collection 2', async (t) => {
   const {
     handlerResponse,
