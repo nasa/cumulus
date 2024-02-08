@@ -517,7 +517,7 @@ test.serial('Lambda captures metadata on error', async (t) => {
     {
       ...expectedMessage0,
       error: 'Error: Intentional failure: test case',
-      granule: [t.context.granule.granuleId],
+      granules: [t.context.granule.granuleId],
       execution: t.context.executionArn,
       collection: toCamel(t.context.collection.name),
       stateMachine: t.context.stateMachineArn,
@@ -557,9 +557,9 @@ test.serial('Lambda reports "none" on metadata collection failure', async (t) =>
     {
       ...expectedMessage0,
       error: 'Error: Intentional failure: test case',
-      granule: 'none',
+      granules: 'unknown',
       execution: t.context.executionArn,
-      collection: 'none',
+      collection: 'unknown',
       stateMachine: t.context.stateMachineArn,
     }
   );
@@ -598,9 +598,9 @@ test.serial('Lambda reports "none" on metadata collection 2', async (t) => {
     {
       ...expectedMessage0,
       error: 'CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time',
-      granule: 'none',
+      granules: 'unknown',
       execution: t.context.executionArn,
-      collection: 'none',
+      collection: 'unknown',
       stateMachine: t.context.stateMachineArn,
     }
   );

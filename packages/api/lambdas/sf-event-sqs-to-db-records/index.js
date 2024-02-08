@@ -121,59 +121,30 @@ const writeRecords = async ({
   });
 };
 
-function extractCollection(cumulusMessage) {
-  try {
-    return cumulusMessage.meta.collection.name;
-  } catch {
-    return null;
-  }
-}
-
-function extractGranules(cumulusMessage) {
-  try {
-    return cumulusMessage.payload.granules.map((granule) => granule.granuleId);
-  } catch {
-    return null;
-  }
-}
-
-function extractExecution(executionEvent) {
-  try {
-    return executionEvent.detail.executionArn;
-  } catch {
-    return null;
-  }
-}
-
-function extractStateMachine(executionEvent) {
-  try {
-    return executionEvent.detail.stateMachineArn;
-  } catch {
-    return null;
-  }
-}
-
 async function formatCumulusDLQMessage(message, error) {
-  const executionEvent = parseSQSMessageBody(message);
   const errorString = error.toString();
-  const execution = extractExecution(executionEvent) || 'none';
-  const stateMachine = extractStateMachine(executionEvent) || 'none';
-  let collection;
-  let granule;
+  let executionEvent;
   try {
-    const cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
-    collection = extractCollection(cumulusMessage) || 'none';
-    granule = extractGranules(cumulusMessage) || 'none';
+    executionEvent = parseSQSMessageBody(message);
   } catch {
-    collection = 'none';
-    granule = 'none';
+    executionEvent = null;
   }
+  const execution = executionEvent?.detail?.executionArn || 'unknown';
+  const stateMachine = executionEvent?.detail?.stateMachineArn || 'unknown';
 
+  let cumulusMessage;
+  try {
+    cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+  } catch {
+    cumulusMessage = null;
+  }
+  const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
+  const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
   return {
     ...message,
     error: errorString,
     collection,
-    granule,
+    granules,
     execution,
     stateMachine,
   };
