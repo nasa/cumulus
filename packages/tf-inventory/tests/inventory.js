@@ -238,8 +238,8 @@ test('listTfResources merges resources correctly', async (t) => {
   });
 });
 
-// test('listAwsResources properly combines ec2 intsances', async (t) => {
-//   const awsResources = await listAwsResources();
+test('listAwsResources properly combines ec2 intsances', async (t) => {
+  const awsResources = await listAwsResources();
 
   t.deepEqual(awsResources,
     {
