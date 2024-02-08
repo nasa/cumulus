@@ -5,7 +5,6 @@ const hsts = require('hsts');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
-const boom = require('express-boom');
 const morgan = require('morgan');
 
 const awsServerlessExpress = require('aws-serverless-express');
@@ -18,6 +17,8 @@ const Logger = require('@cumulus/logger');
 
 const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
+const boom = require('../lib/expressBoom');
+
 
 const log = new Logger({ sender: '@api/index' });
 
