@@ -165,10 +165,10 @@ const stepFunctionMock = {
 const executionExistsMock = (arn) => {
   if ((arn.executionArn === expiredExecutionArn)
       || (arn.executionArn === expiredMissingExecutionArn)) {
-        const error = new Error();
-        error.name = 'ExecutionDoesNotExist';
-        return Promise.reject(error);
-      };
+    const error = new Error();
+    error.name = 'ExecutionDoesNotExist';
+    return Promise.reject(error);
+  }
 
   return Promise.resolve(true);
 };
