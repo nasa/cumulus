@@ -153,14 +153,6 @@ function extractStateMachine(executionEvent) {
   }
 }
 
-function extractLambda(executionEvent) {
-  try {
-    return executionEvent.lambda;
-  } catch {
-    return null;
-  }
-}
-
 async function formatCumulusDLQMessage(message, error) {
   const executionEvent = parseSQSMessageBody(message);
   const errorString = error.toString();
