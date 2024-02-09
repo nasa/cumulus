@@ -14,6 +14,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
+    
+### Changed
+
+- **CUMULUS-3245**
+  - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
+    terraform configuration value or utilize `lzardsProvider` as part of the task
+    workflow configuration
+  - Minor refactor of `@cumulus/lzards-api-client` to:
+   - Use proper ECMAScript import for `@cumulus/launchpad-auth`
+   - Update incorrect docstring
 
 ### Changed
 
@@ -33,6 +43,15 @@ stores as soon as possible after upgrading to this release.
 Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
+
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
 
 ### Changed
 
