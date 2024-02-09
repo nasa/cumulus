@@ -11,6 +11,9 @@
     "migrations",
     "models"
   ],
+  "exclude": [
+    "dist/**"
+  ],
   "statements": 90.0,
   "functions": 88.0,
   "branches": 81.0,
