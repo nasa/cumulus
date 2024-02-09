@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3497**
+  - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
   - Added suppport for additional kex algorithms in the sftp-client.
 
