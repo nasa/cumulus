@@ -25,6 +25,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
    - Update incorrect docstring
 
+### Changed
+
+- **CUMULUS-3497**
+  - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
