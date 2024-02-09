@@ -31,18 +31,21 @@ import {
 } from './errors';
 import { isFulfilledPromise } from './typeGuards';
 import {
-  MakeBackupFileRequestResult,
+  ApiGranule,
+  BackupConfig,
   HandlerEvent,
+  MakeBackupFileRequestResult,
   MessageGranule,
   MessageGranuleFilesObject,
   MessageGranuleFromStepOutput,
-  ApiGranule,
 } from './types';
 
 const log = new Logger({ sender: '@cumulus/lzards-backup' });
 
 const S3_LINK_EXPIRY_SECONDS_DEFAULT = 3600;
 const CREDS_EXPIRY_SECONDS = S3_LINK_EXPIRY_SECONDS_DEFAULT;
+
+const getLzardsProviderOrDefault = (lzardsProvider: string | undefined) => lzardsProvider || process.env.lzards_provider || '';
 
 export const generateCloudfrontUrl = async (params: {
   Bucket: string,
@@ -146,7 +149,8 @@ export const postRequestToLzards = async (params: {
   file: MessageGranuleFilesObject,
   granuleId: string,
   provider: string,
-  createdAt: number
+  createdAt: number,
+  lzardsProvider?: string,
 }) => {
   const {
     accessUrl,
@@ -156,18 +160,23 @@ export const postRequestToLzards = async (params: {
     granuleId,
     provider,
     createdAt,
+    lzardsProvider,
   } = params;
 
-  const lzardsProvider = getRequiredEnvVar('lzards_provider');
+  const configuredLzardsProvider = getLzardsProviderOrDefault(lzardsProvider);
+  if (!configuredLzardsProvider) {
+    log.warn(
+      'Warning - no LZARDS provider set in the configuration object or Cumulus `lzards_provider` configuration.  Backup may fail.'
+    );
+  }
   const lzardsApiUrl = getRequiredEnvVar('lzards_api');
-
   const checksumConfig = setLzardsChecksumQueryType(file, granuleId);
 
   try {
     return await got.post(lzardsApiUrl,
       {
         json: {
-          provider: lzardsProvider,
+          provider: configuredLzardsProvider,
           objectUrl: accessUrl,
           metadata: {
             filename: buildS3Uri(file.bucket, file.key),
@@ -191,12 +200,7 @@ export const postRequestToLzards = async (params: {
 };
 
 export const makeBackupFileRequest = async (params: {
-  backupConfig: {
-    roleCreds: AWS.STS.AssumeRoleResponse,
-    authToken: string,
-    urlType: string,
-    cloudfrontEndpoint?: string,
-  },
+  backupConfig: BackupConfig
   collectionId: string,
   file: MessageGranuleFilesObject,
   granuleId: string,
@@ -229,6 +233,7 @@ export const makeBackupFileRequest = async (params: {
     const { statusCode, body } = await lzardsPostMethod({
       accessUrl,
       authToken,
+      lzardsProvider: backupConfig.lzardsProvider,
       collection: collectionId,
       file,
       granuleId,
@@ -294,12 +299,7 @@ export const getGranuleCollection = async (params: {
 
 export const backupGranule = async (params: {
   granule: MessageGranule,
-  backupConfig: {
-    roleCreds: AWS.STS.AssumeRoleResponse,
-    authToken: string,
-    urlType: string,
-    cloudfrontEndpoint?: string,
-  },
+  backupConfig: BackupConfig,
 }) => {
   let granuleCollection : CollectionRecord;
   let collectionId: string = '';
