@@ -43,7 +43,11 @@ export class SftpClient {
       port: get(config, 'port', 22),
       algorithms: {
         kex: {
-          append: ['diffie-hellman-group14-sha1'],
+          append: [
+            'diffie-hellman-group-exchange-sha1',
+            'diffie-hellman-group14-sha1',
+            'diffie-hellman-group1-sha1',
+          ],
           prepend: [],
           remove: [],
         },
