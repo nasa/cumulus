@@ -227,20 +227,25 @@ test('deploymentReport returns information about the deployment', async (t) => {
 test.serial('listClusterEC2Instances returns lists of instance ids', async (t) => {
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
-      describeContainerInstances: () => ({
-        containerInstances: [
-          {
-            ec2InstanceId: 'i-12345',
-          },
-          {
-            ec2InstanceId: 'i-23456',
-          },
-        ],
-      }),
-      listContainerInstances: () => ({
-        containerInstanceArns: ['arn1'],
-      }),
+      describeContainerInstances: () => (
+        Promise.resolve({
+          containerInstances: [
+            {
+              ec2InstanceId: 'i-12345',
+            },
+            {
+              ec2InstanceId: 'i-23456',
+            },
+          ],
+        })
+      ),
+      listContainerInstances: () => (
+        Promise.resolve({
+          containerInstanceArns: ['arn1'],
+        })
+      ),
     });
+
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, ['i-12345', 'i-23456']);
 
@@ -250,9 +255,11 @@ test.serial('listClusterEC2Instances returns lists of instance ids', async (t) =
 test.serial('listClusterEC2Instances returns empty list if no container instances', async (t) => {
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
-      listContainerInstances: () => ({
-        containerInstanceArns: null,
-      }),
+      listContainerInstances: () => (
+        Promise.resolve({
+          containerInstanceArns: null,
+        })
+      ),
     });
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
@@ -264,7 +271,9 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
 test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
   const ecsStub = sinon.stub(aws, 'ecs')
     .returns({
-      listContainerInstances: () => (null),
+      listContainerInstances: () => (
+        Promise.resolve(null)
+      ),
     });
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');

@@ -49,9 +49,10 @@ test.before(() => {
 
   ecsStub = sinon.stub(aws, 'ecs')
     .returns({
-      listClusters: () => ({
-        clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
-      }),
+      listClusters: () => (
+        Promise.resolve({
+          clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
+        })),
     });
 
   ec2Stub = sinon.stub(aws, 'ec2')
