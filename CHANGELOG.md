@@ -6,41 +6,40 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
+### Changed
+
+- **CUMULUS-3497**
+  - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
+
+## [v18.2.0] 2023-02-02
+
 ### Migration Notes
 
 From this release forward, Cumulus Core will be tested against PostgreSQL v13. Users
 should migrate their datastores to Aurora PostgreSQL 13.9+ compatible data
 stores as soon as possible after upgrading to this release.
 
-#### Engine Upgrade
+#### Database Upgrade
 
-Users utilizing the `cumulus-rds-tf` module will have upgraded/had their
-database clusters forcibly upgraded at the next maintenance window after February 29, 2024.
-
-To upgrade your engine version, we recommend a manual (outside of
-terraform) upgrade. This will result in the cluster being upgraded with a
-manually set parameter group not managed by terraform.
-
-There are several options that AWS provides for upgrading your cluster engine,
-such as using the AWS console or CLI. For more information, visit their
-[documentation](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/aurora-serverless.modifying.html#aurora-serverless.modifying.upgrade).
-
-Once you have manually upgraded your database engine and the cluster is now on
-version 13.12+, to continue using the `cumulus-rds-tf` module *once upgraded*,
-update following module configuration values if set, or allow their defaults to
-be utilized:
-
-```terraform
-parameter_group_family = "aurora-postgresql13"
-engine_version = 13.12
-```
-
-**Please Note**: When you apply this update, the original PostgreSQL v11
-parameter group will be removed, and recreated using PG13 defaults/configured
-terraform values and it will also update the database cluster to use the new configuration.
+Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
+upgrade
+instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
 ### Changed
-
+- **CUMULUS-3492**
+  - add teclark to select-stack.js
+- **CUMULUS-3444**
+  - Update `cumulus-rds-tf` module to take additional parameters in support of
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2891**
@@ -54,16 +53,6 @@ terraform values and it will also update the database cluster to use the new con
 - **CUMULUS-3555**
   - Revert 3540, un-stubbing cmr facing tests
   - Raise memory_size of ftpPopulateTestLambda to 512MB
-
-### Fixed
-- **CUMULUS-3562**
-  - updated crypto-js to 4.2.0
-  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
-
-## Release TBD
-
-### Changed
-
 - **CUMULUS-2887**
   - Updated CloudFormation code to aws sdk v3
 - **CUMULUS-2899**
@@ -104,13 +93,16 @@ terraform values and it will also update the database cluster to use the new con
 - **CUMULUS-3467**
   - Added `childWorkflowMeta` to `QueueWorkflow` task configuration
 - **CUMULUS-3474**
-  - Fixed overriden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
+  - Fixed overridden changes to `rules.buildPayload' to restore changes from ticket `CUMULUS-2969` which limited the definition object to `name` and `arn` to
     account for AWS character limits.
 - **CUMULUS-3479**
   - Fixed typo in s3-replicator resource declaration where `var.lambda_memory_size` is supposed to be `var.lambda_memory_sizes`
 - **CUMULUS-3510**
   - Fixed `@cumulus/api` `validateAndUpdateSqsRule` method to allow 0 retries and 0 visibilityTimeout
     in rule's meta.  This fix from CUMULUS-2863 was not in release 16 and later.
+- **CUMULUS-3562**
+  - updated crypto-js to 4.2.0
+  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
 
 ## [v18.1.0] 2023-10-25
 
@@ -7581,7 +7573,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 
 ## [v1.0.0] - 2018-02-23
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v18.1.0...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v18.2.0...HEAD
+[v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
 [v17.0.0]: https://github.com/nasa/cumulus/compare/v16.1.3...v17.0.0
