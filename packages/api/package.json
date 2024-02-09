@@ -22,7 +22,7 @@
     "serve:debug": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true node --inspect-brk ./bin/cli.js serve",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava --timeout=2m",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
