@@ -7,6 +7,7 @@ export interface HandlerConfig {
   urlType: 's3' | 'cloudfront',
   cloudfrontEndpoint?: string,
   failTaskWhenFileBackupFail?: boolean,
+  lzardsProvider?: string,
 }
 
 export interface HandlerEvent {
@@ -58,4 +59,9 @@ export interface GetCollectionFunctionParams {
     name: string,
     version: string,
   },
+}
+
+export interface BackupConfig extends HandlerConfig{
+  roleCreds: AWS.STS.AssumeRoleResponse,
+  authToken: string,
 }
