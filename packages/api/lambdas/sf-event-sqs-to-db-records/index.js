@@ -163,7 +163,7 @@ const handler = async (event) => {
 
   await Promise.all(sqsMessages.map(async (message) => {
     let cumulusMessage;
-    Logger.log(message);
+    Logger.info(message);
     const executionEvent = parseSQSMessageBody(message);
     try {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
