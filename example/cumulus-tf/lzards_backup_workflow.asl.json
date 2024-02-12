@@ -10,6 +10,7 @@
             "FullMessage": true
           },
           "task_config": {
+            "lzardsProvider": "CUMULUS_INTEGRATION_TESTS",
             "cumulus_message": {
               "outputs": [
                 {
