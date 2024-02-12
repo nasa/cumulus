@@ -1,0 +1,269 @@
+{
+    "Collection": {
+        "ShortName": "MOD14A1",
+        "VersionId": "006",
+        "InsertTime": "2010-10-13T07:39:40.473Z",
+        "LastUpdate": "2016-01-20T09:38:21.508Z",
+        "LongName": "Not provided",
+        "DataSetId": "MODIS/Terra Thermal Anomalies/Fire Daily L3 Global 1km SIN Grid V006",
+        "Description": "MODIS/Terra Thermal Anomalies/Fire Daily L3 Global 1km SIN Grid",
+        "Orderable": "true",
+        "Visible": "true",
+        "RevisionDate": "2016-11-23T16:50:00.000Z",
+        "SuggestedUsage": "Science Research",
+        "ProcessingCenter": "NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS",
+        "ProcessingLevelId": "Level 3",
+        "ProcessingLevelDescription": "Sensor Measurements",
+        "ArchiveCenter": "DEVSEED",
+        "CollectionState": "IN WORK",
+        "RestrictionComment": "None",
+        "Temporal": {
+            "TemporalRangeType": "Continuous Range",
+            "PrecisionOfSeconds": "1",
+            "EndsAtPresentFlag": "true",
+            "RangeDateTime": {
+                "BeginningDateTime": "1999-12-18T00:00:00.000Z"
+            }
+        },
+        "Contacts": {
+            "Contact": [
+                {
+                    "Role": "PROCESSOR",
+                    "OrganizationName": "NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS",
+                    "OrganizationAddresses": {
+                        "Address": {
+                            "StreetAddress": "Not provided",
+                            "City": "Not provided",
+                            "StateProvince": "Not provided",
+                            "PostalCode": "Not provided",
+                            "Country": "US"
+                        }
+                    }
+                },
+                {
+                    "Role": "ARCHIVER",
+                    "OrganizationName": "DEVSEED"
+                },
+                {
+                    "Role": "DISTRIBUTOR",
+                    "HoursOfService": "M-F, 8 a.m. to 4 p.m. Central Time",
+                    "Instructions": "None",
+                    "OrganizationName": "DEVSEED",
+                    "OrganizationAddresses": {
+                        "Address": {
+                            "StreetAddress": "U.S. Geological Survey, Earth Resources Observation and Science (EROS) Center",
+                            "City": "Sioux Falls",
+                            "StateProvince": "Not provided",
+                            "PostalCode": "57198",
+                            "Country": "US"
+                        }
+                    },
+                    "OrganizationPhones": {
+                        "Phone": [
+                            {
+                                "Number": "605-594-6116",
+                                "Type": "Telephone"
+                            },
+                            {
+                                "Number": "605-594-6963",
+                                "Type": "Fax"
+                            }
+                        ]
+                    },
+                    "OrganizationEmails": {
+                        "Email": "lpdaac@usgs.gov"
+                    }
+                },
+                {
+                    "Role": "PROCESSOR",
+                    "Instructions": "Contact for data content concerns",
+                    "OrganizationName": "NASA/GSFC/SED/ESD/HBSL/BISB/MODAPS",
+                    "OrganizationAddresses": {
+                        "Address": {
+                            "StreetAddress": "NASA/GSFC Code 922",
+                            "City": "GREENBELT",
+                            "StateProvince": "Not provided",
+                            "PostalCode": "20771",
+                            "Country": "US"
+                        }
+                    },
+                    "OrganizationPhones": {
+                        "Phone": {
+                            "Number": "301-614-5515",
+                            "Type": "Telephone"
+                        }
+                    },
+                    "OrganizationEmails": {
+                        "Email": "Edward.J.Masuoka@nasa.gov"
+                    }
+                }
+            ]
+        },
+        "ScienceKeywords": {
+            "ScienceKeyword": [
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "BIOSPHERE",
+                    "TermKeyword": "ECOLOGICAL DYNAMICS",
+                    "VariableLevel1Keyword": {
+                        "Value": "FIRE OCCURRENCE"
+                    }
+                },
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "LAND SURFACE",
+                    "TermKeyword": "SURFACE RADIATIVE PROPERTIES",
+                    "VariableLevel1Keyword": {
+                        "Value": "THERMAL PROPERTIES"
+                    }
+                },
+                {
+                    "CategoryKeyword": "EARTH SCIENCE",
+                    "TopicKeyword": "LAND SURFACE",
+                    "TermKeyword": "SURFACE THERMAL PROPERTIES",
+                    "VariableLevel1Keyword": {
+                        "Value": "LAND SURFACE TEMPERATURE"
+                    }
+                }
+            ]
+        },
+        "Platforms": {
+            "Platform": {
+                "ShortName": "Terra",
+                "LongName": "Earth Observing System, TERRA (AM-1)",
+                "Type": "Earth Observation Satellites",
+                "Characteristics": {
+                    "Characteristic": {
+                        "Name": "EquatorCrossingTime",
+                        "Description": "Local time of the equator crossing and direction (ascending or descending)",
+                        "DataType": "varchar",
+                        "Unit": "Local Mean Time",
+                        "Value": "10:30, descending"
+                    }
+                },
+                "Instruments": {
+                    "Instrument": {
+                        "ShortName": "MODIS",
+                        "LongName": "Moderate-Resolution Imaging Spectroradiometer",
+                        "Technique": "Imaging Spectroradiometry",
+                        "Sensors": {
+                            "Sensor": {
+                                "ShortName": "MODIS",
+                                "LongName": "Cross-track Scanning Radiometer",
+                                "Technique": "Radiometry"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "AdditionalAttributes": {
+            "AdditionalAttribute": [
+                {
+                    "Name": "FIREPIXELS",
+                    "DataType": "INT",
+                    "Description": "The number of pixels identified as fire within the granule"
+                },
+                {
+                    "Name": "HORIZONTALTILENUMBER",
+                    "DataType": "INT",
+                    "Description": "Horizontal tile number of a grid, which increases from left to right."
+                },
+                {
+                    "Name": "QAPERCENTGOODQUALITY",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels with good quality"
+                },
+                {
+                    "Name": "QAPERCENTNOTPRODUCEDCLOUD",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels under cloud"
+                },
+                {
+                    "Name": "QAPERCENTNOTPRODUCEDOTHER",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels not produced due to some reason other than cloud"
+                },
+                {
+                    "Name": "QAPERCENTOTHERQUALITY",
+                    "DataType": "INT",
+                    "Description": "Percent of pixels with not so good quality"
+                },
+                {
+                    "Name": "VERTICALTILENUMBER",
+                    "DataType": "INT",
+                    "Description": "Vertical tile number of a grid, which increases from top to bottom."
+                },
+                {
+                    "Name": "NUMBERGRIDCELLSCONTAININGFIRE",
+                    "DataType": "INT",
+                    "Description": "The number of L3 grid cells in this L3 land tile that have been identified by the L3 MODIS fire detection algorithm as containing fire."
+                },
+                {
+                    "Name": "PROCESSVERSION",
+                    "DataType": "STRING",
+                    "Description": "Version of the process software that generated the product."
+                },
+                {
+                    "Name": "TileID",
+                    "DataType": "INT",
+                    "Description": "MODIS Land tile identification number which represents a geographical area on the surface of the Earth bounded by latitude and longitude coordinates."
+                },
+                {
+                    "Name": "identifier_product_doi",
+                    "DataType": "STRING",
+                    "Description": "Digital object identifier that uniquely identifies this data product",
+                    "Value": "10.5067/MODIS/MOD14A1.006"
+                },
+                {
+                    "Name": "identifier_product_doi_authority",
+                    "DataType": "STRING",
+                    "Description": "URL of the digital object identifier resolving authority",
+                    "Value": "http://dx.doi.org"
+                }
+            ]
+        },
+        "TwoDCoordinateSystems": {
+            "TwoDCoordinateSystem": {
+                "TwoDCoordinateSystemName": "MODIS Tile SIN",
+                "Coordinate1": {
+                    "MinimumValue": "0.0",
+                    "MaximumValue": "35.0"
+                },
+                "Coordinate2": {
+                    "MinimumValue": "0.0",
+                    "MaximumValue": "17.0"
+                }
+            }
+        },
+        "OnlineResources": {
+            "OnlineResource": [
+                {
+                    "URL": "http://landweb.nascom.nasa.gov/cgi-bin/QA_WWW/qaFlagPage.cgi?sat=terra&ver=C6",
+                    "Type": "PublicationURL : VIEW RELATED INFORMATION"
+                },
+                {
+                    "URL": "http://dx.doi.org/10.5067/MODIS/MOD14A1.006",
+                    "Description": "Data set landing page at the DEVSEED",
+                    "Type": "PublicationURL : VIEW RELATED INFORMATION"
+                }
+            ]
+        },
+        "Spatial": {
+            "SpatialCoverageType": "HORIZONTAL",
+            "HorizontalSpatialDomain": {
+                "ZoneIdentifier": "Universal Transverse Mercator (UTM)",
+                "Geometry": {
+                    "CoordinateSystem": "CARTESIAN",
+                    "BoundingRectangle": {
+                        "WestBoundingCoordinate": "-180.0",
+                        "NorthBoundingCoordinate": "90.0",
+                        "EastBoundingCoordinate": "180.0",
+                        "SouthBoundingCoordinate": "-90.0"
+                    }
+                }
+            },
+            "GranuleSpatialRepresentation": "GEODETIC"
+        }
+    }
+}

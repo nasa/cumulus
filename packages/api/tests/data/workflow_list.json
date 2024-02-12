@@ -1,0 +1,62 @@
+[
+  {
+    "name": "HelloWorldWorkflow",
+    "arn": "arn:aws:states:stateMachine:HelloWorldWorkflow1234",
+    "definition": {
+      "Comment": "Greets the day",
+      "StartAt": "StartStatus",
+      "States": {
+        "StartStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "Next": "StopStatus"
+        },
+        "StopStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "End": true
+        }
+      }
+    }
+  },
+  {
+    "name": "HelloAgainWorldWorkflow",
+    "arn": "arn:aws:states:stateMachine:HelloAgainWorldWorkflow1234",
+    "definition": {
+      "Comment": "Greets the world a second time",
+      "StartAt": "StartStatus",
+      "States": {
+        "StartStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "Next": "StopStatus"
+        },
+        "StopStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "End": true
+        }
+      }
+    }
+  },
+  {
+    "name": "GoodbyeWorldWorkflow",
+    "arn": "arn:aws:states:stateMachine:GoodbyeWorldWorkflow1234",
+    "definition": {
+      "Comment": "Bids the world farewell",
+      "StartAt": "StartStatus",
+      "States": {
+        "StartStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "Next": "StopStatus"
+        },
+        "StopStatus": {
+          "Type": "Task",
+          "Resource": "${SfSnsReportLambdaAliasOutput}",
+          "End": true
+        }
+      }
+    }
+  }
+]
