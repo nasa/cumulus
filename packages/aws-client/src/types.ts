@@ -12,7 +12,6 @@ import { S3 } from '@aws-sdk/client-s3';
 import { ECS } from '@aws-sdk/client-ecs';
 import { SNS } from '@aws-sdk/client-sns';
 import { SQS } from '@aws-sdk/client-sqs';
-
 export type AWSClientTypes = 
     APIGatewayClient |
     DynamoDB |
