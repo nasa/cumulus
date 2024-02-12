@@ -11,6 +11,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added cumulusError field to DeadLetterArchive body to hold captured error
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
 
+### Changed
+
+- **CUMULUS-3245**
+  - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
+    terraform configuration value or utilize `lzardsProvider` as part of the task
+    workflow configuration
+  - Minor refactor of `@cumulus/lzards-api-client` to:
+   - Use proper ECMAScript import for `@cumulus/launchpad-auth`
+   - Update incorrect docstring
+
+### Changed
+- **CUMULUS-3497**
+
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
@@ -25,12 +39,8 @@ Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
-
 ### Breaking Changes
 
-- **CUMULUS-2890**
-  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
-    from the `@cumulus/aws-client` package.
 - **CUMULUS-2889**
   - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
     client from the `@cumulus/aws-client` package.
@@ -85,6 +95,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - stubbed cmr interfaces in integration tests allow integration tests to pass
   - needed while cmr is failing to continue needed releases and progress
   - this change should be reverted ASAP when cmr is working as needed again
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 ### Fixed
 
