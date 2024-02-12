@@ -71,6 +71,6 @@
   },
   "devDependencies": {
     "@aws-sdk/client-ecs": "^3.447.0",
-    "@cumulus/test-data": "18.1.0"
+    "@cumulus/test-data": "18.2.0"
   }
 }
