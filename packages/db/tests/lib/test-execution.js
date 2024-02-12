@@ -801,6 +801,7 @@ test('getWorkflowNameIntersectFromGranuleIds() returns correct values for single
 
   const results = await getWorkflowNameIntersectFromGranuleIds(knex, [granuleCumulusId]);
 
+  console.log("**** results.sort", results.sort());
   t.deepEqual(results.sort(), ['fakeWorkflow', 'fakeWorkflow2']);
 });
 
