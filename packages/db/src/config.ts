@@ -4,11 +4,12 @@ import { Knex } from 'knex';
 import { envUtils } from '@cumulus/common';
 
 export const localStackConnectionEnv = {
-  PG_HOST: 'localhost',
-  PG_USER: 'postgres',
-  PG_PASSWORD: 'password',
   PG_DATABASE: 'postgres',
+  PG_HOST: 'localhost',
+  PG_PASSWORD: 'password',
   PG_PORT: '5432',
+  PG_USER: 'postgres',
+  DISABLE_PG_SSL: 'true',
 };
 
 export const isKnexDebugEnabled = (
@@ -33,23 +34,35 @@ export const getSecretConnectionConfig = async (
     }
   });
   return {
-    host: dbAccessMeta.host,
-    user: dbAccessMeta.username,
-    password: dbAccessMeta.password,
     database: dbAccessMeta.database,
+    host: dbAccessMeta.host,
+    password: dbAccessMeta.password,
     port: dbAccessMeta.port ?? 5432,
+    ssl: dbAccessMeta.disableSSL ? undefined : { rejectUnauthorized: false },
+    user: dbAccessMeta.username,
   };
 };
 
 export const getConnectionConfigEnv = (
   env: NodeJS.ProcessEnv
-): Knex.PgConnectionConfig => ({
-  host: envUtils.getRequiredEnvVar('PG_HOST', env),
-  user: envUtils.getRequiredEnvVar('PG_USER', env),
-  password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
-  database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
-  port: Number.parseInt(env.PG_PORT ?? '5432', 10),
-});
+): Knex.PgConnectionConfig => {
+  const connectionConfigEnv: {
+    host: string,
+    user: string,
+    password: string,
+    database:string,
+    port: number,
+    ssl?: { rejectUnauthorized: boolean },
+  } = {
+    host: envUtils.getRequiredEnvVar('PG_HOST', env),
+    user: envUtils.getRequiredEnvVar('PG_USER', env),
+    password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
+    database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
+    port: Number.parseInt(env.PG_PORT ?? '5432', 10),
+    ssl: env.DISABLE_PG_SSL === 'true' ? undefined : { rejectUnauthorized: false },
+  };
+  return connectionConfigEnv;
+};
 
 /**
  * Return configuration to make a database connection.
