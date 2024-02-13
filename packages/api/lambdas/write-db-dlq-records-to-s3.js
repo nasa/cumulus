@@ -57,7 +57,7 @@ async function handler(event) {
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
-    const workedMessage = formatCumulusDLQMessage(sqsMessage);
+    const workedMessage = await formatCumulusDLQMessage(sqsMessage);
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
