@@ -1,6 +1,6 @@
 'use strict';
 
-const { ecs, dynamodb } = require('@aws-sdk/client-ecs');
+//const { ecs, dynamodb } = require('@aws-sdk/client-ecs');
 const test = require('ava');
 const rewire = require('rewire');
 const fs = require('fs');
