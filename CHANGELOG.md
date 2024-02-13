@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     
 ### Changed
 
+- **CUMULUS-2898**
+  - Update Step Functions code to AWS SDK v3
 - **CUMULUS-3245**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
@@ -29,6 +31,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
 
 ## [v18.2.0] 2023-02-02
 
@@ -55,8 +59,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 
 ### Changed
 
-- **CUMULUS-2898**
-  - Update Step Functions code to AWS SDK v3
 - **CUMULUS-3492**
   - add teclark to select-stack.js
 - **CUMULUS-3444**
