@@ -13,7 +13,7 @@ const extractDeploymentName = stateFile.__get__('extractDeploymentName');
 const listClusterEC2Instances = stateFile.__get__('listClusterEC2Instances');
 
 const DynamoDb = require('@cumulus/aws-client/DynamoDb');
-//const aws = require('@cumulus/aws-client/services');
+
 const { promiseS3Upload, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 
 const { randomString } = require('@cumulus/common/test-utils');
@@ -226,64 +226,53 @@ test('deploymentReport returns information about the deployment', async (t) => {
 });
 
 test.serial('listClusterEC2Instances returns lists of instance ids', async (t) => {
-  // const ecsStub = sinon.stub(aws, 'ecs')
-  const listClustersStub = sinon.stub(ecs, 'listClusters')
-    .returns({
-      describeContainerInstances: () => (
-        Promise.resolve({
-          containerInstances: [
-            {
-              ec2InstanceId: 'i-12345',
-            },
-            {
-              ec2InstanceId: 'i-23456',
-            },
-          ],
-        })
-      ),
-      listContainerInstances: () => (
-        Promise.resolve({
-          containerInstanceArns: ['arn1'],
-        })
-      ),
-    });
+  const listContainerStub = sinon.stub(ecs(), 'describeContainerInstances').returns((
+    Promise.resolve({
+      containerInstances: [
+        {
+          ec2InstanceId: 'i-12345',
+        },
+        {
+          ec2InstanceId: 'i-23456',
+        },
+      ],
+    })
+  ));
+
+  const describeContainerStub = sinon.stub(ecs(), 'listContainerInstances').returns((
+    Promise.resolve({
+      containerInstanceArns: ['arn1'],
+    })
+  ));
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, ['i-12345', 'i-23456']);
-  listClustersStub.restore();
-  // ecsStub.restore();
+  listContainerStub.restore();
+  describeContainerStub.restore();
 });
 
 test.serial('listClusterEC2Instances returns empty list if no container instances', async (t) => {
-  // const ecsStub = sinon.stub(aws, 'ecs')
-  const listClustersStub = sinon.stub(ecs, 'listClusters')
-    .returns({
-      listContainerInstances: () => (
-        Promise.resolve({
-          containerInstanceArns: null,
-        })
-      ),
-    });
+  const listClustersStub = sinon.stub(ecs(), 'listContainerInstances')
+    .returns((
+      Promise.resolve({
+        containerInstanceArns: null,
+      })
+    ));
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, []);
 
-  // ecsStub.restore();
   listClustersStub.restore();
 });
 
 test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
-  // const ecsStub = sinon.stub(aws, 'ecs')
-  const listClustersStub = sinon.stub(ecs, 'listClusters')
-    .returns({
-      listContainerInstances: () => (
-        Promise.resolve(null)
-      ),
-    });
+  const listClustersStub = sinon.stub(ecs(), 'listContainerInstances')
+    .returns((
+      Promise.resolve(null)
+    ));
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, []);
 
-  // ecsStub.restore();
   listClustersStub.restore();
 });

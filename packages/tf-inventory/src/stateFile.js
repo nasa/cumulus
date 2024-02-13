@@ -2,7 +2,7 @@
 
 'use strict';
 
-const aws = require('@cumulus/aws-client/services');
+const { ecs, dynamodb, s3 } = require('@cumulus/aws-client/services');
 const groupBy = require('lodash/groupBy');
 const { getObject, parseS3Uri, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
@@ -18,7 +18,7 @@ const DEFAULT_DEPLOYMENT_REGEX = /.*\/(.*)\/(data-persistence.*|cumulus.*)\/terr
  */
 async function getStateFilesFromTable(tableName) {
   try {
-    const tableInfo = await aws.dynamodb().describeTable({ TableName: tableName });
+    const tableInfo = await dynamodb().describeTable({ TableName: tableName });
 
     // Check that the table holds state files and actually has items
     if (tableInfo.Table.AttributeDefinitions[0].AttributeName === 'LockID'
@@ -60,7 +60,7 @@ async function getStateFilesFromTable(tableName) {
  * the form bucket/key
  */
 async function listTfStateFiles() {
-  let tables = await aws.dynamodb().listTables({});
+  let tables = await dynamodb().listTables({});
   let tablesComplete = false;
   let stateFiles = [];
 
@@ -75,7 +75,7 @@ async function listTfStateFiles() {
     if (!tables.LastEvaluatedTableName) {
       tablesComplete = true;
     } else {
-      tables = await aws.dynamodb().listTables({
+      tables = await dynamodb().listTables({
         ExclusiveStartTableName: tables.LastEvaluatedTableName,
       });
     }
@@ -95,7 +95,7 @@ async function listTfStateFiles() {
 async function listClusterEC2Instances(clusterArn) {
   let clusterContainerInstances;
   try {
-    clusterContainerInstances = await aws.ecs().listContainerInstances({
+    clusterContainerInstances = await ecs().listContainerInstances({
       cluster: clusterArn,
     });
   } catch (error) {
@@ -107,7 +107,7 @@ async function listClusterEC2Instances(clusterArn) {
     return [];
   }
 
-  const containerInstances = await aws.ecs().describeContainerInstances({
+  const containerInstances = await ecs().describeContainerInstances({
     cluster: clusterArn,
     containerInstances: clusterContainerInstances.containerInstanceArns,
   });
@@ -146,7 +146,7 @@ async function getStateFileDeploymentInfo(file, regex = DEFAULT_DEPLOYMENT_REGEX
   const s3ObjectParams = parseS3Uri(`s3://${file}`);
 
   try {
-    const stateFile = await getObject(aws.s3(), s3ObjectParams);
+    const stateFile = await getObject(s3(), s3ObjectParams);
 
     const stateFileBody = JSON.parse(
       await getObjectStreamContents(stateFile.Body)
