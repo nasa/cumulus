@@ -1,6 +1,5 @@
 'use strict';
 
-const { ecs } = require('@aws-sdk/client-ecs');
 const test = require('ava');
 const rewire = require('rewire');
 const fs = require('fs');
@@ -227,7 +226,7 @@ test('deploymentReport returns information about the deployment', async (t) => {
 
 test.serial('listClusterEC2Instances returns lists of instance ids', async (t) => {
   // const ecsStub = sinon.stub(aws, 'ecs')
-  const listClustersStub = sinon.stub(ecs, 'listClusters')
+  const listClustersStub = sinon.stub('ecs', 'listClusters')
     .returns({
       describeContainerInstances: () => (
         Promise.resolve({
@@ -256,7 +255,7 @@ test.serial('listClusterEC2Instances returns lists of instance ids', async (t) =
 
 test.serial('listClusterEC2Instances returns empty list if no container instances', async (t) => {
   // const ecsStub = sinon.stub(aws, 'ecs')
-  const listClustersStub = sinon.stub(ecs, 'listClusters')
+  const listClustersStub = sinon.stub('ecs', 'listClusters')
     .returns({
       listContainerInstances: () => (
         Promise.resolve({
@@ -274,7 +273,7 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
 
 test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
   // const ecsStub = sinon.stub(aws, 'ecs')
-  const listClustersStub = sinon.stub(ecs, 'listClusters')
+  const listClustersStub = sinon.stub('ecs', 'listClusters')
     .returns({
       listContainerInstances: () => (
         Promise.resolve(null)
