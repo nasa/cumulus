@@ -1,6 +1,6 @@
 'use strict';
 
-//const { ecs, dynamodb } = require('@aws-sdk/client-ecs');
+const { ecs } = require('@aws-sdk/client-ecs');
 const test = require('ava');
 const rewire = require('rewire');
 const fs = require('fs');
@@ -33,7 +33,7 @@ function createTable(tableName, attributeDefs, keySchema) {
 test('getStateFilesFromTable returns empty array if it is not a table containing state files', async (t) => {
   const tableName = randomString();
   await createTable(tableName, [{ AttributeName: 'bucket', AttributeType: 'S' }], [{ AttributeName: 'bucket', KeyType: 'HASH' }]);
-  await dynamodb().putItem({
+  await aws.dynamodb().putItem({
     TableName: tableName,
     Item: { bucket: { S: 'bucket' } },
   });
@@ -41,7 +41,7 @@ test('getStateFilesFromTable returns empty array if it is not a table containing
 
   t.deepEqual([], stateFiles);
 
-  await dynamodb().deleteTable({ TableName: tableName });
+  await aws.dynamodb().deleteTable({ TableName: tableName });
 });
 
 test('getStateFilesFromTable returns empty array if there are no items in the table', async (t) => {
