@@ -1,5 +1,6 @@
 'use strict';
 
+// const { ecs, ec2, es } = require('@cumulus/aws-client/services');
 const aws = require('@cumulus/aws-client/services');
 
 const mergeWith = require('lodash/mergeWith');
