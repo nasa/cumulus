@@ -121,35 +121,6 @@ const writeRecords = async ({
   });
 };
 
-async function formatCumulusDLQMessage(message, error) {
-  const errorString = error.toString();
-  let executionEvent;
-  try {
-    executionEvent = parseSQSMessageBody(message);
-  } catch {
-    executionEvent = null;
-  }
-  const execution = executionEvent?.detail?.executionArn || 'unknown';
-  const stateMachine = executionEvent?.detail?.stateMachineArn || 'unknown';
-
-  let cumulusMessage;
-  try {
-    cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
-  } catch {
-    cumulusMessage = null;
-  }
-  const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
-  const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
-  return {
-    ...message,
-    error: errorString,
-    collection,
-    granules,
-    execution,
-    stateMachine,
-  };
-}
-
 const handler = async (event) => {
   const knex = await getKnexClient({
     env: {
@@ -175,10 +146,12 @@ const handler = async (event) => {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
-      const dlqMessage = await formatCumulusDLQMessage(message, error);
       return sendSQSMessage(
         process.env.DeadLetterQueue,
-        dlqMessage
+        {
+          ...message,
+          error: error.toString(),
+        }
       );
     }
   }));

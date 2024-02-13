@@ -510,7 +510,6 @@ test.serial('Lambda captures metadata on error', async (t) => {
       MaxNumberOfMessages: 3,
     });
 
-  // console.log(Messages[1]);
   const expectedMessage0 = sqsEvent.Records[0];
   t.deepEqual(
     JSON.parse(Messages[0].Body),
@@ -550,7 +549,6 @@ test.serial('Lambda reports "none" on metadata collection failure', async (t) =>
       MaxNumberOfMessages: 3,
     });
 
-  // console.log(Messages[1]);
   const expectedMessage0 = sqsEvent.Records[0];
   t.deepEqual(
     JSON.parse(Messages[0].Body),
@@ -576,6 +574,7 @@ test.serial('Lambda reports "none" on metadata collection 2', async (t) => {
     ],
   });
 
+
   t.is(handlerResponse.batchItemFailures.length, 0);
   const {
     numberOfMessagesAvailable,
@@ -590,7 +589,6 @@ test.serial('Lambda reports "none" on metadata collection 2', async (t) => {
       MaxNumberOfMessages: 3,
     });
 
-  // console.log(Messages[1]);
   const expectedMessage0 = sqsEvent.Records[0];
   t.deepEqual(
     JSON.parse(Messages[0].Body),

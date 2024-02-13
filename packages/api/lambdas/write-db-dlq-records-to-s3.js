@@ -11,7 +11,6 @@ const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterM
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 
 async function formatCumulusDLQMessage(message) {
-
   let executionEvent;
   try {
     executionEvent = parseSQSMessageBody(message);
