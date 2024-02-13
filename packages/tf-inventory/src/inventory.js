@@ -1,4 +1,5 @@
 'use strict';
+
 const { ecs, ec2, es } = require('@cumulus/aws-client/services');
 // const aws = require('@cumulus/aws-client/services');
 
@@ -75,12 +76,12 @@ async function listTfResources(stateFiles) {
  * and ec2Instances
  */
 async function listAwsResources() {
-  const ecsClusters = await aws.ecs().listClusters();
-  let ec2Instances = await aws.ec2().describeInstances().promise();
+  const ecsClusters = await ecs().listClusters();
+  let ec2Instances = await ec2().describeInstances().promise();
   ec2Instances = [].concat(...ec2Instances.Reservations.map((e) => e.Instances));
   ec2Instances = ec2Instances.map((inst) => inst.InstanceId);
 
-  let esDomainNames = await aws.es().listDomainNames().promise();
+  let esDomainNames = await es().listDomainNames().promise();
   esDomainNames = esDomainNames.DomainNames.map((e) => e.DomainName);
 
   return {

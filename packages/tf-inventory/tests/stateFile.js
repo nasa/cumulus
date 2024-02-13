@@ -1,5 +1,6 @@
 'use strict';
 
+const { ecs, dynamodb } = require('@aws-sdk/client-ecs');
 const test = require('ava');
 const rewire = require('rewire');
 const fs = require('fs');
@@ -32,7 +33,7 @@ function createTable(tableName, attributeDefs, keySchema) {
 test('getStateFilesFromTable returns empty array if it is not a table containing state files', async (t) => {
   const tableName = randomString();
   await createTable(tableName, [{ AttributeName: 'bucket', AttributeType: 'S' }], [{ AttributeName: 'bucket', KeyType: 'HASH' }]);
-  await aws.dynamodb().putItem({
+  await dynamodb().putItem({
     TableName: tableName,
     Item: { bucket: { S: 'bucket' } },
   });
@@ -40,7 +41,7 @@ test('getStateFilesFromTable returns empty array if it is not a table containing
 
   t.deepEqual([], stateFiles);
 
-  await aws.dynamodb().deleteTable({ TableName: tableName });
+  await dynamodb().deleteTable({ TableName: tableName });
 });
 
 test('getStateFilesFromTable returns empty array if there are no items in the table', async (t) => {
@@ -249,8 +250,8 @@ test.serial('listClusterEC2Instances returns lists of instance ids', async (t) =
 
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, ['i-12345', 'i-23456']);
-
-  ecsStub.restore();
+  listClustersStub.restore();
+  // ecsStub.restore();
 });
 
 test.serial('listClusterEC2Instances returns empty list if no container instances', async (t) => {
@@ -267,7 +268,8 @@ test.serial('listClusterEC2Instances returns empty list if no container instance
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, []);
 
-  ecsStub.restore();
+  // ecsStub.restore();
+  listClustersStub.restore();
 });
 
 test.serial('listClusterEC2Instances returns empty list if ContainerInstances returns null', async (t) => {
@@ -282,5 +284,6 @@ test.serial('listClusterEC2Instances returns empty list if ContainerInstances re
   const ec2Instances = await listClusterEC2Instances('clusterArn');
   t.deepEqual(ec2Instances, []);
 
-  ecsStub.restore();
+  // ecsStub.restore();
+  listClustersStub.restore();
 });
