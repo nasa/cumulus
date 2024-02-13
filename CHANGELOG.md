@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
 
 ### Fixed
 
@@ -62,6 +64,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     from the `@cumulus/aws-client` package.
 
 ### Changed
+
 - **CUMULUS-3492**
   - add teclark to select-stack.js
 - **CUMULUS-3444**
