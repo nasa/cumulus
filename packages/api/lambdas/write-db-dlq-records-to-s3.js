@@ -8,6 +8,35 @@ const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
+const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
+
+async function formatCumulusDLQMessage(message) {
+
+  let executionEvent;
+  try {
+    executionEvent = parseSQSMessageBody(message);
+  } catch {
+    executionEvent = null;
+  }
+  const execution = executionEvent?.detail?.executionArn || 'unknown';
+  const stateMachine = executionEvent?.detail?.stateMachineArn || 'unknown';
+
+  let cumulusMessage;
+  try {
+    cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+  } catch {
+    cumulusMessage = null;
+  }
+  const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
+  const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
+  return {
+    ...message,
+    collection,
+    granules,
+    execution,
+    stateMachine,
+  };
+}
 
 function determineExecutionName(cumulusMessageObject) {
   try {
@@ -28,10 +57,11 @@ async function handler(event) {
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
+    const workedMessage = formatCumulusDLQMessage(sqsMessage);
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
-      Body: JSON.stringify(sqsMessage),
+      Body: JSON.stringify(workedMessage),
     });
   }));
 }
