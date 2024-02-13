@@ -1,6 +1,6 @@
 'use strict';
 
-const { dynamodb, ecs, s3 } = require('@cumulus/aws-client');
+const { dynamodb, ecs, s3 } = require('@cumulus/aws-client/services');
 const test = require('ava');
 const rewire = require('rewire');
 const fs = require('fs');
