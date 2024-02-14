@@ -33,12 +33,14 @@ export const getSecretConnectionConfig = async (
       throw new Error(`AWS Secret ${SecretId} is missing required key '${key}'`);
     }
   });
+  const rejectUnauthorized = dbAccessMeta.rejectUnauthorized !== 'false';
+
   return {
     database: dbAccessMeta.database,
     host: dbAccessMeta.host,
     password: dbAccessMeta.password,
     port: dbAccessMeta.port ?? 5432,
-    ssl: dbAccessMeta.disableSSL ? undefined : { rejectUnauthorized: false },
+    ssl: dbAccessMeta.disableSSL ? undefined : { rejectUnauthorized },
     user: dbAccessMeta.username,
   };
 };
@@ -46,6 +48,7 @@ export const getSecretConnectionConfig = async (
 export const getConnectionConfigEnv = (
   env: NodeJS.ProcessEnv
 ): Knex.PgConnectionConfig => {
+  const rejectUnauthorized = env.rejectUnauthorized !== 'false';
   const connectionConfigEnv: {
     host: string,
     user: string,
@@ -59,7 +62,7 @@ export const getConnectionConfigEnv = (
     password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
     database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
     port: Number.parseInt(env.PG_PORT ?? '5432', 10),
-    ssl: env.DISABLE_PG_SSL === 'true' ? undefined : { rejectUnauthorized: false },
+    ssl: env.DISABLE_PG_SSL === 'true' ? undefined : { rejectUnauthorized },
   };
   return connectionConfigEnv;
 };
