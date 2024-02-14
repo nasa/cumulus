@@ -10,7 +10,7 @@ const { getMessageExecutionName } = require('@cumulus/message/Executions');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 
-async function formatCumulusDLQMessage(message) {
+async function formatCumulusDLAObject(message) {
   let executionEvent;
   try {
     executionEvent = parseSQSMessageBody(message);
@@ -26,6 +26,7 @@ async function formatCumulusDLQMessage(message) {
   } catch {
     cumulusMessage = null;
   }
+
   const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
   const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
   return {
@@ -56,7 +57,7 @@ async function handler(event) {
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
-    const workedMessage = await formatCumulusDLQMessage(sqsMessage);
+    const workedMessage = await formatCumulusDLAObject(sqsMessage);
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
@@ -69,4 +70,5 @@ module.exports = {
   determineExecutionName,
   handler,
   unwrapDeadLetterCumulusMessage,
+  formatCumulusDLAObject,
 };

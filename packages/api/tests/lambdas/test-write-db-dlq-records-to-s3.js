@@ -9,6 +9,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   determineExecutionName,
   handler,
+  formatCumulusDLAObject
 } = require('../../lambdas/write-db-dlq-records-to-s3.js');
 
 test.before(async (t) => {
@@ -109,14 +110,49 @@ test.serial('write-db-dlq-records-to-s3 throws error if system bucket is not def
 
 test('determineExecutionName returns execution name if it exists in cumulus_meta', (t) => {
   const executionName = 'someExecutionName';
-  t.is(determineExecutionName({
-    cumulus_meta: {
-      execution_name: executionName,
-    },
-  }),
-  executionName);
+  t.is(
+    determineExecutionName({
+      cumulus_meta: {
+        execution_name: executionName,
+      },
+    }),
+    executionName
+  );
 });
 
 test('determineExecutionName returns "unknown" if getExecutionName throws error', (t) => {
   t.is(determineExecutionName({}), 'unknown');
+});
+
+test('formatCumulusDLAObject returns message intact', async (t) => {
+  const message = {
+    a: 'b',
+  };
+  t.like(await formatCumulusDLAObject(message), message);
+});
+
+test('formatCumulusDLAObject returns details as found', async (t) => {
+  const message = {
+    body: JSON.stringify({
+      detail: {
+        status: 'SUCCEEDED',
+        output: JSON.stringify({
+          meta: { collection: { name: 'aName' } },
+          payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+        }),
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+      },
+    }),
+  };
+  t.deepEqual(
+    await formatCumulusDLAObject(message),
+    {
+      ...message,
+      collection: 'aName',
+      granules: ['a', 'b'],
+      execution: 'execArn',
+      stateMachine: 'SMArn',
+    }
+  );
 });

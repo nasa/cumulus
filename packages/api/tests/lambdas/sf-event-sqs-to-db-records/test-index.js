@@ -485,7 +485,7 @@ test.serial('writeRecords() discards an out of order message that has an older s
   t.is('completed', (await pdrPgModel.get(testKnex, { name: pdrName })).status);
 });
 
-test.serial('Lambda captures metadata on error', async (t) => {
+test.serial('Lambda captures error type on error', async (t) => {
   const {
     handlerResponse,
     sqsEvent,
@@ -510,95 +510,12 @@ test.serial('Lambda captures metadata on error', async (t) => {
       MaxNumberOfMessages: 3,
     });
 
-  const expectedMessage0 = sqsEvent.Records[0];
+  const expectedMessage = {
+    ...sqsEvent.Records[0],
+    error: 'Error: Intentional failure: test case',
+  };
   t.deepEqual(
     JSON.parse(Messages[0].Body),
-    {
-      ...expectedMessage0,
-      error: 'Error: Intentional failure: test case',
-      granules: [t.context.granule.granuleId],
-      execution: t.context.executionArn,
-      collection: toCamel(t.context.collection.name),
-      stateMachine: t.context.stateMachineArn,
-    }
-  );
-});
-
-test.serial('Lambda reports "none" on metadata collection failure', async (t) => {
-  const {
-    handlerResponse,
-    sqsEvent,
-  } = await runHandler({
-    ...t.context,
-    cumulusMessages: [
-      { fail: true },
-    ],
-  });
-
-  t.is(handlerResponse.batchItemFailures.length, 0);
-  const {
-    numberOfMessagesAvailable,
-    numberOfMessagesNotVisible,
-  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
-  t.is(numberOfMessagesAvailable, 1);
-  t.is(numberOfMessagesNotVisible, 0);
-  const { Messages } = await sqs()
-    .receiveMessage({
-      QueueUrl: t.context.queues.deadLetterQueueUrl,
-      WaitTimeSeconds: 10,
-      MaxNumberOfMessages: 3,
-    });
-
-  const expectedMessage0 = sqsEvent.Records[0];
-  t.deepEqual(
-    JSON.parse(Messages[0].Body),
-    {
-      ...expectedMessage0,
-      error: 'Error: Intentional failure: test case',
-      granules: 'unknown',
-      execution: t.context.executionArn,
-      collection: 'unknown',
-      stateMachine: t.context.stateMachineArn,
-    }
-  );
-});
-
-test.serial('Lambda reports "none" on metadata collection 2', async (t) => {
-  const {
-    handlerResponse,
-    sqsEvent,
-  } = await runHandler({
-    ...t.context,
-    cumulusMessages: [
-      { a: 'dssd' },
-    ],
-  });
-
-
-  t.is(handlerResponse.batchItemFailures.length, 0);
-  const {
-    numberOfMessagesAvailable,
-    numberOfMessagesNotVisible,
-  } = await getSqsQueueMessageCounts(t.context.queues.deadLetterQueueUrl);
-  t.is(numberOfMessagesAvailable, 1);
-  t.is(numberOfMessagesNotVisible, 0);
-  const { Messages } = await sqs()
-    .receiveMessage({
-      QueueUrl: t.context.queues.deadLetterQueueUrl,
-      WaitTimeSeconds: 10,
-      MaxNumberOfMessages: 3,
-    });
-
-  const expectedMessage0 = sqsEvent.Records[0];
-  t.deepEqual(
-    JSON.parse(Messages[0].Body),
-    {
-      ...expectedMessage0,
-      error: 'CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time',
-      granules: 'unknown',
-      execution: t.context.executionArn,
-      collection: 'unknown',
-      stateMachine: t.context.stateMachineArn,
-    }
+    expectedMessage
   );
 });
