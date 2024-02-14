@@ -55,7 +55,7 @@ describe('when a bad record is ingested', () => {
       failedMessageS3Key
     );
   });
-  it('is sent to the DLA', async () => {
+  it('is sent to the DLA and processed to have expected metadata fields', async () => {
     if (!beforeAllSucceeded) fail('beforeAll() failed');
     console.log(`Waiting for the creation of failed message for execution ${executionName}`);
     const prefix = `${stackName}/dead-letter-archive/sqs/${executionName}`;
