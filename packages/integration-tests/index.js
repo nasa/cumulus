@@ -97,7 +97,7 @@ async function waitForAsyncOperationStatus({
  * @returns {string|undefined} - the cluster ARN or undefined if not found
  */
 async function getClusterArn(stackName) {
-  const { clusterArns } = await ecs().listClusters().promise();
+  const { clusterArns } = await ecs().listClusters();
 
   const matchingArns = clusterArns.filter((arn) => arn.includes(`${stackName}-CumulusECSCluster`));
 

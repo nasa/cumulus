@@ -5,6 +5,7 @@ const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { CloudWatchEvents } = require('@aws-sdk/client-cloudwatch-events');
 const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
+const { ECS } = require('@aws-sdk/client-ecs');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
@@ -141,17 +142,25 @@ test('dynamodbstreams() service defaults to localstack in test mode', async (t) 
   );
 });
 
-test('ecs() service defaults to localstack in test mode', (t) => {
+test('ecs() service defaults to localstack in test mode', async (t) => {
   const ecs = services.ecs();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.ECS);
+  } = localStackAwsClientOptions(ECS);
   t.deepEqual(
-    ecs.config.credentials,
+    await ecs.config.credentials(),
     credentials
   );
-  t.is(ecs.config.endpoint, endpoint);
+  const ecsEndpoint = await ecs.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    ecsEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('ec2() service defaults to localstack in test mode', (t) => {
