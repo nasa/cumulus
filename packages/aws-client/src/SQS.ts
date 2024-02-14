@@ -156,7 +156,7 @@ export const parseSQSMessageBody = (
  * Delete a given SQS message from a given queue.
  *
  * @param {string} queueUrl - url of the SQS queue
- * @param {integer} receiptHandle - the unique identifier of the sQS message
+ * @param {integer} receiptHandle - the unique identifier of the SQS message
  * @returns {Promise} an AWS SQS response
  */
 export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) =>
