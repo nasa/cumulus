@@ -5,8 +5,6 @@ const test = require('ava');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const lodash = require('lodash');
-const SQS = require('@cumulus/aws-client/SQS');
 const {
   determineExecutionName,
   handler,
@@ -132,31 +130,212 @@ test('formatCumulusDLAObject returns input message intact', async (t) => {
   t.like(await formatCumulusDLAObject(message), message);
 });
 
-test('formatCumulusDLAObject returns details as found moved to top layer', async (t) => {
+test('formatCumulusDLAObject returns details: collection, granules, execution, and stateMachine as found moved to top layer', async (t) => {
   const message = {
-    body: JSON.stringify({
-      error: 'anError',
-      detail: {
-        status: 'SUCCEEDED',
-        output: JSON.stringify({
-          meta: { collection: { name: 'aName' } },
-          payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-        }),
-        executionArn: 'execArn',
-        stateMachineArn: 'SMArn',
-      },
-    }),
+    error: 'anError',
+    detail: {
+      status: 'SUCCEEDED',
+      output: JSON.stringify({
+        meta: { collection: { name: 'aName' } },
+        payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+      }),
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+    },
   };
-  const messageBody = SQS.parseSQSMessageBody(message);
   t.deepEqual(
-    await formatCumulusDLAObject(messageBody),
+    await formatCumulusDLAObject(message),
     {
-      ...messageBody,
-      error: 'anError',
+      ...message,
       collection: 'aName',
       granules: ['a', 'b'],
       execution: 'execArn',
       stateMachine: 'SMArn',
     }
   );
+});
+
+test('formatCumulusDLAObject returns unknown for details: collection, granules, execution, and stateMachine when not found', async (t) => {
+  const messages = [
+    {
+      mangled: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      },
+      expected: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+        collection: 'aName',
+        granules: ['a', 'b'],
+        execution: 'execArn',
+        stateMachine: 'SMArn',
+      },
+    }, {
+      mangled: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      },
+      expected: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+        collection: 'unknown',
+        granules: ['a', 'b'],
+        execution: 'execArn',
+        stateMachine: 'SMArn',
+      },
+    }, {
+      mangled: {
+        error: 'anError',
+        detail: {
+          status: 'RUNNING',
+          input: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ a: 'b' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      },
+      expected: {
+        error: 'anError',
+        detail: {
+          status: 'RUNNING',
+          input: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ a: 'b' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+        collection: 'aName',
+        granules: ['unknown', 'b'],
+        execution: 'execArn',
+        stateMachine: 'SMArn',
+      },
+    }, {
+      mangled: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      },
+      expected: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+        collection: 'aName',
+        granules: ['b'],
+        execution: 'execArn',
+        stateMachine: 'SMArn',
+      },
+    }, {
+      mangled: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: 'a' },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      },
+      expected: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: 'a' },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+        collection: 'aName',
+        granules: 'unknown',
+        execution: 'execArn',
+        stateMachine: 'SMArn',
+      },
+    }, {
+      mangled: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+        },
+      },
+      expected: {
+        error: 'anError',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+        },
+        collection: 'aName',
+        granules: ['a', 'b'],
+        execution: 'execArn',
+        stateMachine: 'unknown',
+      },
+    },
+  ];
+  for (let i = 0; i < messages.length; i += 1) {
+    t.deepEqual(
+      // eslint-disable-next-line no-await-in-loop
+      await formatCumulusDLAObject(messages[i].mangled),
+      messages[i].expected
+    );
+  }
 });

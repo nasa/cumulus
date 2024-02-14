@@ -36,7 +36,12 @@ async function formatCumulusDLAObject(messageBody) {
   }
 
   const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
-  const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
+  let granules;
+  if (!cumulusMessage?.payload?.granules?.map) {
+    granules = 'unknown';
+  } else {
+    granules = cumulusMessage.payload.granules.map((granule) => granule?.granuleId || 'unknown');
+  }
   return {
     ...messageBody,
     collection,
