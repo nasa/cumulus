@@ -16,6 +16,7 @@ declare -a param_list=(
   "bamboo_PDR_NODE_NAME_PROVIDER_BUCKET"
   "bamboo_PUBLISH_FLAG"
   "bamboo_REPORT_BUILD_STATUS"
+  "bamboo_RUN_ALL_UNITS"
   "bamboo_SECRET_AWS_ACCESS_KEY_ID"
   "bamboo_SECRET_AWS_ACCOUNT_ID"
   "bamboo_SECRET_AWS_DEFAULT_REGION"
