@@ -9,7 +9,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   determineExecutionName,
   handler,
-  formatCumulusDLAObject
+  formatCumulusDLAObject,
 } = require('../../lambdas/write-db-dlq-records-to-s3.js');
 
 test.before(async (t) => {
