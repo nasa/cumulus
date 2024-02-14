@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 - **CUMULUS-3456**
-  - Added cumulusError field to DeadLetterArchive body to hold captured error
+  - Added stateMachine, collection, execution, granules, error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
 
 ### Changed
