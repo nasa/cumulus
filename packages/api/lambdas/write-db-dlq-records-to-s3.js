@@ -10,14 +10,30 @@ const { getMessageExecutionName } = require('@cumulus/message/Executions');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 
-async function formatCumulusDLAObject(message) {
+/**
+ * Reformat object with key attributes at top level.
+ *
+ * @param {Object} sqsMessage - questionably formatted sqs message
+ * @param {string} sqsMessage.body - data carrying message body
+ * @param {string} sqsMessage.error - optional report of cumulus error that triggered DLQ
+ * @returns {Object} - message packaged with metadata or 'unknown' where metadata not found
+ * {
+ *   error: <errorString | 'unknown'>
+ *   collection: <collectionName | 'unknown'>
+ *   granules: <[granuleIds, ...] | 'unknown'>
+ *   execution: <executionArn | 'unknown'>
+ *   stateMachine: <stateMachineArn | 'unknown'>
+ *   ...originalAttributes
+ * }
+ */
+async function formatCumulusDLAObject(sqsMessage) {
+  const error = sqsMessage?.error || 'unknown';
   let executionEvent;
   try {
-    executionEvent = parseSQSMessageBody(message);
+    executionEvent = parseSQSMessageBody(sqsMessage);
   } catch {
     executionEvent = null;
   }
-  const error = message.error || 'unknown';
   const execution = executionEvent?.detail?.executionArn || 'unknown';
   const stateMachine = executionEvent?.detail?.stateMachineArn || 'unknown';
 
@@ -31,7 +47,7 @@ async function formatCumulusDLAObject(message) {
   const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
   const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
   return {
-    ...message,
+    ...sqsMessage,
     error,
     collection,
     granules,
@@ -39,7 +55,12 @@ async function formatCumulusDLAObject(message) {
     stateMachine,
   };
 }
-
+/**
+ * Determine execution name from body
+ *
+ * @param {Object} cumulusMessageObject - cumulus message
+ * @returns {string} - <executionName | 'unknown'>
+ */
 function determineExecutionName(cumulusMessageObject) {
   try {
     return getMessageExecutionName(cumulusMessageObject);
@@ -49,6 +70,13 @@ function determineExecutionName(cumulusMessageObject) {
   }
 }
 
+/**
+ * Lambda handler for saving DLQ reports to DLA in s3
+ *
+ * @param {Object} event - Input payload object
+ * @param {Array<SQSRecord | AWS.SQS.Message>} [event.Records] set of  sqsMessages
+ * @returns {Promise<void>}
+ */
 async function handler(event) {
   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
