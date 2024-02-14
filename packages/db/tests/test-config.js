@@ -62,7 +62,13 @@ const badSecretsManagerStub = {
 
 test('getKnexConfig returns an expected default configuration object', async (t) => {
   const result = await getKnexConfig({ env: dbConnectionConfigEnv });
-  const connectionConfig = { ...dbConnectionConfig, user: 'postgres' };
+  const connectionConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+    ssl: {
+      rejectUnauthorized: true,
+    },
+  };
   delete connectionConfig.username;
   const expectedConfig = {
     acquireConnectionTimeout: 60000,
@@ -123,6 +129,9 @@ test('getSecretConnectionConfig returns a Knex.PgConnectionConfig object', async
   const expectedConfig = {
     ...dbConnectionConfig,
     user: 'postgres',
+    ssl: {
+      rejectUnauthorized: true,
+    },
   };
   delete expectedConfig.username;
   t.deepEqual(result, expectedConfig);
@@ -157,6 +166,9 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
     password: 'PG_PASSWORD',
     database: 'PG_DATABASE',
     port: 5435,
+    ssl: {
+      rejectUnauthorized: true,
+    },
   });
 });
 
@@ -174,6 +186,9 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
     password: 'PG_PASSWORD',
     database: 'PG_DATABASE',
     port: 5432,
+    ssl: {
+      rejectUnauthorized: true,
+    },
   });
 });
 
@@ -186,6 +201,9 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
   const expectedConfig = {
     ...dbConnectionConfig,
     user: 'postgres',
+    ssl: {
+      rejectUnauthorized: true,
+    },
   };
   delete expectedConfig.username;
 
@@ -203,6 +221,9 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
     ...dbConnectionConfig,
     user: 'postgres',
     port: 5432,
+    ssl: {
+      rejectUnauthorized: true,
+    },
   };
   delete expectedConfig.username;
 
@@ -228,6 +249,9 @@ test('getConnectionConfig returns the expected configuration when using environm
       password: 'PG_PASSWORD',
       database: 'PG_DATABASE',
       port: 5435,
+      ssl: {
+        rejectUnauthorized: true,
+      },
     }
   );
 });
