@@ -5,7 +5,8 @@ const test = require('ava');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-
+const lodash = require('lodash');
+const SQS = require('@cumulus/aws-client/SQS');
 const {
   determineExecutionName,
   handler,
@@ -124,17 +125,17 @@ test('determineExecutionName returns "unknown" if getExecutionName throws error'
   t.is(determineExecutionName({}), 'unknown');
 });
 
-test('formatCumulusDLAObject returns message intact', async (t) => {
+test('formatCumulusDLAObject returns input message intact', async (t) => {
   const message = {
     a: 'b',
   };
   t.like(await formatCumulusDLAObject(message), message);
 });
 
-test('formatCumulusDLAObject returns details as found', async (t) => {
+test('formatCumulusDLAObject returns details as found moved to top layer', async (t) => {
   const message = {
-    error: 'anError',
     body: JSON.stringify({
+      error: 'anError',
       detail: {
         status: 'SUCCEEDED',
         output: JSON.stringify({
@@ -146,10 +147,11 @@ test('formatCumulusDLAObject returns details as found', async (t) => {
       },
     }),
   };
+  const messageBody = SQS.parseSQSMessageBody(message)
   t.deepEqual(
-    await formatCumulusDLAObject(message),
+    await formatCumulusDLAObject(messageBody),
     {
-      ...message,
+      ...messageBody,
       error: 'anError',
       collection: 'aName',
       granules: ['a', 'b'],

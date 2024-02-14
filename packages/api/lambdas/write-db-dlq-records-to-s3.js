@@ -13,9 +13,7 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {Object} sqsMessage - questionably formatted sqs message
- * @param {string} sqsMessage.body - data carrying message body
- * @param {string} sqsMessage.error - optional report of cumulus error that triggered DLQ
+ * @param {EventBridgeEvent} messageBody - event bridge event as defined in aws-lambda
  * @returns {Object} - message packaged with metadata or 'unknown' where metadata not found
  * {
  *   error: <errorString | 'unknown'>
@@ -26,20 +24,13 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
  *   ...originalAttributes
  * }
  */
-async function formatCumulusDLAObject(sqsMessage) {
-  const error = sqsMessage?.error || 'unknown';
-  let executionEvent;
-  try {
-    executionEvent = parseSQSMessageBody(sqsMessage);
-  } catch {
-    executionEvent = null;
-  }
-  const execution = executionEvent?.detail?.executionArn || 'unknown';
-  const stateMachine = executionEvent?.detail?.stateMachineArn || 'unknown';
+async function formatCumulusDLAObject(messageBody) {
+  const execution = messageBody?.detail?.executionArn || 'unknown';
+  const stateMachine = messageBody?.detail?.stateMachineArn || 'unknown';
 
   let cumulusMessage;
   try {
-    cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+    cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
   } catch {
     cumulusMessage = null;
   }
@@ -47,8 +38,7 @@ async function formatCumulusDLAObject(sqsMessage) {
   const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
   const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
   return {
-    ...sqsMessage,
-    error,
+    ...messageBody,
     collection,
     granules,
     execution,
@@ -87,7 +77,7 @@ async function handler(event) {
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
-    const workedMessage = await formatCumulusDLAObject(sqsMessage);
+    const workedMessage = await formatCumulusDLAObject(messageBody);
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
