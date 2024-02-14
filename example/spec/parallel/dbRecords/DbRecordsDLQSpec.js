@@ -2,7 +2,7 @@
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { SQS } = require('@cumulus/aws-client');
-const { lambda } = require('@cumulus/aws-client/services')
+const { lambda } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   deleteS3Object,
@@ -84,7 +84,7 @@ describe('when a bad record is ingested', () => {
     expect(parsed.collection).toEqual('unknown');
     expect(parsed.execution).toEqual('unknown');
     expect(parsed.granules).toEqual('unknown');
-    expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time')
+    expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
   });
 });
 describe('When a bad record is sent on the DLQ', () => {
