@@ -17,6 +17,7 @@ async function formatCumulusDLAObject(message) {
   } catch {
     executionEvent = null;
   }
+  const error = message.error || 'unknown';
   const execution = executionEvent?.detail?.executionArn || 'unknown';
   const stateMachine = executionEvent?.detail?.stateMachineArn || 'unknown';
 
@@ -31,6 +32,7 @@ async function formatCumulusDLAObject(message) {
   const granules = cumulusMessage?.payload?.granules?.map((granule) => granule?.granuleId || 'unknown') || 'unknown';
   return {
     ...message,
+    error,
     collection,
     granules,
     execution,

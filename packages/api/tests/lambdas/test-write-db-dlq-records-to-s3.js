@@ -133,6 +133,7 @@ test('formatCumulusDLAObject returns message intact', async (t) => {
 
 test('formatCumulusDLAObject returns details as found', async (t) => {
   const message = {
+    error: 'anError',
     body: JSON.stringify({
       detail: {
         status: 'SUCCEEDED',
@@ -149,6 +150,7 @@ test('formatCumulusDLAObject returns details as found', async (t) => {
     await formatCumulusDLAObject(message),
     {
       ...message,
+      error: 'anError',
       collection: 'aName',
       granules: ['a', 'b'],
       execution: 'execArn',
