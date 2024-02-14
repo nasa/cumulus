@@ -147,7 +147,7 @@ test('formatCumulusDLAObject returns details as found moved to top layer', async
       },
     }),
   };
-  const messageBody = SQS.parseSQSMessageBody(message)
+  const messageBody = SQS.parseSQSMessageBody(message);
   t.deepEqual(
     await formatCumulusDLAObject(messageBody),
     {
