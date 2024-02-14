@@ -13,7 +13,7 @@ async function findAsyncOperationTaskDefinitionForDeployment(stackName) {
       sort: 'ASC',
     };
     // eslint-disable-next-line no-await-in-loop
-    const response = await ecs().listTaskDefinitions(params).promise();
+    const response = await ecs().listTaskDefinitions(params);
     nextToken = response.nextToken;
     const taskDefinitionArns = response.taskDefinitionArns;
     taskDefinitionArn = taskDefinitionArns[taskDefinitionArns.length - 1];

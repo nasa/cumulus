@@ -3,6 +3,7 @@
 const { fakeGranuleFactoryV2, fakeExecutionFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { deleteAsyncOperation, getAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const { ecs } = require('@cumulus/aws-client/services');
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const {
   getClusterArn,
   loadCollection,
@@ -140,7 +141,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     const describeTasksResponse = await ecs().describeTasks({
       cluster: clusterArn,
       tasks: [taskArn],
-    }).promise();
+    });
 
     expect(describeTasksResponse.tasks.length).toEqual(1);
   });
@@ -148,13 +149,10 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
   it('eventually generates the correct output', async () => {
     expect(beforeAllSucceeded).toBeTrue();
 
-    await ecs().waitFor(
-      'tasksStopped',
-      {
-        cluster: clusterArn,
-        tasks: [taskArn],
-      }
-    ).promise();
+    await waitUntilTasksStopped(
+      { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
+      { cluster: clusterArn, tasks: [taskArn] }
+    );
 
     const asyncOperation = await getAsyncOperation({
       prefix: config.stackName,

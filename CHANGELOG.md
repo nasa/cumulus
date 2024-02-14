@@ -14,6 +14,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
+    
+### Changed
+
+- **CUMULUS-3245**
+  - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
+    terraform configuration value or utilize `lzardsProvider` as part of the task
+    workflow configuration
+  - Minor refactor of `@cumulus/lzards-api-client` to:
+   - Use proper ECMAScript import for `@cumulus/launchpad-auth`
+   - Update incorrect docstring
+
+### Changed
+
+- **CUMULUS-3497**
+  - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
 
 ## [v18.2.0] 2023-02-02
 
@@ -29,7 +46,17 @@ Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
+### Breaking Changes
+
+- **CUMULUS-2889**
+  - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
+    client from the `@cumulus/aws-client` package.
+- **CUMULUS-2890**
+  - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
+    from the `@cumulus/aws-client` package.
+
 ### Changed
+
 - **CUMULUS-3492**
   - add teclark to select-stack.js
 - **CUMULUS-3444**
@@ -37,6 +64,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
@@ -76,6 +105,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - stubbed cmr interfaces in integration tests allow integration tests to pass
   - needed while cmr is failing to continue needed releases and progress
   - this change should be reverted ASAP when cmr is working as needed again
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 ### Fixed
 

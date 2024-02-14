@@ -3,8 +3,7 @@
 const test = require('ava');
 const rewire = require('rewire');
 const sinon = require('sinon');
-const aws = require('@cumulus/aws-client/services');
-
+const { ecs, ec2, es } = require('@cumulus/aws-client/services');
 const inventory = rewire('../src/inventory');
 const mergeResourceLists = inventory.__get__('mergeResourceLists');
 const resourceDiff = inventory.__get__('resourceDiff');
@@ -47,51 +46,45 @@ test.before(() => {
     .stub(stateFile, 'listTfStateFiles')
     .returns(['stateFile1', 'stateFile2']);
 
-  ecsStub = sinon.stub(aws, 'ecs')
+  ecsStub = sinon.stub(ecs(), 'listClusters')
+    .returns(
+      (
+        Promise.resolve({
+          clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
+        }))
+    );
+
+  ec2Stub = sinon.stub(ec2(), 'describeInstances')
     .returns({
-      listClusters: () => ({
-        promise: () =>
-          Promise.resolve({
-            clusterArns: ['clusterArn1', 'clusterArn2', 'clusterArn3', 'clusterArn4'],
-          }),
-      }),
+      promise: () =>
+        Promise.resolve({
+          Reservations: [
+            {
+              Instances: [
+                { InstanceId: 'i-000' },
+                { InstanceId: 'i-111' },
+              ],
+            },
+            {
+              Instances: [
+                { InstanceId: 'i-222' },
+                { InstanceId: 'i-333' },
+              ],
+            },
+          ],
+        }),
     });
 
-  ec2Stub = sinon.stub(aws, 'ec2')
+  esStub = sinon.stub(es(), 'listDomainNames')
     .returns({
-      describeInstances: () => ({
-        promise: () =>
-          Promise.resolve({
-            Reservations: [
-              {
-                Instances: [
-                  { InstanceId: 'i-000' },
-                  { InstanceId: 'i-111' },
-                ],
-              },
-              {
-                Instances: [
-                  { InstanceId: 'i-222' },
-                  { InstanceId: 'i-333' },
-                ],
-              },
-            ],
-          }),
-      }),
-    });
-
-  esStub = sinon.stub(aws, 'es')
-    .returns({
-      listDomainNames: () => ({
-        promise: () =>
-          Promise.resolve({
-            DomainNames: [
-              { DomainName: 'cumulus-es5vpc' },
-              { DomainName: 'cumulus-1-es5vpc' },
-              { DomainName: 'cumulus-2-es5vpc' },
-            ],
-          }),
-      }),
+      promise: () =>
+        Promise.resolve({
+          DomainNames: [
+            { DomainName: 'cumulus-es5vpc' },
+            { DomainName: 'cumulus-1-es5vpc' },
+            { DomainName: 'cumulus-2-es5vpc' },
+          ],
+        }),
     });
 });
 
@@ -174,7 +167,7 @@ test('mergeResourceLists correctly merges null or empty entries', (t) => {
 });
 
 test('mergeResourceLists correctly merges different resources', (t) => {
-  const ecs = {
+  const clusters = {
     ecsClusters: [
       {
         arn: 'clusterArn1',
@@ -187,15 +180,15 @@ test('mergeResourceLists correctly merges different resources', (t) => {
     ],
   };
 
-  const ec2 = {
+  const instances = {
     ec2Instances: [
       'i-12345',
     ],
   };
 
-  t.deepEqual(mergeResourceLists(ecs, ec2), {
-    ec2Instances: ec2.ec2Instances,
-    ecsClusters: ecs.ecsClusters,
+  t.deepEqual(mergeResourceLists(clusters, instances), {
+    ec2Instances: instances.ec2Instances,
+    ecsClusters: clusters.ecsClusters,
   });
 });
 

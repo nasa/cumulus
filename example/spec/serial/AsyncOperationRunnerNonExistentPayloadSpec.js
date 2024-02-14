@@ -1,5 +1,6 @@
 'use strict';
 
+const { waitUntilTasksStopped } = require('@aws-sdk/client-ecs');
 const get = require('lodash/get');
 const { v4: uuidv4 } = require('uuid');
 const { startECSTask } = require('@cumulus/async-operations');
@@ -67,13 +68,10 @@ describe('The AsyncOperation task runner with a non-existent payload', () => {
 
       taskArn = runTaskResponse.tasks[0].taskArn;
 
-      await ecs().waitFor(
-        'tasksStopped',
-        {
-          cluster,
-          tasks: [taskArn],
-        }
-      ).promise();
+      await waitUntilTasksStopped(
+        { client: ecs(), maxWaitTime: 600, maxDelay: 1, minDelay: 1 },
+        { cluster: cluster, tasks: [taskArn] }
+      );
 
       asyncOperation = await waitForAsyncOperationStatus({
         id: asyncOperationId,
