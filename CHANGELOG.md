@@ -72,6 +72,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
