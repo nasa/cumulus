@@ -164,7 +164,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
   });
 
   describe('the reporting lambda has received the CloudWatch step function event and', () => {
-    it('the execution record is added to DynamoDB', async () => {
+    it('the execution record is added to the PostgreSQL database', async () => {
       const record = await waitForApiStatus(
         getExecution,
         {
