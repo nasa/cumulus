@@ -20,7 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     flag.   This causes all Cumulus database connections to require SSL (CA or
     self-signed) and reject connectivity if the database does not provide SSL.
     Users using serverless v1/`cumulus-rds-tf` should not be impacted by this
-    change as certs are provided by default.
+    change as certs are provided by default.   Users using databases that do not
+    provide SSL should update their database secret with the optional value
+    `disableSSL` set to `true`
 
 ### Changed
 
