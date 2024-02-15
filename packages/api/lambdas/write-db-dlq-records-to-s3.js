@@ -32,6 +32,7 @@ async function handler(event) {
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
       Body: sqsMessage.body,
+      ContentType: 'application/json',
     });
   }));
 }
