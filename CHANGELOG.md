@@ -14,7 +14,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
-    
+
 ### Changed
 
 - **CUMULUS-3245**
@@ -36,10 +36,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3580
   - Fixed secret value for `lzards_launchpad_passphrase` which was getting the value from `var.launchpad_passphrase` instead of `var.lzards_launchpad_passphrase`.
-- **CUMULUS-3562**
-  - updated crypto-js to 4.2.0
-  - updated aws-sdk/client-api-gateway to 3.499 to avoid older crypto-js dependency
-
 
 ## [v18.2.0] 2023-02-02
 
