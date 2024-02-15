@@ -41,6 +41,17 @@ export class SftpClient {
     this.clientOptions = {
       host: config.host,
       port: get(config, 'port', 22),
+      algorithms: {
+        kex: {
+          append: [
+            'diffie-hellman-group-exchange-sha1',
+            'diffie-hellman-group14-sha1',
+            'diffie-hellman-group1-sha1',
+          ],
+          prepend: [],
+          remove: [],
+        },
+      },
     };
 
     if (config.username) this.clientOptions.username = config.username;
