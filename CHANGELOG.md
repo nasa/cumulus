@@ -36,6 +36,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3580
   - Fixed secret value for `lzards_launchpad_passphrase` which was getting the value from `var.launchpad_passphrase` instead of `var.lzards_launchpad_passphrase`.
+    - This fix will result in a potential unexpected change for users that were somehow using the `launchpad_passphrase` for lzards authentication, with an incorrect `lzards_launchpad_passphrase` defined. Users should verify their production configuration to ensure this fix doesn't result in an unexpected failure due to misconfiguration.
 
 ## [v18.2.0] 2023-02-02
 
