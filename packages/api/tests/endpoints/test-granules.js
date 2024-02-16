@@ -3867,7 +3867,7 @@ test.only('default paginates correctly with search_after', async (t) => {
   t.is(newResults.length, 1);
   t.is(newMeta.page, 2);
   t.truthy(newMeta.searchContext);
-  console.log(`new results::: ${JSON.stringify(newResults)}`)
+  console.log(`new results::: ${JSON.stringify(newResults)}`);
   console.log(`granuleIds:::: ${JSON.stringify(granuleIds)}`);
   console.log(`default paginates granuleIds: ${JSON.stringify(granuleIds)}, results: ${results[0].granuleId}, ${newResults[0].granuleId}`);
   t.true(granuleIds.includes(results[0].granuleId));
