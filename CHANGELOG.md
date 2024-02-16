@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
+- **CUMULUS-2897**
+  - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
+    from the `@cumulus/aws-client` package.
     
 ### Changed
 
