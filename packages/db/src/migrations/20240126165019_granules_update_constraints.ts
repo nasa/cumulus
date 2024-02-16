@@ -26,7 +26,7 @@ const addConstraintIfNotExists = async ({
   } else {
     console.log(`Constraint ${constraintName} already exists on table ${tableName}`);
   }
-}
+};
 
 export const up = async (knex: Knex): Promise<void> => {
   // ALTER TABLE granules ADD UNIQUE USING INDEX granules_collection_cumulus_id_granule_id_unique
@@ -41,7 +41,8 @@ export const up = async (knex: Knex): Promise<void> => {
 };
 
 export const down = async (knex: Knex): Promise<void> => {
-  // ALTER TABLE granules ADD CONSTRAINT granules_granule_id_collection_cumulus_id_unique UNIQUE (granule_id, collection_cumulus_id)
+  // ALTER TABLE granules ADD CONSTRAINT
+  // granules_granule_id_collection_cumulus_id_unique UNIQUE (granule_id, collection_cumulus_id)
   await addConstraintIfNotExists({
     knex,
     tableName: 'granules',
