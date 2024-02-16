@@ -20,9 +20,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Notable changes
 
 - **CUMULUS-3449**
-  - Updated files.granule_cumulus_id, executions.cumulus_id, executions.parent_cumulus_id,
-    granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id and
-    pdrs.execution_cumulus_id columns to BIGINT.
+  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
+    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
+    and pdrs.execution_cumulus_id
   - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
