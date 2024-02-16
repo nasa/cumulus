@@ -2,12 +2,12 @@
 
 const { fakeFileFactory, fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
 const { SQS } = require('@cumulus/aws-client');
-const { lambda } = require('@cumulus/aws-client/services');
+const { lambda, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   deleteS3Object,
   listS3ObjectsV2,
-  getS3Object,
+  getObject,
   getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
@@ -76,7 +76,13 @@ describe('when a bad record is ingested', () => {
     } catch (error) {
       fail(`Did not find expected S3 Object: ${error}`);
     }
-    const s3Object = await getS3Object(systemBucket, failedMessageS3Key);
+    const s3Object = await getObject(
+      s3(),
+      {
+        Bucket: systemBucket,
+        Key: failedMessageS3Key,
+      }
+    );
     const fileBody = await getObjectStreamContents(s3Object.Body);
 
     const parsed = JSON.parse(fileBody);
