@@ -1,3 +1,4 @@
+//@ts-check
 'use strict';
 
 const get = require('lodash/get');
@@ -120,7 +121,17 @@ const writeRecords = async ({
     testOverrides,
   });
 };
+/**
+ * @typedef {import('aws-lambda').SQSRecord} SQSRecord
+ */
 
+/**
+ * Lambda handler for #TODO
+ *
+ * @param {Object} event - Input payload object
+ * @param {Array<SQSRecord | AWS.SQS.Message>} [event.Records] set of  sqsMessages
+ * @returns {Promise<void>}
+ */
 const handler = async (event) => {
   const knex = await getKnexClient({
     env: {
