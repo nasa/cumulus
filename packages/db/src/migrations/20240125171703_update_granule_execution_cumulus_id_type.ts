@@ -14,3 +14,7 @@ export const up = async (knex: Knex): Promise<void> => {
 export const down = async (): Promise<void> => {
   console.log('Warning - this migration cannot be rolled back');
 };
+
+exports.config = {
+  transaction: false,
+};
