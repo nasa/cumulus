@@ -1,3 +1,4 @@
+//@ts-check
 'use strict';
 
 const get = require('lodash/get');
@@ -11,10 +12,48 @@ const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterM
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 
 /**
+ *
+ * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
+ * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
+*/
+
+/**
+ * @param {unknown} payload
+ * @returns {payload is PayloadWithGranules}
+ */
+function payloadHasGranules(payload) {
+  return (
+    payload instanceof Object
+    && 'granules' in payload
+    && Array.isArray(payload.granules)
+  );
+}
+/**
+ *
+ * @typedef {import('aws-lambda').EventBridgeEvent} EventBridgeEvent
+*/
+/**
+ * @param {{ [key: string]: any }} event
+ * @returns {event is EventBridgeEvent}
+ */
+const isEventBridgeLike = (event) => {
+  if (!(event instanceof Object && 'detail' in event && event.detail instanceof Object)) {
+    return false;
+  }
+  if (event.detail.status === 'RUNNING' && !('input' in event.detail)) {
+    return false;
+  }
+  if (event.detail.status === 'SUCCEEDED' && !('output' in event.detail)) {
+    return false;
+  }
+  return true;
+};
+
+/**
  * Reformat object with key attributes at top level.
  *
- * @param {EventBridgeEvent} messageBody - event bridge event as defined in aws-lambda
- * @returns {Object} - message packaged with metadata or 'unknown' where metadata not found
+ * @param {{ [key: string]: any }} messageBody - event bridge event as defined in aws-lambda
+ * @returns {Promise<Object>} - message packaged with metadata or 'unknown' where metadata not found
  * {
  *   error: <errorString | 'unknown'>
  *   collection: <collectionName | 'unknown'>
@@ -30,18 +69,25 @@ async function formatCumulusDLAObject(messageBody) {
 
   let cumulusMessage;
   try {
-    cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
+    if (isEventBridgeLike(messageBody)) {
+      cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
+    } else {
+      cumulusMessage = null;
+    }
   } catch {
     cumulusMessage = null;
   }
 
   const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
   let granules;
-  if (!cumulusMessage?.payload?.granules?.map) {
-    granules = 'unknown';
+
+  const payload = cumulusMessage?.payload;
+  if (payloadHasGranules(payload)) {
+    granules = payload.granules.map((granule) => granule?.granuleId || 'unknown');
   } else {
-    granules = cumulusMessage.payload.granules.map((granule) => granule?.granuleId || 'unknown');
+    granules = 'unknown';
   }
+
   return {
     ...messageBody,
     collection,
@@ -64,6 +110,9 @@ function determineExecutionName(cumulusMessageObject) {
     return 'unknown';
   }
 }
+/**
+ * @typedef {import('aws-lambda').SQSRecord} SQSRecord
+ */
 
 /**
  * Lambda handler for saving DLQ reports to DLA in s3
@@ -82,11 +131,11 @@ async function handler(event) {
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
-    const workedMessage = await formatCumulusDLAObject(messageBody);
+    const massagedMessage = await formatCumulusDLAObject(messageBody);
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
-      Body: JSON.stringify(workedMessage),
+      Body: JSON.stringify(massagedMessage),
     });
   }));
 }
