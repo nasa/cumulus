@@ -140,6 +140,17 @@ export const receiveSQSMessages = async (
 };
 
 /**
+ * Bare check for SQS message Shape
+ *
+ * @param {{ [key: string]: any }} message
+ * @returns {message is AWS.SQS.Message | SQSRecord}
+ */
+export const isSQSRecordLike = (message: Object): boolean => (
+  message instanceof Object
+  && ('body' in message || 'Body' in message)
+);
+
+/**
  * Extract SQS message body
  *
  * @param {SQSRecord | AWS.SQS.Message} message - SQS message

@@ -1,8 +1,8 @@
 //@ts-check
 import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
 
-import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
-import { CumulusMessage } from '@cumulus/types/message';
+import { parseSQSMessageBody, isSQSRecordLike } from '@cumulus/aws-client/SQS';
+import { CumulusMessage, isCumulusMessage } from '@cumulus/types/message';
 import Logger from '@cumulus/logger';
 
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
@@ -16,27 +16,6 @@ type UnwrapDeadLetterCumulusMessageInputType = (
   | SQSRecord
 );
 
-/**
- * Bare check for CumulusMessage Shape
- *
- * @param {{ [key: string]: any }} message
- * @returns {message is CumulusMessage}
- */
-const isCumulusMessageLike = (message: Object): boolean => (
-  message instanceof Object
-  && 'cumulus_meta' in message
-);
-
-/**
- * Bare check for SQS message Shape
- *
- * @param {{ [key: string]: any }} message
- * @returns {message is AWS.SQS.Message | SQSRecord}
- */
-const isSQSRecordLike = (message: Object): boolean => (
-  message instanceof Object
-  && ('body' in message || 'Body' in message)
-);
 
 /**
  * Bare check for EventBridge shape
@@ -72,7 +51,7 @@ export const unwrapDeadLetterCumulusMessage = async (
         messageBody as StepFunctionEventBridgeEvent
       );
     }
-    if (isCumulusMessageLike(messageBody)) {
+    if (isCumulusMessage(messageBody)) {
       return messageBody as CumulusMessage;
     }
     throw new TypeError('DeadLetter CumulusMessage in unrecognized format');
