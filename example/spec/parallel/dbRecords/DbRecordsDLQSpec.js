@@ -1,7 +1,5 @@
 'use strict';
 
-const { fakeFileFactory, fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
-const { SQS } = require('@cumulus/aws-client');
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
