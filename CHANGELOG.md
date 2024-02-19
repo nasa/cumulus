@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
+- **CUMULUS-2897**
+  - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
+    from the `@cumulus/aws-client` package.
     
 ### Changed
 
@@ -66,6 +69,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
+- **CUMULUS-2891**
+  - Updated ECS code to aws sdk v3
 - **CUMULUS-2895**
   - Updated KMS code to aws sdk v3
 - **CUMULUS-2888**
