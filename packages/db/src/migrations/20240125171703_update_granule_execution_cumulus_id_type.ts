@@ -7,7 +7,7 @@ export const up = async (knex: Knex): Promise<void> => {
   await knex.raw('ALTER TABLE pdrs ALTER COLUMN execution_cumulus_id TYPE BIGINT');
   await knex.raw('VACUUM (ANALYZE, VERBOSE) executions');
   await knex.raw('VACUUM (ANALYZE, VERBOSE) files');
-  await knex.raw('VACUUM (ANALYZE, VERBOSE) granule_executions');
+  await knex.raw('VACUUM (ANALYZE, VERBOSE) granules_executions');
   await knex.raw('VACUUM (ANALYZE, VERBOSE) pdrs');
 };
 

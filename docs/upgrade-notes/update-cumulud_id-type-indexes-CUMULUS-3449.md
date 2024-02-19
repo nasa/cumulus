@@ -151,7 +151,7 @@ exit
 
     VACUUM (ANALYZE, VERBOSE) executions;
     VACUUM (ANALYZE, VERBOSE) files;
-    VACUUM (ANALYZE, VERBOSE) granule_executions;
+    VACUUM (ANALYZE, VERBOSE) granules_executions;
     VACUUM (ANALYZE, VERBOSE) pdrs;
 
     # Update and Add indexes
