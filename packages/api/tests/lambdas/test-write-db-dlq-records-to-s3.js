@@ -335,6 +335,6 @@ test('formatCumulusDLAObject returns unknown for details: collection, granules, 
     messages.map((message) => formatCumulusDLAObject(message.mangled))
   );
   results.forEach((result, index) => {
-    t.deepEqual(result, messages[index].expected)
-  })
+    t.deepEqual(result, messages[index].expected);
+  });
 });
