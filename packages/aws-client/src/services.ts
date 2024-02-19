@@ -11,13 +11,14 @@ import { S3 } from '@aws-sdk/client-s3';
 import { SFN } from '@aws-sdk/client-sfn';
 import { SQS } from '@aws-sdk/client-sqs';
 import { SNS } from '@aws-sdk/client-sns';
+import { ECS } from '@aws-sdk/client-ecs';
 import * as AWS from 'aws-sdk';
 
 import awsClient from './client';
 
 export const apigateway = awsClient(APIGatewayClient, '2015-07-09');
-export const cf = awsClient(CloudFormation, '2010-05-15');
-export const cloudwatch = awsClient(AWS.CloudWatch, '2010-08-01');
+export const ecs = awsClient(ECS, '2014-11-13');
+export const ec2 = awsClient(AWS.EC2, '2016-11-15');
 export const cloudwatchevents = awsClient(CloudWatchEvents, '2015-10-07');
 export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
@@ -27,8 +28,7 @@ export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOpti
     awsClient(DynamoDB, '2012-08-10')(dynamoOptions),
     docClientOptions
   );
-export const ec2 = awsClient(AWS.EC2, '2016-11-15');
-export const ecs = awsClient(AWS.ECS, '2014-11-13');
+export const cf = awsClient(CloudFormation, '2010-05-15');
 export const es = awsClient(AWS.ES, '2015-01-01');
 export const kinesis = awsClient(Kinesis, '2013-12-02');
 export const kms = awsClient(KMS, '2014-11-01');
