@@ -76,7 +76,6 @@ async function indexData() {
  * @returns {undefined} - none
  */
 async function createIndex(indexName, aliasName) {
-  console.log("in createIndex", indexName, aliasName);
   await bootstrapElasticSearch({
     host: 'fakehost',
     index: indexName,
@@ -610,9 +609,6 @@ test.serial('Indices status', async (t) => {
 
 test.serial('Current index - default alias', async (t) => {
   const indexName = randomString();
-  console.log("indexName", indexName);
-  console.log("defaultIndexAlias", defaultIndexAlias);
-
   await createIndex(indexName, defaultIndexAlias);
   t.teardown(() => esClient.indices.delete({ index: indexName }));
 
@@ -620,8 +616,6 @@ test.serial('Current index - default alias', async (t) => {
     .get('/elasticsearch/current-index')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
-  console.log("response.body", response.body);
 
   t.true(response.body.includes(indexName));
 });
