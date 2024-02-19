@@ -22,22 +22,21 @@ type UnwrapDeadLetterCumulusMessageInputType = (
  * @param {{ [key: string]: any }} message
  * @returns {message is CumulusMessage}
  */
-export const isCumulusMessageLike = (message: Object): boolean => (
+const isCumulusMessageLike = (message: Object): boolean => (
   message instanceof Object
   && 'cumulus_meta' in message
 );
 
 /**
  * Bare check for SQS message Shape
+ *
  * @param {{ [key: string]: any }} message
  * @returns {message is AWS.SQS.Message | SQSRecord}
  */
-function isSQSRecordLike(message: Object): boolean {
-  return (
-    message instanceof Object
-    && ('body' in message || 'Body' in message)
-  );
-}
+const isSQSRecordLike = (message: Object): boolean => (
+  message instanceof Object
+  && ('body' in message || 'Body' in message)
+);
 
 /**
  * Bare check for EventBridge shape
@@ -45,7 +44,7 @@ function isSQSRecordLike(message: Object): boolean {
  * @param {{ [key: string]: any }} event
  * @returns {message is EventBridgeEvent}
  */
-export const isEventBridgeLike = (event: Object): boolean => (
+const isEventBridgeLike = (event: Object): boolean => (
   event instanceof Object
   && 'detail' in event
 );
