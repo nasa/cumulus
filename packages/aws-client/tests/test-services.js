@@ -355,16 +355,3 @@ test('sts() service defaults to localstack in test mode', (t) => {
   );
   t.is(sts.config.endpoint, endpoint);
 });
-
-test('systemsManager() service defaults to localstack in test mode', (t) => {
-  const systemsManager = services.systemsManager();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(AWS.SSM);
-  t.deepEqual(
-    systemsManager.config.credentials,
-    credentials
-  );
-  t.is(systemsManager.config.endpoint, endpoint);
-});
