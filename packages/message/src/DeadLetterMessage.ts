@@ -16,7 +16,6 @@ type UnwrapDeadLetterCumulusMessageInputType = (
   | SQSRecord
 );
 
-
 /**
  * Bare check for EventBridge shape
  *
