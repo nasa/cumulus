@@ -331,11 +331,10 @@ test('formatCumulusDLAObject returns unknown for details: collection, granules, 
       },
     },
   ];
-  for (let i = 0; i < messages.length; i += 1) {
-    t.deepEqual(
-      // eslint-disable-next-line no-await-in-loop
-      await formatCumulusDLAObject(messages[i].mangled),
-      messages[i].expected
-    );
-  }
+  const results = await Promise.all(
+    messages.map((message) => formatCumulusDLAObject(message.mangled))
+  );
+  results.forEach((result, index) => {
+    t.deepEqual(result, messages[index].expected)
+  })
 });
