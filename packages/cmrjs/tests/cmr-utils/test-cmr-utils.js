@@ -82,7 +82,7 @@ test.before(async (t) => {
   await secretsManager().createSecret({
     Name: launchpadSecret,
     SecretString: launchpadPassphrase,
-  }).promise();
+  });
 
   process.env.cmr_password_secret_name = cmrPasswordSecret;
   process.env.cmr_username = 'cmr-user';
@@ -90,7 +90,7 @@ test.before(async (t) => {
   await secretsManager().createSecret({
     Name: cmrPasswordSecret,
     SecretString: cmrPassword,
-  }).promise();
+  });
 
   t.context.launchpadStub = sinon.stub(launchpad, 'getLaunchpadToken')
     .callsFake((config) => Promise.resolve(`${config.passphrase}-${config.api}-${config.certificate}`));
@@ -117,11 +117,11 @@ test.after.always(async (t) => {
     await secretsManager().deleteSecret({
       SecretId: launchpadSecret,
       ForceDeleteWithoutRecovery: true,
-    }).promise(),
+    }),
     await secretsManager().deleteSecret({
       SecretId: cmrPasswordSecret,
       ForceDeleteWithoutRecovery: true,
-    }).promise(),
+    }),
     await recursivelyDeleteS3Bucket(t.context.cmrFileBucket),
   ]);
 
@@ -1123,7 +1123,7 @@ test('getCmrSettings uses values in config for earthdata oauth', async (t) => {
   await secretsManager().createSecret({
     Name: testPasswordSecret,
     SecretString: testPassword,
-  }).promise();
+  });
 
   try {
     const credentials = await getCmrSettings({
@@ -1144,7 +1144,7 @@ test('getCmrSettings uses values in config for earthdata oauth', async (t) => {
     await secretsManager().deleteSecret({
       SecretId: testPasswordSecret,
       ForceDeleteWithoutRecovery: true,
-    }).promise();
+    });
   }
 });
 
@@ -1155,7 +1155,7 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
   await secretsManager().createSecret({
     Name: testPassphraseSecret,
     SecretString: testPassphrase,
-  }).promise();
+  });
 
   try {
     const credentials = await getCmrSettings({
@@ -1175,7 +1175,7 @@ test('getCmrSettings uses values in config for launchpad oauth', async (t) => {
     await secretsManager().deleteSecret({
       SecretId: testPassphraseSecret,
       ForceDeleteWithoutRecovery: true,
-    }).promise();
+    });
   }
 });
 

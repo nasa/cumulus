@@ -16,7 +16,7 @@ test('handler sets environment variables based on configured secretsManager secr
       randomTestVal: 'randomTestVal',
       dynamoTableNameString: JSON.stringify({}),
     }),
-  }).promise();
+  });
   process.env.api_config_secret_id = secretId;
 
   // eslint-disable-next-line global-require
