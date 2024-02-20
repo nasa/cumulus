@@ -45,7 +45,7 @@ test.before(async () => {
   await secretsManager().createSecret({
     Name: cmrPasswordSecret,
     SecretString: randomId('cmrPasswordSecret'),
-  }).promise();
+  });
 });
 
 test.beforeEach(() => {
@@ -65,7 +65,7 @@ test.after.always(async () => {
   await secretsManager().deleteSecret({
     SecretId: cmrPasswordSecret,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
 });
 
 test.serial('Test retrieving collection entry with invalid result (no "id" key)', async (t) => {

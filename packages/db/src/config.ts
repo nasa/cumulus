@@ -1,4 +1,5 @@
-import AWS from 'aws-sdk';
+import { GetSecretValueRequest, SecretsManager } from '@aws-sdk/client-secrets-manager';
+import { services } from '@cumulus/aws-client';
 import { Knex } from 'knex';
 
 import { envUtils } from '@cumulus/common';
@@ -18,11 +19,11 @@ export const isKnexDebugEnabled = (
 
 export const getSecretConnectionConfig = async (
   SecretId: string,
-  secretsManager: AWS.SecretsManager
+  secretsManager: SecretsManager
 ): Promise<Knex.PgConnectionConfig> => {
   const response = await secretsManager.getSecretValue(
-    { SecretId } as AWS.SecretsManager.GetSecretValueRequest
-  ).promise();
+    { SecretId } as GetSecretValueRequest
+  );
   if (response.SecretString === undefined) {
     throw new Error(`AWS Secret did not contain a stored value: ${SecretId}`);
   }
@@ -73,17 +74,17 @@ export const getConnectionConfigEnv = (
  * @param {Object} params
  * @param {NodeJS.ProcessEnv} params.env
  *   Environment values for the operation
- * @param {AWS.SecretsManager} params.secretsManager
+ * @param {SecretsManager} params.secretsManager
  *   An instance of an AWS Secrets Manager client
  * @returns {Knex.PgConnectionConfig}
  *   Configuration to make a Postgres database connection.
  */
 export const getConnectionConfig = async ({
   env,
-  secretsManager = new AWS.SecretsManager(),
+  secretsManager = services.secretsManager(),
 }: {
   env: NodeJS.ProcessEnv,
-  secretsManager?: AWS.SecretsManager
+  secretsManager?: SecretsManager
 }): Promise<Knex.PgConnectionConfig> => {
   // Storing credentials in Secrets Manager
   if (env.databaseCredentialSecretArn) {
@@ -139,10 +140,10 @@ export const getConnectionConfig = async ({
  */
 export const getKnexConfig = async ({
   env = process.env,
-  secretsManager = new AWS.SecretsManager(),
+  secretsManager = services.secretsManager(),
 }: {
   env?: NodeJS.ProcessEnv,
-  secretsManager?: AWS.SecretsManager
+  secretsManager?: SecretsManager
 } = {}): Promise<Knex.Config> => {
   const knexConfig: Knex.Config = {
     client: 'pg',
