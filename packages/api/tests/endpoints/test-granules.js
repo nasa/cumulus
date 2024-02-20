@@ -3843,7 +3843,7 @@ test.serial('PUT returns 404 if collection is not part of URI', async (t) => {
   t.is(response.statusCode, 404);
 });
 
-test.only('default paginates correctly with search_after', async (t) => {
+test.serial('default paginates correctly with search_after', async (t) => {
   const response = await request(app)
     .get('/granules?limit=1')
     .set('Accept', 'application/json')
