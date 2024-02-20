@@ -200,14 +200,14 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: envVars.cmr_password_secret_name,
     SecretString: randomString(),
-  }).promise();
+  });
 
   // Store the launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
   await awsServices.secretsManager().createSecret({
     Name: envVars.launchpad_passphrase_secret_name,
     SecretString: randomString(),
-  }).promise();
+  });
 });
 
 test.beforeEach(async (t) => {
@@ -245,11 +245,11 @@ test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: envVars.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   await awsServices.secretsManager().deleteSecret({
     SecretId: envVars.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
 
   await destroyLocalTestDb({
     knex: t.context.knex,

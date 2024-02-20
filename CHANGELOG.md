@@ -14,6 +14,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
+- **CUMULUS-2897**
+  - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
+    from the `@cumulus/aws-client` package.
     
 ### Changed
 
@@ -27,6 +30,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2896**
+  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
