@@ -70,14 +70,14 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
     SecretString: randomString(),
-  }).promise();
+  });
 
   // Store the launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
   await awsServices.secretsManager().createSecret({
     Name: process.env.launchpad_passphrase_secret_name,
     SecretString: randomString(),
-  }).promise();
+  });
 
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
@@ -91,11 +91,11 @@ test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.launchpad_passphrase_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   await destroyLocalTestDb({
     ...t.context,
     testDbName,

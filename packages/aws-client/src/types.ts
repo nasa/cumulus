@@ -9,6 +9,7 @@ import { Kinesis } from '@aws-sdk/client-kinesis';
 import { KMS } from '@aws-sdk/client-kms';
 import { Lambda } from '@aws-sdk/client-lambda';
 import { S3 } from '@aws-sdk/client-s3';
+import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { ECS } from '@aws-sdk/client-ecs';
 import { SNS } from '@aws-sdk/client-sns';
 import { SQS } from '@aws-sdk/client-sqs';
@@ -21,6 +22,7 @@ export type AWSClientTypes =
     Lambda |
     ECS |
     S3 |
+    SecretsManager |
     SNS |
     SQS |
     CloudWatchEvents |

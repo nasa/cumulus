@@ -11,7 +11,7 @@ test('handler throws error if secret containing environment variables cannot be 
   await secretsManager().createSecret({
     Name: secretId,
     SecretString: '[}[}JSON cannot parse this',
-  }).promise();
+  });
   process.env.api_config_secret_id = secretId;
   const dynamoTableNames = {
     DynamoTableName: 'prefix-dynamoTableName',

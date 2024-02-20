@@ -1,4 +1,4 @@
-import AWS from 'aws-sdk';
+import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { Knex } from 'knex';
 
 import { getKnexConfig, getKnexClient } from '@cumulus/db';
@@ -8,7 +8,7 @@ export interface HandlerEvent {
   userLoginSecret: string,
   prefix: string,
   dbPassword: string,
-  secretsManager?: AWS.SecretsManager,
+  secretsManager?: SecretsManager,
   dbRecreation?: boolean
 }
 
@@ -27,7 +27,7 @@ const validateEvent = (event: HandlerEvent): void => {
 export const handler = async (event: HandlerEvent): Promise<void> => {
   validateEvent(event);
 
-  const secretsManager = event.secretsManager ?? new AWS.SecretsManager();
+  const secretsManager = event.secretsManager ?? new SecretsManager();
 
   const rootKnexConfig = await getKnexConfig({
     env: {
@@ -83,7 +83,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
         host: (rootKnexConfig.connection as Knex.PgConnectionConfig).host,
         port: (rootKnexConfig.connection as Knex.PgConnectionConfig).port,
       }),
-    }).promise();
+    });
   } finally {
     if (knex) {
       await knex.destroy();
