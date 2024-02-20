@@ -2,9 +2,10 @@
 import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
 
 import { parseSQSMessageBody, isSQSRecordLike } from '@cumulus/aws-client/SQS';
-import { CumulusMessage, isCumulusMessage } from '@cumulus/types/message';
+import { CumulusMessage } from '@cumulus/types/message';
 import Logger from '@cumulus/logger';
 
+import { isCumulusMessage } from './CumulusMessage';
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
 
 const log = new Logger({ sender: '@cumulus/DeadLetterMessage' });
