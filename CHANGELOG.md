@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 
 ### Changed
+
 - **CUMULUS-3456**
   - Added stateMachine, collection, execution, granules, error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
@@ -20,8 +21,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
    - Update incorrect docstring
-
-### Changed
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
