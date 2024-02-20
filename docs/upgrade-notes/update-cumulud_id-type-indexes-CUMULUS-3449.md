@@ -40,7 +40,7 @@ all database activity be quiesced. This means that Ingest and Archive and other 
 
 The table below from LPDAAC provides the table sizes before and after `alter table` commands, and timings.
 
-| Table Name | Original Table Size | ALTER Run Time | New Table Size | Number of Rows |
+| Table Name | Original Table Size | ALTER Run Time (clock) | New Table Size | Number of Rows |
 |---|---|---|---|---|
 | executions | 1.8 TB | 41 hours | 1.4 TB | 374,170,855 |
 | files | 1.2 TB | 7.5 hours | 850 GB | 1,129,847,659 |
@@ -140,7 +140,7 @@ exit
     ```sh
     tmux new-session -s CumulusUpgrade -n Fix-DataTypes
 
-    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name or postgres> -U <database admin user or postgres> -W
+    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
 
     # Update column types
@@ -166,11 +166,11 @@ exit
     # From tmux CumulusUpgrade session, open another window
     <Ctrl>-b c
 
-    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d postgres -U postgres -W
+    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
 
     select pid, query, state, wait_event_type, wait_event from pg_stat_activity where state = 'active';
     ```
 
 6. Close the Session
 
-    Close the tmux session after the task is complete by `exit` or `<Ctrl>-b x`
+    Close the tmux session after the task is complete by `exit` or `<Ctrl>-b x`.
