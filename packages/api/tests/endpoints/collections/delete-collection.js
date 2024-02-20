@@ -107,12 +107,12 @@ test.beforeEach(async (t) => {
   t.context.TopicArn = TopicArn;
 
   const QueueName = randomString();
-  const { QueueUrl } = await sqs().createQueue({ QueueName }).promise();
+  const { QueueUrl } = await sqs().createQueue({ QueueName });
   t.context.QueueUrl = QueueUrl;
   const getQueueAttributesResponse = await sqs().getQueueAttributes({
     QueueUrl,
     AttributeNames: ['QueueArn'],
-  }).promise();
+  });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await sns().subscribe({
@@ -126,7 +126,7 @@ test.beforeEach(async (t) => {
 
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
-  await sqs().deleteQueue({ QueueUrl }).promise();
+  await sqs().deleteQueue({ QueueUrl });
   await sns().deleteTopic({ TopicArn });
 });
 
@@ -301,7 +301,7 @@ test.serial('Deleting a collection removes it from all data stores and publishes
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
   t.is(Messages.length, 1);
 
@@ -432,7 +432,7 @@ test.serial('del() does not remove from Elasticsearch or publish SNS message if 
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
   t.is(Messages.length, 0);
 });
@@ -483,7 +483,7 @@ test.serial('del() does not remove from PostgreSQL or publish SNS message if rem
   const { Messages } = await sqs().receiveMessage({
     QueueUrl: t.context.QueueUrl,
     WaitTimeSeconds: 10,
-  }).promise();
+  });
 
   t.is(Messages.length, 0);
 });

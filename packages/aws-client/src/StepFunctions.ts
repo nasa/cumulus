@@ -4,6 +4,7 @@
 
 import { sfn } from './services';
 import { improveStackTrace, retryOnThrottlingException } from './utils';
+import { inTestMode } from './test-utils';
 
 // Utility functions
 
@@ -12,6 +13,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
     .then(() => true)
     .catch((error) => {
       if (error.code === 'ExecutionDoesNotExist') return false;
+      if (inTestMode() && error.code === 'InvalidName') return false;
       throw error;
     });
 

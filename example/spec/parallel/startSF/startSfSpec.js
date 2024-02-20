@@ -42,7 +42,7 @@ async function sendStartSfMessages({
     .fill()
     .map(
       () =>
-        sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(message) }).promise()
+        sqs().sendMessage({ QueueUrl: queueUrl, MessageBody: JSON.stringify(message) })
     );
   return await Promise.all(sendMessages);
 }
@@ -76,7 +76,7 @@ const createCloudwatchRuleWithTarget = async ({
         ],
       },
     }),
-  }).promise();
+  });
 
   const { Configuration } = await lambda().getFunction({
     FunctionName: functionName,
@@ -88,7 +88,7 @@ const createCloudwatchRuleWithTarget = async ({
       Id: ruleTargetId,
       Arn: Configuration.FunctionArn,
     }],
-  }).promise();
+  });
 
   return lambda().addPermission({
     Action: 'lambda:InvokeFunction',
@@ -110,7 +110,7 @@ const deleteCloudwatchRuleWithTargets = async ({
       ruleTargetId,
     ],
     Rule: ruleName,
-  }).promise();
+  });
 
   await lambda().removePermission({
     FunctionName: functionName,
@@ -119,7 +119,7 @@ const deleteCloudwatchRuleWithTargets = async ({
 
   return cloudwatchevents().deleteRule({
     Name: ruleName,
-  }).promise();
+  });
 };
 
 describe('the sf-starter lambda function', () => {
@@ -206,13 +206,13 @@ describe('the sf-starter lambda function', () => {
         Attributes: {
           VisibilityTimeout: '360',
         },
-      }).promise();
+      });
       queueUrl = QueueUrl;
 
       const { Attributes } = await sqs().getQueueAttributes({
         QueueUrl: queueUrl,
         AttributeNames: ['QueueArn'],
-      }).promise();
+      });
       queueArn = Attributes.QueueArn;
 
       await sendStartSfMessages({
@@ -227,7 +227,7 @@ describe('the sf-starter lambda function', () => {
     afterAll(async () => {
       await sqs().deleteQueue({
         QueueUrl: queueUrl,
-      }).promise();
+      });
     });
 
     it('that has messages', () => {
@@ -301,7 +301,7 @@ describe('the sf-starter lambda function', () => {
 
       const { QueueUrl } = await sqs().createQueue({
         QueueName: maxQueueName,
-      }).promise();
+      });
       maxQueueUrl = QueueUrl;
 
       ruleName = timestampedName('waitPassSfRule');
@@ -339,7 +339,7 @@ describe('the sf-starter lambda function', () => {
       await Promise.all([
         sqs().deleteQueue({
           QueueUrl: maxQueueUrl,
-        }).promise(),
+        }),
         dynamodbDocClient().delete({
           TableName: `${config.stackName}-SemaphoresTable`,
           Key: {

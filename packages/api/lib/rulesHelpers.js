@@ -4,7 +4,7 @@
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
-const isNull = require('lodash/isNull');
+const isNil = require('lodash/isNil');
 const set = require('lodash/set');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -258,7 +258,7 @@ async function deleteKinesisEventSources(knex, rule, testContext = {
     (lambda) => deleteKinesisEventSourceMethod(knex, rule, lambda.eventType, lambda.type).catch(
       (error) => {
         log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.code !== 'ResourceNotFoundException') throw error;
+        if (error.name !== 'ResourceNotFoundException') throw error;
       }
     )
   );
@@ -363,17 +363,18 @@ async function validateAndUpdateSqsRule(rule) {
     QueueUrl: queueUrl,
     AttributeNames: ['All'],
   };
-  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams).promise();
+  const attributes = await awsServices.sqs().getQueueAttributes(qAttrParams);
   if (!attributes.Attributes.RedrivePolicy) {
     throw new Error(`SQS queue ${queueUrl} does not have a dead-letter queue configured`);
   }
 
   // update rule meta
-  if (!get(rule, 'meta.visibilityTimeout')) {
+  if (isNil(get(rule, 'meta.visibilityTimeout'))) {
     set(rule, 'meta.visibilityTimeout', Number.parseInt(attributes.Attributes.VisibilityTimeout, 10));
   }
 
-  if (!get(rule, 'meta.retries')) set(rule, 'meta.retries', 3);
+  if (isNil(get(rule, 'meta.retries'))) set(rule, 'meta.retries', 3);
+
   return rule;
 }
 
@@ -433,7 +434,7 @@ async function addKinesisEventSources(rule) {
     (lambda) => addKinesisEventSource(rule, lambda).catch(
       (error) => {
         log.error(`Error adding eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.code !== 'ResourceNotFoundException') throw error;
+        if (error.name !== 'ResourceNotFoundException') throw error;
       }
     )
   );
@@ -589,7 +590,7 @@ function validateRecord(rule) {
     throw error;
   }
 
-  recordIsValid(omitDeepBy(rule, isNull), ruleSchema, false);
+  recordIsValid(omitDeepBy(rule, isNil), ruleSchema, false);
 
   if (rule.rule.type !== 'onetime' && !rule.rule.value) {
     error.message += `Rule value is undefined for ${rule.rule.type} rule`;

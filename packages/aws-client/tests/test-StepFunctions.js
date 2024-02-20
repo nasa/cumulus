@@ -159,3 +159,8 @@ test('doesExecutionExist throws any non-ExecutionDoesNotExist errors', async (t)
     t.pass();
   }
 });
+
+test('executionExists returns false if the execution does not exist', async (t) => {
+  const executionArn = 'arn:aws:states:us-east-1:123456789012:execution:MyStackIngestAndPublishGranuleStateMachine:c154d37a-98e5-4ca9-9653-35f4ae9b59d3';
+  t.false(await StepFunctions.executionExists(executionArn));
+});
