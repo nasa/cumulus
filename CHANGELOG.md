@@ -38,7 +38,7 @@ is a backport/patch release on the 16.x series of releases. Updates that are
 included in the future will have a corresponding CHANGELOG entry in future releases.
 
 ### Changed 
-- **CUMULUS_3547
+- **CUMULUS_3547**
  - Update ECS Cluster EBS Volume Default Encryption Settings
 
 ## [v16.1.3] 2024-1-15
