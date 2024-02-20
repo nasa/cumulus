@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     
 ### Changed
 
+- **CUMULUS-2898**
+  - Update Step Functions code to AWS SDK v3
 - **CUMULUS-3245**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
