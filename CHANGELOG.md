@@ -11,8 +11,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 For the v16.1 release series, Cumulus Core will be tested against PostgreSQL v13. Users
 should migrate their datastores to Aurora PostgreSQL 13.12+ compatible data
 stores as soon as possible after upgrading to this release.
-- **CUMULUS-3547**
-  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
+
 
 **IMPORTANT** -- When upgrading from v16.1.x users should update to a release
 following 18.2.0/the first forward release supporting Postgres v13, as versions
