@@ -30,16 +30,13 @@ function payloadHasGranules(payload) {
     && Array.isArray(payload.granules)
   );
 }
-/**
- *
- * @typedef {import('aws-lambda').EventBridgeEvent} EventBridgeEvent
-*/
 
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {{ [key: string]: any }} messageBody - event bridge event as defined in aws-lambda
- * @returns {Promise<Object>} - message packaged with metadata or 'unknown' where metadata not found
+ * @param {{[key: string]: any}} messageBody - event bridge event as defined in aws-lambda
+ * @returns {Promise<Object>} - message packaged with
+ * metadata or 'unknown' where metadata not found
  * {
  *   error: <errorString | 'unknown'>
  *   collection: <collectionName | 'unknown'>
@@ -49,7 +46,7 @@ function payloadHasGranules(payload) {
  *   ...originalAttributes
  * }
  */
-async function formatCumulusDLAObject(messageBody) {
+async function hoistCumulusMessageDetails(messageBody) {
   const execution = messageBody?.detail?.executionArn || 'unknown';
   const stateMachine = messageBody?.detail?.stateMachineArn || 'unknown';
 
@@ -117,7 +114,8 @@ async function handler(event) {
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
-    const massagedMessage = await formatCumulusDLAObject(messageBody);
+
+    const massagedMessage = await hoistCumulusMessageDetails(messageBody);
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
@@ -130,5 +128,4 @@ module.exports = {
   determineExecutionName,
   handler,
   unwrapDeadLetterCumulusMessage,
-  formatCumulusDLAObject,
 };
