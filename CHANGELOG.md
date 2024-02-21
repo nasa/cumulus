@@ -8,7 +8,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
-
 ### Changed
 
 - **CUMULUS-3456**
@@ -19,13 +18,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
   - Minor refactor of `@cumulus/lzards-api-client` to:
-   - Use proper ECMAScript import for `@cumulus/launchpad-auth`
-   - Update incorrect docstring
+    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
+    - Update incorrect docstring
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
   - Added suppport for additional kex algorithms in the sftp-client.
-
 
 ## [v18.2.0] 2023-02-02
 
