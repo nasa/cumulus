@@ -5,15 +5,14 @@
 import Logger from '@cumulus/logger';
 
 import { CumulusMessage } from '@cumulus/types/message';
+import { StepFunctionEventBridgeEvent } from '@cumulus/common/lambda';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
-import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
+import { SQSRecord } from 'aws-lambda';
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
 import { sqs } from './services';
-
-type StepFunctionEventBridgeEvent = EventBridgeEvent<'Step Functions Execution Status Change', { [key: string]: string }>;
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
 export interface SQSMessage extends AWS.SQS.Message {
