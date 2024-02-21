@@ -3,6 +3,7 @@ import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
 
 import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
+import { isEventBridgeEvent } from '@cumulus/common/lambda';
 import Logger from '@cumulus/logger';
 
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
@@ -39,17 +40,6 @@ const isSQSRecordLike = (message: Object): boolean => (
 );
 
 /**
- * Bare check for EventBridge shape
- *
- * @param {{ [key: string]: any }} event
- * @returns {message is EventBridgeEvent}
- */
-const isEventBridgeLike = (event: Object): boolean => (
-  event instanceof Object
-  && 'detail' in event
-);
-
-/**
  * Unwrap dead letter Cumulus message, which may be wrapped in a
  * States cloudwatch event, which is wrapped in an SQS message.
  *
@@ -67,7 +57,7 @@ export const unwrapDeadLetterCumulusMessage = async (
       ) as StepFunctionEventBridgeEvent;
       return await unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
     }
-    if (isEventBridgeLike(messageBody)) {
+    if (isEventBridgeEvent(messageBody)) {
       return await getCumulusMessageFromExecutionEvent(
         messageBody as StepFunctionEventBridgeEvent
       );
