@@ -5,9 +5,8 @@ import path from 'path';
 import isBoolean from 'lodash/isBoolean';
 import { Context } from 'aws-lambda';
 
-import { constructCollectionId } from '@cumulus/message/Collections';
+import { constructCollectionId, deconstructCollectionId } from '@cumulus/message/Collections';
 import { CumulusMessage, CumulusRemoteMessage } from '@cumulus/types/message';
-import { deconstructCollectionId } from '@cumulus/message/Collections';
 import { getCollection } from '@cumulus/api-client/collections';
 import { getRequiredEnvVar } from '@cumulus/common/env';
 import { inTestMode } from '@cumulus/aws-client/test-utils';
