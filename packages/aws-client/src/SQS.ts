@@ -1,14 +1,16 @@
+//@ts-check
 /**
  * @module SQS
  */
 import Logger from '@cumulus/logger';
+
+import { CumulusMessage } from '@cumulus/types/message';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
-import { SQSRecord } from 'aws-lambda';
+import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
-
 import { sqs } from './services';
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
@@ -138,6 +140,7 @@ export const receiveSQSMessages = async (
 
   return <SQSMessage[]>(messages.Messages ?? []);
 };
+type StepFunctionEventBridgeEvent = EventBridgeEvent<'Step Functions Execution Status Change', { [key: string]: string }>;
 
 /**
  * Extract SQS message body
@@ -145,11 +148,12 @@ export const receiveSQSMessages = async (
  * @param {SQSRecord | AWS.SQS.Message} message - SQS message
  * @param {string} message.body - optional key for message body
  * @param {string} message.Body - optional key for message body
- * @returns {Object} an AWS SQS message body
+ * @returns {StepFunctionEventBridgeEvent | CumulusMessage} an AWS SQS message body
+ * parsed into a CumulusMessage or EventBridgeEvent
  */
 export const parseSQSMessageBody = (
   message: SQSRecord | AWS.SQS.Message
-): { [key: string]: any } =>
+): StepFunctionEventBridgeEvent | CumulusMessage =>
   JSON.parse(get(message, 'Body', get(message, 'body')) ?? '{}');
 
 /**
