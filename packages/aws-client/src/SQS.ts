@@ -13,6 +13,8 @@ import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
 import { sqs } from './services';
 
+type StepFunctionEventBridgeEvent = EventBridgeEvent<'Step Functions Execution Status Change', { [key: string]: string }>;
+
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
 export interface SQSMessage extends AWS.SQS.Message {
   ReceiptHandle: string
@@ -140,7 +142,6 @@ export const receiveSQSMessages = async (
 
   return <SQSMessage[]>(messages.Messages ?? []);
 };
-type StepFunctionEventBridgeEvent = EventBridgeEvent<'Step Functions Execution Status Change', { [key: string]: string }>;
 
 /**
  * Extract SQS message body
