@@ -38,9 +38,12 @@ Please note changes in 16.1.4 may not yet be released in future versions, as thi
 is a backport/patch release on the 16.x series of releases. Updates that are
 included in the future will have a corresponding CHANGELOG entry in future releases.
 
-
+### Added
 - **CUMULUS-3547
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
+  - addressed DAR requirement for encrypted volumes
+
+
 
 ### Changed 
 
