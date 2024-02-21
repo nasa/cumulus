@@ -1,20 +1,19 @@
 //@ts-check
-import { SQSRecord, EventBridgeEvent } from 'aws-lambda';
+import { SQSRecord } from 'aws-lambda';
 
 import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
-import { isEventBridgeEvent } from '@cumulus/common/lambda';
+import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/common/lambda';
 import Logger from '@cumulus/logger';
 
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
 
 const log = new Logger({ sender: '@cumulus/DeadLetterMessage' });
 
-type StepFunctionEventBridgeEvent = EventBridgeEvent<'Step Functions Execution Status Change', { [key: string]: string }>;
 type UnwrapDeadLetterCumulusMessageInputType = (
   StepFunctionEventBridgeEvent
-  | AWS.SQS.Message
-  | SQSRecord
+  | AWS.SQS.Message | SQSRecord
+  | CumulusMessage
 );
 
 /**
