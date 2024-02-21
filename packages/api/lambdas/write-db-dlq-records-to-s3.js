@@ -6,6 +6,7 @@ const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 
 const log = require('@cumulus/common/log');
+const { isEventBridgeEvent } = require('@cumulus/common/lambda');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const { getMessageExecutionName } = require('@cumulus/message/Executions');
@@ -33,22 +34,6 @@ function payloadHasGranules(payload) {
  *
  * @typedef {import('aws-lambda').EventBridgeEvent} EventBridgeEvent
 */
-/**
- * @param {{ [key: string]: any }} event
- * @returns {event is EventBridgeEvent}
- */
-const isEventBridgeLike = (event) => {
-  if (!(event instanceof Object && 'detail' in event && event.detail instanceof Object)) {
-    return false;
-  }
-  if (event.detail.status === 'RUNNING' && !('input' in event.detail)) {
-    return false;
-  }
-  if (event.detail.status === 'SUCCEEDED' && !('output' in event.detail)) {
-    return false;
-  }
-  return true;
-};
 
 /**
  * Reformat object with key attributes at top level.
@@ -70,7 +55,7 @@ async function formatCumulusDLAObject(messageBody) {
 
   let cumulusMessage;
   try {
-    if (isEventBridgeLike(messageBody)) {
+    if (isEventBridgeEvent(messageBody)) {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
     } else {
       cumulusMessage = null;
