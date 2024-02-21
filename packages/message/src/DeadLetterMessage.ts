@@ -22,7 +22,7 @@ type UnwrapDeadLetterCumulusMessageInputType = (
  * @param {{ [key: string]: any }} message
  * @returns {message is CumulusMessage}
  */
-const isCumulusMessageLike = (message: Object): boolean => (
+const isCumulusMessageLike = (message: Object): message is CumulusMessage => (
   message instanceof Object
   && 'cumulus_meta' in message
 );
@@ -33,7 +33,7 @@ const isCumulusMessageLike = (message: Object): boolean => (
  * @param {{ [key: string]: any }} message
  * @returns {message is AWS.SQS.Message | SQSRecord}
  */
-const isSQSRecordLike = (message: Object): boolean => (
+const isSQSRecordLike = (message: Object): message is AWS.SQS.Message | SQSRecord => (
   message instanceof Object
   && ('body' in message || 'Body' in message)
 );
@@ -47,22 +47,22 @@ const isSQSRecordLike = (message: Object): boolean => (
  */
 export const unwrapDeadLetterCumulusMessage = async (
   messageBody: UnwrapDeadLetterCumulusMessageInputType
-): Promise<CumulusMessage | UnwrapDeadLetterCumulusMessageInputType> => {
+): Promise<UnwrapDeadLetterCumulusMessageInputType> => {
   try {
     if (isSQSRecordLike(messageBody)) {
       // AWS.SQS.Message/SQS.Record case
       const unwrappedMessageBody = parseSQSMessageBody(
-        messageBody as SQSRecord | AWS.SQS.Message
-      ) as StepFunctionEventBridgeEvent;
+        messageBody
+      );
       return await unwrapDeadLetterCumulusMessage(unwrappedMessageBody);
     }
     if (isEventBridgeEvent(messageBody)) {
       return await getCumulusMessageFromExecutionEvent(
-        messageBody as StepFunctionEventBridgeEvent
+        messageBody
       );
     }
     if (isCumulusMessageLike(messageBody)) {
-      return messageBody as CumulusMessage;
+      return messageBody;
     }
     throw new TypeError('DeadLetter CumulusMessage in unrecognized format');
   } catch (error) {
