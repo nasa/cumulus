@@ -15,6 +15,7 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
 
 /**
  *
+ * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
 */
@@ -55,10 +56,10 @@ async function hoistCumulusMessageDetails(messageBody) {
     if (isEventBridgeEvent(messageBody)) {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
     } else {
-      cumulusMessage = null;
+      cumulusMessage = undefined;
     }
   } catch {
-    cumulusMessage = null;
+    cumulusMessage = undefined;
   }
 
   const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
@@ -82,7 +83,7 @@ async function hoistCumulusMessageDetails(messageBody) {
 /**
  * Determine execution name from body
  *
- * @param {Object} cumulusMessageObject - cumulus message
+ * @param {CumulusMessage} cumulusMessageObject - cumulus message
  * @returns {string} - <executionName | 'unknown'>
  */
 function determineExecutionName(cumulusMessageObject) {
@@ -110,6 +111,7 @@ async function handler(event) {
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     const messageBody = parseSQSMessageBody(sqsMessage);
+    console.log(messageBody);
     const cumulusMessageObject = await unwrapDeadLetterCumulusMessage(messageBody);
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
@@ -128,4 +130,5 @@ module.exports = {
   determineExecutionName,
   handler,
   unwrapDeadLetterCumulusMessage,
+  hoistCumulusMessageDetails,
 };
