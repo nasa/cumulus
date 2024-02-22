@@ -21,7 +21,7 @@
     "lint": "npm run lint-package-json && npm run eslint && lerna run python-lint && npm run lint-md",
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "lint-package-json": "npmPkgJsonLint .",
-    "test": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test > testoutput.txt",
+    "test": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test",
     "test:ci": "./scripts/run_ci_unit_coverage.sh",
     "test:coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 test:coverage > testoutput.txt",
     "coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 --since master coverage -- ",
