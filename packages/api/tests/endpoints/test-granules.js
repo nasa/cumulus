@@ -184,8 +184,7 @@ test.before(async (t) => {
     .createSecret({
       Name: process.env.cmr_password_secret_name,
       SecretString: randomString(),
-    })
-    .promise();
+    });
 
   // Store the Launchpad passphrase
   process.env.launchpad_passphrase_secret_name = randomString();
@@ -193,8 +192,7 @@ test.before(async (t) => {
     .createSecret({
       Name: process.env.launchpad_passphrase_secret_name,
       SecretString: randomString(),
-    })
-    .promise();
+    });
 
   // Generate a local test postGres database
 
@@ -384,14 +382,12 @@ test.after.always(async (t) => {
     .deleteSecret({
       SecretId: process.env.cmr_password_secret_name,
       ForceDeleteWithoutRecovery: true,
-    })
-    .promise();
+    });
   await secretsManager()
     .deleteSecret({
       SecretId: process.env.launchpad_passphrase_secret_name,
       ForceDeleteWithoutRecovery: true,
-    })
-    .promise();
+    });
 
   await destroyLocalTestDb({
     knex: t.context.knex,

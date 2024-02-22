@@ -346,7 +346,7 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: process.env.cmr_password_secret_name,
     SecretString: randomId('cmr-password'),
-  }).promise();
+  });
   const { knex, knexAdmin } = await generateLocalTestDb(testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
@@ -417,7 +417,7 @@ test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: process.env.cmr_password_secret_name,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   delete process.env.cmr_password_secret_name;
   await destroyLocalTestDb({
     knex: t.context.knex,

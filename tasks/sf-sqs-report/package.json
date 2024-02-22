@@ -29,7 +29,8 @@
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

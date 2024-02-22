@@ -80,7 +80,7 @@ test.before(async () => {
   await secretsManager().createSecret({
     Name: cmrPasswordSecret,
     SecretString: randomId('cmrPasswordSecret'),
-  }).promise();
+  });
 });
 
 const setupNock = (params) => {
@@ -131,7 +131,7 @@ test.after.always(async () => {
   await secretsManager().deleteSecret({
     SecretId: cmrPasswordSecret,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
 });
 
 async function uploadFilesXml(files, bucket) {
