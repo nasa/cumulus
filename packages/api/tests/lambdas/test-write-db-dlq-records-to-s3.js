@@ -6,7 +6,6 @@ const test = require('ava');
 const S3 = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
-  determineExecutionName,
   handler,
   hoistCumulusMessageDetails,
 } = require('../../lambdas/write-db-dlq-records-to-s3.js');
@@ -29,18 +28,14 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   const message1 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: message1Name,
-      },
+      detail: { executionArn: message1Name },
     }),
   };
   const message2Name = randomString(12);
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: message2Name,
-      },
+      detail: { executionArn: message2Name },
     }),
   };
 
@@ -65,17 +60,13 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
   const message1 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: messageName,
-      },
+      detail: { executionArn: messageName },
     }),
   };
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
-      cumulus_meta: {
-        execution_name: messageName,
-      },
+      detail: { executionArn: messageName },
     }),
   };
 
@@ -105,22 +96,6 @@ test.serial('write-db-dlq-records-to-s3 throws error if system bucket is not def
     handler({}),
     { message: 'System bucket env var is required.' }
   );
-});
-
-test('determineExecutionName returns execution name if it exists in cumulus_meta', (t) => {
-  const executionName = 'someExecutionName';
-  t.is(
-    determineExecutionName({
-      cumulus_meta: {
-        execution_name: executionName,
-      },
-    }),
-    executionName
-  );
-});
-
-test('determineExecutionName returns "unknown" if getExecutionName throws error', (t) => {
-  t.is(determineExecutionName({}), 'unknown');
 });
 
 test('hoistCumulusMessageDetails returns input message intact', async (t) => {
