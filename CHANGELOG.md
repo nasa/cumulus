@@ -40,7 +40,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 ### Fixed
 - **CUMULUS-3547**
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
-  - addressed DAR requirement for encr
+  - addressed DAR requirement for encryption
 
 ### Changed 
 
