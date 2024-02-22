@@ -232,7 +232,7 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: secretName,
     SecretString: 'secretString',
-  }).promise();
+  });
 
   try {
     const cmr = new CMR({ passwordSecretName: secretName, password: 'cmr-password' });
@@ -242,7 +242,7 @@ test('getCmrPassword returns password from AWS secret when set', async (t) => {
     await awsServices.secretsManager().deleteSecret({
       SecretId: secretName,
       ForceDeleteWithoutRecovery: true,
-    }).promise();
+    });
   }
 });
 
