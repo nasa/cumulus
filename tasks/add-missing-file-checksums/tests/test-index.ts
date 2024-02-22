@@ -1,5 +1,5 @@
 import sinon from 'sinon';
-import anyTest, { TestInterface } from 'ava';
+import anyTest, { TestFn } from 'ava';
 import { Readable } from 'stream';
 import * as S3 from '@cumulus/aws-client/S3';
 import cryptoRandomString from 'crypto-random-string';
@@ -7,7 +7,7 @@ import { handler, addChecksumToGranuleFile } from '../src';
 
 const randomString = () => cryptoRandomString({ length: 10 });
 
-const test = anyTest as TestInterface<{
+const test = anyTest as TestFn<{
   stubS3: { getObject: S3.GetObjectMethod }
 }>;
 
