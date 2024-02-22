@@ -18,7 +18,7 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: t.context.cmrPasswordSecretName,
     SecretString: t.context.cmrPassword,
-  }).promise();
+  });
 
   process.env.cmr_provider = randomId('cmr_provider');
   process.env.cmr_client_id = randomId('cmr_client_id');
@@ -36,7 +36,7 @@ test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.cmrPasswordSecretName,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
 });
 
 test('reconcileCMRMetadata does not call updateCMRMetadata if no metadatafile present', async (t) => {

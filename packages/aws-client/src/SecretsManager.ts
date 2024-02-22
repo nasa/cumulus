@@ -4,6 +4,6 @@
 
 import { secretsManager } from './services';
 
-export const getSecretString = (SecretId: string) =>
-  secretsManager().getSecretValue({ SecretId }).promise()
+export const getSecretString = async (SecretId: string) =>
+  secretsManager().getSecretValue({ SecretId })
     .then((response) => response.SecretString);
