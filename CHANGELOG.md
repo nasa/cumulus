@@ -42,7 +42,6 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
   - addressed DAR requirement for encr
 
-### Changed 
 
 ## [v16.1.3] 2024-1-15
 
