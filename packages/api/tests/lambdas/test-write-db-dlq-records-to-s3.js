@@ -8,7 +8,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 const {
   determineExecutionName,
   handler,
-  formatCumulusDLAObject,
+  hoistCumulusMessageDetails,
 } = require('../../lambdas/write-db-dlq-records-to-s3.js');
 
 test.before(async (t) => {
@@ -123,14 +123,14 @@ test('determineExecutionName returns "unknown" if getExecutionName throws error'
   t.is(determineExecutionName({}), 'unknown');
 });
 
-test('formatCumulusDLAObject returns input message intact', async (t) => {
+test('hoistCumulusMessageDetails returns input message intact', async (t) => {
   const message = {
     a: 'b',
   };
-  t.like(await formatCumulusDLAObject(message), message);
+  t.like(await hoistCumulusMessageDetails(message), message);
 });
 
-test('formatCumulusDLAObject returns details: collection, granules, execution, and stateMachine as found moved to top layer', async (t) => {
+test('hoistCumulusMessageDetails returns details: collection, granules, execution, and stateMachine as found moved to top layer', async (t) => {
   const message = {
     error: 'anError',
     detail: {
@@ -144,7 +144,7 @@ test('formatCumulusDLAObject returns details: collection, granules, execution, a
     },
   };
   t.deepEqual(
-    await formatCumulusDLAObject(message),
+    await hoistCumulusMessageDetails(message),
     {
       ...message,
       collection: 'aName',
@@ -155,7 +155,7 @@ test('formatCumulusDLAObject returns details: collection, granules, execution, a
   );
 });
 
-test('formatCumulusDLAObject returns unknown for details: collection, granules, execution, and stateMachine when not found', async (t) => {
+test('hoistCumulusMessageDetails returns unknown for details: collection, granules, execution, and stateMachine when not found', async (t) => {
   const messages = [
     {
       mangled: {
@@ -332,7 +332,7 @@ test('formatCumulusDLAObject returns unknown for details: collection, granules, 
     },
   ];
   const results = await Promise.all(
-    messages.map((message) => formatCumulusDLAObject(message.mangled))
+    messages.map((message) => hoistCumulusMessageDetails(message.mangled))
   );
   results.forEach((result, index) => {
     t.deepEqual(result, messages[index].expected);
