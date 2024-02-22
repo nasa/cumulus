@@ -35,14 +35,14 @@ test.before(async (t) => {
   await awsServices.secretsManager().createSecret({
     Name: t.context.cmrPasswordSecretName,
     SecretString: randomString(),
-  }).promise();
+  });
 
   // Store the Launchpad passphrase
   t.context.launchpadPassphraseSecretName = randomString();
   await awsServices.secretsManager().createSecret({
     Name: t.context.launchpadPassphraseSecretName,
     SecretString: randomString(),
-  }).promise();
+  });
 });
 
 test.beforeEach(async (t) => {
@@ -69,11 +69,11 @@ test.after.always(async (t) => {
   await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.cmrPasswordSecretName,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
   await awsServices.secretsManager().deleteSecret({
     SecretId: t.context.launchpadPassphraseSecretName,
     ForceDeleteWithoutRecovery: true,
-  }).promise();
+  });
 });
 
 test.serial('postToCMR throws error if CMR correctly identifies the xml as invalid', async (t) => {

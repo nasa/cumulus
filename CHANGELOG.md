@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Breaking Changes
 
+- **CUMULUS-2897**
+  - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
+    from the `@cumulus/aws-client` package.
+
 ### Changed
 
 - **CUMULUS-3456**
@@ -20,6 +24,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
+- **CUMULUS-2896**
+  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**

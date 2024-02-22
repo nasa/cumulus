@@ -32,7 +32,7 @@ const initEnvVarsFunction = async () => {
   try {
     const response = await secretsManager().getSecretValue(
       { SecretId: apiConfigSecretId }
-    ).promise();
+    );
     let envSecret;
     try {
       envSecret = JSON.parse(response.SecretString);

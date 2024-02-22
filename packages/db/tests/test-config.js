@@ -25,37 +25,29 @@ const dbConnectionConfigEnv = {
 };
 
 const secretsManagerStub = {
-  getSecretValue: (_value) => ({
-    promise: () => Promise.resolve({
-      SecretString: JSON.stringify(dbConnectionConfig),
-    }),
+  getSecretValue: (_value) => Promise.resolve({
+    SecretString: JSON.stringify(dbConnectionConfig),
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 };
 
 const secretsManagerNoPortStub = {
-  getSecretValue: (_value) => ({
-    promise: () => Promise.resolve({
-      SecretString: JSON.stringify({ ...dbConnectionConfig, port: undefined }),
-    }),
+  getSecretValue: (_value) => Promise.resolve({
+    SecretString: JSON.stringify({ ...dbConnectionConfig, port: undefined }),
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 };
 
 const undefinedSecretsManagerStub = {
-  getSecretValue: (_value) => ({
-    promise: () => Promise.resolve({
-      SecretString: undefined,
-    }),
+  getSecretValue: (_value) => Promise.resolve({
+    SecretString: undefined,
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 };
 
 const badSecretsManagerStub = {
-  getSecretValue: (_value) => ({
-    promise: () => Promise.resolve({
-      SecretString: { test: 'value' },
-    }),
+  getSecretValue: (_value) => Promise.resolve({
+    SecretString: { test: 'value' },
   }),
   putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
 };

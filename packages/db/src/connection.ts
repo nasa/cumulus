@@ -1,4 +1,5 @@
-import AWS from 'aws-sdk';
+import { SecretsManager } from '@aws-sdk/client-secrets-manager';
+import { services } from '@cumulus/aws-client';
 import { knex, Knex } from 'knex';
 import Logger from '@cumulus/logger';
 
@@ -42,11 +43,11 @@ const log = new Logger({ sender: '@cumulus/db/connection' });
  */
 export const getKnexClient = async ({
   env = process.env,
-  secretsManager = new AWS.SecretsManager(),
+  secretsManager = services.secretsManager(),
   knexLogger = log,
 }: {
   env?: NodeJS.ProcessEnv,
-  secretsManager?: AWS.SecretsManager,
+  secretsManager?: SecretsManager,
   knexLogger?: Logger
 } = {}): Promise<Knex> => {
   if (isKnexDebugEnabled(env)) {
