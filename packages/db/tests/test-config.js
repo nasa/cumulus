@@ -204,11 +204,13 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
 
 test('getConnectionConfig returns the expected configuration when using Secrets Manager with disableSSL set to true', async (t) => {
   const disableSSLsecretsManagerStub = {
-    getSecretValue: (_value) => ({
-      promise: () => Promise.resolve({
-        SecretString: JSON.stringify({ ...dbConnectionConfig, disableSSL: true }),
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          disableSSL: true,
+        }),
       }),
-    }),
     putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
   };
   const result = await getConnectionConfig({
@@ -228,11 +230,13 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
 
 test('getConnectionConfig returns the expected configuration when using Secrets Manager with disableSSL set to true as string', async (t) => {
   const disableSSLsecretsManagerStub = {
-    getSecretValue: (_value) => ({
-      promise: () => Promise.resolve({
-        SecretString: JSON.stringify({ ...dbConnectionConfig, disableSSL: 'true' }),
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          disableSSL: 'true',
+        }),
       }),
-    }),
     putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
   };
   const result = await getConnectionConfig({
@@ -252,11 +256,13 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
 
 test('getConnectionConfig returns the expected configuration when using Secrets Manager with rejectUnauthorized set to false as string', async (t) => {
   const disableSSLsecretsManagerStub = {
-    getSecretValue: (_value) => ({
-      promise: () => Promise.resolve({
-        SecretString: JSON.stringify({ ...dbConnectionConfig, rejectUnauthorized: 'false' }),
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          rejectUnauthorized: 'false',
+        }),
       }),
-    }),
     putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
   };
   const result = await getConnectionConfig({
@@ -278,11 +284,13 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
 
 test('getConnectionConfig returns the expected configuration when using Secrets Manager with rejectUnauthorized set to false', async (t) => {
   const disableSSLsecretsManagerStub = {
-    getSecretValue: (_value) => ({
-      promise: () => Promise.resolve({
-        SecretString: JSON.stringify({ ...dbConnectionConfig, rejectUnauthorized: false }),
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          rejectUnauthorized: false,
+        }),
       }),
-    }),
     putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
   };
   const result = await getConnectionConfig({
