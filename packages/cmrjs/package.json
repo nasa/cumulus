@@ -17,7 +17,8 @@
   },
   "ava": {
     "serial": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "keywords": [
     "CUMULUS"
