@@ -9,10 +9,8 @@ const log = require('@cumulus/common/log');
 const { isEventBridgeEvent } = require('@cumulus/common/lambda');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
-const { getMessageExecutionName } = require('@cumulus/message/Executions');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
-
 /**
  *
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
@@ -56,10 +54,11 @@ async function hoistCumulusMessageDetails(messageBody) {
     if (isEventBridgeEvent(messageBody)) {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
     } else {
-      cumulusMessage = undefined;
+      throw new TypeError('Recieved SQS message body not parseable as EventBridgeEvent');
     }
-  } catch {
+  } catch (error) {
     cumulusMessage = undefined;
+    log.error(`could not parse details from SQS message body due to ${error}`);
   }
 
   const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
@@ -80,20 +79,7 @@ async function hoistCumulusMessageDetails(messageBody) {
     stateMachine,
   };
 }
-/**
- * Determine execution name from body
- *
- * @param {CumulusMessage} cumulusMessageObject - cumulus message
- * @returns {string} - <executionName | 'unknown'>
- */
-function determineExecutionName(cumulusMessageObject) {
-  try {
-    return getMessageExecutionName(cumulusMessageObject);
-  } catch (error) {
-    log.error('Could not find execution name in cumulus_meta:', cumulusMessageObject.cumulus_meta);
-    return 'unknown';
-  }
-}
+
 /**
  * @typedef {import('aws-lambda').SQSRecord} SQSRecord
  */
@@ -101,8 +87,7 @@ function determineExecutionName(cumulusMessageObject) {
 /**
  * Lambda handler for saving DLQ reports to DLA in s3
  *
- * @param {Object} event - Input payload object
- * @param {Array<SQSRecord | AWS.SQS.Message>} [event.Records] set of  sqsMessages
+ * @param {{Records: Array<SQSRecord | AWS.SQS.Message>, [key: string]: any}} event - Input payload
  * @returns {Promise<void>}
  */
 async function handler(event) {
@@ -111,13 +96,11 @@ async function handler(event) {
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     const messageBody = parseSQSMessageBody(sqsMessage);
-    console.log(messageBody);
-    const cumulusMessageObject = await unwrapDeadLetterCumulusMessage(messageBody);
-    const executionName = determineExecutionName(cumulusMessageObject);
-    // version messages with UUID as workflows can produce multiple messages that may all fail.
-    const s3Identifier = `${executionName}-${uuidv4()}`;
-
     const massagedMessage = await hoistCumulusMessageDetails(messageBody);
+
+    // version messages with UUID as workflows can produce multiple messages that may all fail.
+    const s3Identifier = `${massagedMessage.execution}-${uuidv4()}`;
+
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
@@ -127,7 +110,6 @@ async function handler(event) {
 }
 
 module.exports = {
-  determineExecutionName,
   handler,
   unwrapDeadLetterCumulusMessage,
   hoistCumulusMessageDetails,
