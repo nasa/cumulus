@@ -12,7 +12,6 @@ For the v16.1 release series, Cumulus Core will be tested against PostgreSQL v13
 should migrate their datastores to Aurora PostgreSQL 13.12+ compatible data
 stores as soon as possible after upgrading to this release.
 
-
 **IMPORTANT** -- When upgrading from v16.1.x users should update to a release
 following 18.2.0/the first forward release supporting Postgres v13, as versions
 between 16.1.x and 18.2.x+ are unsupported on Aurora Postgres v13.
@@ -30,8 +29,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - Update `cumulus-rds-tf` module to take additional parameters in support of
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 
-
-
+## Changed
 
 ## [v16.1.4] 2024-2-16
 
@@ -39,12 +37,10 @@ Please note changes in 16.1.4 may not yet be released in future versions, as thi
 is a backport/patch release on the 16.x series of releases. Updates that are
 included in the future will have a corresponding CHANGELOG entry in future releases.
 
-### Added
-- **CUMULUS-3547
+### Fixed
+- **CUMULUS-3547**
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
-  - addressed DAR requirement for encrypted volumes
-
-
+  - addressed DAR requirement for encr
 
 ### Changed 
 
