@@ -29,7 +29,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - Update `cumulus-rds-tf` module to take additional parameters in support of
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 
-## Changed
 
 ## [v16.1.4] 2024-2-16
 
@@ -42,7 +41,6 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
   - addressed DAR requirement for encryption
 
-### Changed 
 
 ## [v16.1.3] 2024-1-15
 
