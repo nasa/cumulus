@@ -54,10 +54,9 @@ async function hoistCumulusMessageDetails(sqsMessage) {
   let status = 'unknown';
   let time = 'unknown';
   let collection = 'unknown';
-  let error = 'unknown';
   let granules = [];
+  const error = sqsMessage.error || 'unknown';
   if (isEventBridgeEvent(messageBody)) {
-    error = messageBody?.error || 'unknown';
     execution = messageBody?.detail?.executionArn || 'unknown';
     stateMachine = messageBody?.detail?.stateMachineArn || 'unknown';
     status = messageBody?.detail?.status || 'unknown';
