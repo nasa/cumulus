@@ -6,7 +6,7 @@ const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
 
 const log = require('@cumulus/common/log');
-const { isEventBridgeEvent } = require('@cumulus/common/lambda');
+const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
 const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
