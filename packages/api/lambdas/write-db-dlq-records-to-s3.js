@@ -33,7 +33,7 @@ function payloadHasGranules(payload) {
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {{[key: string]: any}} messageBody - event bridge event as defined in aws-lambda
+ * @param {SQSRecord | AWS.SQS.Message} sqsMessage - event bridge event as defined in aws-lambda
  * @returns {Promise<Object>} - message packaged with
  * metadata or 'unknown' where metadata not found
  * {
@@ -45,38 +45,45 @@ function payloadHasGranules(payload) {
  *   ...originalAttributes
  * }
  */
-async function hoistCumulusMessageDetails(messageBody) {
-  const execution = messageBody?.detail?.executionArn || 'unknown';
-  const stateMachine = messageBody?.detail?.stateMachineArn || 'unknown';
-
-  let cumulusMessage;
-  try {
-    if (isEventBridgeEvent(messageBody)) {
+async function hoistCumulusMessageDetails(sqsMessage) {
+  const messageBody = parseSQSMessageBody(sqsMessage);
+  let execution = 'unknown';
+  let stateMachine = 'unknown';
+  let status = 'unknown';
+  let time = 'unknown';
+  let collection = 'unknown';
+  let granules = ['unknown'];
+  if (isEventBridgeEvent(messageBody)) {
+    execution = messageBody?.detail?.executionArn || 'unknown';
+    stateMachine = messageBody?.detail?.stateMachineArn || 'unknown';
+    status = messageBody?.detail?.status || 'unknown';
+    time = messageBody?.time || 'unknown';
+    let cumulusMessage;
+    try {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
-    } else {
-      throw new TypeError('Recieved SQS message body not parseable as EventBridgeEvent');
+    } catch (error) {
+      cumulusMessage = undefined;
+      log.error(`could not parse details from DLQ message body due to ${error}`);
     }
-  } catch (error) {
-    cumulusMessage = undefined;
-    log.error(`could not parse details from SQS message body due to ${error}`);
-  }
 
-  const collection = cumulusMessage?.meta?.collection?.name || 'unknown';
-  let granules;
+    collection = cumulusMessage?.meta?.collection?.name || 'unknown';
 
-  const payload = cumulusMessage?.payload;
-  if (payloadHasGranules(payload)) {
-    granules = payload.granules.map((granule) => granule?.granuleId || 'unknown');
+    const payload = cumulusMessage?.payload;
+    if (payloadHasGranules(payload)) {
+      granules = payload.granules.map((granule) => granule?.granuleId || 'unknown');
+    }
   } else {
-    granules = 'unknown';
+    log.error('could not parse details from DLQ message body, expected EventBridgeEvent');
   }
 
   return {
-    ...messageBody,
+    ...sqsMessage,
     collection,
     granules,
     execution,
     stateMachine,
+    status,
+    time,
   };
 }
 
@@ -95,9 +102,7 @@ async function handler(event) {
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
-    const messageBody = parseSQSMessageBody(sqsMessage);
-    const massagedMessage = await hoistCumulusMessageDetails(messageBody);
-
+    const massagedMessage = await hoistCumulusMessageDetails(sqsMessage);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${massagedMessage.execution}-${uuidv4()}`;
 
