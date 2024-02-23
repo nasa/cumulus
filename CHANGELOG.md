@@ -1,10 +1,13 @@
 # Changelog
 
+## Unreleased
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+
+
+## [v16.1.4] 2024-2-16
 
 ### Migration Notes
 
@@ -30,8 +33,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 
 
-## [v16.1.4] 2024-2-16
-
 Please note changes in 16.1.4 may not yet be released in future versions, as this
 is a backport/patch release on the 16.x series of releases. Updates that are
 included in the future will have a corresponding CHANGELOG entry in future releases.
@@ -40,6 +41,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 - **CUMULUS-3547**
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
   - addressed DAR requirement for encryption
+
 
 
 ## [v16.1.3] 2024-1-15
