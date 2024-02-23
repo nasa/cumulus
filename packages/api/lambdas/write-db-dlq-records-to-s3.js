@@ -56,7 +56,7 @@ async function hoistCumulusMessageDetails(sqsMessage) {
   let collection = null;
   let granules = [];
   const error = sqsMessage.error || null;
-  log.info(sqsMessage);
+  log.error(sqsMessage);
   if (isEventBridgeEvent(messageBody)) {
     execution = messageBody?.detail?.executionArn || null;
     stateMachine = messageBody?.detail?.stateMachineArn || null;
