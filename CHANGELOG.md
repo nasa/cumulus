@@ -17,6 +17,14 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 - **CUMULUS-3701**
   - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 
+### Fixed
+
+- **CUMULUS-3587**
+  - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
+    updates of sub-dependencies and maintain without refactoring errors in
+    API/etc wholesale
+  - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
