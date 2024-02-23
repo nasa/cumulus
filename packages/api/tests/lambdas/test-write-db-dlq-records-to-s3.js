@@ -298,7 +298,7 @@ test('hoistCumulusMessageDetails returns unknown for details: collection, granul
         collection: 'unknown',
         execution: 'execArn',
         stateMachine: 'SMArn',
-        granules: ['unknown'],
+        granules: [],
         time: 'aTime',
         status: 'unknown',
 
