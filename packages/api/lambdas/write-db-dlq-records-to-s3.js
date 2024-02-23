@@ -35,33 +35,33 @@ function payloadHasGranules(payload) {
  *
  * @param {DLARecord} sqsMessage - event bridge event as defined in aws-lambda
  * @returns {Promise<Object>} - message packaged with
- * metadata or 'unknown' where metadata not found
+ * metadata or null where metadata not found
  * {
- *   error: <errorString | 'unknown'>
- *   time: <timestamp(utc) | 'unknown'>
- *   status: <status | 'unknown'>
- *   collection: <collectionName | 'unknown'>
+ *   error: <errorString | null>
+ *   time: <timestamp(utc) | null>
+ *   status: <status | null>
+ *   collection: <collectionName | null>
  *   granules: <[granuleIds, ...] | []>
- *   execution: <executionArn | 'unknown'>
- *   stateMachine: <stateMachineArn | 'unknown'>
+ *   execution: <executionArn | null>
+ *   stateMachine: <stateMachineArn | null>
  *   ...originalAttributes
  * }
  */
 async function hoistCumulusMessageDetails(sqsMessage) {
   const messageBody = parseSQSMessageBody(sqsMessage);
-  let execution = 'unknown';
-  let stateMachine = 'unknown';
-  let status = 'unknown';
-  let time = 'unknown';
-  let collection = 'unknown';
+  let execution = null;
+  let stateMachine = null;
+  let status = null;
+  let time = null;
+  let collection = null;
   let granules = [];
-  const error = sqsMessage.error || 'unknown';
+  const error = sqsMessage.error || null;
   log.info(sqsMessage);
   if (isEventBridgeEvent(messageBody)) {
-    execution = messageBody?.detail?.executionArn || 'unknown';
-    stateMachine = messageBody?.detail?.stateMachineArn || 'unknown';
-    status = messageBody?.detail?.status || 'unknown';
-    time = messageBody?.time || 'unknown';
+    execution = messageBody?.detail?.executionArn || null;
+    stateMachine = messageBody?.detail?.stateMachineArn || null;
+    status = messageBody?.detail?.status || null;
+    time = messageBody?.time || null;
     let cumulusMessage;
     try {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
@@ -70,11 +70,11 @@ async function hoistCumulusMessageDetails(sqsMessage) {
       log.error(`could not parse details from DLQ message body due to ${error_}`);
     }
 
-    collection = cumulusMessage?.meta?.collection?.name || 'unknown';
+    collection = cumulusMessage?.meta?.collection?.name || null;
 
     const payload = cumulusMessage?.payload;
     if (payloadHasGranules(payload)) {
-      granules = payload.granules.map((granule) => granule?.granuleId || 'unknown');
+      granules = payload.granules.map((granule) => granule?.granuleId || null);
     }
   } else {
     log.error('could not parse details from DLQ message body, expected EventBridgeEvent');
