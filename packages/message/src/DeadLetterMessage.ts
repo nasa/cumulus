@@ -72,7 +72,8 @@ export const unwrapDeadLetterCumulusMessage = async (
   } catch (error) {
     log.error(
       'Falling back to storing wrapped message after encountering unwrap error',
-      error
+      error,
+      JSON.stringify(messageBody)
     );
     return messageBody;
   }
