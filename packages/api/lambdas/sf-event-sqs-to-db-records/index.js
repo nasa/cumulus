@@ -3,7 +3,6 @@
 'use strict';
 
 const get = require('lodash/get');
-
 const { parseSQSMessageBody, sendSQSMessage } = require('@cumulus/aws-client/SQS');
 
 const Logger = require('@cumulus/logger');
@@ -129,9 +128,12 @@ const writeRecords = async ({
 /**
  * Lambda handler for #TODO
  *
- * @param {Object} event - Input payload object
- * @param {Array<SQSRecord | AWS.SQS.Message>} [event.Records] set of  sqsMessages
- * @returns {Promise<void>}
+ * @param {{
+     Records: Array<SQSRecord>,
+     env: {[key: string]:  any},
+     [key: string]: any
+  }} event - Input payload
+ * @returns {Promise<{batchItemFailures: Array<{itemIdentifier: string}>}>}
  */
 const handler = async (event) => {
   const knex = await getKnexClient({
@@ -158,12 +160,17 @@ const handler = async (event) => {
       return await writeRecords({ ...event, cumulusMessage, knex });
     } catch (error) {
       log.error(`Writing message failed: ${JSON.stringify(message)}`, error);
+      if (!process.env.DeadLetterQueue) {
+        log.error('DeadLetterQueue not configured');
+        return undefined;
+      }
       return sendSQSMessage(
         process.env.DeadLetterQueue,
         {
           ...message,
           error: error.toString(),
-        }
+        },
+        log
       );
     }
   }));
