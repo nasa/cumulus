@@ -126,7 +126,7 @@ const writeRecords = async ({
  */
 
 /**
- * Lambda handler for #TODO
+ * Lambda handler for StepFunction Events that writes records or records errors to the DLQ
  *
  * @param {{
      Records: Array<SQSRecord>,
