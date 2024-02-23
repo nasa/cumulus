@@ -107,16 +107,21 @@ test('hoistCumulusMessageDetails returns input message intact', async (t) => {
 
 test('hoistCumulusMessageDetails returns details: collection, granules, execution, and stateMachine as found moved to top layer', async (t) => {
   const message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      time: 'atime',
+      detail: {
+        status: 'SUCCEEDED',
+        output: JSON.stringify({
+          meta: { collection: { name: 'aName' } },
+          payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+        }),
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+      },
+    }),
     error: 'anError',
-    detail: {
-      status: 'SUCCEEDED',
-      output: JSON.stringify({
-        meta: { collection: { name: 'aName' } },
-        payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-      }),
-      executionArn: 'execArn',
-      stateMachineArn: 'SMArn',
-    },
   };
   t.deepEqual(
     await hoistCumulusMessageDetails(message),
@@ -126,6 +131,8 @@ test('hoistCumulusMessageDetails returns details: collection, granules, executio
       granules: ['a', 'b'],
       execution: 'execArn',
       stateMachine: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
     }
   );
 });
@@ -134,175 +141,372 @@ test('hoistCumulusMessageDetails returns unknown for details: collection, granul
   const messages = [
     {
       mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
       },
       expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
         collection: 'aName',
-        granules: ['a', 'b'],
         execution: 'execArn',
         stateMachine: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+
       },
     }, {
       mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
       },
       expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
-        collection: 'unknown',
-        granules: ['a', 'b'],
+        collection: 'aName',
         execution: 'execArn',
         stateMachine: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'unknown',
+        status: 'SUCCEEDED',
+
       },
     }, {
       mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ a: 'b' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'RUNNING',
-          input: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ a: 'b' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
       },
       expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ a: 'b' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'RUNNING',
-          input: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ a: 'b' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
         collection: 'aName',
+        execution: 'execArn',
+        stateMachine: 'SMArn',
         granules: ['unknown', 'b'],
-        execution: 'execArn',
-        stateMachine: 'SMArn',
+        time: 'aTime',
+        status: 'SUCCEEDED',
+
       },
     }, {
       mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
       },
       expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
-        collection: 'aName',
-        granules: ['b'],
+        collection: 'unknown',
         execution: 'execArn',
         stateMachine: 'SMArn',
+        granules: ['unknown'],
+        time: 'aTime',
+        status: 'unknown',
+
       },
     }, {
       mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: ['abcd'] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: 'a' },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
       },
       expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: ['abcd'] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: 'a' },
-          }),
-          executionArn: 'execArn',
-          stateMachineArn: 'SMArn',
-        },
         collection: 'aName',
-        granules: 'unknown',
         execution: 'execArn',
         stateMachine: 'SMArn',
+        granules: ['unknown'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+
       },
     }, {
       mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: {} },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-        },
       },
       expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: {} },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
         error: 'anError',
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify({
-            meta: { collection: { name: 'aName' } },
-            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
-          }),
-          executionArn: 'execArn',
-        },
-        collection: 'aName',
+        collection: 'unknown',
+        execution: 'execArn',
+        stateMachine: 'SMArn',
         granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collection: 'aName',
+        execution: 'unknown',
+        stateMachine: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+          },
+        }),
+        error: 'anError',
+        collection: 'aName',
         execution: 'execArn',
         stateMachine: 'unknown',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'unknown',
+        collection: 'aName',
+        execution: 'execArn',
+        stateMachine: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+
       },
     },
   ];
