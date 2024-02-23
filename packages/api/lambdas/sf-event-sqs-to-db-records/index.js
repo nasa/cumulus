@@ -166,10 +166,7 @@ const handler = async (event) => {
       }
       return sendSQSMessage(
         process.env.DeadLetterQueue,
-        {
-          ...message,
-          error: error.toString(),
-        }
+        message
       );
     }
   }));
