@@ -2,11 +2,25 @@
  * @module Lambda
  */
 import { InvocationType } from '@aws-sdk/client-lambda';
+import { EventBridgeEvent } from 'aws-lambda';
 import Logger from '@cumulus/logger';
 import { lambda } from './services';
 import { inTestMode } from './test-utils';
 
 const log = new Logger({ sender: 'aws-client/Lambda' });
+
+export type StepFunctionEventBridgeEvent = EventBridgeEvent<'Step Functions Execution Status Change', { [key: string]: string }>;
+
+/**
+ * Bare check for EventBridge shape
+ *
+ * @param {{ [key: string]: any }} event
+ * @returns {event is EventBridgeEvent}
+ */
+export const isEventBridgeEvent = (event: Object): event is StepFunctionEventBridgeEvent => (
+  event instanceof Object
+  && 'detail' in event
+);
 
 /**
  * Invoke a Lambda function

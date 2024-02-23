@@ -3,7 +3,7 @@ import { SQSRecord } from 'aws-lambda';
 
 import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
-import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/common/lambda';
+import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
 import Logger from '@cumulus/logger';
 
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';

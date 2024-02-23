@@ -5,7 +5,7 @@
 import Logger from '@cumulus/logger';
 
 import { CumulusMessage } from '@cumulus/types/message';
-import { StepFunctionEventBridgeEvent } from '@cumulus/common/lambda';
+import { StepFunctionEventBridgeEvent } from './Lambda';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
