@@ -9,10 +9,14 @@ import Logger from '@cumulus/logger';
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
 
 const log = new Logger({ sender: '@cumulus/DeadLetterMessage' });
+interface DLARecord extends SQSRecord {
+  error: string
+}
+export type { DLARecord };
 
 type UnwrapDeadLetterCumulusMessageInputType = (
   StepFunctionEventBridgeEvent
-  | AWS.SQS.Message | SQSRecord
+  | DLARecord
   | CumulusMessage
 );
 
@@ -31,9 +35,9 @@ const isCumulusMessageLike = (message: Object): message is CumulusMessage => (
  * Bare check for SQS message Shape
  *
  * @param {{ [key: string]: any }} message
- * @returns {message is AWS.SQS.Message | SQSRecord}
+ * @returns {message is DLARecord}
  */
-const isSQSRecordLike = (message: Object): message is AWS.SQS.Message | SQSRecord => (
+const isSQSRecordLike = (message: Object): message is DLARecord => (
   message instanceof Object
   && ('body' in message || 'Body' in message)
 );

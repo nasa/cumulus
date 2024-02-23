@@ -16,7 +16,8 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
-*/
+ * @typedef {import('@cumulus/message/DeadLetterMessage').DLARecord} DLARecord
+ */
 
 /**
  * @param {unknown} payload
@@ -29,17 +30,18 @@ function payloadHasGranules(payload) {
     && Array.isArray(payload.granules)
   );
 }
-
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {SQSRecord | AWS.SQS.Message} sqsMessage - event bridge event as defined in aws-lambda
+ * @param {DLARecord} sqsMessage - event bridge event as defined in aws-lambda
  * @returns {Promise<Object>} - message packaged with
  * metadata or 'unknown' where metadata not found
  * {
  *   error: <errorString | 'unknown'>
+ *   time: <timestamp(utc) | 'unknown'>
+ *   status: <status | 'unknown'>
  *   collection: <collectionName | 'unknown'>
- *   granules: <[granuleIds, ...] | 'unknown'>
+ *   granules: <[granuleIds, ...] | []>
  *   execution: <executionArn | 'unknown'>
  *   stateMachine: <stateMachineArn | 'unknown'>
  *   ...originalAttributes
@@ -52,9 +54,10 @@ async function hoistCumulusMessageDetails(sqsMessage) {
   let status = 'unknown';
   let time = 'unknown';
   let collection = 'unknown';
-  let granules = ['unknown'];
-  const error = sqsMessage.error || 'unknown';
+  let error = 'unknown';
+  let granules = [];
   if (isEventBridgeEvent(messageBody)) {
+    error = messageBody?.error || 'unknown';
     execution = messageBody?.detail?.executionArn || 'unknown';
     stateMachine = messageBody?.detail?.stateMachineArn || 'unknown';
     status = messageBody?.detail?.status || 'unknown';
@@ -62,9 +65,9 @@ async function hoistCumulusMessageDetails(sqsMessage) {
     let cumulusMessage;
     try {
       cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
-    } catch (error) {
+    } catch (error_) {
       cumulusMessage = undefined;
-      log.error(`could not parse details from DLQ message body due to ${error}`);
+      log.error(`could not parse details from DLQ message body due to ${error_}`);
     }
 
     collection = cumulusMessage?.meta?.collection?.name || 'unknown';
@@ -90,13 +93,9 @@ async function hoistCumulusMessageDetails(sqsMessage) {
 }
 
 /**
- * @typedef {import('aws-lambda').SQSRecord} SQSRecord
- */
-
-/**
  * Lambda handler for saving DLQ reports to DLA in s3
  *
- * @param {{Records: Array<SQSRecord | AWS.SQS.Message>, [key: string]: any}} event - Input payload
+ * @param {{Records: Array<DLARecord>, [key: string]: any}} event - Input payload
  * @returns {Promise<void>}
  */
 async function handler(event) {
