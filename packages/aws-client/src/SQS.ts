@@ -5,13 +5,14 @@
 import Logger from '@cumulus/logger';
 
 import { CumulusMessage } from '@cumulus/types/message';
-import { StepFunctionEventBridgeEvent } from './Lambda';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import { SQSRecord } from 'aws-lambda';
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
+
+import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
