@@ -37,6 +37,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3527**
   - Added suppport for additional kex algorithms in the sftp-client.
 
+### Fixed
+
+- **CUMULUS-3587**
+  - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
+    updates of sub-dependencies and maintain without refactoring errors in
+    API/etc wholesale
+  - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
