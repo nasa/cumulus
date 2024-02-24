@@ -77,8 +77,11 @@ async function handler(event) {
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
+    log.error(sqsMessage);
     const messageBody = parseSQSMessageBody(sqsMessage);
+    log.error(messageBody);
     const cumulusMessageObject = await unwrapDeadLetterCumulusMessage(messageBody);
+    log.error(messageBody);
     const executionName = determineExecutionName(cumulusMessageObject);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
