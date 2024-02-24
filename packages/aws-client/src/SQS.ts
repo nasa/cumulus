@@ -154,7 +154,7 @@ export const receiveSQSMessages = async (
  */
 export const parseSQSMessageBody = (
   message: SQSRecord | AWS.SQS.Message
-): StepFunctionEventBridgeEvent | CumulusMessage =>
+): StepFunctionEventBridgeEvent | CumulusMessage | SQSRecord =>
   JSON.parse(get(message, 'Body', get(message, 'body')) ?? '{}');
 
 /**

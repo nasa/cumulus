@@ -37,7 +37,7 @@ const isCumulusMessageLike = (message: Object): message is CumulusMessage => (
  * @param {{ [key: string]: any }} message
  * @returns {message is DLARecord}
  */
-const isSQSRecordLike = (message: Object): message is DLARecord => (
+export const isSQSRecordLike = (message: Object): message is DLARecord => (
   message instanceof Object
   && ('body' in message || 'Body' in message)
 );

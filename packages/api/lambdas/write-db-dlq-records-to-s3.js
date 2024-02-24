@@ -9,7 +9,7 @@ const log = require('@cumulus/common/log');
 const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
-const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
+const { unwrapDeadLetterCumulusMessage, isSQSRecordLike } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 /**
  *
@@ -48,7 +48,11 @@ function payloadHasGranules(payload) {
  * }
  */
 async function hoistCumulusMessageDetails(sqsMessage) {
-  const messageBody = parseSQSMessageBody(sqsMessage);
+  let messageBody = parseSQSMessageBody(sqsMessage);
+  while (isSQSRecordLike(messageBody)) {
+    messageBody = parseSQSMessageBody(sqsMessage);
+  }
+
   let execution = null;
   let stateMachine = null;
   let status = null;
@@ -56,7 +60,6 @@ async function hoistCumulusMessageDetails(sqsMessage) {
   let collection = null;
   let granules = [];
   const error = sqsMessage.error || null;
-  log.error(sqsMessage);
   if (isEventBridgeEvent(messageBody)) {
     execution = messageBody?.detail?.executionArn || null;
     stateMachine = messageBody?.detail?.stateMachineArn || null;
