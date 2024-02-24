@@ -42,6 +42,7 @@ const {
 const {
   writeGranulesFromMessage,
 } = require('../../lib/writeRecords/write-granules');
+const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 
@@ -151,7 +152,11 @@ const handler = async (event) => {
 
     const executionEvent = parseSQSMessageBody(message);
     try {
-      cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+      if (isEventBridgeEvent(executionEvent)) {
+        cumulusMessage = await getCumulusMessageFromExecutionEvent(executionEvent);
+      } else {
+        throw new TypeError('SQSMessage body not in expected EventBridgeEvent format');
+      }
     } catch (error) {
       log.error(`Writing message failed on getting message from execution event: ${JSON.stringify(message)}`, error);
       return batchItemFailures.push({ itemIdentifier: message.messageId });
@@ -167,7 +172,7 @@ const handler = async (event) => {
       return sendSQSMessage(
         process.env.DeadLetterQueue,
         {
-          ...executionEvent,
+          ...message,
           error: error.toString(),
         },
         log
