@@ -50,6 +50,7 @@ function payloadHasGranules(payload) {
 async function hoistCumulusMessageDetails(sqsMessage) {
   console.log(sqsMessage);
   let messageBody = parseSQSMessageBody(sqsMessage);
+  const error = messageBody.error || null;
   while (isSQSRecordLike(messageBody)) {
     messageBody = parseSQSMessageBody(messageBody);
   }
@@ -61,7 +62,6 @@ async function hoistCumulusMessageDetails(sqsMessage) {
   let time = null;
   let collection = null;
   let granules = null;
-  const error = sqsMessage.error || null;
   if (isEventBridgeEvent(messageBody)) {
     execution = messageBody?.detail?.executionArn || null;
     stateMachine = messageBody?.detail?.stateMachineArn || null;
