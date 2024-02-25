@@ -48,8 +48,9 @@ function payloadHasGranules(payload) {
  * }
  */
 async function hoistCumulusMessageDetails(sqsMessage) {
-  console.log(sqsMessage);
+  log.error(sqsMessage);
   let messageBody = parseSQSMessageBody(sqsMessage);
+  log.error(`post first de-nesting ${messageBody}`);
   const error = messageBody.error || null;
   while (isSQSRecordLike(messageBody)) {
     messageBody = parseSQSMessageBody(messageBody);
