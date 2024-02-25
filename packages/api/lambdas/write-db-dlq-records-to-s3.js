@@ -16,7 +16,7 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
- * @typedef {import('@cumulus/message/DeadLetterMessage').DLARecord} DLARecord
+ * @typedef {import('@cumulus/message/DeadLetterMessage').DLQRecord} DLQRecord
  */
 
 /**
@@ -33,7 +33,7 @@ function payloadHasGranules(payload) {
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {DLARecord} sqsMessage - event bridge event as defined in aws-lambda
+ * @param {DLQRecord} sqsMessage - event bridge event as defined in aws-lambda
  * @returns {Promise<Object>} - message packaged with
  * metadata or null where metadata not found
  * {
@@ -100,7 +100,7 @@ async function hoistCumulusMessageDetails(sqsMessage) {
 /**
  * Lambda handler for saving DLQ reports to DLA in s3
  *
- * @param {{Records: Array<DLARecord>, [key: string]: any}} event - Input payload
+ * @param {{Records: Array<DLQRecord>, [key: string]: any}} event - Input payload
  * @returns {Promise<void>}
  */
 async function handler(event) {
