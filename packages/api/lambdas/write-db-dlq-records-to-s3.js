@@ -48,6 +48,7 @@ function payloadHasGranules(payload) {
  * }
  */
 async function hoistCumulusMessageDetails(sqsMessage) {
+  console.log(sqsMessage);
   let messageBody = parseSQSMessageBody(sqsMessage);
   while (isSQSRecordLike(messageBody)) {
     messageBody = parseSQSMessageBody(messageBody);

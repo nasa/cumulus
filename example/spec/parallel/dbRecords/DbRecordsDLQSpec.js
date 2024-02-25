@@ -30,10 +30,20 @@ describe('when a bad record is ingested', () => {
         env: {},
         Records: [{
           Body: JSON.stringify({
+            time: '4Oclock',
             detail: {
               executionArn: executionArn,
+              stateMachineArn: '1234',
               status: 'RUNNING',
               input: JSON.stringify({
+                meta: {
+                  collection: {
+                    name: 'A_COLLECTION',
+                  }
+                },
+                payload: {
+                  granules: [{granuleId: 'a'}]
+                },
                 a: 'sldkj',
               }),
             },
@@ -83,10 +93,13 @@ describe('when a bad record is ingested', () => {
     const fileBody = await getObjectStreamContents(s3Object.Body);
 
     const parsed = JSON.parse(fileBody);
-    expect(parsed.stateMachine).toEqual(null);
-    expect(parsed.collection).toEqual(null);
+
+    expect(parsed.status).toEqual('RUNNING');
+    expect(parsed.time).toEqual('4Oclock');
+    expect(parsed.stateMachine).toEqual('1234');
+    expect(parsed.collection).toEqual('A_COLLECTION');
     expect(parsed.execution).toEqual(executionArn);
-    expect(parsed.granules).toEqual(null);
+    expect(parsed.granules).toEqual(['a']);
     expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
   });
 });
