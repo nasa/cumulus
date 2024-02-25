@@ -49,7 +49,6 @@ function payloadHasGranules(payload) {
  */
 async function hoistCumulusMessageDetails(sqsMessage) {
   let messageBody = parseSQSMessageBody(sqsMessage);
-  log.error(`before de-nesting: ${JSON.stringify(messageBody)}`);
   while (isSQSRecordLike(messageBody)) {
     messageBody = parseSQSMessageBody(messageBody);
   }
@@ -60,7 +59,7 @@ async function hoistCumulusMessageDetails(sqsMessage) {
   let status = null;
   let time = null;
   let collection = null;
-  let granules = [];
+  let granules = null;
   const error = sqsMessage.error || null;
   if (isEventBridgeEvent(messageBody)) {
     execution = messageBody?.detail?.executionArn || null;
