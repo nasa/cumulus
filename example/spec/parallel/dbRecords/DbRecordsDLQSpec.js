@@ -57,12 +57,12 @@ describe('When a bad record is sent on the DLQ', () => {
     beforeAllSucceeded = true;
   });
 
-  afterAll(async () => {
-    await deleteS3Object(
-      systemBucket,
-      failedMessageS3Key
-    );
-  });
+  // afterAll(async () => {
+  //   await deleteS3Object(
+  //     systemBucket,
+  //     failedMessageS3Key
+  //   );
+  // });
 
   describe('the writeDbDlqRecordstoS3 lambda', () => {
     it('takes the message off the queue and writes it to S3', async () => {
