@@ -169,14 +169,8 @@ const handler = async (event) => {
         log.error('DeadLetterQueue not configured');
         return undefined;
       }
-      return sendSQSMessage(
-        process.env.DeadLetterQueue,
-        {
-          ...message,
-          error: error.toString(),
-        },
-        log
-      );
+      log.error(JSON.stringify(message));
+      return sendSQSMessage(process.env.DeadLetterQueue, message);
     }
   }));
 
