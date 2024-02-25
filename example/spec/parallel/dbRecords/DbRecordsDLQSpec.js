@@ -14,14 +14,14 @@ const { loadConfig } = require('../../helpers/testUtils');
 describe('when a bad record is ingested', () => {
   let stackName;
   let systemBucket;
-  let executionName;
+  let executionArn;
   let failedMessageS3Key;
 
   let beforeAllSucceeded = false;
   beforeAll(async () => {
     const config = await loadConfig();
     stackName = config.stackName;
-    executionName = `execution-${randomString(16)}`;
+    executionArn = `execution-${randomString(16)}`;
     systemBucket = config.bucket;
     const { $metadata } = await lambda().invoke({
       FunctionName: `${stackName}-sfEventSqsToDbRecords`,
@@ -31,11 +31,9 @@ describe('when a bad record is ingested', () => {
         Records: [{
           Body: JSON.stringify({
             detail: {
+              executionArn: executionArn,
               status: 'RUNNING',
               input: JSON.stringify({
-                cumulus_meta: {
-                  execution_name: executionName,
-                },
                 a: 'sldkj',
               }),
             },
@@ -55,8 +53,9 @@ describe('when a bad record is ingested', () => {
   });
   it('is sent to the DLA and processed to have expected metadata fields', async () => {
     if (!beforeAllSucceeded) fail('beforeAll() failed');
-    console.log(`Waiting for the creation of failed message for execution ${executionName}`);
-    const prefix = `${stackName}/dead-letter-archive/sqs/${executionName}`;
+    console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
+    const prefix = `${stackName}/dead-letter-archive/sqs/${executionArn}`;
+
     try {
       await expectAsync(waitForListObjectsV2ResultCount({
         bucket: systemBucket,
@@ -84,10 +83,10 @@ describe('when a bad record is ingested', () => {
     const fileBody = await getObjectStreamContents(s3Object.Body);
 
     const parsed = JSON.parse(fileBody);
-    expect(parsed.stateMachine).toEqual('unknown');
-    expect(parsed.collection).toEqual('unknown');
-    expect(parsed.execution).toEqual('unknown');
-    expect(parsed.granules).toEqual('unknown');
+    expect(parsed.stateMachine).toEqual(null);
+    expect(parsed.collection).toEqual(null);
+    expect(parsed.execution).toEqual(executionArn);
+    expect(parsed.granules).toEqual(null);
     expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
   });
 });
