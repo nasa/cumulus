@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Migration Notes
 
 - The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
-  [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/upgrade-notes/update-cumulud_id-type-indexes-CUMULUS-3449)
+  [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
 ### Breaking Changes
 

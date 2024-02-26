@@ -1,12 +1,12 @@
 ---
-id: update-cumulud_id-type-indexes-CUMULUS-3449
+id: update-cumulus_id-type-indexes-CUMULUS-3449
 title: Update Cumulus_id Type and Indexes
 hide_title: false
 ---
 
 ## Background
 
-As part of the work for [CUMULUS-3449](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3449), we have idenfified some Cumulus Core changes in
+As part of the work for [CUMULUS-3449](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3449), LPDAAC have identified some Cumulus Core changes in
 regards to the database in order to improve query performance. For other recommendations and considerations, see LPDAAC wiki
 [Cumulus RDS Index testing](https://wiki.earthdata.nasa.gov/pages/viewpage.action?spaceKey=LPCUMULUS&title=Cumulus+RDS+Index+testing).
 
@@ -46,7 +46,7 @@ The table below from LPDAAC provides the table sizes before and after `alter tab
 | files | 1.2 TB | 7.5 hours | 850 GB | 1,129,847,659 |
 | granule_executions | 20 GB | 1 hours | 13 GB | 182,566,709 |
 
-## Softwares Used
+## Tools Used
 
 Since the update commands can take several hours to run based on table size and IO throughput, it is recommended that the commands are run in an EC2 instance
 in the AWS environment in a tmux or screen session. This will minimize the number of network hops and potential disconnects between the database client
