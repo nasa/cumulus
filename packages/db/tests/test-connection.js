@@ -54,7 +54,10 @@ test('getKnexClient returns expected Knex object with migration defined',
     });
     t.is('testMigrationDir', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
-    t.deepEqual(fakeConnectionConfig, results.client.config.connection);
+    t.deepEqual(
+      { ...fakeConnectionConfig, ssl: { rejectUnauthorized: true } },
+      results.client.config.connection
+    );
     t.is(true, results.client.config.debug);
     t.is(true, results.client.config.asyncStackTraces);
     t.is('pg', results.client.config.client);
@@ -88,7 +91,7 @@ test('getKnexClient returns Knex object with a default migration set when env.mi
     t.is('knex_migrations', results.migrate.config.tableName);
   });
 
-test('getKnexClient returns expected Knex object with manual db configuraiton options set',
+test('getKnexClient returns expected Knex object with manual db configuration options set',
   async (t) => {
     const results = await getKnexClient({
       env: {
@@ -103,7 +106,10 @@ test('getKnexClient returns expected Knex object with manual db configuraiton op
     });
     t.is('testMigrationDir', results.migrate.config.directory);
     t.is('knex_migrations', results.migrate.config.tableName);
-    t.deepEqual(fakeConnectionConfig, results.client.config.connection);
+    t.deepEqual(
+      { ...fakeConnectionConfig, ssl: { rejectUnauthorized: true } },
+      results.client.config.connection
+    );
     t.is(true, results.client.config.debug);
     t.is(true, results.client.config.asyncStackTraces);
     t.is('pg', results.client.config.client);
