@@ -13,6 +13,13 @@ export const localStackConnectionEnv = {
   DISABLE_PG_SSL: 'true',
 };
 
+/**
+ * Determines if Knex debugging is enabled based on environment variable.
+ *
+ * @param {NodeJS.ProcessEnv} env - The environment variables object, defaults to an empty object.
+ * @returns {boolean} Returns true if the KNEX_DEBUG environment variable is set to 'true',
+ * false otherwise.
+ */
 export const isKnexDebugEnabled = (
   env: NodeJS.ProcessEnv = {}
 ) => env.KNEX_DEBUG === 'true';
