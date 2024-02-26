@@ -32,7 +32,7 @@
     "files": [
       "tests/*.js"
     ],
-    "fail-fast": true,
+    "failFast": true,
     "serial": true,
     "verbose": true,
     "timeout": "15m"
