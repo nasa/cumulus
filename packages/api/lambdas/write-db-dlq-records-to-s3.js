@@ -47,11 +47,11 @@ function payloadHasGranules(payload) {
  *   ...originalAttributes
  * }
  */
-async function hoistCumulusMessageDetails(sqsMessage) {
-  log.error(sqsMessage);
-  let messageBody = parseSQSMessageBody(sqsMessage);
-  log.error(`post first de-nesting ${messageBody}`);
-  const error = messageBody.error || null;
+async function hoistCumulusMessageDetails(dlqRecord) {
+
+  log.error(`post first de-nesting ${dlqRecord}`);
+  const error = dlqRecord.error || null;
+  let messageBody = dlqRecord;
   while (isSQSRecordLike(messageBody)) {
     messageBody = parseSQSMessageBody(messageBody);
   }
@@ -87,7 +87,7 @@ async function hoistCumulusMessageDetails(sqsMessage) {
   }
 
   return {
-    ...sqsMessage,
+    ...dlqRecord,
     collection,
     granules,
     execution,
@@ -109,8 +109,8 @@ async function handler(event) {
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
-    log.error(`raw message ${sqsMessage}`);
-    const massagedMessage = await hoistCumulusMessageDetails(sqsMessage);
+    const dlqRecord = parseSQSMessageBody(sqsMessage);
+    const massagedMessage = await hoistCumulusMessageDetails(dlqRecord);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${massagedMessage.execution}-${uuidv4()}`;
 
