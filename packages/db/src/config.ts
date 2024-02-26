@@ -42,13 +42,13 @@ export const getSecretConnectionConfig = async (
     }
   });
   const rejectUnauthorized = dbAccessMeta.rejectUnauthorized !== 'false' && dbAccessMeta.rejectUnauthorized !== false;
-  const useSsl = dbAccessMeta.disableSSL === 'true' || dbAccessMeta.disableSSL === true;
+  const disableSsl = dbAccessMeta.disableSSL === 'true' || dbAccessMeta.disableSSL === true;
   return {
     database: dbAccessMeta.database,
     host: dbAccessMeta.host,
     password: dbAccessMeta.password,
     port: dbAccessMeta.port ?? 5432,
-    ssl: useSsl ? undefined : { rejectUnauthorized },
+    ssl: disableSsl ? undefined : { rejectUnauthorized },
     user: dbAccessMeta.username,
   };
 };
