@@ -5,7 +5,6 @@ const hsts = require('hsts');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
-const boom = require('express-boom');
 const morgan = require('morgan');
 
 const awsServerlessExpress = require('aws-serverless-express');
@@ -18,6 +17,7 @@ const Logger = require('@cumulus/logger');
 
 const router = require('./routes');
 const { jsonBodyParser } = require('./middleware');
+const boom = require('../lib/expressBoom');
 
 const log = new Logger({ sender: '@api/index' });
 
@@ -32,7 +32,7 @@ const initEnvVarsFunction = async () => {
   try {
     const response = await secretsManager().getSecretValue(
       { SecretId: apiConfigSecretId }
-    ).promise();
+    );
     let envSecret;
     try {
       envSecret = JSON.parse(response.SecretString);
