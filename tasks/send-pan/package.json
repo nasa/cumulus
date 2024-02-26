@@ -19,7 +19,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "package": "./bin/package.sh",
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava -c 1",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",

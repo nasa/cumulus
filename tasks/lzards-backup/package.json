@@ -22,7 +22,7 @@
     "clean": "rm -rf dist",
     "generate-task-schemas": "npx generate-task-schemas . files",
     "package": "npm run generate-task-schemas && ./bin/package.sh",
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava -c 1",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",

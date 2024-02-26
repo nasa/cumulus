@@ -14,7 +14,7 @@
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava -c 1",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/tsc -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"

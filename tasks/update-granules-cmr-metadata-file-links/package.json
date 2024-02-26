@@ -23,7 +23,7 @@
     "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
     "clean": "rm -rf dist",
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava -c 1",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"

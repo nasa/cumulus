@@ -8,7 +8,7 @@
       "type": "node",
       "request": "launch",
       "name": "Run AVA test",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava -c 1",
       "runtimeArgs": [
         "debug",
         "--break",
@@ -29,7 +29,7 @@
       "type": "node",
       "request": "launch",
       "name": "Run AVA test against remote ES",
-      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava",
+      "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/ava -c 1",
       "runtimeArgs": [
         "debug",
         "--break",

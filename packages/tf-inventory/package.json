@@ -10,7 +10,7 @@
     "tf-inventory": "./bin/cli.js"
   },
   "scripts": {
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava -c 1",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
