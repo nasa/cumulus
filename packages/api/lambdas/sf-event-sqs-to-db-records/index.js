@@ -22,6 +22,7 @@ const {
   getMessageExecutionParentArn,
 } = require('@cumulus/message/Executions');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
+const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 
 const {
   getCollectionCumulusId,
@@ -42,7 +43,6 @@ const {
 const {
   writeGranulesFromMessage,
 } = require('../../lib/writeRecords/write-granules');
-const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 
 const log = new Logger({ sender: '@cumulus/api/lambdas/sf-event-sqs-to-db-records' });
 

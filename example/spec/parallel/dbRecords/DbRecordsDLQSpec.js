@@ -39,10 +39,10 @@ describe('when a bad record is ingested', () => {
                 meta: {
                   collection: {
                     name: 'A_COLLECTION',
-                  }
+                  },
                 },
                 payload: {
-                  granules: [{granuleId: 'a'}]
+                  granules: [{ granuleId: 'a' }],
                 },
                 a: 'sldkj',
               }),
