@@ -48,15 +48,12 @@ function payloadHasGranules(payload) {
  * }
  */
 async function hoistCumulusMessageDetails(dlqRecord) {
-
-  log.error(`post first de-nesting ${dlqRecord}`);
   const error = dlqRecord.error || null;
   let messageBody = dlqRecord;
   while (isSQSRecordLike(messageBody)) {
     messageBody = parseSQSMessageBody(messageBody);
   }
 
-  log.error(`after de-nesting: ${JSON.stringify(messageBody)}`);
   let execution = null;
   let stateMachine = null;
   let status = null;

@@ -517,3 +517,99 @@ test('hoistCumulusMessageDetails returns unknown for details: collection, granul
     t.deepEqual(result, messages[index].expected);
   });
 });
+
+test('hoistCumulusMessageDetails handles varying degrees of sqsMessage nestedness', async (t) => {
+  let message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      time: 'atime',
+      detail: {
+        status: 'SUCCEEDED',
+        output: JSON.stringify({
+          meta: { collection: { name: 'aName' } },
+          payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+        }),
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+      },
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      collection: 'aName',
+      granules: ['a', 'b'],
+      execution: 'execArn',
+      stateMachine: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+  message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      body: JSON.stringify({
+        time: 'atime',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: { collection: { name: 'aName' } },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      }),
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      collection: 'aName',
+      granules: ['a', 'b'],
+      execution: 'execArn',
+      stateMachine: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+  message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      body: JSON.stringify({
+        Body: JSON.stringify({
+          time: 'atime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: { collection: { name: 'aName' } },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+      }),
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      collection: 'aName',
+      granules: ['a', 'b'],
+      execution: 'execArn',
+      stateMachine: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+});
