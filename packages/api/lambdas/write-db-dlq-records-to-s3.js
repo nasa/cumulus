@@ -110,9 +110,17 @@ async function handler(event) {
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     const dlqRecord = parseSQSMessageBody(sqsMessage);
-    const massagedMessage = await hoistCumulusMessageDetails(dlqRecord);
+    let massagedMessage;
+    let execution;
+    if (isSQSRecordLike(dlqRecord)) {
+      massagedMessage = await hoistCumulusMessageDetails(dlqRecord);
+      execution = massagedMessage.execution;
+    } else {
+      massagedMessage = dlqRecord;
+      execution = 'unknown';
+    }
     // version messages with UUID as workflows can produce multiple messages that may all fail.
-    const s3Identifier = `${massagedMessage.execution}-${uuidv4()}`;
+    const s3Identifier = `${execution}-${uuidv4()}`;
 
     await s3PutObject({
       Bucket: process.env.system_bucket,
