@@ -15,7 +15,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - **CUMULUS-3456**
-  - Added stateMachine, collection, execution, granules, error fields to Dead Letter Archive message
+  - Added stateMachine, collection, execution, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
 - **CUMULUS-3245**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
