@@ -17,6 +17,7 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
  * @typedef {import('@cumulus/message/DeadLetterMessage').DLQRecord} DLQRecord
+ * @typedef {import('aws-lambda').EventBridgeEvent} EventBridgeEvent
  */
 
 /**
@@ -33,7 +34,7 @@ function payloadHasGranules(payload) {
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {DLQRecord} dlqRecord - event bridge event as defined in aws-lambda
+ * @param {DLQRecord | EventBridgeEvent} dlqRecord - event bridge event as defined in aws-lambda
  * @returns {Promise<Object>} - message packaged with
  * metadata or null where metadata not found
  * {
@@ -48,7 +49,10 @@ function payloadHasGranules(payload) {
  * }
  */
 async function hoistCumulusMessageDetails(dlqRecord) {
-  const error = dlqRecord.error || null;
+  let error = null;
+  if (isSQSRecordLike(dlqRecord)) {
+    error = dlqRecord.error || null;
+  }
   let execution = null;
   let stateMachine = null;
   let status = null;
@@ -112,15 +116,18 @@ async function handler(event) {
     const dlqRecord = parseSQSMessageBody(sqsMessage);
     let massagedMessage;
     let execution;
-    if (isSQSRecordLike(dlqRecord)) {
+    console.log(dlqRecord);
+    if (isSQSRecordLike(dlqRecord) || isEventBridgeEvent(dlqRecord)) {
       massagedMessage = await hoistCumulusMessageDetails(dlqRecord);
       execution = massagedMessage.execution;
     } else {
       massagedMessage = dlqRecord;
-      execution = 'unknown';
+      execution = null;
     }
+    const executionName = execution || 'unknown';
+    console.log(`executionName is: ${executionName}`);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
-    const s3Identifier = `${execution}-${uuidv4()}`;
+    const s3Identifier = `${executionName}-${uuidv4()}`;
 
     await s3PutObject({
       Bucket: process.env.system_bucket,
