@@ -23,6 +23,7 @@ async function handler(event) {
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
+    log.error(`starting message: ${JSON.stringify(sqsMessage)}`);
     const messageBody = parseSQSMessageBody(sqsMessage);
     const cumulusMessageObject = await unwrapDeadLetterCumulusMessage(messageBody);
     const executionName = determineExecutionName(cumulusMessageObject);
