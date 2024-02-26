@@ -33,7 +33,7 @@ function payloadHasGranules(payload) {
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {DLQRecord} sqsMessage - event bridge event as defined in aws-lambda
+ * @param {DLQRecord} dlqRecord - event bridge event as defined in aws-lambda
  * @returns {Promise<Object>} - message packaged with
  * metadata or null where metadata not found
  * {
@@ -49,17 +49,20 @@ function payloadHasGranules(payload) {
  */
 async function hoistCumulusMessageDetails(dlqRecord) {
   const error = dlqRecord.error || null;
-  let messageBody = dlqRecord;
-  while (isSQSRecordLike(messageBody)) {
-    messageBody = parseSQSMessageBody(messageBody);
-  }
-
   let execution = null;
   let stateMachine = null;
   let status = null;
   let time = null;
   let collection = null;
   let granules = null;
+
+  /* @type {any} */
+  let messageBody;
+  messageBody = dlqRecord;
+  while (isSQSRecordLike(messageBody)) {
+    messageBody = parseSQSMessageBody(messageBody);
+  }
+
   if (isEventBridgeEvent(messageBody)) {
     execution = messageBody?.detail?.executionArn || null;
     stateMachine = messageBody?.detail?.stateMachineArn || null;
