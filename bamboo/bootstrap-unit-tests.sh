@@ -14,6 +14,12 @@ docker_command="docker exec -t ${container_id}-build_env-1 /bin/bash -c"
 
 docker ps -a
 
+echo 'Removing running docker containers...'
+
+docker rm -f $(docker ps -q) || true
+
+echo 'Setting up Core containers'
+
 ## Setup the compose stack
 docker compose -p ${container_id} down
 docker compose -p ${container_id} rm -f

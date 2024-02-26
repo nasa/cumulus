@@ -2,25 +2,25 @@
 
 const awsServerlessExpress = require('aws-serverless-express');
 const bodyParser = require('body-parser');
-const boom = require('express-boom');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const distributionRouter = require('express-promise-router')();
-const {
-  EarthdataLoginError,
-} = require('@cumulus/oauth-client');
 const express = require('express');
 const hsts = require('hsts');
 const morgan = require('morgan');
 const urljoin = require('url-join');
 
-const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
+const boom = require('@cumulus/api/lib/expressBoom');
+const {
+  EarthdataLoginError,
+} = require('@cumulus/oauth-client');
 const {
   getConfigurations,
   handleAuthBearerToken,
   isAuthBearTokenRequest,
   useSecureCookies,
 } = require('@cumulus/api/lib/distribution');
+const { isAccessTokenExpired } = require('@cumulus/api/lib/token');
 const { handleCredentialRequest } = require('@cumulus/api/endpoints/s3credentials');
 const { RecordDoesNotExist } = require('@cumulus/errors');
 const displayS3CredentialInstructions = require('@cumulus/api/endpoints/s3credentials-readme');
