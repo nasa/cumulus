@@ -29,6 +29,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     
 ### Changed
 
+- **CUMULUS-2901**
+  - Updated STS code to AWS SDK v3.
 - **CUMULUS-3323**
   - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
     disable SSL for all Core database connection attempts.
