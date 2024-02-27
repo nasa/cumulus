@@ -21,7 +21,7 @@
   "scripts": {
     "build-docs": "npm run clean && npm run tsc && ../../node_modules/.bin/jsdoc2md --heading-depth 3 -t templates/README.md.hbs *.js > README.md",
     "clean": "git clean -d -x -e node_modules -f",
-    "test": "../../node_modules/.bin/ava -c 1",
+    "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",

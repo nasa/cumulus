@@ -27,7 +27,7 @@
     "package-deployment": "for x in lambdas/*; do (echo \"packaging $x\" && cd $x && test -e package.json && npm install && npm run package); done",
     "parallel-tests": "sh scripts/tests-parallel.sh",
     "test": "npm run test:ava && for x in lambdas/*; do cd $x && npm test && cd -; done",
-    "test:ava": "../node_modules/.bin/ava -c 1",
+    "test:ava": "../node_modules/.bin/ava",
     "test:coverage": "../node_modules/.bin/nyc npm test:ava"
   },
   "author": "Cumulus Authors",

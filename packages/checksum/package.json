@@ -14,7 +14,7 @@
   "scripts": {
     "build-docs": "npm run tsc && ../../node_modules/.bin/jsdoc2md -t templates/README.md.hbs ./dist/*.js > README.md",
     "clean": "rm -rf dist",
-    "test": "../../node_modules/.bin/ava -c 1",
+    "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
