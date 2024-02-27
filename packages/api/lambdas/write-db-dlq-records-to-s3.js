@@ -116,7 +116,6 @@ async function handler(event) {
     const dlqRecord = parseSQSMessageBody(sqsMessage);
     let massagedMessage;
     let execution;
-    console.log(dlqRecord);
     if (isSQSRecordLike(dlqRecord) || isEventBridgeEvent(dlqRecord)) {
       massagedMessage = await hoistCumulusMessageDetails(dlqRecord);
       execution = massagedMessage.execution;
@@ -125,7 +124,6 @@ async function handler(event) {
       execution = null;
     }
     const executionName = execution || 'unknown';
-    console.log(`executionName is: ${executionName}`);
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
