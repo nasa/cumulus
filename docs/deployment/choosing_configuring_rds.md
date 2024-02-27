@@ -39,6 +39,44 @@ If you have occasional, bursty ingests of data where you go from ingesting very 
 to suddenly ingesting quite a lot then a serverless database may be a better choice because it
 will be able to handle the spikes in your database load.
 
+## General Configuration Guidelines
+
+### Cumulus Core Login Configuration
+
+Cumulus Core uses a `admin_db_login_secret_arn` and (optionally) `user_credentials_secret_arn` as inputs that allow various Cumulus components to act as a database administrator and/or read/write user.   Those secrets should conform to the following format:
+
+```json
+{
+  "database": "postgres",
+  "dbClusterIdentifier": "clusterName",
+  "engine": "postgres",
+  "host": "xxx",
+  "password": "defaultPassword",
+  "port": 5432,
+  "username": "xxx",
+  "disableSSL": false,
+  "rejectUnauthorized": false,
+}
+```
+
+- `database` -- the PostgreSQL database used by the configured user
+- `dbClusterIdentifier` -- the value set by the  `cluster_identifier` variable in the terraform module
+- `engine` -- the Aurora/RDS database engine
+- `host` -- the RDS service host for the database in the form (dbClusterIdentifier)-(AWS ID string).(region).rds.amazonaws.com
+- `password` -- the database password
+- `username` -- the account username
+- `port` -- The database connection port, should always be 5432
+- `rejectUnauthorized` -- If disableSSL is not set, set to false to allow self-signed certificates or non-supported CAs.  Defaults to false.
+- `disableSSL` - If set to true, disable use of SSL with Core database connections.   Defaults to false.
+
+#### SSL encryption
+
+Cumulus by default expects a configuration that includes a datastore that requires an SSL connection with a recognized certificate authority (RDS managed databases configured to use SSL will automatically work as AWS provides AWS CA bundles in the Lambda runtime environment).    If deployed in an environment not making use of SSL, set `disableSSL` to `true` to disable this behavior.
+
+#### Self-Signed Certs
+
+Cumulus can accommodate a self-signed/unrecognized cert by setting `rejectUnauthorized` as `false` in the connection secret.  This will result Core allowing use of certs without a valid CA.
+
 ## Recommended Scaling Configuration for Aurora Serverless
 
 If you are going to use an Aurora Serverless RDS database, we recommend the following scaling recommendations:
