@@ -132,15 +132,17 @@ function buildOutput(event, groupedExecutions) {
  * @param {string} executionArn - step function execution arn
  * @returns {Promise.<Object>} - an object describing the status of the exection
  */
-function describeExecutionStatus(executionArn) {
-  return StepFunctions.describeExecution({ executionArn })
-    .catch((error) => {
-      if (error.code === 'ExecutionDoesNotExist') {
-        return { executionArn: executionArn, status: 'RUNNING' };
-      }
-      throw error;
-    });
+async function describeExecutionStatus(executionArn) {
+  try {
+    return await StepFunctions.describeExecution({ executionArn });
+  } catch (error) {
+    if (error.code === 'ExecutionDoesNotExist') {
+      return { executionArn: executionArn, status: 'RUNNING' };
+    }
+    throw error;
+  }
 }
+
 /**
  * Checks a list of Step Function Executions to see if they are all in
  * terminal states.

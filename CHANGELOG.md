@@ -14,6 +14,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
+- **CUMULUS-3323**
+  - Updated `@cumulus/db` to by default set the `ssl` option for knex, and
+    reject non-SSL connections via use of the `rejectUnauthorized` configuration
+    flag.   This causes all Cumulus database connections to require SSL (CA or
+    self-signed) and reject connectivity if the database does not provide SSL.
+    Users using serverless v1/`cumulus-rds-tf` should not be impacted by this
+    change as certs are provided by default.   Users using databases that do not
+    provide SSL should update their database secret with the optional value
+    `disableSSL` set to `true`
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
@@ -22,13 +31,23 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-2898**
   - Update Step Functions code to AWS SDK v3
+- **CUMULUS-3323**
+  - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
+    disable SSL for all Core database connection attempts.
+  - Added `rejectUnauthorized` as a valid database secret key - setting
+    this to `false` in your database credentials will allow self-signed certs/certs with an unrecognized authority.
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 1.   This setting for the Aurora Serverless v1 database disallows non-SSL
+    connections to the database, and is intended to help enforce security
+    compliance rules.  This update can be opted-out by supplying a non-default
+    `db_parameters` set in the terraform configuration.
 - **CUMULUS-3245**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
   - Minor refactor of `@cumulus/lzards-api-client` to:
-   - Use proper ECMAScript import for `@cumulus/launchpad-auth`
-   - Update incorrect docstring
+    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
+    - Update incorrect docstring
 
 ### Changed
 
@@ -38,6 +57,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
   - Added suppport for additional kex algorithms in the sftp-client.
+
+### Fixed
+
+- **CUMULUS-3323**
+  - Minor edits to errant integration test titles (dyanmo->postgres)
+- **CUMULUS-3587**
+  - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
+    updates of sub-dependencies and maintain without refactoring errors in
+    API/etc wholesale
+  - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
 
 ## [v18.2.0] 2023-02-02
 
@@ -68,7 +97,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - add teclark to select-stack.js
 - **CUMULUS-3444**
   - Update `cumulus-rds-tf` module to take additional parameters in support of
-    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2891**

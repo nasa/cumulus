@@ -54,7 +54,13 @@ const badSecretsManagerStub = {
 
 test('getKnexConfig returns an expected default configuration object', async (t) => {
   const result = await getKnexConfig({ env: dbConnectionConfigEnv });
-  const connectionConfig = { ...dbConnectionConfig, user: 'postgres' };
+  const connectionConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+    ssl: {
+      rejectUnauthorized: true,
+    },
+  };
   delete connectionConfig.username;
   const expectedConfig = {
     acquireConnectionTimeout: 60000,
@@ -115,6 +121,9 @@ test('getSecretConnectionConfig returns a Knex.PgConnectionConfig object', async
   const expectedConfig = {
     ...dbConnectionConfig,
     user: 'postgres',
+    ssl: {
+      rejectUnauthorized: true,
+    },
   };
   delete expectedConfig.username;
   t.deepEqual(result, expectedConfig);
@@ -149,6 +158,9 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
     password: 'PG_PASSWORD',
     database: 'PG_DATABASE',
     port: 5435,
+    ssl: {
+      rejectUnauthorized: true,
+    },
   });
 });
 
@@ -166,6 +178,9 @@ test('getConnectionConfigEnv returns the expected configuration from the passed 
     password: 'PG_PASSWORD',
     database: 'PG_DATABASE',
     port: 5432,
+    ssl: {
+      rejectUnauthorized: true,
+    },
   });
 });
 
@@ -178,6 +193,117 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
   const expectedConfig = {
     ...dbConnectionConfig,
     user: 'postgres',
+    ssl: {
+      rejectUnauthorized: true,
+    },
+  };
+  delete expectedConfig.username;
+
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getConnectionConfig returns the expected configuration when using Secrets Manager with disableSSL set to true', async (t) => {
+  const disableSSLsecretsManagerStub = {
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          disableSSL: true,
+        }),
+      }),
+    putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
+  };
+  const result = await getConnectionConfig({
+    env: { databaseCredentialSecretArn: 'fakeSecretId' },
+    secretsManager: disableSSLsecretsManagerStub,
+  });
+
+  const expectedConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+    ssl: undefined,
+  };
+  delete expectedConfig.username;
+
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getConnectionConfig returns the expected configuration when using Secrets Manager with disableSSL set to true as string', async (t) => {
+  const disableSSLsecretsManagerStub = {
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          disableSSL: 'true',
+        }),
+      }),
+    putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
+  };
+  const result = await getConnectionConfig({
+    env: { databaseCredentialSecretArn: 'fakeSecretId' },
+    secretsManager: disableSSLsecretsManagerStub,
+  });
+
+  const expectedConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+    ssl: undefined,
+  };
+  delete expectedConfig.username;
+
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getConnectionConfig returns the expected configuration when using Secrets Manager with rejectUnauthorized set to false as string', async (t) => {
+  const disableSSLsecretsManagerStub = {
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          rejectUnauthorized: 'false',
+        }),
+      }),
+    putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
+  };
+  const result = await getConnectionConfig({
+    env: { databaseCredentialSecretArn: 'fakeSecretId' },
+    secretsManager: disableSSLsecretsManagerStub,
+  });
+
+  const expectedConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  };
+  delete expectedConfig.username;
+
+  t.deepEqual(result, expectedConfig);
+});
+
+test('getConnectionConfig returns the expected configuration when using Secrets Manager with rejectUnauthorized set to false', async (t) => {
+  const disableSSLsecretsManagerStub = {
+    getSecretValue: (_value) =>
+      Promise.resolve({
+        SecretString: JSON.stringify({
+          ...dbConnectionConfig,
+          rejectUnauthorized: false,
+        }),
+      }),
+    putSecretValue: (_value) => ({ promise: () => Promise.resolve() }),
+  };
+  const result = await getConnectionConfig({
+    env: { databaseCredentialSecretArn: 'fakeSecretId' },
+    secretsManager: disableSSLsecretsManagerStub,
+  });
+
+  const expectedConfig = {
+    ...dbConnectionConfig,
+    user: 'postgres',
+    ssl: {
+      rejectUnauthorized: false,
+    },
   };
   delete expectedConfig.username;
 
@@ -195,6 +321,9 @@ test('getConnectionConfig returns the expected configuration when using Secrets 
     ...dbConnectionConfig,
     user: 'postgres',
     port: 5432,
+    ssl: {
+      rejectUnauthorized: true,
+    },
   };
   delete expectedConfig.username;
 
@@ -220,6 +349,61 @@ test('getConnectionConfig returns the expected configuration when using environm
       password: 'PG_PASSWORD',
       database: 'PG_DATABASE',
       port: 5435,
+      ssl: {
+        rejectUnauthorized: true,
+      },
+    }
+  );
+});
+
+test('getConnectionConfig returns the expected configuration when using environment variables and setting DISABLE_PG_SSL to true', async (t) => {
+  const result = await getConnectionConfig({
+    env: {
+      PG_HOST: 'PG_HOST',
+      PG_USER: 'PG_USER',
+      PG_PASSWORD: 'PG_PASSWORD',
+      PG_DATABASE: 'PG_DATABASE',
+      PG_PORT: 5435,
+      DISABLE_PG_SSL: 'true',
+    },
+  });
+
+  t.deepEqual(
+    result,
+    {
+      host: 'PG_HOST',
+      user: 'PG_USER',
+      password: 'PG_PASSWORD',
+      database: 'PG_DATABASE',
+      port: 5435,
+      ssl: undefined,
+    }
+  );
+});
+
+test('getConnectionConfig returns the expected configuration when using environment variables and setting REJECT_UNAUTHORIZED to false', async (t) => {
+  const result = await getConnectionConfig({
+    env: {
+      PG_HOST: 'PG_HOST',
+      PG_USER: 'PG_USER',
+      PG_PASSWORD: 'PG_PASSWORD',
+      PG_DATABASE: 'PG_DATABASE',
+      PG_PORT: 5435,
+      REJECT_UNAUTHORIZED: 'false',
+    },
+  });
+
+  t.deepEqual(
+    result,
+    {
+      host: 'PG_HOST',
+      user: 'PG_USER',
+      password: 'PG_PASSWORD',
+      database: 'PG_DATABASE',
+      port: 5435,
+      ssl: {
+        rejectUnauthorized: false,
+      },
     }
   );
 });
