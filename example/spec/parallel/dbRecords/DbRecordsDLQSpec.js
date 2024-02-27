@@ -17,12 +17,21 @@ describe('when a bad record is ingested', () => {
   let executionArn;
   let failedMessageS3Key;
 
-  let beforeAllSucceeded = false;
   beforeAll(async () => {
     const config = await loadConfig();
     stackName = config.stackName;
-    executionArn = `execution-${randomString(16)}`;
     systemBucket = config.bucket;
+    
+  });
+  afterAll(async () => {
+    await deleteS3Object(
+      systemBucket,
+      failedMessageS3Key
+    );
+  });
+  it('is sent to the DLA and processed to have expected metadata fields', async () => {
+
+    executionArn = `execution-${randomString(16)}`;
     const { $metadata } = await lambda().invoke({
       FunctionName: `${stackName}-sfEventSqsToDbRecords`,
       InvocationType: 'RequestResponse',
@@ -51,18 +60,9 @@ describe('when a bad record is ingested', () => {
         }],
       }),
     });
-    if ($metadata.httpStatusCode < 400) {
-      beforeAllSucceeded = true;
+    if ($metadata.httpStatusCode >= 400) {
+      fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
-  });
-  afterAll(async () => {
-    await deleteS3Object(
-      systemBucket,
-      failedMessageS3Key
-    );
-  });
-  it('is sent to the DLA and processed to have expected metadata fields', async () => {
-    if (!beforeAllSucceeded) fail('beforeAll() failed');
     console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
     const prefix = `${stackName}/dead-letter-archive/sqs/${executionArn}`;
 
@@ -100,6 +100,69 @@ describe('when a bad record is ingested', () => {
     expect(parsed.collection).toEqual('A_COLLECTION');
     expect(parsed.execution).toEqual(executionArn);
     expect(parsed.granules).toEqual(['a']);
+    expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
+  });
+
+  it('is sent to the DLA and processed to have expected metadata fields even when data is not found', async () => {
+    
+    executionArn = `execution-${randomString(16)}`;
+    const { $metadata } = await lambda().invoke({
+      FunctionName: `${stackName}-sfEventSqsToDbRecords`,
+      InvocationType: 'RequestResponse',
+      Payload: JSON.stringify({
+        env: {},
+        Records: [{
+          Body: JSON.stringify({
+            detail: {
+              executionArn: executionArn,
+              input: JSON.stringify({
+                a: 'sldkj',
+              }),
+            },
+          }),
+        }],
+      }),
+    });
+    if ($metadata.httpStatusCode >= 400) {
+      fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
+    }
+    console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
+    const prefix = `${stackName}/dead-letter-archive/sqs/${executionArn}`;
+
+    try {
+      await expectAsync(waitForListObjectsV2ResultCount({
+        bucket: systemBucket,
+        prefix,
+        desiredCount: 1,
+        interval: 5 * 1000,
+        timeout: 30 * 1000,
+      })).toBeResolved();
+      // fetch key for cleanup
+      const listResults = await listS3ObjectsV2({
+        Bucket: systemBucket,
+        Prefix: prefix,
+      });
+      failedMessageS3Key = listResults[0].Key;
+    } catch (error) {
+      fail(`Did not find expected S3 Object: ${error}`);
+    }
+    const s3Object = await getObject(
+      s3(),
+      {
+        Bucket: systemBucket,
+        Key: failedMessageS3Key,
+      }
+    );
+    const fileBody = await getObjectStreamContents(s3Object.Body);
+
+    const parsed = JSON.parse(fileBody);
+
+    expect(parsed.status).toEqual(null);
+    expect(parsed.time).toEqual(null);
+    expect(parsed.stateMachine).toEqual(null);
+    expect(parsed.collection).toEqual(null);
+    expect(parsed.execution).toEqual(executionArn);
+    expect(parsed.granules).toEqual(null);
     expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
   });
 });
