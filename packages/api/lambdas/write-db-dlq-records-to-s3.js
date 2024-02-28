@@ -51,7 +51,6 @@ function payloadHasGranules(payload) {
  */
 async function hoistCumulusMessageDetails(dlqRecord) {
   let error = null;
-
   let execution = null;
   let stateMachine = null;
   let status = null;
