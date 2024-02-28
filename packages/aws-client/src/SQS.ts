@@ -3,7 +3,6 @@
  * @module SQS
  */
 import Logger from '@cumulus/logger';
-
 import { CumulusMessage } from '@cumulus/types/message';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
@@ -85,7 +84,6 @@ export const getQueueAttributes = async (queueName: string) => {
  *   object it will be serialized into a JSON string.
  * @param {Logger} [logOverride] - optional Logger passed in for testing
  * @returns {Promise} resolves when the messsage has been sent
- * 
  **/
 export const sendSQSMessage = (
   queueUrl: string,

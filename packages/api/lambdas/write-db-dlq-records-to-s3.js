@@ -16,8 +16,8 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
- * @typedef {import('@cumulus/message/DeadLetterMessage').DLQRecord} DLQRecord
- * @typedef {import('@cumulus/message/DeadLetterMessage').DLARecord} DLARecord
+ * @typedef {import('@cumulus/types/api/dead_letters').DLQRecord} DLQRecord
+ * @typedef {import('@cumulus/types/api/dead_letters').DLARecord} DLARecord
  * @typedef {import('aws-lambda').EventBridgeEvent} EventBridgeEvent
  */
 
