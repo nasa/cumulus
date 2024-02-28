@@ -13,6 +13,7 @@ Resources:
         - DeviceName: "/dev/xvdcz"
           Ebs:
             DeleteOnTermination: true
+            Encrypted: true
             VolumeSize: ${docker_volume_size}
 %{ if key_name != null ~}
       KeyName: ${key_name}
