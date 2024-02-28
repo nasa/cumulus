@@ -22,7 +22,7 @@
     "serve:debug": "LOCALSTACK_HOST=localhost LOCAL_ES_HOST=localhost NODE_ENV=test FAKE_AUTH=true node --inspect-brk ./bin/cli.js serve",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "test": "echo $PWD && for i in `find tests/ -name \\*.js -exec grep -l require\\(\\'ava\\'\\) {} \\;`; do echo TEST START: $i && ../../node_modules/.bin/ava $i; done;",
+    "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
