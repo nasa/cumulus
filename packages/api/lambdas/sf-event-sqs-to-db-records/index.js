@@ -174,8 +174,7 @@ const handler = async (event) => {
         {
           ...message,
           error: error.toString(),
-        },
-        log
+        }
       );
     }
   }));

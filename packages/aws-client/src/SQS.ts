@@ -87,7 +87,11 @@ export const getQueueAttributes = async (queueName: string) => {
  * @returns {Promise} resolves when the messsage has been sent
 
  **/
-export const sendSQSMessage = (queueUrl: string, message: string | object, logOverride: Logger) => {
+export const sendSQSMessage = (
+  queueUrl: string,
+  message: string | object,
+  logOverride: Logger | undefined = undefined
+) => {
   const logger = logOverride || log;
   let messageBody;
   if (isString(message)) messageBody = message;
