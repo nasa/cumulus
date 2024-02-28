@@ -124,16 +124,13 @@ const writeRecords = async ({
 };
 /**
  * @typedef {import('aws-lambda').SQSRecord} SQSRecord
+ * @typedef {{Records: Array<SQSRecord>, env: {[key: string]: any}, [key: string]: any}} LambdaEvent
  */
 
 /**
  * Lambda handler for StepFunction Events that writes records or records errors to the DLQ
  *
- * @param {{
-     Records: Array<SQSRecord>,
-     env: {[key: string]:  any},
-     [key: string]: any
-  }} event - Input payload
+ * @param {LambdaEvent} event - Input payload
  * @returns {Promise<{batchItemFailures: Array<{itemIdentifier: string}>}>}
  */
 const handler = async (event) => {
