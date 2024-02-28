@@ -8,8 +8,8 @@ const uuidv4 = require('uuid/v4');
 const log = require('@cumulus/common/log');
 const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
-const { parseSQSMessageBody } = require('@cumulus/aws-client/SQS');
-const { unwrapDeadLetterCumulusMessage, isSQSRecordLike } = require('@cumulus/message/DeadLetterMessage');
+const { parseSQSMessageBody, isSQSRecordLike } = require('@cumulus/aws-client/SQS');
+const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 /**
  *
@@ -17,6 +17,7 @@ const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFu
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
  * @typedef {import('@cumulus/message/DeadLetterMessage').DLQRecord} DLQRecord
+ * @typedef {import('@cumulus/message/DeadLetterMessage').DLARecord} DLARecord
  * @typedef {import('aws-lambda').EventBridgeEvent} EventBridgeEvent
  */
 
@@ -34,8 +35,8 @@ function payloadHasGranules(payload) {
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {DLQRecord | EventBridgeEvent} dlqRecord - event bridge event as defined in aws-lambda
- * @returns {Promise<Object>} - message packaged with
+ * @param {DLQRecord} dlqRecord - event bridge event as defined in aws-lambda
+ * @returns {Promise<DLARecord>} - message packaged with
  * metadata or null where metadata not found
  * {
  *   error: <errorString | null>
@@ -50,9 +51,7 @@ function payloadHasGranules(payload) {
  */
 async function hoistCumulusMessageDetails(dlqRecord) {
   let error = null;
-  if (isSQSRecordLike(dlqRecord)) {
-    error = dlqRecord.error || null;
-  }
+
   let execution = null;
   let stateMachine = null;
   let status = null;
@@ -62,7 +61,13 @@ async function hoistCumulusMessageDetails(dlqRecord) {
 
   /* @type {any} */
   let messageBody;
-  messageBody = dlqRecord;
+  messageBody = parseSQSMessageBody(dlqRecord);
+  /* seek error at outermost record contents */
+  if (isSQSRecordLike(messageBody)) {
+    error = dlqRecord.error || null;
+  }
+
+  /* de-nest sqs records of unknown depth */
   while (isSQSRecordLike(messageBody)) {
     messageBody = parseSQSMessageBody(messageBody);
   }
@@ -113,14 +118,13 @@ async function handler(event) {
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
-    const dlqRecord = parseSQSMessageBody(sqsMessage);
     let massagedMessage;
     let execution;
-    if (isSQSRecordLike(dlqRecord) || isEventBridgeEvent(dlqRecord)) {
-      massagedMessage = await hoistCumulusMessageDetails(dlqRecord);
+    if (isSQSRecordLike(sqsMessage)) {
+      massagedMessage = await hoistCumulusMessageDetails(sqsMessage);
       execution = massagedMessage.execution;
     } else {
-      massagedMessage = dlqRecord;
+      massagedMessage = sqsMessage;
       execution = null;
     }
     const executionName = execution || 'unknown';

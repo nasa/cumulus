@@ -1,6 +1,5 @@
 //@ts-check
 import { SQSRecord } from 'aws-lambda';
-
 import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
 import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
@@ -9,10 +8,19 @@ import Logger from '@cumulus/logger';
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
 
 const log = new Logger({ sender: '@cumulus/DeadLetterMessage' });
-interface DLQRecord extends SQSRecord {
-  error?: string
+export interface DLQRecord extends SQSRecord {
+  error?: string | null
 }
-export type { DLQRecord };
+
+export interface DLARecord extends DLQRecord {
+  error: string | null
+  time: string | null
+  status: string | null
+  collection: string | null
+  granules: Array<string | null> | null
+  execution: string | null
+  stateMachine: string | null
+}
 
 type UnwrapDeadLetterCumulusMessageInputType = (
   StepFunctionEventBridgeEvent
