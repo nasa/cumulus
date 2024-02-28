@@ -85,7 +85,7 @@ export const getQueueAttributes = async (queueName: string) => {
  *   object it will be serialized into a JSON string.
  * @param {Logger} [logOverride] - optional Logger passed in for testing
  * @returns {Promise} resolves when the messsage has been sent
-
+ * 
  **/
 export const sendSQSMessage = (
   queueUrl: string,
@@ -175,10 +175,9 @@ export const parseSQSMessageBody = (
 /**
  * Delete a given SQS message from a given queue.
  *
- * @param {string} queueUrl - url of the Amazon SQS queue
- * @param {integer} receiptHandle - the unique identifier of the SQS message
+ * @param {string} QueueUrl - url of the Amazon SQS queue
+ * @param {integer} ReceiptHandle - the unique identifier of the SQS message
  * @returns {Promise} an AWS SQS response
- * @throws Will throw an error if deletion fails.
  */
 export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) =>
   sqs().deleteMessage({ QueueUrl, ReceiptHandle })
