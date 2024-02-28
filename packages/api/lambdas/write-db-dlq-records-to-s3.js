@@ -9,7 +9,7 @@ const log = require('@cumulus/common/log');
 const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody, isSQSRecordLike } = require('@cumulus/aws-client/SQS');
-const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
+const { unwrapDeadLetterCumulusMessage, isDLQRecordLike } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 /**
  *
@@ -60,14 +60,13 @@ async function hoistCumulusMessageDetails(dlqRecord) {
 
   /* @type {any} */
   let messageBody;
-  messageBody = parseSQSMessageBody(dlqRecord);
-  /* seek error at outermost record contents */
-  if (isSQSRecordLike(messageBody)) {
-    error = dlqRecord.error || null;
-  }
-
+  messageBody = dlqRecord;
   /* de-nest sqs records of unknown depth */
   while (isSQSRecordLike(messageBody)) {
+    /* capture outermost recorded error */
+    if (isDLQRecordLike(messageBody) && !error) {
+      error = messageBody.error || null;
+    }
     messageBody = parseSQSMessageBody(messageBody);
   }
 

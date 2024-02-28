@@ -1,6 +1,6 @@
 //@ts-check
 import { SQSRecord } from 'aws-lambda';
-import { parseSQSMessageBody } from '@cumulus/aws-client/SQS';
+import { parseSQSMessageBody, isSQSRecordLike } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
 import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
 import Logger from '@cumulus/logger';
@@ -45,9 +45,9 @@ const isCumulusMessageLike = (message: Object): message is CumulusMessage => (
  * @param {{ [key: string]: any }} message
  * @returns {message is DLQRecord}
  */
-export const isSQSRecordLike = (message: Object): message is DLQRecord | SQSRecord => (
-  message instanceof Object
-  && ('body' in message || 'Body' in message)
+export const isDLQRecordLike = (message: Object): message is DLQRecord => (
+  isSQSRecordLike(message)
+  && 'error' in message
 );
 
 /**
