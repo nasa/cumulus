@@ -21,7 +21,6 @@ describe('when a bad record is ingested', () => {
     const config = await loadConfig();
     stackName = config.stackName;
     systemBucket = config.bucket;
-
   });
   afterAll(async () => {
     await deleteS3Object(
@@ -30,7 +29,6 @@ describe('when a bad record is ingested', () => {
     );
   });
   it('is sent to the DLA and processed to have expected metadata fields', async () => {
-
     executionArn = `execution-${randomString(16)}`;
     const { $metadata } = await lambda().invoke({
       FunctionName: `${stackName}-sfEventSqsToDbRecords`,
@@ -104,7 +102,6 @@ describe('when a bad record is ingested', () => {
   });
 
   it('is sent to the DLA and processed to have expected metadata fields even when data is not found', async () => {
-
     executionArn = `execution-${randomString(16)}`;
     const { $metadata } = await lambda().invoke({
       FunctionName: `${stackName}-sfEventSqsToDbRecords`,
