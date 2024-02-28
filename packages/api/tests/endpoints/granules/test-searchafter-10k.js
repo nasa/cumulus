@@ -36,46 +36,46 @@ test.after.always(async (t) => {
   await t.context.esClient.indices.delete({ index: t.context.esIndex });
 });
 
-// test.serial('CUMULUS-2930 /GET granules allows searching past 10K results windows with searchContext', async (t) => {
-//   const numGranules = 12 * 1000;
+test.serial('CUMULUS-2930 /GET granules allows searching past 10K results windows with searchContext', async (t) => {
+  const numGranules = 12 * 1;
 
-//   // create granules in batches of 1000
-//   for (let i = 0; i < numGranules; i += 1000) {
-//     const granules = granuleFactory(1000);
-//     // eslint-disable-next-line no-await-in-loop
-//     await loadGranules(granules, t);
-//     console.log(`${i} of ${numGranules} loaded`);
-//   }
-//   console.log('Granules loaded.');
+  // create granules in batches of 1000
+  for (let i = 0; i < numGranules; i += 1000) {
+    const granules = granuleFactory(1000);
+    // eslint-disable-next-line no-await-in-loop
+    await loadGranules(granules, t);
+    console.log(`${i} of ${numGranules} loaded`);
+  }
+  console.log('Granules loaded.');
 
-//   // expect numGranules / 100 loops since the api limit is 100;
-//   const expectedLoops = 1 + (numGranules / 100);
-//   let actualLoops = 0;
-//   let lastResults = [];
-//   let queryString = '';
-//   let searchContext = '';
+  // expect numGranules / 100 loops since the api limit is 100;
+  const expectedLoops = 1 + (numGranules / 100);
+  let actualLoops = 0;
+  let lastResults = [];
+  let queryString = '';
+  let searchContext = '';
 
-//   do {
-//     actualLoops += 1;
-//     // eslint-disable-next-line no-await-in-loop
-//     const response = await request(app)
-//       .get(`/granules?limit=100${queryString}`)
-//       .set('Accept', 'application/json')
-//       .expect(200);
+  do {
+    actualLoops += 1;
+    // eslint-disable-next-line no-await-in-loop
+    const response = await request(app)
+      .get(`/granules?limit=100${queryString}`)
+      .set('Accept', 'application/json')
+      .expect(200);
 
-//     const results = response.body.results;
-//     t.notDeepEqual(results, lastResults);
-//     lastResults = results;
+    const results = response.body.results;
+    t.notDeepEqual(results, lastResults);
+    lastResults = results;
 
-//     searchContext = response.body.meta.searchContext;
-//     if (searchContext) {
-//       t.is(results.length, 100);
-//     } else {
-//       t.is(results.length, 0);
-//     }
-//     queryString = `&searchContext=${response.body.meta.searchContext}`;
-//   } while (searchContext !== undefined);
+    searchContext = response.body.meta.searchContext;
+    if (searchContext) {
+      t.is(results.length, 100);
+    } else {
+      t.is(results.length, 0);
+    }
+    queryString = `&searchContext=${response.body.meta.searchContext}`;
+  } while (searchContext !== undefined);
 
-//   t.is(lastResults.length, 0);
-//   t.is(actualLoops, expectedLoops);
-// });
+  t.is(lastResults.length, 0);
+  t.is(actualLoops, expectedLoops);
+});
