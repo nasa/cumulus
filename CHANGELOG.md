@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [v16.1.4] 2024-2-16
 
+Please note changes in 16.1.4 may not yet be released in future versions, as this
+is a backport/patch release on the 16.x series of releases. Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
 ### Migration Notes
 
 For the v16.1 release series, Cumulus Core will be tested against PostgreSQL v13. Users
@@ -29,16 +33,10 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - Update `cumulus-rds-tf` module to take additional parameters in support of
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
 
-
-Please note changes in 16.1.4 may not yet be released in future versions, as this
-is a backport/patch release on the 16.x series of releases. Updates that are
-included in the future will have a corresponding CHANGELOG entry in future releases.
-
 ### Fixed
 - **CUMULUS-3547**
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
   - addressed DAR requirement for encryption
-
 
 
 ## [v16.1.3] 2024-1-15
