@@ -168,6 +168,11 @@ variable "db_parameters" {
       name  = "shared_preload_libraries"
       value = "pg_stat_statements,auto_explain"
       apply_method = "pending-reboot"
+    },
+    {
+      name         = "rds.force_ssl"
+      value        = 1
+      apply_method = "pending-reboot"
     }
   ]
 }

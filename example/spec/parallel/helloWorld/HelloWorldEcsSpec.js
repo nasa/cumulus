@@ -46,7 +46,7 @@ describe('The Hello World workflow using ECS and CMA Layers', () => {
   });
 
   describe('the reporting lambda has received the cloudwatch stepfunction event and', () => {
-    it('the execution record is added to DynamoDB', async () => {
+    it('the execution record is added to the PostgreSQL database', async () => {
       const record = await waitForApiStatus(
         getExecution,
         {
