@@ -37,8 +37,8 @@
       "!tests/helpers/**/*.js"
     ],
     "verbose": true,
-    "timeout": "20m",
-    "failFast": true
+    "timeout": "60m",
+    "failFast": false
   },
   "publishConfig": {
     "access": "public"

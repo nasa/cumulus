@@ -38,7 +38,7 @@
       "tests/**"
     ],
     "verbose": true,
-    "failFast": true
+    "failFast": false
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

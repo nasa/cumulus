@@ -16,7 +16,7 @@
   },
   "ava": {
     "timeout": "15m",
-    "failFast": true
+    "failFast": false
   },
   "dependencies": {
     "@cumulus/api": "18.2.0",
