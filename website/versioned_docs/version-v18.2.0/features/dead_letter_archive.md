@@ -70,7 +70,7 @@ Note that
 }
 ```
 
-detail:
+Step Function Execution Status Change (detail):
 
 ```ts
 {
