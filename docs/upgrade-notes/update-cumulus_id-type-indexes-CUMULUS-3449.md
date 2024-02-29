@@ -6,8 +6,9 @@ hide_title: false
 
 ## Background
 
-As part of the work for [CUMULUS-3449](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3449), LPDAAC have identified some Cumulus Core changes in
-regards to the database in order to improve query performance. For other recommendations and considerations, see LPDAAC wiki
+As part of the work for [CUMULUS-3449](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3449), LP DAAC (Land Processes Distributed
+Active Archive Center) have identified some Cumulus Core changes in regards to the database in order to improve query performance.
+For other recommendations and considerations, see LP DAAC wiki
 [Cumulus RDS Index testing](https://wiki.earthdata.nasa.gov/pages/viewpage.action?spaceKey=LPCUMULUS&title=Cumulus+RDS+Index+testing).
 
 The following updates are included:
@@ -34,11 +35,11 @@ The updates will be automatically created as part of the bootstrap lambda functi
 
 ## Apply the Changes in Production Environment
 
-In production and some UAT environments, the type updates and indexes must be applied manually since the commands can take significant
-amount of time. Since these particular ALTER TABLE commands require an EXCLUSIVE LOCK on the table, it is recommended that
+With large database (e.g. number of rows in executions table is greater than 100,000), the type updates and indexes must be applied manually since
+the commands can take significant amount of time. Since these particular ALTER TABLE commands require an EXCLUSIVE LOCK on the table, it is recommended that
 all database activity be quiesced. This means that Ingest and Archive and other Cumulus functions must be shutdown before and during these commands.
 
-The table below from LPDAAC provides the table sizes before and after `alter table` commands, and timings.
+The table below from LP DAAC provides the table sizes before and after `alter table` commands, and timings.
 
 | Table Name | Original Table Size | ALTER Run Time (clock) | New Table Size | Number of Rows |
 |---|---|---|---|---|
@@ -97,6 +98,14 @@ exit
 <Ctrl>-b x
 ```
 
+## Suggestions
+
+- Backup database before applying the updates, see the
+  [Backup and Restore document](https://nasa.github.io/cumulus/docs/features/backup_and_restore/#postgres-database)
+
+- This upgrade should work on prior Cumulus releases, so the upgrade can be performed when maintenance windown allows
+  without having to upgrade Cumulus.
+
 ## Upgrade Steps
 
 1. Quiesce ingest
@@ -120,8 +129,9 @@ exit
 
 2. Login into EC2 instance with database access.
 
-    From AWS console, go to EC2, pick a `<prefix>-CumulusECSCluster` instance, click Connect, click Session Manager.
-    :::note Remember to take a note on which instance you run the commands. :::
+    From AWS console, go to EC2, pick a `<prefix>-CumulusECSCluster` instance, click Connect, click Session Manager
+    and click the Connect button.
+    :::note Remember to take a note on which instance you run the commands.
 
 3. Install tmux and postgres client
 
@@ -136,6 +146,7 @@ exit
 
 4. Run SQL Commands
     The database login credentials can be retrieved from the prefix_db_login secret.
+    When the SQL commands are running, perform step 5 to monitor the commands.
 
     ```sh
     tmux new-session -s CumulusUpgrade -n Fix-DataTypes
@@ -143,21 +154,41 @@ exit
     psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -W
     #e.g. psql -h cumulus-dev-rds-cluster.cluster-xxx.us-east-1.rds.amazonaws.com -p 5432 -d cumulus_test_db -U cumulus_test -W
 
-    # Update column types
+    # Use -f option to run the SQL commands from a file
+    psql -h <Endpoint for writer instance> -p <Port for database or 5432> -d <cumulus database name> -U <database admin user> -f 20240124101001_update_cumulus_id_add_indexes.sql -W
+    ```
+
+    The following are SQL commands, and 20240124101001_update_cumulus_id_add_indexes.sql is available
+    [here](https://github.com/nasa/cumulus/tree/master/packages/db/src/migrations/20240124101001_update_cumulus_id_add_indexes.sql):
+
+    ```sql
+    -- Update column types
+    SELECT CURRENT_TIMESTAMP;
     ALTER TABLE executions ALTER COLUMN cumulus_id TYPE BIGINT, ALTER COLUMN parent_cumulus_id TYPE BIGINT;
+    SELECT CURRENT_TIMESTAMP;
     ALTER TABLE files ALTER COLUMN granule_cumulus_id TYPE BIGINT;
+    SELECT CURRENT_TIMESTAMP;
     ALTER TABLE granules_executions ALTER COLUMN granule_cumulus_id TYPE BIGINT, ALTER COLUMN execution_cumulus_id TYPE BIGINT;
+    SELECT CURRENT_TIMESTAMP;
     ALTER TABLE pdrs ALTER COLUMN execution_cumulus_id TYPE BIGINT;
+    SELECT CURRENT_TIMESTAMP;
 
     VACUUM (ANALYZE, VERBOSE) executions;
+    SELECT CURRENT_TIMESTAMP;
     VACUUM (ANALYZE, VERBOSE) files;
+    SELECT CURRENT_TIMESTAMP;
     VACUUM (ANALYZE, VERBOSE) granules_executions;
+    SELECT CURRENT_TIMESTAMP;
     VACUUM (ANALYZE, VERBOSE) pdrs;
+    SELECT CURRENT_TIMESTAMP;
 
-    # Update and Add indexes
+    -- Update and Add indexes
     CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS granules_collection_cumulus_id_granule_id_unique ON granules(collection_cumulus_id, granule_id);
+    SELECT CURRENT_TIMESTAMP;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_granule_id_index ON granules(granule_id);
+    SELECT CURRENT_TIMESTAMP;
     CREATE INDEX CONCURRENTLY IF NOT EXISTS granules_provider_collection_cumulus_id_granule_id_index ON granules(provider_cumulus_id, collection_cumulus_id, granule_id);
+    SELECT CURRENT_TIMESTAMP;
     ```
 
 5. Monitor the Running Command
@@ -171,6 +202,11 @@ exit
     select pid, query, state, wait_event_type, wait_event from pg_stat_activity where state = 'active';
     ```
 
-6. Close the Session
+6. Verify the Update
+
+    We can verify that the update are performed successfully on the table by checking the \d results from psql. A later version of
+    psql than psql we installed in EC2 is required.
+
+7. Close the Session
 
     Close the tmux session after the task is complete by `exit` or `<Ctrl>-b x`.
