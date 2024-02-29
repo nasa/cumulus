@@ -5,13 +5,21 @@ import { Knex } from 'knex';
 import { envUtils } from '@cumulus/common';
 
 export const localStackConnectionEnv = {
-  PG_HOST: 'localhost',
-  PG_USER: 'postgres',
-  PG_PASSWORD: 'password',
   PG_DATABASE: 'postgres',
+  PG_HOST: 'localhost',
+  PG_PASSWORD: 'password',
   PG_PORT: '5432',
+  PG_USER: 'postgres',
+  DISABLE_PG_SSL: 'true',
 };
 
+/**
+ * Determines if Knex debugging is enabled based on environment variable.
+ *
+ * @param {NodeJS.ProcessEnv} env - The environment variables object, defaults to an empty object.
+ * @returns {boolean} Returns true if the KNEX_DEBUG environment variable is set to 'true',
+ * false otherwise.
+ */
 export const isKnexDebugEnabled = (
   env: NodeJS.ProcessEnv = {}
 ) => env.KNEX_DEBUG === 'true';
@@ -33,24 +41,39 @@ export const getSecretConnectionConfig = async (
       throw new Error(`AWS Secret ${SecretId} is missing required key '${key}'`);
     }
   });
+  const rejectUnauthorized = dbAccessMeta.rejectUnauthorized !== 'false' && dbAccessMeta.rejectUnauthorized !== false;
+  const disableSsl = dbAccessMeta.disableSSL === 'true' || dbAccessMeta.disableSSL === true;
   return {
-    host: dbAccessMeta.host,
-    user: dbAccessMeta.username,
-    password: dbAccessMeta.password,
     database: dbAccessMeta.database,
+    host: dbAccessMeta.host,
+    password: dbAccessMeta.password,
     port: dbAccessMeta.port ?? 5432,
+    ssl: disableSsl ? undefined : { rejectUnauthorized },
+    user: dbAccessMeta.username,
   };
 };
 
 export const getConnectionConfigEnv = (
   env: NodeJS.ProcessEnv
-): Knex.PgConnectionConfig => ({
-  host: envUtils.getRequiredEnvVar('PG_HOST', env),
-  user: envUtils.getRequiredEnvVar('PG_USER', env),
-  password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
-  database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
-  port: Number.parseInt(env.PG_PORT ?? '5432', 10),
-});
+): Knex.PgConnectionConfig => {
+  const rejectUnauthorized = env.REJECT_UNAUTHORIZED !== 'false';
+  const connectionConfigEnv: {
+    host: string,
+    user: string,
+    password: string,
+    database:string,
+    port: number,
+    ssl?: { rejectUnauthorized: boolean },
+  } = {
+    host: envUtils.getRequiredEnvVar('PG_HOST', env),
+    user: envUtils.getRequiredEnvVar('PG_USER', env),
+    password: envUtils.getRequiredEnvVar('PG_PASSWORD', env),
+    database: envUtils.getRequiredEnvVar('PG_DATABASE', env),
+    port: Number.parseInt(env.PG_PORT ?? '5432', 10),
+    ssl: env.DISABLE_PG_SSL === 'true' ? undefined : { rejectUnauthorized },
+  };
+  return connectionConfigEnv;
+};
 
 /**
  * Return configuration to make a database connection.
