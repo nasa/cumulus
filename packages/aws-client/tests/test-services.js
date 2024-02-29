@@ -164,19 +164,6 @@ test('ecs() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('ec2() service defaults to localstack in test mode', (t) => {
-  const ec2 = services.ec2();
-  const {
-    credentials,
-    endpoint,
-  } = localStackAwsClientOptions(AWS.EC2);
-  t.deepEqual(
-    ec2.config.credentials,
-    credentials
-  );
-  t.is(ec2.config.endpoint, endpoint);
-});
-
 test('es() service defaults to localstack in test mode', (t) => {
   const es = services.es();
   const {

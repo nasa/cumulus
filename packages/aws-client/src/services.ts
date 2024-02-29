@@ -18,7 +18,6 @@ import awsClient from './client';
 
 export const apigateway = awsClient(APIGatewayClient, '2015-07-09');
 export const ecs = awsClient(ECS, '2014-11-13');
-export const ec2 = awsClient(AWS.EC2, '2016-11-15');
 export const s3 = awsClient(S3, '2006-03-01');
 export const kinesis = awsClient(Kinesis, '2013-12-02');
 export const lambda = awsClient(Lambda, '2015-03-31');
