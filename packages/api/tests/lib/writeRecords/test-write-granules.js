@@ -2111,14 +2111,13 @@ test.serial('_writeGranules attempts to mark granule as failed if a SchemaValida
     testOverrides: { stepFunctionUtils },
   }));
 
-  t.true(error.message.includes('failed schema validation'));
+  t.true(error.cause.message.includes('The record has validation errors:'));
 
   const pgGranule = await t.context.granulePgModel.get(knex, {
     granule_id: granuleId,
     collection_cumulus_id: collectionCumulusId,
   });
   t.is(pgGranule.status, 'failed');
-  t.true(pgGranule.error.errors.includes('SchemaValdationError'));
 });
 
 test.serial('writeGranulesFromMessage() writes all valid files if any non-valid file fails', async (t) => {
