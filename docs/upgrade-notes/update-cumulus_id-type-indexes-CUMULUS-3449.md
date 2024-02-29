@@ -193,7 +193,7 @@ exit
 
 5. Monitor the Running Command
 
-    ```text
+    ```sh
     # From tmux CumulusUpgrade session, open another window
     <Ctrl>-b c
 
@@ -202,10 +202,46 @@ exit
     select pid, query, state, wait_event_type, wait_event from pg_stat_activity where state = 'active';
     ```
 
-6. Verify the Update
+6. Verify the Updates
 
-    We can verify that the update are performed successfully on the table by checking the \d results from psql. A later version of
-    psql than psql we installed in EC2 is required.
+     We can verify that the tables are updated successfully by checking the `\d table` results from psql.  We can run the commands
+     outside of EC2 from pgAdmin or a psql client which supports `\d` command.  The following are expected results.
+
+    ```sh
+    => \d executions;
+
+              Column           |           Type           | Collation | Nullable |                    Default                     
+    ----------------------------+--------------------------+-----------+----------+------------------------------------------------
+    cumulus_id                 | bigint                   |           | not null | nextval('executions_cumulus_id_seq'::regclass)
+    parent_cumulus_id          | bigint                   |           |          | 
+
+    => \d granules_executions;
+
+            Column        |  Type  | Collation | Nullable | Default 
+    ----------------------+--------+-----------+----------+---------
+    granule_cumulus_id   | bigint |           | not null | 
+    execution_cumulus_id | bigint |           | not null | 
+
+    => \d files;
+                                                   
+          Column       |           Type           | Collation | Nullable |                  Default                  
+    --------------------+--------------------------+-----------+----------+-------------------------------------------
+    granule_cumulus_id | bigint                   |           | not null | 
+
+    => \d granules;
+    
+    Indexes:
+    "granules_collection_cumulus_id_granule_id_unique" UNIQUE, btree (collection_cumulus_id, granule_id)
+    "granules_granule_id_index" btree (granule_id)
+    "granules_provider_collection_cumulus_id_granule_id_index" btree (provider_cumulus_id, collection_cumulus_id, granule_id)
+
+    => \d pdrs
+
+            Column         |           Type           | Collation | Nullable |                 Default                  
+    -----------------------+--------------------------+-----------+----------+------------------------------------------
+    execution_cumulus_id  | bigint                   |           |          | 
+
+    ```
 
 7. Close the Session
 
