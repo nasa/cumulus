@@ -19,14 +19,12 @@ knexFakeError.name = 'KnexTimeoutError';
 
 test.before(async (t) => {
   t.context.secretsManager = {
-    getSecretValue: () => ({
-      promise: () => Promise.resolve({
-        SecretString: JSON.stringify({
-          host: fakeConnectionConfig.host,
-          username: fakeConnectionConfig.user,
-          password: fakeConnectionConfig.password,
-          database: fakeConnectionConfig.database,
-        }),
+    getSecretValue: () => Promise.resolve({
+      SecretString: JSON.stringify({
+        host: fakeConnectionConfig.host,
+        username: fakeConnectionConfig.user,
+        password: fakeConnectionConfig.password,
+        database: fakeConnectionConfig.database,
       }),
     }),
   };

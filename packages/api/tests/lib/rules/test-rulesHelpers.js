@@ -2271,7 +2271,7 @@ test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific e
   // Should fail because a disabled rule should not have an ARN
   // when being updated
   await t.throwsAsync(updateRuleTrigger(rule, updates, t.context.testKnex),
-    null,
+    undefined,
     'Including rule.arn is not allowed when enabling a disabled rule');
   t.teardown(() => {
     snsStub.restore();

@@ -26,7 +26,7 @@ const localStackPorts = {
   redshift: 4566,
   route53: 4566,
   S3: 4566,
-  secretsmanager: 4566,
+  SecretsManager: 4566,
   ses: 4566,
   SNS: 4566,
   SQS: 4566,

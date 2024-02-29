@@ -32,7 +32,8 @@
     "files": [
       "tests/*"
     ],
-    "verbose": true
+    "verbose": true,
+    "failFast": true
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",

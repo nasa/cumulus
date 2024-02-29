@@ -24,12 +24,14 @@
       "tests/**"
     ],
     "verbose": true,
-    "timeout": "5m"
+    "timeout": "5m",
+    "failFast": true
   },
   "engines": {
     "node": ">=16.19.0"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.447.0",
     "@cumulus/aws-client": "18.2.0",
     "@cumulus/common": "18.2.0",
     "@cumulus/errors": "18.2.0",
