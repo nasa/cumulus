@@ -131,8 +131,11 @@ exit
 
 2. Login into EC2 instance with database access.
 
-    From AWS console, go to EC2, pick a `<prefix>-CumulusECSCluster` instance, click Connect, click Session Manager
+    From AWS console: Go to EC2, pick a `<prefix>-CumulusECSCluster` instance, click Connect, click Session Manager
     and click the Connect button.
+
+    From AWS CLI: aws ssm start-session --target `EC2 Instance ID`.
+  
     :::note Remember to take a note on which instance you run the commands.
 
 3. Install tmux and postgres client
@@ -161,7 +164,7 @@ exit
     ```
 
     The following are SQL commands, and 20240124101001_update_cumulus_id_add_indexes.sql is available
-    [here](https://github.com/nasa/cumulus/tree/master/packages/db/src/migrations/20240124101001_update_cumulus_id_add_indexes.sql):
+    [here](https://raw.githubusercontent.com/nasa/cumulus/master/packages/db/src/migrations/20240124101001_update_cumulus_id_add_indexes.sql):
 
     ```sql
     -- Update column types
