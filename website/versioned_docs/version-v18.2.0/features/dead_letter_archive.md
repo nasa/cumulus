@@ -24,16 +24,22 @@ This endpoint may prove particularly useful when recovering from extended or une
 
 The Messages yielded to the dead letter archive have some inherent uncertainty to their structure due to their nature as failed messages that may have failed due to structural issues. However there is a standard format that they will overwhelmingly conform to.
 
-```js
+```ts
 {
-    body: <string> // parseable as EventBridge
-    error: <string> // error that caused the message to be shunted to the DLQ
-    execution: <string> // execution arn
-    time: <string> // time
-    collection: <string> // collection
-    granules: <Array<string>> // granules
-    stateMachine: <string> //state machine arn
-
+    body: [string], // parseable as EventBridge
+    error: [string | null], // error that caused the message to be shunted to the DLQ
+    execution: [string | null], // execution ARN for the execution which created the originating sf event
+    time: [string | null], // Zulu timestamp of of the originating sf event
+    collection: [string | null], // collection the granule belongs to
+    granules: [Array[string | null] | null], // granules 
+    stateMachine: [string | null], // ARN of the triggering workflow
+    status: [string | null], status of triggering execution
+    md5OfBody: [string], // checksum of message body
+    eventSource: [string], // aws:sqs
+    awsRegion: [string], // aws region that this is happening in
+    messageId: [string], // uniqueID of the DLQ message
+    receiptHandle: [string], // #TODO
+    
 }
 ```
 
@@ -42,10 +48,48 @@ for further details on body contents: [see below]
 
 ## Dead Letter Archive Body contents
 
-the body Bttribute should be a JSON string containing an event bridge event
+the body attribute should be a JSON string containing an event bridge event
 
 Note that
 
 - the body attribute can come nested, such that you will have to de-nest a series of body attributes to get to the heart of your message
 - the word body can be interchanged with Body (capitalized)
 - because this message body arrived in the Dead Letter Archive because of issues in processing it, there is no strict guarantee that it is a valid json object, or conforms to expected structure. the *expected* structure follows.
+
+```ts
+{
+    version: [string | null], // versionString
+    id: [string | null], // unique ID of the triggering event
+    'detail-type': 'Step Functions Execution Status Change', // defines the below 'detail' spec
+    source: 'aws.states', //
+    account: [string], // account ID
+    time: [string], // Zulu timestamp of of the originating sf event
+    region: [string], //aws region
+    resources: [Array[string]], //ARNs of involved resources
+    detail: [string], //parses as Step Function Execution Status Change object, see below
+}
+```
+
+detail:
+
+```ts
+{
+    stateMachineArn: [string], // ARN of the triggering workflow
+    name: [string], // Execution name of triggering execution
+    status: [string], // status of triggering execution
+    startDate: [int], // timestamp of
+    stopDate: [int | null], // timestamp of
+    input: [string], //parses as the cumulus message input
+    output: [string | null], //parses as the cumulus message output if execution succeeded
+    stateMachineVersionArn: [string | null], //
+    stateMachineAliasArn: [string | null], //
+    redriveCount: [int], // 
+    redriveDate: [string | null], //
+    redriveStatus: [string], //
+    redriveStatusReason: [string], //
+    inputDetails: [Obj], //
+    outputDetails: [Obj | null], //
+    error: [string | null], //
+    cause: [string | null], //
+}
+```
