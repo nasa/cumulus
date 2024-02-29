@@ -39,7 +39,7 @@ With large database (e.g. number of rows in executions table is greater than 100
 the commands can take significant amount of time. Since these particular ALTER TABLE commands require an EXCLUSIVE LOCK on the table, it is recommended that
 all database activity be quiesced. This means that Ingest and Archive and other Cumulus functions must be shutdown before and during these commands.
 
-The table below from LP DAAC provides the table sizes before and after `alter table` commands, and timings.
+The table below from LP DAAC provides the table sizes before and after `alter table` commands, and timings.  LP DAAC has Aurora PostgreSQL 13.10.
 
 | Table Name | Original Table Size | ALTER Run Time (clock) | New Table Size | Number of Rows |
 |---|---|---|---|---|
@@ -101,7 +101,9 @@ exit
 ## Suggestions
 
 - Backup database before applying the updates, see the
-  [Backup and Restore document](https://nasa.github.io/cumulus/docs/features/backup_and_restore/#postgres-database)
+  [Backup and Restore document](https://nasa.github.io/cumulus/docs/features/backup_and_restore/#postgres-database).
+
+- To get a more accurate downtime estimate, you can take a snapshot of your database, and run the migration on it.
 
 - This upgrade should work on prior Cumulus releases, so the upgrade can be performed when maintenance windown allows
   without having to upgrade Cumulus.
@@ -229,7 +231,7 @@ exit
     granule_cumulus_id | bigint                   |           | not null | 
 
     => \d granules;
-    
+
     Indexes:
     "granules_collection_cumulus_id_granule_id_unique" UNIQUE, btree (collection_cumulus_id, granule_id)
     "granules_granule_id_index" btree (granule_id)
@@ -240,7 +242,6 @@ exit
             Column         |           Type           | Collation | Nullable |                 Default                  
     -----------------------+--------------------------+-----------+----------+------------------------------------------
     execution_cumulus_id  | bigint                   |           |          | 
-
     ```
 
 7. Close the Session
