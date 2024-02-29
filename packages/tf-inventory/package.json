@@ -18,7 +18,7 @@
     "files": [
       "tests/**"
     ],
-    "failFast": true,
+    "failFast": false,
     "verbose": true,
     "timeout": "15m"
   },

@@ -23,7 +23,7 @@
   },
   "ava": {
     "timeout": "15m",
-    "failFast": true
+    "failFast": false
   },
   "keywords": [
     "CUMULUS"
