@@ -71,7 +71,7 @@ Cumulus Core uses a `admin_db_login_secret_arn` and (optionally) `user_credentia
 
 #### SSL encryption
 
-Cumulus by default expects a configuration that includes a datastore that requires an SSL connection with a recognized certificate authority (RDS managed databases configured to use SSL will automatically work as AWS provides AWS CA bundles in the Lambda runtime environment).    If deployed in an environment not making use of SSL, set `disableSSL` to `true` to disable this behavior.
+Current security policy/best practices require use of a SSL enabled configuration.   Cumulus by default expects a configuration that includes a datastore that requires an SSL connection with a recognized certificate authority (RDS managed databases configured to use SSL will automatically work as AWS provides AWS CA bundles in the Lambda runtime environment).    If deployed in an environment not making use of SSL, set `disableSSL` to `true` to disable this behavior.
 
 #### Self-Signed Certs
 
