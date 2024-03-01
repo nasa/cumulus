@@ -4,7 +4,7 @@ const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
 
-const { unwrapDeadLetterCumulusMessage } = require('../DeadLetterMessage');
+const { unwrapDeadLetterCumulusMessage, isDLQRecordLike } = require('../DeadLetterMessage');
 
 test('unwrapDeadLetterCumulusMessage unwraps an SQS message', async (t) => {
   const cumulusMessage = {
@@ -111,4 +111,12 @@ test('unwrapDeadLetterCumulusMessage returns an non-unwrappable message', async 
     }),
   };
   t.deepEqual(await unwrapDeadLetterCumulusMessage(testMessage), testMessage);
+});
+
+test('isDLQRecordLike correctly filters for DLQ record shaped objects', (t) => {
+  /* isDLQRecordLike first checks if object isSQSRecordLike,
+  * these test do not duplicate those tests
+  */
+  t.false(isDLQRecordLike({ body: '{a: "b"}' })); // object must contain an error attribute
+  t.true(isDLQRecordLike({ body: '{a: "b"}', error: 'a' }));
 });
