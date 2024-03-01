@@ -11,8 +11,9 @@ export interface DLARecord extends DLQRecord {
   error: string | null
   time: string | null
   status: string | null
-  collection: string | null
+  collectionId: string | null
+  providerId: string | null
   granules: Array<string | null> | null
-  execution: string | null
-  stateMachine: string | null
+  executionArn: string | null
+  stateMachineArn: string | null
 }

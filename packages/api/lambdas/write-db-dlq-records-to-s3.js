@@ -11,10 +11,12 @@ const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody, isSQSRecordLike } = require('@cumulus/aws-client/SQS');
 const { unwrapDeadLetterCumulusMessage, isDLQRecordLike } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 /**
  *
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
+ * @typedef {import('@cumulus/types/message').Meta} Meta
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
  * @typedef {import('@cumulus/types/api/dead_letters').DLQRecord} DLQRecord
  * @typedef {import('@cumulus/types/api/dead_letters').DLARecord} DLARecord
@@ -32,6 +34,29 @@ function payloadHasGranules(payload) {
     && Array.isArray(payload.granules)
   );
 }
+/**
+ * @param {CumulusMessage} message
+ * @returns {string | null}
+ */
+function extractCollectionId(message) {
+  const collectionName = message?.meta?.collection?.name || null;
+  const collectionVersion = message?.meta?.collection?.version || null;
+  if (collectionName && collectionVersion) {
+    return constructCollectionId(collectionName, collectionVersion);
+  }
+  return null;
+}
+/**
+ * @param {CumulusMessage} message
+ * @returns {Array<string | null> | null}
+ */
+function extractGranules(message) {
+  if (payloadHasGranules(message.payload)) {
+    return message.payload.granules.map((granule) => granule?.granuleId || null);
+  }
+  return null;
+}
+
 /**
  * Reformat object with key attributes at top level.
  *
@@ -51,12 +76,13 @@ function payloadHasGranules(payload) {
  */
 async function hoistCumulusMessageDetails(dlqRecord) {
   let error = null;
-  let execution = null;
-  let stateMachine = null;
+  let executionArn = null;
+  let stateMachineArn = null;
   let status = null;
   let time = null;
-  let collection = null;
+  let collectionId = null;
   let granules = null;
+  let providerId = null;
 
   /* @type {any} */
   let messageBody;
@@ -71,8 +97,8 @@ async function hoistCumulusMessageDetails(dlqRecord) {
   }
 
   if (isEventBridgeEvent(messageBody)) {
-    execution = messageBody?.detail?.executionArn || null;
-    stateMachine = messageBody?.detail?.stateMachineArn || null;
+    executionArn = messageBody?.detail?.executionArn || null;
+    stateMachineArn = messageBody?.detail?.stateMachineArn || null;
     status = messageBody?.detail?.status || null;
     time = messageBody?.time || null;
     let cumulusMessage;
@@ -82,12 +108,10 @@ async function hoistCumulusMessageDetails(dlqRecord) {
       cumulusMessage = undefined;
       log.error(`could not parse details from DLQ message body due to ${error_}`);
     }
-
-    collection = cumulusMessage?.meta?.collection?.name || null;
-
-    const payload = cumulusMessage?.payload;
-    if (payloadHasGranules(payload)) {
-      granules = payload.granules.map((granule) => granule?.granuleId || null);
+    if (cumulusMessage) {
+      collectionId = extractCollectionId(cumulusMessage);
+      granules = extractGranules(cumulusMessage);
+      providerId = cumulusMessage.meta?.provider?.id || null;
     }
   } else {
     log.error('could not parse details from DLQ message body, expected EventBridgeEvent');
@@ -95,10 +119,11 @@ async function hoistCumulusMessageDetails(dlqRecord) {
 
   return {
     ...dlqRecord,
-    collection,
+    collectionId,
+    providerId,
     granules,
-    execution,
-    stateMachine,
+    executionArn,
+    stateMachineArn,
     status,
     time,
     error,
