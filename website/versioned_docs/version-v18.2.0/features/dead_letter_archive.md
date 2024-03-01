@@ -22,7 +22,7 @@ This endpoint may prove particularly useful when recovering from extended or une
 
 ## Dead Letter Archive Message structure
 
-The Messages yielded to the dead letter archive have some inherent uncertainty to their structure due to their nature as failed messages that may have failed due to structural issues. However there is a standard format that they will overwhelmingly conform to.
+The Messages yielded to the dead letter archive have some inherent uncertainty to their structure due to their nature as failed messages that may have failed due to structural issues. However there is a standard format that they will overwhelmingly conform to. This follows, but adds attributes to the format documented at [SQSMessage](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_Message.html)
 
 ```ts
 {
@@ -34,12 +34,14 @@ The Messages yielded to the dead letter archive have some inherent uncertainty t
     granules: [Array[string | null] | null], // granules 
     stateMachine: [string | null], // ARN of the triggering workflow
     status: [string | null], status of triggering execution
+    /* these following are standard, not built by cumulus */
     md5OfBody: [string], // checksum of message body
     eventSource: [string], // aws:sqs
     awsRegion: [string], // aws region that this is happening in
     messageId: [string], // uniqueID of the DLQ message
-    receiptHandle: [string], // #TODO
-    
+    receiptHandle: [string], // An identifier associated with the act of receiving the message. A new receipt handle is returned every time you receive a message.
+    attributes: [Object], // A map of the attributes requested in ReceiveMessage to their respective values.
+    messageAttributes: [Object], // Each message attribute consists of a Name, Type, and Value. 
 }
 ```
 
@@ -52,7 +54,7 @@ the body attribute should be a JSON string containing an event bridge event
 
 Note that
 
-- the body attribute can come nested, such that you will have to de-nest a series of body attributes to get to the heart of your message
+- the body attribute *can* come nested, such that you will have to de-nest a series of body attributes to get to the heart of your message
 - the word body can be interchanged with Body (capitalized)
 - because this message body arrived in the Dead Letter Archive because of issues in processing it, there is no strict guarantee that it is a valid json object, or conforms to expected structure. the *expected* structure follows.
 
@@ -61,9 +63,9 @@ Note that
     version: [string | null], // versionString
     id: [string | null], // unique ID of the triggering event
     'detail-type': 'Step Functions Execution Status Change', // defines the below 'detail' spec
-    source: 'aws.states', //
+    source: 'aws.states',
     account: [string], // account ID
-    time: [string], // Zulu timestamp of of the originating sf event
+    time: [string], // Zulu timestamp oåf the originating sf event
     region: [string], //aws region
     resources: [Array[string]], //ARNs of involved resources
     detail: [string], //parses as Step Function Execution Status Change object, see below
