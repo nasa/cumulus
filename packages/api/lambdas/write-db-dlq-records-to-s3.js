@@ -67,10 +67,11 @@ function extractGranules(message) {
  *   error: <errorString | null>
  *   time: <timestamp(utc) | null>
  *   status: <status | null>
- *   collection: <collectionName | null>
+ *   providerId: <id | null>
+ *   collectionId: <collectionName___collectionId | null>
  *   granules: <[granuleIds, ...] | []>
- *   execution: <executionArn | null>
- *   stateMachine: <stateMachineArn | null>
+ *   executionArn: <executionArn | null>
+ *   stateMachineArn: <stateMachineArn | null>
  *   ...originalAttributes
  * }
  */
