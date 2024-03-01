@@ -12,12 +12,14 @@ import { SQS } from '@aws-sdk/client-sqs';
 import { DynamoDBDocument, TranslateConfig } from '@aws-sdk/lib-dynamodb';
 import { SNS } from '@aws-sdk/client-sns';
 import { ECS } from '@aws-sdk/client-ecs';
+import { EC2 } from '@aws-sdk/client-ec2';
 import * as AWS from 'aws-sdk';
 
 import awsClient from './client';
 
 export const apigateway = awsClient(APIGatewayClient, '2015-07-09');
 export const ecs = awsClient(ECS, '2014-11-13');
+export const ec2 = awsClient(EC2, '2016-11-15');
 export const s3 = awsClient(S3, '2006-03-01');
 export const kinesis = awsClient(Kinesis, '2013-12-02');
 export const lambda = awsClient(Lambda, '2015-03-31');

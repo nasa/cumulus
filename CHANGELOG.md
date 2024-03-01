@@ -14,9 +14,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
-- **CUMULUS-2892**
-  - Removed unused EC2 AWS SDK client. This change removes the EC2
-    client from the `@cumulus/aws-client` package.
 - **CUMULUS-3323**
   - Updated `@cumulus/db` to by default set the `ssl` option for knex, and
     reject non-SSL connections via use of the `rejectUnauthorized` configuration
@@ -36,6 +33,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2892**
+  - Updates `aws-client`'s EC2 client to use AWS SDK v3.
+- **CUMULUS-2896**
+  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3323**
   - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
     disable SSL for all Core database connection attempts.
@@ -53,11 +54,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
-
-### Changed
-
-- **CUMULUS-2896**
-  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
