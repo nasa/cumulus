@@ -146,7 +146,7 @@ async function handler(event) {
     let execution;
     if (isSQSRecordLike(sqsMessage)) {
       massagedMessage = await hoistCumulusMessageDetails(sqsMessage);
-      execution = massagedMessage.execution;
+      execution = massagedMessage.executionArn;
     } else {
       massagedMessage = sqsMessage;
       execution = null;
