@@ -1,5 +1,5 @@
 import { Message } from '@cumulus/types';
-
+import { isCumulusMessageLike } from './CumulusMessage';
 type MessageProvider = {
   id: string
   protocol: string
@@ -7,12 +7,30 @@ type MessageProvider = {
   port?: number
 };
 
+export const isMessageProvider = (
+  obj: any
+): obj is MessageProvider => (
+  obj instanceof Object
+  && 'id' in obj && obj.id instanceof String
+  && 'protocol' in obj && obj.protocol instanceof String
+  && 'host' in obj && obj.host instanceof String
+  && ('port' in obj ? obj.port instanceof Number : true)
+);
+
 type MessageWithProvider = Message.CumulusMessage & {
   meta: {
     provider?: MessageProvider
   }
 };
 
+export const isMessageWithProvider = (
+  obj: any
+): obj is MessageWithProvider => (
+  isCumulusMessageLike(obj)
+  && obj.meta
+  && obj.meta instanceof Object
+  && 'provider' in obj.meta && isMessageProvider(obj.meta.provider)
+);
 /**
  * Get the provider from a workflow message, if any.
  *

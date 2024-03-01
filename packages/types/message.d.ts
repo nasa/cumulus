@@ -27,9 +27,6 @@ export interface Meta {
     name?: string
     version?: string
   }
-  provider?: {
-    id?: string
-  }
   [key: string]: unknown
 }
 

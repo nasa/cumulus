@@ -12,6 +12,7 @@ const { parseSQSMessageBody, isSQSRecordLike } = require('@cumulus/aws-client/SQ
 const { unwrapDeadLetterCumulusMessage, isDLQRecordLike } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { isMessageWithProvider, getMessageProviderId } = require('@cumulus/message/Providers')
 /**
  *
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
@@ -112,7 +113,9 @@ async function hoistCumulusMessageDetails(dlqRecord) {
     if (cumulusMessage) {
       collectionId = extractCollectionId(cumulusMessage);
       granules = extractGranules(cumulusMessage);
-      providerId = cumulusMessage.meta?.provider?.id || null;
+      if (isMessageWithProvider(cumulusMessage)) {
+        providerId = getMessageProviderId(cumulusMessage) || null;
+      }
     }
   } else {
     log.error('could not parse details from DLQ message body, expected EventBridgeEvent');

@@ -6,6 +6,7 @@ import { DLQRecord } from '@cumulus/types/api/dead_letters';
 import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
 import Logger from '@cumulus/logger';
 
+import { isCumulusMessageLike } from './CumulusMessage';
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
 
 const log = new Logger({ sender: '@cumulus/DeadLetterMessage' });
@@ -14,14 +15,6 @@ type UnwrapDeadLetterCumulusMessageInputType = (
   StepFunctionEventBridgeEvent
   | DLQRecord | SQSRecord
   | CumulusMessage
-);
-
-/**
- * Bare check for CumulusMessage Shape
- */
-const isCumulusMessageLike = (message: Object): message is CumulusMessage => (
-  message instanceof Object
-  && 'cumulus_meta' in message
 );
 
 /**

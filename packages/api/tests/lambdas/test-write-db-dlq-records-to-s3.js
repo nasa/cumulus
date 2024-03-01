@@ -116,7 +116,11 @@ test('hoistCumulusMessageDetails returns details: collectionId, providerId, gran
         output: JSON.stringify({
           meta: {
             collection: { name: 'aName', version: '12' },
-            provider: { id: 'abcd' },
+            provider: {
+              id: 'abcd',
+              protocol: 'cheesy',
+              host: 'excellent',
+            },
           },
           payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
         }),
@@ -154,7 +158,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -174,7 +182,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -201,7 +213,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -220,7 +236,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -248,7 +268,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -268,7 +292,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -342,7 +370,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -361,7 +393,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -388,7 +424,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -407,7 +447,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -434,7 +478,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -453,7 +501,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -481,7 +533,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { a: 'b' }] },
             }),
@@ -501,7 +557,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { a: 'b' }] },
             }),
@@ -529,7 +589,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { ss: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -549,7 +613,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { ss: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -576,7 +644,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -595,7 +667,11 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -633,7 +709,11 @@ test('hoistCumulusMessageDetails handles varying degrees of sqsMessage nestednes
         output: JSON.stringify({
           meta: {
             collection: { name: 'aName', version: '12' },
-            provider: { id: 'abcd' },
+            provider: {
+              id: 'abcd',
+              protocol: 'cheesy',
+              host: 'excellent',
+            },
           },
           payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
         }),
@@ -667,7 +747,11 @@ test('hoistCumulusMessageDetails handles varying degrees of sqsMessage nestednes
           output: JSON.stringify({
             meta: {
               collection: { name: 'aName', version: '12' },
-              provider: { id: 'abcd' },
+              provider: {
+                id: 'abcd',
+                protocol: 'cheesy',
+                host: 'excellent',
+              },
             },
             payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
           }),
@@ -703,7 +787,11 @@ test('hoistCumulusMessageDetails handles varying degrees of sqsMessage nestednes
             output: JSON.stringify({
               meta: {
                 collection: { name: 'aName', version: '12' },
-                provider: { id: 'abcd' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
               },
               payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
             }),
@@ -742,7 +830,11 @@ test('hoistCumulusMessageDetails captures outermost error as "error"', async (t)
           output: JSON.stringify({
             meta: {
               collection: { name: 'aName', version: '12' },
-              provider: { id: 'abcd' },
+              provider: {
+                id: 'abcd',
+                protocol: 'cheesy',
+                host: 'excellent',
+              },
             },
             payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
           }),
