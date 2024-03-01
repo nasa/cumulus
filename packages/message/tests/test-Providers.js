@@ -6,7 +6,7 @@ const {
   getMessageProvider,
   getMessageProviderId,
   isMessageWithProvider,
-  isMessageProvider
+  isMessageProvider,
 } = require('../Providers');
 
 test('getMessageProvider returns correct provider', (t) => {
