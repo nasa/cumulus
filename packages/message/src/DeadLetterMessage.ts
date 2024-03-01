@@ -18,9 +18,6 @@ type UnwrapDeadLetterCumulusMessageInputType = (
 
 /**
  * Bare check for CumulusMessage Shape
- *
- * @param {{ [key: string]: any }} message
- * @returns {message is CumulusMessage}
  */
 const isCumulusMessageLike = (message: Object): message is CumulusMessage => (
   message instanceof Object
@@ -29,9 +26,6 @@ const isCumulusMessageLike = (message: Object): message is CumulusMessage => (
 
 /**
  * Bare check for SQS message Shape
- *
- * @param {{ [key: string]: any }} message
- * @returns {message is DLQRecord}
  */
 export const isDLQRecordLike = (message: Object): message is DLQRecord => (
   isSQSRecordLike(message)
@@ -41,9 +35,6 @@ export const isDLQRecordLike = (message: Object): message is DLQRecord => (
 /**
  * Unwrap dead letter Cumulus message, which may be wrapped in a
  * States cloudwatch event, which is wrapped in an SQS message.
- *
- * @param {Object} messageBody - received SQS message
- * @returns {Object} the cumulus message or nearest available object
  */
 export const unwrapDeadLetterCumulusMessage = async (
   messageBody: UnwrapDeadLetterCumulusMessageInputType
