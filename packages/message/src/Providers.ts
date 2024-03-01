@@ -11,10 +11,11 @@ export const isMessageProvider = (
   obj: any
 ): obj is MessageProvider => (
   obj instanceof Object
-  && 'id' in obj && obj.id instanceof String
-  && 'protocol' in obj && obj.protocol instanceof String
-  && 'host' in obj && obj.host instanceof String
-  && ('port' in obj ? obj.port instanceof Number : true)
+  // in testing instanceof String can return false for string literals
+  && 'id' in obj && (obj.id instanceof String || typeof (obj.id) === 'string')
+  && 'protocol' in obj && (obj.protocol instanceof String || typeof (obj.protocol) === 'string')
+  && 'host' in obj && (obj.host instanceof String || typeof (obj.host) === 'string')
+  && ('port' in obj ? (obj.port instanceof Number || typeof (obj.port) === 'number') : true)
 );
 
 type MessageWithProvider = Message.CumulusMessage & {
@@ -27,7 +28,7 @@ export const isMessageWithProvider = (
   obj: any
 ): obj is MessageWithProvider => (
   isCumulusMessageLike(obj)
-  && obj.meta
+  && 'meta' in obj
   && obj.meta instanceof Object
   && 'provider' in obj.meta && isMessageProvider(obj.meta.provider)
 );
