@@ -46,6 +46,12 @@ describe('when a bad record is ingested', () => {
                 meta: {
                   collection: {
                     name: 'A_COLLECTION',
+                    version: '12'
+                  },
+                  provider: {
+                    id: 'abcd',
+                    protocol: 'a',
+                    host: 'b',
                   },
                 },
                 payload: {
@@ -94,10 +100,11 @@ describe('when a bad record is ingested', () => {
 
     expect(parsed.status).toEqual('RUNNING');
     expect(parsed.time).toEqual('4Oclock');
-    expect(parsed.stateMachine).toEqual('1234');
-    expect(parsed.collection).toEqual('A_COLLECTION');
-    expect(parsed.execution).toEqual(executionArn);
+    expect(parsed.stateMachineArn).toEqual('1234');
+    expect(parsed.collection).toEqual('A_COLLECTION___12');
+    expect(parsed.executionArn).toEqual(executionArn);
     expect(parsed.granules).toEqual(['a']);
+    expect(parsed.providerId).toEqual('abcd');
     expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
   });
 

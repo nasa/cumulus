@@ -138,7 +138,7 @@ async function hoistCumulusMessageDetails(dlqRecord) {
 /**
  * Lambda handler for saving DLQ reports to DLA in s3
  *
- * @param {{Records: Array<SQSRecordtest>, [key: string]: any}} event - Input payload
+ * @param {{Records: Array<SQSRecord>, [key: string]: any}} event - Input payload
  * @returns {Promise<void>}
  */
 async function handler(event) {
