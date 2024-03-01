@@ -42,7 +42,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
-  - Fixed `@cumulus/db/types` postgres records typing from number to string for BIGINT id fields.
 
 ### Changed
 
@@ -63,6 +62,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
+- **CUMULUS-3449**
+  - Updated `@cumulus/db/types` postgres records typing from number to string for BIGINT id fields.
 
 ### Changed
 
