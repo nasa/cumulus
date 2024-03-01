@@ -12,13 +12,14 @@ const { parseSQSMessageBody, isSQSRecordLike } = require('@cumulus/aws-client/SQ
 const { unwrapDeadLetterCumulusMessage, isDLQRecordLike } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
-const { isMessageWithProvider, getMessageProviderId } = require('@cumulus/message/Providers')
+const { isMessageWithProvider, getMessageProviderId } = require('@cumulus/message/Providers');
 /**
  *
  * @typedef {import('@cumulus/types/message').CumulusMessage} CumulusMessage
  * @typedef {import('@cumulus/types').MessageGranule} MessageGranule
  * @typedef {import('@cumulus/types/message').Meta} Meta
  * @typedef {{granules: Array<MessageGranule>}} PayloadWithGranules
+ * @typedef {import('aws-lambda').SQSRecord} SQSRecord
  * @typedef {import('@cumulus/types/api/dead_letters').DLQRecord} DLQRecord
  * @typedef {import('@cumulus/types/api/dead_letters').DLARecord} DLARecord
  * @typedef {import('aws-lambda').EventBridgeEvent} EventBridgeEvent
@@ -61,7 +62,7 @@ function extractGranules(message) {
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {DLQRecord} dlqRecord - event bridge event as defined in aws-lambda
+ * @param {SQSRecord} dlqRecord - event bridge event as defined in aws-lambda
  * @returns {Promise<DLARecord>} - message packaged with
  * metadata or null where metadata not found
  * {
@@ -137,7 +138,7 @@ async function hoistCumulusMessageDetails(dlqRecord) {
 /**
  * Lambda handler for saving DLQ reports to DLA in s3
  *
- * @param {{Records: Array<DLQRecord>, [key: string]: any}} event - Input payload
+ * @param {{Records: Array<SQSRecord>, [key: string]: any}} event - Input payload
  * @returns {Promise<void>}
  */
 async function handler(event) {
