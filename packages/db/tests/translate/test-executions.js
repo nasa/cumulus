@@ -65,7 +65,7 @@ test('translatePostgresExecutionToApiExecution translates a Postgres execution t
     execution: 'https://test',
     final_payload: { testOutput: 'finalPayloadValue' },
     original_payload: { testInput: 'originalPayloadValue' },
-    parent_cumulus_id: '1',
+    parent_cumulus_id: 1,
     status: 'running',
     tasks: {},
     timestamp: new Date(),

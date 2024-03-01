@@ -10,7 +10,7 @@ export interface PostgresExecution {
   error?: object | null,
   final_payload?: object | null,
   original_payload?: object | null,
-  parent_cumulus_id?: string | null,
+  parent_cumulus_id?: number | null,
   status?: ExecutionRecordStatus,
   tasks?: object | null,
   timestamp?: Date | null,
@@ -21,6 +21,6 @@ export interface PostgresExecution {
 
 export interface PostgresExecutionRecord extends PostgresExecution {
   created_at: Date,
-  cumulus_id: string,
+  cumulus_id: number,
   updated_at: Date,
 }

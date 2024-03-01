@@ -51,7 +51,7 @@ export const upsertGranuleWithExecutionJoinRecord = async ({
 }: {
   knexTransaction: Knex.Transaction;
   granule: PostgresGranule;
-  executionCumulusId?: string;
+  executionCumulusId?: number;
   granulePgModel?: GranulePgModel;
   granulesExecutionsPgModel?: GranulesExecutionsPgModel;
   writeConstraints?: boolean;

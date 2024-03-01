@@ -349,8 +349,8 @@ test('generateFilePgRecord() adds granule cumulus ID', (t) => {
     bucket: cryptoRandomString({ length: 3 }),
     key: cryptoRandomString({ length: 3 }),
   };
-  const record = generateFilePgRecord({ file, granuleCumulusId: '1' });
-  t.is(record.granule_cumulus_id, '1');
+  const record = generateFilePgRecord({ file, granuleCumulusId: 1 });
+  t.is(record.granule_cumulus_id, 1);
 });
 
 test('getGranuleFromQueryResultOrLookup() returns cumulus ID from database if query result is empty', async (t) => {

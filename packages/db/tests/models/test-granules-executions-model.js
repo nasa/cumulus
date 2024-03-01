@@ -112,8 +112,8 @@ test.serial('GranulesExecutionsPgModel.exists() correctly returns false', async 
   await createRejectableTransaction(knex, async (trx) => {
     t.false(
       await granulesExecutionsPgModel.exists(trx, {
-        execution_cumulus_id: '5',
-        granule_cumulus_id: '5',
+        execution_cumulus_id: 5,
+        granule_cumulus_id: 5,
       })
     );
   });
