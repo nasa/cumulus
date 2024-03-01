@@ -1,7 +1,7 @@
 export interface PostgresFile {
   bucket?: string,
   key?: string,
-  granule_cumulus_id: number,
+  granule_cumulus_id: string,
   checksum_type?: string,
   checksum_value?: string,
   file_name?: string,
@@ -16,7 +16,7 @@ export interface PostgresFile {
 export interface PostgresFileRecord extends Omit<PostgresFile, 'file_size'> {
   bucket: string,
   key: string,
-  cumulus_id: number,
+  cumulus_id: string,
   file_size?: string,
   created_at: Date,
   updated_at: Date,

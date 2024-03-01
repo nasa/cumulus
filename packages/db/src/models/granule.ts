@@ -96,7 +96,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
 
   _buildExclusionClause(
     executionPgModel: ExecutionPgModel,
-    executionCumulusId: number,
+    executionCumulusId: string,
     knexOrTrx: Knex | Knex.Transaction,
     status: 'queued' | 'running'
   ) {
@@ -121,7 +121,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
   }: {
     knexOrTrx: Knex | Knex.Transaction;
     granule: PostgresGranule;
-    executionCumulusId?: number;
+    executionCumulusId?: string;
     executionPgModel?: ExecutionPgModel;
     writeConstraints: boolean;
   }) : Promise<PostgresGranuleRecord[]> {

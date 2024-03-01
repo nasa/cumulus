@@ -51,7 +51,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
    *
    * @param {Knex | Knex.Transaction} knexOrTrx -
    *  DB client or transaction
-   * @param {Array<number>} executionCumulusIds -
+   * @param {Array<string>} executionCumulusIds -
    * single execution cumulus_id or array of execution cumulus_ids
    * @param {Object} [params] - Optional object with addition params for query
    * @param {number} [params.limit] - number of records to be returned
@@ -60,7 +60,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
    */
   async searchByCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
-    executionCumulusIds: Array<number> | number,
+    executionCumulusIds: Array<string> | string,
     params: { limit: number, offset: number }
   ): Promise<Array<number>> {
     const { limit, offset, ...sortQueries } = params || {};

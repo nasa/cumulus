@@ -28,7 +28,7 @@ test('translatePostgresPdrToApiPdr translates postgres PDR record to API PDR rec
     name: 'acbd1234.PDR',
     collection_cumulus_id: 1,
     provider_cumulus_id: 1,
-    execution_cumulus_id: 1,
+    execution_cumulus_id: '1',
     progress: 100,
     pan_sent: false,
     pan_message: 'N/A',
@@ -169,7 +169,7 @@ test('translateApiPdrToPostgresPdr converts API PDR to Postgres', async (t) => {
     updated_at: new Date(record.updatedAt),
     timestamp: new Date(record.timestamp),
     collection_cumulus_id: 1,
-    execution_cumulus_id: 2,
+    execution_cumulus_id: '2',
     provider_cumulus_id: 3,
   };
 

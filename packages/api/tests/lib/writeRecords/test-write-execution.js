@@ -182,7 +182,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
     updatedAt,
     asyncOperationCumulusId: 1,
     collectionCumulusId: 2,
-    parentExecutionCumulusId: 3,
+    parentExecutionCumulusId: '3',
   });
 
   t.deepEqual(
@@ -199,7 +199,7 @@ test('buildExecutionRecord builds correct record for "running" execution', (t) =
       error: {},
       async_operation_cumulus_id: 1,
       collection_cumulus_id: 2,
-      parent_cumulus_id: 3,
+      parent_cumulus_id: '3',
       created_at: new Date(cumulusMessage.cumulus_meta.workflow_start_time),
       timestamp: now,
       updated_at: new Date(updatedAt),

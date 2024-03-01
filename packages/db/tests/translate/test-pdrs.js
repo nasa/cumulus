@@ -7,7 +7,7 @@ const { translateApiPdrToPostgresPdr } = require('../../dist/translate/pdr');
 test('translateApiPdrToPostgresPdr translates an API PDR to Postgres', async (t) => {
   const collectionCumulusId = 1;
   const providerCumulusId = 2;
-  const executionCumulusId = 1;
+  const executionCumulusId = '1';
 
   const fakeDbClient = {};
   const fakeCollectionPgModel = {
