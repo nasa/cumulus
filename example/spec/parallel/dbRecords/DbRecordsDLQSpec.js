@@ -46,7 +46,7 @@ describe('when a bad record is ingested', () => {
                 meta: {
                   collection: {
                     name: 'A_COLLECTION',
-                    version: '12'
+                    version: '12',
                   },
                   provider: {
                     id: 'abcd',
