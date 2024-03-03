@@ -293,7 +293,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
       .where(whereClause)
       .update(updateParams, returning);
     if (Array.isArray(result)) {
-      return convertRecordsIdFieldsToNumber(result);
+      return convertRecordsIdFieldsToNumber(result) as RecordType[];
     }
     return result;
   }
