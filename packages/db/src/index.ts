@@ -130,6 +130,7 @@ export {
   getGranuleByUniqueColumns,
   upsertGranuleWithExecutionJoinRecord,
   getGranulesByApiPropertiesQuery,
+  getGranulesByApiProperties,
   getGranulesByGranuleId,
   getGranuleAndCollection,
 } from './lib/granule';

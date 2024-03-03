@@ -214,9 +214,9 @@ export const getApiGranuleExecutionCumulusIds = async (
  * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
  * @param {string} [searchParams.status] - Granule status to search by
  * @param {string | Array<string>} [sortByFields] - Field(s) to sort by
- * @returns {Promise<object>}
+ * @returns {Knex.QueryBuilder}
  */
-export const getGranulesByApiPropertiesQuery = async (
+export const getGranulesByApiPropertiesQuery = (
   knex: Knex,
   {
     collectionIds,
@@ -232,13 +232,13 @@ export const getGranulesByApiPropertiesQuery = async (
     status?: string,
   },
   sortByFields?: string | string[]
-): Promise<object> => {
+): Knex.QueryBuilder => {
   const {
     granules: granulesTable,
     collections: collectionsTable,
     providers: providersTable,
   } = TableNames;
-  const query = knex<GranuleWithProviderAndCollectionInfo>(granulesTable)
+  return knex<GranuleWithProviderAndCollectionInfo>(granulesTable)
     .select(`${granulesTable}.*`)
     .select({
       providerName: `${providersTable}.name`,
@@ -284,7 +284,36 @@ export const getGranulesByApiPropertiesQuery = async (
     .groupBy(`${granulesTable}.cumulus_id`)
     .groupBy(`${collectionsTable}.cumulus_id`)
     .groupBy(`${providersTable}.cumulus_id`);
+};
 
+export const getGranulesByApiProperties = async (
+  knex: Knex,
+  {
+    collectionIds,
+    granuleIds,
+    providerNames,
+    updatedAtRange = {},
+    status,
+  }: {
+    collectionIds?: string | string[],
+    granuleIds?: string | string[],
+    providerNames?: string[],
+    updatedAtRange?: UpdatedAtRange,
+    status?: string,
+  },
+  sortByFields?: string | string[]
+): Promise<object> => {
+  const query = getGranulesByApiPropertiesQuery(
+    knex,
+    {
+      collectionIds,
+      granuleIds,
+      providerNames,
+      updatedAtRange,
+      status,
+    },
+    sortByFields
+  );
   return convertRecordsIdFieldsToNumber(await query);
 };
 
