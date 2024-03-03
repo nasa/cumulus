@@ -33,11 +33,12 @@ export default class GranulesExecutionsPgModel {
     knexTransaction: Knex.Transaction,
     item: PostgresGranuleExecution
   ) {
-    return await knexTransaction(this.tableName)
+    const records = await knexTransaction(this.tableName)
       .insert(item)
       .onConflict(['granule_cumulus_id', 'execution_cumulus_id'])
       .merge()
       .returning('*');
+    return convertRecordsIdFieldsToNumber(records);
   }
 
   /**

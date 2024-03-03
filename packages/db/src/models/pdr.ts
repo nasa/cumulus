@@ -21,8 +21,9 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
     if (!pdr.created_at) {
       throw new Error(`To upsert pdr record must have 'created_at' set: ${JSON.stringify(pdr)}`);
     }
+    let query;
     if (pdr.status === 'running') {
-      return await knexOrTrx(this.tableName)
+      query = knexOrTrx(this.tableName)
         .insert(pdr)
         .onConflict('name')
         .merge()
@@ -34,14 +35,15 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
             .orWhere(knexOrTrx.raw(`${this.tableName}.progress < EXCLUDED.progress`));
         })
         .returning('*');
+    } else {
+      query = knexOrTrx(this.tableName)
+        .insert(pdr)
+        .onConflict('name')
+        .merge()
+        .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
+        .returning('*');
     }
-    const result = await knexOrTrx(this.tableName)
-      .insert(pdr)
-      .onConflict('name')
-      .merge()
-      .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
-      .returning('*');
-    return convertRecordsIdFieldsToNumber(result);
+    return convertRecordsIdFieldsToNumber(await query);
   }
 }
 

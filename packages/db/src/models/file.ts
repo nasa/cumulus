@@ -3,7 +3,7 @@ import { Knex } from 'knex';
 import { BasePgModel } from './base';
 import { TableNames } from '../tables';
 
-import { convertIdFieldsToNumber } from '../lib/typeHelpers';
+import { convertRecordsIdFieldsToNumber } from '../lib/typeHelpers';
 import { PostgresFile, PostgresFileRecord } from '../types/file';
 
 class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
@@ -17,12 +17,12 @@ class FilePgModel extends BasePgModel<PostgresFile, PostgresFileRecord> {
     knexOrTrx: Knex | Knex.Transaction,
     file: PostgresFile
   ) {
-    const record = await knexOrTrx(this.tableName)
+    const records = await knexOrTrx(this.tableName)
       .insert(file)
       .onConflict(['bucket', 'key'])
       .merge()
       .returning('*');
-    return convertIdFieldsToNumber(record);
+    return convertRecordsIdFieldsToNumber(records) as PostgresFileRecord[];
   }
 }
 
