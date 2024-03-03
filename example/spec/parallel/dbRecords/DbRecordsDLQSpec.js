@@ -57,7 +57,6 @@ describe('when a bad record is ingested', () => {
                 payload: {
                   granules: [{ granuleId: 'a' }],
                 },
-                a: 'sldkj',
               }),
             },
           }),
@@ -97,15 +96,14 @@ describe('when a bad record is ingested', () => {
     const fileBody = await getObjectStreamContents(s3Object.Body);
 
     const parsed = JSON.parse(fileBody);
-
     expect(parsed.status).toEqual('RUNNING');
     expect(parsed.time).toEqual('4Oclock');
     expect(parsed.stateMachineArn).toEqual('1234');
-    expect(parsed.collection).toEqual('A_COLLECTION___12');
+    expect(parsed.collectionId).toEqual('A_COLLECTION___12');
     expect(parsed.executionArn).toEqual(executionArn);
     expect(parsed.granules).toEqual(['a']);
     expect(parsed.providerId).toEqual('abcd');
-    expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
+    expect(parsed.error).toEqual('UnmetRequirementsError: Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
   });
 
   it('is sent to the DLA and processed to have expected metadata fields even when data is not found', async () => {
@@ -163,10 +161,11 @@ describe('when a bad record is ingested', () => {
 
     expect(parsed.status).toEqual(null);
     expect(parsed.time).toEqual(null);
-    expect(parsed.stateMachine).toEqual(null);
-    expect(parsed.collection).toEqual(null);
-    expect(parsed.execution).toEqual(executionArn);
+    expect(parsed.stateMachineArn).toEqual(null);
+    expect(parsed.collectionId).toEqual(null);
+    expect(parsed.executionArn).toEqual(executionArn);
     expect(parsed.granules).toEqual(null);
+    expect(parsed.providerId).toEqual(null);
     expect(parsed.error).toEqual('CumulusMessageError: getMessageWorkflowStartTime on a message without a workflow_start_time');
   });
 });

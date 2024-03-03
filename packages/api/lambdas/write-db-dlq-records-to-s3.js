@@ -148,8 +148,6 @@ async function handler(event) {
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     let massagedMessage;
     let execution;
-    log.error(sqsMessage);
-    log.error(isSQSRecordLike(sqsMessage));
     if (isSQSRecordLike(sqsMessage)) {
       massagedMessage = await hoistCumulusMessageDetails(sqsMessage);
       execution = massagedMessage.executionArn;
