@@ -63,7 +63,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
 - **CUMULUS-3449**
-  - Updated `@cumulus/db/types` postgres records typing from number to string for BIGINT id fields.
+  - Updated `@cumulus/db` package to convert postgres id fields in query result to number.
 
 ### Changed
 

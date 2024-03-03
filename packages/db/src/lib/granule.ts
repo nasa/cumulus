@@ -9,6 +9,7 @@ import {
 import { RecordDoesNotExist } from '@cumulus/errors';
 import Logger from '@cumulus/logger';
 
+import { convertRecordsIdFieldsToNumber } from './typeHelpers';
 import { CollectionPgModel } from '../models/collection';
 import { GranulePgModel } from '../models/granule';
 import { GranulesExecutionsPgModel } from '../models/granules-executions';
@@ -213,9 +214,9 @@ export const getApiGranuleExecutionCumulusIds = async (
  * @param {UpdatedAtRange} [searchParams.updatedAtRange] - Date range for updated_at column
  * @param {string} [searchParams.status] - Granule status to search by
  * @param {string | Array<string>} [sortByFields] - Field(s) to sort by
- * @returns {Knex.QueryBuilder}
+ * @returns {Promise<object>}
  */
-export const getGranulesByApiPropertiesQuery = (
+export const getGranulesByApiPropertiesQuery = async (
   knex: Knex,
   {
     collectionIds,
@@ -231,13 +232,13 @@ export const getGranulesByApiPropertiesQuery = (
     status?: string,
   },
   sortByFields?: string | string[]
-): Knex.QueryBuilder => {
+): Promise<object> => {
   const {
     granules: granulesTable,
     collections: collectionsTable,
     providers: providersTable,
   } = TableNames;
-  return knex<GranuleWithProviderAndCollectionInfo>(granulesTable)
+  const query = knex<GranuleWithProviderAndCollectionInfo>(granulesTable)
     .select(`${granulesTable}.*`)
     .select({
       providerName: `${providersTable}.name`,
@@ -283,6 +284,8 @@ export const getGranulesByApiPropertiesQuery = (
     .groupBy(`${granulesTable}.cumulus_id`)
     .groupBy(`${collectionsTable}.cumulus_id`)
     .groupBy(`${providersTable}.cumulus_id`);
+
+  return convertRecordsIdFieldsToNumber(await query);
 };
 
 /**
@@ -350,7 +353,7 @@ export const getGranulesByGranuleId = async (
   const {
     granules: granulesTable,
   } = TableNames;
-  const records: PostgresGranuleRecord[] = await knexOrTransaction(granulesTable)
+  const records = await knexOrTransaction(granulesTable)
     .where({ granule_id: granuleId });
-  return records;
+  return convertRecordsIdFieldsToNumber(records) as PostgresGranuleRecord[];
 };

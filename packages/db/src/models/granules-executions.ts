@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import { isRecordDefined } from '../database';
 import { TableNames } from '../tables';
 
+import { convertRecordsIdFieldsToNumber } from '../lib/typeHelpers';
 import { PostgresGranuleExecution } from '../types/granule-execution';
 
 export default class GranulesExecutionsPgModel {
@@ -57,7 +58,8 @@ export default class GranulesExecutionsPgModel {
       .select('execution_cumulus_id')
       .whereIn('granule_cumulus_id', granuleCumulusIdsArray)
       .groupBy('execution_cumulus_id');
-    return granuleExecutions.map((granuleExecution) => granuleExecution.execution_cumulus_id);
+    return granuleExecutions
+      .map((granuleExecution) => Number(granuleExecution.execution_cumulus_id));
   }
 
   /**
@@ -79,7 +81,7 @@ export default class GranulesExecutionsPgModel {
         .select('granule_cumulus_id')
         .whereIn('execution_cumulus_id', executionCumulusIdsArray)
         .groupBy('granule_cumulus_id');
-    return granuleExecutions.map((granuleExecution) => granuleExecution.granule_cumulus_id);
+    return granuleExecutions.map((granuleExecution) => Number(granuleExecution.granule_cumulus_id));
   }
 
   async delete(
@@ -91,12 +93,13 @@ export default class GranulesExecutionsPgModel {
       .del();
   }
 
-  search(
+  async search(
     knexTransaction: Knex | Knex.Transaction,
     query: Partial<PostgresGranuleExecution>
   ) {
-    return knexTransaction<PostgresGranuleExecution>(this.tableName)
+    const records = await knexTransaction<PostgresGranuleExecution>(this.tableName)
       .where(query);
+    return convertRecordsIdFieldsToNumber(records);
   }
 }
 

@@ -5,6 +5,7 @@ import { TableNames } from '../tables';
 
 import { PostgresExecution, PostgresExecutionRecord } from '../types/execution';
 import { getSortFields } from '../lib/sort';
+import { convertRecordsIdFieldsToNumber } from '../lib/typeHelpers';
 
 class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionRecord> {
   constructor() {
@@ -27,8 +28,9 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
     execution: PostgresExecution,
     writeConstraints: boolean = true
   ) {
+    let records;
     if (writeConstraints && execution.status === 'running') {
-      return await knexOrTrx(this.tableName)
+      records = await knexOrTrx(this.tableName)
         .insert(execution)
         .onConflict('arn')
         .merge({
@@ -38,12 +40,14 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
           original_payload: execution.original_payload,
         })
         .returning('*');
+    } else {
+      records = await knexOrTrx(this.tableName)
+        .insert(execution)
+        .onConflict('arn')
+        .merge()
+        .returning('*');
     }
-    return await knexOrTrx(this.tableName)
-      .insert(execution)
-      .onConflict('arn')
-      .merge()
-      .returning('*');
+    return convertRecordsIdFieldsToNumber(records);
   }
 
   /**
@@ -56,13 +60,13 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
    * @param {Object} [params] - Optional object with addition params for query
    * @param {number} [params.limit] - number of records to be returned
    * @param {number} [params.offset] - record offset
-   * @returns {Promise<Array<number>>} An array of executions
+   * @returns {Promise<Array<PostgresExecutionRecord>>} An array of executions
    */
   async searchByCumulusIds(
     knexOrTrx: Knex | Knex.Transaction,
     executionCumulusIds: Array<number> | number,
     params: { limit: number, offset: number }
-  ): Promise<Array<number>> {
+  ): Promise<Array<PostgresExecutionRecord>> {
     const { limit, offset, ...sortQueries } = params || {};
     const sortFields = getSortFields(sortQueries);
     const executionCumulusIdsArray = [executionCumulusIds].flat();
@@ -79,7 +83,7 @@ class ExecutionPgModel extends BasePgModel<PostgresExecution, PostgresExecutionR
           });
         }
       });
-    return executions;
+    return convertRecordsIdFieldsToNumber(executions) as PostgresExecutionRecord[];
   }
 }
 

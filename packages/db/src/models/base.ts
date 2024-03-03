@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import { RecordDoesNotExist } from '@cumulus/errors';
 
+import { convertIdFieldsToNumber, convertRecordsIdFieldsToNumber } from '../lib/typeHelpers';
 import { UpdatedAtRange } from '../types/record';
 import { BaseRecord } from '../types/base';
 import { TableNames } from '../tables';
@@ -41,7 +42,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
         }
       });
     const records = await RetryOnDbConnectionTerminateError(query, {}, log);
-    return records;
+    return convertRecordsIdFieldsToNumber(records) as RecordType[];
   }
 
   async count(
@@ -74,7 +75,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ): Promise<RecordType> {
-    const record: RecordType = await knexOrTransaction(this.tableName)
+    const record = await knexOrTransaction(this.tableName)
       .where(params)
       .first();
 
@@ -86,7 +87,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
       );
     }
 
-    return record;
+    return convertIdFieldsToNumber(record);
   }
 
   async getMaxCumulusId(
@@ -108,10 +109,11 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     startId: number = 0,
     pageSize: number = 100
   ): Promise<RecordType[]> {
-    return await knexOrTransaction
+    const records = await knexOrTransaction
       .select()
       .from(this.tableName)
       .whereBetween('cumulus_id', [startId, startId + pageSize - 1]);
+    return convertRecordsIdFieldsToNumber(records);
   }
 
   /**
@@ -140,11 +142,11 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     knexOrTransaction: Knex | Knex.Transaction,
     params: Partial<RecordType>
   ): Promise<RecordType[]> {
-    const records: Array<RecordType> = await this.queryBuilderSearch(
+    const records = await this.queryBuilderSearch(
       knexOrTransaction,
       params
     );
-    return records;
+    return convertRecordsIdFieldsToNumber(records);
   }
 
   /**
@@ -171,7 +173,7 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
         )} does not exist.`
       );
     }
-    return record.cumulus_id;
+    return Number(record.cumulus_id);
   }
 
   /**
@@ -188,10 +190,10 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     columnNames: Array<keyof RecordType>,
     values: Array<any>
   ): Promise<Array<number>> {
-    const records: Array<RecordType> = await knexOrTransaction(this.tableName)
+    const records = await knexOrTransaction(this.tableName)
       .select('cumulus_id')
       .whereIn(columnNames, values);
-    return records.map((record) => record.cumulus_id);
+    return records.map((record) => Number(record.cumulus_id));
   }
 
   /**
@@ -231,9 +233,10 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     item: ItemType,
     returningFields: string | string[] = 'cumulus_id'
   ): Promise<unknown[] | Object[]> {
-    return await knexOrTransaction(this.tableName)
+    const records = await knexOrTransaction(this.tableName)
       .insert(item)
       .returning(returningFields);
+    return convertRecordsIdFieldsToNumber(records);
   }
 
   /**
@@ -251,9 +254,10 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     items: ItemType[],
     returningFields: string | string[] = 'cumulus_id'
   ): Promise<unknown[] | Object[]> {
-    return await knexOrTransaction(this.tableName)
+    const records = await knexOrTransaction(this.tableName)
       .insert(items)
       .returning(returningFields);
+    return convertRecordsIdFieldsToNumber(records);
   }
 
   /**
@@ -285,9 +289,13 @@ class BasePgModel<ItemType, RecordType extends BaseRecord> {
     updateParams: Partial<RecordType>,
     returning: Array<string> = []
   ) {
-    return await knexOrTransaction(this.tableName)
+    const result = await knexOrTransaction(this.tableName)
       .where(whereClause)
       .update(updateParams, returning);
+    if (Array.isArray(result)) {
+      return convertRecordsIdFieldsToNumber(result);
+    }
+    return result;
   }
 
   /**

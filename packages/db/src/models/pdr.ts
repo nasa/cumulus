@@ -3,6 +3,7 @@ import { Knex } from 'knex';
 import { BasePgModel } from './base';
 import { TableNames } from '../tables';
 
+import { convertRecordsIdFieldsToNumber } from '../lib/typeHelpers';
 import { PostgresPdr, PostgresPdrRecord } from '../types/pdr';
 import { translateDateToUTC } from '../lib/timestamp';
 
@@ -34,12 +35,13 @@ export default class PdrPgModel extends BasePgModel<PostgresPdr, PostgresPdrReco
         })
         .returning('*');
     }
-    return await knexOrTrx(this.tableName)
+    const result = await knexOrTrx(this.tableName)
       .insert(pdr)
       .onConflict('name')
       .merge()
       .where(knexOrTrx.raw(`${this.tableName}.created_at <= to_timestamp(${translateDateToUTC(pdr.created_at)})`))
       .returning('*');
+    return convertRecordsIdFieldsToNumber(result);
   }
 }
 

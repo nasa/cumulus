@@ -119,6 +119,7 @@ export {
 
 export {
   getFilesAndGranuleInfoQuery,
+  getFilesAndGranuleInfo,
 } from './lib/file';
 
 export {

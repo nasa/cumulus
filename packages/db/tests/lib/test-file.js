@@ -9,7 +9,7 @@ const {
   CollectionPgModel,
   fakeCollectionRecordFactory,
   fakeGranuleRecordFactory,
-  getFilesAndGranuleInfoQuery,
+  getFilesAndGranuleInfo,
   migrationDir,
   fakeProviderRecordFactory,
   ProviderPgModel,
@@ -59,7 +59,7 @@ test.after.always(async (t) => {
   await destroyLocalTestDb(t.context);
 });
 
-test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
+test('getFilesAndGranuleInfo returns expected records', async (t) => {
   const { collectionCumulusId, filePgModel, knex } = t.context;
 
   const testGranule1 = fakeGranuleRecordFactory({
@@ -94,7 +94,7 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
     granule_cumulus_id: granuleCumulusId2,
   });
 
-  const records = await getFilesAndGranuleInfoQuery({
+  const records = await getFilesAndGranuleInfo({
     knex,
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],
@@ -115,7 +115,7 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
   });
 });
 
-test('getFilesAndGranuleInfoQuery works with no granule columns specified', async (t) => {
+test('getFilesAndGranuleInfo works with no granule columns specified', async (t) => {
   const { collectionCumulusId, filePgModel, knex } = t.context;
 
   const testGranule1 = fakeGranuleRecordFactory({
@@ -135,7 +135,7 @@ test('getFilesAndGranuleInfoQuery works with no granule columns specified', asyn
     granule_cumulus_id: granuleCumulusId1,
   });
 
-  const records = await getFilesAndGranuleInfoQuery({
+  const records = await getFilesAndGranuleInfo({
     knex,
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],
@@ -148,7 +148,7 @@ test('getFilesAndGranuleInfoQuery works with no granule columns specified', asyn
   });
 });
 
-test('getFilesAndGranuleInfoQuery filters on GranuleIds', async (t) => {
+test('getFilesAndGranuleInfo filters on GranuleIds', async (t) => {
   const { collectionCumulusId, filePgModel, knex } = t.context;
 
   const testGranule1 = fakeGranuleRecordFactory({
@@ -183,7 +183,7 @@ test('getFilesAndGranuleInfoQuery filters on GranuleIds', async (t) => {
     granule_cumulus_id: granuleCumulusId2,
   });
 
-  const records = await getFilesAndGranuleInfoQuery({
+  const records = await getFilesAndGranuleInfo({
     knex,
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],
@@ -199,7 +199,7 @@ test('getFilesAndGranuleInfoQuery filters on GranuleIds', async (t) => {
   });
 });
 
-test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
+test('getFilesAndGranuleInfo filters on collectionIds', async (t) => {
   const { collections, filePgModel, knex } = t.context;
 
   const testGranule1 = fakeGranuleRecordFactory({
@@ -237,7 +237,7 @@ test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
     granule_cumulus_id: pgGranule2.cumulus_id,
   });
 
-  const records = await getFilesAndGranuleInfoQuery({
+  const records = await getFilesAndGranuleInfo({
     knex,
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],
@@ -254,7 +254,7 @@ test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
   });
 });
 
-test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
+test('getFilesAndGranuleInfo filters on providers', async (t) => {
   const { collections, filePgModel, knex } = t.context;
 
   const testGranule1 = fakeGranuleRecordFactory({
@@ -289,7 +289,7 @@ test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
     granule_cumulus_id: pgGranule2.cumulus_id,
   });
 
-  const records = await getFilesAndGranuleInfoQuery({
+  const records = await getFilesAndGranuleInfo({
     knex,
     searchParams: { bucket },
     sortColumns: ['bucket', 'key'],

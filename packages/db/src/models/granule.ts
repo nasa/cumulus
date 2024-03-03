@@ -7,6 +7,7 @@ import { PostgresGranule, PostgresGranuleRecord, PostgresGranuleUniqueColumns } 
 
 import { BasePgModel } from './base';
 import { ExecutionPgModel } from './execution';
+import { convertRecordsIdFieldsToNumber } from '../lib/typeHelpers';
 import { translateDateToUTC } from '../lib/timestamp';
 import { getSortFields } from '../lib/sort';
 
@@ -164,7 +165,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         // exist at all
         upsertQuery.whereNotExists(exclusionClause);
       }
-      return await upsertQuery.returning('*');
+      const records = await upsertQuery.returning('*');
+      return convertRecordsIdFieldsToNumber(records) as PostgresGranuleRecord[];
     }
 
     const upsertQuery = knexOrTrx(this.tableName)
@@ -186,7 +188,8 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
         )
       );
     }
-    return await upsertQuery.returning('*');
+    const records = await upsertQuery.returning('*');
+    return convertRecordsIdFieldsToNumber(records) as PostgresGranuleRecord[];
   }
 
   /**
@@ -209,7 +212,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
     const { limit, offset, ...sortQueries } = params || {};
     const sortFields = getSortFields(sortQueries);
     const granuleCumulusIdsArray = [granuleCumulusIds].flat();
-    const granules = await knexOrTrx(this.tableName)
+    const records = await knexOrTrx(this.tableName)
       .whereIn('cumulus_id', granuleCumulusIdsArray)
       .modify((queryBuilder) => {
         if (limit) queryBuilder.limit(limit);
@@ -224,7 +227,7 @@ export default class GranulePgModel extends BasePgModel<PostgresGranule, Postgre
           );
         }
       });
-    return granules;
+    return convertRecordsIdFieldsToNumber(records) as PostgresGranuleRecord[];
   }
 }
 

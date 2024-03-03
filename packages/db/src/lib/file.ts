@@ -2,6 +2,7 @@ import { Knex } from 'knex';
 
 import { deconstructCollectionId } from '@cumulus/message/Collections';
 
+import { convertRecordsIdFieldsToNumber } from './typeHelpers';
 import { TableNames } from '../tables';
 import { PostgresFileRecord } from '../types/file';
 import { PostgresGranuleRecord } from '../types/granule';
@@ -99,4 +100,36 @@ export const getFilesAndGranuleInfoQuery = ({
       .whereIn(`${providersTable}.name`, providers);
   }
   return query;
+};
+
+export const getFilesAndGranuleInfo = async ({
+  knex,
+  searchParams,
+  sortColumns,
+  granuleColumns = [],
+  limit,
+  collectionIds = [],
+  granuleIds = [],
+  providers = [],
+}: {
+  knex: Knex;
+  searchParams: Partial<PostgresFileRecord>;
+  sortColumns: (keyof PostgresFileRecord)[];
+  granuleColumns?: (keyof PostgresGranuleRecord)[];
+  limit?: number;
+  collectionIds?: string[];
+  granuleIds?: string[];
+  providers?: string[];
+}): Promise<Array<object>> => {
+  const result = await getFilesAndGranuleInfoQuery({
+    knex,
+    searchParams,
+    sortColumns,
+    granuleColumns,
+    limit,
+    collectionIds,
+    granuleIds,
+    providers,
+  });
+  return convertRecordsIdFieldsToNumber(result);
 };

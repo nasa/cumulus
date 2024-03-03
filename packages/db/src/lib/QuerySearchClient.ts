@@ -1,6 +1,7 @@
 import { Knex } from 'knex';
 
 import { RetryOnDbConnectionTerminateError } from './retry';
+import { convertRecordsIdFieldsToNumber } from './typeHelpers';
 import { BaseRecord } from '../types/base';
 
 /**
@@ -30,11 +31,12 @@ class QuerySearchClient<RecordType extends BaseRecord> {
    * @throws
    */
   private async fetchRecords() {
-    this.records = await RetryOnDbConnectionTerminateError(
+    const result: Array<RecordType> = await RetryOnDbConnectionTerminateError(
       this.query
         .offset(this.offset)
         .limit(this.limit)
     );
+    this.records = convertRecordsIdFieldsToNumber(result) as RecordType[];
     this.offset += this.limit;
   }
 
