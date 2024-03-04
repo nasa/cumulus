@@ -165,7 +165,7 @@ export const receiveSQSMessages = async (
     messages = await sqs().send(command);
   } catch(error) {
     log.error(error);
-      throw error;
+    throw error;
   }
 
   return <SQSMessage[]>(messages.Messages ?? []);
