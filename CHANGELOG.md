@@ -23,10 +23,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     change as certs are provided by default.   Users using databases that do not
     provide SSL should update their database secret with the optional value
     `disableSSL` set to `true`
+  - Updated `cumulus-rds-tf` to set `rds.force_ssl` to `1`, forcing SSL enabled
+    connections in the `db_parameters` configuration.   Users of this module
+    defining their own `db_parameters` should make this configuration change to allow only SSL
+    connections to the RDS datastore.
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
-    
+
 ### Changed
 
 - **CUMULUS-2901**
