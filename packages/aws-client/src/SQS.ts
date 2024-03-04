@@ -142,7 +142,7 @@ type ReceiveSQSMessagesOptions = {
  * can be set and the timeout is also adjustable.
  *
  * @param {string} queueUrl - url of the SQS queue
- * @param {Object} options - options object
+ * @param {ReceiveSQSMessagesOptions} options - options object
  * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
  * @param {integer} [options.visibilityTimeout=30] - number of seconds a message is invisible
  *   after read
@@ -204,7 +204,7 @@ export const deleteSQSMessage = async (QueueUrl: string, ReceiptHandle: string) 
 /**
  * Test if an SQS queue exists
  *
- * @param {Object} queueUrl     - queue url
+ * @param {string} queueUrl     - url of the SQS queue
  * @returns {Promise<boolean>}  - a Promise that will resolve to a boolean indicating
  *                               if the queue exists
  */
