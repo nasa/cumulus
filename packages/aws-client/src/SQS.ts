@@ -52,7 +52,7 @@ export async function createQueue(QueueName: string) {
 
   try {
     createQueueResponse = await sqs().send(command);
-  } catch(error) {
+  } catch (error) {
     log.error(error);
     throw error;
   }
@@ -61,18 +61,18 @@ export async function createQueue(QueueName: string) {
 }
 
 export const deleteQueue = async (queueUrl: string) => {
-  const command = new DeleteQueueCommand( { QueueUrl: queueUrl } );
+  const command = new DeleteQueueCommand({ QueueUrl: queueUrl });
   let deleteQueueResponse;
 
   try {
     deleteQueueResponse = await sqs().send(command);
-  } catch(error) {
+  } catch (error) {
     log.error(error);
     throw error;
   }
 
   return deleteQueueResponse;
-}
+};
 
 export const getQueueAttributes = async (queueName: string) => {
   const queueUrl = await getQueueUrlByName(queueName);
@@ -104,7 +104,11 @@ export const getQueueAttributes = async (queueName: string) => {
  * @returns {Promise} resolves when the messsage has been sent
 
  **/
-export const sendSQSMessage = async (queueUrl: string, message: string | object, logOverride: Logger) => {
+export const sendSQSMessage = async (
+  queueUrl: string,
+  message: string | object,
+  logOverride: Logger
+) => {
   const logger = logOverride || log;
   let messageBody;
   if (isString(message)) messageBody = message;
@@ -119,7 +123,7 @@ export const sendSQSMessage = async (queueUrl: string, message: string | object,
 
   try {
     response = await sqs().send(command);
-  } catch(error) {
+  } catch (error) {
     logger.error(error);
     throw error;
   }
@@ -163,7 +167,7 @@ export const receiveSQSMessages = async (
 
   try {
     messages = await sqs().send(command);
-  } catch(error) {
+  } catch (error) {
     log.error(error);
     throw error;
   }
@@ -189,13 +193,13 @@ export const deleteSQSMessage = async (QueueUrl: string, ReceiptHandle: string) 
 
   try {
     response = await sqs().send(command);
-  } catch(error) {
+  } catch (error) {
     log.error(error);
     throw error;
   }
 
   return response;
-  }
+};
 
 /**
  * Test if an SQS queue exists
@@ -212,7 +216,6 @@ export const sqsQueueExists = async (queueUrl: string) => {
   }
 
   const command = new GetQueueUrlCommand({ QueueName });
-
 
   try {
     await sqs().send(command);

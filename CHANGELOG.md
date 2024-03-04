@@ -33,6 +33,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-3323**
   - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
     disable SSL for all Core database connection attempts.
@@ -50,9 +52,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
-
-### Changed
-
 - **CUMULUS-2896**
   - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3497**
