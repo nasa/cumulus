@@ -16,6 +16,7 @@ import S3ObjectStore from '@cumulus/aws-client/S3ObjectStore';
 import { CollectionRecord } from '@cumulus/types/api/collections';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import { sts } from '@cumulus/aws-client/services';
+import { AssumeRoleResponse } from '@cumulus/aws-client/STS';
 import {
   constructDistributionUrl,
   fetchDistributionBucketMap,
@@ -62,7 +63,7 @@ export const generateCloudfrontUrl = async (params: {
 };
 
 export const generateDirectS3Url = async (params: {
-  roleCreds: AWS.STS.AssumeRoleResponse,
+  roleCreds: AssumeRoleResponse,
   Bucket: string,
   Key: string,
   usePassedCredentials?: boolean
@@ -98,7 +99,7 @@ export const generateAccessUrl = async (params: {
   Bucket: string,
   Key: string,
   urlConfig: {
-    roleCreds: AWS.STS.AssumeRoleResponse,
+    roleCreds: AssumeRoleResponse,
     urlType?: string,
     cloudfrontEndpoint?: string,
   },
@@ -361,8 +362,8 @@ export const generateAccessCredentials = async () => {
     DurationSeconds: CREDS_EXPIRY_SECONDS,
     RoleSessionName: `${Date.now()}`,
   };
-  const roleCreds = await sts().assumeRole(params).promise();
-  return roleCreds as AWS.STS.AssumeRoleResponse;
+  const roleCreds = await sts().assumeRole(params);
+  return roleCreds as AssumeRoleResponse;
 };
 
 export const backupGranulesToLzards = async (
