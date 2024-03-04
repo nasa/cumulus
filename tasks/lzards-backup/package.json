@@ -41,7 +41,7 @@
         "tests/": "dist/tests/"
       }
     },
-    "failFast": false
+    "failFast": true
   },
   "dependencies": {
     "@cumulus/api-client": "18.2.0",

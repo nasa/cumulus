@@ -13,7 +13,7 @@
     ],
     "verbose": true,
     "timeout": "15m",
-    "failFast": false
+    "failFast": true
   },
   "scripts": {
     "all-tests": "npm run parallel-tests && ../node_modules/.bin/jasmine",

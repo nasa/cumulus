@@ -17,7 +17,7 @@
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
-    "failFast": false,
+    "failFast": true,
     "timeout": "15m"
   },
   "keywords": [

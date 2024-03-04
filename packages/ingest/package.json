@@ -24,7 +24,7 @@
       "!test/fixtures/**/*"
     ],
     "timeout": "15m",
-    "failFast": false
+    "failFast": true
   },
   "keywords": [
     "GIBS",

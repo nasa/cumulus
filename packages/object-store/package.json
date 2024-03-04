@@ -36,7 +36,7 @@
     ],
     "verbose": true,
     "timeout": "15m",
-    "failFast": false
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

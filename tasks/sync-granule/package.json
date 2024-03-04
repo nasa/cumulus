@@ -36,7 +36,7 @@
       "!tests/fixtures/**/*"
     ],
     "timeout": "15m",
-    "failFast": false
+    "failFast": true
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
