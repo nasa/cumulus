@@ -11,6 +11,7 @@ const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
 const { SecretsManager } = require('@aws-sdk/client-secrets-manager');
 const { KMS } = require('@aws-sdk/client-kms');
+const { SFN } = require('@aws-sdk/client-sfn');
 const { SNS } = require('@aws-sdk/client-sns');
 const { SQS } = require('@aws-sdk/client-sqs');
 const { STS } = require('@aws-sdk/client-sts');
@@ -297,17 +298,26 @@ test('secretsManager() service defaults to localstack in test mode', async (t) =
   );
 });
 
-test('sfn() service defaults to localstack in test mode', (t) => {
+test('sfn() service defaults to localstack in test mode', async (t) => {
   const sfn = services.sfn();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.StepFunctions);
+  } = localStackAwsClientOptions(SFN);
   t.deepEqual(
-    sfn.config.credentials,
+    await sfn.config.credentials(),
     credentials
   );
-  t.is(sfn.config.endpoint, endpoint);
+
+  const sfnEndpoint = await sfn.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    sfnEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('sns() service defaults to localstack in test mode', async (t) => {

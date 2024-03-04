@@ -152,7 +152,7 @@ describe('the sf-starter lambda function', () => {
       definition: JSON.stringify(passSfDef),
       roleArn: passSfRoleArn,
     };
-    const { stateMachineArn } = await sfn().createStateMachine(passSfParams).promise();
+    const { stateMachineArn } = await sfn().createStateMachine(passSfParams);
     passSfArn = stateMachineArn;
 
     const waitPassSfName = timestampedName('waitPassTestSf');
@@ -177,13 +177,13 @@ describe('the sf-starter lambda function', () => {
       definition: JSON.stringify(waitPassSfDef),
       roleArn: passSfRoleArn,
     };
-    const response = await sfn().createStateMachine(waitPassSfParams).promise();
+    const response = await sfn().createStateMachine(waitPassSfParams);
     waitPassSfArn = response.stateMachineArn;
   });
 
   afterAll(async () => {
-    await sfn().deleteStateMachine({ stateMachineArn: passSfArn }).promise();
-    await sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn }).promise();
+    await sfn().deleteStateMachine({ stateMachineArn: passSfArn });
+    await sfn().deleteStateMachine({ stateMachineArn: waitPassSfArn });
   });
 
   describe('when linked to a queue', () => {

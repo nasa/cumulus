@@ -69,7 +69,7 @@ async function startWorkflowExecution(workflowArn, workflowMsg) {
     name: workflowMsg.cumulus_meta.execution_name,
   };
 
-  return await sfn().startExecution(workflowParams).promise();
+  return await sfn().startExecution(workflowParams);
 }
 
 /**
@@ -276,7 +276,7 @@ async function buildAndStartWorkflow(
 }
 
 async function stateMachineExists(stateMachineName) {
-  const sfnList = await sfn().listStateMachines({ maxResults: 1 }).promise();
+  const sfnList = await sfn().listStateMachines({ maxResults: 1 });
   const stateMachines = get(sfnList, 'stateMachines', []);
   if (stateMachines.length !== 1) {
     console.log('No state machine found');
