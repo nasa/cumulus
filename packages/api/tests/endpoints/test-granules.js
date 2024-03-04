@@ -693,9 +693,9 @@ test.serial('PATCH does not require a collectionId.', async (t) => {
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon
+    .stub(sfn(), 'describeExecution')
+    .returns(Promise.resolve(fakeDescribeExecutionResult));
   t.teardown(() => stub.restore());
   const response = await request(app)
     .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
@@ -755,9 +755,9 @@ test.serial('PATCH reingests a granule', async (t) => {
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon.stub(sfn(), 'describeExecution').returns(
+    Promise.resolve(fakeDescribeExecutionResult)
+  );
   t.teardown(() => stub.restore());
   const response = await request(app)
     .patch(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
@@ -805,9 +805,9 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
     }),
   };
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon
+    .stub(sfn(), 'describeExecution')
+    .returns(Promise.resolve(fakeDescribeExecutionResult));
   t.teardown(() => stub.restore());
 
   const response = await request(app)

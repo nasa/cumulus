@@ -35,6 +35,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3519**
   - Updates SQS and SNS code to AWS SDK V3 Syntax
+- **CUMULUS-2898**
+  - Update Step Functions code to AWS SDK v3
 - **CUMULUS-3323**
   - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
     disable SSL for all Core database connection attempts.
@@ -98,7 +100,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - add teclark to select-stack.js
 - **CUMULUS-3444**
   - Update `cumulus-rds-tf` module to take additional parameters in support of
-    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2891**
