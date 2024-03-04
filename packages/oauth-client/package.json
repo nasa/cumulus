@@ -40,7 +40,7 @@
       "tests/*"
     ],
     "verbose": true,
-    "failFast": true
+    "failFast": false
   },
   "dependencies": {
     "got": "^11.8.5"

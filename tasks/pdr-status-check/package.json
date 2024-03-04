@@ -31,7 +31,7 @@
   "license": "Apache-2.0",
   "ava": {
     "timeout": "15m",
-    "failFast": true
+    "failFast": false
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
