@@ -1,4 +1,5 @@
 const test = require('ava');
+const omit = require('lodash/omit');
 
 const {
   getConnectionConfig,
@@ -80,7 +81,7 @@ test('getKnexConfig returns an expected default configuration object', async (t)
       reapIntervalMillis: 1000,
     },
   };
-  t.deepEqual(result, expectedConfig);
+  t.deepEqual(omit(result, ['postProcessResponse']), expectedConfig);
 });
 
 test('getKnexConfig sets idleTimeoutMillis when env is set', async (t) => {

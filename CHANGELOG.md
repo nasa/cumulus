@@ -62,6 +62,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
+- **CUMULUS-3449**
+  - Updated `@cumulus/db` package and add knex hook postProcessResponse to convert postgres id fields in
+    query result to number.
 
 ### Changed
 

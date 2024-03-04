@@ -105,6 +105,21 @@ export const getConnectionConfig = async ({
   return await getConnectionConfigEnv(env);
 };
 
+const convertIdColumnsToNumber = (row: any): any => {
+  const convertedRow: any = {};
+  for (const key in row) {
+    if (row.hasOwnProperty(key)) {
+      const value = row[key];
+      if (typeof value === 'string' && key.endsWith('cumulud_id')) {
+        convertedRow[key] = Number(value);
+      } else {
+        convertedRow[key] = value;
+      }
+    }
+  }
+  return convertedRow;
+};
+
 /**
  * Given a NodeJS.ProcessEnv with configuration values, build and return Knex
  * configuration
@@ -170,6 +185,14 @@ export const getKnexConfig = async ({
       destroyTimeoutMillis: Number.parseInt(env.destroyTimeoutMillis ?? '5000', 10),
       reapIntervalMillis: Number.parseInt(env.reapIntervalMillis ?? '1000', 10),
       propagateCreateError: false,
+    },
+    postProcessResponse: (result: any, _queryContext: any) => {
+      if (result && Array.isArray(result)) {
+        return result.map((row) => convertIdColumnsToNumber(row));
+      } else if (result && typeof result === 'object') {
+        return convertIdColumnsToNumber(result);
+      }
+      else return result;
     },
   };
 
