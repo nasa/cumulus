@@ -106,18 +106,21 @@ export const getConnectionConfig = async ({
 };
 
 const convertIdColumnsToNumber = (row: any): any => {
-  const convertedRow: any = {};
-  for (const key in row) {
-    if (row.hasOwnProperty(key)) {
-      const value = row[key];
-      if (typeof value === 'string' && key.endsWith('cumulud_id')) {
-        convertedRow[key] = Number(value);
-      } else {
-        convertedRow[key] = value;
+  if (typeof row === 'object' && row !== null) {
+    const convertedRow: any = {};
+    for (const key in row) {
+      if (row.hasOwnProperty(key)) {
+        const value = row[key];
+        if (typeof value === 'string' && key.endsWith('cumulus_id')) {
+          convertedRow[key] = Number(value);
+        } else {
+          convertedRow[key] = value;
+        }
       }
     }
+    return convertedRow;
   }
-  return convertedRow;
+  return row;
 };
 
 /**
@@ -189,10 +192,8 @@ export const getKnexConfig = async ({
     postProcessResponse: (result: any, _queryContext: any) => {
       if (result && Array.isArray(result)) {
         return result.map((row) => convertIdColumnsToNumber(row));
-      } else if (result && typeof result === 'object') {
-        return convertIdColumnsToNumber(result);
       }
-      else return result;
+      return convertIdColumnsToNumber(result);
     },
   };
 
