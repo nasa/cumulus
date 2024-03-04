@@ -65,14 +65,14 @@ Note that
     'detail-type': 'Step Functions Execution Status Change', // defines the below 'detail' spec
     source: 'aws.states',
     account: [string], // account ID
-    time: [string], // Zulu timestamp oåf the originating sf event
+    time: [string], // Zulu timestamp of the originating sf event
     region: [string], //aws region
     resources: [Array[string]], //ARNs of involved resources
     detail: [string], //parses as Step Function Execution Status Change object, see below
 }
 ```
 
-Step Function Execution Status Change (detail):
+Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-client-sfn/Interface/DescribeExecutionCommandOutput/):
 
 ```ts
 {
@@ -83,15 +83,16 @@ Step Function Execution Status Change (detail):
     stopDate: [int | null], // timestamp of
     input: [string], //parses as the cumulus message input
     output: [string | null], //parses as the cumulus message output if execution succeeded
-    stateMachineVersionArn: [string | null], //
-    stateMachineAliasArn: [string | null], //
-    redriveCount: [int], // 
-    redriveDate: [string | null], //
-    redriveStatus: [string], //
-    redriveStatusReason: [string], //
-    inputDetails: [Obj], //
-    outputDetails: [Obj | null], //
-    error: [string | null], //
-    cause: [string | null], //
+    stateMachineVersionArn: [string | null], // The version ARN is a combination of state machine ARN and the version number separated by a colon (:)
+    stateMachineAliasArn: [string | null], // a combination of state machine ARN and the alias name separated by a colon (:)
+    /* note that these redrive statistics can be misleading, as they are not referring to the execution that failed if the triggering execution was sfEventSqsToDbRecords*/
+    redriveCount: [int],
+    redriveDate: [string | null],
+    redriveStatus: [string],
+    redriveStatusReason: [string],
+    inputDetails: [CloudWatchEventsExecutionDataDetails], // Details about execution input
+    outputDetails: [CloudWatchEventsExecutionDataDetails | null], // Details about execution output
+    error: [string | null], // The cause string if the state machine execution failed (most errors that send to the DLA will not have a *caught* failure that does not arrive here)
+    cause: [string | null], // the cause string if the state machine execution failed
 }
 ```
