@@ -43,7 +43,7 @@ export const doesExecutionExist = (describeExecutionPromise: Promise<unknown>) =
  * exponential backoff.
  *
  * @param {DescribeExecutionInput} params
- * @returns {Promise<DescribeExecutionOutput>} DescribeExecutionOutput
+ * @returns {Promise<DescribeExecutionOutput>}
  *
  * @kind function
  */
@@ -62,7 +62,7 @@ export const describeExecution = retryOnThrottlingException(
  * exponential backoff.
  *
  * @param {DescribeStateMachineInput} params
- * @returns {Promise<DescribeStateMachineOutput>} DescribeStateMachineOutput
+ * @returns {Promise<DescribeStateMachineOutput>}
  *
  * @kind function
  */
