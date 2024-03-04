@@ -1,6 +1,10 @@
 import { GetSecretValueRequest, SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { services } from '@cumulus/aws-client';
 import { Knex } from 'knex';
+import mapValues from 'lodash/mapValues';
+import isNull from 'lodash/isNull';
+import isObject from 'lodash/isObject';
+import isString from 'lodash/isString';
 
 import { envUtils } from '@cumulus/common';
 
@@ -105,23 +109,39 @@ export const getConnectionConfig = async ({
   return await getConnectionConfigEnv(env);
 };
 
-const convertIdColumnsToNumber = (row: any): any => {
-  if (typeof row === 'object' && row !== null) {
-    const convertedRow: any = {};
-    for (const key in row) {
-      if (row.hasOwnProperty(key)) {
-        const value = row[key];
-        if (typeof value === 'string' && key.endsWith('cumulus_id')) {
-          convertedRow[key] = Number(value);
-        } else {
-          convertedRow[key] = value;
-        }
-      }
-    }
-    return convertedRow;
+/**
+ * Check if a string can be converted to a number
+ *
+ * @param bigIntValue - string to be converted to number
+ * @returns true if the string can be converted
+ * @throws - Throws error if the string can not be converted
+ */
+const safelyConvertBigInt = (bigIntValue: string): boolean => {
+  if (BigInt(Number.MAX_SAFE_INTEGER) < BigInt(Number(bigIntValue))) {
+    throw new Error(`Failed to convert to number, ${bigIntValue} exceeds ${Number.MAX_SAFE_INTEGER}`);
   }
-  return row;
+  return true;
 };
+
+type RecordTypeWithNumberIdField<T> = {
+  [P in keyof T]: number | T[P];
+};
+
+/**
+ * Convert cumulus id fields to number
+ *
+ * @param record - record to be converted
+ * @returns the converted record
+ */
+const convertIdColumnsToNumber = <T extends Record<string, any>>(record: T)
+  : RecordTypeWithNumberIdField<T> =>
+    mapValues(
+      record,
+      (value, key) =>
+        ((key.endsWith('cumulus_id') && !isNull(value) && isString(value) && safelyConvertBigInt(value))
+          ? Number(value)
+          : value)
+    );
 
 /**
  * Given a NodeJS.ProcessEnv with configuration values, build and return Knex
@@ -189,11 +209,12 @@ export const getKnexConfig = async ({
       reapIntervalMillis: Number.parseInt(env.reapIntervalMillis ?? '1000', 10),
       propagateCreateError: false,
     },
-    postProcessResponse: (result: any, _queryContext: any) => {
+    // modify the response to convert columns ending with "cumulus_id" from string to number
+    postProcessResponse: (result: any) => {
       if (result && Array.isArray(result)) {
-        return result.map((row) => convertIdColumnsToNumber(row));
+        return result.map((row) => (isObject(row) ? convertIdColumnsToNumber(row) : row));
       }
-      return convertIdColumnsToNumber(result);
+      return (isObject(result) ? convertIdColumnsToNumber(result) : result);
     },
   };
 

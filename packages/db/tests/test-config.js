@@ -1,4 +1,5 @@
 const test = require('ava');
+const isFunction = require('lodash/isFunction');
 const omit = require('lodash/omit');
 
 const {
@@ -82,6 +83,7 @@ test('getKnexConfig returns an expected default configuration object', async (t)
     },
   };
   t.deepEqual(omit(result, ['postProcessResponse']), expectedConfig);
+  t.true(isFunction(result.postProcessResponse));
 });
 
 test('getKnexConfig sets idleTimeoutMillis when env is set', async (t) => {
