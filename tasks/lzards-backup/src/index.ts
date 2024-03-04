@@ -1,4 +1,3 @@
-import AWS from 'aws-sdk';
 import got from 'got';
 import Logger from '@cumulus/logger';
 import path from 'path';
