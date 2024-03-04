@@ -13,6 +13,7 @@ import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { ECS } from '@aws-sdk/client-ecs';
 import { SNS } from '@aws-sdk/client-sns';
 import { SQS } from '@aws-sdk/client-sqs';
+import { STS } from '@aws-sdk/client-sts';
 
 export type AWSClientTypes =
     APIGatewayClient |
@@ -25,6 +26,7 @@ export type AWSClientTypes =
     SecretsManager |
     SNS |
     SQS |
+    STS |
     CloudWatchEvents |
     CloudFormation |
     Kinesis |

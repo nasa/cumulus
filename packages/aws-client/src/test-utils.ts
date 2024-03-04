@@ -31,7 +31,7 @@ const localStackPorts = {
   SNS: 4566,
   SQS: 4566,
   ssm: 4566,
-  sts: 4566,
+  STS: 4566,
 };
 
 /**
