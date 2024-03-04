@@ -5,7 +5,7 @@ import pRetry from 'p-retry';
 import { v4 as uuidv4 } from 'uuid';
 
 import { sfn } from '@cumulus/aws-client/services';
-import { describeExecution } from '@cumulus/aws-client/StepFunctions';
+import { describeExecution, DescribeExecutionOutput } from '@cumulus/aws-client/StepFunctions';
 import { runCumulusTask, CumulusMessageWithAssignedPayload } from '@cumulus/cumulus-message-adapter-js';
 import Logger from '@cumulus/logger';
 import { buildExecutionArn } from '@cumulus/message/Executions';
@@ -23,7 +23,7 @@ const log = new Logger({ sender: '@cumulus/orca-recovery-adapter' });
  * @param {number} params.retries - number of retries
  * @param {number} params.retryIntervalInSecond - retry internal in second
  * @param {number} params.maxRetryTimeInSecond - max retry time in second
- * @returns Promise<AWS.StepFunctions.DescribeExecutionOutput> - Returns promise
+ * @returns Promise<DescribeExecutionOutput> - Returns promise
  *   that resolves to the output of step function execution
  */
 export const getStateMachineExecutionResults = async (
@@ -33,7 +33,7 @@ export const getStateMachineExecutionResults = async (
     retryIntervalInSecond?: number,
     maxRetryTimeInSecond?: number,
   }
-): Promise<AWS.StepFunctions.DescribeExecutionOutput> => {
+): Promise<DescribeExecutionOutput> => {
   const {
     executionArn,
     retries = 50,
@@ -96,7 +96,7 @@ export const invokeOrcaRecoveryWorkflow = async (
   };
 
   try {
-    await sfn().startExecution(workflowParams).promise();
+    await sfn().startExecution(workflowParams);
   } catch (error) {
     log.error(`Error starting ${childWorkflowArn}`, error);
     throw error;
