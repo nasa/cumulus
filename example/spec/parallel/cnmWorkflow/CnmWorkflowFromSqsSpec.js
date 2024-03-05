@@ -5,7 +5,7 @@ const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
-const { deleteTopic } = require('@cumulus/aws-client/SNS');
+const { deleteTopic, createTopic } = require('@cumulus/aws-client/SNS');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
@@ -180,7 +180,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
 
       // create SNS topic for cnm response
       const snsTopicName = timestampedName(`${config.stackName}_CnmSqsTestTopic`);
-      const { TopicArn } = await sns().createTopic({ Name: snsTopicName });
+      const { TopicArn } = await createTopic({ Name: snsTopicName });
       cnmResponseStream = TopicArn;
       config.cnmResponseStream = cnmResponseStream;
 

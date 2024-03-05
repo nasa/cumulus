@@ -6,7 +6,7 @@ import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 import { PublishCommand } from '@aws-sdk/client-sns';
 import { sns } from './services';
-import { DeleteTopicCommand, DeleteTopicCommandInput } from '@aws-sdk/client-sns/dist-types';
+import { CreateTopicCommand, CreateTopicCommandInput, DeleteTopicCommand, DeleteTopicCommandInput, ListSubscriptionsByTopicCommand, ListSubscriptionsByTopicCommandInput, SubscribeCommand, SubscribeCommandInput, UnsubscribeCommand, UnsubscribeCommandInput } from '@aws-sdk/client-sns/dist-types';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
@@ -45,6 +45,22 @@ export const publishSnsMessage = async (
     }
   );
 
+export const createTopic = async (
+  createTopicInput: CreateTopicCommandInput
+) => sns().send(new CreateTopicCommand(createTopicInput));
+
 export const deleteTopic = async (
   deleteTopicInput: DeleteTopicCommandInput
 ) => sns().send(new DeleteTopicCommand(deleteTopicInput));
+
+export const listSubscriptionsByTopic = async (
+  listTopicInput: ListSubscriptionsByTopicCommandInput
+) => sns().send(new ListSubscriptionsByTopicCommand(listTopicInput));
+
+export const subscribe = async (
+  subscribeInput: SubscribeCommandInput
+) => sns().send(new SubscribeCommand(subscribeInput));
+
+export const unsubscribe = async (
+  unsubscribeInput: UnsubscribeCommandInput
+) => sns().send(new UnsubscribeCommand(unsubscribeInput));
