@@ -116,9 +116,9 @@ export const getConnectionConfig = async ({
  * @returns true if the string can be converted
  * @throws - Throws error if the string can not be converted
  */
-const safelyConvertBigInt = (bigIntValue: string): boolean => {
-  if (BigInt(Number.MAX_SAFE_INTEGER) < BigInt(Number(bigIntValue))) {
-    throw new Error(`Failed to convert to number, ${bigIntValue} exceeds ${Number.MAX_SAFE_INTEGER}`);
+export const safelyConvertBigInt = (bigIntValue: string): boolean => {
+  if (BigInt(bigIntValue) > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error(`Failed to convert to number: ${bigIntValue} exceeds max safe integer ${Number.MAX_SAFE_INTEGER}`);
   }
   return true;
 };
@@ -133,7 +133,7 @@ type RecordTypeWithNumberIdField<T> = {
  * @param record - record to be converted
  * @returns the converted record
  */
-const convertIdColumnsToNumber = <T extends Record<string, any>>(record: T)
+export const convertIdColumnsToNumber = <T extends Record<string, any>>(record: T)
   : RecordTypeWithNumberIdField<T> =>
     mapValues(
       record,

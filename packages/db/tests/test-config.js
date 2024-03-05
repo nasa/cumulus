@@ -1,13 +1,16 @@
 const test = require('ava');
+const cryptoRandomString = require('crypto-random-string');
 const isFunction = require('lodash/isFunction');
 const omit = require('lodash/omit');
 
 const {
+  convertIdColumnsToNumber,
   getConnectionConfig,
   getConnectionConfigEnv,
   getSecretConnectionConfig,
   getKnexConfig,
   isKnexDebugEnabled,
+  safelyConvertBigInt,
 } = require('../dist/config');
 
 const dbConnectionConfig = {
@@ -420,4 +423,80 @@ test('isKnexDebugEnabled() returns false if debugging is not enabled', (t) => {
   t.false(isKnexDebugEnabled({ KNEX_DEBUG: 'foobar' }));
   t.false(isKnexDebugEnabled({}));
   t.false(isKnexDebugEnabled());
+});
+
+test('safelyConvertBigInt() returns true if number is in safe range', (t) => {
+  t.true(safelyConvertBigInt(Number.MAX_SAFE_INTEGER.toString()));
+  t.true(safelyConvertBigInt((Number.MAX_SAFE_INTEGER - 1).toString()));
+});
+
+test('safelyConvertBigInt() throws exception if number exceeds safe range', (t) => {
+  const bigIntString = (BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1)).toString();
+  t.throws(
+    () => safelyConvertBigInt(bigIntString),
+    {
+      instanceOf: Error,
+      message: `Failed to convert to number: ${bigIntString} exceeds max safe integer ${Number.MAX_SAFE_INTEGER}`,
+    }
+  );
+});
+
+test('safelyConvertBigInt() throws exception for non-numeric string', (t) => {
+  const nonNumericString = cryptoRandomString({ length: 10 });
+  t.throws(
+    () => safelyConvertBigInt(nonNumericString),
+    {
+      instanceOf: SyntaxError,
+      message: `Cannot convert ${nonNumericString} to a BigInt`,
+    }
+  );
+});
+
+test('convertIdColumnsToNumber() converts cumulus_id columns to number', (t) => {
+  const record = {
+    cumulus_id: Number.MAX_SAFE_INTEGER.toString(),
+    abc_cumulus_id: (Number.MAX_SAFE_INTEGER - 1).toString(),
+    def_cumulus_id: Number.MAX_SAFE_INTEGER - 2,
+    non_id: cryptoRandomString({ length: 10 }),
+  };
+
+  const expectedRecord = {
+    ...record,
+    cumulus_id: Number(record.cumulus_id),
+    abc_cumulus_id: Number(record.abc_cumulus_id),
+  };
+
+  const convertedRecord = convertIdColumnsToNumber(record);
+  t.deepEqual(convertedRecord, expectedRecord);
+});
+
+test('convertIdColumnsToNumber() throws exception if the value of cumulus_id column exceeds safe range', (t) => {
+  const bigIntString = (BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1)).toString();
+  const record = {
+    cumulus_id: Number.MAX_SAFE_INTEGER.toString(),
+    abc_cumulus_id: bigIntString,
+  };
+
+  t.throws(
+    () => convertIdColumnsToNumber(record),
+    {
+      instanceOf: Error,
+      message: `Failed to convert to number: ${bigIntString} exceeds max safe integer ${Number.MAX_SAFE_INTEGER}`,
+    }
+  );
+});
+
+test('convertIdColumnsToNumber() throws exception if the value of cumulus_id column is non-numeric string', (t) => {
+  const record = {
+    cumulus_id: Number.MAX_SAFE_INTEGER.toString(),
+    abc_cumulus_id: cryptoRandomString({ length: 10 }),
+  };
+
+  t.throws(
+    () => convertIdColumnsToNumber(record),
+    {
+      instanceOf: SyntaxError,
+      message: `Cannot convert ${record.abc_cumulus_id} to a BigInt`,
+    }
+  );
 });

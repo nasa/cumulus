@@ -33,8 +33,8 @@ Typically, there are two TypeScript interfaces describing each Cumulus data type
 
 ### BigInt cumulus_id columns
 
-For the BigInt columns, knex returns postgres as "string" type. In order to use cumulus_id as a number,
-we are converting the return string from columns ending with "cumulus_id" to Number.
+For the BigInt columns, knex returns postgres as "string" type. In order to use cumulus_id as a number, knex hook
+postProcessResponse is configured to convert the return string from columns ending with "cumulus_id" to number.
 
 ## About Cumulus
 

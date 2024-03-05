@@ -63,8 +63,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
 - **CUMULUS-3449**
-  - Updated `@cumulus/db` package and add knex hook postProcessResponse to convert postgres id fields in
-    query result to number.
+  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
+    from columns ending with "cumulus_id" to number.
 
 ### Changed
 
