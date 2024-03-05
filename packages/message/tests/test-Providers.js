@@ -47,7 +47,7 @@ test('getMessageProviderId returns undefined if there is no provider ID', (t) =>
   });
   t.is(providerId, undefined);
 });
-test.only('isMessageProvider correctly filters for messageProviders', (t) => {
+test('isMessageProvider correctly filters for messageProviders', (t) => {
   t.false(isMessageProvider('a')); // must be obj
   t.false(isMessageProvider(3)); // must be obj
   t.true(isMessageProvider({ id: 'a', protocol: 'b', host: 'c' }));
