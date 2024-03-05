@@ -117,7 +117,7 @@ test('isDLQRecordLike correctly filters for DLQ record shaped objects', (t) => {
   t.false(isDLQRecordLike('aaa')); // must be an object
   t.false(isDLQRecordLike({ a: 'b' })); // object must contain a body
   t.true(isDLQRecordLike({ body: 'a' }));
-  t.true(isDLQRecordLikex({ Body: 'a' })); // must accept body or Body
+  t.true(isDLQRecordLike({ Body: 'a' })); // must accept body or Body
 
   /* isDLQRecordLike first checks if object isSQSRecordLike,
   * the above are direct replicas of those tests for surety
