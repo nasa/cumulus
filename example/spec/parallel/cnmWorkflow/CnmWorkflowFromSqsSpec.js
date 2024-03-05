@@ -5,7 +5,7 @@ const replace = require('lodash/replace');
 const pWaitFor = require('p-wait-for');
 
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
-const { sns } = require('@cumulus/aws-client/services');
+const { deleteTopic } = require('@cumulus/aws-client/SNS');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
@@ -81,7 +81,7 @@ async function cleanUp() {
     deleteFolder(config.bucket, testDataFolder),
     deleteQueue(queues.sourceQueueUrl),
     deleteQueue(queues.deadLetterQueueUrl),
-    sns().deleteTopic({ TopicArn: cnmResponseStream }),
+    deleteTopic({ TopicArn: cnmResponseStream }),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
   ]);

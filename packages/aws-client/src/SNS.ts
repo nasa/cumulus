@@ -6,6 +6,7 @@ import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 import { PublishCommand } from '@aws-sdk/client-sns';
 import { sns } from './services';
+import { DeleteTopicCommand, DeleteTopicCommandInput } from '@aws-sdk/client-sns/dist-types';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 
@@ -43,3 +44,7 @@ export const publishSnsMessage = async (
       ...retryOptions,
     }
   );
+
+export const deleteTopic = async (
+  deleteTopicInput: DeleteTopicCommandInput
+) => sns().send(new DeleteTopicCommand(deleteTopicInput));
