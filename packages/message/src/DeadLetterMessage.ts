@@ -90,20 +90,6 @@ const extractGranules = (message: CumulusMessage): Array<string | null> | null =
 /**
  * Reformat object with key attributes at top level.
  *
- * @param {SQSRecord} dlqRecord - event bridge event as defined in aws-lambda
- * @returns {Promise<DLARecord>} - message packaged with
- * metadata or null where metadata not found
- * {
- *   error: <errorString | null>
- *   time: timestamp(utc) | null>
- *   status: <status | null>
- *   providerId: <id | null>
- *   collectionId: <collectionName___collectionId | null>
- *   granules: <[granuleIds, ...] | []>
- *   executionArn: <executionArn | null>
- *   stateMachineArn: <stateMachineArn | null>
- *   ...originalAttributes
- * }
  */
 export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<DLARecord> => {
   let error = null;
