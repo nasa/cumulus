@@ -26,7 +26,7 @@ const {
   createTopic,
   deleteTopic,
   publishSnsMessage,
- } = require('@cumulus/aws-client/SNS');
+} = require('@cumulus/aws-client/SNS');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');

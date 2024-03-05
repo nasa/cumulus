@@ -4,7 +4,7 @@ const sinon = require('sinon');
 const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const {
-  creatTopic,
+  createTopic,
   deleteTopic,
 } = require('@cumulus/aws-client/SNS');
 const { createBucket } = require('@cumulus/aws-client/S3');

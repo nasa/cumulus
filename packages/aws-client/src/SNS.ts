@@ -4,9 +4,20 @@
 
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
-import { PublishCommand } from '@aws-sdk/client-sns';
+import {
+  CreateTopicCommand,
+  CreateTopicCommandInput,
+  DeleteTopicCommand,
+  DeleteTopicCommandInput,
+  ListSubscriptionsByTopicCommand,
+  ListSubscriptionsByTopicCommandInput,
+  PublishCommand,
+  SubscribeCommand,
+  SubscribeCommandInput,
+  UnsubscribeCommand,
+  UnsubscribeCommandInput } from '@aws-sdk/client-sns';
+
 import { sns } from './services';
-import { CreateTopicCommand, CreateTopicCommandInput, DeleteTopicCommand, DeleteTopicCommandInput, ListSubscriptionsByTopicCommand, ListSubscriptionsByTopicCommandInput, SubscribeCommand, SubscribeCommandInput, UnsubscribeCommand, UnsubscribeCommandInput } from '@aws-sdk/client-sns/dist-types';
 
 const log = new Logger({ sender: 'aws-client/sns' });
 

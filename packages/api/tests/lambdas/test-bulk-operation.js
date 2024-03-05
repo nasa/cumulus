@@ -9,7 +9,7 @@ const {
   createTopic,
   subscribe,
   deleteTopic,
- } = require('@cumulus/aws-client/SNS');
+} = require('@cumulus/aws-client/SNS');
 
 const awsServices = require('@cumulus/aws-client/services');
 const {

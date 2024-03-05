@@ -14,7 +14,7 @@ const {
   createTopic,
   subscribe,
   deleteTopic,
- } = require('@cumulus/aws-client/SNS');
+} = require('@cumulus/aws-client/SNS');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,

@@ -18,8 +18,7 @@ const {
   createTopic,
   deleteTopic,
   unsubscribe,
-  subscribe,
-} = require('@cumulus/aws-client/SNS')
+} = require('@cumulus/aws-client/SNS');
 const { randomId, randomString } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,

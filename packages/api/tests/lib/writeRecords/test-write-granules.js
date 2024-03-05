@@ -39,7 +39,7 @@ const {
   createTopic,
   subscribe,
   deleteTopic,
- } = require('@cumulus/aws-client/SNS');
+} = require('@cumulus/aws-client/SNS');
 const {
   Search,
 } = require('@cumulus/es-client/search');

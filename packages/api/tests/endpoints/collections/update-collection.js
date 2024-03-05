@@ -7,7 +7,7 @@ const {
   createTopic,
   subscribe,
   deleteTopic,
-} = require('@cumulus/aws-client/SNS')
+} = require('@cumulus/aws-client/SNS');
 const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');

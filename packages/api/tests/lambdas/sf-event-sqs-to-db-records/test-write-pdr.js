@@ -20,10 +20,10 @@ const {
 const { Search } = require('@cumulus/es-client/search');
 const { sqs } = require('@cumulus/aws-client/services');
 const {
-  creatTopic,
+  createTopic,
   subscribe,
   deleteTopic,
- } = require('@cumulus/aws-client/SNS');
+} = require('@cumulus/aws-client/SNS');
 const {
   createTestIndex,
   cleanupTestIndex,

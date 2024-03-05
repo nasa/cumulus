@@ -361,10 +361,10 @@ test.beforeEach(async (t) => {
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
   const { SubscriptionArn } = await subscribe({
-      TopicArn,
-      Protocol: 'sqs',
-      Endpoint: QueueArn,
-    });
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  });
 
   t.context.SubscriptionArn = SubscriptionArn;
 });

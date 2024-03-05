@@ -16,7 +16,7 @@ const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
 const {
   subscribe,
   unsubscribe,
-  listSubscriptionsByTopic
+  listSubscriptionsByTopic,
 } = require('@cumulus/aws-client/SNS');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const { RulePgModel } = require('@cumulus/db');
