@@ -165,17 +165,12 @@ const stepFunctionMock = {
 const executionExistsMock = (arn) => {
   if ((arn.executionArn === expiredExecutionArn)
       || (arn.executionArn === expiredMissingExecutionArn)) {
-    return {
-      promise: () => {
-        const error = new Error();
-        error.code = 'ExecutionDoesNotExist';
-        return Promise.reject(error);
-      },
-    };
+    const error = new Error();
+    error.name = 'ExecutionDoesNotExist';
+    return Promise.reject(error);
   }
-  return {
-    promise: () => Promise.resolve(true),
-  };
+
+  return Promise.resolve(true);
 };
 
 let jwtAuthToken;

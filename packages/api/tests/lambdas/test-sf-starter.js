@@ -242,15 +242,12 @@ test.serial('incrementAndDispatch decrements priority semaphore if dispatch() th
   const { semaphore, queueUrl } = t.context;
 
   const message = createWorkflowMessage(queueUrl, 5);
-
   const stubSFNThrowError = () => ({
-    startExecution: () => ({
-      promise: async () => {
-        const response = await semaphore.get(queueUrl);
-        t.is(response.semvalue, 1);
-        throw new Error('testing');
-      },
-    }),
+    startExecution: async () => {
+      const response = await semaphore.get(queueUrl);
+      t.is(response.semvalue, 1);
+      throw new Error('testing');
+    },
   });
   const revert = sfStarter.__set__('sfn', stubSFNThrowError);
 
