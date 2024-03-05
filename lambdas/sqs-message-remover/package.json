@@ -30,7 +30,7 @@
       "tests/**/*.js"
     ],
     "timeout": "15m",
-    "failFast": false
+    "failFast": true
   },
   "publishConfig": {
     "access": "public"

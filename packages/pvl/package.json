@@ -14,7 +14,7 @@
   "ava": {
     "serial": true,
     "timeout": "15m",
-    "failFast": false
+    "failFast": true
   },
   "publishConfig": {
     "access": "public"

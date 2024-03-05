@@ -39,7 +39,7 @@
         "tests/": "dist/tests/"
       }
     },
-    "failFast": false
+    "failFast": true
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

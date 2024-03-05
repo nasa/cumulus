@@ -25,7 +25,7 @@
     ],
     "verbose": true,
     "timeout": "5m",
-    "failFast": false
+    "failFast": true
   },
   "engines": {
     "node": ">=16.19.0"
