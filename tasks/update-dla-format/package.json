@@ -1,0 +1,48 @@
+{
+  "name": "@cumulus/update-cmr-access-constraints",
+  "version": "18.2.0",
+  "description": "Updates CMR metadata to set access constraints",
+  "author": "Cumulus Authors",
+  "license": "Apache-2.0",
+  "private": true,
+  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/update-cmr-access-constraints#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nasa/cumulus",
+    "directory": "tasks/update-cmr-access-constraints"
+  },
+  "engines": {
+    "node": ">=16.19.0"
+  },
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "generate-task-schemas": "npx generate-task-schemas . files",
+    "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
+    "clean": "rm -rf dist",
+    "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test",
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+  },
+  "ava": {
+    "files": [
+      "tests/*"
+    ],
+    "verbose": true,
+    "failFast": true
+  },
+  "dependencies": {
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/cmrjs": "18.2.0",
+    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "lodash": "^4.17.5"
+  },
+  "devDependencies": {
+    "@cumulus/common": "18.2.0",
+    "@cumulus/schemas": "18.2.0"
+  }
+}
