@@ -48,30 +48,24 @@ export const getQueueUrlByName = async (queueName: string) => {
  */
 export async function createQueue(QueueName: string) {
   const command = new CreateQueueCommand({ QueueName });
-  let createQueueResponse;
 
-  try {
-    createQueueResponse = await sqs().send(command);
-  } catch (error) {
-    log.error(error);
-    throw error;
-  }
+  const createQueueResponse = await sqs().send(command)
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
 
   return createQueueResponse.QueueUrl;
 }
 
-export const deleteQueue = async (queueUrl: string) => {
+export const deleteQueue = (queueUrl: string) => {
   const command = new DeleteQueueCommand({ QueueUrl: queueUrl });
-  let deleteQueueResponse;
 
-  try {
-    deleteQueueResponse = await sqs().send(command);
-  } catch (error) {
-    log.error(error);
-    throw error;
-  }
-
-  return deleteQueueResponse;
+  return sqs().send(command)
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
 };
 
 export const getQueueAttributes = async (queueName: string) => {
@@ -104,7 +98,7 @@ export const getQueueAttributes = async (queueName: string) => {
  * @returns {Promise} resolves when the messsage has been sent
 
  **/
-export const sendSQSMessage = async (
+export const sendSQSMessage = (
   queueUrl: string,
   message: string | object,
   logOverride: Logger
@@ -119,16 +113,12 @@ export const sendSQSMessage = async (
     MessageBody: messageBody,
     QueueUrl: queueUrl,
   });
-  let response;
 
-  try {
-    response = await sqs().send(command);
-  } catch (error) {
-    logger.error(error);
-    throw error;
-  }
-
-  return response;
+  return sqs().send(command)
+    .catch((error) => {
+      logger.error(error);
+      throw error;
+    });
 };
 
 type ReceiveSQSMessagesOptions = {
@@ -163,14 +153,12 @@ export const receiveSQSMessages = async (
   };
 
   const command = new ReceiveMessageCommand(params);
-  let messages;
 
-  try {
-    messages = await sqs().send(command);
-  } catch (error) {
-    log.error(error);
-    throw error;
-  }
+  const messages = await sqs().send(command)
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
 
   return <SQSMessage[]>(messages.Messages ?? []);
 };
@@ -187,18 +175,14 @@ export const parseSQSMessageBody = (
  * @param {integer} receiptHandle - the unique identifier of the sQS message
  * @returns {Promise} an AWS SQS response
  */
-export const deleteSQSMessage = async (QueueUrl: string, ReceiptHandle: string) => {
+export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) => {
   const command = new DeleteMessageCommand({ QueueUrl, ReceiptHandle });
-  let response;
 
-  try {
-    response = await sqs().send(command);
-  } catch (error) {
-    log.error(error);
-    throw error;
-  }
-
-  return response;
+  return sqs().send(command)
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
 };
 
 /**
