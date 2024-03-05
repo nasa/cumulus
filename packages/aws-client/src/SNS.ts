@@ -21,7 +21,7 @@ const log = new Logger({ sender: 'aws-client/sns' });
  */
 export const publishSnsMessage = async (
   snsTopicArn: string,
-  message: any,
+  message: Object,
   retryOptions = {}
 ) =>
   await pRetry(
