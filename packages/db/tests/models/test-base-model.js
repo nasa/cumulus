@@ -130,6 +130,33 @@ test('BasePgModel.insert() creates records and returns specified fields', async 
   );
 });
 
+test('BasePgModel.insert() creates records and returns bigint cumulus_id column as numbers', async (t) => {
+  const { knex, basePgModel, tableName } = t.context;
+  const info = cryptoRandomString({ length: 5 });
+  const info2 = cryptoRandomString({ length: 5 });
+  const bigIntString = (Number.MAX_SAFE_INTEGER - 1).toString();
+  const bigIntString2 = (Number.MAX_SAFE_INTEGER - 10).toString();
+
+  const insertedRecords = await basePgModel.insert(
+    knex,
+    [
+      { ...defaultDates, info, test_cumulus_id: bigIntString },
+      { ...defaultDates, info: info2, test_cumulus_id: bigIntString2 },
+    ],
+    '*'
+  );
+
+  const records = await knex(tableName).whereIn('info', [info, info2]).orderBy('info');
+  t.deepEqual(
+    sortBy(records, ['info']),
+    sortBy(insertedRecords, ['info'])
+  );
+  t.deepEqual(
+    records.map((record) => record.test_cumulus_id).sort(),
+    [Number(bigIntString), Number(bigIntString2)].sort()
+  );
+});
+
 test('BasePgModel.insert() works with transaction', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
@@ -195,7 +222,7 @@ test('BasePgModel.get() returns bigint cumulus_id column as a number', async (t)
   );
 });
 
-test('BasePgModel.get() throws exception if the value of cumulus_id column exceeds safe range', async (t) => {
+test('BasePgModel.get() throws exception if the value of bigint cumulus_id column exceeds safe range', async (t) => {
   const { knex, basePgModel, tableName } = t.context;
   const info = cryptoRandomString({ length: 5 });
   const bigIntString = (BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1)).toString();

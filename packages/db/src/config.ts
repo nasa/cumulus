@@ -209,7 +209,7 @@ export const getKnexConfig = async ({
       reapIntervalMillis: Number.parseInt(env.reapIntervalMillis ?? '1000', 10),
       propagateCreateError: false,
     },
-    // modify the response to convert columns ending with "cumulus_id" from string to number
+    // modify any knex query response to convert columns ending with "cumulus_id" from string | number to number
     postProcessResponse: (result: any) => {
       if (result && Array.isArray(result)) {
         return result.map((row) => (isObject(row) ? convertIdColumnsToNumber(row) : row));
