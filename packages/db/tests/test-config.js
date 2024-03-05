@@ -10,7 +10,7 @@ const {
   getSecretConnectionConfig,
   getKnexConfig,
   isKnexDebugEnabled,
-  safelyConvertBigInt,
+  canSafelyConvertBigInt,
 } = require('../dist/config');
 
 const dbConnectionConfig = {
@@ -425,15 +425,15 @@ test('isKnexDebugEnabled() returns false if debugging is not enabled', (t) => {
   t.false(isKnexDebugEnabled());
 });
 
-test('safelyConvertBigInt() returns true if number is in safe range', (t) => {
-  t.true(safelyConvertBigInt(Number.MAX_SAFE_INTEGER.toString()));
-  t.true(safelyConvertBigInt((Number.MAX_SAFE_INTEGER - 1).toString()));
+test('canSafelyConvertBigInt() returns true if number is in safe range', (t) => {
+  t.true(canSafelyConvertBigInt(Number.MAX_SAFE_INTEGER.toString()));
+  t.true(canSafelyConvertBigInt((Number.MAX_SAFE_INTEGER - 1).toString()));
 });
 
-test('safelyConvertBigInt() throws exception if number exceeds safe range', (t) => {
+test('canSafelyConvertBigInt() throws exception if number exceeds safe range', (t) => {
   const bigIntString = (BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1)).toString();
   t.throws(
-    () => safelyConvertBigInt(bigIntString),
+    () => canSafelyConvertBigInt(bigIntString),
     {
       instanceOf: Error,
       message: `Failed to convert to number: ${bigIntString} exceeds max safe integer ${Number.MAX_SAFE_INTEGER}`,
@@ -441,10 +441,10 @@ test('safelyConvertBigInt() throws exception if number exceeds safe range', (t) 
   );
 });
 
-test('safelyConvertBigInt() throws exception for non-numeric string', (t) => {
+test('canSafelyConvertBigInt() throws exception for non-numeric string', (t) => {
   const nonNumericString = cryptoRandomString({ length: 10 });
   t.throws(
-    () => safelyConvertBigInt(nonNumericString),
+    () => canSafelyConvertBigInt(nonNumericString),
     {
       instanceOf: SyntaxError,
       message: `Cannot convert ${nonNumericString} to a BigInt`,

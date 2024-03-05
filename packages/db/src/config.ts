@@ -116,7 +116,7 @@ export const getConnectionConfig = async ({
  * @returns true if the string can be converted
  * @throws - Throws error if the string can not be converted
  */
-export const safelyConvertBigInt = (bigIntValue: string): boolean => {
+export const canSafelyConvertBigInt = (bigIntValue: string): boolean => {
   if (BigInt(bigIntValue) > BigInt(Number.MAX_SAFE_INTEGER)) {
     throw new Error(`Failed to convert to number: ${bigIntValue} exceeds max safe integer ${Number.MAX_SAFE_INTEGER}`);
   }
@@ -138,7 +138,7 @@ export const convertIdColumnsToNumber = <T extends Record<string, any>>(record: 
     mapValues(
       record,
       (value, key) =>
-        ((key.endsWith('cumulus_id') && !isNull(value) && isString(value) && safelyConvertBigInt(value))
+        ((key.endsWith('cumulus_id') && !isNull(value) && isString(value) && canSafelyConvertBigInt(value))
           ? Number(value)
           : value)
     );
