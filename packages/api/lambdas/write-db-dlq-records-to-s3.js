@@ -60,7 +60,7 @@ function extractGranules(message) {
 }
 
 /**
- * Reformat object with key attributes at top level.
+ * Reformat dlqRecord to add key attributes at top level.
  *
  * @param {SQSRecord} dlqRecord - event bridge event as defined in aws-lambda
  * @returns {Promise<DLARecord>} - message packaged with
