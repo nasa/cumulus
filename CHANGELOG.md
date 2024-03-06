@@ -37,6 +37,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates `aws-client`'s EC2 client to use AWS SDK v3.
 - **CUMULUS-2896**
   - Updated Secrets Manager code to AWS SDK v3.
+- **CUMULUS-2901**
+  - Updated STS code to AWS SDK v3.
 - **CUMULUS-2898**
   - Update Step Functions code to AWS SDK v3
 - **CUMULUS-3323**
