@@ -18,7 +18,6 @@ const {
   postRule,
   updateRule,
   listRules,
-  subscribe,
 } = require('@cumulus/api-client/rules');
 const { lambda } = require('@cumulus/aws-client/services');
 const {
@@ -26,6 +25,7 @@ const {
   createTopic,
   deleteTopic,
   publish,
+  subscribe,
 } = require('@cumulus/aws-client/SNS');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
