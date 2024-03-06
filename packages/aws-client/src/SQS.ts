@@ -1,7 +1,9 @@
+//@ts-check
 /**
  * @module SQS
  */
 import Logger from '@cumulus/logger';
+import { CumulusMessage } from '@cumulus/types/message';
 import get from 'lodash/get';
 import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
@@ -9,6 +11,7 @@ import isNil from 'lodash/isNil';
 import { SQSRecord } from 'aws-lambda';
 import { QueueAttributeName } from '@aws-sdk/client-sqs';
 
+import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
@@ -30,11 +33,6 @@ export const getQueueUrlByName = async (queueName: string) => {
 
 /**
  * Create an SQS Queue.  Properly handles localstack queue URLs
- *
- * @param {string} QueueName - queue name
- * @returns {Promise<string>} the Queue URL
- *
- * @static
  */
 export async function createQueue(QueueName: string) {
   const createQueueResponse = await sqs().createQueue({
@@ -75,15 +73,12 @@ export const getQueueAttributes = async (queueName: string) => {
 
 /**
  * Send a message to AWS SQS
- *
- * @param {string} queueUrl - url of the SQS queue
- * @param {string|Object} message - either string or object message. If an
- *   object it will be serialized into a JSON string.
- * @param {Logger} [logOverride] - optional Logger passed in for testing
- * @returns {Promise} resolves when the messsage has been sent
-
- **/
-export const sendSQSMessage = (queueUrl: string, message: string | object, logOverride: Logger) => {
+ */
+export const sendSQSMessage = (
+  queueUrl: string,
+  message: string | object,
+  logOverride: Logger | undefined = undefined
+) => {
   const logger = logOverride || log;
   let messageBody;
   if (isString(message)) messageBody = message;
@@ -108,14 +103,6 @@ type ReceiveSQSMessagesOptions = {
 /**
  * Receives SQS messages from a given queue. The number of messages received
  * can be set and the timeout is also adjustable.
- *
- * @param {string} queueUrl - url of the SQS queue
- * @param {Object} options - options object
- * @param {integer} [options.numOfMessages=1] - number of messages to read from the queue
- * @param {integer} [options.visibilityTimeout=30] - number of seconds a message is invisible
- *   after read
- * @param {integer} [options.waitTimeSeconds=0] - number of seconds to poll SQS queue (long polling)
- * @returns {Promise<Array>} an array of messages
  */
 export const receiveSQSMessages = async (
   queueUrl: string,
@@ -139,17 +126,24 @@ export const receiveSQSMessages = async (
   return <SQSMessage[]>(messages.Messages ?? []);
 };
 
+/**
+ * Bare check for SQS message Shape
+ */
+export const isSQSRecordLike = (message: Object): message is SQSRecord => (
+  message instanceof Object
+  && ('body' in message || 'Body' in message)
+);
+
+/**
+ * Extract SQS message body
+ */
 export const parseSQSMessageBody = (
   message: SQSRecord | AWS.SQS.Message
-): { [key: string]: any } =>
+): StepFunctionEventBridgeEvent | CumulusMessage | SQSRecord =>
   JSON.parse(get(message, 'Body', get(message, 'body')) ?? '{}');
 
 /**
  * Delete a given SQS message from a given queue.
- *
- * @param {string} queueUrl - url of the SQS queue
- * @param {integer} receiptHandle - the unique identifier of the sQS message
- * @returns {Promise} an AWS SQS response
  */
 export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) =>
   sqs().deleteMessage({ QueueUrl, ReceiptHandle })
@@ -160,10 +154,6 @@ export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) =>
 
 /**
  * Test if an SQS queue exists
- *
- * @param {Object} queueUrl     - queue url
- * @returns {Promise<boolean>}  - a Promise that will resolve to a boolean indicating
- *                               if the queue exists
  */
 export const sqsQueueExists = async (queueUrl: string) => {
   const QueueName = getQueueNameFromUrl(queueUrl);
