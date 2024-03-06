@@ -25,7 +25,7 @@ const {
   listSubscriptionsByTopic,
   createTopic,
   deleteTopic,
-  publishSnsMessage,
+  publish,
 } = require('@cumulus/aws-client/SNS');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
@@ -202,7 +202,7 @@ describe('The SNS-type rule', () => {
       try {
         const messagePublishTime = Date.now() - 1000 * 30;
 
-        await publishSnsMessage({ TopicArn: snsTopicArn, Message: snsMessage });
+        await publish({ TopicArn: snsTopicArn, Message: snsMessage });
 
         console.log('originalPayload.testId', testId);
         helloWorldExecutionArn = await findExecutionArn(

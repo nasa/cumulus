@@ -13,11 +13,7 @@ const Logger = require('@cumulus/logger');
 const s3Utils = require('@cumulus/aws-client/S3');
 const workflows = require('@cumulus/common/workflows');
 const { sqsQueueExists } = require('@cumulus/aws-client/SQS');
-const {
-  subscribe,
-  unsubscribe,
-  listSubscriptionsByTopic,
-} = require('@cumulus/aws-client/SNS');
+const snsClient = require('@cumulus/aws-client/SNS');
 const { invoke } = require('@cumulus/aws-client/Lambda');
 const { RulePgModel } = require('@cumulus/db');
 const { ValidationError } = require('@cumulus/errors');
@@ -301,7 +297,7 @@ async function deleteSnsTrigger(knex, rule) {
     SubscriptionArn: rule.rule.arn,
   };
   log.info(`Successfully deleted SNS subscription for ARN ${rule.rule.arn}.`);
-  return unsubscribe(subscriptionParams);
+  return snsClient.unsubscribe(subscriptionParams);
 }
 
 /**
@@ -454,7 +450,7 @@ async function addKinesisEventSources(rule) {
  *
  * @param {RuleRecord} ruleItem - Rule to check
  *
- * @returns {Object}
+ * @returns {Promise<Object>}
  *  subExists - boolean
  *  existingSubscriptionArn - ARN of subscription
  */
@@ -464,7 +460,7 @@ async function checkForSnsSubscriptions(ruleItem) {
   let subscriptionArn;
   /* eslint-disable no-await-in-loop */
   do {
-    const subsResponse = await listSubscriptionsByTopic({
+    const subsResponse = await snsClient.listSubscriptionsByTopic({
       TopicArn: ruleItem.rule.value,
       NextToken: token,
     });
@@ -510,7 +506,7 @@ async function addSnsTrigger(item) {
       Endpoint: process.env.messageConsumer,
       ReturnSubscriptionArn: true,
     };
-    const r = await subscribe(subscriptionParams);
+    const r = await snsClient.subscribe(subscriptionParams);
     subscriptionArn = r.SubscriptionArn;
     // create permission to invoke lambda
     const permissionParams = {
