@@ -11,8 +11,10 @@ const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
 const { SecretsManager } = require('@aws-sdk/client-secrets-manager');
 const { KMS } = require('@aws-sdk/client-kms');
+const { SFN } = require('@aws-sdk/client-sfn');
 const { SNS } = require('@aws-sdk/client-sns');
 const { SQS } = require('@aws-sdk/client-sqs');
+const { STS } = require('@aws-sdk/client-sts');
 
 const services = require('../services');
 const { localStackAwsClientOptions } = require('../test-utils');
@@ -296,17 +298,26 @@ test('secretsManager() service defaults to localstack in test mode', async (t) =
   );
 });
 
-test('sfn() service defaults to localstack in test mode', (t) => {
+test('sfn() service defaults to localstack in test mode', async (t) => {
   const sfn = services.sfn();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.StepFunctions);
+  } = localStackAwsClientOptions(SFN);
   t.deepEqual(
-    sfn.config.credentials,
+    await sfn.config.credentials(),
     credentials
   );
-  t.is(sfn.config.endpoint, endpoint);
+
+  const sfnEndpoint = await sfn.config.endpoint();
+  const localstackEndpoint = new URL(endpoint);
+  t.like(
+    sfnEndpoint,
+    {
+      hostname: localstackEndpoint.hostname,
+      port: Number.parseInt(localstackEndpoint.port, 10),
+    }
+  );
 });
 
 test('sns() service defaults to localstack in test mode', async (t) => {
@@ -352,15 +363,23 @@ test('sqs() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('sts() service defaults to localstack in test mode', (t) => {
+test('sts() service defaults to localstack in test mode', async (t) => {
   const sts = services.sts();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.STS);
+  } = localStackAwsClientOptions(STS);
   t.deepEqual(
-    sts.config.credentials,
+    await sts.config.credentials(),
     credentials
   );
-  t.is(sts.config.endpoint, endpoint);
+  const serviceConfigEndpoint = await sts.config.endpoint();
+  const localEndpoint = new URL(endpoint);
+  t.like(
+    serviceConfigEndpoint,
+    {
+      hostname: localEndpoint.hostname,
+      port: Number.parseInt(localEndpoint.port, 10),
+    }
+  );
 });

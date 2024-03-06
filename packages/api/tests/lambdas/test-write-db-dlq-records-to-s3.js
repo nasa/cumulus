@@ -698,7 +698,7 @@ test('hoistCumulusMessageDetails returns unknown for details: collectionId, prov
   });
 });
 
-test('hoistCumulusMessageDetails handles varying degrees of sqsMessage nestedness', async (t) => {
+test('hoistCumulusMessageDetails handles up to 3 degrees of sqsMessage nestedness', async (t) => {
   let message = {
     messageId: 'a',
     eventSource: 'aws:sqs',

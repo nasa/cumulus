@@ -28,9 +28,7 @@ export const isMessageWithProvider = (
   obj: any
 ): obj is MessageWithProvider => (
   isCumulusMessageLike(obj)
-  && 'meta' in obj
-  && obj.meta instanceof Object
-  && 'provider' in obj.meta && isMessageProvider(obj.meta.provider)
+  && isMessageProvider(obj?.meta?.provider)
 );
 /**
  * Get the provider from a workflow message, if any.

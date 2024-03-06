@@ -114,9 +114,9 @@ test('unwrapDeadLetterCumulusMessage returns an non-unwrappable message', async 
 });
 
 test('isDLQRecordLike correctly filters for DLQ record shaped objects', (t) => {
-  /* isDLQRecordLike first checks if object isSQSRecordLike,
-  * these test do not duplicate those tests
-  */
+  t.false(isDLQRecordLike('aaa')); // must be an object
+  t.false(isDLQRecordLike({ a: 'b' })); // object must contain a body
   t.false(isDLQRecordLike({ body: '{a: "b"}' })); // object must contain an error attribute
   t.true(isDLQRecordLike({ body: '{a: "b"}', error: 'a' }));
+  t.true(isDLQRecordLike({ Body: '{a: "b"}', error: 'a' }));
 });
