@@ -104,13 +104,13 @@ test('getFilesAndGranuleInfoQuery returns expected records', async (t) => {
   t.like(records[0], {
     bucket,
     key: firstKey,
-    granule_cumulus_id: Number.parseInt(granuleCumulusId1, 10),
+    granule_cumulus_id: granuleCumulusId1,
     granule_id: testGranule1.granule_id,
   });
   t.like(records[1], {
     bucket,
     key: secondKey,
-    granule_cumulus_id: Number.parseInt(granuleCumulusId2, 10),
+    granule_cumulus_id: granuleCumulusId2,
     granule_id: testGranule2.granule_id,
   });
 });
@@ -144,7 +144,7 @@ test('getFilesAndGranuleInfoQuery works with no granule columns specified', asyn
   t.like(records[0], {
     bucket,
     key: firstKey,
-    granule_cumulus_id: Number.parseInt(granuleCumulusId1, 10),
+    granule_cumulus_id: granuleCumulusId1,
   });
 });
 
@@ -194,7 +194,7 @@ test('getFilesAndGranuleInfoQuery filters on GranuleIds', async (t) => {
   t.like(records[0], {
     bucket,
     key: secondKey,
-    granule_cumulus_id: Number.parseInt(granuleCumulusId2, 10),
+    granule_cumulus_id: granuleCumulusId2,
     granule_id: testGranule2.granule_id,
   });
 });
@@ -249,7 +249,7 @@ test('getFilesAndGranuleInfoQuery filters on collectionIds', async (t) => {
   t.like(records[0], {
     bucket,
     key: secondKey,
-    granule_cumulus_id: Number.parseInt(pgGranule2.cumulus_id, 10),
+    granule_cumulus_id: pgGranule2.cumulus_id,
     granule_id: testGranule2.granule_id,
   });
 });
@@ -301,7 +301,7 @@ test('getFilesAndGranuleInfoQuery filters on providers', async (t) => {
   t.like(records[0], {
     bucket,
     key: secondKey,
-    granule_cumulus_id: Number.parseInt(pgGranule2.cumulus_id, 10),
+    granule_cumulus_id: pgGranule2.cumulus_id,
     granule_id: testGranule2.granule_id,
   });
 });

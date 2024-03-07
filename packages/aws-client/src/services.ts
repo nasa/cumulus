@@ -41,4 +41,3 @@ export const sfn = awsClient(SFN, '2016-11-23');
 export const sns = awsClient(SNS, '2010-03-31');
 export const sqs = awsClient(SQS, '2012-11-05');
 export const sts = awsClient(STS, '2011-06-15');
-export const systemsManager = awsClient(AWS.SSM, '2017-10-17');

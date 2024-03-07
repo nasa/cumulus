@@ -69,6 +69,7 @@
     "@cumulus/checksum": "18.2.0",
     "@cumulus/errors": "18.2.0",
     "@cumulus/logger": "18.2.0",
+    "@cumulus/types": "18.2.0",
     "aws-sdk": "^2.1492.0",
     "jsonpath-plus": "^1.1.0",
     "lodash": "~4.17.21",
