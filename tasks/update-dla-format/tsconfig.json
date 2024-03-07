@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "module": "es2022",
+    "target": "es2022"
+  },
+  "include": ["./**/*.ts"],
+}

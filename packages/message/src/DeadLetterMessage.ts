@@ -1,12 +1,12 @@
 //@ts-check
 import { SQSRecord } from 'aws-lambda';
+import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
 import { parseSQSMessageBody, isSQSRecordLike } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
 import { DLQRecord, DLARecord } from '@cumulus/types/api/dead_letters';
-import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
 import Logger from '@cumulus/logger';
-import { isMessageWithProvider, getMessageProviderId } from '@cumulus/message/Providers';
 import { MessageGranule } from '@cumulus/types';
+import { isMessageWithProvider, getMessageProviderId } from './Providers';
 import { isCumulusMessageLike } from './CumulusMessage';
 import { getCumulusMessageFromExecutionEvent } from './StepFunctions';
 import { constructCollectionId } from './Collections';
@@ -65,7 +65,7 @@ interface PayloadWithGranules {
   granules: Array<MessageGranule>
 }
 
-const payloadHasGranules = (payload: unknown): payload is PayloadWithGranules => (
+const payloadHasGranules = (payload: any): payload is PayloadWithGranules => (
   payload instanceof Object
   && 'granules' in payload
   && Array.isArray(payload.granules)
@@ -147,4 +147,4 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
     time,
     error,
   };
-}
+};

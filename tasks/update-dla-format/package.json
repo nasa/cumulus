@@ -1,7 +1,6 @@
 {
   "name": "@cumulus/update-dla-format",
   "version": "18.2.0",
-  "description": "Updates CMR metadata to set access constraints",
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "private": true,
@@ -14,27 +13,15 @@
   "engines": {
     "node": ">=16.19.0"
   },
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
+  "type": "module",
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
-    "build": "rm -rf dist && mkdir dist && npm run generate-task-schemas && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
-    "clean": "rm -rf dist",
-    "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
+    "clean": "rm -rf node_modules && rm -rf dist",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../scripts/coverage_handler/coverage.py",
     "tsc": "../../node_modules/.bin/tsc"
-  },
-  "ava": {
-    "files": [
-      "tests/*"
-    ],
-    "verbose": true,
-    "failFast": true
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
@@ -43,7 +30,8 @@
     "@types/minimist": "^1.2.5",
     "lodash": "^4.17.5",
     "minimist": "^1.2.8",
-    "optimist": "^0.6.1"
+    "p-retry": "^4.2.0",
+    "tsc": "^2.0.4"
   },
   "devDependencies": {
     "@cumulus/common": "18.2.0",
