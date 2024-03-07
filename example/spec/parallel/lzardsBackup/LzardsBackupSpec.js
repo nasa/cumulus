@@ -5,6 +5,11 @@ const pAll = require('p-all');
 const path = require('path');
 const pTimeout = require('p-timeout');
 
+const {
+  GetFunctionConfigurationCommand,
+  InvokeCommand,
+} = require('@aws-sdk/client-lambda');
+
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const { lambda } = require('@cumulus/aws-client/services');
@@ -47,9 +52,9 @@ describe('The Lzards Backup Task ', () => {
       await putFile(ingestBucket, `${ingestPath}/testGranule3.jpg`, path.join(__dirname, 'test_data', 'testGranule3.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
       lzardsApiGetFunctionName = `${prefix}-LzardsApiClientTest`;
-      functionConfig = await lambda().getFunctionConfiguration({
+      functionConfig = await lambda().send(new GetFunctionConfigurationCommand({
         FunctionName,
-      });
+      }));
       granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
@@ -168,7 +173,7 @@ describe('The Lzards Backup Task ', () => {
       );
 
       lzardsBackupOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }),
+        lambda().send(new InvokeCommand({ FunctionName, Payload })),
         (functionConfig.Timeout + 10) * 1000
       );
 
@@ -238,7 +243,7 @@ describe('The Lzards Backup Task ', () => {
       else {
         const lzardsGetPayload = new TextEncoder().encode(JSON.stringify({ searchParams: {} }));
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
           (functionConfig.Timeout + 10) * 1000
         );
 
@@ -259,7 +264,7 @@ describe('The Lzards Backup Task ', () => {
           },
         }));
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
           (functionConfig.Timeout + 50) * 1000
         );
 
@@ -286,7 +291,7 @@ describe('The Lzards Backup Task ', () => {
         }));
 
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
           (functionConfig.Timeout + 10) * 1000
         );
 
@@ -311,7 +316,7 @@ describe('The Lzards Backup Task ', () => {
         }));
 
         const lzardsApiGetOutput = await pTimeout(
-          lambda().invoke({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload }),
+          lambda().send(new InvokeCommand({ FunctionName: lzardsApiGetFunctionName, Payload: lzardsGetPayload })),
           (functionConfig.Timeout + 10) * 1000
         );
 
