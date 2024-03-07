@@ -45,6 +45,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-2901**
+  - Updated STS code to AWS SDK v3.
+- **CUMULUS-2898**
+  - Update Step Functions code to AWS SDK v3
+- **CUMULUS-3456**
+  - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
+  - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
 - **CUMULUS-3323**
   - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
     disable SSL for all Core database connection attempts.
@@ -62,14 +69,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
+- **CUMULUS-2896**
+  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
-
-### Changed
-
-- **CUMULUS-2896**
-  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
@@ -114,7 +118,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - add teclark to select-stack.js
 - **CUMULUS-3444**
   - Update `cumulus-rds-tf` module to take additional parameters in support of
-    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2891**
@@ -211,8 +215,10 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Breaking Changes
+
 - **CUMULUS-3427**
   - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+
 ### Notable Changes
 
 - **CUMULUS-3095**

@@ -50,7 +50,7 @@ function dispatch(queueUrl, message) {
     stateMachineArn: input.cumulus_meta.state_machine,
     input: JSON.stringify(input),
     name: input.cumulus_meta.execution_name,
-  }).promise();
+  });
 }
 
 /**
