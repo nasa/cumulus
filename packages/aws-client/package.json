@@ -52,6 +52,7 @@
     "@aws-sdk/client-dynamodb-streams": "^3.447.0",
     "@aws-sdk/client-ec2": "^3.447.0",
     "@aws-sdk/client-ecs": "^3.447.0",
+    "@aws-sdk/client-elasticsearch-service": "^3.447.0",
     "@aws-sdk/client-kinesis": "^3.447.0",
     "@aws-sdk/client-kms": "^3.447.0",
     "@aws-sdk/client-lambda": "^3.447.0",
