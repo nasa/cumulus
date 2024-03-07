@@ -54,7 +54,7 @@ test.beforeEach(async (t) => {
   t.context.granuleCumulusId = pgGranule.cumulus_id;
   t.context.joinRecord = {
     execution_cumulus_id: t.context.executionCumulusId,
-    granule_cumulus_id: Number(t.context.granuleCumulusId),
+    granule_cumulus_id: t.context.granuleCumulusId,
   };
 });
 

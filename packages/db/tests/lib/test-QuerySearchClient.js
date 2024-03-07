@@ -96,7 +96,7 @@ test('QuerySearchClient.shift() returns next record from current set of results 
     await querySearchClient.shift(),
     {
       ...records[0],
-      granule_cumulus_id: Number.parseInt(records[0].granule_cumulus_id, 10),
+      granule_cumulus_id: records[0].granule_cumulus_id,
       granule_id: testGranule.granule_id,
     }
   );
@@ -104,7 +104,7 @@ test('QuerySearchClient.shift() returns next record from current set of results 
     await querySearchClient.shift(),
     {
       ...records[1],
-      granule_cumulus_id: Number.parseInt(records[1].granule_cumulus_id, 10),
+      granule_cumulus_id: records[1].granule_cumulus_id,
       granule_id: testGranule.granule_id,
     }
   );
@@ -132,7 +132,7 @@ test('QuerySearchClient.shift() returns next record if next record must be fetch
     await querySearchClient.shift(),
     {
       ...records[0],
-      granule_cumulus_id: Number.parseInt(records[0].granule_cumulus_id, 10),
+      granule_cumulus_id: records[0].granule_cumulus_id,
       granule_id: testGranule.granule_id,
     }
   );
@@ -140,7 +140,7 @@ test('QuerySearchClient.shift() returns next record if next record must be fetch
     await querySearchClient.shift(),
     {
       ...records[1],
-      granule_cumulus_id: Number.parseInt(records[1].granule_cumulus_id, 10),
+      granule_cumulus_id: records[1].granule_cumulus_id,
       granule_id: testGranule.granule_id,
     }
   );
