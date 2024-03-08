@@ -50,13 +50,14 @@ for further details on body contents: [see below]
 
 ## Dead Letter Archive Body contents
 
-the body attribute should be a JSON string containing an event bridge event
+The body attribute should be a JSON string containing an event bridge event
 
 Note that
 
-- the body attribute *can* come nested, such that you will have to de-nest a series of body attributes to get to the heart of your message
-- the word body can be interchanged with Body (capitalized)
-- because this message body arrived in the Dead Letter Archive because of issues in processing it, there is no strict guarantee that it is a valid json object, or conforms to expected structure. the *expected* structure follows.
+- The body attribute *can* come nested, such that you will have to de-nest a series of body attributes to get to the heart of your message
+- The word body can be interchanged with Body (capitalized)
+- Because this message body arrived in the Dead Letter Archive because of issues in processing it, there is no strict guarantee that it is a valid json object, or conforms to expected structure. the *expected* structure follows.
+- Automated processing of these messages *must* be prepared for attributes to be missing.
 
 ```ts
 {
@@ -86,14 +87,14 @@ Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.co
     output: [string | null], //parses as the cumulus message output if execution succeeded
     stateMachineVersionArn: [string | null], // The version ARN is a combination of state machine ARN and the version number separated by a colon (:)
     stateMachineAliasArn: [string | null], // a combination of state machine ARN and the alias name separated by a colon (:)
+    inputDetails: [CloudWatchEventsExecutionDataDetails], // Details about execution input
+    outputDetails: [CloudWatchEventsExecutionDataDetails | null], // Details about execution output
+    error: [string | null], // The cause string if the state machine execution failed (most errors that send to the DLA will not have a *caught* failure that does not arrive here)
+    cause: [string | null], // the cause string if the state machine execution failed
     /* note that these redrive statistics can be misleading, as they are not referring to the execution that failed if the triggering execution was sfEventSqsToDbRecords*/
     redriveCount: [int],
     redriveDate: [string | null],
     redriveStatus: [string],
     redriveStatusReason: [string],
-    inputDetails: [CloudWatchEventsExecutionDataDetails], // Details about execution input
-    outputDetails: [CloudWatchEventsExecutionDataDetails | null], // Details about execution output
-    error: [string | null], // The cause string if the state machine execution failed (most errors that send to the DLA will not have a *caught* failure that does not arrive here)
-    cause: [string | null], // the cause string if the state machine execution failed
 }
 ```
