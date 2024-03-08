@@ -16,7 +16,7 @@ const localStackPorts = {
   DynamoDBStreamsClient: 4566,
   EC2: 4566,
   ECS: 4566,
-  ElasticsearchServiceClient: 4566,
+  ElasticsearchService: 4566,
   firehose: 4566,
   iam: 4566,
   Kinesis: 4566,

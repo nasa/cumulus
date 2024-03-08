@@ -6,7 +6,7 @@ const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { ECS } = require('@aws-sdk/client-ecs');
 const { EC2 } = require('@aws-sdk/client-ec2');
-const { ElasticsearchServiceClient } = require('@aws-sdk/client-elasticsearch-service');
+const { ElasticsearchService } = require('@aws-sdk/client-elasticsearch-service');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
@@ -193,7 +193,7 @@ test('es() service defaults to localstack in test mode', async (t) => {
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(ElasticsearchServiceClient);
+  } = localStackAwsClientOptions(ElasticsearchService);
   t.deepEqual(
     await es.config.credentials(),
     credentials

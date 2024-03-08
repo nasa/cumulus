@@ -15,7 +15,7 @@ import { SNS } from '@aws-sdk/client-sns';
 import { STS } from '@aws-sdk/client-sts';
 import { ECS } from '@aws-sdk/client-ecs';
 import { EC2 } from '@aws-sdk/client-ec2';
-import { ElasticsearchServiceClient } from '@aws-sdk/client-elasticsearch-service';
+import { ElasticsearchService } from '@aws-sdk/client-elasticsearch-service';
 
 import awsClient from './client';
 
@@ -31,7 +31,7 @@ export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOpti
     docClientOptions
   );
 export const cf = awsClient(CloudFormation, '2010-05-15');
-export const es = awsClient(ElasticsearchServiceClient, '2015-01-01');
+export const es = awsClient(ElasticsearchService, '2015-01-01');
 export const kinesis = awsClient(Kinesis, '2013-12-02');
 export const kms = awsClient(KMS, '2014-11-01');
 export const lambda = awsClient(Lambda, '2015-03-31');
