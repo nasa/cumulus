@@ -76,6 +76,7 @@ Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.co
 
 ```ts
 {
+    executionArn: [string], // ARN of the triggering execution
     stateMachineArn: [string], // ARN of the triggering workflow
     name: [string], // Execution name of triggering execution
     status: [string], // status of triggering execution
