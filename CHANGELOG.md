@@ -81,7 +81,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-3527**
   - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3610**
-  - WIP: Updating `aws-client` ES code to AWS SDK v3.
+  - Updated `aws-client`'s ES client to use AWS SDK v3.
 
 ### Fixed
 
