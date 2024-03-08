@@ -741,21 +741,12 @@ export const uploadS3FileStream = (
 
 /**
  * List the objects in an S3 bucket
- *
- * @param {string} bucket - The name of the bucket
- * @param {string} prefix - Only objects with keys starting with this prefix
- *   will be included (useful for searching folders in buckets, e.g., '/PDR')
- * @param {boolean} skipFolders - If true don't return objects that are folders
- *   (defaults to true)
- * @returns {Promise} A promise that resolves to the list of objects. Each S3
- *   object is represented as a JS object with the following attributes: `Key`,
- * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
 export const listS3Objects = async (
   bucket: string,
   prefix?: string,
   skipFolders: boolean = true
-) => {
+): Promise<Array<Object>> => {
   log.info(`Listing objects in s3://${bucket}`);
   const params: ListObjectsRequest = {
     Bucket: bucket,
