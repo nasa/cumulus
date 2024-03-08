@@ -3,9 +3,15 @@
 const test = require('ava');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
-
 const proxyquire = require('proxyquire');
 const fs = require('fs-extra');
+const {
+  CreateEventSourceMappingCommand,
+  CreateFunctionCommand,
+  DeleteEventSourceMappingCommand,
+  GetPolicyCommand,
+  ListEventSourceMappingsCommand,
+} = require('@aws-sdk/client-lambda');
 
 const awsServices = require('@cumulus/aws-client/services');
 const workflows = require('@cumulus/common/workflows');
@@ -69,15 +75,15 @@ const createEventSourceMapping = async (rule) => {
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true,
     };
-    return awsServices.lambda().createEventSourceMapping(params);
+    return awsServices.lambda().send(new CreateEventSourceMappingCommand(params));
   });
   return await Promise.all(eventSourceMapping);
 };
 
 const getKinesisEventMappings = async () => {
   const mappingPromises = eventLambdas.map((lambda) => {
-    const mappingParms = { FunctionName: lambda };
-    return awsServices.lambda().listEventSourceMappings(mappingParms);
+    const mappingParams = { FunctionName: lambda };
+    return awsServices.lambda().send(new ListEventSourceMappingsCommand(mappingParams));
   });
   return await Promise.all(mappingPromises);
 };
@@ -94,7 +100,7 @@ const deleteKinesisEventSourceMappings = async () => {
   );
 
   return await Promise.all(allEventMappings.map((e) =>
-    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID })));
+    awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
 };
 
 test.before(async (t) => {
@@ -120,7 +126,7 @@ test.before(async (t) => {
 
   await Promise.all(
     ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
-      const lambdaCreated = await awsServices.lambda().createFunction({
+      const lambdaCreated = await awsServices.lambda().send(new CreateFunctionCommand({
         Code: {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
@@ -128,7 +134,7 @@ test.before(async (t) => {
         Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
-      });
+      }));
       process.env[name] = lambdaCreated.FunctionName;
     })
   );
@@ -1006,9 +1012,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   const { subExists } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(subExists);
 
-  const { Policy } = await awsServices.lambda().getPolicy({
+  const { Policy } = await awsServices.lambda().send(new GetPolicyCommand({
     FunctionName: process.env.messageConsumer,
-  });
+  }));
   const { Statement } = JSON.parse(Policy);
   t.true(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(ruleWithTrigger)));
 
@@ -1018,9 +1024,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   t.false(subExists2);
 
   await t.throwsAsync(
-    awsServices.lambda().getPolicy({
+    awsServices.lambda().send(new GetPolicyCommand({
       FunctionName: process.env.messageConsumer,
-    }),
+    })),
     { name: 'ResourceNotFoundException' }
   );
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));

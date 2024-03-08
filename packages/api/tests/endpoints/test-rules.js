@@ -7,6 +7,7 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const test = require('ava');
 const sinon = require('sinon');
+const { InvokeCommand } = require('@aws-sdk/client-lambda');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
@@ -87,7 +88,7 @@ test.before(async (t) => {
 
   await Promise.all(
     ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
-      const lambdaCreated = await awsServices.lambda().createFunction({
+      const lambdaCreated = await awsServices.lambda().send(new InvokeCommand({
         Code: {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
@@ -95,7 +96,7 @@ test.before(async (t) => {
         Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
-      });
+      }));
       process.env[name] = lambdaCreated.FunctionName;
     })
   );

@@ -25,7 +25,7 @@
     "@cumulus/db": "18.2.0",
     "@cumulus/es-client": "18.2.0",
     "@cumulus/logger": "18.2.0",
-    "aws-sdk": "^2.1492.0",
+    "@aws-sdk/client-lambda": "^3.447.0",
     "crypto-random-string": "^3.2.0",
     "got": "^11.8.5",
     "lodash": "^4.17.21",

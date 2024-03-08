@@ -6,6 +6,15 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 const set = require('lodash/set');
+const {
+  AddPermissionCommand,
+  DeleteEventSourceMappingCommand,
+  RemovePermissionCommand,
+  ListEventSourceMappingsCommand,
+  UpdateEventSourceMappingCommand,
+  CreateEventSourceMappingCommand,
+  EventSourcePosition,
+} = require('@aws-sdk/client-lambda');
 
 const awsServices = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
@@ -218,7 +227,7 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
       UUID: id[eventType],
     };
     log.info(`Deleting event source with UUID ${id[eventType]}`);
-    return awsServices.lambda().deleteEventSourceMapping(params);
+    return awsServices.lambda().send(new DeleteEventSourceMappingCommand(params));
   }
   log.info(`Event source mapping is shared with another rule. Will not delete kinesis event source for ${rule.name}`);
   return undefined;
@@ -283,7 +292,7 @@ async function deleteSnsTrigger(knex, rule) {
     StatementId: getSnsTriggerPermissionId(rule),
   };
   try {
-    await awsServices.lambda().removePermission(permissionParams);
+    await awsServices.lambda().send(new RemovePermissionCommand(permissionParams));
   } catch (error) {
     if (isResourceNotFoundException(error)) {
       throw new ResourceNotFoundError(error);
@@ -391,7 +400,7 @@ async function addKinesisEventSource(item, lambda) {
     FunctionName: lambda.name,
     EventSourceArn: item.rule.value,
   };
-  const listData = await awsServices.lambda().listEventSourceMappings(listParams);
+  const listData = await awsServices.lambda().send(new ListEventSourceMappingsCommand(listParams));
   if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
     const currentMapping = listData.EventSourceMappings[0];
 
@@ -399,20 +408,20 @@ async function addKinesisEventSource(item, lambda) {
     if (currentMapping.State === 'Enabled') {
       return currentMapping;
     }
-    return awsServices.lambda().updateEventSourceMapping({
+    return awsServices.lambda().send(new UpdateEventSourceMappingCommand({
       UUID: currentMapping.UUID,
       Enabled: true,
-    });
+    }));
   }
 
   // create event source mapping
   const params = {
     EventSourceArn: item.rule.value,
     FunctionName: lambda.name,
-    StartingPosition: 'TRIM_HORIZON',
+    StartingPosition: EventSourcePosition.TRIM_HORIZON,
     Enabled: true,
   };
-  return awsServices.lambda().createEventSourceMapping(params);
+  return awsServices.lambda().send(new CreateEventSourceMappingCommand(params));
 }
 
 /**
@@ -515,7 +524,7 @@ async function addSnsTrigger(item) {
       SourceArn: item.rule.value,
       StatementId: getSnsTriggerPermissionId(item),
     };
-    await awsServices.lambda().addPermission(permissionParams);
+    await awsServices.lambda().send(new AddPermissionCommand(permissionParams));
   }
   return subscriptionArn;
 }
