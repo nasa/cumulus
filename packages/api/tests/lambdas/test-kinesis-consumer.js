@@ -19,7 +19,6 @@ const { handler } = proxyquire('../../lambdas/message-consumer', {
   },
 });
 
-// TODO use V3 module import
 const snsClient = sns();
 
 const testCollectionName = 'test-collection';

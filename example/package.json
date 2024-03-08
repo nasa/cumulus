@@ -45,6 +45,8 @@
     ]
   },
   "dependencies": {
+    "@aws-sdk/client-ecs": "^3.447.0",
+    "@aws-sdk/client-sns": "^3.447.0",
     "@cumulus/api": "18.2.0",
     "@cumulus/api-client": "18.2.0",
     "@cumulus/async-operations": "18.2.0",
@@ -71,7 +73,6 @@
     "@cumulus/test-processing": "18.2.0"
   },
   "devDependencies": {
-    "@aws-sdk/client-ecs": "^3.447.0",
     "@cumulus/test-data": "18.2.0"
   }
 }

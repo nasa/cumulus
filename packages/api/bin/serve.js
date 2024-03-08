@@ -1,8 +1,8 @@
 'use strict';
 
 const { promiseS3Upload } = require('@cumulus/aws-client/S3');
-const { s3 } = require('@cumulus/aws-client/services');
-const { createTopic } = require('@cumulus/aws-client/SNS');
+const { s3, sns } = require('@cumulus/aws-client/services');
+const { CreateTopicCommand } = require('@aws-sdk/client-sns');
 const { randomId, inTestMode } = require('@cumulus/common/test-utils');
 const {
   CollectionPgModel,
@@ -66,7 +66,7 @@ async function prepareServices(stackName, bucket) {
   });
   await s3().createBucket({ Bucket: bucket });
 
-  const { TopicArn } = await createTopic({ Name: randomId('topicName') });
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: randomId('topicName') }));
   process.env.collection_sns_topic_arn = TopicArn;
 }
 

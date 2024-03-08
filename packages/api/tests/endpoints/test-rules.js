@@ -31,11 +31,12 @@ const {
   translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const awsServices = require('@cumulus/aws-client/services');
-const snsClient = require('@cumulus/aws-client/SNS');
 const S3 = require('@cumulus/aws-client/S3');
 const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+
+const { CreateTopicCommand } = require('@aws-sdk/client-sns');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -532,7 +533,7 @@ test.serial('post() creates SNS rule with same trigger information in PostgreSQL
     pgCollection,
   } = t.context;
 
-  const topic1 = await snsClient.createTopic({ Name: randomId('topic1_') });
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
 
   const rule = fakeRuleFactoryV2({
     state: 'ENABLED',
@@ -1193,6 +1194,7 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
 });
 
 test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
+  // TODO Fix Stubs
   const listSubscriptionsByTopicStub = sinon.stub(snsClient, 'listSubscriptionsByTopic')
     .returns(
       Promise.resolve({

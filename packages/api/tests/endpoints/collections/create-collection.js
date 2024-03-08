@@ -18,8 +18,12 @@ const {
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
-const { sqs } = require('@cumulus/aws-client/services');
-const { createTopic, subscribe, deleteTopic } = require('@cumulus/aws-client/SNS');
+const { sns, sqs } = require('@cumulus/aws-client/services');
+const {
+  CreateTopicCommand,
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
@@ -89,7 +93,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await createTopic({ Name: topicName });
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -102,11 +106,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -114,7 +118,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {

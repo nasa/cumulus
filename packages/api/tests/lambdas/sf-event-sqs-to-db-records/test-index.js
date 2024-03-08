@@ -9,12 +9,12 @@ const uuidv4 = require('uuid/v4');
 const proxyquire = require('proxyquire');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
-const { sqs } = require('@cumulus/aws-client/services');
+const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  createTopic,
-  subscribe,
-  deleteTopic,
-} = require('@cumulus/aws-client/SNS');
+  CreateTopicCommand,
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const {
   localStackConnectionEnv,
   destroyLocalTestDb,
@@ -170,8 +170,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await createTopic({ Name: executionsTopicName });
-  const pdrsTopic = await createTopic({ Name: pdrsTopicName });
+  const executionsTopic = await sns().send(new CreateTopicCommand({ Name: executionsTopicName }));
+  const pdrsTopic = await sns().send(new CreateTopicCommand({ Name: pdrsTopicName }));
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -190,7 +190,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await createTopic({ Name: topicName });
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -201,11 +201,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 
@@ -284,8 +284,8 @@ test.after.always(async (t) => {
     testDbName: t.context.testDbName,
   });
   await cleanupTestIndex(t.context);
-  await deleteTopic({ TopicArn: ExecutionsTopicArn });
-  await deleteTopic({ TopicArn: PdrsTopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn: ExecutionsTopicArn }));
+  await sns().send(new DeleteTopicCommand({ TopicArn: PdrsTopicArn }));
 });
 
 test('writeRecords() throws error if requirements to write execution to PostgreSQL are not met', async (t) => {

@@ -94,7 +94,6 @@ export const getQueueAttributes = async (queueName: string) => {
  *   object it will be serialized into a JSON string.
  * @param logOverride - optional Logger passed in for testing
  * @returns {Promise} resolves when the messsage has been sent
-
  **/
 export const sendSQSMessage = (
   queueUrl: string,

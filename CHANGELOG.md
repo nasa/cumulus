@@ -49,8 +49,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-2892**
   - Updates `aws-client`'s EC2 client to use AWS SDK v3.
-- **CUMULUS-2896**
-  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-2901**
   - Updated STS code to AWS SDK v3.
 - **CUMULUS-2898**
