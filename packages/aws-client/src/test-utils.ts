@@ -14,7 +14,7 @@ const localStackPorts = {
   DynamoDB: 4566,
   DynamoDBClient: 4566,
   DynamoDBStreamsClient: 4566,
-  ec2: 4566,
+  EC2: 4566,
   ECS: 4566,
   es: 4566,
   firehose: 4566,
@@ -31,7 +31,7 @@ const localStackPorts = {
   SNS: 4566,
   SQS: 4566,
   ssm: 4566,
-  sts: 4566,
+  STS: 4566,
 };
 
 /**

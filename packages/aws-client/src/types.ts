@@ -5,6 +5,7 @@ import { CloudWatchEvents } from '@aws-sdk/client-cloudwatch-events';
 import { CloudFormation } from '@aws-sdk/client-cloudformation';
 import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
 import { DynamoDB, DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { EC2 } from '@aws-sdk/client-ec2';
 import { ECS } from '@aws-sdk/client-ecs';
 import { Kinesis } from '@aws-sdk/client-kinesis';
 import { KMS } from '@aws-sdk/client-kms';
@@ -14,6 +15,7 @@ import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { SFN } from '@aws-sdk/client-sfn';
 import { SNS } from '@aws-sdk/client-sns';
 import { SQS } from '@aws-sdk/client-sqs';
+import { STS } from '@aws-sdk/client-sts';
 
 export type AWSClientTypes =
     APIGatewayClient |
@@ -22,11 +24,13 @@ export type AWSClientTypes =
     DynamoDBStreamsClient |
     Lambda |
     ECS |
+    EC2 |
     S3 |
     SecretsManager |
     SFN |
     SNS |
     SQS |
+    STS |
     CloudWatchEvents |
     CloudFormation |
     Kinesis |
