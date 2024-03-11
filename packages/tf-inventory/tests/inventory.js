@@ -83,15 +83,13 @@ test.before(() => {
 
   esStub = sinon.stub(es(), 'listDomainNames')
     .returns(
-      (
-        Promise.resolve({
-          DomainNames: [
-            { DomainName: 'cumulus-es5vpc' },
-            { DomainName: 'cumulus-1-es5vpc' },
-            { DomainName: 'cumulus-2-es5vpc' },
-          ],
-        })
-      )
+      Promise.resolve({
+        DomainNames: [
+          { DomainName: 'cumulus-es5vpc' },
+          { DomainName: 'cumulus-1-es5vpc' },
+          { DomainName: 'cumulus-2-es5vpc' },
+        ],
+      })
     );
 });
 
