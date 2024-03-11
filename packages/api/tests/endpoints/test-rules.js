@@ -7,6 +7,7 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const test = require('ava');
 const sinon = require('sinon');
+const { mockClient } = require('aws-sdk-client-mock');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
@@ -36,7 +37,11 @@ const { Search } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { CreateTopicCommand } = require('@aws-sdk/client-sns');
+const {
+  CreateTopicCommand,
+  ListSubscriptionsByTopicCommand,
+  UnsubscribeCommand,
+} = require('@aws-sdk/client-sns');
 
 const { buildFakeExpressResponse } = require('./utils');
 const {
@@ -1194,21 +1199,19 @@ test.serial('PATCH nullifies expected fields for existing rule in all datastores
 });
 
 test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
-  // TODO Fix Stubs
-  const listSubscriptionsByTopicStub = sinon.stub(snsClient, 'listSubscriptionsByTopic')
-    .returns(
-      Promise.resolve({
-        Subscriptions: [{
-          Endpoint: process.env.messageConsumer,
-          SubscriptionArn: randomString(),
-        }],
-      })
-    );
+  const snsMock = mockClient(awsServices.sns());
 
-  const unsubscribeStub = sinon.stub(snsClient, 'unsubscribe')
-    .returns(
-      Promise.resolve()
-    );
+  snsMock
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
+
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
@@ -1219,8 +1222,7 @@ test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', 
       }),
     });
   t.teardown(() => {
-    listSubscriptionsByTopicStub.restore();
-    unsubscribeStub.restore();
+    snsMock.restore();
     lambdaStub.restore();
   });
 
@@ -1552,8 +1554,8 @@ test.serial('PATCH creates the same updated SNS rule in PostgreSQL/Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = await snsClient.createTopic({ Name: randomId('topic1_') });
-  const topic2 = await snsClient.createTopic({ Name: randomId('topic2_') });
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalPgRecord,
@@ -1816,8 +1818,8 @@ test.serial('PATCH keeps initial trigger information if writing to PostgreSQL fa
     pgCollection,
   } = t.context;
 
-  const topic1 = await snsClient.createTopic({ Name: randomId('topic1_') });
-  const topic2 = await snsClient.createTopic({ Name: randomId('topic2_') });
+  const topic1 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalPgRecord,
@@ -1907,8 +1909,8 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = await snsClient.createTopic({ Name: randomId('topic1_') });
-  const topic2 = await snsClient.createTopic({ Name: randomId('topic2_') });
+  const topic1 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalPgRecord,
@@ -2176,20 +2178,18 @@ test.serial('PUT removes existing fields if not specified or set to null', async
 });
 
 test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', async (t) => {
-  const listSubscriptionsByTopicStub = sinon.stub(snsClient, 'listSubscriptionsByTopic')
-    .returns(
-      Promise.resolve({
-        Subscriptions: [{
-          Endpoint: process.env.messageConsumer,
-          SubscriptionArn: randomString(),
-        }],
-      })
-    );
+  const snsMock = mockClient(awsServices.sns());
 
-  const unsubscribeStub = sinon.stub(snsClient, 'unsubscribe')
-    .returns(
-      Promise.resolve()
-    );
+  snsMock
+    .on(ListSubscriptionsByTopicCommand)
+    .resolves({
+      Subscriptions: [{
+        Endpoint: process.env.messageConsumer,
+        SubscriptionArn: randomString(),
+      }],
+    })
+    .on(UnsubscribeCommand)
+    .resolves({});
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
@@ -2201,8 +2201,7 @@ test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', as
       }),
     });
   t.teardown(() => {
-    listSubscriptionsByTopicStub.restore();
-    unsubscribeStub.restore();
+    snsMock.restore();
     lambdaStub.restore();
   });
 
@@ -2511,8 +2510,8 @@ test.serial('PUT creates the same updated SNS rule in PostgreSQL/Elasticsearch',
     pgCollection,
   } = t.context;
 
-  const topic1 = await snsClient.createTopic({ Name: randomId('topic1_') });
-  const topic2 = await snsClient.createTopic({ Name: randomId('topic2_') });
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalApiRule,
@@ -2775,8 +2774,8 @@ test.serial('PUT keeps initial trigger information if writing to PostgreSQL fail
     pgCollection,
   } = t.context;
 
-  const topic1 = await snsClient.createTopic({ Name: randomId('topic1_') });
-  const topic2 = await snsClient.createTopic({ Name: randomId('topic2_') });
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalApiRule,
@@ -2867,8 +2866,8 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     pgCollection,
   } = t.context;
 
-  const topic1 = await snsClient.createTopic({ Name: randomId('topic1_') });
-  const topic2 = await snsClient.createTopic({ Name: randomId('topic2_') });
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalApiRule,

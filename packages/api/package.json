@@ -121,6 +121,7 @@
     }
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.2.0"
+    "@cumulus/test-data": "18.2.0",
+    "aws-sdk-client-mock": "^3.0.1"
   }
 }
