@@ -3,6 +3,8 @@
 const sinon = require('sinon');
 const test = require('ava');
 const proxyquire = require('proxyquire');
+const { mockClient } = require('aws-sdk-client-mock');
+const { PublishCommand } = require('@aws-sdk/client-sns');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { s3, sns } = require('@cumulus/aws-client/services');
@@ -86,7 +88,7 @@ function testCallback(err, object) {
   return object;
 }
 
-let publishStub;
+let snsMock;
 let templateBucket;
 
 test.before(async () => {
@@ -109,7 +111,10 @@ test.beforeEach((t) => {
     ResponseMetadata: { RequestId: randomString() },
     MessageId: randomString(),
   };
-  publishStub = sinon.stub(snsClient, 'publish').returns(Promise.resolve(t.context.publishResponse));
+  snsMock = mockClient(snsClient);
+  snsMock
+    .on(PublishCommand)
+    .resolves(Promise.resolve(t.context.publishResponse));
 
   process.env.stackName = randomString();
   process.env.system_bucket = randomString();
@@ -121,7 +126,7 @@ test.beforeEach((t) => {
 
 test.afterEach.always(() => {
   queueMessageStub.resetHistory();
-  publishStub.restore();
+  snsMock.restore();
 });
 
 test.after.always(async () => {
@@ -146,9 +151,11 @@ test.serial('A kinesis message, should publish the invalid record to fallbackSNS
     Records: [validRecord, invalidRecord],
   };
   await handler(kinesisEvent, {}, testCallback);
-  const callArgs = publishStub.getCall(0).args;
-  t.deepEqual(invalidRecord, JSON.parse(callArgs[0].Message));
-  t.true(publishStub.calledOnce);
+
+  const publishCalls = snsMock.commandCalls(PublishCommand);
+
+  t.true(publishCalls.length > 0);
+  t.deepEqual(invalidRecord, JSON.parse(publishCalls[0].firstArg.input.Message));
 });
 
 test.serial('An SNS fallback retry, should throw an error if message does not include a collection', async (t) => {
@@ -173,9 +180,10 @@ test.serial('A kinesis message, should publish the invalid records to fallbackSN
 
   await handler(kinesisEvent, {}, testCallback);
 
-  const callArgs = publishStub.getCall(0).args;
-  t.deepEqual(invalidRecord, JSON.parse(callArgs[0].Message));
-  t.true(publishStub.calledOnce);
+  const publishCalls = snsMock.commandCalls(PublishCommand);
+
+  t.true(publishCalls.length > 0);
+  t.deepEqual(invalidRecord, JSON.parse(publishCalls[0].firstArg.input.Message));
 });
 
 test.serial('An SNS Fallback retry, should throw an error if message collection has wrong data type', async (t) => {
@@ -201,9 +209,10 @@ test.serial('A kinesis message, should publish the invalid record to fallbackSNS
 
   await handler(kinesisEvent, {}, testCallback);
 
-  const callArgs = publishStub.getCall(0).args;
-  t.deepEqual(invalidRecord, JSON.parse(callArgs[0].Message));
-  t.true(publishStub.calledOnce);
+  const publishCalls = snsMock.commandCalls(PublishCommand);
+
+  t.true(publishCalls.length > 0);
+  t.deepEqual(invalidRecord, JSON.parse(publishCalls[0].firstArg.input.Message));
 });
 
 test.serial('An SNS Fallback retry, should throw an error if message is invalid json', async (t) => {
@@ -224,7 +233,9 @@ test.serial('A kinesis message should not publish record to fallbackSNS if it pr
   const kinesisEvent = {
     Records: [{ kinesis: { data: Buffer.from(validMessage).toString('base64') } }],
   };
-  t.true(publishStub.notCalled);
+  const publishCalls = snsMock.commandCalls(PublishCommand);
+
+  t.true(publishCalls.length < 1);
   return handler(kinesisEvent, {}, testCallback)
     .then((r) => t.deepEqual(r, [[true]]));
 });
@@ -240,10 +251,11 @@ test.serial('An SNS Fallback message should not throw if message is valid.', (t)
 });
 
 test.serial('An error publishing falllback record for Kinesis message should re-throw error from validation', async (t) => {
-  publishStub.restore();
-  publishStub = sinon.stub(snsClient, 'publish').callsFake(() => {
-    throw new Error('fail');
-  });
+  snsMock.restore();
+  snsMock = mockClient(snsClient);
+  snsMock
+    .on(PublishCommand)
+    .rejects(new Error('fail'));
 
   const invalidMessage = JSON.stringify({ noCollection: 'in here' });
   const invalidRecord = { kinesis: { data: Buffer.from(invalidMessage).toString('base64') } };
@@ -257,6 +269,6 @@ test.serial('An error publishing falllback record for Kinesis message should re-
       { message: /validation/ }
     );
   } finally {
-    publishStub.restore();
+    snsMock.restore();
   }
 });

@@ -42,7 +42,7 @@ async function publishRecordToFallbackTopic(record) {
   const fallbackArn = process.env.FallbackTopicArn;
   log.info('publishing bad kinesis record to Topic:', fallbackArn);
   log.info('record:', JSON.stringify(record));
-  return await sns.send(new PublishCommand({
+  return await sns().send(new PublishCommand({
     TopicArn: fallbackArn,
     Message: JSON.stringify(record),
   }));
