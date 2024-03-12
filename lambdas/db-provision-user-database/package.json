@@ -23,7 +23,8 @@
   },
   "license": "Apache-2.0",
   "ava": {
-    "timeout": "2m"
+    "timeout": "2m",
+    "failFast": true
   },
   "dependencies": {
     "@aws-sdk/client-secrets-manager": "^3.447.0",

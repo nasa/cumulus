@@ -21,7 +21,8 @@
   },
   "ava": {
     "serial": true,
-    "timeout": "15m"
+    "timeout": "15m",
+    "failFast": true
   },
   "publishConfig": {
     "access": "private"

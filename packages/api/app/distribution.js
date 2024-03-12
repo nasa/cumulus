@@ -17,11 +17,11 @@ const hsts = require('hsts');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const express = require('express');
-const boom = require('express-boom');
 const awsServerlessExpress = require('aws-serverless-express');
 const morgan = require('morgan');
 const awsServerlessExpressMiddleware = require('aws-serverless-express/middleware');
 const distributionRouter = require('./distribution-routes');
+const boom = require('../lib/expressBoom');
 const { writeBucketMapCacheToS3 } = require('../endpoints/distribution');
 
 const distributionApp = express();
