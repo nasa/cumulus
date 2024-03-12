@@ -59,6 +59,16 @@ function extractGranules(message) {
   return null;
 }
 
+function formatDateForDLA(timestamp) {
+  const date = new Date(timestamp * 1000);
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  const day = date.getUTCDate();
+  const hour = date.getUTCHours();
+
+  return `${year}/${month}/${day}/${hour}`;
+}
+
 /**
  * Reformat dlqRecord to add key attributes at top level.
  *
@@ -159,9 +169,11 @@ async function handler(event) {
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
+    const timePath = formatDateForDLA(massagedMessage.time);
+
     await s3PutObject({
       Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
+      Key: `${process.env.stackName}/dead-letter-archive/sqs/${timePath}/${s3Identifier}.json`,
       Body: JSON.stringify(massagedMessage),
     });
   }));
