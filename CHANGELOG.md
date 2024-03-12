@@ -44,7 +44,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     to granules table
 
 ### Changed
-
+- **CUMULUS-3613**
+  - Updated handler for saving DLQ reports to S3 by putting the message in an S3 folder based on the timestamp
+  - Provided a migration for existing DLA objects into the new structure
 - **CUMULUS-2892**
   - Updates `aws-client`'s EC2 client to use AWS SDK v3.
 - **CUMULUS-2896**
