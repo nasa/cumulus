@@ -45,6 +45,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- **CUMULUS-3518**
+  - Update existing usage of `@cumulus/aws-client` lambda service to use AWS SDK v3 `send` syntax
 - **CUMULUS-2901**
   - Updated STS code to AWS SDK v3.
 - **CUMULUS-2898**
