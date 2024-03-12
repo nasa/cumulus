@@ -1,7 +1,7 @@
 /**
  * @module Lambda
  */
-import { InvocationType, InvokeCommandOutput } from '@aws-sdk/client-lambda';
+import { InvocationType, InvokeCommand, InvokeCommandOutput } from '@aws-sdk/client-lambda';
 import { EventBridgeEvent } from 'aws-lambda';
 import Logger from '@cumulus/logger';
 import { lambda } from './services';
@@ -32,11 +32,11 @@ export const invoke = async (name: string, payload: unknown, type: InvocationTyp
 
   let response;
   try {
-    response = await lambda().invoke({
+    response = await lambda().send(new InvokeCommand({
       FunctionName: name,
       Payload: new TextEncoder().encode(JSON.stringify(payload)),
       InvocationType: type,
-    });
+    }));
   } catch (error) {
     log.error(`Error invoking ${name}`, error);
     throw error;
