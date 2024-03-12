@@ -29,6 +29,7 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.529.1",
     "@cumulus/api": "18.2.0",
     "@cumulus/api-client": "18.2.0",
     "@cumulus/aws-client": "18.2.0",
