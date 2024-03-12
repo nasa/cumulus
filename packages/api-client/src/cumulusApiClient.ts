@@ -1,5 +1,8 @@
-import pRetry from 'p-retry';
+import {
+  InvokeCommand,
+} from '@aws-sdk/client-lambda';
 
+import pRetry from 'p-retry';
 import { lambda } from '@cumulus/aws-client/services';
 import Logger from '@cumulus/logger';
 
@@ -36,10 +39,10 @@ export async function invokeApi(
 
   return await pRetry(
     async () => {
-      const apiOutput = await lambda().invoke({
+      const apiOutput = await lambda().send(new InvokeCommand({
         Payload: new TextEncoder().encode(JSON.stringify(payload)),
         FunctionName: `${prefix}-PrivateApiLambda`,
-      });
+      }));
 
       if (!apiOutput.Payload) {
         throw new Error('No payload received from lambda invocation');
