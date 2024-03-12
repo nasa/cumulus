@@ -1,6 +1,4 @@
-import {
-  InvokeCommand,
-} from '@aws-sdk/client-lambda';
+import { InvokeCommand } from '@aws-sdk/client-lambda';
 
 import pRetry from 'p-retry';
 import { lambda } from '@cumulus/aws-client/services';
