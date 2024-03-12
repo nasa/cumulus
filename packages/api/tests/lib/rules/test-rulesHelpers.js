@@ -16,7 +16,7 @@ const {
   RemovePermissionCommand,
 } = require('@aws-sdk/client-lambda');
 
-const {mockClient} = require('aws-sdk-client-mock');
+const { mockClient } = require('aws-sdk-client-mock');
 
 const awsServices = require('@cumulus/aws-client/services');
 const workflows = require('@cumulus/common/workflows');
