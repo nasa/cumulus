@@ -34,7 +34,7 @@ export const publishSnsMessageWithRetry = async (
         TopicArn: snsTopicArn,
         Message: JSON.stringify(message),
       };
-      sns().send(new PublishCommand(publishInput));
+      await sns().send(new PublishCommand(publishInput));
     },
     {
       maxTimeout: 5000,
