@@ -1,5 +1,3 @@
-//@ts-check
-
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
@@ -397,10 +395,10 @@ async function validateAndUpdateSqsRule(rule) {
    * @param {{ name: string | undefined}}  lambda - The name of the target lambda
    * @returns {Promise}
    */
-async function addKinesisEventSource(item, lambda) {
+async function addKinesisEventSource(item, kinesisLambda) {
   // use the existing event source mapping if it already exists and is enabled
   const listParams = {
-    FunctionName: lambda.name,
+    FunctionName: kinesisLambda.name,
     EventSourceArn: item.rule.value,
   };
   const mappingInput = new ListEventSourceMappingsCommand(listParams);
@@ -423,7 +421,7 @@ async function addKinesisEventSource(item, lambda) {
   // create event source mapping
   const params = {
     EventSourceArn: item.rule.value,
-    FunctionName: lambda.name,
+    FunctionName: kinesisLambda.name,
     StartingPosition: EventSourcePosition.TRIM_HORIZON,
     Enabled: true,
   };
@@ -446,7 +444,7 @@ async function addKinesisEventSources(rule) {
   ];
 
   const sourceEventPromises = kinesisSourceEvents.map(
-    (lambda) => addKinesisEventSource(rule, lambda).catch(
+    (kinesisLambda) => addKinesisEventSource(rule, kinesisLambda).catch(
       (error) => {
         log.error(`Error adding eventSourceMapping for ${rule.name}: ${error}`);
         if (error.name !== 'ResourceNotFoundException') throw error;
