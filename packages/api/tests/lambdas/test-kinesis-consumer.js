@@ -113,6 +113,8 @@ test.beforeEach((t) => {
   };
   snsMock = mockClient(snsClient);
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(PublishCommand)
     .resolves(Promise.resolve(t.context.publishResponse));
 
@@ -254,6 +256,8 @@ test.serial('An error publishing falllback record for Kinesis message should re-
   snsMock.restore();
   snsMock = mockClient(snsClient);
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(PublishCommand)
     .rejects(new Error('fail'));
 

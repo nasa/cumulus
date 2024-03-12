@@ -1202,6 +1202,8 @@ test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', 
   const snsMock = mockClient(awsServices.sns());
 
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(ListSubscriptionsByTopicCommand)
     .resolves({
       Subscriptions: [{
@@ -2181,6 +2183,8 @@ test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', as
   const snsMock = mockClient(awsServices.sns());
 
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(ListSubscriptionsByTopicCommand)
     .resolves({
       Subscriptions: [{

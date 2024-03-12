@@ -717,6 +717,8 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
     });
 
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(ListSubscriptionsByTopicCommand)
     .resolves({
       Subscriptions: [{
@@ -848,6 +850,8 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
       }),
     });
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(ListSubscriptionsByTopicCommand)
     .resolves({
       Subscriptions: [{
@@ -1687,6 +1691,8 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
   const snsMock = mockClient(awsServices.sns());
 
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(ListSubscriptionsByTopicCommand)
     .resolves({
       Subscriptions: [{
@@ -2114,6 +2120,8 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
     });
 
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(ListSubscriptionsByTopicCommand)
     .resolves({
       Subscriptions: [{
@@ -2178,6 +2186,8 @@ test.serial('Updating an SNS rule to "disabled" removes the event source mapping
     });
 
   snsMock
+    .onAnyCommand()
+    .rejects()
     .on(ListSubscriptionsByTopicCommand)
     .resolves({
       Subscriptions: [{
