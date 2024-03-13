@@ -96,9 +96,7 @@ const updateDLABatch = async (
   const targetPaths = validKeys.map((filePath) => filePath.replace(sourceDir, targetDirectory));
 
   const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
-  for (const pathPair of zipped) {
-    await updateDLAFile(bucket, pathPair[0], pathPair[1]);
-  }
+  zipped.forEach((pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1]));
 };
 
 
