@@ -60,14 +60,37 @@ function extractGranules(message) {
 }
 
 function formatDateForDLA(timestamp) {
-  const date = new Date(timestamp * 1000);
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth() + 1;
-  const day = date.getUTCDate();
-  const hour = date.getUTCHours();
-
-  return `${year}/${month}/${day}/${hour}`;
+  const dateObj = new Date(timestamp);
+  const month = ('0' + (dateObj.getUTCMonth() + 1)).slice(-2);
+  const day = ('0' + dateObj.getUTCDate()).slice(-2);
+  const hour = ('0' + dateObj.getUTCHours()).slice(-2);
+  return dateObj.getUTCFullYear() + '/' + month + '/' + day + '/' + hour;
 }
+
+/*
+async function restructureDLA(prefix, system_bucket){
+  let continuationToken;
+
+  const objects = await listS3ObjectsV2({
+    Bucket: system_bucket,
+    Prefix:  prefix + '/dead-letter-archive/sqs',
+    ContinuationToken: continuationToken,
+    MaxKeys: 1000 });
+
+  for (const object of objects) {
+    const timestamp = jsonObject.body.time;
+    const newPath = formatDateForDLA(timestamp);
+
+    await moveObject({
+      sourceBucket: system_bucket,
+      sourceKey: object.Key,
+      destinationBucket: system_bucket,
+      destinationKey: object.Key + newPath,
+      copyTags: true,
+    })
+
+  }
+}*/
 
 /**
  * Reformat dlqRecord to add key attributes at top level.

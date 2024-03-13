@@ -27,6 +27,7 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   const message1Name = randomString(12);
   const message1 = {
     messageId: uuidv4(),
+    time: '2024-03-11T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: message1Name },
     }),
@@ -34,6 +35,7 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   const message2Name = randomString(12);
   const message2 = {
     messageId: uuidv4(),
+    time: '2024-03-12T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: message2Name },
     }),
@@ -47,11 +49,11 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
 
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${message1Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/3/11/18/${message1Name}`,
   })).length, 1);
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${message2Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/3/12/18/${message2Name}`,
   })).length, 1);
 });
 
@@ -59,12 +61,14 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
   const messageName = randomString(12);
   const message1 = {
     messageId: uuidv4(),
+    time: '2024-03-11T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: messageName },
     }),
   };
   const message2 = {
     messageId: uuidv4(),
+    time: '2024-03-11T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: messageName },
     }),
@@ -78,7 +82,7 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
 
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${messageName}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/3/11/18/${messageName}`,
   })).length, 2);
 });
 
