@@ -5,48 +5,15 @@ import {
   getJsonS3Object,
   putJsonS3Object,
   listS3Objects,
-  headObject,
 } from '@cumulus/aws-client/S3';
 import { hoistCumulusMessageDetails } from '../../packages/message/DeadLetterMessage';
-
-const updateDLAFile = async (
-  bucket: string,
-  sourcePath: string,
-  targetPath: string
-) => {
-  const dlaObject = await getJsonS3Object(bucket, sourcePath);
-  const hoisted = await hoistCumulusMessageDetails(dlaObject);
-  return putJsonS3Object(bucket, targetPath, hoisted);
-};
-
-const updateDLABatch = async (
-  bucket: string,
-  sourceDirectory: string,
-  targetDirectory: string,
-  prefix: string
-) => {
-  const subObjects = await listS3Objects(bucket, path.join(sourceDirectory, prefix));
-  const validKeys = subObjects.map(
-    (obj) => obj.Key
-  ).filter(
-    (key) => key !== undefined
-  ) as Array<string>;
-  const sourcePaths = validKeys;
-  const fileNames = validKeys.map((key) => path.basename(key));
-
-  // const sourcePaths = fileNames.map((fileName) => path.join(sourceDirectory, fileName));
-  const targetPaths = fileNames.map((fileName) => path.join(targetDirectory, fileName));
-  const zipped: Array<[string, string]> = zip(sourcePaths, targetPaths) as Array<[string, string]>;
-  zipped.forEach(
-    (pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1])
-  );
-};
 const getEnvironmentVariable = (variable: string): string => {
   if (!process.env[variable]) {
     throw new Error(`Environment variable "${variable}" is not set.`);
   }
   return process.env[variable] as string;
-}
+};
+
 const verifyRequiredEnvironmentVariables = () => {
   [
     'DEPLOYMENT',
@@ -57,51 +24,107 @@ const verifyRequiredEnvironmentVariables = () => {
   });
 };
 
-
-const parseS3Directory = (prefix: string) => {
-  const directoryForm = prefix.endsWith('/') ? prefix : `${prefix}/`;
-  const bucket = getEnvironmentVariable('INTERNAL_BUCKET');
-  const testObjects = listS3Objects(bucket, prefix).then(
-    (a) => a
-  ).catch((error) => { throw error; });
-
-
-  const testKey = testObjects.filter((obj) => obj.Key)[0].Key as string;
-  if (testKey.startsWith(directoryForm)) {
-    return prefix;
+const manipulateTrailingSlash = (str: string, shouldHave: boolean): string => {
+  const has = str.endsWith('/');
+  if (has && shouldHave) {
+    return str;
   }
+  if (!has && !shouldHave) {
+    return str;
+  }
+  if (!has && shouldHave) {
+    return `${str}/`;
+  }
+  if (has && !shouldHave) {
+    return str.slice(0, -1);
+  }
+  throw new Error('how did you get here? this shouldnt be possible');
+};
+const parseS3Directory = async (prefix: string): Promise<string> => {
+  const directoryForm = manipulateTrailingSlash(prefix, true);
+  const bucket = getEnvironmentVariable('INTERNAL_BUCKET');
+  const testObjects = await listS3Objects(bucket, prefix);
+  try {
+    const testKey = testObjects.filter((obj) => 'Key' in obj)[0].Key as string;
+    if (testKey.startsWith(directoryForm)) {
+      return directoryForm;
+    }
+  } catch (error) {
+    throw new Error(`cannot find contents of bucket ${bucket} under key ${prefix}`);
+  }
+
   return path.dirname(prefix);
 };
-
-const parsePath = (prefix: string | undefined): string => {
-  const defaultPath = `${process.env['DEPLOYMENT']}/dead_letter_archive/sqs/`;
+const parsePrefix = (prefix: string | undefined): string => {
+  const defaultPath = `${process.env['DEPLOYMENT']}/dead-letter-archive/sqs/`;
   if (!prefix) {
     console.log(
       `no prefix arg given, defaulting path to ${defaultPath}`
     );
     return defaultPath;
   }
-  return parseS3Directory(prefix)
+  return prefix;
 };
 
-const parseTargetPath = (targetPath: string | undefined, sourcePath: string): string => {
+const parsePath = async (prefix: string | undefined): Promise<string> => (
+  await parseS3Directory(parsePrefix(prefix))
+);
+
+const updateDLAFile = async (
+  bucket: string,
+  sourcePath: string,
+  targetPath: string
+) => {
+  const dlaObject = await getJsonS3Object(bucket, sourcePath);
+  const hoisted = await hoistCumulusMessageDetails(dlaObject);
+  return await putJsonS3Object(bucket, targetPath, hoisted);
+};
+
+const updateDLABatch = async (
+  bucket: string,
+  targetDirectory: string,
+  prefix: string
+) => {
+  const sourceDir = await parsePath(prefix);
+  const subObjects = await listS3Objects(bucket, prefix);
+
+  const validKeys = subObjects.map(
+    (obj) => obj.Key
+  ).filter(
+    (key) => key !== undefined
+  ) as Array<string>;
+  const targetPaths = validKeys.map((filePath) => filePath.replace(sourceDir, targetDirectory));
+
+  const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
+  for (const pathPair of zipped) {
+    await updateDLAFile(bucket, pathPair[0], pathPair[1]);
+  }
+};
+
+
+
+const parseTargetPath = async (
+  targetPath: string | undefined,
+  prefix: string | undefined
+): Promise<string> => {
+  const sourceDir = await parsePath(prefix);
   if (!targetPath) {
-    const defaultTarget = sourcePath + '_updated_dla';
+    const defaultTarget = `${manipulateTrailingSlash(sourceDir, false)}_updated_dla/`;
     console.log(
       `no targetPath given, defaulting targetPath to ${defaultTarget}`
     );
     return defaultTarget;
   }
-  if (targetPath === sourcePath) {
+  const targetDir = manipulateTrailingSlash(targetPath, true);
+  if (targetDir === sourceDir) {
     console.log(
       'writing output to input bucket'
     );
   }
-  return targetPath;
+  return targetDir;
 };
 
-
-if (require.main === module) {
+const main = async () => {
   verifyRequiredEnvironmentVariables();
   const internalBucket = process.env['INTERNAL_BUCKET'];
   if (!internalBucket) {
@@ -124,29 +147,20 @@ if (require.main === module) {
       },
     }
   );
-  console.log(args);
 
-  const s3Directory = parseS3Directory(prefix);
-  console.log(checkShit);
-  console.log(parsePath, parseTargetPath, parsePrefix);
-  // const sourcePath = parsePath(args.prefix);
-  // const targetPath = parseTargetPath(args.targetPath, sourcePath);
-  // const prefix = parsePrefix(args.prefix);
-  // console.log(sourcePath);
-  // console.log(targetPath);
-  // console.log(prefix);
+  const targetDir = await parseTargetPath(args.targetPath, args.prefix);
+  const prefix = await parsePrefix(args.prefix);
 
-  // updateDLABatch(
-  //   internalBucket,
-  //   sourcePath,
-  //   targetPath,
-  //   prefix
-  // ).then(
-  //   (ret) => console.log(ret)
-  // ).catch((error) => {
-  //   console.log(`update-dla-format failed: ${error}`);
-  //   throw error;
-  // });
-  console.log(updateDLAFile);
-  console.log(updateDLABatch)
+  updateDLABatch(internalBucket, targetDir, prefix);
+
+};
+
+if (require.main === module) {
+  main(
+  ).then(
+    (ret) => console.log(ret)
+  ).catch((error) => {
+    console.log(`failed: ${error}`);
+    throw error;
+  });
 }
