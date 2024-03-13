@@ -739,6 +739,10 @@ export const uploadS3FileStream = (
     },
   });
 
+export interface ListS3ObjectsOutput {
+  Key: string
+}
+
 /**
  * List the objects in an S3 bucket
  */
@@ -746,7 +750,7 @@ export const listS3Objects = async (
   bucket: string,
   prefix?: string,
   skipFolders: boolean = true
-): Promise<Array<Object>> => {
+): Promise<Array<ListS3ObjectsOutput>> => {
   log.info(`Listing objects in s3://${bucket}`);
   const params: ListObjectsRequest = {
     Bucket: bucket,
@@ -754,10 +758,13 @@ export const listS3Objects = async (
   if (prefix) params.Prefix = prefix;
 
   const data = await s3().listObjects(params);
-  let contents = data.Contents || [];
+  if (!data.Contents) {
+    return [];
+  }
+  let contents = data.Contents.filter((obj) => obj.Key !== undefined) as Array<ListS3ObjectsOutput>;
   if (skipFolders) {
     // Filter out any references to folders
-    contents = contents.filter((obj) => obj.Key !== undefined && !obj.Key.endsWith('/'));
+    contents = contents.filter((obj) => !obj.Key.endsWith('/'));
   }
   return contents;
 };
