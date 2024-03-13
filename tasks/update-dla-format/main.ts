@@ -99,8 +99,6 @@ const updateDLABatch = async (
   zipped.forEach((pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1]));
 };
 
-
-
 const parseTargetPath = async (
   targetPath: string | undefined,
   prefix: string | undefined
@@ -150,7 +148,6 @@ const main = async () => {
   const prefix = await parsePrefix(args.prefix);
 
   updateDLABatch(internalBucket, targetDir, prefix);
-
 };
 
 if (require.main === module) {
