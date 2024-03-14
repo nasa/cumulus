@@ -29,7 +29,7 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
     messageId: uuidv4(),
     body: JSON.stringify({
       detail: { executionArn: message1Name },
-      time: '2024-03-11T18:58:27Z'
+      time: '2024-03-11T18:58:27Z',
     }),
   };
   const message2Name = randomString(12);
@@ -37,7 +37,7 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
     messageId: uuidv4(),
     body: JSON.stringify({
       detail: { executionArn: message2Name },
-      time: '2024-03-12T18:58:27Z'
+      time: '2024-03-12T18:58:27Z',
     }),
   };
 
@@ -62,14 +62,14 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
     messageId: uuidv4(),
     body: JSON.stringify({
       detail: { executionArn: messageName },
-      time: '2024-03-11T18:58:27Z'
+      time: '2024-03-11T18:58:27Z',
     }),
   };
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
       detail: { executionArn: messageName },
-      time: '2024-03-11T18:58:27Z'
+      time: '2024-03-11T18:58:27Z',
     }),
   };
 
