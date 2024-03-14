@@ -36,6 +36,7 @@ function payloadHasGranules(payload) {
     && Array.isArray(payload.granules)
   );
 }
+
 /**
  * @param {CumulusMessage} message
  * @returns {string | null}
@@ -48,6 +49,7 @@ function extractCollectionId(message) {
   }
   return null;
 }
+
 /**
  * @param {CumulusMessage} message
  * @returns {Array<string | null> | null}
@@ -59,6 +61,11 @@ function extractGranules(message) {
   return null;
 }
 
+/**
+ *
+ * @param {string} timestamp
+ * @returns {string}
+ */
 function formatDateForDLA(timestamp) {
   const dateObj = new Date(timestamp);
   const month = ('0' + (dateObj.getUTCMonth() + 1)).slice(-2);
@@ -66,31 +73,6 @@ function formatDateForDLA(timestamp) {
   const hour = ('0' + dateObj.getUTCHours()).slice(-2);
   return dateObj.getUTCFullYear() + '/' + month + '/' + day + '/' + hour;
 }
-
-/*
-async function restructureDLA(prefix, system_bucket){
-  let continuationToken;
-
-  const objects = await listS3ObjectsV2({
-    Bucket: system_bucket,
-    Prefix:  prefix + '/dead-letter-archive/sqs',
-    ContinuationToken: continuationToken,
-    MaxKeys: 1000 });
-
-  for (const object of objects) {
-    const timestamp = jsonObject.body.time;
-    const newPath = formatDateForDLA(timestamp);
-
-    await moveObject({
-      sourceBucket: system_bucket,
-      sourceKey: object.Key,
-      destinationBucket: system_bucket,
-      destinationKey: object.Key + newPath,
-      copyTags: true,
-    })
-
-  }
-}*/
 
 /**
  * Reformat dlqRecord to add key attributes at top level.
@@ -192,7 +174,7 @@ async function handler(event) {
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
-    const timePath = formatDateForDLA(massagedMessage.time);
+    const timePath = massagedMessage.time !== null ? formatDateForDLA(massagedMessage.time) : 'unknown_time';
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${timePath}/${s3Identifier}.json`,
