@@ -193,7 +193,6 @@ async function handler(event) {
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
     const timePath = formatDateForDLA(massagedMessage.time);
-
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${timePath}/${s3Identifier}.json`,

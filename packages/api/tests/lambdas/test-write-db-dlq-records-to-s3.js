@@ -27,17 +27,17 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   const message1Name = randomString(12);
   const message1 = {
     messageId: uuidv4(),
-    time: '2024-03-11T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: message1Name },
+      time: '2024-03-11T18:58:27Z'
     }),
   };
   const message2Name = randomString(12);
   const message2 = {
     messageId: uuidv4(),
-    time: '2024-03-12T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: message2Name },
+      time: '2024-03-12T18:58:27Z'
     }),
   };
 
@@ -46,7 +46,6 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   };
 
   await handler(recordsFixture);
-
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
     Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/3/11/18/${message1Name}`,
@@ -61,16 +60,16 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
   const messageName = randomString(12);
   const message1 = {
     messageId: uuidv4(),
-    time: '2024-03-11T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: messageName },
+      time: '2024-03-11T18:58:27Z'
     }),
   };
   const message2 = {
     messageId: uuidv4(),
-    time: '2024-03-11T18:58:27Z',
     body: JSON.stringify({
       detail: { executionArn: messageName },
+      time: '2024-03-11T18:58:27Z'
     }),
   };
 
