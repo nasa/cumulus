@@ -48,11 +48,11 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   await handler(recordsFixture);
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/3/11/18/${message1Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/03/11/18/${message1Name}`,
   })).length, 1);
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/3/12/18/${message2Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/03/12/18/${message2Name}`,
   })).length, 1);
 });
 
@@ -81,7 +81,7 @@ test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execut
 
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/3/11/18/${messageName}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024/03/11/18/${messageName}`,
   })).length, 2);
 });
 
