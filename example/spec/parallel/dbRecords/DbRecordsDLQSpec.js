@@ -67,7 +67,7 @@ describe('when a bad record is ingested', () => {
       fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
     console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
-    const prefix = `${stackName}/dead-letter-archive/sqs/2024/03/11/18/${executionArn}`;
+    const prefix = `${stackName}/dead-letter-archive/sqs/eventdate=2024-03-11/${executionArn}`;
 
     try {
       await expectAsync(waitForListObjectsV2ResultCount({

@@ -4,6 +4,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 
 const log = require('@cumulus/common/log');
 const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
@@ -59,19 +60,6 @@ function extractGranules(message) {
     return message.payload.granules.map((granule) => granule?.granuleId || null);
   }
   return null;
-}
-
-/**
- *
- * @param {string} timestamp
- * @returns {string}
- */
-function formatDateForDLA(timestamp) {
-  const dateObj = new Date(timestamp);
-  const month = ('0' + (dateObj.getUTCMonth() + 1)).slice(-2);
-  const day = ('0' + dateObj.getUTCDate()).slice(-2);
-  const hour = ('0' + dateObj.getUTCHours()).slice(-2);
-  return dateObj.getUTCFullYear() + '/' + month + '/' + day + '/' + hour;
 }
 
 /**
@@ -174,7 +162,7 @@ async function handler(event) {
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
-    const timePath = massagedMessage.time !== null ? formatDateForDLA(massagedMessage.time) : 'unknown-time';
+    const timePath = massagedMessage.time ? 'eventdate=' + moment.utc(massagedMessage.time).format('YYYY-MM-DD') : 'unknown-time';
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${timePath}/${s3Identifier}.json`,
