@@ -18,6 +18,7 @@ import {
   CopyObjectCommandInput,
   CreateMultipartUploadRequest,
   DeleteObjectRequest,
+  DeleteBucketCommandOutput,
   GetObjectCommandInput,
   GetObjectOutput,
   HeadObjectOutput,
@@ -629,11 +630,11 @@ export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap
 /**
 * Delete a bucket and all of its objects from S3
 *
-* @param {string} bucket - name of the bucket
-* @returns {Promise} the promised result of `S3.deleteBucket`
+* @param bucket - name of the bucket
+* @returns the promised result of `S3.deleteBucket`
 **/
 export const recursivelyDeleteS3Bucket = improveStackTrace(
-  async (bucket: string) => {
+  async (bucket: string): Promise<DeleteBucketCommandOutput> => {
     const response = await s3().listObjects({ Bucket: bucket });
     const s3Objects: DeleteObjectRequest[] = (response.Contents || []).map((o) => {
       if (!o.Key) throw new Error(`Unable to determine S3 key of ${JSON.stringify(o)}`);
