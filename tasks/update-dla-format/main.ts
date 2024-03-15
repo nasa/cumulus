@@ -6,7 +6,10 @@ import {
   putJsonS3Object,
   listS3Objects,
 } from '@cumulus/aws-client/S3';
-import { hoistCumulusMessageDetails } from '../../packages/message/DeadLetterMessage';
+import {
+  PutObjectCommandOutput,
+} from '@aws-sdk/client-s3';
+import { hoistCumulusMessageDetails } from '@cumulus/message/DeadLetterMessage';
 const getEnvironmentVariable = (variable: string): string => {
   if (!process.env[variable]) {
     throw new Error(`Environment variable "${variable}" is not set.`);
@@ -17,14 +20,16 @@ const getEnvironmentVariable = (variable: string): string => {
 const verifyRequiredEnvironmentVariables = () => {
   [
     'DEPLOYMENT',
-    'AWS_PROFILE',
     'INTERNAL_BUCKET',
   ].forEach((x) => {
     getEnvironmentVariable(x);
   });
 };
 
-const manipulateTrailingSlash = (str: string, shouldHave: boolean): string => {
+export const manipulateTrailingSlash = (str: string, shouldHave: boolean): string => {
+  if (str === '') {
+    return str;
+  }
   const has = str.endsWith('/');
   if (has && shouldHave) {
     return str;
@@ -36,74 +41,94 @@ const manipulateTrailingSlash = (str: string, shouldHave: boolean): string => {
     return `${str}/`;
   }
   if (has && !shouldHave) {
-    return str.slice(0, -1);
+    let out = str.slice(0, -1);
+    while (out.endsWith('/')) {
+      out = out.slice(0, -1);
+    }
+    return out;
   }
   throw new Error('how did you get here? this shouldnt be possible');
 };
-const parseS3Directory = async (prefix: string): Promise<string> => {
-  const directoryForm = manipulateTrailingSlash(prefix, true);
+export const parseS3Directory = async (prefix: string): Promise<string> => {
+  let prefixForm = prefix;
+  /* expect user might point us at '/' expecting that to mean 'everything' */
+  if (prefixForm === '/') {
+    prefixForm = '';
+  }
+  const directoryForm = manipulateTrailingSlash(prefixForm, true);
   const bucket = getEnvironmentVariable('INTERNAL_BUCKET');
-  const testObjects = await listS3Objects(bucket, prefix);
+
+  let prefixIsValid = false;
+  let directoryIsValid = false;
+  let keys = [];
   try {
-    const testKey = testObjects.filter((obj) => 'Key' in obj)[0].Key as string;
-    if (testKey.startsWith(directoryForm)) {
-      return directoryForm;
+    const testObjects = await listS3Objects(bucket, prefixForm);
+    keys = testObjects.map((obj) => obj.Key);
+    if (keys.length === 0) {
+      throw new Error(`cannot find contents of bucket ${bucket} under prefix '${prefixForm}'`);
     }
   } catch (error) {
-    throw new Error(`cannot find contents of bucket ${bucket} under key ${prefix}`);
+    throw new Error(`cannot find contents of bucket ${bucket} under prefix '${prefixForm}'`);
   }
 
-  return path.dirname(prefix);
-};
-const parsePrefix = (prefix: string | undefined): string => {
-  const defaultPath = `${process.env['DEPLOYMENT']}/dead-letter-archive/sqs/`;
-  if (!prefix) {
-    console.log(
-      `no prefix arg given, defaulting path to ${defaultPath}`
-    );
-    return defaultPath;
+  keys.forEach((key) => {
+    if (key && key.startsWith(directoryForm)) {
+      directoryIsValid = true;
+    } else if (key && key.startsWith(prefixForm)) {
+      prefixIsValid = true;
+    }
+  });
+  if (prefixIsValid) {
+    let dirname = path.dirname(prefixForm);
+    if (dirname === '.') {
+      dirname = '';
+    }
+    return manipulateTrailingSlash(dirname, true);
   }
-  return prefix;
+  if (directoryIsValid) {
+    return directoryForm;
+  }
+  
+  throw new Error(`cannot find contents of bucket ${bucket} under prefix ${prefix}`);
 };
 
-const parsePath = async (prefix: string | undefined): Promise<string> => (
-  await parseS3Directory(parsePrefix(prefix))
-);
-
-const updateDLAFile = async (
+export const updateDLAFile = async (
   bucket: string,
   sourcePath: string,
   targetPath: string
-) => {
+): Promise<PutObjectCommandOutput> => {
   const dlaObject = await getJsonS3Object(bucket, sourcePath);
   const hoisted = await hoistCumulusMessageDetails(dlaObject);
   return await putJsonS3Object(bucket, targetPath, hoisted);
 };
 
-const updateDLABatch = async (
+export const updateDLABatch = async (
   bucket: string,
   targetDirectory: string,
   prefix: string
 ) => {
-  const sourceDir = await parsePath(prefix);
+  const sourceDir = await parseS3Directory(prefix);
   const subObjects = await listS3Objects(bucket, prefix);
 
   const validKeys = subObjects.map(
     (obj) => obj.Key
-  ).filter(
-    (key) => key !== undefined
-  ) as Array<string>;
-  const targetPaths = validKeys.map((filePath) => filePath.replace(sourceDir, targetDirectory));
+  );
+  const targetPaths = validKeys.map(
+    (filePath) => filePath.replace(
+      sourceDir,
+      manipulateTrailingSlash(targetDirectory, true)
+    )
+  );
 
   const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
-  zipped.forEach((pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1]));
+  await Promise.all(zipped.map((pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1])));
 };
 
 const parseTargetPath = async (
-  targetPath: string | undefined,
-  prefix: string | undefined
+  targetPath: string,
+  prefix: string
 ): Promise<string> => {
-  const sourceDir = await parsePath(prefix);
+  const sourceDir = await parseS3Directory(prefix);
   if (!targetPath) {
     const defaultTarget = `${manipulateTrailingSlash(sourceDir, false)}_updated_dla/`;
     console.log(
@@ -122,7 +147,9 @@ const parseTargetPath = async (
 
 const main = async () => {
   verifyRequiredEnvironmentVariables();
-  const internalBucket = process.env['INTERNAL_BUCKET'];
+
+  const internalBucket = getEnvironmentVariable('INTERNAL_BUCKET');
+  const deployment = getEnvironmentVariable('DEPLOYMENT');
   if (!internalBucket) {
     throw new Error('a');
   }
@@ -143,9 +170,8 @@ const main = async () => {
       },
     }
   );
-
+  const prefix = args.prefix || `${deployment}/dead-letter-archive/sqs/`;
   const targetDir = await parseTargetPath(args.targetPath, args.prefix);
-  const prefix = await parsePrefix(args.prefix);
 
   updateDLABatch(internalBucket, targetDir, prefix);
 };
