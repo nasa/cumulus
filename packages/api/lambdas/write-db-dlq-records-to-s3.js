@@ -8,7 +8,7 @@ const moment = require('moment');
 
 const log = require('@cumulus/common/log');
 const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
-const { s3PutObject } = require('@cumulus/aws-client/S3');
+const { s3PutObject, getJsonS3Object, moveObject, listS3ObjectsV2 } = require('@cumulus/aws-client/S3');
 const { parseSQSMessageBody, isSQSRecordLike } = require('@cumulus/aws-client/SQS');
 const { unwrapDeadLetterCumulusMessage, isDLQRecordLike } = require('@cumulus/message/DeadLetterMessage');
 const { getCumulusMessageFromExecutionEvent } = require('@cumulus/message/StepFunctions');
@@ -139,6 +139,51 @@ async function hoistCumulusMessageDetails(dlqRecord) {
 }
 
 /**
+ * Restructures the DLA to the new eventdate format. DLA objects will
+ * now have an additional eventdate=YYYY-MM-DD field to their keys in S3
+ *
+ * @param {string} bucket - unprocessed dead letter object
+ * @param {string} stackName - S3 bucket
+ * @returns {Promise<void>}
+ */
+async function restructureDla(bucket, stackName) {
+  // check if the DLA folder already has the new file structure by
+  // seeing if there are any folders in the sqs folder
+  const params = {
+    Bucket: bucket,
+    Prefix: stackName + '/dead-letter-archive/sqs/',
+    Delimiter: '/',
+  };
+
+  const messageObjects = await listS3ObjectsV2(params);
+  if (messageObjects && messageObjects.length > 0) return;
+
+  const objects = await listS3ObjectsV2({
+    Bucket: bucket,
+    Prefix: stackName + '/dead-letter-archive/sqs/',
+  });
+
+  // check if there are DLA records, return if not
+  if (!objects) return;
+
+  objects.map(async (deadLetterObject) => {
+    if (!deadLetterObject.Key) return;
+    const message = await getJsonS3Object(bucket, deadLetterObject.Key);
+    const timepath = message.time ? 'eventdate=' + moment.utc(message.time).format('YYYY-MM-DD') : 'unknown-time';
+    const indexOfPath = deadLetterObject.Key.lastIndexOf('/');
+    const newKey = deadLetterObject.Key.substring(0, indexOfPath + 1) + timepath + '/' + deadLetterObject.Key.substring(indexOfPath + 1);
+    // move the object to the new file path pased on the time of the DLA message
+    await moveObject({
+      sourceBucket: bucket,
+      sourceKey: deadLetterObject.Key,
+      destinationBucket: bucket,
+      destinationKey: newKey,
+      copyTags: true,
+    });
+  });
+}
+
+/**
  * Lambda handler for saving DLQ reports to DLA in s3
  *
  * @param {{Records: Array<SQSRecord>, [key: string]: any}} event - Input payload
@@ -148,6 +193,7 @@ async function handler(event) {
   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const sqsMessages = get(event, 'Records', []);
+  await restructureDla(process.env.system_bucket, process.env.stackName);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     let massagedMessage;
     let execution;
