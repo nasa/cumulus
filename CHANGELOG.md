@@ -44,6 +44,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     to granules table
 
 ### Changed
+
 - **CUMULUS-3609**
   - Adds update-dla-format to scripts to be used for updating existing DLA records
 - **CUMULUS-2892**
