@@ -162,7 +162,7 @@ async function handler(event) {
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
-    const timePath = massagedMessage.time ? 'eventdate=' + moment.utc(massagedMessage.time).format('YYYY-MM-DD') : 'unknown-time';
+    const timePath = massagedMessage.time ? moment.utc(massagedMessage.time).format('YYYY-MM-DD') : 'unknown-time';
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: `${process.env.stackName}/dead-letter-archive/sqs/${timePath}/${s3Identifier}.json`,
