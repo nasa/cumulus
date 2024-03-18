@@ -121,7 +121,6 @@ test('isDLQRecordLike correctly filters for DLQ record shaped objects', (t) => {
   t.true(isDLQRecordLike({ Body: '{a: "b"}', error: 'a' }));
 });
 
-
 test('hoistCumulusMessageDetails returns input message intact', async (t) => {
   const message = {
     a: 'b',
