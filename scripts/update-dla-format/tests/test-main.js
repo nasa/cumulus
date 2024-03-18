@@ -65,11 +65,11 @@ test.serial('parseS3Directory parses a string as the nearest valid directory fou
   t.is(await parseS3Directory('a/b'), 'a/');
   await t.throwsAsync(
     parseS3Directory('b'),
-    { message: `cannot find contents of bucket ${bucketName} under prefix 'b'` }
+    { message: `cannot find contents of bucket ${bucketName} under prefix "b"` }
   );
   await t.throwsAsync(
     parseS3Directory('a/c/e'),
-    { message: `cannot find contents of bucket ${bucketName} under prefix 'a/c/e'` }
+    { message: `cannot find contents of bucket ${bucketName} under prefix "a/c/e"` }
   );
 
   await recursivelyDeleteS3Bucket(bucketName);
@@ -404,7 +404,7 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   restoreEnvironment(storedEnvironment);
 });
 
-test.only('processArgs captures, massages and/or sets defaults for process args', async (t) => {
+test('processArgs captures, massages and/or sets defaults for process args', async (t) => {
   const storedEnv = storeEnvironment();
   const baseArgs = clone(process.argv);
   process.argv = baseArgs.concat([
