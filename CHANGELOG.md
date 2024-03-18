@@ -44,7 +44,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     to granules table
 
 ### Changed
-
+- **CUMULUS-3609**
+  - Adds update-dla-format to scripts to be used for updating existing DLA records
 - **CUMULUS-2892**
   - Updates `aws-client`'s EC2 client to use AWS SDK v3.
 - **CUMULUS-2896**
@@ -73,10 +74,6 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Minor refactor of `@cumulus/lzards-api-client` to:
     - Use proper ECMAScript import for `@cumulus/launchpad-auth`
     - Update incorrect docstring
-    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
-    - Update incorrect docstring
-- **CUMULUS-2896**
-  - Updated Secrets Manager code to AWS SDK v3.
 - **CUMULUS-3449**
   - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
     from columns ending with "cumulus_id" to number.
