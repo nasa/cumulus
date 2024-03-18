@@ -45,6 +45,7 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
     messageId: uuidv4(),
     body: JSON.stringify({
       detail: { executionArn: message3Name },
+      time: '2024-03-13T18:58:27Z',
     }),
   };
 
@@ -63,7 +64,7 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   })).length, 1);
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/unknown-time/${message3Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024-03-13/${message3Name}`,
   })).length, 1);
 });
 

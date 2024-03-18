@@ -115,6 +115,7 @@ describe('when a bad record is ingested', () => {
         env: {},
         Records: [{
           Body: JSON.stringify({
+            time: '2024-03-11T18:58:27Z',
             detail: {
               executionArn: executionArn,
               input: JSON.stringify({
@@ -129,7 +130,7 @@ describe('when a bad record is ingested', () => {
       fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
     console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
-    const prefix = `${stackName}/dead-letter-archive/sqs/unknown-time/${executionArn}`;
+    const prefix = `${stackName}/dead-letter-archive/sqs/2024-03-11/${executionArn}`;
 
     try {
       await expectAsync(waitForListObjectsV2ResultCount({
