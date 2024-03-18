@@ -81,11 +81,13 @@ module.exports = {
   },
   externals: [
     'aws-sdk',
+    '@aws-sdk',
     'electron',
     { formidable: 'url' },
     { fsevents: "require('fsevents')" }
   ],
   module: {
+    paralellism: 75,
     rules: [
       {
         test: /\.js$/,
