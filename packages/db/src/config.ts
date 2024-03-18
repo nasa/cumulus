@@ -1,6 +1,10 @@
 import { GetSecretValueRequest, SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { services } from '@cumulus/aws-client';
 import { Knex } from 'knex';
+import mapValues from 'lodash/mapValues';
+import isNull from 'lodash/isNull';
+import isObject from 'lodash/isObject';
+import isString from 'lodash/isString';
 
 import { envUtils } from '@cumulus/common';
 
@@ -106,6 +110,40 @@ export const getConnectionConfig = async ({
 };
 
 /**
+ * Check if a string can be converted to a number
+ *
+ * @param bigIntValue - string to be converted to number
+ * @returns true if the string can be converted
+ * @throws - Throws error if the string can not be converted
+ */
+export const canSafelyConvertBigInt = (bigIntValue: string): boolean => {
+  if (BigInt(bigIntValue) > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new Error(`Failed to convert to number: ${bigIntValue} exceeds max safe integer ${Number.MAX_SAFE_INTEGER}`);
+  }
+  return true;
+};
+
+type RecordTypeWithNumberIdField<T> = {
+  [P in keyof T]: number | T[P];
+};
+
+/**
+ * Convert cumulus id fields to number
+ *
+ * @param record - record to be converted
+ * @returns the converted record
+ */
+export const convertIdColumnsToNumber = <T extends Record<string, any>>(record: T)
+  : RecordTypeWithNumberIdField<T> =>
+    mapValues(
+      record,
+      (value, key) =>
+        ((key.endsWith('cumulus_id') && !isNull(value) && isString(value) && canSafelyConvertBigInt(value))
+          ? Number(value)
+          : value)
+    );
+
+/**
  * Given a NodeJS.ProcessEnv with configuration values, build and return Knex
  * configuration
  *
@@ -170,6 +208,14 @@ export const getKnexConfig = async ({
       destroyTimeoutMillis: Number.parseInt(env.destroyTimeoutMillis ?? '5000', 10),
       reapIntervalMillis: Number.parseInt(env.reapIntervalMillis ?? '1000', 10),
       propagateCreateError: false,
+    },
+    // modify any knex query response to convert columns ending with "cumulus_id" from
+    // string | number to number
+    postProcessResponse: (result: any) => {
+      if (result && Array.isArray(result)) {
+        return result.map((row) => (isObject(row) ? convertIdColumnsToNumber(row) : row));
+      }
+      return (isObject(result) ? convertIdColumnsToNumber(result) : result);
     },
   };
 
