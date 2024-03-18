@@ -22,6 +22,7 @@ const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
+  parallelism: 75,
   entry: {
     app: './app/index.js',
     bootstrap: './lambdas/bootstrap.js',
@@ -87,7 +88,6 @@ module.exports = {
     { fsevents: "require('fsevents')" }
   ],
   module: {
-    paralellism: 75,
     rules: [
       {
         test: /\.js$/,
