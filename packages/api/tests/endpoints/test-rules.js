@@ -7,7 +7,12 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const test = require('ava');
 const sinon = require('sinon');
-const { InvokeCommand } = require('@aws-sdk/client-lambda');
+const {
+  CreateFunctionCommand,
+  AddPermissionCommand,
+  RemovePermissionCommand,
+} = require('@aws-sdk/client-lambda');
+const { mockClient } = require('aws-sdk-client-mock');
 
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const workflows = require('@cumulus/common/workflows');
@@ -88,7 +93,7 @@ test.before(async (t) => {
 
   await Promise.all(
     ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
-      const lambdaCreated = await awsServices.lambda().send(new InvokeCommand({
+      const lambdaCreated = await awsServices.lambda().send(new CreateFunctionCommand({
         Code: {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
@@ -1207,18 +1212,14 @@ test.serial('PATCH sets SNS rule to "disabled" and removes source mapping ARN', 
         Promise.resolve()
       ),
     });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+
+  const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient.on(RemovePermissionCommand).resolves();
+
   t.teardown(() => {
     snsStub.restore();
-    lambdaStub.restore();
+    mockLambdaClient.restore();
   });
 
   const {
@@ -2187,20 +2188,14 @@ test.serial('PUT sets SNS rule to "disabled" and removes source mapping ARN', as
         Promise.resolve()
       ),
     });
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
+  const mockLambdaClient = mockClient(awsServices.lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(AddPermissionCommand).resolves();
+  mockLambdaClient.on(RemovePermissionCommand).resolves();
+
   t.teardown(() => {
     snsStub.restore();
-    lambdaStub.restore();
+    mockLambdaClient.restore();
   });
-
   const {
     esRulesClient,
     rulePgModel,
