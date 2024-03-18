@@ -86,6 +86,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
   - Added suppport for additional kex algorithms in the sftp-client.
+- **CUMULUS-3610**
+  - Updated `aws-client`'s ES client to use AWS SDK v3.
 
 ### Fixed
 

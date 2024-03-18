@@ -9,13 +9,13 @@ import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import { SQSRecord } from 'aws-lambda';
-import { QueueAttributeName } from '@aws-sdk/client-sqs';
+import { Message, QueueAttributeName } from '@aws-sdk/client-sqs';
 
 import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
-export interface SQSMessage extends AWS.SQS.Message {
+export interface SQSMessage extends Message {
   ReceiptHandle: string
 }
 
