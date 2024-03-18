@@ -3,6 +3,10 @@ locals {
   glue_database_name  = "${local.db_prefix}_glue_database"
   dla_glue_table_name = "${local.db_prefix}_dla_glue_table"
   dla_glue_table_s3_location = "s3://${var.system_bucket}/${var.prefix}/dead-letter-archive/sqs"
+  athena_workgroup    = "${local.db_prefix}_athena_workgroup"
+  athena_query_output_location = "s3://${var.system_bucket}/${var.prefix}/athena/query_output/"
+  current_date        = formatdate("YYYY-MM-DD", timestamp())
+  athena_test_query_name = "${local.db_prefix}_athena_test_query"
 }
 
 resource "aws_glue_catalog_database" "glue_database" {
@@ -93,4 +97,28 @@ resource "aws_glue_catalog_table" "dla_glue_table" {
     name = "eventdate"
     type = "string"
   }
+}
+
+resource "aws_athena_workgroup" "athena_workgroup" {
+  name = local.athena_workgroup
+
+  configuration {
+    enforce_workgroup_configuration    = true
+    publish_cloudwatch_metrics_enabled = true
+
+    result_configuration {
+      output_location = local.athena_query_output_location
+
+      encryption_configuration {
+        encryption_option = "SSE_S3"
+      }
+    }
+  }
+}
+
+resource "aws_athena_named_query" "athena_test_query" {
+  name        = local.athena_test_query_name
+  workgroup   = aws_athena_workgroup.athena_workgroup.id
+  database    = local.glue_database_name
+  query       = "SELECT * FROM ${local.dla_glue_table_name} where eventdate = '${local.current_date}' limit 1;"
 }
