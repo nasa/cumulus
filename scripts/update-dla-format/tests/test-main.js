@@ -407,7 +407,6 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
 test.only('processArgs captures, massages and/or sets defaults for process args', async (t) => {
   const storedEnv = storeEnvironment();
   const baseArgs = clone(process.argv);
-  console.log(baseArgs, typeof baseArgs);
   process.argv = baseArgs.concat([
     '--prefix=a',
     '--targetPath=b/',

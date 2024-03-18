@@ -241,7 +241,7 @@ const main = async () => {
 if (require.main === module) {
   main(
   ).then(
-    (ret) => console.log(ret)
+    (ret) => ret
   ).catch((error) => {
     console.log(`failed: ${error}`);
     throw error;
