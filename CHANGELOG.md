@@ -47,6 +47,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+  - Raised memory_size of DiscoverGranules to 1024MB
 
 ### Changed
 
