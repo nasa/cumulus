@@ -81,7 +81,7 @@ async function listAwsResources() {
   ec2Instances = [].concat(...ec2Instances.Reservations.map((e) => e.Instances));
   ec2Instances = ec2Instances.map((inst) => inst.InstanceId);
 
-  let esDomainNames = await es().listDomainNames().promise();
+  let esDomainNames = await es().listDomainNames();
   esDomainNames = esDomainNames.DomainNames.map((e) => e.DomainName);
 
   return {
