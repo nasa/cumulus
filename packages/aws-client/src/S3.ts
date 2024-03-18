@@ -158,18 +158,18 @@ export const deleteS3Objects = (params: {
 /**
 * Get an object header from S3
 *
-* @param {string} Bucket - name of bucket
-* @param {string} Key - key for object (filepath + filename)
-* @param {Object} retryOptions - options to control retry behavior when an
+* @param Bucket - name of bucket
+* @param Key - key for object (filepath + filename)
+* @param retryOptions - options to control retry behavior when an
 *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
 *   By default, retries will not be performed
-* @returns {Promise} returns response from `S3.headObject` as a promise
+* @returns  returns response from `S3.headObject` as a promise
 **/
 export const headObject = (
   Bucket: string,
   Key: string,
   retryOptions: pRetry.Options = { retries: 0 }
-) =>
+): Promise<HeadObjectOutput> =>
   pRetry(
     async () => {
       try {
