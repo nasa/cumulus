@@ -5,23 +5,21 @@
   "description": "update old DLA records to new format",
   "license": "Apache-2.0",
   "private": true,
-  "homepage": "https://github.com/nasa/cumulus/tree/master/tasks/update-dla-format#readme",
+  "homepage": "https://github.com/nasa/cumulus/tree/master/scripts/update-dla-format#readme",
   "repository": {
     "type": "git",
     "url": "https://github.com/nasa/cumulus",
-    "directory": "tasks/update-dla-format"
+    "directory": "scripts/update-dla-format"
   },
   "engines": {
     "node": ">=16.19.0"
   },
   "scripts": {
-    "generate-task-schemas": "npx generate-task-schemas . files",
     "clean": "rm -rf node_modules && rm -rf dist",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
     "coverage": "python ../../ci_scripts/coverage_handler/coverage.py",
-    "tsc": "../../node_modules/.bin/tsc",
+    "tsc": "../../node_modules/.bin/tsc"
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
@@ -35,7 +33,6 @@
     "tsc": "^2.0.4"
   },
   "devDependencies": {
-    "@cumulus/common": "18.2.0",
-    "@cumulus/schemas": "18.2.0"
+    "@cumulus/common": "18.2.0"
   }
 }
