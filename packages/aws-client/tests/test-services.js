@@ -1,11 +1,12 @@
 const test = require('ava');
 
-const AWS = require('aws-sdk');
 const { APIGatewayClient } = require('@aws-sdk/client-api-gateway');
 const { CloudWatchEvents } = require('@aws-sdk/client-cloudwatch-events');
 const { CloudFormation } = require('@aws-sdk/client-cloudformation');
 const { DynamoDB } = require('@aws-sdk/client-dynamodb');
 const { ECS } = require('@aws-sdk/client-ecs');
+const { EC2 } = require('@aws-sdk/client-ec2');
+const { ElasticsearchService } = require('@aws-sdk/client-elasticsearch-service');
 const { Kinesis } = require('@aws-sdk/client-kinesis');
 const { Lambda } = require('@aws-sdk/client-lambda');
 const { S3 } = require('@aws-sdk/client-s3');
@@ -166,30 +167,46 @@ test('ecs() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-test('ec2() service defaults to localstack in test mode', (t) => {
+test('ec2() service defaults to localstack in test mode', async (t) => {
   const ec2 = services.ec2();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.EC2);
+  } = localStackAwsClientOptions(EC2);
   t.deepEqual(
-    ec2.config.credentials,
+    await ec2.config.credentials(),
     credentials
   );
-  t.is(ec2.config.endpoint, endpoint);
+  const ec2Endpoint = await ec2.config.endpoint();
+  const localStackEndpoint = new URL(endpoint);
+  t.like(
+    ec2Endpoint,
+    {
+      hostname: localStackEndpoint.hostname,
+      port: Number.parseInt(localStackEndpoint.port, 10),
+    }
+  );
 });
 
-test('es() service defaults to localstack in test mode', (t) => {
+test('es() service defaults to localstack in test mode', async (t) => {
   const es = services.es();
   const {
     credentials,
     endpoint,
-  } = localStackAwsClientOptions(AWS.ES);
+  } = localStackAwsClientOptions(ElasticsearchService);
   t.deepEqual(
-    es.config.credentials,
+    await es.config.credentials(),
     credentials
   );
-  t.is(es.config.endpoint, endpoint);
+  const esEndpoint = await es.config.endpoint();
+  const localSatckEndpoint = new URL(endpoint);
+  t.like(
+    esEndpoint,
+    {
+      hostname: localSatckEndpoint.hostname,
+      port: Number.parseInt(localSatckEndpoint.port, 10),
+    }
+  );
 });
 
 test('kinesis() service defaults to localstack in test mode', async (t) => {

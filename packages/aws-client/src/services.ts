@@ -14,15 +14,15 @@ import { SQS } from '@aws-sdk/client-sqs';
 import { SNS } from '@aws-sdk/client-sns';
 import { STS } from '@aws-sdk/client-sts';
 import { ECS } from '@aws-sdk/client-ecs';
-import * as AWS from 'aws-sdk';
+import { EC2 } from '@aws-sdk/client-ec2';
+import { ElasticsearchService } from '@aws-sdk/client-elasticsearch-service';
 
 import awsClient from './client';
 
 export const apigateway = awsClient(APIGatewayClient, '2015-07-09');
 export const ecs = awsClient(ECS, '2014-11-13');
-export const ec2 = awsClient(AWS.EC2, '2016-11-15');
+export const ec2 = awsClient(EC2, '2016-11-15');
 export const cloudwatchevents = awsClient(CloudWatchEvents, '2015-10-07');
-export const cloudwatchlogs = awsClient(AWS.CloudWatchLogs, '2014-03-28');
 export const dynamodb = awsClient(DynamoDB, '2012-08-10');
 export const dynamodbstreams = awsClient(DynamoDBStreamsClient, '2012-08-10');
 export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOptions?: object) =>
@@ -31,7 +31,7 @@ export const dynamodbDocClient = (docClientOptions?: TranslateConfig, dynamoOpti
     docClientOptions
   );
 export const cf = awsClient(CloudFormation, '2010-05-15');
-export const es = awsClient(AWS.ES, '2015-01-01');
+export const es = awsClient(ElasticsearchService, '2015-01-01');
 export const kinesis = awsClient(Kinesis, '2013-12-02');
 export const kms = awsClient(KMS, '2014-11-01');
 export const lambda = awsClient(Lambda, '2015-03-31');
@@ -41,4 +41,3 @@ export const sfn = awsClient(SFN, '2016-11-23');
 export const sns = awsClient(SNS, '2010-03-31');
 export const sqs = awsClient(SQS, '2012-11-05');
 export const sts = awsClient(STS, '2011-06-15');
-export const systemsManager = awsClient(AWS.SSM, '2017-10-17');
