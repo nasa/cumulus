@@ -15,6 +15,7 @@ import {
   DeleteQueueCommand,
   GetQueueAttributesCommand,
   GetQueueUrlCommand,
+  Message,
   QueueAttributeName,
   ReceiveMessageCommand,
   SendMessageCommand } from '@aws-sdk/client-sqs';
@@ -23,7 +24,7 @@ import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
 
 const log = new Logger({ sender: '@cumulus/aws-client/SQS' });
-export interface SQSMessage extends AWS.SQS.Message {
+export interface SQSMessage extends Message {
   ReceiptHandle: string
 }
 
