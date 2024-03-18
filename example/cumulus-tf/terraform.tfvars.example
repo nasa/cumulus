@@ -77,6 +77,7 @@ deploy_cumulus_distribution = true
 
 # Optional. Uncomment if using Cumulus Distribution.
 # toggle this after deployed to put the correct port in. (and hosts and config)
+# Once tested with API Gateway, update to use a CloudFront distribution
 # cumulus_distribution_url = "cumulus distribution url"
 
 # Optional. Uncomment if using TEA.
