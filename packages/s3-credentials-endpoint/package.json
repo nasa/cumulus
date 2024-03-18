@@ -12,7 +12,7 @@
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "timeout": "15m",

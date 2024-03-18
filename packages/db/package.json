@@ -17,7 +17,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "../../node_modules/.bin/tsc -w",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "files": [

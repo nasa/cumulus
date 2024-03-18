@@ -21,7 +21,7 @@
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py"
   },
   "publishConfig": {
     "access": "public"

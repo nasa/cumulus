@@ -26,7 +26,7 @@
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
-    "coverage": "python ../../scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0",

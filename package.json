@@ -22,7 +22,7 @@
     "lint-md": "markdownlint docs/**/*.md docs/*.md tf-modules/**/*.md tf-modules/*.md",
     "lint-package-json": "npmPkgJsonLint .",
     "test": "lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test",
-    "test:ci": "./scripts/run_ci_unit_coverage.sh",
+    "test:ci": "./ci_scripts/run_ci_unit_coverage.sh",
     "test:coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --stream --concurrency 1 test:coverage",
     "coverage": "lerna run --ignore @cumulus/cumulus-integration-tests --concurrency 1 --since master coverage -- ",
     "tsc": "lerna run tsc",
