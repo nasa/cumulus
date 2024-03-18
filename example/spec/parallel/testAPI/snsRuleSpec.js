@@ -113,7 +113,7 @@ describe('The SNS-type rule', () => {
 
       await addCollections(config.stackName, config.bucket, collectionsDir,
         testSuffix, testId);
-      const { TopicArn } = sns().send(new CreateTopicCommand({ Name: snsTopicName }));
+      const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: snsTopicName }));
       snsTopicArn = TopicArn;
       snsRuleDefinition.rule.value = TopicArn;
       const postRuleResponse = await postRule({
