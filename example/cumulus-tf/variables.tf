@@ -424,7 +424,7 @@ variable "lambda_memory_sizes" {
   type = map(number)
   default = {
     cleanExecutions = 384           # archive
-    DistributionApiEndpoints = 384  # cumulus_distribution
+    DistributionApiEndpoints = 512  # cumulus_distribution
     s3-credentials-endpoint  = 384  # distribution
     HelloWorld = 384                # ingest
     s3-replicator = 384             # s3-replicator
