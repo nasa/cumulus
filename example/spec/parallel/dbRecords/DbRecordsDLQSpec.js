@@ -161,7 +161,7 @@ describe('when a bad record is ingested', () => {
     const parsed = JSON.parse(fileBody);
 
     expect(parsed.status).toEqual(null);
-    expect(parsed.time).toEqual(null);
+    expect(parsed.time).toEqual('2024-03-11T18:58:27Z');
     expect(parsed.stateMachineArn).toEqual(null);
     expect(parsed.collectionId).toEqual(null);
     expect(parsed.executionArn).toEqual(executionArn);
