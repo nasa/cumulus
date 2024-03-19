@@ -23,7 +23,6 @@ import {
   GetObjectOutput,
   HeadObjectOutput,
   ListObjectsRequest,
-  ListObjectsV2Output,
   ListObjectsV2Request,
   ObjectCannedACL,
   PutObjectCommandInput,
@@ -31,6 +30,7 @@ import {
   S3,
   Tag,
   Tagging,
+  _Object,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -739,8 +739,11 @@ export const uploadS3FileStream = (
       Body: fileStream,
     },
   });
-
-export interface ListS3ObjectsOutput {
+/**
+ * List of outputs from ListS3Objects functions (including V2)
+ * Guarantees that Key exists
+ */
+export interface ListS3ObjectsOutput extends _Object{
   Key: string
 }
 
@@ -788,7 +791,7 @@ export const listS3Objects = async (
  */
 export const listS3ObjectsV2 = async (
   params: ListObjectsV2Request
-): Promise<ListObjectsV2Output['Contents']> => {
+): Promise<Array<ListS3ObjectsOutput>> => {
   // Fetch the first list of objects from S3
   let listObjectsResponse = await s3().listObjectsV2(params);
 
@@ -808,7 +811,7 @@ export const listS3ObjectsV2 = async (
     discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents ?? []);
   }
 
-  return discoveredObjects;
+  return discoveredObjects.filter((obj) => obj.Key) as Array<ListS3ObjectsOutput>;
 };
 
 /**

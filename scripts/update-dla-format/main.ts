@@ -4,11 +4,11 @@ import path from 'path';
 import {
   getJsonS3Object,
   putJsonS3Object,
-  listS3Objects,
+  listS3ObjectsV2,
   s3ObjectExists,
 } from '@cumulus/aws-client/S3';
 import { hoistCumulusMessageDetails } from '@cumulus/message/DeadLetterMessage';
-
+import pMap from 'p-map';
 /**
  * Check for an Env variable and throw if it's not present
  */
@@ -73,12 +73,12 @@ export const parseS3Directory = async (prefix: string): Promise<string> => {
   let directoryIsValid = false;
   let keys = [];
   try {
-    const testObjects = await listS3Objects(bucket, prefixForm);
-    keys = testObjects.map((obj) => obj.Key);
-    if (keys.length === 0) {
+    const testObjects = await listS3ObjectsV2({ Bucket: bucket, Prefix: prefixForm });
+    if (testObjects === undefined || testObjects.length === 0) {
       throw new Error(`cannot find contents of bucket ${bucket} under prefix "${prefixForm}"`);
     }
-  } catch (error) {
+    keys = testObjects.map((obj) => obj.Key);
+  } catch {
     throw new Error(`cannot find contents of bucket ${bucket} under prefix "${prefixForm}"`);
   }
 
@@ -163,7 +163,7 @@ export const updateDLABatch = async (
   skip: boolean = false
 ) => {
   const sourceDir = await parseS3Directory(prefix);
-  const subObjects = await listS3Objects(bucket, prefix);
+  const subObjects = await listS3ObjectsV2({ Bucket: bucket, Prefix: prefix });
 
   const validKeys = subObjects.map(
     (obj) => obj.Key
@@ -176,10 +176,12 @@ export const updateDLABatch = async (
   );
 
   const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
-  return await Promise.all(
-    zipped.map((pathPair) => updateDLAFile(
-      bucket, pathPair[0], pathPair[1], skip
-    ))
+  return await pMap(
+    zipped, (async (pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1], skip)),
+    {
+      concurrency: 5,
+      stopOnError: false,
+    }
   );
 };
 
