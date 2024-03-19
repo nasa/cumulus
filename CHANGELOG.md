@@ -45,7 +45,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 - **CUMULUS-3613**
-  - Updated handler for saving DLQ reports to S3 by putting the message in an S3 folder based on the timestamp
+  - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
 - **CUMULUS-2892**
   - Updates `aws-client`'s EC2 client to use AWS SDK v3.
 - **CUMULUS-2896**

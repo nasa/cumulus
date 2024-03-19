@@ -1,6 +1,7 @@
 'use strict';
 
 const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 const test = require('ava');
 
 const S3 = require('@cumulus/aws-client/S3');
@@ -48,9 +49,16 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
       time: '2024-03-13T18:58:27Z',
     }),
   };
+  const message4Name = randomString(12);
+  const message4 = {
+    messageId: uuidv4(),
+    body: JSON.stringify({
+      detail: { executionArn: message4Name },
+    }),
+  };
 
   const recordsFixture = {
-    Records: [message1, message2, message3],
+    Records: [message1, message2, message3, message4],
   };
 
   await handler(recordsFixture);
@@ -65,6 +73,10 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
     Prefix: `${process.env.stackName}/dead-letter-archive/sqs/2024-03-13/${message3Name}`,
+  })).length, 1);
+  t.is((await S3.listS3ObjectsV2({
+    Bucket: t.context.bucket,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${moment.utc(moment()).format('YYYY-MM-DD')}/${message4Name}`,
   })).length, 1);
 });
 
