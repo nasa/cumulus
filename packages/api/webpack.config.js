@@ -22,7 +22,7 @@ const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
-  parallelism: 75,
+  parallelism: 10,
   entry: {
     app: './app/index.js',
     bootstrap: './lambdas/bootstrap.js',
