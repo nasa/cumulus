@@ -3,17 +3,26 @@
 const test = require('ava');
 const sinon = require('sinon');
 const proxyquire = require('proxyquire');
+const { mockClient } = require('aws-sdk-client-mock');
+const { PublishCommand } = require('@aws-sdk/client-sns');
 
 const { randomString } = require('@cumulus/common/test-utils');
+const { sns } = require('@cumulus/aws-client/services');
 
 const sandbox = sinon.createSandbox();
 const stubPromiseReturn = Promise.resolve();
 const fetchEnabledRulesStub = sandbox.stub();
-const publishMessageStub = sandbox.stub().returns(stubPromiseReturn);
 const queueMessageStub = sandbox.stub().resolves(true);
 
+const snsMock = mockClient(sns());
+snsMock
+  .onAnyCommand()
+  .rejects()
+  .on(PublishCommand)
+  .resolves(stubPromiseReturn);
+
 const messageConsumer = proxyquire('../../lambdas/message-consumer', {
-  '@cumulus/aws-client/services': { sns: () => ({ publish: publishMessageStub }) },
+  '@cumulus/aws-client/services': { sns: () => snsMock },
   '../lib/rulesHelpers': {
     fetchEnabledRules: fetchEnabledRulesStub,
     queueMessageForRule: queueMessageStub,
@@ -27,7 +36,7 @@ test.before(() => {
 
 test.afterEach.always(() => {
   fetchEnabledRulesStub.reset();
-  publishMessageStub.reset();
+  snsMock.reset();
   queueMessageStub.reset();
 });
 
@@ -95,11 +104,12 @@ test('handler processes records as expected', async (t) => {
     },
   };
 
-  publishMessageStub.callsFake((params) => {
-    t.is(params.TopicArn, process.env.FallbackTopicArn);
-    t.deepEqual(params.Message, JSON.stringify(erroringMessage));
-    return stubPromiseReturn;
-  });
+  snsMock
+    .callsFake((params) => {
+      t.is(params.TopicArn, process.env.FallbackTopicArn);
+      t.deepEqual(params.Message, JSON.stringify(erroringMessage));
+      return stubPromiseReturn;
+    });
 
   await messageConsumer.handler(
     { Records: [snsMessage, kinesisMessage, kinesisFallbackMessage, erroringMessage] },
@@ -110,10 +120,13 @@ test('handler processes records as expected', async (t) => {
   );
   t.true(fetchEnabledRulesStub.calledOnce);
 
-  t.true(publishMessageStub.withArgs({
+  const expectedArgs = {
     TopicArn: process.env.FallbackTopicArn,
     Message: JSON.stringify(erroringMessage),
-  }).calledOnce);
+  };
+  const publishCalls = snsMock.commandCalls(PublishCommand);
+  t.true(publishCalls.length > 0);
+  t.deepEqual(expectedArgs, publishCalls[0].firstArg.input);
 
   t.is(queueMessageStub.callCount, 3);
 });
