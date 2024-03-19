@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
-    "build": "../../node_modules/.bin/webpack",
+    "build": "node --max-old-space-size=4096 ../../node_modules/.bin/webpack",
     "clean": "git clean -d -x -e node_modules -f",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run prepare && npm run build && npm run link-api-bin && npm run build-lambda-zips",
