@@ -22,7 +22,6 @@ const root = path.resolve(__dirname);
 
 module.exports = {
   mode: process.env.PRODUCTION ? 'production' : 'development',
-  parallelism: 1,
   entry: {
     app: './app/index.js',
     bootstrap: './lambdas/bootstrap.js',
@@ -82,6 +81,7 @@ module.exports = {
   },
   externals: [
     'aws-sdk',
+    '@aws-sdk',
     'electron',
     { formidable: 'url' },
     { fsevents: "require('fsevents')" }
