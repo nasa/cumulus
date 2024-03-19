@@ -10,8 +10,8 @@ import { CloudWatchEvents } from '@aws-sdk/client-cloudwatch-events';
 import { S3 } from '@aws-sdk/client-s3';
 import { SecretsManager } from '@aws-sdk/client-secrets-manager';
 import { SFN } from '@aws-sdk/client-sfn';
-import { SQS } from '@aws-sdk/client-sqs'; // TODO update to SQSClient
-import { SNS } from '@aws-sdk/client-sns'; // TODO update to SNSClient
+import { SQS } from '@aws-sdk/client-sqs';
+import { SNS } from '@aws-sdk/client-sns';
 import { STS } from '@aws-sdk/client-sts';
 import { ECS } from '@aws-sdk/client-ecs';
 import { EC2 } from '@aws-sdk/client-ec2';

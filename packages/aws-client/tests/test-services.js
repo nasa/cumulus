@@ -337,7 +337,6 @@ test('sfn() service defaults to localstack in test mode', async (t) => {
   );
 });
 
-// TODO update to V3
 test('sns() service defaults to localstack in test mode', async (t) => {
   const sns = services.sns();
   const {
