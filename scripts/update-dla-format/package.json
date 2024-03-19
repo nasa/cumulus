@@ -16,10 +16,11 @@
   },
   "scripts": {
     "clean": "rm -rf node_modules && rm -rf dist",
-    "test": "../../node_modules/.bin/ava",
-    "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../ci_scripts/coverage_handler/coverage.py",
-    "tsc": "../../node_modules/.bin/tsc"
+    "prepare": "npm run tsc",
+    "tsc": "../../node_modules/.bin/tsc",
+    "test": "../../node_modules/.bin/ava",
+    "test:coverage": "../../node_modules/.bin/nyc npm test"
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
