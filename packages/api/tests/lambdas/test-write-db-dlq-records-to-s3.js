@@ -76,7 +76,7 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
   })).length, 1);
   t.is((await S3.listS3ObjectsV2({
     Bucket: t.context.bucket,
-    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${moment.utc(moment()).format('YYYY-MM-DD')}/${message4Name}`,
+    Prefix: `${process.env.stackName}/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/${message4Name}`,
   })).length, 1);
 });
 
