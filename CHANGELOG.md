@@ -46,6 +46,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Changed
 - **CUMULUS-3613**
   - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
+- **CUMULUS-3518**
+  - Update Discover Granules lambda default memory to 1024 MB
 - **CUMULUS-3600**
   - Update docs to clarify CloudFront HTTPS DIT requirements.
 - **CUMULUS-2892**
