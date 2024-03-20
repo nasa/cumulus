@@ -494,7 +494,7 @@ distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 
 :::caution
 
-Cumulus deploys API Gateways for the Archive and Distribution APIs. In production environments these must be behind CloudFront distributions.
+Cumulus deploys API Gateways for the Archive and Distribution APIs. In production environments these must be behind CloudFront distributions using HTTPS connections.
 
 :::
 
@@ -514,7 +514,7 @@ If you've lost track of the needed redirect URIs, they can be located on the [AP
 
 :::caution
 
-In production environments, the API Gateway URLs must be replaced with CloudFront distributions to ensure Data In Transit compliance.
+In production environments, the API Gateway URLs must be replaced with CloudFront distributions using HTTPS connections to ensure Data In Transit compliance.
 
 :::
 
@@ -615,7 +615,7 @@ You should be able to visit the Dashboard website at `http://<prefix>-dashboard.
 
 :::caution
 
-In production environments, the dashboard must be behind a CloudFront distribution to ensure Data In Transit compliance.
+In production environments, the dashboard must be behind a CloudFront distributions using an HTTPS connection to ensure Data In Transit compliance.
 
 :::
 
