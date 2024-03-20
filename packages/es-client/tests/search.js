@@ -19,16 +19,6 @@ test.before(async (t) => {
   const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-
-  const awsMock = {
-    config: {
-      credentials: {
-        user: 'test',
-        password: 'testPassword',
-      },
-    },
-  };
-  esSearch.__set__('aws', awsMock);
 });
 
 test.after.always(async (t) => {
