@@ -82,18 +82,19 @@ test.serial('write-db-dlq-records-to-s3 puts one file on S3 per SQS message', as
 
 test.serial('write-db-dlq-records-to-s3 keeps all messages from identical execution', async (t) => {
   const messageName = randomString(12);
+  const time = '2024-03-11T18:58:27Z';
   const message1 = {
     messageId: uuidv4(),
     body: JSON.stringify({
       detail: { executionArn: messageName },
-      time: '2024-03-11T18:58:27Z',
+      time,
     }),
   };
   const message2 = {
     messageId: uuidv4(),
     body: JSON.stringify({
       detail: { executionArn: messageName },
-      time: '2024-03-11T18:58:27Z',
+      time,
     }),
   };
 

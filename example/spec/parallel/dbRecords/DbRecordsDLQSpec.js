@@ -1,5 +1,6 @@
 'use strict';
 
+const moment = require('moment');
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -115,7 +116,6 @@ describe('when a bad record is ingested', () => {
         env: {},
         Records: [{
           Body: JSON.stringify({
-            time: '2024-03-11T18:58:27Z',
             detail: {
               executionArn: executionArn,
               input: JSON.stringify({
@@ -130,7 +130,7 @@ describe('when a bad record is ingested', () => {
       fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
     console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
-    const prefix = `${stackName}/dead-letter-archive/sqs/2024-03-11/${executionArn}`;
+    const prefix = `${stackName}/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/${executionArn}`;
 
     try {
       await expectAsync(waitForListObjectsV2ResultCount({
@@ -161,7 +161,7 @@ describe('when a bad record is ingested', () => {
     const parsed = JSON.parse(fileBody);
 
     expect(parsed.status).toEqual(null);
-    expect(parsed.time).toEqual('2024-03-11T18:58:27Z');
+    expect(parsed.time).toEqual(null);
     expect(parsed.stateMachineArn).toEqual(null);
     expect(parsed.collectionId).toEqual(null);
     expect(parsed.executionArn).toEqual(executionArn);
