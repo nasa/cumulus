@@ -114,6 +114,7 @@ resource "aws_athena_workgroup" "athena_workgroup" {
       }
     }
   }
+  force_destroy = true
 }
 
 resource "aws_athena_named_query" "athena_test_query" {
