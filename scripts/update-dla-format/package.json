@@ -17,7 +17,7 @@
   "scripts": {
     "clean": "rm -rf node_modules && rm -rf dist",
     "coverage": "python ../../ci_scripts/coverage_handler/coverage.py",
-    "package": "npm run prepare",
+    "build": "npm run prepare",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "test": "../../node_modules/.bin/ava",
