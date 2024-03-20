@@ -47,6 +47,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 - **CUMULUS-3518**
   - Update existing usage of `@cumulus/aws-client` lambda service to use AWS SDK v3 `send` syntax
+  - Update Discover Granules lambda default memory to 1024 MB
+- **CUMULUS-3600**
+  - Update docs to clarify CloudFront HTTPS DIT requirements.
 - **CUMULUS-2892**
   - Updates `aws-client`'s EC2 client to use AWS SDK v3.
 - **CUMULUS-2896**
