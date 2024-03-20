@@ -127,10 +127,11 @@ export const parseTargetPath = async (
 /**
  * pull S3 Object from sourcePath, update it to new DLA structure and push it to targetPath
  * noop if skip is true and an object already exists at targetPath
+ *
  * @param bucket
  * @param sourcePath
  * @param targetPath
- * @param skip skip if targetPath already exists
+ * @param skip - skip if targetPath already exists
  * @returns whether the logic was actually run (not skipped)
  */
 export const updateDLAFile = async (
@@ -151,10 +152,11 @@ export const updateDLAFile = async (
 /**
  * update a batch of DLA files under prefix and push them to the targetDirectory
  * skip files that appear to already have been processed if skip is set to true
+ *
  * @param bucket
  * @param targetDirectory
  * @param prefix
- * @param skip skip files that are already present at the target directory, default false
+ * @param skip - skip files that are already present at the target directory, default false
  */
 export const updateDLABatch = async (
   bucket: string,
