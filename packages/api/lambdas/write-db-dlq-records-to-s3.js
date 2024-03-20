@@ -4,6 +4,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { isSQSRecordLike } = require('@cumulus/aws-client/SQS');
@@ -40,9 +41,10 @@ async function handler(event) {
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
+    const dateString = massagedMessage.time ? moment.utc(massagedMessage.time).format('YYYY-MM-DD') : moment.utc().format('YYYY-MM-DD');
     await s3PutObject({
       Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
+      Key: `${process.env.stackName}/dead-letter-archive/sqs/${dateString}/${s3Identifier}.json`,
       Body: JSON.stringify(massagedMessage),
     });
   }));
