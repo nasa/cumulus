@@ -4,6 +4,7 @@
 
 const get = require('lodash/get');
 const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 
 const log = require('@cumulus/common/log');
 const { isEventBridgeEvent } = require('@cumulus/aws-client/Lambda');
@@ -36,6 +37,7 @@ function payloadHasGranules(payload) {
     && Array.isArray(payload.granules)
   );
 }
+
 /**
  * @param {CumulusMessage} message
  * @returns {string | null}
@@ -48,6 +50,7 @@ function extractCollectionId(message) {
   }
   return null;
 }
+
 /**
  * @param {CumulusMessage} message
  * @returns {Array<string | null> | null}
@@ -159,9 +162,10 @@ async function handler(event) {
     // version messages with UUID as workflows can produce multiple messages that may all fail.
     const s3Identifier = `${executionName}-${uuidv4()}`;
 
+    const dateString = massagedMessage.time ? moment.utc(massagedMessage.time).format('YYYY-MM-DD') : moment.utc().format('YYYY-MM-DD');
     await s3PutObject({
       Bucket: process.env.system_bucket,
-      Key: `${process.env.stackName}/dead-letter-archive/sqs/${s3Identifier}.json`,
+      Key: `${process.env.stackName}/dead-letter-archive/sqs/${dateString}/${s3Identifier}.json`,
       Body: JSON.stringify(massagedMessage),
     });
   }));
