@@ -43,14 +43,14 @@ Although you might have to wait a bit for your Cognito user credentials, the rem
 
 Your Cumulus Distribution URL is used by Cumulus to generate download URLs as part of the granule metadata generated and published to the CMR. For example, a granule download URL will be of the form `<distribution url>/<protected bucket>/<key>` (or `<distribution url>/path/to/file`, if using a custom bucket map, as explained further below).
 
-By default, the value of your distribution URL is the URL of your private Cumulus Distribution API Gateway (the API Gateway named `<prefix>-distribution`, once you deploy the Cumulus Distribution module). Therefore, by default, the generated download URLs are private, and thus inaccessible directly, but there are 2 ways to address this issue (both of which are detailed below): (a) use tunneling (typically in development) or (b) put a CloudFront URL in front of your API Gateway (typically in production, and perhaps UAT and/or SIT).
+By default, the value of your distribution URL is the URL of your private Cumulus Distribution API Gateway (the API Gateway named `<prefix>-distribution`, once you deploy the Cumulus Distribution module). Therefore, by default, the generated download URLs are private, and thus inaccessible directly, but there are 2 ways to address this issue (both of which are detailed below): (a) use tunneling (only in development) or (b) put an HTTPS CloudFront URL in front of your API Gateway (required in production, UAT, and SIT).
 
 In either case, you must first know the default URL (i.e., the URL for the private Cumulus Distribution API Gateway). In order to obtain this default URL, you must first deploy your `cumulus-tf` module with the new Cumulus Distribution module, and once your initial deployment is complete, one of the Terraform outputs will be `cumulus_distribution_api_uri`, which is the URL for the private API Gateway.
 
 You may override this default URL by adding a `cumulus_distribution_url` variable to your `cumulus-tf/terraform.tfvars` file and setting it to one of the following values (both are explained below):
 
-1. The default URL, but with a port added to it, in order to allow you to configure tunneling (typically only in development)
-2. A CloudFront URL placed in front of your Cumulus Distribution API Gateway (typically only for Production, but perhaps also for a UAT or SIT environment)
+1. The default URL, but with a port added to it, in order to allow you to configure tunneling (only in development)
+2. An HTTPS CloudFront URL placed in front of your Cumulus Distribution API Gateway (required in production environments)
 
 The following subsections explain these approaches in turn.
 
@@ -172,7 +172,7 @@ While this is a relatively lengthy process, things are much easier when using Cl
 
 ### Using a CloudFront URL as Your Distribution URL
 
-In Production (OPS), and perhaps in other environments, such as UAT and SIT, you'll need to provide a publicly accessible URL for users to use for downloading (distributing) granule files.
+In Production (OPS), and in other environments, such as UAT and SIT, you'll need to provide a publicly accessible URL for users to use for downloading (distributing) granule files.
 
 This is generally done by placing a CloudFront URL in front of your private Cumulus Distribution API Gateway. In order to create such a CloudFront URL, contact the person who helped you obtain your Cognito credentials, and request a CloudFront URL with the following details:
 
