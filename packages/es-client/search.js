@@ -59,12 +59,13 @@ const esProdConfig = async (host) => {
     node = `https://${host}`;
   }
 
+  log.info('INFO: Getting credentials for ES client');
   let credentialsProvider;
   try {
     credentialsProvider = await fromNodeProviderChain();
-    log.debug(`INFO: Got credentials (access key ID): ${credentialsProvider.accessKeyId}`);
+    log.info(`INFO: Got credentials (access key ID): ${credentialsProvider.accessKeyId}`);
   } catch (error) {
-    log.debug(`ERROR: Failed to get credentials: ${error}`);
+    log.info(`ERROR: Failed to get credentials: ${error}`);
     throw error;
   }
 
