@@ -1,10 +1,9 @@
 import zip from 'lodash/zip';
 import minimist from 'minimist';
-import path from 'path';
 import {
   getJsonS3Object,
   putJsonS3Object,
-  listS3ObjectsV2,
+  listS3ObjectsV2Batch,
   s3ObjectExists,
 } from '@cumulus/aws-client/S3';
 import { hoistCumulusMessageDetails } from '@cumulus/message/DeadLetterMessage';
@@ -53,78 +52,6 @@ export const manipulateTrailingSlash = (S3Path: string, shouldHave: boolean): st
 };
 
 /**
- * Parse the S3 'directory' referenced by a prefix.
- * @param prefix
- * @returns
- *  - '' if prefix is '' or '/'
- *  - parent directory to prefix if prefix doesn't refer to a directory itself
- *  - prefix in 'directory' form (trailing slash) if it refers to a directory
- */
-export const parseS3Directory = async (prefix: string): Promise<string> => {
-  let prefixForm = prefix;
-  /* expect user might point us at '/' expecting that to mean 'everything' */
-  if (prefixForm === '/') {
-    prefixForm = '';
-  }
-  const directoryForm = manipulateTrailingSlash(prefixForm, true);
-  const bucket = getEnvironmentVariable('INTERNAL_BUCKET');
-
-  let prefixIsValid = false;
-  let directoryIsValid = false;
-  let keys = [];
-  try {
-    const testObjects = await listS3ObjectsV2({ Bucket: bucket, Prefix: prefixForm });
-    if (testObjects === undefined || testObjects.length === 0) {
-      throw new Error(`cannot find contents of bucket ${bucket} under prefix "${prefixForm}"`);
-    }
-    keys = testObjects.map((obj) => obj.Key);
-  } catch {
-    throw new Error(`cannot find contents of bucket ${bucket} under prefix "${prefixForm}"`);
-  }
-
-  keys.forEach((key) => {
-    if (key && key.startsWith(directoryForm)) {
-      directoryIsValid = true;
-    } else if (key && key.startsWith(prefixForm)) {
-      prefixIsValid = true;
-    }
-  });
-  if (prefixIsValid) {
-    let dirname = path.dirname(prefixForm);
-    if (dirname === '.') {
-      dirname = '';
-    }
-    return manipulateTrailingSlash(dirname, true);
-  }
-  if (directoryIsValid) {
-    return directoryForm;
-  }
-  throw new Error(`Couldn't make sense of contents of bucket ${bucket} under prefix "${prefixForm}"`);
-};
-
-/**
- * handle given targetPath, either parsing standard from prefix if targetPath is undefined
- * or massaging targetPath into a 'Directory' if a
- * @param targetPath given target to parse or undefined if none given
- * @param prefix only relevant if targetPath is unspecified
- * @returns Promise<string>
- */
-export const parseTargetPath = async (
-  targetPath: string | undefined,
-  prefix: string
-): Promise<string> => {
-  if (targetPath !== undefined) {
-    return manipulateTrailingSlash(targetPath, true);
-  }
-  const sourceDir = await parseS3Directory(prefix);
-  const defaultTarget = `${manipulateTrailingSlash(sourceDir, false)}_updated_dla/`;
-  console.log(
-    `no targetPath given, defaulting targetPath to ${defaultTarget}`
-  );
-  return defaultTarget;
-};
-
-/**
  * pull S3 Object from sourcePath, update it to new DLA structure and push it to targetPath
  * noop if skip is true and an object already exists at targetPath
  *
@@ -161,30 +88,33 @@ export const updateDLAFile = async (
 export const updateDLABatch = async (
   bucket: string,
   targetDirectory: string,
-  prefix: string,
+  sourceDirectory: string,
   skip: boolean = false
 ) => {
-  const sourceDir = await parseS3Directory(prefix);
-  const subObjects = await listS3ObjectsV2({ Bucket: bucket, Prefix: prefix });
+  const out = [];
+  const sourceDir = manipulateTrailingSlash(sourceDirectory, true);
+  const targetDir = manipulateTrailingSlash(targetDirectory, true);
+  for await (
+    const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: sourceDir, MaxKeys: 2 })
+  ) {
+    const validKeys = objectBatch.map((obj) => obj.Key);
+    const targetPaths = validKeys.map(
+      (filePath) => filePath.replace(
+        sourceDir,
+        targetDir
+      )
+    );
 
-  const validKeys = subObjects.map(
-    (obj) => obj.Key
-  );
-  const targetPaths = validKeys.map(
-    (filePath) => filePath.replace(
-      sourceDir,
-      manipulateTrailingSlash(targetDirectory, true)
-    )
-  );
-
-  const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
-  return await pMap(
-    zipped, (async (pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1], skip)),
-    {
-      concurrency: 5,
-      stopOnError: false,
-    }
-  );
+    const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
+    out.push(await pMap(
+      zipped, (async (pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1], skip)),
+      {
+        concurrency: 5,
+        stopOnError: false,
+      }
+    ));
+  }
+  return out.flat();
 };
 
 interface UpdateDLAArgs {
@@ -193,6 +123,11 @@ interface UpdateDLAArgs {
   skip: boolean,
 }
 
+/**
+ * process command line arguments to get prefix, targetPath, skip values
+ *
+ * @returns { {prefix: string, targetPath: string, skip: boolean} }
+ */
 export const processArgs = async (): Promise<UpdateDLAArgs> => {
   const args = minimist(
     process.argv,
@@ -214,10 +149,11 @@ export const processArgs = async (): Promise<UpdateDLAArgs> => {
     }
   );
   const prefix = args.prefix || `${getEnvironmentVariable('DEPLOYMENT')}/dead-letter-archive/sqs/`;
+  const targetPath = args.targetPath || `${getEnvironmentVariable('DEPLOYMENT')}/updated-dead-letter-archive/sqs/`;
   return {
     prefix,
+    targetPath,
     skip: args.skip,
-    targetPath: await parseTargetPath(args.targetPath, prefix),
   };
 };
 

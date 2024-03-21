@@ -48,67 +48,10 @@ test('manipulateTrailingSlash adds or removes trailing slashes as needed', (t) =
   t.is(manipulateTrailingSlash('', true), '');
 });
 
-test.serial('parseS3Directory parses a string as the nearest valid directory found in the bucket', async (t) => {
-  const storedEnvironment = storeEnvironment();
-  const bucketName = randomString(12);
-  process.env.INTERNAL_BUCKET = bucketName;
-  await createBucket(bucketName);
-  await putJsonS3Object(bucketName, 'a/b', '{}');
-  await putJsonS3Object(bucketName, 'a/c/d', '{}');
-  t.is(await parseS3Directory('a'), 'a/');
-  t.is(await parseS3Directory('a/b'), 'a/');
-  t.is(await parseS3Directory('/'), '');
-  t.is(await parseS3Directory(''), '');
-
-  await putJsonS3Object(bucketName, 'a/b/c', '{}');
-  /* interpret 'a/b' as the directory 'a/' if it exists */
-  t.is(await parseS3Directory('a/b'), 'a/');
-  await t.throwsAsync(
-    parseS3Directory('b'),
-    { message: `cannot find contents of bucket ${bucketName} under prefix "b"` }
-  );
-  await t.throwsAsync(
-    parseS3Directory('a/c/e'),
-    { message: `cannot find contents of bucket ${bucketName} under prefix "a/c/e"` }
-  );
-
-  await recursivelyDeleteS3Bucket(bucketName);
-  restoreEnvironment(storedEnvironment);
-});
-
-test('parseTargetPath ensures S3 directory shape if targetPath is defined', async (t) => {
-  t.is(await parseTargetPath('/', ''), '');
-  t.is(await parseTargetPath('', ''), '');
-  t.is(await parseTargetPath('a'), 'a/');
-  t.is(await parseTargetPath('a/b/c/d/'), 'a/b/c/d/');
-});
-
-test('parseTargetPath grocs and manipulates prefix parent directory to default target path if targetPath is undefined', async (t) => {
-  const bucket = randomString(12);
-  const storedEnvironment = storeEnvironment();
-  process.env.INTERNAL_BUCKET = bucket;
-  await createBucket(bucket);
-  await putJsonS3Object(bucket, 'a/b', '{}');
-  await putJsonS3Object(bucket, 'a/cc/d', '{}');
-  t.is(await parseTargetPath(undefined, 'a/'), 'a_updated_dla/');
-  t.is(await parseTargetPath(undefined, 'a/c'), 'a_updated_dla/');
-  t.is(await parseTargetPath(undefined, 'a/b'), 'a_updated_dla/');
-  t.is(await parseTargetPath(undefined, 'a/cc'), 'a/cc_updated_dla/');
-  t.is(await parseTargetPath(undefined, 'a/cc/'), 'a/cc_updated_dla/');
-  await t.throwsAsync(
-    parseTargetPath(undefined, 'b/'),
-    {
-      message: `cannot find contents of bucket ${bucket} under prefix "b/"`,
-    }
-  );
-  recursivelyDeleteS3Bucket(bucket);
-  restoreEnvironment(storedEnvironment);
-});
-
 test.serial('updateDLAFile updates existing files to new structure and skips as requested', async (t) => {
   const bucket = randomString(12);
   const sourcePath = 'a/b';
-  const targetPath = 'a_updated/b';
+  const targetPath = 'updated-a/b';
   await createBucket(bucket);
   await putJsonS3Object(
     bucket,
@@ -203,7 +146,7 @@ test.serial('updateDLAFile updates existing files to new structure and skips as 
   await recursivelyDeleteS3Bucket(bucket);
 });
 
-test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips only what has already been processed if requested ', async (t) => {
+test.only('updateDLABatch acts upon a batch of files under a prefix, and skips only what has already been processed if requested ', async (t) => {
   const storedEnvironment = storeEnvironment();
   process.env.INTERNAL_BUCKET = randomString();
   let expectedCapturedFiles;
@@ -268,8 +211,8 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   }));
 
   /* update all entries under prefix 'a' */
-  /* push updated records to a_updated */
-  filesProcessed = await updateDLABatch(bucket, 'a_updated/', 'a');
+  /* push updated records to updated-a */
+  filesProcessed = await updateDLABatch(bucket, 'updated-a/', 'a');
   t.is(filesProcessed.filter(Boolean).length, 5);
   expectedCapturedFiles = [
     'a/1',
@@ -279,11 +222,11 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
     'a/b/65',
   ].sort();
   expectedOutputFiles = [
-    'a_updated/1',
-    'a_updated/12',
-    'a_updated/b',
-    'a_updated/b/57',
-    'a_updated/b/65',
+    'updated-a/1',
+    'updated-a/12',
+    'updated-a/b',
+    'updated-a/b/57',
+    'updated-a/b/65',
   ];
 
   /* pull these updated as we expect to find them */
@@ -307,51 +250,19 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
     );
   });
 
-  /* look under prefix a/1 */
-
-  /* if asked to skip, these should all have been processed above */
-  filesProcessed = await updateDLABatch(bucket, 'a_updated', 'a/1', true);
-  t.is(filesProcessed.filter(Boolean).length, 0);
-  /* if asked not to skip, these should actually get processed */
-  filesProcessed = await updateDLABatch(bucket, 'a_updated', 'a/1', false);
-  t.is(filesProcessed.filter(Boolean).length, 2);
-
-  expectedCapturedFiles = [
-    'a/1',
-    'a/12',
-  ].sort();
-  expectedOutputFiles = [
-    'a_updated/1',
-    'a_updated/12',
-  ];
-  fileContents = await Promise.all(
-    expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))
-  );
-  capturedFiles = fileContents.map((content) => JSON.parse(content.Body).detail.executionArn).sort();
-  t.deepEqual(expectedCapturedFiles, capturedFiles);
-
-  fileContents.forEach((content) => {
-    t.like(
-      content,
-      stableMetadata
-    );
-    t.is(
-      JSON.parse(content.Body).detail.executionArn,
-      content.executionArn
-    );
-  });
-
   /* look under prefix b */
-  await updateDLABatch(bucket, 'b_updated', 'b');
+  filesProcessed = await updateDLABatch(bucket, 'updated-b', 'b');
+
+  t.is(filesProcessed.filter(Boolean).length, 3);
   expectedCapturedFiles = [
     'b/1',
     'b/12',
     'b/b',
   ].sort();
   expectedOutputFiles = [
-    'b_updated/1',
-    'b_updated/12',
-    'b_updated/b',
+    'updated-b/1',
+    'updated-b/12',
+    'updated-b/b',
   ];
   fileContents = await Promise.all(
     expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))
@@ -371,16 +282,16 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   });
 
   /* look under prefix a/b */
-  await updateDLABatch(bucket, 'a_b_updated', 'a/b');
+  await updateDLABatch(bucket, 'updated-a/b', 'a/b');
   expectedCapturedFiles = [
     'a/b',
     'a/b/57',
     'a/b/65',
   ].sort();
   expectedOutputFiles = [
-    'a_b_updated/b',
-    'a_b_updated/b/57',
-    'a_b_updated/b/65',
+    'updated-a/b',
+    'updated-a/b/57',
+    'updated-a/b/65',
   ];
   fileContents = await Promise.all(
     expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))

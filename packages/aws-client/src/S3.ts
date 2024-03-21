@@ -743,7 +743,7 @@ export const uploadS3FileStream = (
  * List of outputs from ListS3Objects functions (including V2)
  * Guarantees that Key exists
  */
-export interface ListS3ObjectsOutput extends _Object{
+export interface ListS3ObjectsOutput extends _Object {
   Key: string
 }
 
@@ -813,6 +813,45 @@ export const listS3ObjectsV2 = async (
 
   return discoveredObjects.filter((obj) => obj.Key) as Array<ListS3ObjectsOutput>;
 };
+/**
+ * Fetch lazy list of S3 objects
+ *
+ * listObjectsV2 is limited to 1,000 results per call.  This function continues
+ * listing objects until there are no more to be fetched.
+ *
+ * The passed params must be compatible with the listObjectsV2 call.
+ *
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
+ *
+ * @param params - params for the s3.listObjectsV2 call
+ * @yields a series of objects corresponding to
+ *   the Contents property of the listObjectsV2 response
+ *   batched to allow processing of one chunk at a time
+ *
+ * @static
+ */
+export async function* listS3ObjectsV2Batch(
+  params: ListObjectsV2Request
+): AsyncIterable<Array<ListS3ObjectsOutput>> {
+  let listObjectsResponse = await s3().listObjectsV2(params);
+
+  let discoveredObjects = listObjectsResponse.Contents ?? [];
+  yield discoveredObjects.filter((obj) => 'Key' in obj) as Array<ListS3ObjectsOutput>;
+  // Keep listing more objects from S3 until we have all of them
+  while (listObjectsResponse.IsTruncated) {
+    // eslint-disable-next-line no-await-in-loop
+    listObjectsResponse = (await s3().listObjectsV2(
+      // Update the params with a Continuation Token
+      {
+
+        ...params,
+        ContinuationToken: listObjectsResponse.NextContinuationToken,
+      }
+    ));
+    discoveredObjects = listObjectsResponse.Contents ?? [];
+    yield discoveredObjects.filter((obj) => 'Key' in obj) as Array<ListS3ObjectsOutput>;
+  }
+}
 
 /**
  * Calculate the cryptographic hash of an S3 object
