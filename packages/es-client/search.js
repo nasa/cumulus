@@ -50,7 +50,7 @@ const esTestConfig = () => ({
   },
 });
 
-const esProdConfig = async (host) => {
+const esProdConfig = (host) => {
   let node = 'http://localhost:9200';
 
   if (process.env.ES_HOST) {
@@ -62,8 +62,8 @@ const esProdConfig = async (host) => {
   log.info('INFO: Getting credentials for ES client');
   let credentialsProvider;
   try {
-    credentialsProvider = await fromNodeProviderChain();
-    log.info(`INFO: Got credentials (access key ID): ${credentialsProvider.accessKeyId}`);
+    credentialsProvider = fromNodeProviderChain();
+    log.info(`INFO: Got credentials (access key ID): ${JSON.stringify(credentialsProvider)}`);
   } catch (error) {
     log.info(`ERROR: Failed to get credentials: ${error}`);
     throw error;
@@ -97,21 +97,21 @@ const esMetricsConfig = () => {
   };
 };
 
-const esConfig = async (host, metrics = false) => {
+const esConfig = (host, metrics = false) => {
   let config;
   if (inTestMode() || 'LOCAL_ES_HOST' in process.env) {
     config = esTestConfig();
   } else if (metrics) {
     config = esMetricsConfig();
   } else {
-    config = await esProdConfig(host);
+    config = esProdConfig(host);
   }
   return config;
 };
 
 class BaseSearch {
-  static async es(host, metrics) {
-    return new elasticsearch.Client(await esConfig(host, metrics));
+  static es(host, metrics) {
+    return new elasticsearch.Client(esConfig(host, metrics));
   }
 
   constructor(event, type = null, index, metrics = false) {
