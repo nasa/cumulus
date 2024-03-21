@@ -50,7 +50,7 @@ const esTestConfig = () => ({
   },
 });
 
-const esProdConfig = (host) => {
+const esProdConfig = async (host) => {
   let node = 'http://localhost:9200';
 
   if (process.env.ES_HOST) {
@@ -60,25 +60,29 @@ const esProdConfig = (host) => {
   }
 
   log.info('INFO: Getting credentials for ES client');
-  let credentialsProvider;
+  const credentialsProvider = fromNodeProviderChain({
+    clientConfig: {
+      region: process.env.AWS_REGION,
+    },
+  });
+
   try {
-    credentialsProvider = fromNodeProviderChain();
-    log.info(`INFO: Got credentials (access key ID): ${JSON.stringify(credentialsProvider)}`);
+    const credentials = await credentialsProvider();
+    log.info(`INFO: Got credentials (access key ID): ${JSON.stringify(credentials)}`);
+    return {
+      node,
+      Connection: AmazonConnection,
+      awsConfig: {
+        credentials: { ...credentials },
+      },
+
+      // Note that this doesn't abort the query.
+      requestTimeout: 50000, // milliseconds
+    };
   } catch (error) {
     log.info(`ERROR: Failed to get credentials: ${error}`);
     throw error;
   }
-
-  return {
-    node,
-    Connection: AmazonConnection,
-    awsConfig: {
-      credentials: { ...credentialsProvider },
-    },
-
-    // Note that this doesn't abort the query.
-    requestTimeout: 50000, // milliseconds
-  };
 };
 
 const esMetricsConfig = () => {
@@ -97,21 +101,21 @@ const esMetricsConfig = () => {
   };
 };
 
-const esConfig = (host, metrics = false) => {
+const esConfig = async (host, metrics = false) => {
   let config;
   if (inTestMode() || 'LOCAL_ES_HOST' in process.env) {
     config = esTestConfig();
   } else if (metrics) {
     config = esMetricsConfig();
   } else {
-    config = esProdConfig(host);
+    config = await esProdConfig(host);
   }
   return config;
 };
 
 class BaseSearch {
-  static es(host, metrics) {
-    return new elasticsearch.Client(esConfig(host, metrics));
+  static async es(host, metrics) {
+    return new elasticsearch.Client(await esConfig(host, metrics));
   }
 
   constructor(event, type = null, index, metrics = false) {
