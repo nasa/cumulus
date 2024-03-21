@@ -844,8 +844,8 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
   const { testKnex } = t.context;
   const lambdaMock = mockClient(awsServices.lambda());
   lambdaMock.onAnyCommand().rejects();
-  lambdaMock.on(RemovePermissionCommand).resolves({});
-  lambdaMock.on(AddPermissionCommand).resolves({});
+  lambdaMock.on(RemovePermissionCommand).resolves();
+  lambdaMock.on(AddPermissionCommand).resolves();
   const snsStub = sinon.stub(awsServices, 'sns')
     .returns({
       listSubscriptionsByTopic: () => (
