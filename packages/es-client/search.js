@@ -68,12 +68,12 @@ const esProdConfig = async (host) => {
 
   try {
     const credentials = await credentialsProvider();
-    log.info(`INFO: Got credentials (access key ID): ${JSON.stringify(credentials)}`);
+    log.info(`INFO: Got credentials (access key ID): ${JSON.stringify(credentials.accessKeyId)}`);
     return {
       node,
       Connection: AmazonConnection,
       awsConfig: {
-        credentials: { ...credentials },
+        credentials,
       },
 
       // Note that this doesn't abort the query.
