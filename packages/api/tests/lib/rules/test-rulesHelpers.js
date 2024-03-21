@@ -1705,7 +1705,14 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     state: 'ENABLED',
   });
   const subscribeSpy = sinon.spy(awsServices.sns(), 'subscribe');
-  const lambdaMock = sinon.spy(awsServices.lambda(), 'send');
+
+  const lambdaMock = mockClient(awsServices.lambda());
+  let mockCalled = false;
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(AddPermissionCommand).callsFake(() => {
+    mockCalled = true;
+  });
+
   await createRuleTrigger(rule);
   t.true(subscribeSpy.called);
   t.true(subscribeSpy.calledWith({
@@ -1714,7 +1721,7 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     Endpoint: process.env.messageConsumer,
     ReturnSubscriptionArn: true,
   }));
-  t.true(lambdaMock.called);
+  t.true(mockCalled);
   t.teardown(async () => {
     snsStub.restore();
     subscribeSpy.restore();
