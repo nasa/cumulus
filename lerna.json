@@ -10,8 +10,7 @@
     "packages/api/ecs/async-operation",
     "tasks/*",
     "tf-modules/*",
-    "tf-modules/internal/*",
-    "scripts/*"
+    "tf-modules/internal/*"
   ],
   "command": {
     "bootstrap": {

@@ -1,6 +1,3 @@
-'use strict';
-
-//@ts-check
 import zip from 'lodash/zip';
 import minimist from 'minimist';
 import path from 'path';
