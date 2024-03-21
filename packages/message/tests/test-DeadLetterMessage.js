@@ -3,8 +3,13 @@
 const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
-
-const { unwrapDeadLetterCumulusMessage, hoistCumulusMessageDetails, isDLQRecordLike } = require('../DeadLetterMessage');
+const moment = require('moment');
+const {
+  unwrapDeadLetterCumulusMessage,
+  hoistCumulusMessageDetails,
+  isDLQRecordLike,
+  getDLAKey,
+} = require('../DeadLetterMessage');
 
 test('unwrapDeadLetterCumulusMessage unwraps an SQS message', async (t) => {
   const cumulusMessage = {
@@ -881,5 +886,62 @@ test('hoistCumulusMessageDetails captures outermost error as "error"', async (t)
       status: 'SUCCEEDED',
       time: 'atime',
     }
+  );
+});
+
+test('getDLAKey gets an appropriate DLA key, handling missing executionArn and time', (t) => {
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+      time: '2024-03-21T15:09:54Z',
+      executionArn: 'execution',
+    }
+  ).startsWith('super-DAAC/dead-letter-archive/sqs/2024-03-21/execution-'));
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+      executionArn: 'execution',
+    }
+  ).startsWith(`super-DAAC/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/execution-`));
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+      time: '2024-03-21T15:09:54Z',
+    }
+  ).startsWith('super-DAAC/dead-letter-archive/sqs/2024-03-21/unknown-'));
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+    }
+  ).startsWith(`super-DAAC/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/unknown-`));
+});
+
+test('getDLAKey keeps records unique even when identifiers are non-unique or missing', (t) => {
+  t.not(getDLAKey('super-DAAC', {}), getDLAKey('super-DAAC', {}));
+  t.not(
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+    }),
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+    })
+  );
+  t.not(
+    getDLAKey('super-DAAC', {
+      execution: 'a',
+    }),
+    getDLAKey('super-DAAC', {
+      execution: 'a',
+    })
+  );
+  t.not(
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+      execution: 'a',
+    }),
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+      execution: 'a',
+    })
   );
 });

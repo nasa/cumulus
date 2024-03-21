@@ -1,13 +1,22 @@
+'use strict';
+
+//@ts-check
 import zip from 'lodash/zip';
 import minimist from 'minimist';
+import path from 'path';
 import {
   getJsonS3Object,
   putJsonS3Object,
   listS3ObjectsV2Batch,
   s3ObjectExists,
 } from '@cumulus/aws-client/S3';
-import { hoistCumulusMessageDetails } from '@cumulus/message/DeadLetterMessage';
+import {
+  hoistCumulusMessageDetails,
+  extractDateString,
+} from '@cumulus/message/DeadLetterMessage';
+import { DLARecord } from '@cumulus/types/api/dead_letters';
 import pMap from 'p-map';
+import moment from 'moment';
 /**
  * Check for an Env variable and throw if it's not present
  */
@@ -52,6 +61,31 @@ export const manipulateTrailingSlash = (S3Path: string, shouldHave: boolean): st
 };
 
 /**
+ * identifies whether the innermost folder of the filePath appears to be a timestamp
+ *
+ * @param targetPath
+ * @returns whether the innermost folder of the filePath appears to be a timestamp
+ */
+export const identifyDatedPath = (targetPath: string): boolean => (
+  moment(path.basename(path.dirname(targetPath)), 'YYYY-MM-DD').isValid()
+);
+
+/**
+ * Manipulate target filepath to put file is YYYY-MM-DD sub-folder
+ *
+ * @param targetPath
+ * @param message - DLARecord message from which timestamp can be extracted
+ * @returns targetPath with lowest 'folder' added in form YYYY-MM-DD
+ */
+export const addDateIdentifierToPath = (targetPath: string, message: DLARecord): string => (
+  path.join(
+    path.dirname(targetPath),
+    extractDateString(message),
+    path.basename(targetPath)
+  )
+);
+
+/**
  * pull S3 Object from sourcePath, update it to new DLA structure and push it to targetPath
  * noop if skip is true and an object already exists at targetPath
  *
@@ -67,12 +101,25 @@ export const updateDLAFile = async (
   targetPath: string,
   skip: boolean = false
 ): Promise<boolean> => {
-  if (skip && await s3ObjectExists({ Bucket: bucket, Key: targetPath })) {
+  const inDateForm = identifyDatedPath(targetPath);
+  // let massagedTargetPath;
+  /* *only* if path is already in dateForm, and skip is set we might exit without downloading */
+  if (inDateForm && skip && await s3ObjectExists({ Bucket: bucket, Key: targetPath })) {
     return false;
   }
   const dlaObject = await getJsonS3Object(bucket, sourcePath);
   const hoisted = await hoistCumulusMessageDetails(dlaObject);
-  await putJsonS3Object(bucket, targetPath, hoisted);
+  let massagedTargetPath: string;
+  if (!inDateForm) {
+    massagedTargetPath = addDateIdentifierToPath(targetPath, hoisted);
+  } else {
+    massagedTargetPath = targetPath;
+  }
+  /* if we can skip, at least avoid uploading an object */
+  if (skip && await s3ObjectExists({ Bucket: bucket, Key: massagedTargetPath })) {
+    return false;
+  }
+  await putJsonS3Object(bucket, massagedTargetPath, hoisted);
   return true;
 };
 
@@ -128,7 +175,7 @@ interface UpdateDLAArgs {
  *
  * @returns { {prefix: string, targetPath: string, skip: boolean} }
  */
-export const processArgs = async (): Promise<UpdateDLAArgs> => {
+export const processArgs = (): UpdateDLAArgs => {
   const args = minimist(
     process.argv,
     {
@@ -157,30 +204,14 @@ export const processArgs = async (): Promise<UpdateDLAArgs> => {
   };
 };
 
-/**
- * Main function to update dla structure
- * expects environment variable INTERNAL_BUCKET
- * expects environment variable DEPLOYMENT *if* prefix is not specified (for parsing the default)
- * parses args to get prefix, targetPath and skip
- * massages args for useability
- * pulls all files from the INTERNAL_BUCKET beneath the given prefix
- * massages them to the updated DLA format
- * pushes them to the targetPath with a similar directory structure
- */
-const main = async () => {
+if (require.main === module) {
   const internalBucket = getEnvironmentVariable('INTERNAL_BUCKET');
   const {
     targetPath,
     prefix,
     skip,
-  } = await processArgs();
-
-  await updateDLABatch(internalBucket, targetPath, prefix, skip);
-};
-
-if (require.main === module) {
-  main(
-  ).then(
+  } = processArgs();
+  updateDLABatch(internalBucket, targetPath, prefix, skip).then(
     (ret) => ret
   ).catch((error) => {
     console.log(`failed: ${error}`);

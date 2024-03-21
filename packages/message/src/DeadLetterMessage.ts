@@ -1,5 +1,8 @@
 //@ts-check
 import { SQSRecord } from 'aws-lambda';
+import moment from 'moment';
+
+import { uuid } from 'uuidv4';
 import { isEventBridgeEvent, StepFunctionEventBridgeEvent } from '@cumulus/aws-client/Lambda';
 import { parseSQSMessageBody, isSQSRecordLike } from '@cumulus/aws-client/SQS';
 import { CumulusMessage } from '@cumulus/types/message';
@@ -147,4 +150,16 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
     time,
     error,
   };
+};
+
+export const getDLARootKey = (stackName: string): string => `${stackName}/dead-letter-archive/sqs/`;
+
+export const extractDateString = (message: DLARecord): string => (
+  message.time && moment.utc(message.time).isValid() ? moment.utc(message.time).format('YYYY-MM-DD') : moment.utc().format('YYYY-MM-DD')
+);
+
+export const getDLAKey = (stackName: string, message: DLARecord): string => {
+  const dateString = extractDateString(message);
+  const execution = message.executionArn || 'unknown';
+  return `${getDLARootKey(stackName)}${dateString}/${execution}-${uuid()}`;
 };
