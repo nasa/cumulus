@@ -1,7 +1,7 @@
 'use strict';
 
 const { InvokeCommand } = require('@aws-sdk/client-lambda');
-
+const moment = require('moment');
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
@@ -39,7 +39,7 @@ describe('when a bad record is ingested', () => {
         env: {},
         Records: [{
           Body: JSON.stringify({
-            time: '4Oclock',
+            time: '2024-03-11T18:58:27Z',
             detail: {
               executionArn: executionArn,
               stateMachineArn: '1234',
@@ -69,7 +69,7 @@ describe('when a bad record is ingested', () => {
       fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
     console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
-    const prefix = `${stackName}/dead-letter-archive/sqs/${executionArn}`;
+    const prefix = `${stackName}/dead-letter-archive/sqs/2024-03-11/${executionArn}`;
 
     try {
       await expectAsync(waitForListObjectsV2ResultCount({
@@ -99,7 +99,7 @@ describe('when a bad record is ingested', () => {
 
     const parsed = JSON.parse(fileBody);
     expect(parsed.status).toEqual('RUNNING');
-    expect(parsed.time).toEqual('4Oclock');
+    expect(parsed.time).toEqual('2024-03-11T18:58:27Z');
     expect(parsed.stateMachineArn).toEqual('1234');
     expect(parsed.collectionId).toEqual('A_COLLECTION___12');
     expect(parsed.executionArn).toEqual(executionArn);
@@ -131,7 +131,7 @@ describe('when a bad record is ingested', () => {
       fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
     console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
-    const prefix = `${stackName}/dead-letter-archive/sqs/${executionArn}`;
+    const prefix = `${stackName}/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/${executionArn}`;
 
     try {
       await expectAsync(waitForListObjectsV2ResultCount({
