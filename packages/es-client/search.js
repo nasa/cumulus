@@ -13,7 +13,7 @@ const { AmazonConnection } = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
-
+const Logger = require('@cumulus/logger');
 const queries = require('./queries');
 const aggs = require('./aggregations');
 
@@ -25,6 +25,8 @@ const logDetails = {
 const defaultIndexAlias = 'cumulus-alias';
 const multipleRecordFoundString = 'More than one record was found!';
 const recordNotFoundString = 'Record not found';
+
+const log = new Logger({ sender: '@cumulus/es-client/search' });
 
 /**
  * returns the local address of elasticsearch based on
@@ -57,7 +59,14 @@ const esProdConfig = async (host) => {
     node = `https://${host}`;
   }
 
-  const credentialsProvider = await fromNodeProviderChain();
+  let credentialsProvider;
+  try {
+    credentialsProvider = await fromNodeProviderChain();
+    log.debug(`INFO: Got credentials (access key ID): ${credentialsProvider.accessKeyId}`);
+  } catch (error) {
+    log.debug(`ERROR: Failed to get credentials: ${error}`);
+    throw error;
+  }
 
   return {
     node,
