@@ -9,11 +9,11 @@
 const has = require('lodash/has');
 const omit = require('lodash/omit');
 const { fromNodeProviderChain } = require('@aws-sdk/credential-providers');
-const { AmazonConnection } = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
 const Logger = require('@cumulus/logger');
+const createAmazonConnector = require('./esAmazonConnection');
 const queries = require('./queries');
 const aggs = require('./aggregations');
 
@@ -71,10 +71,10 @@ const esProdConfig = async (host) => {
     log.info(`INFO: Got credentials (access key ID): ${JSON.stringify(credentials.accessKeyId)}`);
     return {
       node,
-      Connection: AmazonConnection,
-      awsConfig: {
+      ...createAmazonConnector({
         credentials,
-      },
+        region: process.env.AWS_REGION,
+      }),
 
       // Note that this doesn't abort the query.
       requestTimeout: 50000, // milliseconds
