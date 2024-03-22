@@ -33,7 +33,33 @@ async function postRecoverCumulusMessages(req, res) {
 
 router.post('/recoverCumulusMessages', postRecoverCumulusMessages, asyncOperationEndpointErrorHandler);
 
+async function postUpdateDLAFormat(req, res) {
+  const stackName = process.env.stackName;
+  const systemBucket = process.env.system_bucket;
+  const { bucket, sourcePath, targetPath } = (req.body === undefined ? {} : req.body);
+  const asyncOperation = await asyncOperations.startAsyncOperation({
+    cluster: process.env.EcsCluster,
+    callerLambdaName: getFunctionNameFromRequestContext(req),
+    lambdaName: process.env.DeadLetterProcessingLambda,
+    asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
+    description: 'Dead-Letter Processor ECS Run',
+    operationType: 'Dead-Letter Processing',
+    payload: {
+      bucket,
+      sourcePath,
+      targetPath,
+    },
+    stackName,
+    systemBucket,
+    knexConfig: process.env,
+    useLambdaEnvironmentVariables: true,
+  });
+  return res.status(202).send(asyncOperation);
+}
+
+router.post('/updateDLAFormat', postUpdateDLAFormat, asyncOperationEndpointErrorHandler);
 module.exports = {
+  postUpdateDLAFormat,
   postRecoverCumulusMessages,
   router,
 };
