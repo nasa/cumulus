@@ -3,7 +3,6 @@
 //@ts-check
 
 import get from 'lodash/get';
-import { getDLARootKey } from '@cumulus/message/DeadLetterMessage';
 import zip from 'lodash/zip';
 import minimist from 'minimist';
 import path from 'path';
@@ -16,6 +15,7 @@ import {
 import {
   hoistCumulusMessageDetails,
   extractDateString,
+  getDLARootKey,
 } from '@cumulus/message/DeadLetterMessage';
 import { DLARecord } from '@cumulus/types/api/dead_letters';
 import pMap from 'p-map';

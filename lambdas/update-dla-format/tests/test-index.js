@@ -8,7 +8,6 @@ const {
   recursivelyDeleteS3Bucket,
   getJsonS3Object,
   s3ObjectExists,
-  listS3Objects,
 } = require('@cumulus/aws-client/S3');
 const {
   getEnvironmentVariable,
@@ -34,7 +33,6 @@ test.serial('getEnvironmentVariable gets your variable or throws trying', (t) =>
   );
   restoreEnvironment(envStore);
 });
-
 
 test('manipulateTrailingSlash adds or removes trailing slashes as needed', (t) => {
   /* test 4 expected use cases */
