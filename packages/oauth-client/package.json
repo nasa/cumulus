@@ -33,7 +33,7 @@
     "prepare": "npm run tsc",
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "files": [

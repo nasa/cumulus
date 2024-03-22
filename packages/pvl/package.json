@@ -9,7 +9,7 @@
   "scripts": {
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "serial": true,

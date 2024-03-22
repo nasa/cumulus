@@ -21,7 +21,7 @@
     "tsc": "rm -rf dist && ../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "clean": "rm -rf node_modules && rm -rf dist",
-    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py",
     "build": "npm run prepare",
     "prepare": "npm run tsc",
     "test": "../../node_modules/.bin/ava",

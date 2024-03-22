@@ -26,7 +26,7 @@
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
     "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
-    "coverage": "python ../../ci_scripts/coverage_handler/coverage.py"
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "files": [
