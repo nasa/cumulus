@@ -7,8 +7,8 @@ const {
   createBucket,
   recursivelyDeleteS3Bucket,
   getJsonS3Object,
-  listS3Objects,
   s3ObjectExists,
+  listS3Objects,
 } = require('@cumulus/aws-client/S3');
 const {
   getEnvironmentVariable,
@@ -16,8 +16,7 @@ const {
   updateDLAFile,
   updateDLABatch,
   processArgs,
-  addDateIdentifierToPath,
-} = require('../dist/main');
+} = require('../dist');
 function storeEnvironment() {
   return clone(process.env);
 }
@@ -154,7 +153,7 @@ test.serial('updateDLAFile identifies whether or not date identifier needs to be
   const bucket = randomString(12);
   const sourcePath = 'a/b';
   let targetPath = 'updated-a/b';
-  let actualTargetPath = `updated-a/${moment.utc().format('YYYY-MM-DD')}/b`;
+  let actualTargetPath = 'updated-a/2024-03-21/b';
   await createBucket(bucket);
   await putJsonS3Object(
     bucket,
@@ -168,7 +167,7 @@ test.serial('updateDLAFile identifies whether or not date identifier needs to be
           status: 'RUNNING',
           input: JSON.stringify({
             meta: {
-              collection: {  
+              collection: {
                 name: 'A_COLLECTION',
                 version: '12',
               },
