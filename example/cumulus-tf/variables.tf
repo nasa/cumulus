@@ -425,8 +425,8 @@ variable "lambda_memory_sizes" {
   default = {
     cleanExecutions = 512           # archive
     DistributionApiEndpoints = 512  # cumulus_distribution
-    s3-credentials-endpoint  = 512  # distribution
     HelloWorld = 512                # ingest
+    s3-credentials-endpoint  = 512  # distribution
     s3-replicator = 512             # s3-replicator
     TeaCache = 512                  # tea-map-cache
   }
