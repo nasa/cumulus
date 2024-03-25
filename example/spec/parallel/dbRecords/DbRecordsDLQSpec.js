@@ -1,5 +1,6 @@
 'use strict';
 
+const { InvokeCommand } = require('@aws-sdk/client-lambda');
 const moment = require('moment');
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
@@ -31,7 +32,7 @@ describe('when a bad record is ingested', () => {
   });
   it('is sent to the DLA and processed to have expected metadata fields', async () => {
     executionArn = `execution-${randomString(16)}`;
-    const { $metadata } = await lambda().invoke({
+    const { $metadata } = await lambda().send(new InvokeCommand({
       FunctionName: `${stackName}-sfEventSqsToDbRecords`,
       InvocationType: 'RequestResponse',
       Payload: JSON.stringify({
@@ -63,7 +64,7 @@ describe('when a bad record is ingested', () => {
           }),
         }],
       }),
-    });
+    }));
     if ($metadata.httpStatusCode >= 400) {
       fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
@@ -109,7 +110,7 @@ describe('when a bad record is ingested', () => {
 
   it('is sent to the DLA and processed to have expected metadata fields even when data is not found', async () => {
     executionArn = `execution-${randomString(16)}`;
-    const { $metadata } = await lambda().invoke({
+    const { $metadata } = await lambda().send(new InvokeCommand({
       FunctionName: `${stackName}-sfEventSqsToDbRecords`,
       InvocationType: 'RequestResponse',
       Payload: JSON.stringify({
@@ -125,7 +126,7 @@ describe('when a bad record is ingested', () => {
           }),
         }],
       }),
-    });
+    }));
     if ($metadata.httpStatusCode >= 400) {
       fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
     }
