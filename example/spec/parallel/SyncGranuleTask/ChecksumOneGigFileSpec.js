@@ -3,6 +3,11 @@
 const get = require('lodash/get');
 const pAll = require('p-all');
 const pTimeout = require('p-timeout');
+const {
+  GetFunctionConfigurationCommand,
+  InvokeCommand,
+} = require('@aws-sdk/client-lambda');
+
 const { pullStepFunctionEvent } = require('@cumulus/message/StepFunctions');
 const { randomId } = require('@cumulus/common/test-utils');
 
@@ -48,9 +53,9 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
 
       const FunctionName = `${prefix}-SyncGranule`;
 
-      const functionConfig = await lambda().getFunctionConfiguration({
+      const functionConfig = await lambda().send(new GetFunctionConfigurationCommand({
         FunctionName,
-      });
+      }));
 
       const Payload = new TextEncoder().encode(JSON.stringify({
         cma: {
@@ -112,7 +117,7 @@ describe('The SyncGranule task with a 1 GB file to be checksummed', () => {
       }));
 
       syncGranuleOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }),
+        lambda().send(new InvokeCommand({ FunctionName, Payload })),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {
