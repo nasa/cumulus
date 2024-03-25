@@ -1,13 +1,21 @@
-//@ts-check
-
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 const set = require('lodash/set');
+const {
+  AddPermissionCommand,
+  DeleteEventSourceMappingCommand,
+  RemovePermissionCommand,
+  ListEventSourceMappingsCommand,
+  UpdateEventSourceMappingCommand,
+  CreateEventSourceMappingCommand,
+  EventSourcePosition,
+} = require('@aws-sdk/client-lambda');
 
 const awsServices = require('@cumulus/aws-client/services');
+const { lambda } = require('@cumulus/aws-client/services');
 const CloudwatchEvents = require('@cumulus/aws-client/CloudwatchEvents');
 const Logger = require('@cumulus/logger');
 const s3Utils = require('@cumulus/aws-client/S3');
@@ -218,7 +226,7 @@ async function deleteKinesisEventSource(knex, rule, eventType, id) {
       UUID: id[eventType],
     };
     log.info(`Deleting event source with UUID ${id[eventType]}`);
-    return awsServices.lambda().deleteEventSourceMapping(params);
+    return lambda().send(new DeleteEventSourceMappingCommand(params));
   }
   log.info(`Event source mapping is shared with another rule. Will not delete kinesis event source for ${rule.name}`);
   return undefined;
@@ -254,14 +262,16 @@ async function deleteKinesisEventSources(knex, rule, testContext = {
       },
     },
   ];
-  const deleteEventPromises = kinesisSourceEvents.map(
-    (lambda) => deleteKinesisEventSourceMethod(knex, rule, lambda.eventType, lambda.type).catch(
-      (error) => {
-        log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
-        if (error.name !== 'ResourceNotFoundException') throw error;
-      }
-    )
-  );
+  const deleteEventPromises = kinesisSourceEvents.map((kinesisLambda) =>
+    deleteKinesisEventSourceMethod(
+      knex,
+      rule,
+      kinesisLambda.eventType,
+      kinesisLambda.type
+    ).catch((error) => {
+      log.error(`Error deleting eventSourceMapping for ${rule.name}: ${error}`);
+      if (error.name !== 'ResourceNotFoundException') throw error;
+    }));
   return await Promise.all(deleteEventPromises);
 }
 
@@ -283,7 +293,7 @@ async function deleteSnsTrigger(knex, rule) {
     StatementId: getSnsTriggerPermissionId(rule),
   };
   try {
-    await awsServices.lambda().removePermission(permissionParams);
+    await lambda().send(new RemovePermissionCommand(permissionParams));
   } catch (error) {
     if (isResourceNotFoundException(error)) {
       throw new ResourceNotFoundError(error);
@@ -385,13 +395,14 @@ async function validateAndUpdateSqsRule(rule) {
    * @param {{ name: string | undefined}}  lambda - The name of the target lambda
    * @returns {Promise}
    */
-async function addKinesisEventSource(item, lambda) {
+async function addKinesisEventSource(item, kinesisLambda) {
   // use the existing event source mapping if it already exists and is enabled
   const listParams = {
-    FunctionName: lambda.name,
+    FunctionName: kinesisLambda.name,
     EventSourceArn: item.rule.value,
   };
-  const listData = await awsServices.lambda().listEventSourceMappings(listParams);
+  const mappingInput = new ListEventSourceMappingsCommand(listParams);
+  const listData = await awsServices.lambda().send(mappingInput);
   if (listData.EventSourceMappings && listData.EventSourceMappings.length > 0) {
     const currentMapping = listData.EventSourceMappings[0];
 
@@ -399,20 +410,22 @@ async function addKinesisEventSource(item, lambda) {
     if (currentMapping.State === 'Enabled') {
       return currentMapping;
     }
-    return awsServices.lambda().updateEventSourceMapping({
-      UUID: currentMapping.UUID,
-      Enabled: true,
-    });
+    return awsServices.lambda().send(
+      new UpdateEventSourceMappingCommand({
+        UUID: currentMapping.UUID,
+        Enabled: true,
+      })
+    );
   }
 
   // create event source mapping
   const params = {
     EventSourceArn: item.rule.value,
-    FunctionName: lambda.name,
-    StartingPosition: 'TRIM_HORIZON',
+    FunctionName: kinesisLambda.name,
+    StartingPosition: EventSourcePosition.TRIM_HORIZON,
     Enabled: true,
   };
-  return awsServices.lambda().createEventSourceMapping(params);
+  return awsServices.lambda().send(new CreateEventSourceMappingCommand(params));
 }
 
 /**
@@ -431,7 +444,7 @@ async function addKinesisEventSources(rule) {
   ];
 
   const sourceEventPromises = kinesisSourceEvents.map(
-    (lambda) => addKinesisEventSource(rule, lambda).catch(
+    (kinesisLambda) => addKinesisEventSource(rule, kinesisLambda).catch(
       (error) => {
         log.error(`Error adding eventSourceMapping for ${rule.name}: ${error}`);
         if (error.name !== 'ResourceNotFoundException') throw error;
@@ -515,7 +528,7 @@ async function addSnsTrigger(item) {
       SourceArn: item.rule.value,
       StatementId: getSnsTriggerPermissionId(item),
     };
-    await awsServices.lambda().addPermission(permissionParams);
+    await lambda().send(new AddPermissionCommand(permissionParams));
   }
   return subscriptionArn;
 }

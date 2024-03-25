@@ -336,7 +336,7 @@ Consider [the size of your Elasticsearch cluster](#elasticsearch) when configuri
 
 :::tip
 
-Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus Dashboard will not work without Elasticsearch.
+Elasticsearch is optional and can be disabled using `include_elasticsearch = false` in your `terraform.tfvars`. Your Cumulus Dashboard and endpoints querying Elasticsearch will not work without Elasticsearch.
 
 :::
 
@@ -492,9 +492,9 @@ distribution_redirect_uri = https://abc123.execute-api.us-east-1.amazonaws.com/D
 distribution_url = https://abc123.execute-api.us-east-1.amazonaws.com/DEV/
 ```
 
-:::note
+:::caution
 
-Be sure to copy the redirect URLs because you will need them to update your Earthdata application.
+Cumulus deploys API Gateways for the Archive and Distribution APIs. In production environments these must be behind CloudFront distributions using HTTPS connections.
 
 :::
 
@@ -511,6 +511,12 @@ Add the two redirect URLs to your EarthData login application by doing the follo
 5. You may delete the placeholder url you used to create the application
 
 If you've lost track of the needed redirect URIs, they can be located on the [API Gateway](https://console.aws.amazon.com/apigateway). Once there, select `<prefix>-archive` and/or `<prefix>-thin-egress-app-EgressGateway`, `Dashboard` and utilizing the base URL at the top of the page that is accompanied by the text `Invoke this API at:`. Make sure to append `/token` for the archive URL and `/login` to the thin egress app URL.
+
+:::caution
+
+In production environments, the API Gateway URLs must be replaced with CloudFront distributions using HTTPS connections to ensure Data In Transit compliance.
+
+:::
 
 ---
 
@@ -606,6 +612,12 @@ From the S3 Console:
 
 You should be able to visit the Dashboard website at `http://<prefix>-dashboard.s3-website-<region>.amazonaws.com` or find the url
 `<prefix>-dashboard` -> "Properties" -> "Static website hosting" -> "Endpoint" and log in with a user that you had previously configured for access.
+
+:::caution
+
+In production environments, the dashboard must be behind a CloudFront distributions using an HTTPS connection to ensure Data In Transit compliance.
+
+:::
 
 ---
 

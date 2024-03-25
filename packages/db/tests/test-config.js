@@ -489,7 +489,7 @@ test('convertIdColumnsToNumber() throws exception if the value of cumulus_id col
 test('convertIdColumnsToNumber() throws exception if the value of cumulus_id column is non-numeric string', (t) => {
   const record = {
     cumulus_id: Number.MAX_SAFE_INTEGER.toString(),
-    abc_cumulus_id: cryptoRandomString({ length: 10 }),
+    abc_cumulus_id: `abc${cryptoRandomString({ length: 10 })}`,
   };
 
   t.throws(

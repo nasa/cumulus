@@ -7,6 +7,7 @@ import { DynamoDBStreamsClient } from '@aws-sdk/client-dynamodb-streams';
 import { DynamoDB, DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { EC2 } from '@aws-sdk/client-ec2';
 import { ECS } from '@aws-sdk/client-ecs';
+import { ElasticsearchService } from '@aws-sdk/client-elasticsearch-service';
 import { Kinesis } from '@aws-sdk/client-kinesis';
 import { KMS } from '@aws-sdk/client-kms';
 import { Lambda } from '@aws-sdk/client-lambda';
@@ -25,6 +26,7 @@ export type AWSClientTypes =
     Lambda |
     ECS |
     EC2 |
+    ElasticsearchService |
     S3 |
     SecretsManager |
     SFN |

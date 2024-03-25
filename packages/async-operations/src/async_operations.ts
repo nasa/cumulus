@@ -1,6 +1,6 @@
 import { RunTaskCommandOutput } from '@aws-sdk/client-ecs';
 import { Knex } from 'knex';
-import { FunctionConfiguration } from '@aws-sdk/client-lambda';
+import { FunctionConfiguration, GetFunctionConfigurationCommand } from '@aws-sdk/client-lambda';
 import { ecs, s3, lambda } from '@cumulus/aws-client/services';
 
 import {
@@ -32,9 +32,9 @@ type StartEcsTaskReturnType = Promise<RunTaskCommandOutput>;
 
 export const getLambdaConfiguration = async (
   functionName: string
-): Promise<FunctionConfiguration> => lambda().getFunctionConfiguration({
+): Promise<FunctionConfiguration> => lambda().send(new GetFunctionConfigurationCommand({
   FunctionName: functionName,
-});
+}));
 
 export const getLambdaEnvironmentVariables = (
   configuration: FunctionConfiguration

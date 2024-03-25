@@ -12,6 +12,8 @@ const url = require('url');
 const Logger = require('@cumulus/logger');
 const { pipeline } = require('stream');
 const { promisify } = require('util');
+const { GetFunctionCommand } = require('@aws-sdk/client-lambda');
+
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const {
   deleteS3Object,
@@ -101,9 +103,9 @@ async function fetchAndDeletePayload(payloadUrl) {
 async function getLambdaInfo(FunctionName) {
   logger.debug(`Retrieving lambda info for ${FunctionName}.`);
 
-  const getFunctionResponse = await lambda().getFunction({
+  const getFunctionResponse = await lambda().send(new GetFunctionCommand({
     FunctionName,
-  }).promise();
+  }));
 
   const handler = getFunctionResponse.Configuration.Handler;
   const [moduleFileName, moduleFunctionName] = handler.split('.');
