@@ -8,7 +8,7 @@ const got = require('got');
 const isEqual = require('lodash/isEqual');
 const isNil = require('lodash/isNil');
 const pWaitFor = require('p-wait-for');
-const { GetFunctionConfigurationCommand } = require('aws-sdk/client-lambda');
+const { GetFunctionConfigurationCommand } = require('@aws-sdk/client-lambda');
 
 const { deleteAsyncOperation } = require('@cumulus/api-client/asyncOperations');
 const reconciliationReportsApi = require('@cumulus/api-client/reconciliationReports');
