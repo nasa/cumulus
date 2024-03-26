@@ -22,6 +22,8 @@
     "webpack": "../../node_modules/.bin/webpack"
   },
   "dependencies": {
-    "@cumulus/api": "18.2.0"
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/logger": "18.2.0",
+    "moment": "^2.29.4"
   }
 }

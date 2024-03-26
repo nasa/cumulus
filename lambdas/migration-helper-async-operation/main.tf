@@ -1,10 +1,9 @@
 locals {
   lambda_path      = "${path.module}/dist/webpack/lambda.zip"
-  all_bucket_names = [for k, v in var.buckets : v.name]
 }
-resource "aws_lambda_function" "migration-helper-async-operation" {
-  function_name    = "${var.prefix}-migration-helper-async-operation"
-  role             = aws_iam_role.postgres_migration_async_operation_role.arn
+resource "aws_lambda_function" "migration_helper_async_operation" {
+  function_name    = "${var.prefix}-migrationHelperAsyncOperation"
+  role             = aws_iam_role.migration_helper_async_operation_role.arn
   filename         = local.lambda_path
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
@@ -22,7 +21,7 @@ resource "aws_lambda_function" "migration-helper-async-operation" {
       EcsCluster                   = var.ecs_cluster_name
       ES_HOST                      = var.elasticsearch_hostname
       idleTimeoutMillis            = var.rds_connection_timing_configuration.idleTimeoutMillis
-      DLAMigrationLambda           = var.dla_migration_function_arn
+      DlaMigrationLambda           = var.dla_migration_function_arn
       reapIntervalMillis           = var.rds_connection_timing_configuration.reapIntervalMillis
       stackName                    = var.prefix
       system_bucket                = var.system_bucket

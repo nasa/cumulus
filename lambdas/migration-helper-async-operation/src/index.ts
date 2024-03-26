@@ -21,21 +21,21 @@ exports.handler = async (event: HandlerEvent, context: Context) => {
     throw new Error(errorMessage);
   }
 
-  logger.info('About to start async operation for Migration');
+  logger.info(`About to start async operation for ${operationType}`);
   const asyncOperation = await asyncOperations.startAsyncOperation({
     asyncOperationTaskDefinition: process.env.AsyncOperationTaskDefinition,
     cluster: process.env.EcsCluster,
     callerLambdaName: context.functionName,
-    description: 'dead-letter-archive Migration',
+    description: 'Migrate Dead Letter Archive Messages',
     knexConfig: process.env,
-    lambdaName: process.env.DLAMigrationLambda,
-    operationType: 'DLA Migration',
+    lambdaName: process.env.DlaMigrationLambda,
+    operationType,
     payload: event,
     stackName: process.env.stackName,
     systemBucket: process.env.system_bucket,
     useLambdaEnvironmentVariables: true,
   });
 
-  logger.info(`Started async operation ${asyncOperation.id} for DLA Migration`);
+  logger.info(`Started async operation ${asyncOperation.id} for ${operationType}`);
   return asyncOperation;
 };

@@ -10,11 +10,6 @@ variable "system_bucket" {
   type        = string
 }
 
-variable "lambda_processing_role_arn" {
-  description = "Name of IAM role assumed when executing Lambda"
-  type = string
-}
-
 # Optional
 
 variable "lambda_memory_sizes" {
@@ -35,14 +30,19 @@ variable "lambda_subnet_ids" {
   default     = null
 }
 
-variable "security_group_ids" {
-  description = "Security Group IDs for Lambdas"
-  type        = list(string)
-  default     = null
+variable "permissions_boundary_arn" {
+  type    = string
+  description = "Optional permissions boundary for lambda role bounds"
+  default = null
 }
 
 variable "tags" {
   description = "Tags to be applied to Cumulus resources that support tags"
   type        = map(string)
   default     = {}
+}
+
+variable "vpc_id" {
+  type    = string
+  default = null
 }
