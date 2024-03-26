@@ -16,7 +16,7 @@ process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 test.before(async (t) => {
-  const { esIndex, esClient } = await createTestIndex();
+  const { esIndex, esClient, cumulusEsClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
@@ -31,7 +31,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('upsertExecution writes new "running" execution with null fields omitted', async (t) => {
+test.only('upsertExecution writes new "running" execution with null fields omitted', async (t) => {
   const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {

@@ -106,16 +106,36 @@ const esConfig = async (host, metrics = false) => {
 };
 
 class BaseSearch {
+  async getEsClient(host, metrics) {
+    //Todo rename, add init?
+    if (!this.client) {
+      this.client = new elasticsearch.Client(await esConfig(host, metrics));
+    }
+    return this.client;
+  }
+
+  async refreshCredentials() {
+    // TODO - this isn't v3 compat.   Ugh.
+    if (!aws.config.credentials || aws.config.credentials.expired) {
+      await getCredentials();
+      this.client = new elasticsearch.Client(
+        await esConfig(this.host, this.metrics)
+      );
+    }
+  }
+
   static async es(host, metrics) {
     return new elasticsearch.Client(await esConfig(host, metrics));
   }
 
-  constructor(event, type = null, index, metrics = false) {
+  constructor(event = {}, type = null, index, metrics = false) {
+    // TODO - refactor init into constructor call?
     let params = {};
     const logLimit = 10;
 
     this.type = type;
-    this.client = null;
+    this.client = undefined;
+    this.host = undefined;
     this.metrics = metrics;
 
     // this will allow us to receive payload
@@ -125,17 +145,17 @@ class BaseSearch {
     }
 
     // get page number
-    const page = Number.parseInt((params.page) ? params.page : 1, 10);
+    const page = Number.parseInt(params.page ? params.page : 1, 10);
     this.params = params;
     //log.debug('Generated params:', params, logDetails);
 
-    this.size = Number.parseInt((params.limit) ? params.limit : logLimit, 10);
+    this.size = Number.parseInt(params.limit ? params.limit : logLimit, 10);
 
     // max size is 100 for performance reasons
     this.size = this.size > 100 ? 100 : this.size;
 
     this.frm = (page - 1) * this.size;
-    this.page = Number.parseInt((params.skip) ? params.skip : page, 10);
+    this.page = Number.parseInt(params.skip ? params.skip : page, 10);
     this.index = index || defaultIndexAlias;
   }
 
@@ -197,37 +217,39 @@ class BaseSearch {
     const body = {
       query: {
         bool: {
-          must: [{
-            term: {
-              _id: id,
+          must: [
+            {
+              term: {
+                _id: id,
+              },
             },
-          }],
+          ],
         },
       },
     };
 
     if (parentId) {
-      body.query.bool.must.push(
-        {
-          parent_id: {
-            id: parentId,
-            type: this.type,
-          },
-        }
-      );
+      body.query.bool.must.push({
+        parent_id: {
+          id: parentId,
+          type: this.type,
+        },
+      });
     }
 
     logDetails.granuleId = id;
 
     if (!this.client) {
-      this.client = await this.constructor.es();
+      this.client = await this.getEsClient();
     }
 
-    const result = await this.client.search({
-      index: this.index,
-      type: this.type,
-      body,
-    }).then((response) => response.body);
+    const result = await this.client
+      .search({
+        index: this.index,
+        type: this.type,
+        body,
+      })
+      .then((response) => response.body);
 
     if (result.hits.total > 1) {
       return { detail: multipleRecordFoundString };
@@ -252,7 +274,7 @@ class BaseSearch {
     try {
       // search ES with the generated parameters
       if (!this.client) {
-        this.client = await this.constructor.es(null, this.metrics);
+        this.client = await this.getEsClient(null, this.metrics);
       }
       const response = await this.client.search(searchParams);
       const hits = response.body.hits.hits;
@@ -262,7 +284,9 @@ class BaseSearch {
       meta.page = this.page;
       meta.count = response.body.hits.total;
       if (hits.length > 0) {
-        meta.searchContext = encodeURIComponent(JSON.stringify(hits[hits.length - 1].sort));
+        meta.searchContext = encodeURIComponent(
+          JSON.stringify(hits[hits.length - 1].sort)
+        );
       }
 
       return {
@@ -279,7 +303,7 @@ class BaseSearch {
 
     try {
       if (!this.client) {
-        this.client = await this.constructor.es();
+        this.client = await this.getEsClient();
       }
 
       const result = await this.client.search(searchParams);

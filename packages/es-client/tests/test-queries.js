@@ -36,6 +36,7 @@ const reconciliationReports = [
 ];
 
 let esClient;
+let cumulusEsClient;
 const esIndex = randomId('esindex');
 const esAlias = randomId('esalias');
 process.env.ES_INDEX = esAlias;
@@ -48,8 +49,8 @@ test.before(async () => {
     alias: esAlias,
   });
 
-  esClient = await Search.es();
-
+  esClient = await new Search();
+  cumulusEsClient = await esClient.getEsClient();
   await Promise.all(
     granules.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
   );
@@ -62,7 +63,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
+  await cumulusEsClient.indices.delete({ index: esIndex });
 });
 
 test('Search with prefix returns correct granules', async (t) => {

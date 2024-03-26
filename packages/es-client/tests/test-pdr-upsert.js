@@ -15,9 +15,10 @@ process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 test.before(async (t) => {
-  const { esIndex, esClient } = await createTestIndex();
+  const { esIndex, esClient, cumulusEsClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
+  t.context.cumulusEsClient = cumulusEsClient;
 
   t.context.esPdrsClient = new Search(
     {},
@@ -418,7 +419,7 @@ test('upsertPdr does update a final (failed) record to a final state (completed)
 });
 
 test('upsertPdr handles version conflicts on parallel updates', async (t) => {
-  const { esIndex, esClient } = t.context;
+  const { esIndex, esClient, cumulusEsClient } = t.context;
 
   const createdAt = Date.now();
   const pdr = {
@@ -459,7 +460,7 @@ test('upsertPdr handles version conflicts on parallel updates', async (t) => {
     }),
   ]);
 
-  await esClient.indices.refresh({
+  await cumulusEsClient.indices.refresh({
     index: esIndex,
   });
   const updatedEsRecord = await t.context.esPdrsClient.get(pdr.pdrName);
