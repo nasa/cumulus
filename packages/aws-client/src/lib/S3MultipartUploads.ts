@@ -5,13 +5,14 @@ import range from 'lodash/range';
 import {
   AbortMultipartUploadRequest,
   CompleteMultipartUploadRequest,
+  CompleteMultipartUploadOutput as S3CompleteMultipartUploadOutput,
   CreateMultipartUploadRequest,
   UploadPartCopyRequest,
 } from '@aws-sdk/client-s3';
 
 import { s3 } from '../services';
 
-export interface CompleteMultipartUploadOutput extends AWS.S3.CompleteMultipartUploadOutput {
+export interface CompleteMultipartUploadOutput extends S3CompleteMultipartUploadOutput {
   ETag: string
 }
 

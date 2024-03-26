@@ -138,7 +138,7 @@ export const isSQSRecordLike = (message: Object): message is SQSRecord => (
  * Extract SQS message body
  */
 export const parseSQSMessageBody = (
-  message: SQSRecord | AWS.SQS.Message
+  message: SQSRecord | Message
 ): StepFunctionEventBridgeEvent | CumulusMessage | SQSRecord =>
   JSON.parse(get(message, 'Body', get(message, 'body')) ?? '{}');
 
