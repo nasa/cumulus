@@ -3,7 +3,18 @@
 const { Connection } = require('@elastic/elasticsearch');
 const aws4 = require('aws4');
 
-const buildAmazonConnection = (awsConfig) => {
+/**
+ * Builds and returns a custom subclass of Connection that is configured to sign requests
+ * for AWS Elasticsearch service. Request signing is provided by the aws4 library and requires
+ * valid AWS credentials.
+ *
+ * @param {object} awsConfig - AWS configuration values to be used to build the Connection.
+ * @param {string} [awsConfig.region] - Optionally specify the AWS region in the request.
+ * @param {object} awsConfig.credentials - Valid AWS credentials object.
+ * @returns {AmazonConnection} - Connection configured and signed to work with AWS Elasticsearch
+ * service.
+ */
+const createAmazonConnection = (awsConfig) => {
   class AmazonConnection extends Connection {
     buildRequestObject(params) {
       const req = super.buildRequestObject(params);
@@ -49,5 +60,5 @@ const buildAmazonConnection = (awsConfig) => {
 };
 
 module.exports = (awsConfig) => ({
-  Connection: buildAmazonConnection(awsConfig),
+  Connection: createAmazonConnection(awsConfig),
 });
