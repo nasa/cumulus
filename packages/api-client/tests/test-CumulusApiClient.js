@@ -26,8 +26,8 @@ test.serial('invokeApi invokes the lambda with the expected Payload and Function
   };
 
   fakeServices.lambda = () => ({
-    invoke: (payloadObject) => {
-      const passedPayload = payloadObject;
+    send: (payloadObject) => {
+      const passedPayload = payloadObject.input;
       t.deepEqual(Payload, passedPayload);
       return Promise.resolve({
         Payload: new TextEncoder().encode(JSON.stringify(t.context.testLambdaReturn)),
@@ -48,7 +48,7 @@ test.serial('invokeApi retries on timeout failure, then throws error on failure'
   let lambdaInvocations = 0;
 
   fakeServices.lambda = () => ({
-    invoke: () => {
+    send: () => {
       lambdaInvocations += 1;
       return Promise.resolve({
         Payload: new TextEncoder().encode(JSON.stringify({ errorMessage: 'Task timed out' })),
@@ -72,15 +72,17 @@ test.serial('invokeApi retries on status code failure, then throws expected erro
   let lambdaInvocations = 0;
 
   fakeServices.lambda = () => ({
-    invoke: () => {
+    send: () => {
       lambdaInvocations += 1;
       return Promise.resolve({
-        Payload: new TextEncoder().encode(JSON.stringify({
-          statusCode: 500,
-          body: JSON.stringify({
-            message: 'API failure',
-          }),
-        })),
+        Payload: new TextEncoder().encode(
+          JSON.stringify({
+            statusCode: 500,
+            body: JSON.stringify({
+              message: 'API failure',
+            }),
+          })
+        ),
       });
     },
   });
@@ -102,9 +104,8 @@ test.serial('invokeApi retries on status code failure, then throws expected erro
 
 test.serial('invokeApi respects expected non-200 status code', async (t) => {
   let lambdaInvocations = 0;
-
   fakeServices.lambda = () => ({
-    invoke: () => {
+    send: () => {
       lambdaInvocations += 1;
       return Promise.resolve({
         Payload: new TextEncoder().encode(JSON.stringify({
@@ -134,7 +135,7 @@ test.serial('invokeApi respects multiple accepted status codes', async (t) => {
   let lambdaInvocations = 0;
 
   fakeServices.lambda = () => ({
-    invoke: () => {
+    send: () => {
       lambdaInvocations += 1;
       return Promise.resolve({
         Payload: new TextEncoder().encode(JSON.stringify({

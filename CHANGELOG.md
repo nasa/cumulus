@@ -43,8 +43,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
 
-### Changed
+### Add
 
+- **CUMULUS-3614**
+  - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+
+### Changed
+- **CUMULUS-3613**
+  - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
+- **CUMULUS-3518**
+  - Update existing usage of `@cumulus/aws-client` lambda service to use AWS SDK v3 `send` syntax
+  - Update Discover Granules lambda default memory to 1024 MB
+- **CUMULUS-3600**
+  - Update docs to clarify CloudFront HTTPS DIT requirements.
 - **CUMULUS-2892**
   - Updates `aws-client`'s EC2 client to use AWS SDK v3.
 - **CUMULUS-2896**

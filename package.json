@@ -74,10 +74,12 @@
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
+    "aws-sdk-client-mock": "^3.0.1",
     "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
     "@docusaurus/eslint-plugin": "^2.3.0",
     "@octokit/graphql": "2.1.1",
+    "@smithy/types": "^2.11.0",
     "@types/aws-lambda": "^8.10.58",
     "@types/lodash": "^4.14.150",
     "@types/lodash.iserror": "^3.1.6",
