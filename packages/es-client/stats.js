@@ -106,7 +106,7 @@ class Stats extends BaseSearch {
 
   async count() {
     if (!this.client) {
-      this.client = await this.constructor.es();
+      this.client = await this.getEsClient();
     }
 
     const originalField = this.params.field || 'status';

@@ -20,6 +20,7 @@ process.env.system_bucket = randomId('system-bucket');
 process.env.stackName = randomId('stackName');
 
 let esClient;
+let cumulusEsClient;
 let esAlias;
 let esIndex;
 
@@ -39,7 +40,8 @@ test.before(async () => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await Search.es();
+  esClient = await new Search();
+  cumulusEsClient = await esClient.getEsClient(); // TODO fix init
 
   await Promise.all([
     indexer.indexCollection(esClient, {
@@ -112,7 +114,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
+  await cumulusEsClient.indices.delete({ index: esIndex });
   await s3.recursivelyDeleteS3Bucket(process.env.system_bucket);
 });
 

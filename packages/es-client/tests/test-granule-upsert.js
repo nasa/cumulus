@@ -15,9 +15,10 @@ process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 test.before(async (t) => {
-  const { esIndex, esClient } = await createTestIndex();
+  const { esIndex, esClient, cumulusEsClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
+  t.context.cumulusEsClient = cumulusEsClient;
 
   t.context.esGranulesClient = new Search(
     {},
@@ -30,8 +31,8 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test('upsertGranule removes deleted granule record', async (t) => {
-  const { esIndex, esClient } = t.context;
+test.serial('upsertGranule removes deleted granule record', async (t) => {
+  const { esIndex, esClient, cumulusEsClient } = t.context;
 
   const granule = {
     granuleId: randomString(),
@@ -62,7 +63,7 @@ test('upsertGranule removes deleted granule record', async (t) => {
     parent: granule.collectionId,
   };
 
-  let deletedRecord = await esClient.get(deletedGranParams)
+  let deletedRecord = await cumulusEsClient.get(deletedGranParams)
     .then((response) => response.body);
   t.like(deletedRecord._source, granule);
 
@@ -72,7 +73,7 @@ test('upsertGranule removes deleted granule record', async (t) => {
     index: esIndex,
   });
 
-  deletedRecord = await esClient.get(deletedGranParams, { ignore: [404] })
+  deletedRecord = await cumulusEsClient.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
   t.false(deletedRecord.found);
 });
@@ -275,7 +276,7 @@ test('upsertGranule updates record with expected nullified values for same execu
   t.like(updatedEsRecord, granule);
 });
 
-test('upsertGranule updates record with expected nullified values for same execution if writeConstraints is true and write conditions are met and createdAt is not set', async (t) => {
+test.serial('upsertGranule updates record with expected nullified values for same execution if writeConstraints is true and write conditions are met and createdAt is not set', async (t) => {
   const { esIndex, esClient } = t.context;
   const granule = {
     createdAt: Date.now(),
@@ -1770,8 +1771,8 @@ test('upsertGranule does update "completed" granule to "failed" for new executio
   t.like(updatedEsRecord, updates);
 });
 
-test('upsertGranule handles version conflicts on parallel updates', async (t) => {
-  const { esIndex, esClient } = t.context;
+test.serial('upsertGranule handles version conflicts on parallel updates', async (t) => {
+  const { esIndex, esClient, cumulusEsClient } = t.context;
 
   const execution = randomString();
   const createdAt = Date.now();
@@ -1809,7 +1810,7 @@ test('upsertGranule handles version conflicts on parallel updates', async (t) =>
     }),
   ]);
 
-  await esClient.indices.refresh({ index: esIndex });
+  await cumulusEsClient.indices.refresh({ index: esIndex });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });

@@ -13,12 +13,18 @@ const createTestIndex = async () => {
     index: esIndex,
     alias: esAlias,
   });
-  const esClient = await Search.es('fakehost');
-  return { esIndex, esClient };
+  const esClient = await new Search('fakehost');
+  const cumulusEsClient = await esClient.getEsClient(); //TODO - init is a side effect here :( )
+  return {
+    cumulusEsClient,
+    esClient,
+    esIndex,
+  };
 };
 
 const cleanupTestIndex = async ({ esClient, esIndex }) => {
-  await esClient.indices.delete({ index: esIndex });
+  const cumulusEsClient = await esClient.getEsClient();
+  await cumulusEsClient.indices.delete({ index: esIndex });
 };
 
 module.exports = {

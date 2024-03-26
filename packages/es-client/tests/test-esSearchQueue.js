@@ -19,13 +19,14 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  t.context.esClient = await Search.es();
-  t.context.esClientSpy = sandbox.spy(t.context.esClient, 'scroll');
+  t.context.esClient = await new Search();
+  t.context.cumulusEsClient = await t.context.esClient.getEsClient();
+  t.context.esClientSpy = sandbox.spy(t.context.cumulusEsClient, 'scroll');
 });
 
 test.afterEach.always(async (t) => {
   sandbox.restore();
-  await t.context.esClient.indices.delete({ index: t.context.esIndex });
+  await t.context.cumulusEsClient.indices.delete({ index: t.context.esIndex });
 });
 
 test.serial(
