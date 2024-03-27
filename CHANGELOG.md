@@ -8,16 +8,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
+
 - The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
   [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
-- CUMULUS-3617 Instructions for migrating old DLA (Dead Letter Archive) messages to `YYYY-MM-DD` subfolder of S3 dead letter archive:
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
+
+Instructions for migrating old DLA (Dead Letter Archive) messages to `YYYY-MM-DD` subfolder of S3 dead letter archive:
+
 To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
 
 ```bash
 aws lambda invoke --function-name $PREFIX-migrationHelperAsyncOperation \
   --payload $(echo '{"operationType": "DLA Migration"}' | base64) $OUTFILE
 ```
+
 - `PREFIX` is your Cumulus deployment prefix.
 - `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
 
@@ -117,6 +123,7 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Updated `aws-client`'s ES client to use AWS SDK v3.
 - **CUMULUS-3617**
   - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
+  - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
 
 ### Fixed
 
