@@ -627,28 +627,6 @@ export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap
   { concurrency: S3_RATE_LIMIT }
 );
 
-/**
-* Delete a bucket and all of its objects from S3
-*
-* @param bucket - name of the bucket
-* @returns the promised result of `S3.deleteBucket`
-**/
-export const recursivelyDeleteS3Bucket = improveStackTrace(
-  async (bucket: string): Promise<DeleteBucketCommandOutput> => {
-    const response = await s3().listObjects({ Bucket: bucket });
-    const s3Objects: DeleteObjectRequest[] = (response.Contents || []).map((o) => {
-      if (!o.Key) throw new Error(`Unable to determine S3 key of ${JSON.stringify(o)}`);
-
-      return {
-        Bucket: bucket,
-        Key: o.Key,
-      };
-    });
-
-    await deleteS3Files(s3Objects);
-    return await s3().deleteBucket({ Bucket: bucket });
-  }
-);
 
 /**
 * Delete a list of buckets and all of their objects from S3
@@ -813,6 +791,7 @@ export const listS3ObjectsV2 = async (
 
   return discoveredObjects.filter((obj) => obj.Key) as Array<ListS3ObjectsOutput>;
 };
+
 /**
  * Fetch lazy list of S3 objects
  *
@@ -852,7 +831,23 @@ export async function* listS3ObjectsV2Batch(
     yield discoveredObjects.filter((obj) => 'Key' in obj) as Array<ListS3ObjectsOutput>;
   }
 }
-
+/**
+* Delete a bucket and all of its objects from S3
+*
+* @param bucket - name of the bucket
+* @returns the promised result of `S3.deleteBucket`
+**/
+export const recursivelyDeleteS3Bucket = improveStackTrace(
+  async (bucket: string): Promise<DeleteBucketCommandOutput> => {
+    for await (
+      const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket })
+    ) {
+      const deleteRequests = objectBatch.map((obj) => ({ Bucket: bucket, Key: obj.Key }));
+      await deleteS3Files(deleteRequests);
+    }
+    return await s3().deleteBucket({ Bucket: bucket });
+  }
+);
 /**
  * Calculate the cryptographic hash of an S3 object
  *
