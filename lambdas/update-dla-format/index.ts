@@ -145,7 +145,7 @@ export const updateDLABatch = async (
   const sourceDir = manipulateTrailingSlash(sourceDirectory, true);
   const targetDir = manipulateTrailingSlash(targetDirectory, true);
   for await (
-    const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: sourceDir, MaxKeys: 2 })
+    const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: sourceDir })
   ) {
     const validKeys = objectBatch.map((obj) => obj.Key);
     const targetPaths = validKeys.map(
