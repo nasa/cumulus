@@ -74,7 +74,6 @@
     "fs-extra": "^9.0.0"
   },
   "devDependencies": {
-    "aws-sdk-client-mock": "^3.0.1",
     "@ava/typescript": "^1.1.1",
     "@babel/core": "^7.9.6",
     "@docusaurus/eslint-plugin": "^2.3.0",
@@ -94,7 +93,7 @@
     "@typescript-eslint/parser": "^4.33.0",
     "audit-ci": "6.6.1",
     "ava": "^5.3.1",
-    "aws-sdk": "^2.1492.0",
+    "aws-sdk-client-mock": "^3.0.1",
     "babel-eslint": "^10.0.3",
     "babel-loader": "^8.2.2",
     "babel-plugin-source-map-support": "^2.1.1",

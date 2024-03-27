@@ -32,7 +32,7 @@ module.exports = {
     },
   },
   externals: [
-    'aws-sdk',
+    '@aws-sdk',
     'electron',
     { formidable: 'url' },
   ],
