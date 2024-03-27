@@ -19,7 +19,7 @@ Credentials Endpoint with a configuration targeted at Cumulus and NGAP.
 - **api_gateway_stage** (string) - The API Gateway stage to create, defaults to `DEV`
 - **cmr_provider** (string) - The provider used to search CMR ACLs, defaults to `null`
 - **deploy_s3_credentials_endpoint** - (bool) Option to deploy the s3 credentials endpoint, defaults to `true`
-- **distribution_url** (string) - An alternative URL used for distribution
+- **distribution_url** (string) - An alternative URL (e.g. CloudFront URL) used for distribution
 - **permissions_boundary_arn** (string) - The ARN of an IAM permissions boundary to use when creating IAM policies
 - **protected_buckets** (list(string)) - A list of protected buckets
 - **public_buckets** (list(string)) - A list of public buckets

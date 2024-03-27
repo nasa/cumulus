@@ -3,6 +3,8 @@
 'use strict';
 
 const get = require('lodash/get');
+const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { isSQSRecordLike } = require('@cumulus/aws-client/SQS');
@@ -34,6 +36,7 @@ async function handler(event) {
       massagedMessage = sqsMessage;
     }
 
+    const dateString = massagedMessage.time ? moment.utc(massagedMessage.time).format('YYYY-MM-DD') : moment.utc().format('YYYY-MM-DD');
     await s3PutObject({
       Bucket: process.env.system_bucket,
       Key: getDLAKey(process.env.stackName, massagedMessage),

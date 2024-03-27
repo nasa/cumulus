@@ -50,7 +50,7 @@ module.exports.asyncOperation = {
     description: { type: 'string' },
     operationType: {
       type: 'string',
-      enum: ['Data Migration', 'Dead-Letter Processing', 'Migration Count Report', 'ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report', 'SQS Replay'],
+      enum: ['Data Migration', 'Dead-Letter Processing', 'DLA Migration', 'Migration Count Report', 'ES Index', 'Bulk Granules', 'Bulk Granule Delete', 'Bulk Granule Reingest', 'Kinesis Replay', 'Reconciliation Report', 'SQS Replay'],
     },
     output: {
       description: 'The result of the operation, stored as JSON',

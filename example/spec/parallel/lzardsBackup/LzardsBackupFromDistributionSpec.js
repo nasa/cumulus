@@ -4,6 +4,10 @@ const get = require('lodash/get');
 const pAll = require('p-all');
 const path = require('path');
 const pTimeout = require('p-timeout');
+const {
+  GetFunctionConfigurationCommand,
+  InvokeCommand,
+} = require('@aws-sdk/client-lambda');
 
 const { createCollection } = require('@cumulus/integration-tests/Collections');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -37,9 +41,9 @@ describe('The Lzards Backup Task with distribution URL', () => {
       await putFile(ingestBucket, `${ingestPath}/testGranule.dat`, path.join(__dirname, 'test_data', 'testGranule.dat'));
       await putFile(ingestBucket, `${ingestPath}/testGranule.jpg`, path.join(__dirname, 'test_data', 'testGranule.jpg'));
       FunctionName = `${prefix}-LzardsBackup`;
-      functionConfig = await lambda().getFunctionConfiguration({
+      functionConfig = await lambda().send(new GetFunctionConfigurationCommand({
         FunctionName,
-      });
+      }));
       granuleId = `FakeGranule_${randomString()}`;
       provider = `FakeProvider_${randomString()}`;
 
@@ -127,7 +131,7 @@ describe('The Lzards Backup Task with distribution URL', () => {
       }));
 
       lzardsBackupOutput = await pTimeout(
-        lambda().invoke({ FunctionName, Payload }),
+        lambda().send(new InvokeCommand({ FunctionName, Payload })),
         (functionConfig.Timeout + 10) * 1000
       );
     } catch (error) {

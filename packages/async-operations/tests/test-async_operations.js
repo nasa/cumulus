@@ -7,6 +7,9 @@ const sinon = require('sinon');
 const omit = require('lodash/omit');
 
 const { v4: uuidv4 } = require('uuid');
+const { mockClient } = require('aws-sdk-client-mock');
+const { GetFunctionConfigurationCommand } = require('@aws-sdk/client-lambda');
+
 const { ecs, lambda, s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, recursivelyDeleteS3Bucket } = require('@cumulus/aws-client/S3');
 // eslint-disable-next-line node/no-unpublished-require
@@ -77,10 +80,10 @@ test.before(async (t) => {
     },
   };
 
-  sinon.stub(lambda(), 'getFunctionConfiguration').returns(
+  const mockLambdaClient = mockClient(lambda()).onAnyCommand().rejects();
+  mockLambdaClient.on(GetFunctionConfigurationCommand).resolves(
     Promise.resolve(t.context.functionConfig)
   );
-
   t.context.asyncOperationPgModel = new AsyncOperationPgModel();
 });
 
