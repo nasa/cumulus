@@ -4,6 +4,7 @@
     "lambdas/**/*.ts",
     "packages/**/*.ts",
     "tasks/**/*.ts",
+    "scripts/**/*.ts",
     ".eslintrc.js",
   ]
 }

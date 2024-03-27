@@ -18,11 +18,11 @@ import {
   CopyObjectCommandInput,
   CreateMultipartUploadRequest,
   DeleteObjectRequest,
+  DeleteBucketCommandOutput,
   GetObjectCommandInput,
   GetObjectOutput,
   HeadObjectOutput,
   ListObjectsRequest,
-  ListObjectsV2Output,
   ListObjectsV2Request,
   ObjectCannedACL,
   PutObjectCommandInput,
@@ -30,6 +30,7 @@ import {
   S3,
   Tag,
   Tagging,
+  _Object,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -157,18 +158,18 @@ export const deleteS3Objects = (params: {
 /**
 * Get an object header from S3
 *
-* @param {string} Bucket - name of bucket
-* @param {string} Key - key for object (filepath + filename)
-* @param {Object} retryOptions - options to control retry behavior when an
+* @param Bucket - name of bucket
+* @param Key - key for object (filepath + filename)
+* @param retryOptions - options to control retry behavior when an
 *   object does not exist. See https://github.com/tim-kos/node-retry#retryoperationoptions
 *   By default, retries will not be performed
-* @returns {Promise} returns response from `S3.headObject` as a promise
+* @returns  returns response from `S3.headObject` as a promise
 **/
 export const headObject = (
   Bucket: string,
   Key: string,
   retryOptions: pRetry.Options = { retries: 0 }
-) =>
+): Promise<HeadObjectOutput> =>
   pRetry(
     async () => {
       try {
@@ -626,28 +627,6 @@ export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap
   { concurrency: S3_RATE_LIMIT }
 );
 
-/**
-* Delete a bucket and all of its objects from S3
-*
-* @param {string} bucket - name of the bucket
-* @returns {Promise} the promised result of `S3.deleteBucket`
-**/
-export const recursivelyDeleteS3Bucket = improveStackTrace(
-  async (bucket: string) => {
-    const response = await s3().listObjects({ Bucket: bucket });
-    const s3Objects: DeleteObjectRequest[] = (response.Contents || []).map((o) => {
-      if (!o.Key) throw new Error(`Unable to determine S3 key of ${JSON.stringify(o)}`);
-
-      return {
-        Bucket: bucket,
-        Key: o.Key,
-      };
-    });
-
-    await deleteS3Files(s3Objects);
-    return await s3().deleteBucket({ Bucket: bucket });
-  }
-);
 
 /**
 * Delete a list of buckets and all of their objects from S3
@@ -738,24 +717,22 @@ export const uploadS3FileStream = (
       Body: fileStream,
     },
   });
+/**
+ * List of outputs from ListS3Objects functions (including V2)
+ * Guarantees that Key exists
+ */
+export interface ListS3ObjectsOutput extends _Object {
+  Key: string
+}
 
 /**
  * List the objects in an S3 bucket
- *
- * @param {string} bucket - The name of the bucket
- * @param {string} prefix - Only objects with keys starting with this prefix
- *   will be included (useful for searching folders in buckets, e.g., '/PDR')
- * @param {boolean} skipFolders - If true don't return objects that are folders
- *   (defaults to true)
- * @returns {Promise} A promise that resolves to the list of objects. Each S3
- *   object is represented as a JS object with the following attributes: `Key`,
- * `ETag`, `LastModified`, `Owner`, `Size`, `StorageClass`.
  */
 export const listS3Objects = async (
   bucket: string,
   prefix?: string,
   skipFolders: boolean = true
-) => {
+): Promise<Array<ListS3ObjectsOutput>> => {
   log.info(`Listing objects in s3://${bucket}`);
   const params: ListObjectsRequest = {
     Bucket: bucket,
@@ -763,10 +740,13 @@ export const listS3Objects = async (
   if (prefix) params.Prefix = prefix;
 
   const data = await s3().listObjects(params);
-  let contents = data.Contents || [];
+  if (!data.Contents) {
+    return [];
+  }
+  let contents = data.Contents.filter((obj) => obj.Key !== undefined) as Array<ListS3ObjectsOutput>;
   if (skipFolders) {
     // Filter out any references to folders
-    contents = contents.filter((obj) => obj.Key !== undefined && !obj.Key.endsWith('/'));
+    contents = contents.filter((obj) => !obj.Key.endsWith('/'));
   }
   return contents;
 };
@@ -789,7 +769,7 @@ export const listS3Objects = async (
  */
 export const listS3ObjectsV2 = async (
   params: ListObjectsV2Request
-): Promise<ListObjectsV2Output['Contents']> => {
+): Promise<Array<ListS3ObjectsOutput>> => {
   // Fetch the first list of objects from S3
   let listObjectsResponse = await s3().listObjectsV2(params);
 
@@ -809,9 +789,65 @@ export const listS3ObjectsV2 = async (
     discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents ?? []);
   }
 
-  return discoveredObjects;
+  return discoveredObjects.filter((obj) => obj.Key) as Array<ListS3ObjectsOutput>;
 };
 
+/**
+ * Fetch lazy list of S3 objects
+ *
+ * listObjectsV2 is limited to 1,000 results per call.  This function continues
+ * listing objects until there are no more to be fetched.
+ *
+ * The passed params must be compatible with the listObjectsV2 call.
+ *
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
+ *
+ * @param params - params for the s3.listObjectsV2 call
+ * @yields a series of objects corresponding to
+ *   the Contents property of the listObjectsV2 response
+ *   batched to allow processing of one chunk at a time
+ *
+ * @static
+ */
+export async function* listS3ObjectsV2Batch(
+  params: ListObjectsV2Request
+): AsyncIterable<Array<ListS3ObjectsOutput>> {
+  let listObjectsResponse = await s3().listObjectsV2(params);
+
+  let discoveredObjects = listObjectsResponse.Contents ?? [];
+  yield discoveredObjects.filter((obj) => 'Key' in obj) as Array<ListS3ObjectsOutput>;
+  // Keep listing more objects from S3 until we have all of them
+  while (listObjectsResponse.IsTruncated) {
+    // eslint-disable-next-line no-await-in-loop
+    listObjectsResponse = (await s3().listObjectsV2(
+      // Update the params with a Continuation Token
+      {
+
+        ...params,
+        ContinuationToken: listObjectsResponse.NextContinuationToken,
+      }
+    ));
+    discoveredObjects = listObjectsResponse.Contents ?? [];
+    yield discoveredObjects.filter((obj) => 'Key' in obj) as Array<ListS3ObjectsOutput>;
+  }
+}
+/**
+* Delete a bucket and all of its objects from S3
+*
+* @param bucket - name of the bucket
+* @returns the promised result of `S3.deleteBucket`
+**/
+export const recursivelyDeleteS3Bucket = improveStackTrace(
+  async (bucket: string): Promise<DeleteBucketCommandOutput> => {
+    for await (
+      const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket })
+    ) {
+      const deleteRequests = objectBatch.map((obj) => ({ Bucket: bucket, Key: obj.Key }));
+      await deleteS3Files(deleteRequests);
+    }
+    return await s3().deleteBucket({ Bucket: bucket });
+  }
+);
 /**
  * Calculate the cryptographic hash of an S3 object
  *
