@@ -11,6 +11,28 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
   [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
+- CUMULUS-3617 Instructions for migrating old DLA (Dead Letter Archive) messages to `YYYY-MM-DD` subfolder of S3 dead letter archive:
+To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
+
+```bash
+aws lambda invoke --function-name $PREFIX-migrationHelperAsyncOperation \
+  --payload $(echo '{"operationType": "DLA Migration"}' | base64) $OUTFILE
+```
+- `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
+
+The Lambda will trigger an Async Operation and return an `id` such as:
+
+```json
+{"id":"41c9fbbf-a031-4dd8-91cc-8ec2d8b5e31a","description":"Migrate Dead Letter Archive Messages",
+"operationType":"DLA Migration","status":"RUNNING",
+"taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789"}
+```
+
+which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for
+the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view
+the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+
 ### Breaking Changes
 
 - **CUMULUS-2889**
@@ -93,6 +115,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3610**
   - Updated `aws-client`'s ES client to use AWS SDK v3.
+- **CUMULUS-3617**
+  - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
 
 ### Fixed
 
