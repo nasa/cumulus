@@ -84,7 +84,6 @@ locals {
       system_bucket                    = var.system_bucket
       TOKEN_REDIRECT_ENDPOINT          = local.api_redirect_uri
       TOKEN_SECRET                     = var.token_secret
-      UpdateDLAFormatLambda            = aws_lambda_function.update_dla_format.arn
     }
 }
 
