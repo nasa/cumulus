@@ -156,9 +156,13 @@ async function indexModel({
     );
 
     const indexPromises = pageResults.map((pageResult) => limitEsRequests(async () => {
+      /*       console.log(`Sleeping to simulate long running index time`);
+      await sleep(1000 * 60);
+      console.log(`Waking!`); */
       let translationResult;
       try {
         translationResult = await translationFunction(pageResult);
+        await esClient.refreshCredentials();
         return await indexFn(esClient, translationResult, esIndex);
       } catch (error) {
         log.error(
@@ -202,7 +206,8 @@ async function indexFromDatabase(event) {
     postgresResultPageSize,
     postgresConnectionPoolSize,
   } = event;
-  const esClient = await Search.es(esHost);
+  const esClient = await new Search();
+  await esClient.getEsClient(esHost); // TODO - we have to set this so client is set, but...
   const knex = event.knex || (await getKnexClient({
     env: {
       dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
