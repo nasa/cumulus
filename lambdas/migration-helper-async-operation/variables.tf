@@ -37,6 +37,18 @@ variable "lambda_subnet_ids" {
   default = []
 }
 
+variable "lambda_memory_sizes" {
+  description = "Configurable map of memory sizes for lambdas"
+  type = map(number)
+  default = {}
+}
+
+variable "lambda_timeouts" {
+  description = "Configurable map of timeouts for lambdas"
+  type = map(number)
+  default = {}
+}
+
 variable "permissions_boundary_arn" {
   type = string
 }

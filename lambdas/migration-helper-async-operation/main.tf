@@ -8,8 +8,8 @@ resource "aws_lambda_function" "migration_helper_async_operation" {
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
   runtime          = "nodejs16.x"
-  timeout          = 300
-  memory_size      = 512
+  timeout          = lookup(var.lambda_timeouts, "migrationHelperAsyncOperation", 300)
+  memory_size      = lookup(var.lambda_memory_sizes, "migrationHelperAsyncOperation", 512)
 
   environment {
     variables = {
