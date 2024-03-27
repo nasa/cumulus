@@ -627,6 +627,47 @@ export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap
 );
 
 /**
+ * Fetch complete list of S3 objects
+ *
+ * listObjectsV2 is limited to 1,000 results per call.  This function continues
+ * listing objects until there are no more to be fetched.
+ *
+ * The passed params must be compatible with the listObjectsV2 call.
+ *
+ * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
+ *
+ * @param {Object} params - params for the s3.listObjectsV2 call
+ * @returns {Promise<Array>} resolves to an array of objects corresponding to
+ *   the Contents property of the listObjectsV2 response
+ *
+ * @static
+ */
+export const listS3ObjectsV2 = async (
+  params: ListObjectsV2Request
+): Promise<ListObjectsV2Output['Contents']> => {
+  // Fetch the first list of objects from S3
+  let listObjectsResponse = await s3().listObjectsV2(params);
+
+  let discoveredObjects = listObjectsResponse.Contents ?? [];
+
+  // Keep listing more objects from S3 until we have all of them
+  while (listObjectsResponse.IsTruncated) {
+    // eslint-disable-next-line no-await-in-loop
+    listObjectsResponse = (await s3().listObjectsV2(
+      // Update the params with a Continuation Token
+      {
+
+        ...params,
+        ContinuationToken: listObjectsResponse.NextContinuationToken,
+      }
+    ));
+    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents ?? []);
+  }
+
+  return discoveredObjects;
+};
+
+/**
 * Delete a bucket and all of its objects from S3
 *
 * @param {string} bucket - name of the bucket
@@ -634,8 +675,8 @@ export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap
 **/
 export const recursivelyDeleteS3Bucket = improveStackTrace(
   async (bucket: string) => {
-    const response = await s3().listObjects({ Bucket: bucket });
-    const s3Objects: DeleteObjectRequest[] = (response.Contents || []).map((o) => {
+    const s3list = await listS3ObjectsV2({ Bucket: bucket });
+    const s3Objects: DeleteObjectRequest[] = (s3list || []).map((o) => {
       if (!o.Key) throw new Error(`Unable to determine S3 key of ${JSON.stringify(o)}`);
 
       return {
@@ -769,47 +810,6 @@ export const listS3Objects = async (
     contents = contents.filter((obj) => obj.Key !== undefined && !obj.Key.endsWith('/'));
   }
   return contents;
-};
-
-/**
- * Fetch complete list of S3 objects
- *
- * listObjectsV2 is limited to 1,000 results per call.  This function continues
- * listing objects until there are no more to be fetched.
- *
- * The passed params must be compatible with the listObjectsV2 call.
- *
- * https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#listObjectsV2-property
- *
- * @param {Object} params - params for the s3.listObjectsV2 call
- * @returns {Promise<Array>} resolves to an array of objects corresponding to
- *   the Contents property of the listObjectsV2 response
- *
- * @static
- */
-export const listS3ObjectsV2 = async (
-  params: ListObjectsV2Request
-): Promise<ListObjectsV2Output['Contents']> => {
-  // Fetch the first list of objects from S3
-  let listObjectsResponse = await s3().listObjectsV2(params);
-
-  let discoveredObjects = listObjectsResponse.Contents ?? [];
-
-  // Keep listing more objects from S3 until we have all of them
-  while (listObjectsResponse.IsTruncated) {
-    // eslint-disable-next-line no-await-in-loop
-    listObjectsResponse = (await s3().listObjectsV2(
-      // Update the params with a Continuation Token
-      {
-
-        ...params,
-        ContinuationToken: listObjectsResponse.NextContinuationToken,
-      }
-    ));
-    discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents ?? []);
-  }
-
-  return discoveredObjects;
 };
 
 /**
