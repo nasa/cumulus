@@ -49,6 +49,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 
 ### Changed
+
 - **CUMULUS-3613**
   - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
 - **CUMULUS-3518**
@@ -67,6 +68,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2902**
   - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
   the `@aws-sdk/credential-providers` AWS SDK v3 package.
+  - Removes `aws-sdk` from all cumulus packages and replaces usages with AWS SDK v3 clients.
 - **CUMULUS-3456**
   - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
