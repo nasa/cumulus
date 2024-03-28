@@ -89,7 +89,7 @@ class SftpProviderClient {
 
       if (this.providerConfig.cmKeyId) {
         // we are using AWS KMS and the privateKey is encrypted
-        this.plaintextProviderKey = KMS.decryptBase64String(fetchedKey);
+        this.plaintextProviderKey = await KMS.decryptBase64String(fetchedKey);
       } else {
         this.plaintextProviderKey = fetchedKey;
       }
