@@ -207,38 +207,23 @@ export const processArgs = (): UpdateDLAArgs => {
   };
 };
 
-if (require.main === module) {
-  const systemBucket = getEnvironmentVariable('SYSTEM_BUCKET');
-  const {
-    targetPath,
-    prefix,
-    skip,
-  } = processArgs();
-  updateDLABatch(systemBucket, targetPath, prefix, skip).then(
-    (ret) => ret
-  ).catch((error) => {
-    console.log(`failed: ${error}`);
-    throw error;
-  });
-}
-
 interface UpdateDLAHandlerEvent {
   internalBucket?: string
   stackName?: string
 }
 
-async function handler(event: UpdateDLAHandlerEvent) {
-  if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
-  if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
+// async function handler(event: UpdateDLAHandlerEvent) {
+//   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
+//   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
 
-  const systemBucket = process.env.system_bucket;
-  const stackName = process.env.stackName;
+//   const systemBucket = process.env.system_bucket;
+//   const stackName = process.env.stackName;
 
-  const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
-  const targetDirectory = get(event, 'targetDirectory', getDLARootKey(stackName).replace('dead-letter-archive', 'updated-dead-letter-archive'));
-  const skip = true;
-  updateDLABatch(systemBucket, targetDirectory, sourceDirectory, skip);
-}
+//   const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
+//   const targetDirectory = get(event, 'targetDirectory', getDLARootKey(stackName).replace('dead-letter-archive', 'updated-dead-letter-archive'));
+//   const skip = true;
+//   updateDLABatch(systemBucket, targetDirectory, sourceDirectory, skip);
+// }
 
 module.exports = {
   handler,
@@ -251,27 +236,35 @@ module.exports = {
   processArgs,
 };
 
-// const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
-// export interface HandlerEvent {
-//   dlaPath?: string
-// }
+const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
+export interface HandlerEvent {
+  dlaPath?: string
+}
 
-// export interface HandlerOutput {
-//   migrated: number
-// }
+export interface HandlerOutput {
+  migrated: number
+}
 
-// export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
-//   const systemBucket = process.env.system_bucket || '';
-//   const stackName = process.env.stackName || '';
+export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
+  if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
+  if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
+  const systemBucket = process.env.system_bucket;
+  const stackName = process.env.stackName;
 
-//   const dlaPath = event.dlaPath ?? `${stackName}/dead-letter-archive/sqs/`;
-//   const lastIndexOfDlaPathSeparator = dlaPath.lastIndexOf('/');
+  // const dlaPath = event.dlaPath ?? `${stackName}/dead-letter-archive/sqs/`;
 
-//   let fileCount = 0;
-//   const s3ObjectsQueue = new S3ListObjectsV2Queue({
-//     Bucket: systemBucket,
-//     Prefix: dlaPath,
-//   });
+
+  const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
+  const targetDirectory = get(event, 'targetDirectory', getDLARootKey(stackName).replace('dead-letter-archive', 'updated-dead-letter-archive'));
+  const skip = true;
+  updateDLABatch(systemBucket, targetDirectory, sourceDirectory, skip);
+};
+
+  // let fileCount = 0;
+  // const s3ObjectsQueue = new S3ListObjectsV2Queue({
+  //   Bucket: systemBucket,
+  //   Prefix: dlaPath,
+  // });
 
 //   /* eslint-disable no-await-in-loop */
 //   while (await s3ObjectsQueue.peek()) {
