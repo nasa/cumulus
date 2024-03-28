@@ -4,13 +4,12 @@
 
 import get from 'lodash/get';
 import zip from 'lodash/zip';
-import minimist from 'minimist';
+import Logger from '@cumulus/logger';
 import path from 'path';
 import {
   getJsonS3Object,
   putJsonS3Object,
   listS3ObjectsV2Batch,
-  s3ObjectExists,
 } from '@cumulus/aws-client/S3';
 import {
   hoistCumulusMessageDetails,
@@ -20,15 +19,10 @@ import {
 import { DLARecord } from '@cumulus/types/api/dead_letters';
 import pMap from 'p-map';
 import moment from 'moment';
-/**
- * Check for an Env variable and throw if it's not present
- */
-export const getEnvironmentVariable = (variable: string): string => {
-  if (!process.env[variable]) {
-    throw new Error(`Environment variable "${variable}" is not set.`);
-  }
-  return process.env[variable] as string;
-};
+import { deleteS3Object } from '../../../packages/aws-client/src/S3';
+
+const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
+
 
 /**
  * Ensure that a string has or does not have a trailing slash as appropriate
@@ -102,14 +96,10 @@ export const updateDLAFile = async (
   bucket: string,
   sourcePath: string,
   targetPath: string,
-  skip: boolean = false
 ): Promise<boolean> => {
   const inDateForm = identifyDatedPath(targetPath);
-  // let massagedTargetPath;
-  /* *only* if path is already in dateForm, and skip is set we might exit without downloading */
-  if (inDateForm && skip && await s3ObjectExists({ Bucket: bucket, Key: targetPath })) {
-    return false;
-  }
+
+  logger.info(`About to process ${sourcePath}`);
   const dlaObject = await getJsonS3Object(bucket, sourcePath);
   const hoisted = await hoistCumulusMessageDetails(dlaObject);
   let massagedTargetPath: string;
@@ -118,11 +108,13 @@ export const updateDLAFile = async (
   } else {
     massagedTargetPath = targetPath;
   }
-  /* if we can skip, at least avoid uploading an object */
-  if (skip && await s3ObjectExists({ Bucket: bucket, Key: massagedTargetPath })) {
-    return false;
-  }
+
   await putJsonS3Object(bucket, massagedTargetPath, hoisted);
+  logger.info(`Migrated file from bucket ${bucket}/${sourcePath} to ${massagedTargetPath}`);
+  if (massagedTargetPath !== sourcePath){
+    await deleteS3Object(bucket, sourcePath)
+    logger.info(`Deleted file ${bucket}/${sourcePath}`);
+  }
   return true;
 };
 
@@ -139,7 +131,6 @@ export const updateDLABatch = async (
   bucket: string,
   targetDirectory: string,
   sourceDirectory: string,
-  skip: boolean = false
 ) => {
   const out = [];
   const sourceDir = manipulateTrailingSlash(sourceDirectory, true);
@@ -157,7 +148,7 @@ export const updateDLABatch = async (
 
     const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
     out.push(await pMap(
-      zipped, (async (pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1], skip)),
+      zipped, (async (pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1])),
       {
         concurrency: 5,
         stopOnError: false,
@@ -167,45 +158,6 @@ export const updateDLABatch = async (
   return out.flat();
 };
 
-interface UpdateDLAArgs {
-  prefix: string,
-  targetPath: string,
-  skip: boolean,
-}
-
-/**
- * process command line arguments to get prefix, targetPath, skip values
- *
- * @returns { {prefix: string, targetPath: string, skip: boolean} }
- */
-export const processArgs = (): UpdateDLAArgs => {
-  const args = minimist(
-    process.argv,
-    {
-      string: ['prefix', 'targetPath'],
-      alias: {
-        p: 'prefix',
-        key: 'prefix',
-        k: 'prefix',
-        path: 'prefix',
-        target: 'targetPath',
-        'skip-existing': 'skip',
-      },
-      default: {
-        prefix: undefined,
-        targetPath: undefined,
-        skip: false,
-      },
-    }
-  );
-  const prefix = args.prefix || `${getEnvironmentVariable('DEPLOYMENT')}/dead-letter-archive/sqs/`;
-  const targetPath = args.targetPath || `${getEnvironmentVariable('DEPLOYMENT')}/updated-dead-letter-archive/sqs/`;
-  return {
-    prefix,
-    targetPath,
-    skip: args.skip,
-  };
-};
 
 // interface UpdateDLAHandlerEvent {
 //   internalBucket?: string
@@ -226,7 +178,6 @@ export const processArgs = (): UpdateDLAArgs => {
 // }
 
 
-// const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
 export interface HandlerEvent {
   dlaPath?: string
 }
@@ -245,58 +196,16 @@ export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
 
 
   const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
-  const targetDirectory = get(event, 'targetDirectory', getDLARootKey(stackName).replace('dead-letter-archive', 'updated-dead-letter-archive'));
-  const skip = true;
-  updateDLABatch(systemBucket, targetDirectory, sourceDirectory, skip);
+  const targetDirectory = get(event, 'targetDirectory', sourceDirectory);
+  updateDLABatch(systemBucket, targetDirectory, sourceDirectory);
   return { 'migrated': 1 };
 };
 
-  // let fileCount = 0;
-  // const s3ObjectsQueue = new S3ListObjectsV2Queue({
-  //   Bucket: systemBucket,
-  //   Prefix: dlaPath,
-  // });
-
-//   /* eslint-disable no-await-in-loop */
-//   while (await s3ObjectsQueue.peek()) {
-//     const s3Object = await s3ObjectsQueue.shift();
-//     const s3ObjectKey = s3Object?.Key;
-
-//     logger.info(`About to process ${s3ObjectKey}`);
-//     // skip directories and files on subfolder
-//     if (s3ObjectKey && s3ObjectKey.endsWith('.json') && s3ObjectKey.lastIndexOf('/') === lastIndexOfDlaPathSeparator) {
-//       const deadLetterMessage = await getJsonS3Object(systemBucket, s3ObjectKey);
-//       const dateString = moment.utc(deadLetterMessage.time).format('YYYY-MM-DD');
-//       const destinationKey = `${dlaPath}${dateString}/${s3ObjectKey.split('/').pop()}`;
-
-//       await putJsonS3Object(
-//         systemBucket,
-//         destinationKey,
-//         deadLetterMessage
-//       );
-//       logger.info(`Migrated file from bucket ${systemBucket}/${s3ObjectKey} to ${destinationKey}`);
-
-//       await deleteS3Object(
-//         systemBucket,
-//         s3ObjectKey
-//       );
-//       logger.info(`Deleted file ${systemBucket}/${s3ObjectKey}`);
-
-//       fileCount += 1;
-//     }
-//   }
-//   /* eslint-enable no-await-in-loop */
-
-//   logger.info(`Completed DLA migration, migrated ${fileCount} files`);
-//   return { migrated: fileCount };
+// module.exports = {
+//   handler,
+//   manipulateTrailingSlash,
+//   identifyDatedPath,
+//   addDateIdentifierToPath,
+//   updateDLAFile,
+//   updateDLABatch,
 // };
-module.exports = {
-  handler,
-  getEnvironmentVariable,
-  manipulateTrailingSlash,
-  identifyDatedPath,
-  addDateIdentifierToPath,
-  updateDLAFile,
-  updateDLABatch,
-  processArgs,
-};
