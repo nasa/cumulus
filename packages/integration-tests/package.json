@@ -40,7 +40,6 @@
     "@cumulus/logger": "18.2.0",
     "@cumulus/message": "18.2.0",
     "@cumulus/oauth-client": "18.2.0",
-    "aws-sdk": "^2.1492.0",
     "base-64": "^0.1.0",
     "commander": "^2.15.0",
     "dotenv": "^8.2.0",

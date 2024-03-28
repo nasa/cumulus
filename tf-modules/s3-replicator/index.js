@@ -1,10 +1,10 @@
 'use strict';
 
-const AWS = require('aws-sdk');
+const { S3 } = require('@aws-sdk/client-s3');
 const path = require('path');
 
 async function handler(event, _context) {
-  const s3 = new AWS.S3();
+  const s3 = new S3();
   return await Promise.all(event.Records.map(async (rec) => {
     const eventType = rec.eventName;
     if (!eventType.startsWith('ObjectCreated:')) return null;
@@ -15,7 +15,7 @@ async function handler(event, _context) {
       Bucket: process.env.TARGET_BUCKET,
       Key: `${process.env.TARGET_PREFIX}/${path.basename(srcKey)}`,
       ACL: 'bucket-owner-full-control',
-    }).promise();
+    });
   }));
 }
 

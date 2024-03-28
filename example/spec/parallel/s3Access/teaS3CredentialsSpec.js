@@ -1,7 +1,7 @@
 'use strict';
 
 const { URL } = require('url');
-const { STS } = require('aws-sdk');
+const { STS } = require('@aws-sdk/client-sts');
 const base64 = require('base-64');
 
 const { models: { AccessToken } } = require('@cumulus/api');
@@ -93,8 +93,8 @@ describe('When accessing s3credentials endpoint', () => {
           sessionToken,
         } = creds;
 
-        const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
-        const whoami = await sts.getCallerIdentity().promise();
+        const sts = new STS({ credentials: { accessKeyId, secretAccessKey, sessionToken } });
+        const whoami = await sts.getCallerIdentity();
 
         expect(accessKeyId).toBeDefined();
         expect(secretAccessKey).toBeDefined();
@@ -127,8 +127,8 @@ describe('When accessing s3credentials endpoint', () => {
           sessionToken,
         } = creds;
 
-        const sts = new STS({ accessKeyId, secretAccessKey, sessionToken });
-        const whoami = await sts.getCallerIdentity().promise();
+        const sts = new STS({ credentials: { accessKeyId, secretAccessKey, sessionToken } });
+        const whoami = await sts.getCallerIdentity();
 
         expect(accessKeyId).toBeDefined();
         expect(secretAccessKey).toBeDefined();

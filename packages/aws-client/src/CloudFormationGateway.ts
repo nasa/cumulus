@@ -1,12 +1,13 @@
 import pRetry from 'p-retry';
 import Logger from '@cumulus/logger';
 import { isThrottlingException } from '@cumulus/errors';
+import { CloudFormation } from '@aws-sdk/client-cloudformation';
 
 const log = new Logger({ sender: 'aws-client/CloudFormationGateway' });
 
 class CloudFormationGateway {
   constructor(
-    private cloudFormationService: AWS.CloudFormation
+    private cloudFormationService: CloudFormation
   ) {}
 
   /**
@@ -21,7 +22,7 @@ class CloudFormationGateway {
         try {
           const stackDetails = await this.cloudFormationService.describeStacks({
             StackName,
-          }).promise();
+          });
 
           if (!stackDetails.Stacks) {
             throw new Error(`Could not fetch stack details of ${StackName}`);
