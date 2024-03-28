@@ -15,7 +15,7 @@ const Logger = require('@cumulus/logger');
 const { inTestMode } = require('@cumulus/common/test-utils');
 const { IndexExistsError } = require('@cumulus/errors');
 
-const { Search, defaultIndexAlias } = require('./search');
+const { EsClient, defaultIndexAlias } = require('./search');
 const { createIndex } = require('./indexer');
 const mappings = require('./config/mappings.json');
 
@@ -31,9 +31,7 @@ const logger = new Logger({ sender: '@cumulus/es-client/bootstrap' });
  * @returns {Array<string>} - list of missing indices
  */
 async function findMissingMappings(esClient, index, newMappings) {
-  const cumulusEsClient = await esClient.getEsClient();
-
-  const typesResponse = await cumulusEsClient.indices.getMapping({
+  const typesResponse = await esClient.client.indices.getMapping({
     index,
   }).then((response) => response.body);
 
@@ -59,12 +57,11 @@ async function findMissingMappings(esClient, index, newMappings) {
 }
 
 async function removeIndexAsAlias(esClient, alias, removeAliasConflict) {
-  const cumulusEsClient = await esClient.getEsClient();
   // If the alias already exists as an index, remove it
   // We can't do a simple exists check here, because it'll return true if the alias
   // is actually an alias assigned to an index. We do a get and check that the alias
   // name is not the key, which would indicate it's an index
-  const { body: existingIndex } = await cumulusEsClient.indices.get(
+  const { body: existingIndex } = await esClient.client.indices.get(
     { index: alias },
     { ignore: [404] }
   );
@@ -75,7 +72,7 @@ async function removeIndexAsAlias(esClient, alias, removeAliasConflict) {
       throw new Error('Aborting ES recreation as configuration does not allow removal of index');
     }
     logger.warn(`Deleting alias as index: ${alias}`);
-    await cumulusEsClient.indices.delete({ index: alias });
+    await esClient.client.indices.delete({ index: alias });
   }
 }
 
@@ -100,11 +97,11 @@ async function bootstrapElasticSearch({
 }) {
   if (!host) return;
 
-  const esClient = await new Search(host);
-  const cumulusEsClient = await esClient.getEsClient();
+  const esClient = new EsClient(); // TODO - remove awaits on this sort of call
+  await esClient.initializeEsClient();
 
   // Make sure that indexes are not automatically created
-  await cumulusEsClient.cluster.putSettings({
+  await esClient.client.cluster.putSettings({
     body: {
       persistent: { 'action.auto_create_index': false },
     },
@@ -114,7 +111,7 @@ async function bootstrapElasticSearch({
 
   let aliasedIndex = index;
 
-  const indices = await cumulusEsClient.indices.getAlias({ name: alias }, { ignore: [404] })
+  const indices = await esClient.client.indices.getAlias({ name: alias }, { ignore: [404] })
     .then((response) => response.body);
 
   const aliasExists = !isNil(indices) && !indices.error;
@@ -134,7 +131,7 @@ async function bootstrapElasticSearch({
       }
     }
 
-    await cumulusEsClient.indices.putAlias({
+    await esClient.client.indices.putAlias({
       index: index,
       name: alias,
     });
@@ -149,7 +146,7 @@ async function bootstrapElasticSearch({
     const concurrencyLimit = inTestMode() ? 1 : 3;
     const limit = pLimit(concurrencyLimit);
     const addMissingTypesPromises = missingTypes.map((type) =>
-      limit(() => cumulusEsClient.indices.putMapping({
+      limit(() => esClient.client.indices.putMapping({
         index: aliasedIndex,
         type,
         body: get(mappings, type),

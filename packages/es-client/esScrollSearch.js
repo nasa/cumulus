@@ -36,8 +36,8 @@ const {
  */
 class ESScrollSearch extends Search {
   async query() {
-    if (!this.client) {
-      this.client = await this.getEsClient();
+    if (!this._esClient) {
+      await this.initializeEsClient(undefined, this.metrics);
     }
     let response;
     if (!this.scrollId) {

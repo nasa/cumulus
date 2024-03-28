@@ -2,7 +2,7 @@ const { randomString } = require('@cumulus/common/test-utils');
 
 const bootstrap = require('./bootstrap');
 
-const { Search } = require('./search');
+const { EsClient, Search } = require('./search');
 
 const createTestIndex = async () => {
   const esIndex = randomString();
@@ -13,18 +13,18 @@ const createTestIndex = async () => {
     index: esIndex,
     alias: esAlias,
   });
-  const esClient = await new Search('fakehost');
-  const cumulusEsClient = await esClient.getEsClient(); //TODO - init is a side effect here :( )
+  const esClient = await new EsClient('fakehost');
+  const searchClient = await new Search();
+  await searchClient.initializeEsClient('fakehost');
   return {
-    cumulusEsClient,
     esClient,
     esIndex,
+    searchClient,
   };
 };
 
 const cleanupTestIndex = async ({ esClient, esIndex }) => {
-  const cumulusEsClient = await esClient.getEsClient();
-  await cumulusEsClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 };
 
 module.exports = {

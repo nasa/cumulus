@@ -6,7 +6,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const isEqual = require('lodash/isEqual');
 const orderBy = require('lodash/orderBy');
 const { bootstrapElasticSearch } = require('../bootstrap');
-const { Search } = require('../search');
+const { Search, EsClient } = require('../search');
 const ESSearchAfter = require('../esSearchAfter');
 const { loadGranules, granuleFactory } = require('./helpers/helpers');
 
@@ -25,13 +25,15 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  t.context.esClient = new Search();
-  t.context.cumulusEsClient = await t.context.esClient.getEsClient();
+  t.context.esClient = new EsClient();
+  await t.context.esClient.initializeEsClient();
+  t.context.search = new Search();
+  await t.context.search.initializeEsClient();
 });
 
 test.afterEach.always(async (t) => {
   sandbox.restore();
-  await t.context.cumulusEsClient.indices.delete({ index: t.context.esIndex });
+  await t.context.esClient.client.indices.delete({ index: t.context.esIndex });
 });
 
 test.after.always(() => {
@@ -53,10 +55,11 @@ test.serial('ESSearchAfter query can list all hits', async (t) => {
     'granule',
     t.context.esAlias
   );
+  await esSearchAfter.initializeEsClient();
+  const client = esSearchAfter._esClient.client;
   let allResults = [];
-  const client = await ESSearchAfter.es();
-  esSearchAfter.client = client;
-  const spy = sandbox.spy(client, 'search');
+
+  const spy = sandbox.spy(esSearchAfter._esClient.client, 'search');
   let calls = 0;
   let response;
   /* eslint-disable no-await-in-loop */
@@ -74,7 +77,8 @@ test.serial('ESSearchAfter query can list all hits', async (t) => {
       'granule',
       t.context.esAlias
     );
-    esSearchAfter.client = client;
+    await esSearchAfter.initializeEsClient();
+    esSearchAfter._esClient._client = client;
     if (calls < expectedCallsWithTestSearchSize) {
       t.is(response.results.length, testSearchSize);
     } else if (calls === expectedCallsWithTestSearchSize) {

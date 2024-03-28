@@ -27,15 +27,14 @@ const mappings = require('./config/mappings.json');
 const logger = new Logger({ sender: '@cumulus/es-client/indexer' });
 
 async function createIndex(esClient, indexName) {
-  const cumulusEsClient = await esClient.getEsClient();
-  const indexExists = await cumulusEsClient.indices.exists({ index: indexName })
+  const indexExists = await esClient.client.indices.exists({ index: indexName })
     .then((response) => response.body);
 
   if (indexExists) {
     throw new IndexExistsError(`Index ${indexName} exists and cannot be created.`);
   }
 
-  await cumulusEsClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: {
       mappings,
@@ -58,7 +57,7 @@ async function createIndex(esClient, indexName) {
  * @param  {Object} doc      - the record
  * @param  {string} index    - Elasticsearch index alias
  * @param  {string} type     - Elasticsearch type
- * @param  {string} parent   - the optional parent id
+ * @param  {string} [parent]   - the optional parent id
  * @returns {Promise} Elasticsearch response
  */
 async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
@@ -78,15 +77,12 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
   if (parent) params.parent = parent;
 
   // Call creds refresh
-  if (esClient) {
-    esClient.refreshCredentials();
-  }
-
   // adding or replacing record to ES
   let actualEsClient;
 
-  if (esClient) {
-    actualEsClient = await esClient.getEsClient(esClient.host, esClient.metrics);
+  if (esClient) { // TODO fix
+    await esClient.refreshClient();
+    actualEsClient = esClient.client;
   } else {
     actualEsClient = await Search.es();
   }
@@ -112,8 +108,7 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
  * @returns {Promise} Elasticsearch response
  */
 async function updateExistingRecord(esClient, id, doc, index, type) {
-  const cumulusEsClient = await esClient.getEsClient();
-  return await cumulusEsClient.update({
+  return await esClient.client.update({
     index,
     type,
     id,
@@ -169,7 +164,7 @@ async function upsertExecution({
   type = 'execution',
   refresh,
 }, writeConstraints = true) {
-  const cumulusEsClient = await esClient.getEsClient();
+  const cumulusEsClient = await esClient.client;
   Object.keys(updates).forEach((key) => {
     if (updates[key] === null && executionInvalidNullFields.includes(key)) {
       throw new ValidationError(`Attempted Elasticsearch write with invalid key ${key} set to null.  Please remove or change this field and retry`);
@@ -324,8 +319,7 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
     parent: payload.collectionId,
     refresh: inTestMode(),
   };
-  const cumulusEsClient = await esClient.getEsClient();
-  await cumulusEsClient.delete(delGranParams, { ignore: [404] });
+  await esClient.client.delete(delGranParams, { ignore: [404] });
   /* console.log(`Sleeping to simulate long running index time`);
   await sleep(1000 * 60);
   console.log(`Waking!`); */
@@ -375,7 +369,7 @@ async function upsertGranule({
     }
   });
 
-  const cumulusEsClient = await esClient.getEsClient();
+  const cumulusEsClient = await esClient.client;
   // If the granule exists in 'deletedgranule', delete it first before inserting the granule
   // into ES.  Ignore 404 error, so the deletion still succeeds if the record doesn't exist.
   const delGranParams = {
@@ -493,8 +487,7 @@ async function upsertPdr({
     ...updates,
     timestamp: Date.now(),
   };
-  const cumulusEsClient = await esClient.getEsClient();
-  return await cumulusEsClient.update({
+  return await esClient.client.update({
     index,
     type,
     id: upsertDoc.pdrName,
@@ -527,7 +520,7 @@ async function upsertPdr({
  * @param  {Object} params.esClient - Elasticsearch Connection object
  * @param  {string} params.id       - id of the Elasticsearch record
  * @param  {string} params.type     - Elasticsearch type (default: execution)
- * @param  {strint} params.parent   - id of the parent (optional)
+ * @param  {string} params.parent   - id of the parent (optional)
  * @param  {string} params.index    - Elasticsearch index (default: cumulus)
  * @param  {Array}  params.ignore   - Response codes to ignore (optional)
  * @returns {Promise} elasticsearch delete response
@@ -556,7 +549,8 @@ async function deleteRecord({
 
   let actualEsClient;
   if (esClient) {
-    actualEsClient = await esClient.getEsClient(esClient.host, esClient.metrics);
+    await esClient.refreshClient();
+    actualEsClient = await esClient.client;
   } else {
     actualEsClient = await Search.es();
   }

@@ -7,18 +7,17 @@ const test = require('ava');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 
 const { bootstrapElasticSearch, findMissingMappings } = require('../bootstrap');
-const { Search } = require('../search');
+const { EsClient } = require('../search');
 const mappings = require('../config/mappings.json');
 
 const testMappings = require('./data/testEsMappings.json');
 const mappingsSubset = require('./data/testEsMappingsSubset.json');
 const mappingsNoFields = require('./data/testEsMappingsNoFields.json');
 
-const esClient = new Search();
-let cumulusEsClient;
+const esClient = new EsClient('fakehost');
 
 test.before(async () => {
-  cumulusEsClient = await esClient.getEsClient();
+  await esClient.initializeEsClient();
 });
 
 test('bootstrap creates index with alias', async (t) => {
@@ -31,14 +30,14 @@ test('bootstrap creates index with alias', async (t) => {
     alias: testAlias,
   });
   try {
-    t.is((await cumulusEsClient.indices.exists({ index: indexName })).body, true);
+    t.is((await esClient.client.indices.exists({ index: indexName })).body, true);
 
-    const alias = await cumulusEsClient.indices.getAlias({ name: testAlias })
+    const alias = await esClient.client.indices.getAlias({ name: testAlias })
       .then((response) => response.body);
 
     t.deepEqual(Object.keys(alias), [indexName]);
   } finally {
-    await cumulusEsClient.indices.delete({ index: indexName });
+    await esClient.client.indices.delete({ index: indexName });
   }
 });
 
@@ -54,13 +53,13 @@ test.serial('bootstrap creates index with specified number of shards', async (t)
       alias: testAlias,
     });
 
-    const indexSettings = await cumulusEsClient.indices.get({ index: indexName })
+    const indexSettings = await esClient.client.indices.get({ index: indexName })
       .then((response) => response.body);
 
     t.is(indexSettings[indexName].settings.index.number_of_shards, '4');
   } finally {
     delete process.env.ES_INDEX_SHARDS;
-    await cumulusEsClient.indices.delete({ index: indexName });
+    await esClient.client.indices.delete({ index: indexName });
   }
 });
 
@@ -68,7 +67,7 @@ test('bootstrap adds alias to existing index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
-  await cumulusEsClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: { mappings },
   });
@@ -78,19 +77,19 @@ test('bootstrap adds alias to existing index', async (t) => {
     index: indexName,
     alias: testAlias,
   });
-  const alias = await cumulusEsClient.indices.getAlias({ name: testAlias })
+  const alias = await esClient.client.indices.getAlias({ name: testAlias })
     .then((response) => response.body);
 
   t.deepEqual(Object.keys(alias), [indexName]);
 
-  await cumulusEsClient.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: indexName });
 });
 
 test('Missing types added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
-  await cumulusEsClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: { mappings: mappingsSubset },
   });
@@ -111,14 +110,14 @@ test('Missing types added to index', async (t) => {
     []
   );
 
-  await cumulusEsClient.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: indexName });
 });
 
 test('Missing fields added to index', async (t) => {
   const indexName = randomString();
   const testAlias = randomString();
 
-  await cumulusEsClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: { mappings: mappingsNoFields },
   });
@@ -139,7 +138,7 @@ test('Missing fields added to index', async (t) => {
     []
   );
 
-  await cumulusEsClient.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: indexName });
 });
 
 test('If an index exists with the alias name, it is deleted on bootstrap', async (t) => {
@@ -147,7 +146,7 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   const testAlias = randomString();
 
   // Create index with name of alias we want to use
-  await cumulusEsClient.indices.create({
+  await esClient.client.indices.create({
     index: testAlias,
     body: { mappings },
   });
@@ -160,11 +159,11 @@ test('If an index exists with the alias name, it is deleted on bootstrap', async
   // Get the index and make sure `testAlias` is not a key which would mean it's an index
   // If you use indices.exist on testAlias it'll return true because the alias is
   // applied to the index. Here we're checking it's an alias, not an index
-  const { body: index } = await cumulusEsClient.indices.get({ index: testAlias });
+  const { body: index } = await esClient.client.indices.get({ index: testAlias });
 
   t.falsy(index[testAlias]);
 
-  await cumulusEsClient.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: indexName });
 });
 
 test('If an index exists with the alias name, and removeAliasConflict is set to false it is deleted on bootstrap', async (t) => {
@@ -172,7 +171,7 @@ test('If an index exists with the alias name, and removeAliasConflict is set to 
   const testAlias = randomString();
 
   // Create index with name of alias we want to use
-  await cumulusEsClient.indices.create({
+  await esClient.client.indices.create({
     index: testAlias,
     body: { mappings },
   });
@@ -202,10 +201,10 @@ test('If an alias exists that index is used and a new one is not created', async
     index: indexName,
     alias: existingAlias,
   });
-  const indexExists = await cumulusEsClient.indices.exists({ index: indexName })
+  const indexExists = await esClient.client.indices.exists({ index: indexName })
     .then((response) => response.body);
 
   t.false(indexExists);
 
-  await cumulusEsClient.indices.delete({ index: existingIndex });
+  await esClient.client.indices.delete({ index: existingIndex });
 });

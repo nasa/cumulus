@@ -15,10 +15,9 @@ process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 test.before(async (t) => {
-  const { esIndex, esClient, cumulusEsClient } = await createTestIndex();
+  const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-  t.context.cumulusEsClient = cumulusEsClient;
 
   t.context.esGranulesClient = new Search(
     {},
@@ -32,7 +31,7 @@ test.after.always(async (t) => {
 });
 
 test.serial('upsertGranule removes deleted granule record', async (t) => {
-  const { esIndex, esClient, cumulusEsClient } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const granule = {
     granuleId: randomString(),
@@ -63,7 +62,7 @@ test.serial('upsertGranule removes deleted granule record', async (t) => {
     parent: granule.collectionId,
   };
 
-  let deletedRecord = await cumulusEsClient.get(deletedGranParams)
+  let deletedRecord = await esClient.client.get(deletedGranParams)
     .then((response) => response.body);
   t.like(deletedRecord._source, granule);
 
@@ -73,7 +72,7 @@ test.serial('upsertGranule removes deleted granule record', async (t) => {
     index: esIndex,
   });
 
-  deletedRecord = await cumulusEsClient.get(deletedGranParams, { ignore: [404] })
+  deletedRecord = await esClient.client.get(deletedGranParams, { ignore: [404] })
     .then((response) => response.body);
   t.false(deletedRecord.found);
 });
@@ -1772,7 +1771,7 @@ test('upsertGranule does update "completed" granule to "failed" for new executio
 });
 
 test.serial('upsertGranule handles version conflicts on parallel updates', async (t) => {
-  const { esIndex, esClient, cumulusEsClient } = t.context;
+  const { esIndex, esClient } = t.context;
 
   const execution = randomString();
   const createdAt = Date.now();
@@ -1810,7 +1809,7 @@ test.serial('upsertGranule handles version conflicts on parallel updates', async
     }),
   ]);
 
-  await cumulusEsClient.indices.refresh({ index: esIndex });
+  await esClient.client.indices.refresh({ index: esIndex });
   const updatedEsRecord = await t.context.esGranulesClient.get(granule.granuleId);
   t.like(updatedEsRecord, updates);
 });

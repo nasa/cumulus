@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
 const range = require('lodash/range');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -9,8 +8,8 @@ const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const indexer = rewire('../indexer');
-const { Search } = require('../search');
+const indexer = require('../indexer');
+const { EsClient } = require('../search');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const Stats = require('../stats');
 
@@ -35,12 +34,12 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  t.context.esClient = await new Search();
-  t.context.cumulusEsClient = await t.context.esClient.getEsClient();
+  t.context.esClient = await new EsClient();
+  await t.context.esClient.initializeEsClient();
 });
 
 test.afterEach(async (t) => {
-  await t.context.cumulusEsClient.indices.delete({ index: t.context.esIndex });
+  await t.context.esClient.client.indices.delete({ index: t.context.esIndex });
 });
 
 test.after.always(async () => {
