@@ -16,11 +16,10 @@ const { Search } = esSearch;
 const localEsHost = process.env.LOCAL_ES_HOST;
 
 test.before(async (t) => {
-  const { esIndex, esClient, cumulusEsClient } = await createTestIndex();
+  const { esIndex, esClient, searchClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-  t.context.cumulusEsClient = cumulusEsClient;
-
+  t.context.searchClient = searchClient;
   const awsMock = {
     config: {
       credentials: {
@@ -82,7 +81,7 @@ test('Search.get() returns record', async (t) => {
   const record = { foo: 'bar' };
   const id = randomString();
   const type = 'record';
-  await t.context.cumulusEsClient.index({
+  await t.context.esClient.client.index({
     body: record,
     id,
     index: t.context.esIndex,
@@ -102,7 +101,7 @@ test('Search.exists() returns true if record exists', async (t) => {
   const record = { foo: 'bar' };
   const id = randomString();
   const type = 'record';
-  await t.context.cumulusEsClient.index({
+  await t.context.esClient.client.index({
     body: record,
     id,
     index: t.context.esIndex,
@@ -135,7 +134,7 @@ test('Search.get() returns record by parentId', async (t) => {
   const type = `child${randomString()}`;
   const parentType = `parent${randomString()}`;
 
-  await t.context.cumulusEsClient.indices.putMapping({
+  await t.context.esClient.client.indices.putMapping({
     index: t.context.esIndex,
     type,
     body: {
@@ -147,7 +146,7 @@ test('Search.get() returns record by parentId', async (t) => {
     },
   });
 
-  await t.context.cumulusEsClient.index({
+  await t.context.esClient.client.index({
     body: record,
     id,
     index: t.context.esIndex,

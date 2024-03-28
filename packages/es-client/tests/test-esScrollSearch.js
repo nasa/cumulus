@@ -4,7 +4,7 @@ const test = require('ava');
 const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('../bootstrap');
-const { Search } = require('../search');
+const { EsClient } = require('../search');
 const ESScrollSearch = require('../esScrollSearch');
 const { loadGranules, granuleFactory } = require('./helpers/helpers');
 
@@ -19,13 +19,13 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  t.context.esClient = await new Search();
-  t.context.cumulusEsClient = await t.context.esClient.getEsClient();
+  t.context.esClient = await new EsClient();
+  await t.context.esClient.initializeEsClient();
 });
 
 test.afterEach.always(async (t) => {
   sandbox.restore();
-  await t.context.cumulusEsClient.indices.delete({ index: t.context.esIndex });
+  await t.context.esClient.client.indices.delete({ index: t.context.esIndex });
 });
 
 test.serial(

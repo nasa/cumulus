@@ -105,27 +105,55 @@ const esConfig = async (host, metrics = false) => {
   return config;
 };
 
-class BaseSearch {
-  async getEsClient(host, metrics) {
-    //Todo rename, add init?
-    if (!this.client) {
-      this.client = new elasticsearch.Client(await esConfig(host, metrics));
+class EsClient {
+  async initializeEsClient() {
+    if (!this._esClient) {
+      this._client = new elasticsearch.Client(await esConfig(this.host, this.metrics));
     }
-    return this.client;
+    return this._client;
   }
 
-  async refreshCredentials() {
+  async refreshClient() {
     // TODO - this isn't v3 compat.   Ugh.
     if (!aws.config.credentials || aws.config.credentials.expired) {
       await getCredentials();
-      this.client = new elasticsearch.Client(
+      this._client = new elasticsearch.Client(
         await esConfig(this.host, this.metrics)
       );
     }
   }
 
+  get client() {
+    return this._client;
+  }
+
+  constructor(host, metrics = false) {
+    this.host = host;
+    this.metrics = metrics;
+    this.initializeEsClient();
+  }
+}
+
+class BaseSearch {
+  // TODO Deprecate this
   static async es(host, metrics) {
     return new elasticsearch.Client(await esConfig(host, metrics));
+  }
+
+  async refreshClient() {
+    await this._esClient.refreshClient();
+  }
+
+  async initializeEsClient(host, metrics) {
+    const esClient = new EsClient(host, metrics);
+    this._esClient = esClient;
+    this._host = host;
+    this._metrics = metrics;
+    await this._esClient.initializeEsClient();
+  }
+
+  get client() {
+    return this._esClient ? this._esClient.client : undefined;
   }
 
   constructor(event = {}, type = null, index, metrics = false) {
@@ -134,8 +162,8 @@ class BaseSearch {
     const logLimit = 10;
 
     this.type = type;
-    this.client = undefined;
-    this.host = undefined;
+    this._esClient = undefined;
+    this._host = undefined;
     this.metrics = metrics;
 
     // this will allow us to receive payload
@@ -239,16 +267,15 @@ class BaseSearch {
 
     logDetails.granuleId = id;
 
-    if (!this.client) {
-      this.client = await this.getEsClient();
+    if (!this._esClient) {
+      await this.initializeEsClient();
     }
 
-    const result = await this.client
-      .search({
-        index: this.index,
-        type: this.type,
-        body,
-      })
+    const result = await this.client.search({
+      index: this.index,
+      type: this.type,
+      body,
+    })
       .then((response) => response.body);
 
     if (result.hits.total > 1) {
@@ -273,8 +300,8 @@ class BaseSearch {
 
     try {
       // search ES with the generated parameters
-      if (!this.client) {
-        this.client = await this.getEsClient(null, this.metrics);
+      if (!this._esClient) {
+        await this.initializeEsClient(null, this.metrics);
       }
       const response = await this.client.search(searchParams);
       const hits = response.body.hits.hits;
@@ -302,11 +329,11 @@ class BaseSearch {
     const searchParams = this._buildAggregation();
 
     try {
-      if (!this.client) {
-        this.client = await this.getEsClient();
+      if (!this.esClient) {
+        this.esClient = await this.initializeEsClient();
       }
 
-      const result = await this.client.search(searchParams);
+      const result = await this.esClient.search(searchParams);
       const count = result.body.hits.total;
 
       return {
@@ -328,6 +355,7 @@ class Search extends BaseSearch {}
 module.exports = {
   BaseSearch,
   Search,
+  EsClient,
   defaultIndexAlias,
   multipleRecordFoundString,
   recordNotFoundString,

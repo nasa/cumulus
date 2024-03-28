@@ -16,7 +16,7 @@ process.env.system_bucket = randomString();
 process.env.stackName = randomString();
 
 test.before(async (t) => {
-  const { esIndex, esClient, cumulusEsClient } = await createTestIndex();
+  const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 

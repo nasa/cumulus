@@ -5,7 +5,7 @@ const sinon = require('sinon');
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const { ESSearchQueue } = require('../esSearchQueue');
-const { Search } = require('../search');
+const { EsClient, Search } = require('../search');
 const { granuleFactory, loadGranules } = require('./helpers/helpers');
 
 const sandbox = sinon.createSandbox();
@@ -19,14 +19,15 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  t.context.esClient = await new Search();
-  t.context.cumulusEsClient = await t.context.esClient.getEsClient();
-  t.context.esClientSpy = sandbox.spy(t.context.cumulusEsClient, 'scroll');
+  t.context.search = new Search();
+  await t.context.search.initializeEsClient();
+  t.context.esClient = new EsClient();
+  await t.context.esClient.initializeEsClient();
 });
 
 test.afterEach.always(async (t) => {
   sandbox.restore();
-  await t.context.cumulusEsClient.indices.delete({ index: t.context.esIndex });
+  await t.context.esClient.client.indices.delete({ index: t.context.esIndex });
 });
 
 test.serial(
@@ -79,10 +80,11 @@ test.serial('esSearchQueue handles paging.', async (t) => {
 
   const sq = new ESSearchQueue({}, 'granule');
   const spiedSq = sandbox.spy(sq, '_fetchItems');
+  const esClientSpy = sandbox.spy(t.context.search._esClient._client, 'scroll');
 
   const fetched = [];
 
-  t.false(t.context.esClientSpy.called);
+  t.false(esClientSpy.called);
 
   /* eslint-disable no-await-in-loop */
   while (await sq.peek()) {
