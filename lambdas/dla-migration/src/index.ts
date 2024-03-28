@@ -207,10 +207,10 @@ export const processArgs = (): UpdateDLAArgs => {
   };
 };
 
-interface UpdateDLAHandlerEvent {
-  internalBucket?: string
-  stackName?: string
-}
+// interface UpdateDLAHandlerEvent {
+//   internalBucket?: string
+//   stackName?: string
+// }
 
 // async function handler(event: UpdateDLAHandlerEvent) {
 //   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
@@ -225,18 +225,8 @@ interface UpdateDLAHandlerEvent {
 //   updateDLABatch(systemBucket, targetDirectory, sourceDirectory, skip);
 // }
 
-module.exports = {
-  handler,
-  getEnvironmentVariable,
-  manipulateTrailingSlash,
-  identifyDatedPath,
-  addDateIdentifierToPath,
-  updateDLAFile,
-  updateDLABatch,
-  processArgs,
-};
 
-const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
+// const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
 export interface HandlerEvent {
   dlaPath?: string
 }
@@ -258,6 +248,7 @@ export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
   const targetDirectory = get(event, 'targetDirectory', getDLARootKey(stackName).replace('dead-letter-archive', 'updated-dead-letter-archive'));
   const skip = true;
   updateDLABatch(systemBucket, targetDirectory, sourceDirectory, skip);
+  return { 'migrated': 1 };
 };
 
   // let fileCount = 0;
@@ -299,3 +290,13 @@ export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
 //   logger.info(`Completed DLA migration, migrated ${fileCount} files`);
 //   return { migrated: fileCount };
 // };
+module.exports = {
+  handler,
+  getEnvironmentVariable,
+  manipulateTrailingSlash,
+  identifyDatedPath,
+  addDateIdentifierToPath,
+  updateDLAFile,
+  updateDLABatch,
+  processArgs,
+};
