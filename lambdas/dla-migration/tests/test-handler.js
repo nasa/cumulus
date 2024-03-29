@@ -4,6 +4,7 @@ const moment = require('moment');
 
 const pMap = require('p-map');
 const range = require('lodash/range');
+const clone = require('lodash/clone');
 const {
   createBucket,
   putJsonS3Object,
@@ -121,11 +122,11 @@ test('handler successfully migrates files', async (t) => {
   });
   t.deepEqual(s3list.map((object) => object.Key).sort(), t.context.expectedJsonObjectKeys.sort());
 
-//   const handlerOutput2 = await handler({});
-//   t.is(handlerOutput2.migrated, 0);
+  const handlerOutput2 = await handler({});
+  t.is(handlerOutput2.migrated, 0);
 });
 
-test.only('handler successfully migrates files in non-default location when dlaPath is provided', async (t) => {
+test('handler successfully migrates files in non-default location when dlaPath is provided', async (t) => {
   const handlerOutput = await handler({ dlaPath: t.context.dlaPath2 });
   t.is(handlerOutput.migrated, t.context.bucketObjects2);
   const s3list = await listS3ObjectsV2({
@@ -134,6 +135,17 @@ test.only('handler successfully migrates files in non-default location when dlaP
   });
   t.deepEqual(s3list.map((object) => object.Key).sort(), t.context.expectedJsonObjectKeys2.sort());
 
-//   const handlerOutput2 = await handler({ dlaPath: t.context.dlaPath2 });
-//   t.is(handlerOutput2.migrated, 0);
+  const handlerOutput2 = await handler({ dlaPath: t.context.dlaPath2 });
+  t.is(handlerOutput2.migrated, 0);
+});
+
+test.serial('handler yells about missing environment variables stackName, system_bucket', async (t) => {
+  const storedEnv = clone(process.env);
+  process.env = {};
+  await t.throwsAsync(handler({}), { message: 'System bucket env var is required.' });
+  process.env.system_bucket = 'a';
+
+  await t.throwsAsync(handler({}), { message: 'Could not determine archive path as stackName env var is undefined.' });
+
+  process.env = storedEnv;
 });

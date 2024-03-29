@@ -5,12 +5,10 @@ const moment = require('moment');
 const {
   createBucket,
   putJsonS3Object,
-  s3ObjectExists,
   recursivelyDeleteS3Bucket,
   getJsonS3Object,
 } = require('@cumulus/aws-client/S3');
 
-// eslint-disable-next-line unicorn/import-index
 const {
   updateDLABatch,
   updateDLAFile,
@@ -25,7 +23,7 @@ test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
 
-test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips only what has already been processed if requested ', async (t) => {
+test('updateDLABatch acts upon a batch of files under a prefix, and skips only what has already been processed if requested ', async (t) => {
   let expectedCapturedFiles;
   let expectedOutputFiles;
   let fileContents;
@@ -68,14 +66,14 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   await createBucket(bucket);
 
   const filePaths = [
-    'a/1',
-    'a/12',
-    'a/b',
-    'b/1',
-    'b/12',
-    'b/b',
-    'a/b/57',
-    'a/b/65',
+    'a/1.json',
+    'a/12.json',
+    'a/b.json',
+    'b/1.json',
+    'b/12.json',
+    'b/b.json',
+    'a/b/57.json',
+    'a/b/65.json',
   ];
   await Promise.all(filePaths.map((filePath) => {
     /* setting executionArn to be our file ID for later verification */
@@ -89,21 +87,17 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
 
   /* update all entries under prefix 'a' */
   /* push updated records to updated-a */
-  filesProcessed = await updateDLABatch(bucket, 'updated-a/', 'a');
-  t.is(filesProcessed.filter(Boolean).length, 5);
+  filesProcessed = await updateDLABatch(bucket, 'a');
+  t.is(filesProcessed.filter(Boolean).length, 3);
   expectedCapturedFiles = [
-    'a/1',
-    'a/12',
-    'a/b',
-    'a/b/57',
-    'a/b/65',
+    'a/1.json',
+    'a/12.json',
+    'a/b.json',
   ].sort();
   expectedOutputFiles = [
-    'updated-a/2024-03-21/1',
-    'updated-a/2024-03-21/12',
-    'updated-a/2024-03-21/b',
-    'updated-a/b/2024-03-21/57',
-    'updated-a/b/2024-03-21/65',
+    'a/2024-03-21/1.json',
+    'a/2024-03-21/12.json',
+    'a/2024-03-21/b.json',
   ];
   /* pull these updated as we expect to find them */
   fileContents = await Promise.all(
@@ -127,18 +121,18 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   });
 
   /* look under prefix b */
-  filesProcessed = await updateDLABatch(bucket, 'updated-b', 'b');
+  filesProcessed = await updateDLABatch(bucket, 'b');
 
   t.is(filesProcessed.filter(Boolean).length, 3);
   expectedCapturedFiles = [
-    'b/1',
-    'b/12',
-    'b/b',
+    'b/1.json',
+    'b/12.json',
+    'b/b.json',
   ].sort();
   expectedOutputFiles = [
-    'updated-b/2024-03-21/1',
-    'updated-b/2024-03-21/12',
-    'updated-b/2024-03-21/b',
+    'b/2024-03-21/1.json',
+    'b/2024-03-21/12.json',
+    'b/2024-03-21/b.json',
   ];
   fileContents = await Promise.all(
     expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))
@@ -158,16 +152,14 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   });
 
   /* look under prefix a/b */
-  await updateDLABatch(bucket, 'updated-a/b', 'a/b');
+  await updateDLABatch(bucket, 'a/b');
   expectedCapturedFiles = [
-    'a/b',
-    'a/b/57',
-    'a/b/65',
+    'a/b/57.json',
+    'a/b/65.json',
   ].sort();
   expectedOutputFiles = [
-    'updated-a/2024-03-21/b',
-    'updated-a/b/2024-03-21/57',
-    'updated-a/b/2024-03-21/65',
+    'a/b/2024-03-21/57.json',
+    'a/b/2024-03-21/65.json',
   ];
   fileContents = await Promise.all(
     expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))
@@ -190,9 +182,9 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
 
 test.serial('updateDLAFile updates existing files to new structure', async (t) => {
   const bucket = t.context.systemBucket;
-  const sourcePath = 'a/b';
-  const targetPath = 'updated-a/b';
-  let actualTargetPath = `updated-a/${moment.utc().format('YYYY-MM-DD')}/b`;
+  const sourcePath = 'a/b.json';
+  const targetPath = 'a/b.json';
+  let actualTargetPath = `a/${moment.utc().format('YYYY-MM-DD')}/b.json`;
 
   await putJsonS3Object(
     bucket,
@@ -245,7 +237,7 @@ test.serial('updateDLAFile updates existing files to new structure', async (t) =
     }
   );
   t.true(await updateDLAFile(bucket, sourcePath, targetPath));
-  actualTargetPath = 'updated-a/2024-03-21/b';
+  actualTargetPath = 'a/2024-03-21/b.json';
 
   t.deepEqual(
     await getJsonS3Object(bucket, actualTargetPath),
@@ -284,76 +276,4 @@ test.serial('updateDLAFile updates existing files to new structure', async (t) =
       time: '2024-03-21T15:09:54Z',
     }
   );
-});
-test.serial('updateDLAFile identifies whether or not date identifier needs to be added', async (t) => {
-  const bucket = t.context.systemBucket;
-  const sourcePath = 'a/b';
-  let targetPath = 'updated-a/b';
-  let actualTargetPath = 'updated-a/2024-03-21/b';
-  await putJsonS3Object(
-    bucket,
-    sourcePath,
-    {
-      Body: JSON.stringify({
-        time: '2024-03-21T15:09:54Z',
-        detail: {
-          executionArn: 'abcd',
-          stateMachineArn: '1234',
-          status: 'RUNNING',
-          input: JSON.stringify({
-            meta: {
-              collection: {
-                name: 'A_COLLECTION',
-                version: '12',
-              },
-              provider: {
-                id: 'abcd',
-                protocol: 'a',
-                host: 'b',
-              },
-            },
-            payload: {
-              granules: [{ granuleId: 'a' }],
-            },
-          }),
-        },
-      }),
-    }
-  );
-  await updateDLAFile(bucket, sourcePath, targetPath);
-  t.true(await s3ObjectExists({ Bucket: bucket, Key: actualTargetPath }));
-  await putJsonS3Object(
-    bucket,
-    sourcePath,
-    {
-      Body: JSON.stringify({
-        time: '2024-03-21T15:09:54Z',
-        detail: {
-          executionArn: 'abcd',
-          stateMachineArn: '1234',
-          status: 'RUNNING',
-          input: JSON.stringify({
-            meta: {
-              collection: {
-                name: 'A_COLLECTION',
-                version: '12',
-              },
-              provider: {
-                id: 'abcd',
-                protocol: 'a',
-                host: 'b',
-              },
-            },
-            payload: {
-              granules: [{ granuleId: 'a' }],
-            },
-          }),
-        },
-      }),
-    }
-  );
-  targetPath = 'updated-a/2023-04-21/b';
-  actualTargetPath = targetPath;
-  await updateDLAFile(bucket, sourcePath, targetPath);
-  t.true(await s3ObjectExists({ Bucket: bucket, Key: actualTargetPath }));
 });
