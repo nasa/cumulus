@@ -23,7 +23,6 @@ import { deleteS3Object } from '../../../packages/aws-client/src/S3';
 
 const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
 
-
 /**
  * Ensure that a string has or does not have a trailing slash as appropriate
  * the strings '' and '/' are special cases that should return '' always
@@ -95,7 +94,7 @@ export const addDateIdentifierToPath = (targetPath: string, message: DLARecord):
 export const updateDLAFile = async (
   bucket: string,
   sourcePath: string,
-  targetPath: string,
+  targetPath: string
 ): Promise<boolean> => {
   const inDateForm = identifyDatedPath(targetPath);
 
@@ -112,7 +111,7 @@ export const updateDLAFile = async (
   await putJsonS3Object(bucket, massagedTargetPath, hoisted);
   logger.info(`Migrated file from bucket ${bucket}/${sourcePath} to ${massagedTargetPath}`);
   if (massagedTargetPath !== sourcePath) {
-    await deleteS3Object(bucket, sourcePath)
+    await deleteS3Object(bucket, sourcePath);
     logger.info(`Deleted file ${bucket}/${sourcePath}`);
   }
   return true;
@@ -130,7 +129,7 @@ export const updateDLAFile = async (
 export const updateDLABatch = async (
   bucket: string,
   targetDirectory: string,
-  sourceDirectory: string,
+  sourceDirectory: string
 ): Promise<Array<boolean>> => {
   const out = [];
   const sourceDir = manipulateTrailingSlash(sourceDirectory, true);
@@ -158,7 +157,6 @@ export const updateDLABatch = async (
   return out.flat();
 };
 
-
 export interface HandlerEvent {
   dlaPath?: string
 }
@@ -172,9 +170,6 @@ export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const systemBucket = process.env.system_bucket;
   const stackName = process.env.stackName;
-
-  // const dlaPath = event.dlaPath ?? `${stackName}/dead-letter-archive/sqs/`;
-
 
   const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
   const targetDirectory = get(event, 'targetDirectory', sourceDirectory);

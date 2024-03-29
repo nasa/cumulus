@@ -627,17 +627,6 @@ export const deleteS3Files = async (s3Objs: DeleteObjectRequest[]) => await pMap
   { concurrency: S3_RATE_LIMIT }
 );
 
-
-/**
-* Delete a list of buckets and all of their objects from S3
-*
-* @param {Array} buckets - list of bucket names
-* @returns {Promise} the promised result of `S3.deleteBucket`
-**/
-export const deleteS3Buckets = async (
-  buckets: Array<string>
-): Promise<any> => await Promise.all(buckets.map(recursivelyDeleteS3Bucket));
-
 type FileInfo = {
   filename: string,
   key: string,
@@ -848,6 +837,17 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
     return await s3().deleteBucket({ Bucket: bucket });
   }
 );
+
+/**
+* Delete a list of buckets and all of their objects from S3
+*
+* @param {Array} buckets - list of bucket names
+* @returns {Promise} the promised result of `S3.deleteBucket`
+**/
+export const deleteS3Buckets = async (
+  buckets: Array<string>
+): Promise<any> => await Promise.all(buckets.map(recursivelyDeleteS3Bucket));
+
 /**
  * Calculate the cryptographic hash of an S3 object
  *

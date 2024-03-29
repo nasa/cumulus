@@ -3,8 +3,6 @@
 'use strict';
 
 const get = require('lodash/get');
-const uuidv4 = require('uuid/v4');
-const moment = require('moment');
 
 const { s3PutObject } = require('@cumulus/aws-client/S3');
 const { isSQSRecordLike } = require('@cumulus/aws-client/SQS');
@@ -27,6 +25,7 @@ const {
 async function handler(event) {
   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
+  const stackName = process.env.stackName;
   const sqsMessages = get(event, 'Records', []);
   await Promise.all(sqsMessages.map(async (sqsMessage) => {
     let massagedMessage;
@@ -36,10 +35,9 @@ async function handler(event) {
       massagedMessage = sqsMessage;
     }
 
-    const dateString = massagedMessage.time ? moment.utc(massagedMessage.time).format('YYYY-MM-DD') : moment.utc().format('YYYY-MM-DD');
     await s3PutObject({
       Bucket: process.env.system_bucket,
-      Key: getDLAKey(process.env.stackName, massagedMessage),
+      Key: getDLAKey(stackName, massagedMessage),
       Body: JSON.stringify(massagedMessage),
     });
   }));
