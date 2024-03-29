@@ -10,6 +10,7 @@ import {
   getJsonS3Object,
   putJsonS3Object,
   listS3ObjectsV2Batch,
+  deleteS3Object,
 } from '@cumulus/aws-client/S3';
 import {
   hoistCumulusMessageDetails,
@@ -19,7 +20,6 @@ import {
 import { DLARecord } from '@cumulus/types/api/dead_letters';
 import pMap from 'p-map';
 import moment from 'moment';
-import { deleteS3Object } from '../../../packages/aws-client/src/S3';
 
 const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
 
