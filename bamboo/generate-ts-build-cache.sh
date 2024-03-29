@@ -34,8 +34,6 @@ npm install
 # Bootstrap to install/link packages
 npm run ci:bootstrap-no-scripts
 
-# # Pre-run tsc:listEmittedFiles to allow failure to print
-# npm run tsc:listEmittedFiles
 # Get a list of TS compiled files
 npm run tsc:listEmittedFiles | grep TSFILE | awk '{print $2}' | sed "s,$CURRENT_WORKING_DIR/,,g" >> .ts-build-cache-files
 cat .ts-build-cache-files
