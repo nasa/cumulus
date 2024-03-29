@@ -111,7 +111,7 @@ export const updateDLAFile = async (
 
   await putJsonS3Object(bucket, massagedTargetPath, hoisted);
   logger.info(`Migrated file from bucket ${bucket}/${sourcePath} to ${massagedTargetPath}`);
-  if (massagedTargetPath !== sourcePath){
+  if (massagedTargetPath !== sourcePath) {
     await deleteS3Object(bucket, sourcePath)
     logger.info(`Deleted file ${bucket}/${sourcePath}`);
   }
@@ -131,7 +131,7 @@ export const updateDLABatch = async (
   bucket: string,
   targetDirectory: string,
   sourceDirectory: string,
-) => {
+): Promise<Array<boolean>> => {
   const out = [];
   const sourceDir = manipulateTrailingSlash(sourceDirectory, true);
   const targetDir = manipulateTrailingSlash(targetDirectory, true);
@@ -159,25 +159,6 @@ export const updateDLABatch = async (
 };
 
 
-// interface UpdateDLAHandlerEvent {
-//   internalBucket?: string
-//   stackName?: string
-// }
-
-// async function handler(event: UpdateDLAHandlerEvent) {
-//   if (!process.env.system_bucket) throw new Error('System bucket env var is required.');
-//   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
-
-//   const systemBucket = process.env.system_bucket;
-//   const stackName = process.env.stackName;
-
-//   const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
-//   const targetDirectory = get(event, 'targetDirectory', getDLARootKey(stackName).replace('dead-letter-archive', 'updated-dead-letter-archive'));
-//   const skip = true;
-//   updateDLABatch(systemBucket, targetDirectory, sourceDirectory, skip);
-// }
-
-
 export interface HandlerEvent {
   dlaPath?: string
 }
@@ -197,15 +178,6 @@ export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
 
   const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
   const targetDirectory = get(event, 'targetDirectory', sourceDirectory);
-  updateDLABatch(systemBucket, targetDirectory, sourceDirectory);
-  return { 'migrated': 1 };
+  const successes = await updateDLABatch(systemBucket, targetDirectory, sourceDirectory);
+  return { migrated: successes.filter(Boolean).length };
 };
-
-// module.exports = {
-//   handler,
-//   manipulateTrailingSlash,
-//   identifyDatedPath,
-//   addDateIdentifierToPath,
-//   updateDLAFile,
-//   updateDLABatch,
-// };
