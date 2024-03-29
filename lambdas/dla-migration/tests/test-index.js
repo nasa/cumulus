@@ -12,23 +12,10 @@ const {
 
 // eslint-disable-next-line unicorn/import-index
 const {
-  manipulateTrailingSlash,
   updateDLABatch,
   updateDLAFile,
 } = require('../dist/lambda');
 
-test('manipulateTrailingSlash adds or removes trailing slashes as needed', (t) => {
-  /* test 4 expected use cases */
-  t.is(manipulateTrailingSlash('a', true), 'a/');
-  t.is(manipulateTrailingSlash('a/', true), 'a/');
-  t.is(manipulateTrailingSlash('a', false), 'a');
-  t.is(manipulateTrailingSlash('a/', false), 'a');
-  /* test some potential weird cases */
-  t.is(manipulateTrailingSlash('a/sdas/s/dawd//', true), 'a/sdas/s/dawd//');
-  t.is(manipulateTrailingSlash('a/sdas/s/dawd//', false), 'a/sdas/s/dawd');
-  /* shouldn't append to empty string */
-  t.is(manipulateTrailingSlash('', true), '');
-});
 test.before(async (t) => {
   t.context.systemBucket = `stack${cryptoRandomString({ length: 5 })}`;
   await createBucket(t.context.systemBucket);

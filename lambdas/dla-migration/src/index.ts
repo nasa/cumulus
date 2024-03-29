@@ -24,39 +24,6 @@ import moment from 'moment';
 const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
 
 /**
- * Ensure that a string has or does not have a trailing slash as appropriate
- * the strings '' and '/' are special cases that should return '' always
- * because we're handling 'directories' in S3, expect a user to give '/' and mean 'the whole bucket'
- * @param S3Path a string meant to represent a path within an S3 bucket
- * @param shouldHave should it end with a '/'
- * @returns massaged S3Path
- */
-export const manipulateTrailingSlash = (S3Path: string, shouldHave: boolean): string => {
-  if (S3Path === '' || S3Path === '/') {
-    return '';
-  }
-  const has = S3Path.endsWith('/');
-  if (has && shouldHave) {
-    return S3Path;
-  }
-  if (!has && !shouldHave) {
-    return S3Path;
-  }
-  if (!has && shouldHave) {
-    return `${S3Path}/`;
-  }
-  if (has && !shouldHave) {
-    let out = S3Path.slice(0, -1);
-    while (out.endsWith('/')) {
-      out = out.slice(0, -1);
-    }
-    return out;
-  }
-  /* this is just to satisfy typescript, it shouldn't be possible to get here */
-  return S3Path;
-};
-
-/**
  * identifies whether the innermost folder of the filePath appears to be a timestamp
  *
  * @param targetPath
@@ -131,8 +98,8 @@ export const updateDLABatch = async (
   sourceDirectory: string
 ): Promise<Array<boolean>> => {
   const out = [];
-  const sourceDir = manipulateTrailingSlash(sourceDirectory, true);
-  const targetDir = manipulateTrailingSlash(targetDirectory, true);
+  const sourceDir = sourceDirectory.replace('//?$/', '/');
+  const targetDir = targetDirectory.replace('//?$/', '/');
   for await (
     const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: sourceDir })
   ) {
