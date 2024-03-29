@@ -20,6 +20,7 @@ import {
 import { DLARecord } from '@cumulus/types/api/dead_letters';
 import pMap from 'p-map';
 import moment from 'moment';
+import cryptoRandomString from 'crypto-random-string';
 
 const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
 
@@ -48,6 +49,14 @@ export const addDateIdentifierToPath = (targetPath: string, message: DLARecord):
   )
 );
 
+export const addRunID = (key: string, runID: string): string => {
+  const regex = new RegExp(`mid.{${runID.length}}\.json`);
+  if (key.match(regex)) {
+    return key.replace(regex, `mid{${runID}}.json`);
+  }
+  return key.replace('.json', `mid{${runID}}.json`);
+};
+
 /**
  * pull S3 Object from sourcePath, update it to new DLA structure and push it to targetPath
  * noop if skip is true and an object already exists at targetPath
@@ -61,19 +70,20 @@ export const addDateIdentifierToPath = (targetPath: string, message: DLARecord):
 export const updateDLAFile = async (
   bucket: string,
   sourcePath: string,
-  targetPath: string
+  runID: string,
 ): Promise<boolean> => {
-  const inDateForm = identifyDatedPath(targetPath);
+  const inDateForm = identifyDatedPath(sourcePath);
 
   logger.info(`About to process ${sourcePath}`);
   const dlaObject = await getJsonS3Object(bucket, sourcePath);
   const hoisted = await hoistCumulusMessageDetails(dlaObject);
   let massagedTargetPath: string;
   if (!inDateForm) {
-    massagedTargetPath = addDateIdentifierToPath(targetPath, hoisted);
+    massagedTargetPath = addDateIdentifierToPath(sourcePath, hoisted);
   } else {
-    massagedTargetPath = targetPath;
+    massagedTargetPath = sourcePath;
   }
+  massagedTargetPath = addRunID(massagedTargetPath, runID);
   await putJsonS3Object(bucket, massagedTargetPath, hoisted);
   logger.info(`Migrated file from bucket ${bucket}/${sourcePath} to ${massagedTargetPath}`);
   if (massagedTargetPath !== sourcePath) {
@@ -94,26 +104,18 @@ export const updateDLAFile = async (
  */
 export const updateDLABatch = async (
   bucket: string,
-  targetDirectory: string,
-  sourceDirectory: string
+  sourceDirectory: string,
+  runID: string
 ): Promise<Array<boolean>> => {
   const out = [];
   const sourceDir = sourceDirectory.replace('//?$/', '/');
-  const targetDir = targetDirectory.replace('//?$/', '/');
   for await (
     const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: sourceDir })
   ) {
-    const validKeys = objectBatch.map((obj) => obj.Key);
-    const targetPaths = validKeys.map(
-      (filePath) => filePath.replace(
-        sourceDir,
-        targetDir
-      )
-    );
-
-    const zipped: Array<[string, string]> = zip(validKeys, targetPaths) as Array<[string, string]>;
+    const keys = objectBatch.map((obj) => obj.Key).filter((key) => key.endsWith('.json') && !key.endsWith(`${runID}.json`));
+    
     out.push(await pMap(
-      zipped, (async (pathPair) => updateDLAFile(bucket, pathPair[0], pathPair[1])),
+      keys, (async (key) => updateDLAFile(bucket, key, runID)),
       {
         concurrency: 5,
         stopOnError: false,
@@ -129,6 +131,7 @@ export interface HandlerEvent {
 
 export interface HandlerOutput {
   migrated: number
+  runID: string
 }
 
 export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
@@ -136,9 +139,8 @@ export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
   if (!process.env.stackName) throw new Error('Could not determine archive path as stackName env var is undefined.');
   const systemBucket = process.env.system_bucket;
   const stackName = process.env.stackName;
-
+  const runID = cryptoRandomString({ length: 8 });
   const sourceDirectory = get(event, 'dlaPath', getDLARootKey(stackName));
-  const targetDirectory = get(event, 'targetDlaPath', sourceDirectory);
-  const successes = await updateDLABatch(systemBucket, targetDirectory, sourceDirectory);
-  return { migrated: successes.filter(Boolean).length };
+  const successes = await updateDLABatch(systemBucket, sourceDirectory, runID);
+  return { runID, migrated: successes.filter(Boolean).length };
 };
