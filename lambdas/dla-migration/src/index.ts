@@ -63,7 +63,7 @@ export const manipulateTrailingSlash = (S3Path: string, shouldHave: boolean): st
  * @returns whether the innermost folder of the filePath appears to be a timestamp
  */
 export const identifyDatedPath = (targetPath: string): boolean => (
-  moment(path.basename(path.dirname(targetPath)), 'YYYY-MM-DD').isValid()
+  moment(path.basename(path.dirname(targetPath)), 'YYYY-MM-DD', true).isValid()
 );
 
 /**
@@ -107,7 +107,6 @@ export const updateDLAFile = async (
   } else {
     massagedTargetPath = targetPath;
   }
-
   await putJsonS3Object(bucket, massagedTargetPath, hoisted);
   logger.info(`Migrated file from bucket ${bucket}/${sourcePath} to ${massagedTargetPath}`);
   if (massagedTargetPath !== sourcePath) {
@@ -171,8 +170,8 @@ export const handler = async (event: HandlerEvent): Promise<HandlerOutput> => {
   const systemBucket = process.env.system_bucket;
   const stackName = process.env.stackName;
 
-  const sourceDirectory = get(event, 'sourceDirectory', getDLARootKey(stackName));
-  const targetDirectory = get(event, 'targetDirectory', sourceDirectory);
+  const sourceDirectory = get(event, 'dlaPath', getDLARootKey(stackName));
+  const targetDirectory = get(event, 'targetDlaPath', sourceDirectory);
   const successes = await updateDLABatch(systemBucket, targetDirectory, sourceDirectory);
   return { migrated: successes.filter(Boolean).length };
 };

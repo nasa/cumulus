@@ -29,7 +29,7 @@
     "tsc:listEmittedFiles": "lerna run tsc:listEmittedFiles --stream --no-prefix",
     "package": "lerna run package",
     "bootstrap": "lerna bootstrap --no-ci --force-local && npm run package && git rev-parse --short HEAD > .bootstrapSha",
-    "bootstrap-no-build": "lerna bootstrap --no-ci --force-local",
+    "bootstrap-no-build": "lerna bootstrap --no-ci --force-local --ignore-scripts",
     "bootstrap-no-build-no-scripts": "lerna bootstrap --no-ci --force-local",
     "bootstrap-no-build-no-concurrency": "lerna bootstrap --no-ci --force-local --concurrency 1",
     "bootstrap-no-build-quiet": "lerna bootstrap --no-ci --force-local --loglevel=error",
