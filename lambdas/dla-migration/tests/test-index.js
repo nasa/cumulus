@@ -22,7 +22,7 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
-test('updateDLAFile updates existing files to new structure', async (t) => {
+test.serial('updateDLAFile updates existing files to new structure', async (t) => {
   const bucket = t.context.systemBucket;
   const sourcePath = 'a/b.json';
   let actualTargetPath = `a/${moment.utc().format('YYYY-MM-DD')}/b.json`;
@@ -119,7 +119,7 @@ test('updateDLAFile updates existing files to new structure', async (t) => {
   );
 });
 
-test('updateDLAFile handles bad input gracefully', async (t) => {
+test.serial('updateDLAFile handles bad input gracefully', async (t) => {
   const bucket = t.context.systemBucket;
   const sourcePath = 'a/b.json';
 
@@ -131,7 +131,7 @@ test('updateDLAFile handles bad input gracefully', async (t) => {
   t.false(await updateDLAFile(bucket, sourcePath));
 });
 
-test('updateDLABatch acts upon a batch of files under a prefix, and skips only what has already been processed if requested ', async (t) => {
+test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips only what has already been processed if requested ', async (t) => {
   let expectedCapturedFiles;
   let expectedOutputFiles;
   let fileContents;
@@ -287,7 +287,7 @@ test('updateDLABatch acts upon a batch of files under a prefix, and skips only w
   });
 });
 
-test('updateDLABatch handles bad inputs gracefully', async (t) => {
+test.serial('updateDLABatch handles bad inputs gracefully', async (t) => {
   const sampleObject = {
     time: '2024-03-21T15:09:54Z',
     detail: {
