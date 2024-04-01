@@ -103,12 +103,12 @@ Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.co
 
 [Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/what-is.html) is a powerful serverless query service that allows you
 to analyze data directly from Amazon S3 using standard SQL. One of the key features of Athena is its support for partition
-projection, partition projection allows you to define a virtual partitioning scheme for your data stored in Amazon S3
+projection, partition projection allows us to define a virtual partitioning scheme for our data stored in Amazon S3
 without physically partitioning the data.
 
 We have provided an AWS Glue Catalog database, an AWS Glue Catalog table and an example query for querying S3 DLA messages.
-Our AWS Glue Catalog table `<prefix>_dla_glue_table` defines a partition projection on `eventdate` which corresponds to `date` folder
-under Dead Letter Archive S3 storage location.
+Our AWS Glue Catalog table `<prefix>_dla_glue_table` defines partition projection for `eventdate` key which corresponds
+to `date` folder under Dead Letter Archive S3 storage location.
 
 **Note:** `<prefix>` is your stack name with dash replaced by underscore
 
