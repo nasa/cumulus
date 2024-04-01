@@ -85,7 +85,7 @@ export const updateDLABatch = async (
   /* this batch capture of files means that new valid files
   produced *by* this function will also get processed,
   this is not an issue right now because they are added in a directory and directories are skipped
-  *change this logic with care for recursion*
+  ***CHANGE THIS LOGIC WITH CARE FOR RECURSION***
   */
   for await (
     const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: sourceDir })
