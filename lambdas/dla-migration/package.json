@@ -27,9 +27,7 @@
     "@cumulus/logger": "18.2.0",
     "@cumulus/message": "18.2.0",
     "@cumulus/types": "18.2.0",
-    "lodash.clone": "^4.5.0",
-    "lodash.get": "^4.4.2",
-    "lodash.range": "^3.2.0",
+    "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "p-map": "^4.0.0"
   }
