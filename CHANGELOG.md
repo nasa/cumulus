@@ -75,6 +75,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+- **CUMULUS-3616**
+  - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
 - **CUMULUS-3613**
