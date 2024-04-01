@@ -22,6 +22,114 @@ test.before(async (t) => {
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(t.context.systemBucket);
 });
+test('updateDLAFile updates existing files to new structure', async (t) => {
+  const bucket = t.context.systemBucket;
+  const sourcePath = 'a/b.json';
+  let actualTargetPath = `a/${moment.utc().format('YYYY-MM-DD')}/b.json`;
+
+  await putJsonS3Object(
+    bucket,
+    sourcePath,
+    { body: JSON.stringify({ a: 'b' }) }
+  );
+  t.true(await updateDLAFile(bucket, sourcePath));
+  t.deepEqual(
+    await getJsonS3Object(bucket, actualTargetPath),
+    {
+      body: JSON.stringify({ a: 'b' }),
+      collectionId: null,
+      error: null,
+      executionArn: null,
+      granules: null,
+      providerId: null,
+      stateMachineArn: null,
+      status: null,
+      time: null,
+    }
+  );
+  await putJsonS3Object(
+    bucket,
+    sourcePath,
+    {
+      Body: JSON.stringify({
+        time: '2024-03-21T15:09:54Z',
+        detail: {
+          executionArn: 'abcd',
+          stateMachineArn: '1234',
+          status: 'RUNNING',
+          input: JSON.stringify({
+            meta: {
+              collection: {
+                name: 'A_COLLECTION',
+                version: '12',
+              },
+              provider: {
+                id: 'abcd',
+                protocol: 'a',
+                host: 'b',
+              },
+            },
+            payload: {
+              granules: [{ granuleId: 'a' }],
+            },
+          }),
+        },
+      }),
+    }
+  );
+  t.true(await updateDLAFile(bucket, sourcePath));
+  actualTargetPath = 'a/2024-03-21/b.json';
+
+  t.deepEqual(
+    await getJsonS3Object(bucket, actualTargetPath),
+    {
+      Body: JSON.stringify({
+        time: '2024-03-21T15:09:54Z',
+        detail: {
+          executionArn: 'abcd',
+          stateMachineArn: '1234',
+          status: 'RUNNING',
+          input: JSON.stringify({
+            meta: {
+              collection: {
+                name: 'A_COLLECTION',
+                version: '12',
+              },
+              provider: {
+                id: 'abcd',
+                protocol: 'a',
+                host: 'b',
+              },
+            },
+            payload: {
+              granules: [{ granuleId: 'a' }],
+            },
+          }),
+        },
+      }),
+      collectionId: 'A_COLLECTION___12',
+      error: null,
+      executionArn: 'abcd',
+      granules: ['a'],
+      providerId: 'abcd',
+      stateMachineArn: '1234',
+      status: 'RUNNING',
+      time: '2024-03-21T15:09:54Z',
+    }
+  );
+});
+
+test('updateDLAFile handles bad input gracefully', async (t) => {
+  const bucket = t.context.systemBucket;
+  const sourcePath = 'a/b.json';
+
+  await putJsonS3Object(
+    bucket,
+    sourcePath,
+    { body: '{"sdf: sf}' }
+  );
+  t.false(await updateDLAFile(bucket, sourcePath));
+});
 
 test('updateDLABatch acts upon a batch of files under a prefix, and skips only what has already been processed if requested ', async (t) => {
   let expectedCapturedFiles;
@@ -63,7 +171,6 @@ test('updateDLABatch acts upon a batch of files under a prefix, and skips only w
     time: '2024-03-21T15:09:54Z',
   };
   const bucket = t.context.systemBucket;
-  await createBucket(bucket);
 
   const filePaths = [
     'a/1.json',
@@ -180,100 +287,54 @@ test('updateDLABatch acts upon a batch of files under a prefix, and skips only w
   });
 });
 
-test.serial('updateDLAFile updates existing files to new structure', async (t) => {
-  const bucket = t.context.systemBucket;
-  const sourcePath = 'a/b.json';
-  const targetPath = 'a/b.json';
-  let actualTargetPath = `a/${moment.utc().format('YYYY-MM-DD')}/b.json`;
-
-  await putJsonS3Object(
-    bucket,
-    sourcePath,
-    { body: JSON.stringify({ a: 'b' }) }
-  );
-  t.true(await updateDLAFile(bucket, sourcePath, targetPath, true));
-  t.deepEqual(
-    await getJsonS3Object(bucket, actualTargetPath),
-    {
-      body: JSON.stringify({ a: 'b' }),
-      collectionId: null,
-      error: null,
-      executionArn: null,
-      granules: null,
-      providerId: null,
-      stateMachineArn: null,
-      status: null,
-      time: null,
-    }
-  );
-  await putJsonS3Object(
-    bucket,
-    sourcePath,
-    {
-      Body: JSON.stringify({
-        time: '2024-03-21T15:09:54Z',
-        detail: {
-          executionArn: 'abcd',
-          stateMachineArn: '1234',
-          status: 'RUNNING',
-          input: JSON.stringify({
-            meta: {
-              collection: {
-                name: 'A_COLLECTION',
-                version: '12',
-              },
-              provider: {
-                id: 'abcd',
-                protocol: 'a',
-                host: 'b',
-              },
-            },
-            payload: {
-              granules: [{ granuleId: 'a' }],
-            },
-          }),
-        },
-      }),
-    }
-  );
-  t.true(await updateDLAFile(bucket, sourcePath, targetPath));
-  actualTargetPath = 'a/2024-03-21/b.json';
-
-  t.deepEqual(
-    await getJsonS3Object(bucket, actualTargetPath),
-    {
-      Body: JSON.stringify({
-        time: '2024-03-21T15:09:54Z',
-        detail: {
-          executionArn: 'abcd',
-          stateMachineArn: '1234',
-          status: 'RUNNING',
-          input: JSON.stringify({
-            meta: {
-              collection: {
-                name: 'A_COLLECTION',
-                version: '12',
-              },
-              provider: {
-                id: 'abcd',
-                protocol: 'a',
-                host: 'b',
-              },
-            },
-            payload: {
-              granules: [{ granuleId: 'a' }],
-            },
-          }),
-        },
-      }),
-      collectionId: 'A_COLLECTION___12',
-      error: null,
-      executionArn: 'abcd',
-      granules: ['a'],
-      providerId: 'abcd',
+test('updateDLABatch handles bad inputs gracefully', async (t) => {
+  const sampleObject = {
+    time: '2024-03-21T15:09:54Z',
+    detail: {
+      executionArn: 'replaceme',
       stateMachineArn: '1234',
       status: 'RUNNING',
-      time: '2024-03-21T15:09:54Z',
-    }
+      input: JSON.stringify({
+        meta: {
+          collection: {
+            name: 'A_COLLECTION',
+            version: '12',
+          },
+          provider: {
+            id: 'abcd',
+            protocol: 'a',
+            host: 'b',
+          },
+        },
+        payload: {
+          granules: [{ granuleId: 'a' }],
+        },
+      }),
+    },
+  };
+
+  const bucket = t.context.systemBucket;
+
+  const filePaths = [
+    'a/1.json',
+    'a/12.json',
+    'a/b.json',
+  ];
+  await Promise.all(filePaths.map((filePath) => {
+    /* setting executionArn to be our file ID for later verification */
+    sampleObject.detail.executionArn = filePath;
+    return putJsonS3Object(
+      bucket,
+      filePath,
+      { Body: JSON.stringify(sampleObject) }
+    );
+  }));
+  await putJsonS3Object(
+    bucket,
+    'a/bad.json',
+    { Body: '{"jlke:d}' }
   );
+  const ret = await updateDLABatch(bucket, 'a');
+  t.is(ret.length, 4);
+  t.is(ret.filter(Boolean).length, 3);
 });
