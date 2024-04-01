@@ -103,14 +103,14 @@ Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.co
 
 [Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/what-is.html) is a powerful serverless query service that allows you
 to analyze data directly from Amazon S3 using standard SQL. One of the key features of Athena is its support for partition
-projection, partition projection in AWS Glue allows you to define a virtual partitioning scheme for your data stored in Amazon S3
+projection, partition projection allows you to define a virtual partitioning scheme for your data stored in Amazon S3
 without physically partitioning the data.
 
-We have provided an AWS Glue Catalog database, an AWS Glue Catalog table and a example query for querying S3 DLA messages.
-Our AWS Glue Catalog table `<prefix>_dla_glue_table` defines partition projection on `eventdate` which corresponding to `date` folder
+We have provided an AWS Glue Catalog database, an AWS Glue Catalog table and an example query for querying S3 DLA messages.
+Our AWS Glue Catalog table `<prefix>_dla_glue_table` defines a partition projection on `eventdate` which corresponds to `date` folder
 under Dead Letter Archive S3 storage location.
 
-:::note `<prefix>` is your stack name with dash replaced by underscore
+**Note:** `<prefix>` is your stack name with dash replaced by underscore
 
 ### Procedure
 
@@ -118,17 +118,18 @@ under Dead Letter Archive S3 storage location.
 
     Launch query editor to `Query your data with Trino SQL`.
 
-    Choose Workgroup `<prefix>_athena_workgroup`.  Acknowledge `Workgroup <prefix>_athena_workgroup settings`.
-    The `Saved queries` should have an example query `<prefix>_athena_test_query`, click to open and run the query.
+    Choose Workgroup `<prefix>_athena_workgroup` and acknowledge `Workgroup <prefix>_athena_workgroup settings`.
+
+    The `Saved queries` tab should have an example query `<prefix>_athena_test_query`, click it to open and run the query.
 
 2. Write and Run the Query:
 
     When the query includes the partition key `eventdate`, the query on the table will be executed using `partition projection`
     settings and would result in faster results by directly scanning the folder and files based on the partition information
     provided in the query.
-    
+
     In the following query, the data is filtered based on the eventdate partition key and a specific value in the granules column.
-    `$path` returns the S3 file location for the data in a table row. 
+    `$path` returns the S3 file location for the data in a table row.
 
     ```sql
     select "$path",
@@ -140,5 +141,5 @@ under Dead Letter Archive S3 storage location.
             'MOD09GQ.A5039420.mQk0tM.006.9370766211793'
         )
     ```
-    
-    See`[SQL reference for Athena](https://docs.aws.amazon.com/athena/latest/ug/ddl-sql-reference.html)` for the complete SQL guide.
+
+    See `[SQL reference for Athena](https://docs.aws.amazon.com/athena/latest/ug/ddl-sql-reference.html)` for the complete SQL guide.
