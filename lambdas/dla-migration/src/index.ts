@@ -5,6 +5,8 @@
 import get from 'lodash/get';
 import Logger from '@cumulus/logger';
 import path from 'path';
+import pMap from 'p-map';
+
 import {
   getJsonS3Object,
   putJsonS3Object,
@@ -17,7 +19,6 @@ import {
   getDLARootKey,
 } from '@cumulus/message/DeadLetterMessage';
 import { DLARecord } from '@cumulus/types/api/dead_letters';
-import pMap from 'p-map';
 
 const logger = new Logger({ sender: '@cumulus/dla-migration-lambda' });
 
