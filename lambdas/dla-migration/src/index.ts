@@ -92,7 +92,6 @@ export const updateDLABatch = async (
       keys, (async (key) => updateDLAFile(bucket, key)),
       {
         concurrency: 5,
-        stopOnError: false,
       }
     ));
   }
