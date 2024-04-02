@@ -15,7 +15,7 @@ const {
 // eslint-disable-next-line unicorn/import-index
 const {
   handler,
-} = require('../dist/lambda');
+} = require('../');
 test.before(async (t) => {
   t.context.stackName = `stack${cryptoRandomString({ length: 5 })}`;
   process.env.stackName = t.context.stackName;

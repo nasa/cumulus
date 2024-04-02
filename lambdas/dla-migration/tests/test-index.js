@@ -12,7 +12,7 @@ const {
 const {
   updateDLABatch,
   updateDLAFile,
-} = require('../dist/lambda');
+} = require('..');
 
 test.before(async (t) => {
   t.context.systemBucket = `stack${cryptoRandomString({ length: 5 })}`;
