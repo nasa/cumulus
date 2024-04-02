@@ -12,6 +12,8 @@ import {
   listS3ObjectsV2Batch,
   deleteS3Object,
 } from '@cumulus/aws-client/S3';
+
+import { inTestMode } from '@cumulus/common/test-utils';
 import {
   hoistCumulusMessageDetails,
   extractDateString,
@@ -50,16 +52,23 @@ export const updateDLAFile = async (
   sourcePath: string
 ): Promise<boolean> => {
   try {
-    logger.info(`About to process ${sourcePath}`);
+    if (!inTestMode()) {
+      logger.info(`About to process ${sourcePath}`);
+    }
     const dlaObject = await getJsonS3Object(bucket, sourcePath);
     const hoisted = await hoistCumulusMessageDetails(dlaObject);
     const massagedTargetPath = addDateIdentifierToPath(sourcePath, hoisted);
 
     await putJsonS3Object(bucket, massagedTargetPath, hoisted);
-    logger.info(`Migrated file from bucket ${bucket}/${sourcePath} to ${massagedTargetPath}`);
 
+    if (!inTestMode()) {
+      logger.info(`Migrated file from bucket ${bucket}/${sourcePath} to ${massagedTargetPath}`);
+    }
     await deleteS3Object(bucket, sourcePath);
-    logger.info(`Deleted file ${bucket}/${sourcePath}`);
+
+    if (!inTestMode()) {
+      logger.info(`Deleted file ${bucket}/${sourcePath}`);
+    }
     return true;
   } catch (error) {
     logger.error(`failed to process ${sourcePath} due to error: ${error}`);

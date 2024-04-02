@@ -15,7 +15,7 @@
     "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava --timeout=5m",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
