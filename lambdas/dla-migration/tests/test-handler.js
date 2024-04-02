@@ -12,10 +12,9 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 
-// eslint-disable-next-line unicorn/import-index
 const {
   handler,
-} = require('../');
+} = require('..');
 test.before(async (t) => {
   t.context.stackName = `stack${cryptoRandomString({ length: 5 })}`;
   process.env.stackName = t.context.stackName;
