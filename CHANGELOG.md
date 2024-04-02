@@ -15,7 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
 
-Instructions for migrating old DLA (Dead Letter Archive) messages to `YYYY-MM-DD` subfolder of S3 dead letter archive:
+Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
+
+- `YYYY-MM-DD` subfolders to organize by date
+- new top level fields for simplified search and analysis
+- captured error message
 
 To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
 
