@@ -30,7 +30,7 @@ import {
   S3,
   Tag,
   Tagging,
-  _Object,
+  ListObjectsCommandOutput,
 } from '@aws-sdk/client-s3';
 import { Upload, Options as UploadOptions } from '@aws-sdk/lib-storage';
 
@@ -706,13 +706,6 @@ export const uploadS3FileStream = (
       Body: fileStream,
     },
   });
-/**
- * List of outputs from ListS3Objects functions (including V2)
- * Guarantees that Key exists
- */
-export interface ListS3ObjectsOutput extends _Object {
-  Key: string
-}
 
 /**
  * List the objects in an S3 bucket
@@ -721,7 +714,7 @@ export const listS3Objects = async (
   bucket: string,
   prefix?: string,
   skipFolders: boolean = true
-): Promise<Array<ListS3ObjectsOutput>> => {
+): Promise<ListObjectsCommandOutput['Contents']> => {
   log.info(`Listing objects in s3://${bucket}`);
   const params: ListObjectsRequest = {
     Bucket: bucket,
@@ -732,10 +725,10 @@ export const listS3Objects = async (
   if (!data.Contents) {
     return [];
   }
-  let contents = data.Contents.filter((obj) => obj.Key !== undefined) as Array<ListS3ObjectsOutput>;
+  let contents = data.Contents.filter((obj) => obj.Key !== undefined);
   if (skipFolders) {
     // Filter out any references to folders
-    contents = contents.filter((obj) => !obj.Key.endsWith('/'));
+    contents = contents.filter((obj) => obj.Key && !obj.Key.endsWith('/'));
   }
   return contents;
 };
@@ -758,7 +751,7 @@ export const listS3Objects = async (
  */
 export const listS3ObjectsV2 = async (
   params: ListObjectsV2Request
-): Promise<Array<ListS3ObjectsOutput>> => {
+): Promise<ListObjectsCommandOutput['Contents']> => {
   // Fetch the first list of objects from S3
   let listObjectsResponse = await s3().listObjectsV2(params);
 
@@ -778,7 +771,7 @@ export const listS3ObjectsV2 = async (
     discoveredObjects = discoveredObjects.concat(listObjectsResponse.Contents ?? []);
   }
 
-  return discoveredObjects.filter((obj) => obj.Key) as Array<ListS3ObjectsOutput>;
+  return discoveredObjects.filter((obj) => obj.Key);
 };
 
 /**
@@ -800,11 +793,11 @@ export const listS3ObjectsV2 = async (
  */
 export async function* listS3ObjectsV2Batch(
   params: ListObjectsV2Request
-): AsyncIterable<Array<ListS3ObjectsOutput>> {
+): AsyncIterable<ListObjectsCommandOutput['Contents']> {
   let listObjectsResponse = await s3().listObjectsV2(params);
 
   let discoveredObjects = listObjectsResponse.Contents ?? [];
-  yield discoveredObjects.filter((obj) => 'Key' in obj) as Array<ListS3ObjectsOutput>;
+  yield discoveredObjects.filter((obj) => 'Key' in obj);
   // Keep listing more objects from S3 until we have all of them
   while (listObjectsResponse.IsTruncated) {
     // eslint-disable-next-line no-await-in-loop
@@ -817,7 +810,7 @@ export async function* listS3ObjectsV2Batch(
       }
     ));
     discoveredObjects = listObjectsResponse.Contents ?? [];
-    yield discoveredObjects.filter((obj) => 'Key' in obj) as Array<ListS3ObjectsOutput>;
+    yield discoveredObjects.filter((obj) => 'Key' in obj);
   }
 }
 /**
@@ -831,8 +824,12 @@ export const recursivelyDeleteS3Bucket = improveStackTrace(
     for await (
       const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket })
     ) {
-      const deleteRequests = objectBatch.map((obj) => ({ Bucket: bucket, Key: obj.Key }));
-      await deleteS3Files(deleteRequests);
+      if (objectBatch) {
+        const deleteRequests = objectBatch.filter(
+          (obj) => obj.Key
+        ).map((obj) => ({ Bucket: bucket, Key: obj.Key }));
+        await deleteS3Files(deleteRequests);
+      }
     }
     return await s3().deleteBucket({ Bucket: bucket });
   }

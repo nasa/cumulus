@@ -90,15 +90,17 @@ export const updateDLABatch = async (
   for await (
     const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: sourceDir })
   ) {
-    const keys = objectBatch.map((obj) => obj.Key).filter(
-      (key) => key.lastIndexOf('/') === lastIndexOfDlaPathSeparator && key.endsWith('.json')
-    );
-    out.push(await pMap(
-      keys, (async (key) => updateDLAFile(bucket, key)),
-      {
-        concurrency: 5,
-      }
-    ));
+    if (objectBatch) {
+      const keys = objectBatch.map((obj) => obj.Key).filter(
+        (key) => key && key.lastIndexOf('/') === lastIndexOfDlaPathSeparator && key.endsWith('.json')
+      ) as Array<string>;
+      out.push(await pMap(
+        keys, (async (key) => updateDLAFile(bucket, key)),
+        {
+          concurrency: 5,
+        }
+      ));
+    }
   }
   return out.flat();
 };
