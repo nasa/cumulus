@@ -42,6 +42,7 @@
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
     "@cumulus/logger": "18.2.0",
+    "@aws-sdk/client-lambda": "^3.529.1",
     "p-retry": "^2.0.0"
   },
   "devDependencies": {

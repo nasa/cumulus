@@ -8,8 +8,36 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
+
 - The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
   [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
+
+Instructions for migrating old DLA (Dead Letter Archive) messages to `YYYY-MM-DD` subfolder of S3 dead letter archive:
+
+To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
+
+```bash
+aws lambda invoke --function-name $PREFIX-migrationHelperAsyncOperation \
+  --payload $(echo '{"operationType": "DLA Migration"}' | base64) $OUTFILE
+```
+
+- `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
+
+The Lambda will trigger an Async Operation and return an `id` such as:
+
+```json
+{"id":"41c9fbbf-a031-4dd8-91cc-8ec2d8b5e31a","description":"Migrate Dead Letter Archive Messages",
+"operationType":"DLA Migration","status":"RUNNING",
+"taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789"}
+```
+
+which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for
+the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view
+the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Breaking Changes
 
@@ -43,10 +71,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
 
-### Changed
+### Added
+- **CUMULUS-3614**
+  - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 
+### Changed
 - **CUMULUS-3519**
   - Updates SQS and SNS code to AWS SDK V3 Syntax
+- **CUMULUS-3613**
+  - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
+- **CUMULUS-3518**
+  - Update existing usage of `@cumulus/aws-client` lambda service to use AWS SDK v3 `send` syntax
+  - Update Discover Granules lambda default memory to 1024 MB
 - **CUMULUS-3600**
   - Update docs to clarify CloudFront HTTPS DIT requirements.
 - **CUMULUS-2892**
@@ -86,6 +122,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3610**
   - Updated `aws-client`'s ES client to use AWS SDK v3.
+- **CUMULUS-3617**
+  - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
+  - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
 
 ### Fixed
 

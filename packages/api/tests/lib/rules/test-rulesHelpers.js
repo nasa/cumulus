@@ -5,6 +5,17 @@ const sinon = require('sinon');
 const omit = require('lodash/omit');
 const proxyquire = require('proxyquire');
 const fs = require('fs-extra');
+
+const {
+  CreateEventSourceMappingCommand,
+  CreateFunctionCommand,
+  DeleteEventSourceMappingCommand,
+  GetPolicyCommand,
+  ListEventSourceMappingsCommand,
+  AddPermissionCommand,
+  RemovePermissionCommand,
+} = require('@aws-sdk/client-lambda');
+
 const { mockClient } = require('aws-sdk-client-mock');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -76,15 +87,15 @@ const createEventSourceMapping = async (rule) => {
       StartingPosition: 'TRIM_HORIZON',
       Enabled: true,
     };
-    return awsServices.lambda().createEventSourceMapping(params);
+    return awsServices.lambda().send(new CreateEventSourceMappingCommand(params));
   });
   return await Promise.all(eventSourceMapping);
 };
 
 const getKinesisEventMappings = async () => {
   const mappingPromises = eventLambdas.map((lambda) => {
-    const mappingParms = { FunctionName: lambda };
-    return awsServices.lambda().listEventSourceMappings(mappingParms);
+    const mappingParams = { FunctionName: lambda };
+    return awsServices.lambda().send(new ListEventSourceMappingsCommand(mappingParams));
   });
   return await Promise.all(mappingPromises);
 };
@@ -101,7 +112,7 @@ const deleteKinesisEventSourceMappings = async () => {
   );
 
   return await Promise.all(allEventMappings.map((e) =>
-    awsServices.lambda().deleteEventSourceMapping({ UUID: e.UUID })));
+    awsServices.lambda().send(new DeleteEventSourceMappingCommand({ UUID: e.UUID }))));
 };
 
 test.before(async (t) => {
@@ -126,7 +137,7 @@ test.before(async (t) => {
   ]);
   await Promise.all(
     ['messageConsumer', 'KinesisInboundEventLogger'].map(async (name) => {
-      const lambdaCreated = await awsServices.lambda().createFunction({
+      const lambdaCreated = await awsServices.lambda().send(new CreateFunctionCommand({
         Code: {
           ZipFile: fs.readFileSync(require.resolve('@cumulus/test-data/fake-lambdas/hello.zip')),
         },
@@ -134,7 +145,7 @@ test.before(async (t) => {
         Role: `arn:aws:iam::123456789012:role/${randomId('role')}`,
         Handler: 'index.handler',
         Runtime: 'nodejs16.x',
-      });
+      }));
       process.env[name] = lambdaCreated.FunctionName;
     })
   );
@@ -705,17 +716,10 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
   const { testKnex } = t.context;
   const snsMock = mockClient(awsServices.sns());
   const sandbox = sinon.createSandbox();
-
-  sandbox.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-
+  const lambdaMock = mockClient(awsServices.lambda());
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(RemovePermissionCommand).resolves({});
+  lambdaMock.on(AddPermissionCommand).resolves({});
   snsMock
     .onAnyCommand()
     .rejects()
@@ -728,7 +732,6 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
     })
     .on(UnsubscribeCommand)
     .resolves({});
-
   const snsTopicArn = randomString();
   const params = {
     rule: {
@@ -747,6 +750,7 @@ test.serial('deleteSnsTrigger deletes a rule SNS trigger', async (t) => {
   }).length > 0);
 
   t.teardown(() => {
+    lambdaMock.restore();
     sandbox.restore();
     snsMock.restore();
   });
@@ -839,16 +843,11 @@ test.serial('deleteRuleResources correctly deletes resources for kinesis rule', 
 
 test.serial('deleteRuleResources correctly deletes resources for sns rule', async (t) => {
   const { testKnex } = t.context;
+  const lambdaMock = mockClient(awsServices.lambda());
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(RemovePermissionCommand).resolves();
+  lambdaMock.on(AddPermissionCommand).resolves();
   const snsMock = mockClient(awsServices.sns());
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
   snsMock
     .onAnyCommand()
     .rejects()
@@ -878,7 +877,7 @@ test.serial('deleteRuleResources correctly deletes resources for sns rule', asyn
   }).length > 0);
 
   t.teardown(() => {
-    lambdaStub.restore();
+    lambdaMock.restore();
     snsMock.restore();
   });
 });
@@ -1006,9 +1005,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   const { subExists } = await checkForSnsSubscriptions(ruleWithTrigger);
   t.true(subExists);
 
-  const { Policy } = await awsServices.lambda().getPolicy({
+  const { Policy } = await awsServices.lambda().send(new GetPolicyCommand({
     FunctionName: process.env.messageConsumer,
-  });
+  }));
   const { Statement } = JSON.parse(Policy);
   t.true(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(ruleWithTrigger)));
 
@@ -1018,9 +1017,9 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
   t.false(subExists2);
 
   await t.throwsAsync(
-    awsServices.lambda().getPolicy({
+    awsServices.lambda().send(new GetPolicyCommand({
       FunctionName: process.env.messageConsumer,
-    }),
+    })),
     { name: 'ResourceNotFoundException' }
   );
   t.teardown(() => rulePgModel.delete(testKnex, newPgRule));
@@ -1308,7 +1307,6 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
   const error = new Error(errorMessage);
   error.name = 'ResourceNotFoundException';
   const { snsTopicArn } = t.context;
-  const lambdaStub = sinon.stub(awsServices.lambda(), 'removePermission').throws(error);
 
   const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
     rule: {
@@ -1318,6 +1316,9 @@ test.serial('deleteSnsTrigger throws more detailed ResourceNotFoundError', async
     workflow,
     state: 'ENABLED',
   }));
+
+  const lambdaStub = sinon.stub(awsServices.lambda(), 'send');
+  lambdaStub.throws(error);
 
   await t.throwsAsync(
     rulesHelpers.deleteSnsTrigger(t.context.testKnex, ruleWithTrigger),
@@ -1678,16 +1679,6 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     Name: randomId('topic'),
   }));
 
-  const lambdaStub = sinon.stub(awsServices, 'lambda')
-    .returns({
-      addPermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-      removePermission: () => ({
-        promise: () => Promise.resolve(),
-      }),
-    });
-
   const snsMock = mockClient(awsServices.sns());
 
   snsMock
@@ -1710,7 +1701,13 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     workflow,
     state: 'ENABLED',
   });
-  const addPermissionSpy = sinon.spy(awsServices.lambda(), 'addPermission');
+
+  const lambdaMock = mockClient(awsServices.lambda());
+  let mockCalled = false;
+  lambdaMock.onAnyCommand().rejects();
+  lambdaMock.on(AddPermissionCommand).callsFake(() => {
+    mockCalled = true;
+  });
 
   await createRuleTrigger(rule);
   const subscribeCalls = snsMock.commandCalls(SubscribeCommand);
@@ -1722,11 +1719,10 @@ test.serial('Creating an enabled SNS rule creates an event source mapping', asyn
     Endpoint: process.env.messageConsumer,
     ReturnSubscriptionArn: true,
   });
-  t.true(addPermissionSpy.called);
+  t.true(mockCalled);
   t.teardown(async () => {
-    lambdaStub.restore();
     snsMock.restore();
-    addPermissionSpy.restore();
+    lambdaMock.restore();
     await awsServices.sns().send(new DeleteTopicCommand({ TopicArn }));
   });
 });

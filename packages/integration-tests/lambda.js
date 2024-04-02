@@ -1,6 +1,10 @@
 'use strict';
 
 const { lambda } = require('@cumulus/aws-client/services');
+const {
+  DeleteEventSourceMappingCommand,
+  GetEventSourceMappingCommand,
+} = require('@aws-sdk/client-lambda');
 
 /**
  * Retrieve a rule's Kinesis Event Source Mappings
@@ -9,7 +13,7 @@ const { lambda } = require('@cumulus/aws-client/services');
  * @returns {Promise<unknown>} - details about an Event Source Mapping
  */
 async function getEventSourceMapping(uuid) {
-  return await lambda().getEventSourceMapping({ UUID: uuid });
+  return await lambda().send(new GetEventSourceMappingCommand(({ UUID: uuid })));
 }
 
 /**
@@ -19,7 +23,7 @@ async function getEventSourceMapping(uuid) {
  * @returns {Promise<unknown>}
  */
 async function deleteEventSourceMapping(uuid) {
-  return await lambda().deleteEventSourceMapping({ UUID: uuid });
+  return await lambda().send(new DeleteEventSourceMappingCommand({ UUID: uuid }));
 }
 
 module.exports = {

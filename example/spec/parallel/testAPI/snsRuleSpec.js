@@ -6,11 +6,16 @@ const get = require('lodash/get');
 const omit = require('lodash/omit');
 
 const {
+  GetFunctionCommand,
+  GetPolicyCommand,
+  RemovePermissionCommand,
+} = require('@aws-sdk/client-lambda');
+
+const {
   addCollections,
   cleanupCollections,
   removeRuleAddedParams,
 } = require('@cumulus/integration-tests');
-
 const { deleteExecution } = require('@cumulus/api-client/executions');
 const {
   deleteRule,
@@ -52,7 +57,7 @@ const policyErrorMessage = 'The resource you requested does not exist.';
 
 async function shouldCatchPolicyError(consumerName, expectedStatementId) {
   try {
-    const policy = await lambda().getPolicy({ FunctionName: consumerName });
+    const policy = await lambda().send(new GetPolicyCommand({ FunctionName: consumerName }));
     const statement = JSON.parse(policy.Policy).Statement;
     if (!statement.some((s) => s.Sid === expectedStatementId)) return policyErrorMessage;
     return undefined;
@@ -136,7 +141,7 @@ describe('The SNS-type rule', () => {
         FunctionName: consumerName,
         StatementId: expectedStatementId,
       };
-      await lambda().removePermission(permissionParams);
+      await lambda().send(new RemovePermissionCommand(permissionParams));
     } catch (error) {
       // If the deletion test passed, this _should_ fail.  This is just handling
       // the case where the deletion test did not properly clean this up.
@@ -185,9 +190,9 @@ describe('The SNS-type rule', () => {
 
     it('creates a policy when it is created in an enabled state', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      const response = await lambda().getPolicy({
+      const response = await lambda().send(new GetPolicyCommand({
         FunctionName: consumerName,
-      });
+      }));
       const { Policy } = response;
 
       const statementSids = JSON.parse(Policy).Statement.map((s) => s.Sid);
@@ -347,7 +352,7 @@ describe('The SNS-type rule', () => {
 
     it('adds the new policy and subscription', async () => {
       if (beforeAllFailed) fail(beforeAllFailed);
-      const { Policy } = await lambda().getPolicy({ FunctionName: consumerName });
+      const { Policy } = await lambda().send(new GetPolicyCommand({ FunctionName: consumerName }));
       const { Statement } = JSON.parse(Policy);
       expect(await getNumberOfTopicSubscriptions(newTopicArn)).toBeGreaterThan(0);
       expect(Statement.some((s) => s.Sid === getSnsTriggerPermissionId(putRule))).toBeTrue();
@@ -366,7 +371,7 @@ describe('The SNS-type rule', () => {
         const subscriptionParams = {
           TopicArn,
           Protocol: 'lambda',
-          Endpoint: (await lambda().getFunction({ FunctionName: consumerName })).Configuration.FunctionArn,
+          Endpoint: (await lambda().send(new GetFunctionCommand({ FunctionName: consumerName }))).Configuration.FunctionArn,
           ReturnSubscriptionArn: true,
         };
         const { SubscriptionArn } = await sns().send(new SubscribeCommand(subscriptionParams));
