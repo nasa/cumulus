@@ -72,7 +72,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     to granules table
 
 ### Add
-
+- **UnticketedForNow**
+  - sqs messages truncated to max sqs length if necessary
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 

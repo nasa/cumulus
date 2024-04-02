@@ -9,7 +9,7 @@ import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import { SQSRecord } from 'aws-lambda';
-import { Message, QueueAttributeName } from '@aws-sdk/client-sqs';
+import { Message, QueueAttributeName, SendMessageCommandOutput } from '@aws-sdk/client-sqs';
 
 import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
@@ -78,13 +78,17 @@ export const sendSQSMessage = (
   queueUrl: string,
   message: string | object,
   logOverride: Logger | undefined = undefined
-) => {
+): Promise<SendMessageCommandOutput> => {
   const logger = logOverride || log;
   let messageBody;
   if (isString(message)) messageBody = message;
   else if (isObject(message)) messageBody = JSON.stringify(message);
   else throw new Error('body type is not accepted');
-
+  const maxLength = 262144;
+  if (messageBody.length > maxLength) {
+    const warningString = '...TruncatedForLength';
+    messageBody = `${messageBody.substring(0, maxLength - warningString.length)}${warningString}`;
+  }
   return sqs().sendMessage({
     MessageBody: messageBody,
     QueueUrl: queueUrl,
@@ -106,7 +110,7 @@ type ReceiveSQSMessagesOptions = {
  */
 export const receiveSQSMessages = async (
   queueUrl: string,
-  options: ReceiveSQSMessagesOptions
+  options: ReceiveSQSMessagesOptions = {}
 ): Promise<SQSMessage[]> => {
   const params = {
     QueueUrl: queueUrl,

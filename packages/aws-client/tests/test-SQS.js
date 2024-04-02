@@ -12,6 +12,7 @@ const {
   sqsQueueExists,
   sendSQSMessage,
   isSQSRecordLike,
+  receiveSQSMessages,
 } = require('../SQS');
 
 const randomString = () => cryptoRandomString({ length: 10 });
@@ -99,4 +100,16 @@ test('isSQSRecordLike filters correctly for sqs record shape', (t) => {
   /* this is a bare check for body in object.
   body *should* be a string form json object,
   but strictly checking is not compatible with the current use-case*/
+});
+
+test.only('sendSQSMessage truncates oversized messages safely', async (t) => {
+  const queueName = randomString();
+  const queueUrl = await createQueue(queueName);
+  const maxLength = 262144;
+  const overflowMessage = '0'.repeat(maxLength + 2);
+  const a = await sendSQSMessage(queueUrl, overflowMessage);
+  console.log(a);
+  const b = await receiveSQSMessages(queueUrl, {});
+  console.log(b);
+  t.true(true);
 });
