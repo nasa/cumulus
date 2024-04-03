@@ -1,3 +1,4 @@
+import { SQSRecord } from 'aws-lambda';
 export interface DeadLetterArchivePayload {
   bucket?: string,
   path?: string,
