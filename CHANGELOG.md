@@ -81,7 +81,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 
 ### Changed
-
+- **lkfjlk**
+  - dla guarantees de-nested SQS message bodies, preferring outermost metadata as found.
 - **CUMULUS-3609**
   - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
   - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
