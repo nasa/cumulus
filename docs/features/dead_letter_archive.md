@@ -101,9 +101,9 @@ Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.co
 
 ## Search and View Dead Letter Archive Messages
 
-[Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/what-is.html) is a powerful serverless query service that allows you
+[Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/what-is.html) is a powerful serverless query service that allows us
 to analyze data directly from Amazon S3 using standard SQL. One of the key features of Athena is its support for partition
-projection, partition projection allows us to define a virtual partitioning scheme for our data stored in Amazon S3
+projection. Partition projection allows us to define a virtual partitioning scheme for our data stored in Amazon S3
 without physically partitioning the data.
 
 We have provided an AWS Glue Catalog database, an AWS Glue Catalog table and an example query for querying S3 DLA messages.
