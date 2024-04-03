@@ -54,8 +54,6 @@ The body attribute should be a JSON string containing an event bridge event
 
 Note that
 
-- The body attribute *can* come nested, such that you will have to de-nest a series of body attributes to get to the heart of your message
-- The word body can be interchanged with Body (capitalized)
 - Because this message body arrived in the Dead Letter Archive because of issues in processing it, there is no strict guarantee that it is a valid json object, or conforms to expected structure. the *expected* structure follows.
 - Automated processing of these messages *must* be prepared for attributes to be missing.
 
