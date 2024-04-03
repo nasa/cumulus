@@ -90,12 +90,24 @@ const extractGranules = (message: CumulusMessage): Array<string | null> | null =
   return null;
 };
 
+type DLQMetadata = Partial<DLQRecord> & { body: undefined };
+/**
+ * peel out metadata from an SQS(/DLQ)record
+ * @param message DLQ or SQS message
+ * @returns the given message without its body
+ */
+const extractSQSMetadata = (message: DLQRecord | SQSRecord): DLQMetadata => {
+  const metadata = { ...message } as any;
+  delete metadata.body;
+  delete metadata.Body;
+  return metadata;
+};
+
 /**
  * Reformat object with key attributes at top level.
  *
  */
 export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<DLARecord> => {
-  let error = null;
   let executionArn = null;
   let stateMachineArn = null;
   let status = null;
@@ -104,18 +116,16 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
   let granules = null;
   let providerId = null;
 
-  /* @type {any} */
   let messageBody;
   messageBody = dlqRecord;
+  let metadata = extractSQSMetadata(messageBody);
   /* de-nest sqs records of unknown depth */
   while (isSQSRecordLike(messageBody)) {
-    /* capture outermost recorded error */
-    if (isDLQRecordLike(messageBody) && !error) {
-      error = messageBody.error || null;
-    }
+    /* prefer outermost recorded metadata */
+    metadata = { ...extractSQSMetadata(messageBody), ...metadata };
     messageBody = parseSQSMessageBody(messageBody);
   }
-
+  const error = 'error' in metadata ? metadata.error : null;
   if (isEventBridgeEvent(messageBody)) {
     executionArn = messageBody?.detail?.executionArn || null;
     stateMachineArn = messageBody?.detail?.stateMachineArn || null;
@@ -138,9 +148,9 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
   } else {
     log.error('could not parse details from DLQ message body, expected EventBridgeEvent');
   }
-
   return {
-    ...dlqRecord,
+    ...metadata,
+    body: JSON.stringify(messageBody),
     collectionId,
     providerId,
     granules,
@@ -149,7 +159,7 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
     status,
     time,
     error,
-  };
+  } as DLARecord; // cast to DLARecord: ts is confused by explicit 'undefined' fields in metadata
 };
 
 export const getDLARootKey = (stackName: string): string => `${stackName}/dead-letter-archive/sqs/`;
