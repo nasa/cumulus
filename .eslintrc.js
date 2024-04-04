@@ -54,7 +54,7 @@ module.exports = {
     'plugin:promise/recommended',
     'plugin:unicorn/recommended',
   ],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   env: {
     jasmine: true,
     node: true,
