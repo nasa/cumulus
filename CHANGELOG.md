@@ -15,7 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
 
-Instructions for migrating old DLA (Dead Letter Archive) messages to `YYYY-MM-DD` subfolder of S3 dead letter archive:
+Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
+
+- `YYYY-MM-DD` subfolders to organize by date
+- new top level fields for simplified search and analysis
+- captured error message
 
 To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
 
@@ -77,6 +81,10 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 
 ### Changed
+
+- **CUMULUS-3609**
+  - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
+  - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
 - **CUMULUS-3613**
   - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
 - **CUMULUS-3518**
