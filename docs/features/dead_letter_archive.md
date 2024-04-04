@@ -118,7 +118,7 @@ to `date` folder under Dead Letter Archive S3 storage location.
 
     Launch query editor to `Query your data with Trino SQL`.
 
-    Choose Workgroup `<prefix>_athena_workgroup` and acknowledge `Workgroup <prefix>_athena_workgroup settings`.
+    Choose Workgroup `<prefix>_athena_workgroup` from the workgroup drop down menu and acknowledge `Workgroup <prefix>_athena_workgroup settings`.
 
     The `Saved queries` tab should have an example query `<prefix>_athena_test_query`, click it to open and run the query.
 
