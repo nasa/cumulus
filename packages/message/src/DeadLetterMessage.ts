@@ -126,7 +126,11 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
       cumulusMessage = await getCumulusMessageFromExecutionEvent(messageBody);
     } catch (error_) {
       cumulusMessage = undefined;
-      log.error(`could not parse details from DLQ message body due to ${error_}`);
+      log.error(
+        'could not parse details from DLQ message body',
+        error_,
+        messageBody
+      );
     }
     if (cumulusMessage) {
       collectionId = extractCollectionId(cumulusMessage);
@@ -136,7 +140,11 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
       }
     }
   } else {
-    log.error('could not parse details from DLQ message body, expected EventBridgeEvent');
+    log.error(
+      'could not parse details from DLQ message body',
+      messageBody,
+      'expected EventBridgeEvent'
+    );
   }
 
   return {
