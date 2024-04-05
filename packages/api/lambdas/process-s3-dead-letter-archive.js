@@ -80,7 +80,7 @@ async function processDeadLetterArchive({
   let continuationToken;
   let allSuccessKeys = [];
   const allFailedKeys = [];
-  log.error(`working with ${bucket}, ${path}`)
+  log.error(`working with ${bucket}, ${path}`);
   /* eslint-disable no-await-in-loop */
   do {
     listObjectsResponse = await s3().listObjectsV2({
@@ -142,6 +142,7 @@ async function processDeadLetterArchive({
  * @returns {Promise<void>}
  */
 async function handler(event) {
+  log.error("at the entry point");
   const knex = await getKnexClient({
     env: {
       ...process.env,
@@ -152,6 +153,7 @@ async function handler(event) {
     bucket,
     path,
   } = event;
+  log.error("but we're trying to call this at all");
   return processDeadLetterArchive({ knex, bucket, path });
 }
 
