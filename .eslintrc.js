@@ -54,7 +54,7 @@ module.exports = {
     'plugin:promise/recommended',
     'plugin:unicorn/recommended',
   ],
-  parser: 'babel-eslint',
+  parser: '@babel/eslint-parser',
   env: {
     jasmine: true,
     node: true,
@@ -165,6 +165,9 @@ module.exports = {
     'unicorn/prefer-string-slice': 'off',
     'unicorn/prefer-trim-start-end': 'off',
     'unicorn/prevent-abbreviations': 'off',
+  },
+  parserOptions: {
+    requireConfigFile: false,
   },
   overrides: [
     {
