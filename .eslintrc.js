@@ -166,6 +166,9 @@ module.exports = {
     'unicorn/prefer-trim-start-end': 'off',
     'unicorn/prevent-abbreviations': 'off',
   },
+  parserOptions: {
+    requireConfigFile: false,
+  },
   overrides: [
     {
       files: ['*.ts'],
