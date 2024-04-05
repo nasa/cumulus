@@ -88,11 +88,13 @@ async function processDeadLetterArchive({
       ContinuationToken: continuationToken,
       MaxKeys: batchSize,
     });
+    log.error(listObjectsResponse);
     continuationToken = listObjectsResponse.NextContinuationToken;
     const deadLetterObjects = listObjectsResponse.Contents || [];
     const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
         const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
+        log.error(deadLetterMessage);
         const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
         try {
           await writeRecordsFunction({ cumulusMessage, knex });
