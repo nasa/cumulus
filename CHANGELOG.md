@@ -18,8 +18,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
 - **CUMULUS-3673**
-  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
-
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
+- **Audit Issues**
+  - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
+    updating babel packages and .babelrc
+  
 ## [v18.2.1] 2023-05-08
 
 **Please note** changes in 18.2.1 may not yet be released in future versions, as this
