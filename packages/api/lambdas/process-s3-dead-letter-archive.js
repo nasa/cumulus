@@ -80,6 +80,7 @@ async function processDeadLetterArchive({
   let continuationToken;
   let allSuccessKeys = [];
   const allFailedKeys = [];
+  log.error(`working with ${bucket}, ${path}`)
   /* eslint-disable no-await-in-loop */
   do {
     listObjectsResponse = await s3().listObjectsV2({
