@@ -1,6 +1,7 @@
 {
   "comments": false,
   "sourceMaps": "both",
+  "sourceType": "unambiguous",
   "presets": [
     ["@babel/preset-env", {
       "targets": {
