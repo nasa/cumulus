@@ -11,10 +11,11 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf dist",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py",
     "build": "rm -rf dist && mkdir dist && npm run prepare && npm run webpack",
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
-    "test": "../../node_modules/.bin/ava",
+    "test": "../../node_modules/.bin/ava --timeout=5m",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
@@ -24,6 +25,9 @@
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
     "@cumulus/logger": "18.2.0",
+    "@cumulus/message": "18.2.0",
+    "@cumulus/types": "18.2.0",
+    "@cumulus/common": "18.2.0",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
     "p-map": "^4.0.0"
