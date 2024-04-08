@@ -25,6 +25,7 @@ const generateNewArchiveKeyForFailedMessage = (failedKey) => {
     * this path will also handle a call pointed to
     * `${process.env.stackName}/dead-letter-archive/failed-sqs/${messageId}`
     * */
+    log.error(`handling sqs case ${failedKey}, ${failedKey.replace('sqs/', 'failed-sqs/')}`)
     return failedKey.replace('sqs/', 'failed-sqs/');
   }
   if (failedKey.contains('dead-letter-archive/')) {
