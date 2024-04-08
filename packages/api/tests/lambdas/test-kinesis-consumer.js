@@ -156,7 +156,7 @@ test.serial('A kinesis message, should publish the invalid record to fallbackSNS
 
   const publishCalls = snsMock.commandCalls(PublishCommand);
 
-  t.true(publishCalls.length > 0);
+  t.true(publishCalls.length === 1);
   t.deepEqual(invalidRecord, JSON.parse(publishCalls[0].firstArg.input.Message));
 });
 
@@ -184,7 +184,7 @@ test.serial('A kinesis message, should publish the invalid records to fallbackSN
 
   const publishCalls = snsMock.commandCalls(PublishCommand);
 
-  t.true(publishCalls.length > 0);
+  t.true(publishCalls.length === 1);
   t.deepEqual(invalidRecord, JSON.parse(publishCalls[0].firstArg.input.Message));
 });
 
@@ -213,7 +213,7 @@ test.serial('A kinesis message, should publish the invalid record to fallbackSNS
 
   const publishCalls = snsMock.commandCalls(PublishCommand);
 
-  t.true(publishCalls.length > 0);
+  t.true(publishCalls.length === 1);
   t.deepEqual(invalidRecord, JSON.parse(publishCalls[0].firstArg.input.Message));
 });
 
