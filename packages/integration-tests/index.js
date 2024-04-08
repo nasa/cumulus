@@ -99,7 +99,7 @@ async function waitForAsyncOperationStatus({
 async function getClusterArn(stackName) {
   const { clusterArns } = await ecs().listClusters();
 
-  const matchingArns = clusterArns.filter((arn) => arn.includes(`${stackName}-CumulusECSCluster`));
+  const matchingArns = clusterArns.filter((arn) => arn.endsWith(`cluster/${stackName}-CumulusECSCluster`));
 
   if (matchingArns.length !== 1) {
     throw new Error(`Expected to find 1 cluster but found: ${matchingArns}`);

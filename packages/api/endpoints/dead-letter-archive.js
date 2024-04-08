@@ -32,7 +32,6 @@ async function postRecoverCumulusMessages(req, res) {
 }
 
 router.post('/recoverCumulusMessages', postRecoverCumulusMessages, asyncOperationEndpointErrorHandler);
-
 module.exports = {
   postRecoverCumulusMessages,
   router,
