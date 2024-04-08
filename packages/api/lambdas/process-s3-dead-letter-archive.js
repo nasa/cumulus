@@ -1,7 +1,6 @@
 'use strict';
 
-const moment = require('moment');
-
+//@ts-check
 const log = require('@cumulus/common/log');
 
 const S3 = require('@cumulus/aws-client/S3');
@@ -19,12 +18,21 @@ const { writeRecords } = require('./sf-event-sqs-to-db-records');
  * @returns {string}
  */
 const generateNewArchiveKeyForFailedMessage = (failedKey) => {
-  // Split key with format `${process.env.stackName}/dead-letter-archive/sqs/${messageId}`,
-  const splitKey = failedKey.split('/sqs/');
-  const pathPrefix = splitKey[0];
-  const messageId = splitKey[1];
-  const date = moment.utc().format('YYYY-MM-DD');
-  return `${pathPrefix}/failed-sqs/${date}/${messageId}`;
+  if (failedKey.contains('sqs/')) {
+    /* this is the expected path
+    * this *should* be called with format
+    * `${process.env.stackName}/dead-letter-archive/sqs/${messageId}`
+    * this path will also handle a call pointed to
+    * `${process.env.stackName}/dead-letter-archive/failed-sqs/${messageId}`
+    * */
+    return failedKey.replace('sqs/', 'failed-sqs/');
+  }
+  if (failedKey.contains('dead-letter-archive/')) {
+    // in case a weird path is passed, hopefully it contains dead-letter-archive/
+    return failedKey.replace('failed-dead-letter-archive/');
+  }
+  // catchall to avoid data loss in case of failure
+  return failedKey.replace(process.env.stackName, `${process.env.stackName}/failed-dead-letter-archive`);
 };
 
 /**
@@ -142,7 +150,6 @@ async function processDeadLetterArchive({
  * @returns {Promise<void>}
  */
 async function handler(event) {
-  log.error("at the entry point");
   const knex = await getKnexClient({
     env: {
       ...process.env,
