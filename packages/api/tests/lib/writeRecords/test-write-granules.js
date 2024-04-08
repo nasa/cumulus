@@ -4798,7 +4798,6 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL/
     MaxNumberOfMessages: 2,
     WaitTimeSeconds: 10,
   });
-  console.log('Received Messages::', Messages);
   const snsMessageBody = JSON.parse(Messages[1].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
