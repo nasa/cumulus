@@ -1820,8 +1820,8 @@ test.serial('PATCH keeps initial trigger information if writing to PostgreSQL fa
     pgCollection,
   } = t.context;
 
-  const topic1 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalPgRecord,
@@ -1911,8 +1911,8 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
 
   const {
     originalPgRecord,
