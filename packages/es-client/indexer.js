@@ -89,7 +89,16 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   let indexResponse;
   try {
-    indexResponse = await actualEsClient.index(params);
+    try {
+      indexResponse = await actualEsClient.index(params);
+    } catch (error) {
+      if (error.name === 'ResponseError' && error.meta.body.message.includes('The security token included in the request is expired')) {
+        logger.warn(`genericRecordUpdate encountered a ResponseError ${JSON.stringify(error)}, updating credentials and retrying`);
+        await actualEsClient.refreshClient(); // TODO - Meh, can we check a heartbeat/do better here
+        indexResponse = await actualEsClient.index(params);
+      }
+      throw error;
+    }
   } catch (error) {
     logger.error(`Error thrown on index ${JSON.stringify(error)}`);
     throw error;
