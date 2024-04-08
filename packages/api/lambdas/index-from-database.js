@@ -2,11 +2,12 @@
 
 const isNil = require('lodash/isNil');
 const pLimit = require('p-limit');
+const aws = require('aws-sdk');
 
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const log = require('@cumulus/common/log');
 
-const { Search } = require('@cumulus/es-client/search');
+const { EsClient } = require('@cumulus/es-client/search');
 const {
   CollectionPgModel,
   ExecutionPgModel,
@@ -206,8 +207,8 @@ async function indexFromDatabase(event) {
     postgresResultPageSize,
     postgresConnectionPoolSize,
   } = event;
-  const esClient = await new Search();
-  await esClient.getEsClient(esHost); // TODO - we have to set this so client is set, but...
+  const esClient = new EsClient(esHost);
+  await esClient.initializeEsClient(); // TODO - we have to set this so client is set, but...
   const knex = event.knex || (await getKnexClient({
     env: {
       dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,

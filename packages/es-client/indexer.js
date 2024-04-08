@@ -80,8 +80,8 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
   // adding or replacing record to ES
   let actualEsClient;
 
-  if (esClient) { // TODO fix
-    await esClient.refreshClient();
+  if (esClient) {
+    await esClient.refreshClient(); // TODO -- fix?
     actualEsClient = esClient.client;
   } else {
     actualEsClient = await Search.es();

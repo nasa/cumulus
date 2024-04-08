@@ -105,6 +105,12 @@ const esConfig = async (host, metrics = false) => {
   return config;
 };
 
+const awsCredsExpired = (expireTime) => {
+  const shouldExpireTime = new Date();
+  shouldExpireTime.setMinutes(expireTime.getMinutes() - 4);
+  return expireTime >= shouldExpireTime;
+};
+
 class EsClient {
   async initializeEsClient() {
     if (!this._esClient) {
@@ -115,12 +121,15 @@ class EsClient {
 
   async refreshClient() {
     // TODO - this isn't v3 compat.   Ugh.
-    if (!aws.config.credentials || aws.config.credentials.expired) {
+    if (!aws.config.credentials) {
       await getCredentials();
-      this._client = new elasticsearch.Client(
-        await esConfig(this.host, this.metrics)
-      );
     }
+    if (aws.config.credentials.expireTime && awsCredsExpired(aws.config.credentials.expireTime)) {
+      aws.config.credentials.refresh();
+    }
+    this._client = new elasticsearch.Client(
+      await esConfig(this.host, this.metrics)
+    );
   }
 
   get client() {

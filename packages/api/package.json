@@ -76,6 +76,7 @@
     "aws-sdk": "^2.1492.0",
     "@aws-sdk/client-sns": "^3.447.0",
     "@aws-sdk/client-sqs": "^3.447.0",
+    "@aws-sdk/client-s3": "^3.0.0",
     "@aws-sdk/client-lambda": "^3.529.1",
     "aws-serverless-express": "^3.3.5",
     "body-parser": "^1.18.3",
