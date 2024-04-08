@@ -4,6 +4,7 @@ const Ajv = require('ajv');
 const get = require('lodash/get');
 const set = require('lodash/set');
 const { sns } = require('@cumulus/aws-client/services');
+const { PublishCommand } = require('@aws-sdk/client-sns');
 const log = require('@cumulus/common/log');
 const kinesisSchema = require('./kinesis-consumer-event-schema.json');
 const {
@@ -41,10 +42,10 @@ async function publishRecordToFallbackTopic(record) {
   const fallbackArn = process.env.FallbackTopicArn;
   log.info('publishing bad kinesis record to Topic:', fallbackArn);
   log.info('record:', JSON.stringify(record));
-  return await sns().publish({
+  return await sns().send(new PublishCommand({
     TopicArn: fallbackArn,
     Message: JSON.stringify(record),
-  });
+  }));
 }
 
 /**

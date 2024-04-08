@@ -75,15 +75,15 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
 
-### Add
-
+### Added
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
   - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
-
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-3609**
   - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
   - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage

@@ -18,10 +18,12 @@ const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
+const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  sns,
-  sqs,
-} = require('@cumulus/aws-client/services');
+  CreateTopicCommand,
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 
 const { bulkGranuleDelete } = require('../../lambdas/bulk-operation');
 const { createGranuleAndFiles } = require('../helpers/create-test-data');
@@ -51,7 +53,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -64,11 +66,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -76,7 +78,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {
