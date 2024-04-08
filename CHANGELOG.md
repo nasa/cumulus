@@ -84,6 +84,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 ### Changed
 
+- **CUMULUS-3669**
+  - Updates deployment template to create and utilize an Aurora Serverless V2 PostgreSQL cluster.
 - **CUMULUS-3609**
   - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
   - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
