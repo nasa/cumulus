@@ -13,6 +13,7 @@ const { AmazonConnection } = require('aws-elasticsearch-connector');
 const elasticsearch = require('@elastic/elasticsearch');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
+const Logger = require('@cumulus/logger');
 
 const queries = require('./queries');
 const aggs = require('./aggregations');
@@ -25,6 +26,8 @@ const logDetails = {
 const defaultIndexAlias = 'cumulus-alias';
 const multipleRecordFoundString = 'More than one record was found!';
 const recordNotFoundString = 'Record not found';
+
+const logger = new Logger({ sender: '@cumulus/es-client/search' });
 
 const getCredentials = () =>
   new Promise((resolve, reject) => aws.config.getCredentials((err) => {
@@ -105,12 +108,6 @@ const esConfig = async (host, metrics = false) => {
   return config;
 };
 
-const awsCredsExpired = (expireTime) => {
-  const shouldExpireTime = new Date();
-  shouldExpireTime.setMinutes(expireTime.getMinutes() - 4);
-  return expireTime >= shouldExpireTime;
-};
-
 class EsClient {
   async initializeEsClient() {
     if (!this._esClient) {
@@ -120,16 +117,18 @@ class EsClient {
   }
 
   async refreshClient() {
-    // TODO - this isn't v3 compat.   Ugh.
     if (!aws.config.credentials) {
       await getCredentials();
     }
-    if (aws.config.credentials.expireTime && awsCredsExpired(aws.config.credentials.expireTime)) {
-      aws.config.credentials.refresh();
+    const oldKey = aws.config.credentials.accessKeyId;
+    await aws.config.credentials.refreshPromise();
+    if (oldKey !== aws.config.credentials.accessKeyId) {
+      logger.info('AWS Credentials updated, updating to new ESClient');
+      this._client = new elasticsearch.Client(
+        await esConfig(this.host, this.metrics)
+      );
     }
-    this._client = new elasticsearch.Client(
-      await esConfig(this.host, this.metrics)
-    );
+    logger.info(`Creds after client refresh: ${JSON.stringify(aws.config.credentials.accessKeyId)}`); //TODO remove
   }
 
   get client() {
@@ -184,7 +183,6 @@ class BaseSearch {
     // get page number
     const page = Number.parseInt(params.page ? params.page : 1, 10);
     this.params = params;
-    //log.debug('Generated params:', params, logDetails);
 
     this.size = Number.parseInt(params.limit ? params.limit : logLimit, 10);
 
@@ -353,7 +351,6 @@ class BaseSearch {
         counts: result.body.aggregations,
       };
     } catch (error) {
-      //log.error(e, logDetails);
       return error;
     }
   }

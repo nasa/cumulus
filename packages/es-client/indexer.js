@@ -21,7 +21,7 @@ const { IndexExistsError, ValidationError } = require('@cumulus/errors');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeNilProperties } = require('@cumulus/common/util');
 
-const { Search, defaultIndexAlias } = require('./search');
+const { EsClient, Search, defaultIndexAlias } = require('./search');
 const mappings = require('./config/mappings.json');
 
 const logger = new Logger({ sender: '@cumulus/es-client/indexer' });
@@ -81,21 +81,23 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
   let actualEsClient;
 
   if (esClient) {
-    await esClient.refreshClient(); // TODO -- fix?
-    actualEsClient = esClient.client;
+    await esClient.refreshClient();
+    actualEsClient = esClient;
   } else {
-    actualEsClient = await Search.es();
+    const defaultEsClient = new EsClient();
+    await defaultEsClient.initializeEsClient();
+    actualEsClient = defaultEsClient;
   }
 
   let indexResponse;
   try {
     try {
-      indexResponse = await actualEsClient.index(params);
+      indexResponse = await actualEsClient.client.index(params);
     } catch (error) {
       if (error.name === 'ResponseError' && error.meta.body.message.includes('The security token included in the request is expired')) {
         logger.warn(`genericRecordUpdate encountered a ResponseError ${JSON.stringify(error)}, updating credentials and retrying`);
-        await actualEsClient.refreshClient(); // TODO - Meh, can we check a heartbeat/do better here
-        indexResponse = await actualEsClient.index(params);
+        await actualEsClient.refreshClient();
+        indexResponse = await actualEsClient.client.index(params);
       }
       throw error;
     }
@@ -782,7 +784,6 @@ async function deleteGranule({
     type,
     index
   );
-
   // TODO setup creds refresh
   const granuleEsRecord = await esGranulesClient.get(granuleId, collectionId);
 

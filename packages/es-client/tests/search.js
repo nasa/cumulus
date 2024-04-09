@@ -35,7 +35,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('Configured with Metrics host when metrics propety is set', async (t) => {
+test.serial('Configured with Metrics host when metrics property is set', async (t) => {
   process.env.METRICS_ES_HOST = 'example.com';
   process.env.METRICS_ES_USER = 'test';
   process.env.METRICS_ES_PASS = 'password';

@@ -157,13 +157,12 @@ async function indexModel({
     );
 
     const indexPromises = pageResults.map((pageResult) => limitEsRequests(async () => {
-      /*       console.log(`Sleeping to simulate long running index time`);
-      await sleep(1000 * 60);
-      console.log(`Waking!`); */
       let translationResult;
       try {
         translationResult = await translationFunction(pageResult);
-        await esClient.refreshCredentials();
+        await esClient.refreshClient();
+        console.log(`Creds: ${JSON.stringify(aws.config.credentials)}`);
+        console.log(`EsCreds: ${JSON.stringify(esClient.client)}`);
         return await indexFn(esClient, translationResult, esIndex);
       } catch (error) {
         log.error(
@@ -219,7 +218,7 @@ async function indexFromDatabase(event) {
   const pageSize = Number.parseInt(postgresResultPageSize, 10) || 1000;
   const esRequestConcurrency = getEsRequestConcurrency(event);
   log.info(
-    `Tuning configuration: esRequestConcurrency: ${esRequestConcurrency}, postgresResultPageSize: ${pageSize}, postgresConnectionPoolSize: ${postgresConnectionPoolSize} `
+    `Tuning configuration: esRequestConcurrency: ${esRequestConcurrency}, postgresResultPageSize: ${pageSize}, postgresConnectionPoolSize: ${postgresConnectionPoolSize}`
   );
 
   const limitEsRequests = pLimit(esRequestConcurrency);
