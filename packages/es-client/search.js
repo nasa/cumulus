@@ -8,12 +8,11 @@
 
 const has = require('lodash/has');
 const omit = require('lodash/omit');
-const aws = require('aws-sdk');
-const { AmazonConnection } = require('aws-elasticsearch-connector');
+const { fromNodeProviderChain } = require('@aws-sdk/credential-providers');
 const elasticsearch = require('@elastic/elasticsearch');
 
 const { inTestMode } = require('@cumulus/common/test-utils');
-
+const createEsAmazonConnection = require('./esAmazonConnection');
 const queries = require('./queries');
 const aggs = require('./aggregations');
 
@@ -25,12 +24,6 @@ const logDetails = {
 const defaultIndexAlias = 'cumulus-alias';
 const multipleRecordFoundString = 'More than one record was found!';
 const recordNotFoundString = 'Record not found';
-
-const getCredentials = () =>
-  new Promise((resolve, reject) => aws.config.getCredentials((err) => {
-    if (err) return reject(err);
-    return resolve();
-  }));
 
 /**
  * returns the local address of elasticsearch based on
@@ -55,8 +48,6 @@ const esTestConfig = () => ({
 });
 
 const esProdConfig = async (host) => {
-  if (!aws.config.credentials) await getCredentials();
-
   let node = 'http://localhost:9200';
 
   if (process.env.ES_HOST) {
@@ -65,12 +56,19 @@ const esProdConfig = async (host) => {
     node = `https://${host}`;
   }
 
+  const credentialsProvider = fromNodeProviderChain({
+    clientConfig: {
+      region: process.env.AWS_REGION,
+    },
+  });
+
+  const credentials = await credentialsProvider();
   return {
     node,
-    Connection: AmazonConnection,
-    awsConfig: {
-      credentials: aws.config.credentials,
-    },
+    ...createEsAmazonConnection({
+      credentials,
+      region: process.env.AWS_REGION,
+    }),
 
     // Note that this doesn't abort the query.
     requestTimeout: 50000, // milliseconds
