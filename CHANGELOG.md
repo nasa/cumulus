@@ -15,7 +15,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
 
-Instructions for migrating old DLA (Dead Letter Archive) messages to `YYYY-MM-DD` subfolder of S3 dead letter archive:
+Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
+
+- `YYYY-MM-DD` subfolders to organize by date
+- new top level fields for simplified search and analysis
+- captured error message
 
 To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
 
@@ -71,13 +75,18 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
 
-### Add
-
+### Added
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+- **CUMULUS-3616**
+  - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
-
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
+- **CUMULUS-3609**
+  - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
+  - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
 - **CUMULUS-3613**
   - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
 - **CUMULUS-3518**
@@ -139,6 +148,9 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **Audit Issues**
+  - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
+    updating babel packages and .babelrc
 
 ## [v18.2.0] 2023-02-02
 

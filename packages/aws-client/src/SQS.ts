@@ -9,7 +9,16 @@ import isObject from 'lodash/isObject';
 import isString from 'lodash/isString';
 import isNil from 'lodash/isNil';
 import { SQSRecord } from 'aws-lambda';
-import { Message, QueueAttributeName } from '@aws-sdk/client-sqs';
+import {
+  CreateQueueCommand,
+  DeleteMessageCommand,
+  DeleteQueueCommand,
+  GetQueueAttributesCommand,
+  GetQueueUrlCommand,
+  Message,
+  QueueAttributeName,
+  ReceiveMessageCommand,
+  SendMessageCommand } from '@aws-sdk/client-sqs';
 
 import { StepFunctionEventBridgeEvent } from './Lambda';
 import { sqs } from './services';
@@ -27,7 +36,9 @@ export const getQueueUrl = (sourceArn: string, queueName: string) => {
 };
 
 export const getQueueUrlByName = async (queueName: string) => {
-  const response = await sqs().getQueueUrl({ QueueName: queueName });
+  const command = new GetQueueUrlCommand({ QueueName: queueName });
+  const response = await sqs().send(command);
+
   return response.QueueUrl;
 };
 
@@ -35,23 +46,26 @@ export const getQueueUrlByName = async (queueName: string) => {
  * Create an SQS Queue.  Properly handles localstack queue URLs
  */
 export async function createQueue(QueueName: string) {
-  const createQueueResponse = await sqs().createQueue({
-    QueueName,
-  }).catch((error) => {
-    log.error(error);
-    throw error;
-  });
+  const command = new CreateQueueCommand({ QueueName });
+
+  const createQueueResponse = await sqs().send(command)
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
 
   return createQueueResponse.QueueUrl;
 }
 
-export const deleteQueue = (queueUrl: string) =>
-  sqs().deleteQueue({
-    QueueUrl: queueUrl,
-  }).catch((error) => {
-    log.error(error);
-    throw error;
-  });
+export const deleteQueue = (queueUrl: string) => {
+  const command = new DeleteQueueCommand({ QueueUrl: queueUrl });
+
+  return sqs().send(command)
+    .catch((error) => {
+      log.error(error);
+      throw error;
+    });
+};
 
 export const getQueueAttributes = async (queueName: string) => {
   const queueUrl = await getQueueUrlByName(queueName);
@@ -60,10 +74,12 @@ export const getQueueAttributes = async (queueName: string) => {
     throw new Error(`Unable to determine QueueUrl of ${queueName}`);
   }
 
-  const response = await sqs().getQueueAttributes({
+  const command = new GetQueueAttributesCommand({
     AttributeNames: ['All'],
     QueueUrl: queueUrl,
   });
+
+  const response = await sqs().send(command);
 
   return {
     ...response.Attributes,
@@ -73,7 +89,7 @@ export const getQueueAttributes = async (queueName: string) => {
 
 /**
  * Send a message to AWS SQS
- */
+ **/
 export const sendSQSMessage = (
   queueUrl: string,
   message: string | object,
@@ -85,13 +101,16 @@ export const sendSQSMessage = (
   else if (isObject(message)) messageBody = JSON.stringify(message);
   else throw new Error('body type is not accepted');
 
-  return sqs().sendMessage({
+  const command = new SendMessageCommand({
     MessageBody: messageBody,
     QueueUrl: queueUrl,
-  }).catch((error) => {
-    logger.error(error);
-    throw error;
   });
+
+  return sqs().send(command)
+    .catch((error) => {
+      logger.error(error);
+      throw error;
+    });
 };
 
 type ReceiveSQSMessagesOptions = {
@@ -117,7 +136,9 @@ export const receiveSQSMessages = async (
     MaxNumberOfMessages: options.numOfMessages || 1,
   };
 
-  const messages = await sqs().receiveMessage(params)
+  const command = new ReceiveMessageCommand(params);
+
+  const messages = await sqs().send(command)
     .catch((error) => {
       log.error(error);
       throw error;
@@ -145,12 +166,15 @@ export const parseSQSMessageBody = (
 /**
  * Delete a given SQS message from a given queue.
  */
-export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) =>
-  sqs().deleteMessage({ QueueUrl, ReceiptHandle })
+export const deleteSQSMessage = (QueueUrl: string, ReceiptHandle: string) => {
+  const command = new DeleteMessageCommand({ QueueUrl, ReceiptHandle });
+
+  return sqs().send(command)
     .catch((error) => {
       log.error(error);
       throw error;
     });
+};
 
 /**
  * Test if an SQS queue exists
@@ -162,8 +186,10 @@ export const sqsQueueExists = async (queueUrl: string) => {
     throw new Error(`Unable to determine QueueName from ${queueUrl}`);
   }
 
+  const command = new GetQueueUrlCommand({ QueueName });
+
   try {
-    await sqs().getQueueUrl({ QueueName });
+    await sqs().send(command);
     return true;
   } catch (error) {
     if (error.name === 'QueueDoesNotExist') {
