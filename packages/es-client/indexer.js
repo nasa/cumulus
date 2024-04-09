@@ -534,7 +534,7 @@ async function upsertPdr({
  * @returns {Promise} elasticsearch delete response
  */
 async function deleteRecord({
-  esClient,
+  esClient = new EsClient(),
   id,
   type,
   parent,
@@ -553,17 +553,8 @@ async function deleteRecord({
   if (parent) params.parent = parent;
   if (ignore) options = { ignore };
 
-  //TODO cleanup
-
-  let actualEsClient;
-  if (esClient) {
-    await esClient.refreshClient();
-    actualEsClient = await esClient.client;
-  } else {
-    actualEsClient = await Search.es();
-  }
-
-  const deleteResponse = await actualEsClient.delete(params, options);
+  await esClient.refreshClient();
+  const deleteResponse = await esClient.client.delete(params, options);
   return deleteResponse.body;
 }
 
