@@ -331,9 +331,6 @@ async function indexGranule(esClient, payload, index = defaultIndexAlias, type =
     refresh: inTestMode(),
   };
   await esClient.client.delete(delGranParams, { ignore: [404] });
-  /* console.log(`Sleeping to simulate long running index time`);
-  await sleep(1000 * 60);
-  console.log(`Waking!`); */
   return genericRecordUpdate(
     esClient,
     payload.granuleId,
