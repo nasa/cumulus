@@ -28,7 +28,7 @@ const getServiceClient = <T extends AWSClientTypes>(
  * Note: The returned service objects are cached, so there will only be one
  *       instance of each service object per process.
  *
- * @param {AWSClinetTypes} Service - an AWS service object constructor function
+ * @param {AWSClientTypes} Service - an AWS service object constructor function
  * @param {string} [version] - the API version to use
  * @param {string} [serviceOptions] - additional options to pass to the service
  * @returns {Function} a function which, when called, will return an instance of an AWS service
