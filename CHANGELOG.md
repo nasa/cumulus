@@ -75,17 +75,17 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
 
-### Add
-
+### Added
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
   - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
-
 - **CUMULUS-3669**
   - Updates deployment template to create and utilize an Aurora Serverless V2 PostgreSQL cluster.
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-3609**
   - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
   - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
@@ -104,6 +104,9 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Updated STS code to AWS SDK v3.
 - **CUMULUS-2898**
   - Update Step Functions code to AWS SDK v3
+- **CUMULUS-2902**
+  - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
+  the `@aws-sdk/credential-providers` AWS SDK v3 package.
 - **CUMULUS-3456**
   - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue

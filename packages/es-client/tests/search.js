@@ -20,15 +20,12 @@ test.before(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
-  const awsMock = {
-    config: {
-      credentials: {
-        user: 'test',
-        password: 'testPassword',
-      },
-    },
-  };
-  esSearch.__set__('aws', awsMock);
+  const awsCredentialsMock = () => () => Promise.resolve({
+    accessKeyId: 'testAccessKeyId',
+    secretAccessKey: 'testsecretAccessKey',
+  });
+
+  esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
 });
 
 test.after.always(async (t) => {
