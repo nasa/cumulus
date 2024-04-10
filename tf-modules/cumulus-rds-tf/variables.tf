@@ -119,6 +119,16 @@ variable "min_capacity" {
   default = 2
 }
 
+variable "cluster_instance_count" {
+  description = "Number of instances to create inside of the cluster"
+  type = number
+  default = 1
+  validation {
+    condition = var.cluster_instance_count >= 1 && var.cluster_instance_count <= 16
+    error_message = "Variable cluster_instance_count should be between 1 and 16."
+  }
+}
+
 ### Required for user/database provisioning
 variable "prefix" {
   type = string

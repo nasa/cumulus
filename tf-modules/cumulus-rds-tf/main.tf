@@ -38,6 +38,7 @@ resource "aws_secretsmanager_secret_version" "rds_login" {
     database            = "postgres"
     engine              = "postgres"
     host                = aws_rds_cluster.cumulus.endpoint
+    hostReader          = aws_rds_cluster.cumulus.reader_endpoint
     port                = 5432
     dbClusterIdentifier = aws_rds_cluster.cumulus.id
   })
@@ -84,7 +85,7 @@ resource "aws_rds_cluster_parameter_group" "rds_cluster_group_v13" {
 resource "aws_rds_cluster" "cumulus" {
   depends_on              = [aws_db_subnet_group.default, aws_rds_cluster_parameter_group.rds_cluster_group]
   cluster_identifier      = var.cluster_identifier
-  engine_mode             = "serverless"
+  engine_mode             = "provisioned"
   engine                  = "aurora-postgresql"
   engine_version          = var.engine_version
   database_name           = "postgres"
@@ -94,11 +95,11 @@ resource "aws_rds_cluster" "cumulus" {
   preferred_backup_window = var.backup_window
   db_subnet_group_name    = aws_db_subnet_group.default.id
   apply_immediately       = var.apply_immediately
+  storage_encrypted       = true
 
-  scaling_configuration {
+  serverlessv2_scaling_configuration {
     max_capacity = var.max_capacity
     min_capacity = var.min_capacity
-    timeout_action = var.rds_scaling_timeout_action
   }
   vpc_security_group_ids          = [aws_security_group.rds_cluster_access.id]
   deletion_protection             = var.deletion_protection
@@ -111,4 +112,13 @@ resource "aws_rds_cluster" "cumulus" {
   lifecycle {
     ignore_changes = [engine_version]
   }
+}
+
+resource "aws_rds_cluster_instance" "cumulus" {
+  cluster_identifier = aws_rds_cluster.cumulus.id
+  identifier = "${aws_rds_cluster.cumulus.id}-instance-${count.index+1}"
+  count              = var.cluster_instance_count
+  instance_class     = "db.serverless"
+  engine             = aws_rds_cluster.cumulus.engine
+  engine_version     = aws_rds_cluster.cumulus.engine_version
 }

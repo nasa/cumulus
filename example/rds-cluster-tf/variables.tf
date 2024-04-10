@@ -48,6 +48,12 @@ variable "cluster_identifier" {
   default     = "cumulus-rds-serverless-default-cluster"
 }
 
+variable "cluster_instance_count" {
+  description = "Number of instances to create inside of the cluster"
+  type = number
+  default = 1
+}
+
 variable "snapshot_identifier" {
   description = "Optional database snapshot for restoration"
   type = string
@@ -103,7 +109,7 @@ variable "lambda_timeouts" {
 variable "parameter_group_family" {
   description = "Database family to use for creating database parameter group"
   type = string
-  default = "aurora-postgresql11"
+  default = "aurora-postgresql13"
 }
 
 variable "parameter_group_family_v13" {

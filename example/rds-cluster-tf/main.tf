@@ -23,6 +23,7 @@ module "rds_cluster" {
   engine_version             = var.engine_version
   deletion_protection        = true
   cluster_identifier         = var.cluster_identifier
+  cluster_instance_count     = var.cluster_instance_count
   tags                       = var.tags
   snapshot_identifier        = var.snapshot_identifier
   lambda_timeouts            = var.lambda_timeouts
