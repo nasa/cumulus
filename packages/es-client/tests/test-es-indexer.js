@@ -214,7 +214,7 @@ test.serial('indexing a provider record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test.only('genericRecordUpdate handles a `ResponseError` and retries the query', async (t) => {
+test.serial('genericRecordUpdate handles a `ResponseError` and retries the query', async (t) => {
   const esClient = cloneDeep(t.context.esClient);
   const { esIndex } = t.context;
   const record = {
