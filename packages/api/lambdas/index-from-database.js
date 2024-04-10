@@ -207,7 +207,7 @@ async function indexFromDatabase(event) {
     postgresConnectionPoolSize,
   } = event;
   const esClient = new EsClient(esHost);
-  await esClient.initializeEsClient(); // TODO - we have to set this so client is set, but...
+  await esClient.initializeEsClient();
   const knex = event.knex || (await getKnexClient({
     env: {
       dbMaxPool: Number.parseInt(postgresConnectionPoolSize, 10) || 10,
