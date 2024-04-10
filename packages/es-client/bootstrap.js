@@ -97,7 +97,7 @@ async function bootstrapElasticSearch({
 }) {
   if (!host) return;
 
-  const esClient = new EsClient(); // TODO - remove awaits on this sort of call
+  const esClient = new EsClient();
   await esClient.initializeEsClient();
 
   // Make sure that indexes are not automatically created

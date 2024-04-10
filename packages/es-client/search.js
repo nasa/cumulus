@@ -117,6 +117,9 @@ class EsClient {
   }
 
   async refreshClient() {
+    if (this.metrics) {
+      return;
+    }
     if (!aws.config.credentials) {
       await getCredentials();
     }
@@ -138,7 +141,9 @@ class EsClient {
   constructor(host, metrics = false) {
     this.host = host;
     this.metrics = metrics;
-    this.initializeEsClient();
+    if (metrics) {
+      this.host = process.env.METRICS_ES_HOST;
+    }
   }
 }
 
@@ -146,10 +151,6 @@ class BaseSearch {
   // TODO Deprecate this
   static async es(host, metrics) {
     return new elasticsearch.Client(await esConfig(host, metrics));
-  }
-
-  async refreshClient() {
-    await this._esClient.refreshClient();
   }
 
   async initializeEsClient(host, metrics) {
@@ -165,7 +166,6 @@ class BaseSearch {
   }
 
   constructor(event = {}, type = null, index, metrics = false) {
-    // TODO - refactor init into constructor call?
     let params = {};
     const logLimit = 10;
 

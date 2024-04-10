@@ -553,6 +553,7 @@ async function deleteRecord({
   if (parent) params.parent = parent;
   if (ignore) options = { ignore };
 
+  await esClient.initializeEsClient();
   await esClient.refreshClient();
   const deleteResponse = await esClient.client.delete(params, options);
   return deleteResponse.body;
@@ -772,7 +773,6 @@ async function deleteGranule({
     type,
     index
   );
-  // TODO setup creds refresh
   const granuleEsRecord = await esGranulesClient.get(granuleId, collectionId);
 
   // When a 'granule' record is deleted, the record is added to 'deletedgranule' type

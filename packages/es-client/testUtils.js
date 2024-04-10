@@ -14,6 +14,7 @@ const createTestIndex = async () => {
     alias: esAlias,
   });
   const esClient = await new EsClient('fakehost');
+  await esClient.initializeEsClient();
   const searchClient = await new Search();
   await searchClient.initializeEsClient('fakehost');
   return {
