@@ -1,6 +1,10 @@
 'use strict';
 
 const test = require('ava');
+
+const cloneDeep = require('lodash/cloneDeep');
+const sinon = require('sinon');
+
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const { randomString, randomId } = require('@cumulus/common/test-utils');
@@ -208,6 +212,34 @@ test.serial('indexing a provider record', async (t) => {
 
   t.is(record._id, testRecord.id);
   t.is(typeof record._source.timestamp, 'number');
+});
+
+test.only('genericRecordUpdate handles a `ResponseError` and retries the query', async (t) => {
+  const esClient = cloneDeep(t.context.esClient);
+  const { esIndex } = t.context;
+  const record = {
+    name: 'SomeName',
+    version: 'someVersion',
+  };
+  const collectionId = constructCollectionId(record.name, record.version);
+
+  const refreshClientStub = () => Promise.resolve();
+  esClient.refreshClient = refreshClientStub;
+
+  const indexStub = sinon.stub();
+  esClient._client = { index: indexStub };
+
+  const responseError = new Error();
+  responseError.name = 'ResponseError';
+  responseError.meta = {
+    body: { message: 'The security token included in the request is expired' },
+  };
+  const successText = 'TestStub Success';
+  indexStub.onCall(0).throws(responseError);
+  indexStub.onCall(1).returns({ body: successText });
+
+  const result = await indexer.genericRecordUpdate(esClient, collectionId, record, esIndex, 'collection');
+  t.is(result, successText);
 });
 
 test.serial('indexing a collection record', async (t) => {
