@@ -31,7 +31,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.only('upsertExecution writes new "running" execution with null fields omitted', async (t) => {
+test.serial('upsertExecution writes new "running" execution with null fields omitted', async (t) => {
   const { esIndex, esClient, esExecutionsClient } = t.context;
 
   const testRecord = {
