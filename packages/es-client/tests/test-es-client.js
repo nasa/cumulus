@@ -2,7 +2,6 @@
 
 // Unset local configuration
 // Must be set prior to requiring AWS module/subdependency
-
 const setupTestEnvs = () => {
   process.env.NODE_ENV = 'notTestingTotallyNotTesting';
   const accessKeyId = 'ACCESS_KEY';
@@ -16,7 +15,6 @@ const setupTestEnvs = () => {
   delete process.env.METRICS_ES_USER;
   delete process.env.METRICS_ES_PASS;
 };
-
 setupTestEnvs();
 
 const test = require('ava');

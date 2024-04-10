@@ -48,7 +48,8 @@ test.before(async () => {
     alias: esAlias,
   });
 
-  esClient = await new EsClient();
+  esClient = new EsClient();
+  await esClient.initializeEsClient();
   await Promise.all(
     granules.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
   );
