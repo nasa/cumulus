@@ -214,7 +214,7 @@ test.serial('indexing a provider record', async (t) => {
   t.is(typeof record._source.timestamp, 'number');
 });
 
-test.serial('genericRecordUpdate handles a `ResponseError` and retries the query', async (t) => {
+test.serial('genericRecordUpdate handles a `ResponseError` and retries the query after refreshing the client', async (t) => {
   const esClient = cloneDeep(t.context.esClient);
   const { esIndex } = t.context;
   const record = {
@@ -223,7 +223,7 @@ test.serial('genericRecordUpdate handles a `ResponseError` and retries the query
   };
   const collectionId = constructCollectionId(record.name, record.version);
 
-  const refreshClientStub = () => Promise.resolve();
+  const refreshClientStub = sinon.stub();
   esClient.refreshClient = refreshClientStub;
 
   const indexStub = sinon.stub();
@@ -240,6 +240,36 @@ test.serial('genericRecordUpdate handles a `ResponseError` and retries the query
 
   const result = await indexer.genericRecordUpdate(esClient, collectionId, record, esIndex, 'collection');
   t.is(result, successText);
+  t.is(refreshClientStub.callCount, 1);
+});
+
+test.serial('genericRecordUpdate handles a `ResponseError` and retries the query after refreshing the client, throwing an error if one is thrown', async (t) => {
+  const esClient = cloneDeep(t.context.esClient);
+  const { esIndex } = t.context;
+  const record = {
+    name: 'SomeName',
+    version: 'someVersion',
+  };
+  const collectionId = constructCollectionId(record.name, record.version);
+
+  const refreshClientStub = sinon.stub();
+  esClient.refreshClient = refreshClientStub;
+
+  const indexStub = sinon.stub();
+  esClient._client = { index: indexStub };
+
+  const responseError = new Error();
+  responseError.name = 'ResponseError';
+  responseError.meta = {
+    body: { message: 'The security token included in the request is expired' },
+  };
+
+  const errorMessage = 'second error';
+  indexStub.onCall(0).throws(responseError);
+  indexStub.onCall(1).throws(new Error(errorMessage));
+
+  await t.throwsAsync(indexer.genericRecordUpdate(esClient, collectionId, record, esIndex, 'collection'), undefined, errorMessage);
+  t.is(refreshClientStub.callCount, 1);
 });
 
 test.serial('indexing a collection record', async (t) => {

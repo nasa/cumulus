@@ -76,12 +76,9 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   if (parent) params.parent = parent;
 
-  // Call creds refresh
-  // adding or replacing record to ES
   let actualEsClient;
-
   if (esClient) {
-    await esClient.refreshClient();
+    //await esClient.refreshClient();
     actualEsClient = esClient;
   } else {
     const defaultEsClient = new EsClient();
@@ -98,8 +95,9 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
         logger.warn(`genericRecordUpdate encountered a ResponseError ${JSON.stringify(error)}, updating credentials and retrying`);
         await actualEsClient.refreshClient();
         indexResponse = await actualEsClient.client.index(params);
+      } else {
+        throw error;
       }
-      throw error;
     }
   } catch (error) {
     logger.error(`Error thrown on index ${JSON.stringify(error)}`);
@@ -801,27 +799,28 @@ async function deleteGranule({
 
 module.exports = {
   createIndex,
+  deleteAsyncOperation,
+  deleteCollection,
+  deleteExecution,
+  deleteGranule,
+  deletePdr,
+  deleteProvider,
+  deleteReconciliationReport,
+  deleteRecord,
+  deleteRule,
+  executionInvalidNullFields,
+  granuleInvalidNullFields,
+  genericRecordUpdate,
+  indexAsyncOperation,
   indexCollection,
+  indexExecution,
+  indexGranule,
+  indexPdr,
   indexProvider,
   indexReconciliationReport,
   indexRule,
-  indexGranule,
-  upsertGranule,
-  indexPdr,
-  upsertPdr,
-  indexExecution,
-  indexAsyncOperation,
-  deleteRecord,
-  deleteAsyncOperation,
   updateAsyncOperation,
   upsertExecution,
-  deleteCollection,
-  deleteProvider,
-  deleteRule,
-  deletePdr,
-  deleteGranule,
-  deleteExecution,
-  deleteReconciliationReport,
-  executionInvalidNullFields,
-  granuleInvalidNullFields,
+  upsertGranule,
+  upsertPdr,
 };
