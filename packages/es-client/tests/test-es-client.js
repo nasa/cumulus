@@ -8,7 +8,7 @@ const setupTestEnvs = () => {
   process.env.AWS_ACCESS_KEY_ID = accessKeyId;
   const secretAccessKey = 'SECRET_KEY';
   process.env.AWS_SECRET_ACCESS_KEY = secretAccessKey;
-  process.env.AWS_PROFILE = 'BOGUS_TEST_PROFILE';
+  delete process.env.AWS_PROFILE;
   delete process.env.AWS_ACCOUNT_ID;
   delete process.env.LOCAL_ES_HOST;
   delete process.env.METRICS_ES_HOST;
@@ -33,7 +33,7 @@ test.serial('EsClient is created with credentialed ES client with expected auth/
   await esClient.initializeEsClient();
 
   const connection = Array.from(esClient.client.transport.connectionPool.connections)[0];
-  const awsCreds = connection[1].credentials;
+  const awsCreds = connection[1];
   const connectionUri = connection[0];
   t.is(awsCreds.accessKeyId, process.env.AWS_ACCESS_KEY_ID);
   t.is(awsCreds.secretAccessKey, process.env.AWS_SECRET_ACCESS_KEY);
@@ -45,7 +45,7 @@ test.serial('EsClient is created with credentialed ES client with expected auth/
   await esClient.initializeEsClient();
 
   const connection = Array.from(esClient.client.transport.connectionPool.connections)[0];
-  const awsCreds = connection[1].credentials;
+  const awsCreds = connection[1];
   const connectionUri = connection[0];
   t.is(esClient.host, 'nasa.gov');
   t.is(connectionUri, 'https://nasa.gov/');
@@ -60,11 +60,10 @@ test.serial('EsClient is created with credentialed ES client with expected auth/
   const esClient = new EsClient('nasa.gov', true);
   await esClient.initializeEsClient();
   const connection = Array.from(esClient.client.transport.connectionPool.connections)[0];
-  const awsCreds = connection[1].credentials;
   const connectionUri = connection[0];
   t.is(esClient.host, 'localhost/metrics');
   t.is(connectionUri, 'https://localhost/metrics');
-  t.is(awsCreds, undefined);
+  t.is(connection[1].awsAccessKeyId, undefined);
 });
 
 test.serial('EsClient initialization fails if metrics is specified but required environment variables are unset', async (t) => {
@@ -86,23 +85,20 @@ test.serial('EsClient refreshClient() does nothing if metrics is set to true for
   const esClient = new EsClient(undefined, true);
   await esClient.initializeEsClient();
   const originalConnection = Array.from(esClient.client.transport.connectionPool.connections)[0];
-  const originalCreds = originalConnection[1].credentials;
   process.env.AWS_ACCESS_KEY_ID = 'NEW_KEY_ID';
   esClient.refreshClient();
   const connection = Array.from(esClient.client.transport.connectionPool.connections)[0];
-  const creds = connection[1].credentials;
-  t.is(originalCreds, undefined);
-  t.is(creds, undefined);
+  t.is(originalConnection[1].awsAccessKeyId, undefined);
+  t.is(connection[1].accessKeyId, undefined);
 });
 
 test.serial('EsClient refreshClient() refreshes client credentials upon AWS credential chain change', async (t) => {
   const esClient = new EsClient();
   await esClient.initializeEsClient();
   process.env.AWS_ACCESS_KEY_ID = 'NEW_KEY_ID';
-  esClient.refreshClient();
+  await esClient.refreshClient();
   const connection = Array.from(esClient.client.transport.connectionPool.connections)[0];
-  const creds = connection[1].credentials;
-  t.is(creds.accessKeyId, 'NEW_KEY_ID');
+  t.is(connection[1].accessKeyId, 'NEW_KEY_ID');
 });
 
 test.serial('EsClient is created with credentialed ES client with expected auth/endpoint configuration when in test mode', async (t) => {

@@ -42,6 +42,15 @@ const getLocalEsHost = () => {
   return `${protocol}://localhost:9200`;
 };
 
+const getAwsCredentials = async () => {
+  const credentialsProvider = fromNodeProviderChain({
+    clientConfig: {
+      region: process.env.AWS_REGION,
+    },
+  });
+  return await credentialsProvider();
+};
+
 const esTestConfig = () => ({
   node: getLocalEsHost(),
   requestTimeout: 5000,
@@ -58,14 +67,7 @@ const esProdConfig = async (host) => {
   } else if (host) {
     node = `https://${host}`;
   }
-
-  const credentialsProvider = fromNodeProviderChain({
-    clientConfig: {
-      region: process.env.AWS_REGION,
-    },
-  });
-
-  const credentials = await credentialsProvider();
+  const credentials = await getAwsCredentials();
   return {
     node,
     ...createEsAmazonConnection({
@@ -109,7 +111,7 @@ const esConfig = async (host, metrics = false) => {
 class EsClient {
   async initializeEsClient() {
     if (!this._esClient) {
-      this._client = new elasticsearch.Client(await esConfig(this.host, this.metrics));
+      this._client = new elasticsearch.Client(await esConfig(this.host, this.metrics, undefined));
     }
     return this._client;
   }
@@ -118,18 +120,14 @@ class EsClient {
     if (this.metrics) {
       return;
     }
-    if (!aws.config.credentials) {
-      await getCredentials();
-    }
-    const oldKey = aws.config.credentials.accessKeyId;
-    await aws.config.credentials.refreshPromise();
-    if (oldKey !== aws.config.credentials.accessKeyId) {
+    const oldKey = this._client.awsAccessKeyId;
+    const newCreds = await getAwsCredentials();
+    if (oldKey !== newCreds.accessKeyId) {
       logger.info('AWS Credentials updated, updating to new ESClient');
       this._client = new elasticsearch.Client(
         await esConfig(this.host, this.metrics)
       );
     }
-    logger.info(`Creds after client refresh: ${JSON.stringify(aws.config.credentials.accessKeyId)}`); //TODO remove
   }
 
   get client() {
