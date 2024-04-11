@@ -16,7 +16,7 @@ const { Search } = esSearch;
 const localEsHost = process.env.LOCAL_ES_HOST;
 
 test.before(async (t) => {
-  const { esIndex, esClient, searchClient } = await createTestIndex();
+  const { esIndex, esClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
   const awsCredentialsMock = () => () => Promise.resolve({
@@ -26,7 +26,6 @@ test.before(async (t) => {
 
   esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
 });
-
 test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
