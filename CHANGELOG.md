@@ -140,6 +140,13 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 ### Fixed
 
+- **CUMULUS-3618**
+  - Fixed `@cumulus/es-client` credentialing issue in instance where
+    lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
+    refresh behavior to `@cumulus/es-client/indexer.genericRecordUpdate` to ensure record indexing
+    does not fail in those instances.
+  - Updated `index-from-database` lambda to utilize updated es-client to prevent
+    credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
 - **CUMULUS-3587**
