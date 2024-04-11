@@ -108,6 +108,20 @@ const esConfig = async (host, metrics = false) => {
   return config;
 };
 
+/**
+ * `EsClient` is a class for managing an Elasticsearch client.
+ *
+ * @property {string} host - The host URL for the Elasticsearch instance.
+ * @property {boolean} metrics - A flag indicating whether metrics are enabled.
+ * @property {Object} _client - The Elasticsearch client instance.
+ *
+ * @method constructor - Initializes a new instance of the `EsClient` class.
+ * @method initializeEsClient - Initializes the Elasticsearch client (this._client/client)
+ * if it hasn't been initialized yet.
+ * @method refreshClient - Refreshes the Elasticsearch client if the AWS credentials have changed,
+ * by creating a new Elasticsearch `Client` instance.
+ * @method client - Getter that returns the Elasticsearch client instance.
+ */
 class EsClient {
   async initializeEsClient() {
     if (!this._esClient) {
