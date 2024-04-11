@@ -19,16 +19,12 @@ test.before(async (t) => {
   const { esIndex, esClient, searchClient } = await createTestIndex();
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
-  t.context.searchClient = searchClient;
-  const awsMock = {
-    config: {
-      credentials: {
-        user: 'test',
-        password: 'testPassword',
-      },
-    },
-  };
-  esSearch.__set__('aws', awsMock);
+  const awsCredentialsMock = () => () => Promise.resolve({
+    accessKeyId: 'testAccessKeyId',
+    secretAccessKey: 'testsecretAccessKey',
+  });
+
+  esSearch.__set__('fromNodeProviderChain', awsCredentialsMock);
 });
 
 test.after.always(async (t) => {

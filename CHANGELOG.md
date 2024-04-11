@@ -102,6 +102,9 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Updated STS code to AWS SDK v3.
 - **CUMULUS-2898**
   - Update Step Functions code to AWS SDK v3
+- **CUMULUS-2902**
+  - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
+  the `@aws-sdk/credential-providers` AWS SDK v3 package.
 - **CUMULUS-3456**
   - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
