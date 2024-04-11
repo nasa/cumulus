@@ -155,8 +155,6 @@ class BaseSearch {
   async initializeEsClient(host, metrics) {
     const esClient = new EsClient(host, metrics);
     this._esClient = esClient;
-    this._host = host;
-    this._metrics = metrics;
     await this._esClient.initializeEsClient();
   }
 
@@ -169,8 +167,6 @@ class BaseSearch {
     const logLimit = 10;
 
     this.type = type;
-    this._esClient = undefined;
-    this._host = undefined;
     this.metrics = metrics;
 
     // this will allow us to receive payload
