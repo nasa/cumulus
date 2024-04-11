@@ -148,7 +148,6 @@ class EsClient {
 }
 
 class BaseSearch {
-  // TODO Deprecate this
   static async es(host, metrics) {
     return new elasticsearch.Client(await esConfig(host, metrics));
   }
