@@ -2,7 +2,6 @@
 
 const isNil = require('lodash/isNil');
 const pLimit = require('p-limit');
-const aws = require('aws-sdk');
 
 const DynamoDbSearchQueue = require('@cumulus/aws-client/DynamoDbSearchQueue');
 const log = require('@cumulus/common/log');
@@ -161,8 +160,6 @@ async function indexModel({
       try {
         translationResult = await translationFunction(pageResult);
         await esClient.refreshClient();
-        console.log(`Creds: ${JSON.stringify(aws.config.credentials)}`);
-        console.log(`EsCreds: ${JSON.stringify(esClient.client)}`);
         return await indexFn(esClient, translationResult, esIndex);
       } catch (error) {
         log.error(
