@@ -39,6 +39,8 @@ const log = new Logger({ sender: '@cumulus/db/connection' });
  *   acquireConnectionTimeout connection timeout
  * @param {string} [params.env.migrationDir] - Directory to look in for
  *   migrations
+ * @param {SecretsManager} [params.secretsManager] - An instance of an AWS secrets manager client
+ * @param {Logger} [params.knexLogger] - a logger instance
  * @returns {Promise<Knex>} a Knex configuration object that has returned at least one query
  */
 export const getKnexClient = async ({

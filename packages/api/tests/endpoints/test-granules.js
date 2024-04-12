@@ -47,6 +47,11 @@ const {
 } = require('@cumulus/aws-client/S3');
 
 const { secretsManager, sfn, s3, sns, sqs } = require('@cumulus/aws-client/services');
+const {
+  CreateTopicCommand,
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const { CMR } = require('@cumulus/cmr-client');
 const { metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
 const indexer = require('@cumulus/es-client/indexer');
@@ -346,7 +351,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -359,12 +364,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns()
-    .subscribe({
-      TopicArn,
-      Protocol: 'sqs',
-      Endpoint: QueueArn,
-    });
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
+    TopicArn,
+    Protocol: 'sqs',
+    Endpoint: QueueArn,
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -372,7 +376,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {
@@ -693,9 +697,9 @@ test.serial('PATCH does not require a collectionId.', async (t) => {
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon
+    .stub(sfn(), 'describeExecution')
+    .returns(Promise.resolve(fakeDescribeExecutionResult));
   t.teardown(() => stub.restore());
   const response = await request(app)
     .patch(`/granules/${t.context.fakePGGranules[0].granule_id}`)
@@ -755,9 +759,9 @@ test.serial('PATCH reingests a granule', async (t) => {
   const wKey = `${process.env.stackName}/workflows/${message.meta.workflow_name}.json`;
   await s3PutObject({ Bucket: process.env.system_bucket, Key: wKey, Body: '{}' });
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon.stub(sfn(), 'describeExecution').returns(
+    Promise.resolve(fakeDescribeExecutionResult)
+  );
   t.teardown(() => stub.restore());
   const response = await request(app)
     .patch(`/granules/${t.context.collectionId}/${t.context.fakePGGranules[0].granule_id}`)
@@ -805,9 +809,9 @@ test.serial('PATCH applies an in-place workflow to an existing granule', async (
     }),
   };
 
-  const stub = sinon.stub(sfn(), 'describeExecution').returns({
-    promise: () => Promise.resolve(fakeDescribeExecutionResult),
-  });
+  const stub = sinon
+    .stub(sfn(), 'describeExecution')
+    .returns(Promise.resolve(fakeDescribeExecutionResult));
   t.teardown(() => stub.restore());
 
   const response = await request(app)

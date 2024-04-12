@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration Notes
+
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
+
+- The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
+  [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
+
+Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
+
+- `YYYY-MM-DD` subfolders to organize by date
+- new top level fields for simplified search and analysis
+- captured error message
+
+To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
+
+```bash
+aws lambda invoke --function-name $PREFIX-migrationHelperAsyncOperation \
+  --payload $(echo '{"operationType": "DLA Migration"}' | base64) $OUTFILE
+```
+
+- `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
+
+The Lambda will trigger an Async Operation and return an `id` such as:
+
+```json
+{"id":"41c9fbbf-a031-4dd8-91cc-8ec2d8b5e31a","description":"Migrate Dead Letter Archive Messages",
+"operationType":"DLA Migration","status":"RUNNING",
+"taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789"}
+```
+
+which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for
+the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view
+the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+
 ### Breaking Changes
 
 - **CUMULUS-2889**
@@ -14,28 +51,107 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - **CUMULUS-2890**
   - Removed unused CloudWatch AWS SDK client. This change removes the CloudWatch client
     from the `@cumulus/aws-client` package.
+- **CUMULUS-3323**
+  - Updated `@cumulus/db` to by default set the `ssl` option for knex, and
+    reject non-SSL connections via use of the `rejectUnauthorized` configuration
+    flag.   This causes all Cumulus database connections to require SSL (CA or
+    self-signed) and reject connectivity if the database does not provide SSL.
+    Users using serverless v1/`cumulus-rds-tf` should not be impacted by this
+    change as certs are provided by default.   Users using databases that do not
+    provide SSL should update their database secret with the optional value
+    `disableSSL` set to `true`
+  - Updated `cumulus-rds-tf` to set `rds.force_ssl` to `1`, forcing SSL enabled
+    connections in the `db_parameters` configuration.   Users of this module
+    defining their own `db_parameters` should make this configuration change to allow only SSL
+    connections to the RDS datastore.
 - **CUMULUS-2897**
   - Removed unused Systems Manager AWS SDK client. This change removes the Systems Manager client
     from the `@cumulus/aws-client` package.
-    
-### Changed
+- **CUMULUS-3449**
+  - Updated the following database columns to BIGINT: executions.cumulus_id, executions.parent_cumulus_id,
+    files.granule_cumulus_id, granules_executions.granule_cumulus_id, granules_executions.execution_cumulus_id
+    and pdrs.execution_cumulus_id
+  - Changed granules table unique constraint to granules_collection_cumulus_id_granule_id_unique
+  - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
+    to granules table
 
+### Added
+- **CUMULUS-3614**
+  - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+- **CUMULUS-3616**
+  - Added user guide on querying dead-letter-archive messages using AWS Athena.
+
+### Changed
+- **CUMULUS-3570**
+  - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
+- **CUMULUS-3609**
+  - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
+  - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
+- **CUMULUS-3613**
+  - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
+- **CUMULUS-3518**
+  - Update existing usage of `@cumulus/aws-client` lambda service to use AWS SDK v3 `send` syntax
+  - Update Discover Granules lambda default memory to 1024 MB
+- **CUMULUS-3600**
+  - Update docs to clarify CloudFront HTTPS DIT requirements.
+- **CUMULUS-2892**
+  - Updates `aws-client`'s EC2 client to use AWS SDK v3.
+- **CUMULUS-2896**
+  - Updated Secrets Manager code to AWS SDK v3.
+- **CUMULUS-2901**
+  - Updated STS code to AWS SDK v3.
+- **CUMULUS-2898**
+  - Update Step Functions code to AWS SDK v3
+- **CUMULUS-2902**
+  - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
+  the `@aws-sdk/credential-providers` AWS SDK v3 package.
+- **CUMULUS-3456**
+  - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
+  - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
+- **CUMULUS-3323**
+  - Added `disableSSL` as a valid database secret key - setting this in your database credentials will
+    disable SSL for all Core database connection attempts.
+  - Added `rejectUnauthorized` as a valid database secret key - setting
+    this to `false` in your database credentials will allow self-signed certs/certs with an unrecognized authority.
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 1.   This setting for the Aurora Serverless v1 database disallows non-SSL
+    connections to the database, and is intended to help enforce security
+    compliance rules.  This update can be opted-out by supplying a non-default
+    `db_parameters` set in the terraform configuration.
 - **CUMULUS-3245**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
   - Minor refactor of `@cumulus/lzards-api-client` to:
-   - Use proper ECMAScript import for `@cumulus/launchpad-auth`
-   - Update incorrect docstring
-
-### Changed
-
-- **CUMULUS-2896**
-  - Updated Secrets Manager code to AWS SDK v3.
+    - Use proper ECMAScript import for `@cumulus/launchpad-auth`
+    - Update incorrect docstring
+- **CUMULUS-3449**
+  - Updated `@cumulus/db` package and configure knex hook postProcessResponse to convert the return string
+    from columns ending with "cumulus_id" to number.
 - **CUMULUS-3497**
   - Updated `example/cumulus-tf/orca.tf` to use v9.0.4
 - **CUMULUS-3527**
   - Added suppport for additional kex algorithms in the sftp-client.
+- **CUMULUS-3610**
+  - Updated `aws-client`'s ES client to use AWS SDK v3.
+- **CUMULUS-3617**
+  - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
+  - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
+
+### Fixed
+
+- **CUMULUS-3323**
+  - Minor edits to errant integration test titles (dyanmo->postgres)
+- **CUMULUS-3587**
+  - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
+    updates of sub-dependencies and maintain without refactoring errors in
+    API/etc wholesale
+  - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **Audit Issues**
+  - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
+    updating babel packages and .babelrc
 
 ## [v18.2.0] 2023-02-02
 
@@ -66,7 +182,7 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - add teclark to select-stack.js
 - **CUMULUS-3444**
   - Update `cumulus-rds-tf` module to take additional parameters in support of
-    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
+    migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-2891**
@@ -163,8 +279,10 @@ endpoints will require a `Cumulus-API-Version` value of at least `2`.
 Users/clients that do not make use of these endpoints will not be impacted.
 
 ### Breaking Changes
+
 - **CUMULUS-3427**
   - Changed the naming conventions for memory size and timeouts configuration to simply the lambda name
+
 ### Notable Changes
 
 - **CUMULUS-3095**

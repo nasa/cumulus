@@ -15,6 +15,7 @@ test.before(async (t) => {
         username: localStackConnectionEnv.PG_USER,
         password: localStackConnectionEnv.PG_PASSWORD,
         database: localStackConnectionEnv.PG_DATABASE,
+        disableSSL: 'true',
       }),
     }),
     putSecretValue: () => ({

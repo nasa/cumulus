@@ -3,8 +3,13 @@
 const test = require('ava');
 
 const { randomString } = require('@cumulus/common/test-utils');
-
-const { unwrapDeadLetterCumulusMessage } = require('../DeadLetterMessage');
+const moment = require('moment');
+const {
+  unwrapDeadLetterCumulusMessage,
+  hoistCumulusMessageDetails,
+  isDLQRecordLike,
+  getDLAKey,
+} = require('../DeadLetterMessage');
 
 test('unwrapDeadLetterCumulusMessage unwraps an SQS message', async (t) => {
   const cumulusMessage = {
@@ -111,4 +116,832 @@ test('unwrapDeadLetterCumulusMessage returns an non-unwrappable message', async 
     }),
   };
   t.deepEqual(await unwrapDeadLetterCumulusMessage(testMessage), testMessage);
+});
+
+test('isDLQRecordLike correctly filters for DLQ record shaped objects', (t) => {
+  t.false(isDLQRecordLike('aaa')); // must be an object
+  t.false(isDLQRecordLike({ a: 'b' })); // object must contain a body
+  t.false(isDLQRecordLike({ body: '{a: "b"}' })); // object must contain an error attribute
+  t.true(isDLQRecordLike({ body: '{a: "b"}', error: 'a' }));
+  t.true(isDLQRecordLike({ Body: '{a: "b"}', error: 'a' }));
+});
+
+test('hoistCumulusMessageDetails returns input message intact', async (t) => {
+  const message = {
+    a: 'b',
+  };
+  t.like(await hoistCumulusMessageDetails(message), message);
+});
+
+test('hoistCumulusMessageDetails returns details: collectionId, providerId, granules, time, error, status, executionArn, and stateMachineArn as found moved to top layer', async (t) => {
+  const message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      time: 'atime',
+      detail: {
+        status: 'SUCCEEDED',
+        output: JSON.stringify({
+          meta: {
+            collection: { name: 'aName', version: '12' },
+            provider: {
+              id: 'abcd',
+              protocol: 'cheesy',
+              host: 'excellent',
+            },
+          },
+          payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+        }),
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+      },
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      collectionId: 'aName___12',
+      providerId: 'abcd',
+      granules: ['a', 'b'],
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+});
+
+test('hoistCumulusMessageDetails returns unknown for details: collectionId, providerId, granules, time, error, status, executionArn, and stateMachineArn when not found', async (t) => {
+  const messages = [
+    {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: 'aName___12',
+        providerId: 'abcd',
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: null,
+        providerId: null,
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: null,
+        time: 'aTime',
+        status: null,
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: null,
+        providerId: 'abcd',
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: 'aName___12',
+        providerId: null,
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: 'aName___12',
+        providerId: 'abcd',
+        executionArn: null,
+        stateMachineArn: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: 'aName___12',
+        providerId: 'abcd',
+        executionArn: 'execArn',
+        stateMachineArn: null,
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: null,
+        collectionId: 'aName___12',
+        providerId: 'abcd',
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: ['a', 'b'],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { a: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { a: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: 'aName___12',
+        providerId: 'abcd',
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: ['a', null],
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { ss: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          time: 'aTime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { ss: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: 'aName___12',
+        providerId: 'abcd',
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: null,
+        time: 'aTime',
+        status: 'SUCCEEDED',
+      },
+    }, {
+      mangled: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+      },
+      expected: {
+        messageId: 'a',
+        eventSource: 'aws:sqs',
+        body: JSON.stringify({
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+        error: 'anError',
+        collectionId: 'aName___12',
+        providerId: 'abcd',
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+        granules: ['a', 'b'],
+        time: null,
+        status: 'SUCCEEDED',
+      },
+    },
+  ];
+  const results = await Promise.all(
+    messages.map((message) => hoistCumulusMessageDetails(message.mangled))
+  );
+  results.forEach((result, index) => {
+    t.deepEqual(result, messages[index].expected);
+  });
+});
+
+test('hoistCumulusMessageDetails handles up to 3 degrees of sqsMessage nestedness', async (t) => {
+  let message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      time: 'atime',
+      detail: {
+        status: 'SUCCEEDED',
+        output: JSON.stringify({
+          meta: {
+            collection: { name: 'aName', version: '12' },
+            provider: {
+              id: 'abcd',
+              protocol: 'cheesy',
+              host: 'excellent',
+            },
+          },
+          payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+        }),
+        executionArn: 'execArn',
+        stateMachineArn: 'SMArn',
+      },
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      providerId: 'abcd',
+      collectionId: 'aName___12',
+      granules: ['a', 'b'],
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+  message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      body: JSON.stringify({
+        time: 'atime',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: {
+              collection: { name: 'aName', version: '12' },
+              provider: {
+                id: 'abcd',
+                protocol: 'cheesy',
+                host: 'excellent',
+              },
+            },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      }),
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      providerId: 'abcd',
+      collectionId: 'aName___12',
+      granules: ['a', 'b'],
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+  message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      body: JSON.stringify({
+        Body: JSON.stringify({
+          time: 'atime',
+          detail: {
+            status: 'SUCCEEDED',
+            output: JSON.stringify({
+              meta: {
+                collection: { name: 'aName', version: '12' },
+                provider: {
+                  id: 'abcd',
+                  protocol: 'cheesy',
+                  host: 'excellent',
+                },
+              },
+              payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+            }),
+            executionArn: 'execArn',
+            stateMachineArn: 'SMArn',
+          },
+        }),
+      }),
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      providerId: 'abcd',
+      collectionId: 'aName___12',
+      granules: ['a', 'b'],
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+});
+
+test('hoistCumulusMessageDetails captures outermost error as "error"', async (t) => {
+  const message = {
+    messageId: 'a',
+    eventSource: 'aws:sqs',
+    body: JSON.stringify({
+      body: JSON.stringify({
+        time: 'atime',
+        detail: {
+          status: 'SUCCEEDED',
+          output: JSON.stringify({
+            meta: {
+              collection: { name: 'aName', version: '12' },
+              provider: {
+                id: 'abcd',
+                protocol: 'cheesy',
+                host: 'excellent',
+              },
+            },
+            payload: { granules: [{ granuleId: 'a' }, { granuleId: 'b' }] },
+          }),
+          executionArn: 'execArn',
+          stateMachineArn: 'SMArn',
+        },
+      }),
+      error: 'aDifferentError',
+    }),
+    error: 'anError',
+  };
+  t.deepEqual(
+    await hoistCumulusMessageDetails(message),
+    {
+      ...message,
+      providerId: 'abcd',
+      collectionId: 'aName___12',
+      granules: ['a', 'b'],
+      executionArn: 'execArn',
+      stateMachineArn: 'SMArn',
+      status: 'SUCCEEDED',
+      time: 'atime',
+    }
+  );
+});
+
+test('getDLAKey gets an appropriate DLA key, handling missing executionArn and time', (t) => {
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+      time: '2024-03-21T15:09:54Z',
+      executionArn: 'execution',
+    }
+  ).startsWith('super-DAAC/dead-letter-archive/sqs/2024-03-21/execution-'));
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+      executionArn: 'execution',
+    }
+  ).startsWith(`super-DAAC/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/execution-`));
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+      time: '2024-03-21T15:09:54Z',
+    }
+  ).startsWith('super-DAAC/dead-letter-archive/sqs/2024-03-21/unknown-'));
+  t.true(getDLAKey(
+    'super-DAAC',
+    {
+    }
+  ).startsWith(`super-DAAC/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/unknown-`));
+});
+
+test('getDLAKey keeps records unique even when identifiers are non-unique or missing', (t) => {
+  t.not(getDLAKey('super-DAAC', {}), getDLAKey('super-DAAC', {}));
+  t.not(
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+    }),
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+    })
+  );
+  t.not(
+    getDLAKey('super-DAAC', {
+      execution: 'a',
+    }),
+    getDLAKey('super-DAAC', {
+      execution: 'a',
+    })
+  );
+  t.not(
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+      execution: 'a',
+    }),
+    getDLAKey('super-DAAC', {
+      time: '2024-03-21T15:09:54Z',
+      execution: 'a',
+    })
+  );
 });

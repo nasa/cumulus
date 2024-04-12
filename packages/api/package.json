@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
-    "build": "../../node_modules/.bin/webpack",
+    "build": "node --max-old-space-size=4096 ../../node_modules/.bin/webpack",
     "clean": "git clean -d -x -e node_modules -f",
     "link-api-bin": "sh ./bin/link-api-bin.sh",
     "package": "npm run prepare && npm run build && npm run link-api-bin && npm run build-lambda-zips",
@@ -36,9 +36,9 @@
       "!tests/endpoints/granules/helpers.js",
       "!tests/helpers/**/*.js"
     ],
-    "fail-fast": true,
     "verbose": true,
-    "timeout": "20m"
+    "timeout": "20m",
+    "failFast": true
   },
   "publishConfig": {
     "access": "public"
@@ -70,9 +70,13 @@
     "@cumulus/sftp-client": "18.2.0",
     "@cumulus/types": "18.2.0",
     "@mapbox/dyno": "^1.4.2",
+    "@hapi/boom": "^10.0.0",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
     "aws-sdk": "^2.1492.0",
+    "@aws-sdk/client-sns": "^3.447.0",
+    "@aws-sdk/client-sqs": "^3.447.0",
+    "@aws-sdk/client-lambda": "^3.529.1",
     "aws-serverless-express": "^3.3.5",
     "body-parser": "^1.18.3",
     "commander": "^2.15.0",
@@ -81,7 +85,6 @@
     "deepdash": "^5.3.9",
     "dynamodb-data-types": "^3.0.0",
     "express": "^4.16.4",
-    "express-boom": "^3.0.0",
     "express-promise-router": "^3.0.3",
     "googleapis": "^49.0.0",
     "got": "^11.8.5",
@@ -120,6 +123,7 @@
     }
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.2.0"
+    "@cumulus/test-data": "18.2.0",
+    "aws-sdk-client-mock": "^3.0.1"
   }
 }

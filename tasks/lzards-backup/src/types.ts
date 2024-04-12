@@ -1,3 +1,5 @@
+import { AssumeRoleResponse } from '@cumulus/aws-client/STS';
+
 export interface HandlerInput {
   granules: MessageGranule[],
   [key: string]: unknown
@@ -62,6 +64,6 @@ export interface GetCollectionFunctionParams {
 }
 
 export interface BackupConfig extends HandlerConfig{
-  roleCreds: AWS.STS.AssumeRoleResponse,
+  roleCreds: AssumeRoleResponse,
   authToken: string,
 }

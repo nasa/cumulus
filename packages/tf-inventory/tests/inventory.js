@@ -17,6 +17,12 @@ let ecsStub;
 let ec2Stub;
 let esStub;
 
+/**
+ *
+ * @param {string} sf - Stubbed name of a test resource state file.
+ * @returns { { ecsClusters: string[], ec2Instances: string[], esDomainNames: string[] } } Dummy
+ * resources IDs given the state file name.
+ */
 function resourcesForStateFile(sf) {
   if (sf === 'stateFile1') {
     return {
@@ -76,16 +82,15 @@ test.before(() => {
     });
 
   esStub = sinon.stub(es(), 'listDomainNames')
-    .returns({
-      promise: () =>
-        Promise.resolve({
-          DomainNames: [
-            { DomainName: 'cumulus-es5vpc' },
-            { DomainName: 'cumulus-1-es5vpc' },
-            { DomainName: 'cumulus-2-es5vpc' },
-          ],
-        }),
-    });
+    .returns(
+      Promise.resolve({
+        DomainNames: [
+          { DomainName: 'cumulus-es5vpc' },
+          { DomainName: 'cumulus-1-es5vpc' },
+          { DomainName: 'cumulus-2-es5vpc' },
+        ],
+      })
+    );
 });
 
 test.after.always(() => {
@@ -159,9 +164,9 @@ test('mergeResourceLists correctly merges null or empty entries', (t) => {
     ],
   };
 
-  t.deepEqual(mergeResourceLists(null, sampleResource), sampleResource);
+  t.deepEqual(mergeResourceLists(undefined, sampleResource), sampleResource);
 
-  t.deepEqual(mergeResourceLists(sampleResource, null), sampleResource);
+  t.deepEqual(mergeResourceLists(sampleResource, undefined), sampleResource);
 
   t.deepEqual(mergeResourceLists({}, sampleResource), sampleResource);
 });
