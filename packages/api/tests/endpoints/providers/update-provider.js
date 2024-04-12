@@ -378,7 +378,10 @@ test('put() does not write to PostgreSQL if writing to Elasticsearch fails', asy
   );
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
   const apiProvider = translatePostgresProviderToApiProvider(originalPgRecord);
   const updatedProvider = {
