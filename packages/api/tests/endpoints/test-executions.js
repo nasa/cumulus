@@ -330,7 +330,7 @@ test.serial('CUMULUS-912 GET with pathParameters and with an unauthorized user r
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.serial('GET executions returns list of executions by default', async (t) => {
+test.only('GET executions returns list of executions by default', async (t) => {
   const response = await request(app)
     .get('/executions')
     .set('Accept', 'application/json')
