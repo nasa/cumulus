@@ -18,7 +18,7 @@ const {
   translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
 const CollectionConfigStore = require('@cumulus/collection-config-store');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient, Search } = require('@cumulus/es-client/search');
 const {
   indexCollection,
   deleteCollection,
@@ -113,7 +113,7 @@ async function post(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName
@@ -181,7 +181,7 @@ async function put(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName
@@ -243,7 +243,7 @@ async function del(req, res) {
   const {
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     collectionConfigStore = new CollectionConfigStore(
       process.env.system_bucket,
       process.env.stackName

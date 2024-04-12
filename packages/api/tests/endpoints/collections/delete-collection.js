@@ -446,8 +446,11 @@ test.serial('del() does not remove from PostgreSQL or publish SNS message if rem
   );
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
   };
 
