@@ -997,7 +997,9 @@ test.serial('post() does not write to PostgreSQL if writing to Elasticsearch fai
   const { newRule, testKnex } = t.context;
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const expressRequest = {
@@ -1510,7 +1512,9 @@ test('PATCH does not write to PostgreSQL if writing to Elasticsearch fails', asy
   );
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const updatedRule = {
@@ -1952,8 +1956,10 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     body: updateRule,
     testContext: {
       esClient: {
-        index: () => {
-          throw new Error('ES fail');
+        client: {
+          index: () => {
+            throw new Error('ES fail');
+          },
         },
       },
     },
@@ -2461,7 +2467,9 @@ test('PUT does not write to PostgreSQL if writing to Elasticsearch fails', async
   );
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const updatedRule = {
@@ -2905,8 +2913,10 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     body: updateRule,
     testContext: {
       esClient: {
-        index: () => {
-          throw new Error('ES fail');
+        client: {
+          index: () => {
+            throw new Error('ES fail');
+          },
         },
       },
     },
@@ -3177,9 +3187,12 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
   );
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
+    initializeEsClient: () => Promise.resolve(),
   };
 
   const expressRequest = {
