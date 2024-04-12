@@ -11,7 +11,7 @@ const {
 const {
   upsertExecution,
 } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const {
   getMessageExecutionArn,
   getExecutionUrlFromArn,
@@ -91,7 +91,7 @@ const buildExecutionRecord = ({
 const writeExecutionToES = async (params) => {
   const {
     apiRecord,
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     writeConstraints = true,
   } = params;
   return await upsertExecution({
