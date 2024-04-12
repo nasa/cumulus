@@ -363,10 +363,17 @@ class BaseSearch {
 
 class Search extends BaseSearch {}
 
+const getEsClient = async (host, metrics) => {
+  const esClient = new EsClient(host, metrics);
+  await esClient.initializeEsClient();
+  return esClient;
+};
+
 module.exports = {
   BaseSearch,
   Search,
   EsClient,
+  getEsClient,
   defaultIndexAlias,
   multipleRecordFoundString,
   recordNotFoundString,
