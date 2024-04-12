@@ -125,7 +125,7 @@ const esConfig = async (host, metrics = false) => {
 class EsClient {
   async initializeEsClient() {
     if (!this._esClient) {
-      this._client = new elasticsearch.Client(await esConfig(this.host, this.metrics, undefined));
+      this._client = new elasticsearch.Client(await esConfig(this.host, this.metrics));
     }
     return this._client;
   }

@@ -78,7 +78,6 @@ async function genericRecordUpdate(esClient, id, doc, index, type, parent) {
 
   let actualEsClient;
   if (esClient) {
-    //await esClient.refreshClient();
     actualEsClient = esClient;
   } else {
     const defaultEsClient = new EsClient();
@@ -552,7 +551,6 @@ async function deleteRecord({
   if (ignore) options = { ignore };
 
   await esClient.initializeEsClient();
-  await esClient.refreshClient();
   const deleteResponse = await esClient.client.delete(params, options);
   return deleteResponse.body;
 }
