@@ -1,3 +1,4 @@
+//@ts-check
 /* This code is copied from sat-api-lib library
  * with some alterations.
  * source: https://raw.githubusercontent.com/sat-utils/sat-api-lib/master/libs/search.js
@@ -42,13 +43,17 @@ const getLocalEsHost = () => {
   return `${protocol}://localhost:9200`;
 };
 
+/**
+ * Asynchronously retrieves AWS credentials using the `fromNodeProviderChain` function.
+ */
 const getAwsCredentials = async () => {
   const credentialsProvider = fromNodeProviderChain({
     clientConfig: {
       region: process.env.AWS_REGION,
     },
   });
-  return await credentialsProvider();
+  const creds = await credentialsProvider();
+  return creds;
 };
 
 const esTestConfig = () => ({
@@ -59,7 +64,18 @@ const esTestConfig = () => ({
   },
 });
 
-const esProdConfig = async (host) => {
+/**
+ * Generates a configuration for Elasticsearch in a production environment.
+ *
+ * @param {string | undefined} host - The host URL for the Elasticsearch instance.
+ *  If not provided, the function will use the `ES_HOST` environment variable.
+ * @param {import('@aws-sdk/types').AwsCredentialIdentity | undefined} credentials - The
+ *  AWS credentials for accessing the Elasticsearch instance.
+ * @returns
+ * -  The configuration object for Elasticsearch, including the node address,
+ * AWS connection details, and request timeout.
+ */
+const esProdConfig = (host, credentials) => {
   let node = 'http://localhost:9200';
 
   if (process.env.ES_HOST) {
@@ -67,7 +83,6 @@ const esProdConfig = async (host) => {
   } else if (host) {
     node = `https://${host}`;
   }
-  const credentials = await getAwsCredentials();
   return {
     node,
     ...createEsAmazonConnection({
@@ -96,16 +111,28 @@ const esMetricsConfig = () => {
   };
 };
 
+/**
+ * Asynchronously generates a configuration for Elasticsearch based on the environment
+ * and provided parameters.
+ *
+ * @param {string} [host] - The host URL for the Elasticsearch instance.
+ * @param {boolean} [metrics=false] - A flag indicating whether metrics are enabled.
+ * @returns {Promise<[Object, import('@aws-sdk/types').Credentials | undefined]>} A
+ * promise that resolves to a tuple containing the configuration object and
+ * AWS credentials (if applicable).
+ */
 const esConfig = async (host, metrics = false) => {
   let config;
+  let credentials;
   if (inTestMode() || 'LOCAL_ES_HOST' in process.env) {
     config = esTestConfig();
   } else if (metrics) {
     config = esMetricsConfig();
   } else {
-    config = await esProdConfig(host);
+    credentials = await getAwsCredentials();
+    config = esProdConfig(host, credentials);
   }
-  return config;
+  return [config, credentials];
 };
 
 /**
@@ -113,7 +140,7 @@ const esConfig = async (host, metrics = false) => {
  *
  * @property {string} host - The host URL for the Elasticsearch instance.
  * @property {boolean} metrics - A flag indicating whether metrics are enabled.
- * @property {Object} _client - The Elasticsearch client instance.
+ * @property {elasticsearch.Client} _client - The Elasticsearch client instance.
  *
  * @method constructor - Initializes a new instance of the `EsClient` class.
  * @method initializeEsClient - Initializes the Elasticsearch client (this._client/client)
@@ -123,31 +150,61 @@ const esConfig = async (host, metrics = false) => {
  * @method client - Getter that returns the Elasticsearch client instance.
  */
 class EsClient {
+  /**
+   * Asynchronously initializes the Elasticsearch client if it hasn't been initialized yet.
+   *
+   * @returns {Promise<elasticsearch.Client>} A promise that resolves to an instance of
+   * `elasticsearch.Client`.
+   */
   async initializeEsClient() {
-    if (!this._esClient) {
-      this._client = new elasticsearch.Client(await esConfig(this.host, this.metrics));
+    /** @type {elasticsearch.Client | undefined} */
+    let client = this._client;
+    if (!client) {
+      const [config, credentials] = await esConfig(this.host, this.metrics);
+      if (credentials) {
+        this._awsKeyId = credentials.accessKeyId;
+      }
+      client = new elasticsearch.Client(config);
+      this._client = client;
     }
-    return this._client;
+    return client;
   }
 
+  /**
+   * Asynchronously refreshes the Elasticsearch client if the AWS credentials have changed,
+   * by creating a new Elasticsearch `Client` instance.
+   *
+   * @returns {Promise<void>} A promise that resolves when the client has been refreshed.
+   */
   async refreshClient() {
+    const { host, metrics } = this;
     if (this.metrics) {
       return;
     }
-    const oldKey = this._client.awsAccessKeyId;
+    const oldKey = this._awsKeyId;
     const newCreds = await getAwsCredentials();
     if (oldKey !== newCreds.accessKeyId) {
       logger.info('AWS Credentials updated, updating to new ESClient');
-      this._client = new elasticsearch.Client(
-        await esConfig(this.host, this.metrics)
-      );
+      const [config] = await esConfig(host, metrics); // Removed unused variable _creds
+      this._client = new elasticsearch.Client(config);
     }
   }
 
+  /**
+   * Getter that returns the Elasticsearch client instance.
+   *
+   * @returns {elasticsearch.Client | undefined} The Elasticsearch client instance.
+   */
   get client() {
     return this._client;
   }
 
+  /**
+   * Initializes a new instance of the `EsClient` class.
+   *
+   * @param {string} host - The host URL for the Elasticsearch instance.
+   * @param {boolean} [metrics=false] - A flag indicating whether metrics are enabled.
+   */
   constructor(host, metrics = false) {
     this.host = host;
     this.metrics = metrics;
@@ -159,7 +216,8 @@ class EsClient {
 
 class BaseSearch {
   static async es(host, metrics) {
-    return new elasticsearch.Client(await esConfig(host, metrics));
+    const [config] = await esConfig(host, metrics);
+    return new elasticsearch.Client(config);
   }
 
   async initializeEsClient(host, metrics) {
@@ -363,6 +421,13 @@ class BaseSearch {
 
 class Search extends BaseSearch {}
 
+/**
+ * Asynchronously initializes and returns an instance of `EsClient`.
+ *
+ * @param {string} host - The host URL for the Elasticsearch instance.
+ * @param {boolean} metrics - A flag indicating whether metrics are enabled.
+ * @returns {Promise<EsClient>} A promise that resolves to an instance of `EsClient`.
+ */
 const getEsClient = async (host, metrics) => {
   const esClient = new EsClient(host, metrics);
   await esClient.initializeEsClient();
