@@ -35,10 +35,11 @@ This entry assumes you already have two [Kinesis](https://aws.amazon.com/kinesis
 If you do not have two streams setup, please take a moment to review the [Kinesis documentation](https://aws.amazon.com/documentation/kinesis/) and setup two basic single-shard streams for this example:
 
 Using the "Create Data Stream" button on the [Kinesis Dashboard](https://console.aws.amazon.com/kinesis/home), work through the dialogue.
+See the [Kinesis Stream for Ingest docs](../operator-docs/kinesis-stream-for-ingest.md) for details.
 
 You should be able to quickly use the "Create Data Stream" button on the [Kinesis Dashboard](https://console.aws.amazon.com/kinesis/home), and setup streams that are similar to the following example:
 
-![Screenshot of AWS console page for creating a Kinesis stream](../assets/cnm_create_kinesis_stream.jpg)
+![Screenshot of AWS console page for creating a Kinesis stream](../assets/cnm_create_kinesis_stream_V2.jpg)
 
 Please bear in mind that your `{{prefix}}-lambda-processing` IAM role will need permissions to write to the response stream for this workflow to succeed if you create the Kinesis stream with a dashboard user. If you are using the `cumulus` top-level module for your deployment this should be set properly.
 
@@ -46,6 +47,10 @@ If not, the most straightforward approach is to attach the `AmazonKinesisFullAcc
 s are using, however your environment/security policies may require an approach specific to your deployment environment.
 
 In operational environments it's likely science data providers would typically be responsible for providing a Kinesis stream with the appropriate permissions.
+
+:::note
+Ensure that the data streams created have server-side encryption enabled.
+:::
 
 For more information on how this process works and how to develop a process that will add records to a stream, read the [Kinesis documentation](https://aws.amazon.com/documentation/kinesis/) and the [developer guide](https://docs.aws.amazon.com/streams/latest/dev/introduction.html).
 

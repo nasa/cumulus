@@ -14,11 +14,14 @@ Keep in mind that you should only have to set this up once per ingest stream. Ki
 
     - In your AWS console, go to the `Kinesis` service and click `Create Data Stream`.
     - Assign a name to the stream.
+    - Select `Provisioned` capacity mode
+        - Alternatively select `On-Demand` depending on your needs and [cost analysis](https://aws.amazon.com/kinesis/data-streams/pricing/)
     - Apply a `shard value` of `1`.
-    - Click on `Create Kinesis Stream`.
-    - A status page with stream details display. Once the status is `active` then the stream is ready to use. Keep in mind to record the streamName and StreamARN for later use.
-
-    ![Screenshot of AWS console page for creating a Kinesis stream](../assets/cnm_create_kinesis_stream.jpg)
+    - Click on `Create Data Stream`. A status page with stream details will display.
+    - Click on `Configuration` and then `Edit` next to `Encryption`
+    - Check the `Enable server-side encryption` checkbox and click `Save Changes`
+        - Using the default AWS managed CMK is recommended
+    - Once the status is `active` the stream is ready to use. Record the streamName and StreamARN for later use.
 
 2. Create a Rule
 
