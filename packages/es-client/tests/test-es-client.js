@@ -18,11 +18,7 @@ const setupTestEnvs = () => {
 setupTestEnvs();
 
 const test = require('ava');
-const rewire = require('rewire');
-
-const esSearch = rewire('../search');
-
-const { EsClient } = esSearch;
+const { EsClient } = require('../search');
 
 test.afterEach(() => {
   setupTestEnvs();
