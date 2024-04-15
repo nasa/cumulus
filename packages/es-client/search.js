@@ -178,7 +178,7 @@ class EsClient {
    */
   async refreshClient() {
     const { host, metrics } = this;
-    if (this.metrics || inTestMode() || 'LOCAL_ES_HOST') {
+    if (this.metrics || inTestMode() || process.env.LOCAL_ES_HOST) {
       return;
     }
     const oldKey = this._awsKeyId;
