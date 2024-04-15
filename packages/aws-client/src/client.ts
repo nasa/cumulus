@@ -1,4 +1,3 @@
-import AWS from 'aws-sdk';
 import mem from 'mem';
 
 import { inTestMode, getLocalstackAwsClientOptions } from './test-utils';
@@ -6,8 +5,6 @@ import { AWSClientTypes } from './types';
 import { getServiceIdentifer } from './utils';
 
 const getRegion = () => process.env.AWS_DEFAULT_REGION || process.env.AWS_REGION || 'us-east-1';
-
-AWS.config.setPromisesDependency(Promise);
 
 const buildServiceClient = (Service: any, options?: object) => {
   if (inTestMode()) {
@@ -31,13 +28,11 @@ const getServiceClient = <T extends AWSClientTypes>(
  * Note: The returned service objects are cached, so there will only be one
  *       instance of each service object per process.
  *
- * @param {AWS.Service} Service - an AWS service object constructor function
+ * @param {AWSClientTypes} Service - an AWS service object constructor function
  * @param {string} [version] - the API version to use
  * @param {string} [serviceOptions] - additional options to pass to the service
- *
  * @returns {Function} a function which, when called, will return an instance of an AWS service
  * object
- *
  * @private
  */
 const awsClient = <T extends AWSClientTypes>(
@@ -50,13 +45,7 @@ const awsClient = <T extends AWSClientTypes>(
     ...serviceOptions,
   };
   if (version) options.apiVersion = version;
-  if (inTestMode()) {
-    // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
-    if (AWS.DynamoDB.DocumentClient.serviceIdentifier === undefined) {
-      // @ts-ignore - serviceIdentifier is not part of the public API and may break at any time
-      AWS.DynamoDB.DocumentClient.serviceIdentifier = 'dynamodbclient';
-    }
-  }
+
   return getServiceClient(Service, options);
 };
 

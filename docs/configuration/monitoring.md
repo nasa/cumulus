@@ -51,11 +51,11 @@ As a very simple example, we could create a function that filters CloudWatch log
 
 ```js
 const zlib = require('zlib');
-const aws = require('aws-sdk');
+const { SNS } = require('@aws-sdk/client-sns');
 const { promisify } = require('util');
 
 const gunzip = promisify(zlib.gunzip);
-const sns = new aws.SNS();
+const sns = new SNS();
 
 exports.handler = async (event) => {
   const payload = Buffer.from(event.awslogs.data, 'base64');
