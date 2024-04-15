@@ -147,11 +147,12 @@ const esConfig = async (host, metrics = false) => {
  * if it hasn't been initialized yet.
  * @method refreshClient - Refreshes the Elasticsearch client if the AWS credentials have changed,
  * by creating a new Elasticsearch `Client` instance.
- * @method client - Getter that returns the Elasticsearch client instance.
+ * @method client - Getter that returns the current Elasticsearch Client
  */
 class EsClient {
   /**
-   * Asynchronously initializes the Elasticsearch client if it hasn't been initialized yet.
+   *  Initializes the Elasticsearch client if it hasn't been initialized yet,
+   * fetching AWS credentials if necessary.
    *
    * @returns {Promise<elasticsearch.Client>} A promise that resolves to an instance of
    * `elasticsearch.Client`.
@@ -174,7 +175,7 @@ class EsClient {
    * Asynchronously refreshes the Elasticsearch client if the AWS credentials have changed,
    * by creating a new Elasticsearch `Client` instance.
    *
-   * @returns {Promise<void>} A promise that resolves when the client has been refreshed.
+   * @returns {Promise<void>} A promise that resolves when the credentials have been refreshed.
    */
   async refreshClient() {
     const { host, metrics } = this;
@@ -191,7 +192,7 @@ class EsClient {
   }
 
   /**
-   * Getter that returns the Elasticsearch client instance.
+   * Getter that returns the Elasticsearch client instance if it's been initialized
    *
    * @returns {elasticsearch.Client | undefined} The Elasticsearch client instance.
    */
@@ -214,6 +215,27 @@ class EsClient {
   }
 }
 
+/**
+ * `BaseSearch` is a class for managing certain Cumulus Elasticsearch queries.
+ *
+ * @property {string | undefined} host - The host URL for the Elasticsearch instance.
+ * @property {boolean} metrics - A flag indicating whether metrics are enabled.
+ * @property {EsClient} _esClient - The Elasticsearch client instance.
+ * @property {string | null} type - The type of the Elasticsearch index.
+ * @property {Object} params - The query parameters.
+ * @property {number} size - The number of results to return per page.
+ * @property {number} frm - The starting index for the results.
+ * @property {number} page - The current page number.
+ * @property {string} index - The Elasticsearch index to query.
+ *
+ * @method initializeEsClient - Initializes the EsClient associated with the instance of this class
+ * @method client - Returns the Elasticsearch client instance.
+ * @method constructor - Initializes the `BaseSearch` instance, including the EsClient instance.
+ * @method get - Retrieves a single document by id and/or parentId.
+ * @method exists - Checks if a document exists by id and/or parentId.
+ * @method query - Performs a search query.
+ * @method count - Counts the number of documents in the index
+ */
 class BaseSearch {
   async initializeEsClient(host, metrics) {
     const esClient = new EsClient(host, metrics);
@@ -417,7 +439,7 @@ class BaseSearch {
 class Search extends BaseSearch {}
 
 /**
- * Initializes and returns an instance of `EsClient`.
+ * Initializes and returns an instance of an `EsClient` Class
  *
  * @param {string} host - The host URL for the Elasticsearch instance.
  * @param {boolean} metrics - A flag indicating whether metrics are enabled.
