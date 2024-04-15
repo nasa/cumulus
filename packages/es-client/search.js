@@ -30,8 +30,8 @@ const recordNotFoundString = 'Record not found';
 const logger = new Logger({ sender: '@cumulus/es-client/search' });
 
 /**
- * returns the local address of elasticsearch based on
- * the environment variables set
+ * Returns the local address of elasticsearch based on
+ * environment variables
  *
  * @returns {string} elasticsearch local address
  */
@@ -44,7 +44,7 @@ const getLocalEsHost = () => {
 };
 
 /**
- * Asynchronously retrieves AWS credentials using the `fromNodeProviderChain` function.
+ * Retrieves AWS credentials using the `fromNodeProviderChain` function.
  */
 const getAwsCredentials = async () => {
   const credentialsProvider = fromNodeProviderChain({
@@ -112,7 +112,7 @@ const esMetricsConfig = () => {
 };
 
 /**
- * Asynchronously generates a configuration for Elasticsearch based on the environment
+ * Generates a configuration for Elasticsearch based on the environment
  * and provided parameters.
  *
  * @param {string} [host] - The host URL for the Elasticsearch instance.
