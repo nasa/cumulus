@@ -24,9 +24,7 @@ test.serial('getStackStatus returns the correct stack status', async (t) => {
   const describeStacksResponse = buildDescribeStacksResponse('UPDATE_COMPLETE');
 
   sinon.stub(cfService, 'describeStacks')
-    .returns({
-      promise: () => Promise.resolve(describeStacksResponse),
-    });
+    .returns(Promise.resolve(describeStacksResponse));
 
   const cloudFormationGateway = new CloudFormationGateway(cfService);
 
@@ -43,13 +41,9 @@ test.serial('getStackStatus will retry if a throttling exception is encountered'
 
   sinon.stub(cfService, 'describeStacks')
     .onFirstCall()
-    .returns({
-      promise: () => Promise.reject(throttlingResult),
-    })
+    .returns(Promise.reject(throttlingResult))
     .onSecondCall()
-    .returns({
-      promise: () => Promise.resolve(goodResult),
-    });
+    .returns(Promise.resolve(goodResult));
 
   const cloudFormationGateway = new CloudFormationGateway(cfService);
 

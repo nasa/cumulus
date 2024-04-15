@@ -5,13 +5,14 @@ import range from 'lodash/range';
 import {
   AbortMultipartUploadRequest,
   CompleteMultipartUploadRequest,
+  CompleteMultipartUploadOutput,
   CreateMultipartUploadRequest,
   UploadPartCopyRequest,
 } from '@aws-sdk/client-s3';
 
 import { s3 } from '../services';
 
-export interface CompleteMultipartUploadOutput extends AWS.S3.CompleteMultipartUploadOutput {
+export interface S3CompleteMultipartUploadOutput extends CompleteMultipartUploadOutput {
   ETag: string
 }
 
@@ -57,9 +58,9 @@ export const createMultipartUpload = async (
 
 export const completeMultipartUpload = async (
   params: CompleteMultipartUploadRequest
-): Promise<CompleteMultipartUploadOutput> => {
+): Promise<S3CompleteMultipartUploadOutput> => {
   const result = await s3().completeMultipartUpload(params);
-  return <CompleteMultipartUploadOutput>result;
+  return <S3CompleteMultipartUploadOutput>result;
 };
 
 export const abortMultipartUpload = async (
