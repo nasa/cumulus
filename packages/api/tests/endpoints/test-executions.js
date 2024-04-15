@@ -330,7 +330,7 @@ test.serial('CUMULUS-912 GET with pathParameters and with an unauthorized user r
   assertions.isAuthorizationMissingResponse(t, response);
 });
 
-test.only('GET executions returns list of executions by default', async (t) => {
+test.serial('GET executions returns list of executions by default', async (t) => {
   const response = await request(app)
     .get('/executions')
     .set('Accept', 'application/json')
@@ -565,8 +565,11 @@ test.serial('del() does not remove from PostgreSQL if removing from Elasticsearc
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
   };
 
