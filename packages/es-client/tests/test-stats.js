@@ -47,11 +47,12 @@ test.after.always(async () => {
 });
 
 test.serial('Stats does not return a collection if the collection has no active granules', async (t) => {
+  const { esClient } = t.context;
   const collection = {
     name: randomId('name'),
     version: 1,
   };
-  await indexer.indexCollection(t.context.esClient, collection, t.context.esAlias);
+  await indexer.indexCollection(esClient, collection, t.context.esAlias);
 
   const stats = new Stats({}, undefined, process.env.ES_INDEX);
   const queryResult = await stats.query();
@@ -60,11 +61,12 @@ test.serial('Stats does not return a collection if the collection has no active 
 });
 
 test.serial('Stats returns one granule when a granule is indexed', async (t) => {
+  const { esClient } = t.context;
   const granule = {
     granuleId: randomId('granule'),
     collectionId: constructCollectionId(randomId('name'), 1),
   };
-  await indexer.indexGranule(t.context.esClient, granule, t.context.esAlias);
+  await indexer.indexGranule(esClient, granule, t.context.esAlias);
 
   const stats = new Stats({}, undefined, process.env.ES_INDEX);
   const queryResult = await stats.query();
@@ -73,20 +75,21 @@ test.serial('Stats returns one granule when a granule is indexed', async (t) => 
 });
 
 test.serial('Stats returns correct granule errors', async (t) => {
+  const { esClient } = t.context;
   await Promise.all(
-    range(10).map(() => indexer.indexGranule(t.context.esClient, {
+    range(10).map(() => indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: constructCollectionId(randomId('name'), 1),
     }, t.context.esAlias))
   );
 
   await Promise.all([
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       status: 'failed',
       collectionId: constructCollectionId(randomId('name'), 1),
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       status: 'failed',
       collectionId: constructCollectionId(randomId('name'), 1),
@@ -108,16 +111,18 @@ test.serial('Count returns 0 if there are no granules', async (t) => {
 });
 
 test.serial('Count returns correct granule and collection count', async (t) => {
+  const { esClient } = t.context;
+
   await Promise.all(
     range(12).map(() =>
-      indexer.indexCollection(t.context.esClient, {
+      indexer.indexCollection(esClient, {
         name: randomId('collection'),
         version: 1,
       }, t.context.esAlias))
   );
 
   await Promise.all(
-    range(10).map(() => indexer.indexGranule(t.context.esClient, {
+    range(10).map(() => indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: constructCollectionId(randomId('name'), 1),
       status: 'completed',
@@ -125,12 +130,12 @@ test.serial('Count returns correct granule and collection count', async (t) => {
   );
 
   await Promise.all([
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       status: 'failed',
       collectionId: constructCollectionId(randomId('name'), 1),
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: constructCollectionId(randomId('name'), 1),
       status: 'failed',
@@ -153,26 +158,27 @@ test.serial('Count returns correct granule and collection count', async (t) => {
 });
 
 test.serial('Count returns correct count for date range', async (t) => {
+  const { esClient } = t.context;
   await Promise.all([
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       updatedAt: new Date(2020, 0, 27),
       status: 'completed',
       collectionId: constructCollectionId(randomId('name'), 1),
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       status: 'completed',
       collectionId: constructCollectionId(randomId('name'), 1),
       updatedAt: new Date(),
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: constructCollectionId(randomId('name'), 1),
       status: 'failed',
       updatedAt: new Date(),
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       status: 'failed',
       updatedAt: new Date(2020, 0, 29),
@@ -225,22 +231,22 @@ test.serial('Count returns correct count for date range', async (t) => {
 });
 
 test.serial('Count returns correct count for with custom field specified', async (t) => {
-  // TODO refactor these to use local variable assignment
+  const { esClient } = t.context;
   await Promise.all([
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: 'collection1',
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: 'collection2',
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: 'collection3',
       status: 'failed',
     }, t.context.esAlias),
-    indexer.indexGranule(t.context.esClient, {
+    indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
       collectionId: 'collection1',
       status: 'failed',
