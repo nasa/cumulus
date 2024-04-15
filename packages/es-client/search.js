@@ -215,11 +215,6 @@ class EsClient {
 }
 
 class BaseSearch {
-  static async es(host, metrics) {
-    const [config] = await esConfig(host, metrics);
-    return new elasticsearch.Client(config);
-  }
-
   async initializeEsClient(host, metrics) {
     const esClient = new EsClient(host, metrics);
     this._esClient = esClient;
@@ -422,7 +417,7 @@ class BaseSearch {
 class Search extends BaseSearch {}
 
 /**
- * Asynchronously initializes and returns an instance of `EsClient`.
+ * Initializes and returns an instance of `EsClient`.
  *
  * @param {string} host - The host URL for the Elasticsearch instance.
  * @param {boolean} metrics - A flag indicating whether metrics are enabled.

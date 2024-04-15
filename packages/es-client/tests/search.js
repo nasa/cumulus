@@ -11,7 +11,7 @@ const {
 } = require('../testUtils');
 const esSearch = rewire('../search');
 
-const { Search } = esSearch;
+const { Search, getEsClient } = esSearch;
 
 const localEsHost = process.env.LOCAL_ES_HOST;
 
@@ -46,8 +46,8 @@ test.serial('Configured with Metrics host when metrics property is set', async (
     revertTestModeStub();
   });
 
-  const esClient = await Search.es(undefined, true);
-  const connection = esClient.connectionPool;
+  const esClient = await getEsClient(undefined, true);
+  const connection = esClient.client.connectionPool;
   t.assert(connection);
   t.is(connection.connections.get('https://example.com/').url.origin, 'https://example.com');
   t.is(connection._auth.username, 'test');
@@ -66,8 +66,8 @@ test.serial('Configured with default host when no metrics property is set', asyn
     revertTestModeStub();
   });
 
-  const esClient = await Search.es();
-  const connection = esClient.connectionPool;
+  const esClient = await getEsClient();
+  const connection = esClient.client.connectionPool;
   t.assert(connection);
   t.is(connection.connections.get('https://example.com/').url.origin, 'https://example.com');
 });
