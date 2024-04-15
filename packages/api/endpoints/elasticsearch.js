@@ -71,7 +71,7 @@ async function reindex(req, res) {
     } catch (error) {
       return res.boom.badRequest(`Error creating index ${destIndex}: ${error.message}`);
     }
-  }c
+  }
 
   // reindex
   esClient.client.reindex({
