@@ -45,6 +45,16 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 ### Breaking Changes
 
+- **CUMULUS-3618**
+  - Modified @cumulus/es-client/search.BaseSearch:
+    - Removed static class method `es` in favor of new class for managing
+       elasticsearch clients `EsClient` which allows for credential
+       refresh/reset.  Updated api/es-client code to
+       utilize new pattern.    Users making use of @cumulus/es-client should
+       update their code to make use of the new EsClient create/initialize pattern.
+    - Added helper method getEsClient to encapsulate logic to create/initialize
+      a new EsClient.
+
 - **CUMULUS-2889**
   - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
     client from the `@cumulus/aws-client` package.
