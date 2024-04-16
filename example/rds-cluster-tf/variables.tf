@@ -96,24 +96,12 @@ variable "lambda_memory_sizes" {
   }
 }
 
-variable "enable_upgrade" {
-  description = "Flag to enable use of updated parameter group"
-  type = bool
-  default = false
-}
-
 variable "lambda_timeouts" {
   description = "Configurable map of timeouts for lambdas"
   type = map(number)
   default = {
     ProvisionPostgresDatabase = 600 # cumulus-rds-tf
   }
-}
-
-variable "parameter_group_family" {
-  description = "Database family to use for creating database parameter group"
-  type = string
-  default = "aurora-postgresql13"
 }
 
 variable "parameter_group_family_v13" {
