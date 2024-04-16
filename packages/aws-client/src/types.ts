@@ -1,5 +1,3 @@
-import * as AWS from 'aws-sdk';
-
 import { APIGatewayClient } from '@aws-sdk/client-api-gateway';
 import { CloudWatchEvents } from '@aws-sdk/client-cloudwatch-events';
 import { CloudFormation } from '@aws-sdk/client-cloudformation';
@@ -36,6 +34,4 @@ export type AWSClientTypes =
     CloudWatchEvents |
     CloudFormation |
     Kinesis |
-    KMS |
-    AWS.Service |
-    AWS.DynamoDB.DocumentClient;
+    KMS;

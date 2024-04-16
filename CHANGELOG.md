@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
   [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
-#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
 Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
 
@@ -84,6 +84,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 ### Changed
 
+- **CUMULUS-3570**
+  - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
 - **CUMULUS-3519**
   - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-3609**
@@ -107,6 +109,7 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 - **CUMULUS-2902**
   - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
   the `@aws-sdk/credential-providers` AWS SDK v3 package.
+  - Removes `aws-sdk` from all cumulus packages and replaces usages with AWS SDK v3 clients.
 - **CUMULUS-3456**
   - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
