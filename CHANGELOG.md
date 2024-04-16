@@ -84,6 +84,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 ### Changed
 - **CUMULUS-3669**
   - Updates deployment template to create and utilize an Aurora Serverless V2 PostgreSQL cluster.
+- **CUMULUS-3570**
+  - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
 - **CUMULUS-3519**
   - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-3609**
@@ -107,6 +109,7 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 - **CUMULUS-2902**
   - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
   the `@aws-sdk/credential-providers` AWS SDK v3 package.
+  - Removes `aws-sdk` from all cumulus packages and replaces usages with AWS SDK v3 clients.
 - **CUMULUS-3456**
   - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
