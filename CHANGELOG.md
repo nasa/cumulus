@@ -80,6 +80,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
   - Added user guide on querying dead-letter-archive messages using AWS Athena.
+- **CUMULUS-3700**
+  - Added option to configure EBS volume type for Elasticsearch; default remains `gp2`.
 
 ### Changed
 - **CUMULUS-3570**
