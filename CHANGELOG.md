@@ -76,12 +76,14 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     to granules table
 
 ### Added
+
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
   - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
+
 - **CUMULUS-3519**
   - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-3609**
@@ -147,6 +149,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **CUMULUS-3673**
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
 - **Audit Issues**
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc
