@@ -15,6 +15,14 @@ type AssociateExecutionRequest = {
   executionArn: string
 };
 
+const encodeGranulesURIComponent = (
+  granuleId: string,
+  collectionId: string | undefined
+): string =>
+  (collectionId
+    ? `/granules/${encodeURIComponent(collectionId)}/${encodeURIComponent(granuleId)}`
+    : `/granules/${encodeURIComponent(granuleId)}`); // Fetching a granule without a collectionId is supported but deprecated
+
 /**
  * GET raw response from /granules/{granuleId} or /granules/{collectionId}/{granuleId}
  *
@@ -48,12 +56,7 @@ export const getGranuleResponse = async (params: {
     callback = invokeApi,
   } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = encodeGranulesURIComponent(granuleId, collectionId);
 
   return await callback({
     prefix,
@@ -184,12 +187,7 @@ export const reingestGranule = async (params: {
     callback = invokeApi,
   } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = encodeGranulesURIComponent(granuleId, collectionId);
 
   return await callback({
     prefix: prefix,
@@ -231,12 +229,7 @@ export const removeFromCMR = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, collectionId, callback = invokeApi } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = encodeGranulesURIComponent(granuleId, collectionId);
 
   return await callback({
     prefix: prefix,
@@ -284,12 +277,7 @@ export const applyWorkflow = async (params: {
     callback = invokeApi,
   } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = encodeGranulesURIComponent(granuleId, collectionId);
 
   return await callback({
     prefix: prefix,
@@ -335,12 +323,7 @@ export const deleteGranule = async (params: {
     callback = invokeApi,
   } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = encodeGranulesURIComponent(granuleId, collectionId);
 
   return await callback({
     prefix: prefix,
@@ -382,12 +365,7 @@ export const moveGranule = async (params: {
     callback = invokeApi,
   } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = encodeGranulesURIComponent(granuleId, collectionId);
 
   return await callback({
     prefix: prefix,
@@ -511,12 +489,14 @@ export const replaceGranule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
 
+  const path = encodeGranulesURIComponent(body.granuleId, body.collectionId);
+
   return await callback({
     prefix,
     payload: {
       httpMethod: 'PUT',
       resource: '/{proxy+}',
-      path: `/granules/${body.collectionId}/${body.granuleId}`,
+      path,
       headers: {
         'Content-Type': 'application/json',
         'Cumulus-API-Version': '2',
@@ -549,12 +529,7 @@ export const updateGranule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, granuleId, collectionId, body, callback = invokeApi } = params;
 
-  let path = `/granules/${collectionId}/${granuleId}`;
-
-  // Fetching a granule without a collectionId is supported but deprecated
-  if (!collectionId) {
-    path = `/granules/${granuleId}`;
-  }
+  const path = encodeGranulesURIComponent(granuleId, collectionId);
 
   return await callback({
     prefix,
@@ -587,12 +562,14 @@ export const associateExecutionWithGranule = async (params: {
 }): Promise<ApiGatewayLambdaHttpProxyResponse> => {
   const { prefix, body, callback = invokeApi } = params;
 
+  const path = encodeGranulesURIComponent(body.granuleId, undefined);
+
   return await callback({
     prefix,
     payload: {
       httpMethod: 'POST',
       resource: '/{proxy+}',
-      path: `/granules/${body.granuleId}/executions`,
+      path: `${path}/executions`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     },
