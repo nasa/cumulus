@@ -10,7 +10,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",

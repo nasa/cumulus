@@ -10,7 +10,7 @@
     "directory": "tasks/test-processing"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "../../node_modules/.bin/webpack",
