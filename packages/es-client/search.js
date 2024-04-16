@@ -188,6 +188,7 @@ class EsClient {
       logger.info('AWS Credentials updated, updating to new ESClient');
       const [config] = await esConfig(host, metrics); // Removed unused variable _creds
       this._client = new elasticsearch.Client(config);
+      this._awsKeyId = newCreds.accessKeyId;
     }
   }
 
