@@ -6,7 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### FIXED
+### Added
+
+- **CUMULUS-3700**
+  - Added option to configure EBS volume type for Elasticsearch; default remains `gp2`.
+
+### Fixed
 
 - **CUMULUS-3807**
   - Pinned @aws-sdk/client-s3 to 3.614 to address timeout/bug in s3().listObjectsV2
@@ -64,7 +69,7 @@ of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 #### CUMULUS-3779 async_operations Docker image version upgrade
-  
+
 The `async-operation` Docker image has been updated to support Node v20 and `aws-sdk` v3. Users of the image will need
 to update to at least [async-operations:52](https://hub.docker.com/layers/cumuluss/async-operation/52/images/sha256-78c05f9809c29707f9da87c0fc380d39a71379669cbebd227378c8481eb11c3a?context=explore).
 
