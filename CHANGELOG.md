@@ -75,14 +75,19 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
 
-### Add
-
+### Added
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+- **CUMULUS-3616**
+  - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
 - **lkfjlk**
   - dla guarantees de-nested SQS message bodies, preferring outermost metadata as found.
+- **CUMULUS-3570**
+  - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
 - **CUMULUS-3609**
   - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
   - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
@@ -101,6 +106,10 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Updated STS code to AWS SDK v3.
 - **CUMULUS-2898**
   - Update Step Functions code to AWS SDK v3
+- **CUMULUS-2902**
+  - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
+  the `@aws-sdk/credential-providers` AWS SDK v3 package.
+  - Removes `aws-sdk` from all cumulus packages and replaces usages with AWS SDK v3 clients.
 - **CUMULUS-3456**
   - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
@@ -114,7 +123,7 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     connections to the database, and is intended to help enforce security
     compliance rules.  This update can be opted-out by supplying a non-default
     `db_parameters` set in the terraform configuration.
-- **CUMULUS-3245**
+- **CUMULUS-3425**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
@@ -143,6 +152,9 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **Audit Issues**
+  - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
+    updating babel packages and .babelrc
 
 ## [v18.2.0] 2023-02-02
 

@@ -96,3 +96,50 @@ Step Function Execution Status Change (detail) [here](https://docs.aws.amazon.co
     redriveStatusReason: [string],
 }
 ```
+
+## Search and View Dead Letter Archive Messages
+
+[Amazon Athena](https://docs.aws.amazon.com/athena/latest/ug/what-is.html) is a powerful serverless query service that allows us
+to analyze data directly from Amazon S3 using standard SQL. One of the key features of Athena is its support for partition
+projection. [Partition projection](https://docs.aws.amazon.com/athena/latest/ug/partition-projection.html) allows us to define a
+virtual partitioning scheme for our data stored in Amazon S3 without physically partitioning the data.
+
+We have provided an AWS Glue Catalog database, an AWS Glue Catalog table and an example query for querying S3 DLA messages.
+Our AWS Glue Catalog table `<prefix>_dla_glue_table` defines partition projection for `eventdate` key which corresponds
+to `date` folder under Dead Letter Archive S3 storage location.
+
+**Note:** `<prefix>` is your stack name with dash replaced by underscore
+
+### Procedure
+
+1. Navigate to AWS Athena Console:
+
+    Launch query editor to `Query your data with Trino SQL`.
+
+    Choose Workgroup `<prefix>_athena_workgroup` from the workgroup drop down menu and acknowledge `Workgroup <prefix>_athena_workgroup settings`.
+
+    The `Saved queries` tab should have an example query `<prefix>_athena_test_query`, click it to open.
+
+    Select the appropriate database `<prefix>_glue_database` from the Database dropdown menu and run the query.
+
+2. Write and Run the Query:
+
+    When the query includes the partition key `eventdate`, the query on the table will be executed using `partition projection`
+    settings and would result in faster results by directly scanning the folder and files based on the partition information
+    provided in the query.
+
+    In the following query, the data is filtered based on the eventdate partition key and a specific value in the granules column.
+    `$path` returns the S3 file location for the data in a table row.
+
+    ```sql
+    select "$path",
+        *
+    from <prefix>_dla_glue_table
+    where eventdate between '2024-03-10' and '2024-03-15'
+        and contains(
+            granules,
+            'MOD09GQ.A5039420.mQk0tM.006.9370766211793'
+        )
+    ```
+
+    See `[SQL reference for Athena](https://docs.aws.amazon.com/athena/latest/ug/ddl-sql-reference.html)` for the complete SQL guide.

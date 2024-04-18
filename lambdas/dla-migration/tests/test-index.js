@@ -51,7 +51,7 @@ test.serial('updateDLAFile updates existing files to new structure', async (t) =
     bucket,
     sourcePath,
     {
-      body: JSON.stringify({
+      Body: JSON.stringify({
         time: '2024-03-21T15:09:54Z',
         detail: {
           executionArn: 'abcd',
@@ -83,7 +83,7 @@ test.serial('updateDLAFile updates existing files to new structure', async (t) =
   t.deepEqual(
     await getJsonS3Object(bucket, actualTargetPath),
     {
-      body: JSON.stringify({
+      Body: JSON.stringify({
         time: '2024-03-21T15:09:54Z',
         detail: {
           executionArn: 'abcd',
@@ -188,7 +188,7 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
     return putJsonS3Object(
       bucket,
       filePath,
-      { body: JSON.stringify(sampleObject) }
+      { Body: JSON.stringify(sampleObject) }
     );
   }));
 
@@ -211,9 +211,9 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
     expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))
   );
 
-  capturedFiles = fileContents.map((content) => JSON.parse(content.body).detail.executionArn).sort();
+  capturedFiles = fileContents.map((content) => JSON.parse(content.Body).detail.executionArn).sort();
   /* we've set executionArn to be our file ID, that these come from the expected input files */
-  t.deepEqual(expectedCapturedFiles, fileContents.map((content) => JSON.parse(content.body).detail.executionArn).sort());
+  t.deepEqual(expectedCapturedFiles, fileContents.map((content) => JSON.parse(content.Body).detail.executionArn).sort());
 
   /* check that metadata has been captured and hoisted */
   fileContents.forEach((content) => {
@@ -222,7 +222,7 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
       stableMetadata
     );
     t.is(
-      JSON.parse(content.body).detail.executionArn,
+      JSON.parse(content.Body).detail.executionArn,
       content.executionArn
     );
   });
@@ -244,7 +244,7 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   fileContents = await Promise.all(
     expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))
   );
-  capturedFiles = fileContents.map((content) => JSON.parse(content.body).detail.executionArn).sort();
+  capturedFiles = fileContents.map((content) => JSON.parse(content.Body).detail.executionArn).sort();
   t.deepEqual(expectedCapturedFiles, capturedFiles);
 
   fileContents.forEach((content) => {
@@ -253,7 +253,7 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
       stableMetadata
     );
     t.is(
-      JSON.parse(content.body).detail.executionArn,
+      JSON.parse(content.Body).detail.executionArn,
       content.executionArn
     );
   });
@@ -271,7 +271,7 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
   fileContents = await Promise.all(
     expectedOutputFiles.map((filePath) => getJsonS3Object(bucket, filePath))
   );
-  capturedFiles = fileContents.map((content) => JSON.parse(content.body).detail.executionArn).sort();
+  capturedFiles = fileContents.map((content) => JSON.parse(content.Body).detail.executionArn).sort();
 
   t.deepEqual(expectedCapturedFiles, capturedFiles);
 
@@ -281,7 +281,7 @@ test.serial('updateDLABatch acts upon a batch of files under a prefix, and skips
       stableMetadata
     );
     t.is(
-      JSON.parse(content.body).detail.executionArn,
+      JSON.parse(content.Body).detail.executionArn,
       content.executionArn
     );
   });
@@ -326,13 +326,13 @@ test.serial('updateDLABatch handles bad inputs gracefully', async (t) => {
     return putJsonS3Object(
       bucket,
       filePath,
-      { body: JSON.stringify(sampleObject) }
+      { Body: JSON.stringify(sampleObject) }
     );
   }));
   await putJsonS3Object(
     bucket,
     'a/bad.json',
-    { body: '{"jlke:d}' }
+    { Body: '{"jlke:d}' }
   );
   const ret = await updateDLABatch(bucket, 'a');
   t.is(ret.length, 4);
