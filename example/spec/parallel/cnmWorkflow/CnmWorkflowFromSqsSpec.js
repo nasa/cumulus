@@ -34,9 +34,10 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForTestSfForRecord } = require('../../helpers/kinesisHelpers');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const {
   loadConfig,
@@ -71,6 +72,7 @@ const s3data = [
   '@cumulus/test-data/granules/ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc',
 ];
 
+/** */
 async function cleanUp() {
   setProcessEnvironment(config.stackName, config.bucket);
   console.log(`\nDeleting rule ${ruleOverride.name}`);
@@ -79,7 +81,7 @@ async function cleanUp() {
   await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
   await removePublishedGranule({ prefix: config.stackName,
     granuleId,
-    collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+    collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
@@ -240,7 +242,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
             {
               prefix: config.stackName,
               granuleId,
-              collectionId: encodedConstructCollectionId(record.collection, record.product.dataVersion),
+              collectionId: constructCollectionId(record.collection, record.product.dataVersion),
             },
             'completed'
           );
