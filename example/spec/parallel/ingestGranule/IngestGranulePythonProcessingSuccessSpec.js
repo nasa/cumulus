@@ -17,7 +17,7 @@ const {
 } = require('@cumulus/api-client/providers');
 
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 
 const {
@@ -90,7 +90,7 @@ describe('The TestPythonProcessing workflow', () => {
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
       pdrFilename = inputPayload.pdr.name;
       const granuleId = inputPayload.granules[0].granuleId;
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
 
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>

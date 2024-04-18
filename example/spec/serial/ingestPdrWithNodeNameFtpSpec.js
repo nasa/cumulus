@@ -28,7 +28,7 @@ const {
 } = require('@cumulus/integration-tests');
 
 const { buildFtpProvider } = require('../helpers/Providers');
-const { encodedConstructCollectionId } = require('../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
   createTestDataPath,
@@ -356,7 +356,7 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
-              const newCollectionId = encodedConstructCollectionId(addedCollection.name, addedCollection.version);
+              const newCollectionId = constructCollectionId(addedCollection.name, addedCollection.version);
               await waitForApiStatus(
                 getGranule,
                 {

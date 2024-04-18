@@ -55,7 +55,7 @@ const {
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 const { getPdr } = require('@cumulus/api-client/pdrs');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
