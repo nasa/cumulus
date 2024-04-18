@@ -96,6 +96,7 @@ resource "aws_rds_cluster" "cumulus" {
 
   lifecycle {
     ignore_changes = [engine_version]
+    prevent_destroy = true
   }
 }
 
@@ -107,7 +108,7 @@ resource "aws_rds_cluster_instance" "cumulus" {
   engine             = aws_rds_cluster.cumulus.engine
   engine_version     = aws_rds_cluster.cumulus.engine_version
 
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
+  lifecycle {
+    prevent_destroy = true
+  }
 }
