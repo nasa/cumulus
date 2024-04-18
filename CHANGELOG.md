@@ -82,6 +82,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
+- **CUMULUS-3669**
+  - Updates deployment template to create and utilize an Aurora Serverless V2 PostgreSQL cluster.
 - **CUMULUS-3570**
   - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
 - **CUMULUS-3519**

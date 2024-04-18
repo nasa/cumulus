@@ -1,9 +1,10 @@
-prefix              = "prefix"
-db_admin_username   = "changethisuser"
-db_admin_password   = "changethispassword"
-region              = "us-east-1"
-vpc_id              = "vpc_id"
-subnets             = ["subnet-some-subnet-1", "subnet-some-subnet-in-another-az-2"]
-deletion_protection = false
-cluster_identifier  = "some_cluster"
-tags                = { "Deployment" = "some_deployment_identifier" }
+prefix                 = "prefix"
+db_admin_username      = "changethisuser"
+db_admin_password      = "changethispassword"
+region                 = "us-east-1"
+vpc_id                 = "vpc_id"
+subnets                = ["subnet-some-subnet-1", "subnet-some-subnet-in-another-az-2"]
+deletion_protection    = false
+cluster_identifier     = "some_cluster"
+cluster_instance_count = 1
+tags                   = { "Deployment" = "some_deployment_identifier" }

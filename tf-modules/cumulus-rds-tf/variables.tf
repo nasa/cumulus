@@ -91,22 +91,10 @@ variable "engine_version" {
   default     = "13.12"
 }
 
-variable "parameter_group_family" {
-  description = "Database family to use for creating database parameter group"
-  type = string
-  default = "aurora-postgresql11"
-}
-
 variable "parameter_group_family_v13" {
   description = "Database family to use for creating database parameter group under postgres 13 upgrade conditions"
   type = string
   default = "aurora-postgresql13"
-}
-
-variable "enable_upgrade" {
-  description = "Flag to enable use of updated parameter group for postgres v13"
-  type = bool
-  default = true
 }
 
 variable "max_capacity" {
@@ -117,6 +105,16 @@ variable "max_capacity" {
 variable "min_capacity" {
   type = number
   default = 2
+}
+
+variable "cluster_instance_count" {
+  description = "Number of instances to create inside of the cluster"
+  type = number
+  default = 1
+  validation {
+    condition = var.cluster_instance_count >= 1 && var.cluster_instance_count <= 16
+    error_message = "Variable cluster_instance_count should be between 1 and 16."
+  }
 }
 
 ### Required for user/database provisioning
