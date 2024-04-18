@@ -13,11 +13,11 @@ const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForGranuleAndDelete } = require('../../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { deleteProvidersAndAllDependenciesByHost } = require('../../helpers/Providers');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   createTimestampedTestId,

@@ -27,8 +27,8 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
-const { buildFtpProvider } = require('../helpers/Providers');
 const { constructCollectionId } = require('@cumulus/message/Collections');
+const { buildFtpProvider } = require('../helpers/Providers');
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
   createTestDataPath,

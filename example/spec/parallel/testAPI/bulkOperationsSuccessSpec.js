@@ -104,7 +104,7 @@ describe('POST /granules/bulk', () => {
           Body: 'asdf',
         });
 
-        collectionId = encodedConstructCollectionId(collection.name, collection.version);
+        collectionId = constructCollectionId(collection.name, collection.version);
         granuleId = randomId('granule-id-');
         console.log('granuleId', granuleId);
 
