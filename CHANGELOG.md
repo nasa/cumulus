@@ -121,7 +121,7 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     connections to the database, and is intended to help enforce security
     compliance rules.  This update can be opted-out by supplying a non-default
     `db_parameters` set in the terraform configuration.
-- **CUMULUS-3245**
+- **CUMULUS-3425**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
