@@ -115,6 +115,65 @@ describe('when a bad record is ingested', () => {
     expect(parsed.granules).toEqual(['a']);
     expect(parsed.providerId).toEqual('abcd');
     expect(parsed.error).toEqual('UnmetRequirementsError: Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
+  });
+  it('yields a message to the DLA which can be handled correctly by process-s3-dead-letter-archive', async() => {
+    executionArn = `execution-${randomString(16)}`;
+    const { $metadata } = await lambda().send(new InvokeCommand({
+      FunctionName: `${stackName}-sfEventSqsToDbRecords`,
+      InvocationType: 'RequestResponse',
+      Payload: JSON.stringify({
+        env: {},
+        Records: [{
+          Body: JSON.stringify({
+            time: '2024-03-11T18:58:27Z',
+            detail: {
+              executionArn: executionArn,
+              stateMachineArn: '1234',
+              status: 'RUNNING',
+              input: JSON.stringify({
+                meta: {
+                  collection: {
+                    name: 'A_COLLECTION',
+                    version: '12',
+                  },
+                  provider: {
+                    id: 'abcd',
+                    protocol: 'a',
+                    host: 'b',
+                  },
+                },
+                payload: {
+                  granules: [{ granuleId: 'a' }],
+                },
+              }),
+            },
+          }),
+        }],
+      }),
+    }));
+    if ($metadata.httpStatusCode >= 400) {
+      fail(`lambda invocation to set up failed, code ${$metadata.httpStatusCode}`);
+    }
+    console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
+    const prefix = `${stackName}/dead-letter-archive/sqs/2024-03-11/${executionArn}`;
+    let failedMessageS3Key;
+    try {
+      await expectAsync(waitForListObjectsV2ResultCount({
+        bucket: systemBucket,
+        prefix,
+        desiredCount: 1,
+        interval: 5 * 1000,
+        timeout: 30 * 1000,
+      })).toBeResolved();
+      // fetch key for cleanup
+      const listResults = await listS3ObjectsV2({
+        Bucket: systemBucket,
+        Prefix: prefix,
+      });
+      failedMessageS3Key = listResults[0].Key;
+    } catch (error) {
+      fail(`Did not find expected S3 Object: ${error}`);
+    }
 
     const postRecoverResponse = await postRecoverCumulusMessages(
       {
@@ -125,9 +184,7 @@ describe('when a bad record is ingested', () => {
         },
       }
     );
-    const postRecoverResponseBody = JSON.parse(postRecoverResponse.body);
-
-    const deadLetterRecoveryAsyncOpId = postRecoverResponseBody.id;
+    const deadLetterRecoveryAsyncOpId = JSON.parse(postRecoverResponse.body).id;
     await waitForApiStatus(
       getAsyncOperation,
       {
@@ -150,8 +207,7 @@ describe('when a bad record is ingested', () => {
       prefix: stackName,
       asyncOperationid: deadLetterRecoveryAsyncOpId,
     });
-  });
-
+  })
   it('is sent to the DLA and processed to have expected metadata fields even when data is not found', async () => {
     executionArn = `execution-${randomString(16)}`;
     const { $metadata } = await lambda().send(new InvokeCommand({
