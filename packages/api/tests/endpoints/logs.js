@@ -7,7 +7,6 @@ const {
   recursivelyDeleteS3Bucket,
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { Search } = require('@cumulus/es-client/search');
 const {
   createFakeJwtAuthToken,
   setAuthorizedOAuthUsers,
@@ -27,7 +26,7 @@ let accessTokenModel;
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-test.before(async (t) => {
+test.before(async () => {
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
 
   const username = randomString();
@@ -37,8 +36,6 @@ test.before(async (t) => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-
-  t.context.esClient = await Search.es('fakehost');
 });
 
 test.after.always(async () => {

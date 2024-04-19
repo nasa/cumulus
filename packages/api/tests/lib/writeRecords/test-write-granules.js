@@ -1967,10 +1967,13 @@ test.serial('writeGranulesFromMessage() does not persist records to PostgreSQL/E
   } = t.context;
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('Granules ES error');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('Granules ES error');
+      },
+      delete: () => Promise.resolve(),
     },
-    delete: () => Promise.resolve(),
   };
 
   const [error] = await t.throwsAsync(writeGranulesFromMessage({
@@ -4909,10 +4912,13 @@ test.serial('updateGranuleStatusToQueued() does not update PostgreSQL granule if
   } = t.context;
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('Elasticsearch failure');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('Elasticsearch failure');
+      },
+      delete: () => Promise.resolve(),
     },
-    delete: () => Promise.resolve(),
   };
 
   await writeGranuleFromApi({ ...granule }, knex, esClient, 'Create');
@@ -5022,8 +5028,11 @@ test.serial('updateGranuleStatusToFailed() updates granule status in the databas
     granulePgModel,
   } = t.context;
   const fakeEsClient = {
-    update: () => Promise.resolve(),
-    delete: () => Promise.resolve(),
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => Promise.resolve(),
+      delete: () => Promise.resolve(),
+    },
   };
   granule.status = 'running';
   const snsEventType = 'Update';

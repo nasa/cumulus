@@ -18,7 +18,7 @@ const {
 const { randomString, randomId } = require('@cumulus/common/test-utils');
 const { IndexExistsError } = require('@cumulus/errors');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { Search, defaultIndexAlias } = require('@cumulus/es-client/search');
+const { getEsClient, defaultIndexAlias } = require('@cumulus/es-client/search');
 const mappings = require('@cumulus/es-client/config/mappings.json');
 const startAsyncOperation = require('../../lib/startAsyncOperation');
 
@@ -57,7 +57,7 @@ async function indexData() {
   ];
 
   await Promise.all(rules.map(async (rule) => {
-    await esClient.index({
+    await esClient.client.index({
       index: esIndex,
       type: 'rule',
       id: rule.name,
@@ -65,7 +65,7 @@ async function indexData() {
     });
   }));
 
-  await esClient.indices.refresh();
+  await esClient.client.indices.refresh();
 }
 
 /**
@@ -81,7 +81,7 @@ async function createIndex(indexName, aliasName) {
     index: indexName,
     alias: aliasName,
   });
-  esClient = await Search.es();
+  esClient = await getEsClient();
 }
 
 const testDbName = randomId('elasticsearch');
@@ -117,7 +117,7 @@ test.before(async (t) => {
 
 test.after.always(async (t) => {
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.testKnex,
     knexAdmin: t.context.testKnexAdmin,
@@ -152,22 +152,22 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 
   const aliasName = randomString();
 
-  await esClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: { mappings },
   });
 
-  await esClient.indices.putAlias({
+  await esClient.client.indices.putAlias({
     index: indexName,
     name: aliasName,
   });
 
-  await esClient.indices.create({
+  await esClient.client.indices.create({
     index: otherIndexName,
     body: { mappings },
   });
 
-  await esClient.indices.putAlias({
+  await esClient.client.indices.putAlias({
     index: otherIndexName,
     name: aliasName,
   });
@@ -181,8 +181,8 @@ test.serial('Reindex - multiple aliases found', async (t) => {
 
   t.is(response.body.message, `Multiple indices found for alias ${aliasName}. Specify source index as one of [${otherIndexName}, ${indexName}].`);
 
-  await esClient.indices.delete({ index: indexName });
-  await esClient.indices.delete({ index: otherIndexName });
+  await esClient.client.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: otherIndexName });
 });
 
 test.serial('Reindex - specify a source index that does not exist', async (t) => {
@@ -203,7 +203,7 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
   const indexName = 'source-index';
   const destIndex = randomString();
 
-  await esClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: { mappings },
   });
@@ -236,13 +236,13 @@ test.serial('Reindex - specify a source index that is not aliased', async (t) =>
   }
   /* eslint-enable no-await-in-loop */
 
-  await esClient.indices.delete({ index: indexName });
-  await esClient.indices.delete({ index: destIndex });
+  await esClient.client.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex request returns 400 with the expected message when source index matches destination index.', async (t) => {
   const indexName = randomId('index');
-  await esClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: { mappings },
   });
@@ -255,7 +255,7 @@ test.serial('Reindex request returns 400 with the expected message when source i
     .expect(400);
 
   t.is(response.body.message, `source index(${indexName}) and destination index(${indexName}) must be different.`);
-  await esClient.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: indexName });
 });
 
 test.serial('Reindex request returns 400 with the expected message when source index matches the default destination index.', async (t) => {
@@ -269,7 +269,7 @@ test.serial('Reindex request returns 400 with the expected message when source i
   }
 
   t.teardown(async () => {
-    await esClient.indices.delete({ index: defaultIndexName });
+    await esClient.client.indices.delete({ index: defaultIndexName });
   });
 
   const response = await request(app)
@@ -319,7 +319,7 @@ test.serial('Reindex success', async (t) => {
   t.is(3, indexStatus.primaries.docs.count);
 
   // Validate destination index mappings are correct
-  const fieldMappings = await esClient.indices.getMapping()
+  const fieldMappings = await esClient.client.indices.getMapping()
     .then((mappingsResponse) => mappingsResponse.body);
 
   const sourceMapping = get(fieldMappings, esIndex);
@@ -327,7 +327,7 @@ test.serial('Reindex success', async (t) => {
 
   t.deepEqual(sourceMapping.mappings, destMapping.mappings);
 
-  await esClient.indices.delete({ index: destIndex });
+  await esClient.client.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex - destination index exists', async (t) => {
@@ -365,7 +365,7 @@ test.serial('Reindex - destination index exists', async (t) => {
   }
   /* eslint-enable no-await-in-loop */
 
-  await esClient.indices.delete({ index: destIndex });
+  await esClient.client.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex status, no task running', async (t) => {
@@ -446,7 +446,7 @@ test.serial('Change index - new index does not exist', async (t) => {
 
   t.is(response.body.message, `Change index success - alias ${esAlias} now pointing to ${newIndex}`);
 
-  await esClient.indices.delete({ index: newIndex });
+  await esClient.client.indices.delete({ index: newIndex });
 });
 
 test.serial('Change index - current index same as new index', async (t) => {
@@ -498,15 +498,15 @@ test.serial('Change index', async (t) => {
   t.is(response.body.message,
     `Change index success - alias ${aliasName} now pointing to ${destIndex}`);
 
-  const alias = await esClient.indices.getAlias({ name: aliasName })
+  const alias = await esClient.client.indices.getAlias({ name: aliasName })
     .then((aliasResponse) => aliasResponse.body);
 
   // Test that the only index connected to the alias is the destination index
   t.deepEqual(Object.keys(alias), [destIndex]);
 
-  t.is((await esClient.indices.exists({ index: sourceIndex })).body, true);
+  t.is((await esClient.client.indices.exists({ index: sourceIndex })).body, true);
 
-  await esClient.indices.delete({ index: destIndex });
+  await esClient.client.indices.delete({ index: destIndex });
 });
 
 test.serial('Change index and delete source index', async (t) => {
@@ -541,9 +541,9 @@ test.serial('Change index and delete source index', async (t) => {
 
   t.is(response.body.message,
     `Change index success - alias ${aliasName} now pointing to ${destIndex} and index ${sourceIndex} deleted`);
-  t.is((await esClient.indices.exists({ index: sourceIndex })).body, false);
+  t.is((await esClient.client.indices.exists({ index: sourceIndex })).body, false);
 
-  await esClient.indices.delete({ index: destIndex });
+  await esClient.client.indices.delete({ index: destIndex });
 });
 
 test.serial('Reindex from database - startAsyncOperation is called with expected payload', async (t) => {
@@ -576,7 +576,7 @@ test.serial('Reindex from database - startAsyncOperation is called with expected
     });
   } finally {
     process.env = processEnv;
-    await esClient.indices.delete({ index: indexName });
+    await esClient.client.indices.delete({ index: indexName });
     asyncOperationsStub.restore();
   }
 });
@@ -585,12 +585,12 @@ test.serial('Indices status', async (t) => {
   const indexName = `z-${randomString()}`;
   const otherIndexName = `a-${randomString()}`;
 
-  await esClient.indices.create({
+  await esClient.client.indices.create({
     index: indexName,
     body: { mappings },
   });
 
-  await esClient.indices.create({
+  await esClient.client.indices.create({
     index: otherIndexName,
     body: { mappings },
   });
@@ -603,14 +603,14 @@ test.serial('Indices status', async (t) => {
   t.true(response.text.includes(indexName));
   t.true(response.text.includes(otherIndexName));
 
-  await esClient.indices.delete({ index: indexName });
-  await esClient.indices.delete({ index: otherIndexName });
+  await esClient.client.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: otherIndexName });
 });
 
 test.serial('Current index - default alias', async (t) => {
   const indexName = randomString();
   await createIndex(indexName, defaultIndexAlias);
-  t.teardown(() => esClient.indices.delete({ index: indexName }));
+  t.teardown(() => esClient.client.indices.delete({ index: indexName }));
 
   const response = await request(app)
     .get('/elasticsearch/current-index')
@@ -632,7 +632,7 @@ test.serial('Current index - custom alias', async (t) => {
 
   t.deepEqual(response.body, [indexName]);
 
-  await esClient.indices.delete({ index: indexName });
+  await esClient.client.indices.delete({ index: indexName });
 });
 
 test.serial('request to /elasticsearch/index-from-database endpoint returns 500 if invoking StartAsyncOperation lambda throws unexpected error', async (t) => {
