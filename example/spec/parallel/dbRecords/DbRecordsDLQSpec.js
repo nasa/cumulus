@@ -6,12 +6,20 @@ const { lambda, s3 } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const {
   deleteS3Object,
+  s3ObjectExists,
   listS3ObjectsV2,
   getObject,
   getObjectStreamContents,
 } = require('@cumulus/aws-client/S3');
+const {
+  deleteAsyncOperation,
+  getAsyncOperation,
+} = require('@cumulus/api-client/asyncOperations');
+const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
-
+const { postRecoverCumulusMessages } = require('@cumulus/api-client/deadLetterArchive');
 const { loadConfig } = require('../../helpers/testUtils');
 describe('when a bad record is ingested', () => {
   let stackName;
@@ -24,12 +32,12 @@ describe('when a bad record is ingested', () => {
     stackName = config.stackName;
     systemBucket = config.bucket;
   });
-  afterAll(async () => {
-    await deleteS3Object(
-      systemBucket,
-      failedMessageS3Key
-    );
-  });
+  // afterAll(async () => {
+  //   // await deleteS3Object(
+  //   //   systemBucket,
+  //   //   failedMessageS3Key
+  //   // );
+  // });
   it('is sent to the DLA and processed to have expected metadata fields', async () => {
     executionArn = `execution-${randomString(16)}`;
     const { $metadata } = await lambda().send(new InvokeCommand({
@@ -107,17 +115,38 @@ describe('when a bad record is ingested', () => {
     expect(parsed.providerId).toEqual('abcd');
     expect(parsed.error).toEqual('UnmetRequirementsError: Could not satisfy requirements for writing records to PostgreSQL. No records written to the database.');
 
-    const a = await lambda().send(new InvokeCommand({
-      FunctionName: `${stackName}-processDeadLetterArchive`,
-      InvocationType: 'RequestResponse',
-      Payload: JSON.stringify({
-        bucket: systemBucket,
-        key: prefix,
-      }),
-    }));
-    console.log(a);
-    const buffer = Buffer.concat(a.payload);
-    console.log(buffer.toString('base64'));
+    const postRecoverResponse = await postRecoverCumulusMessages(
+      {
+        prefix: stackName,
+        payload: {
+          bucket: systemBucket,
+          path: failedMessageS3Key,
+        },
+      }
+    );
+    const postRecoverResponseBody = JSON.parse(postRecoverResponse.body);
+
+    const deadLetterRecoveryAsyncOpId = postRecoverResponseBody.id;
+    await waitForApiStatus(
+      getAsyncOperation,
+      {
+        prefix: stackName,
+        asyncOperationId: deadLetterRecoveryAsyncOpId,
+      },
+      'SUCCEEDED'
+    );
+    const postRecoveryFailedKey = failedMessageS3Key.replace('sqs/', 'failed-sqs/');
+    const headObjectResponse = await s3ObjectExists({
+      Bucket: systemBucket,
+      Key: failedMessageS3Key,
+    });
+    console.log('oldobject', failedMessageS3Key, 'exists', headObjectResponse)
+    const headObjectResponse2 = await s3ObjectExists({
+      Bucket: systemBucket,
+      Key: postRecoveryFailedKey,
+    });
+    
+    console.log('newObject', postRecoveryFailedKey, 'exists', headObjectResponse2)
   });
 
   // it('is sent to the DLA and processed to have expected metadata fields even when data is not found', async () => {

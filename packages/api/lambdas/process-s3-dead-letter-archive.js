@@ -46,6 +46,7 @@ const generateNewArchiveKeyForFailedMessage = (failedKey) => {
  */
 const transferUnprocessedMessage = async (deadLetterObject, bucket) => {
   // Save allFailedKeys messages to different location
+  log.error("in here");
   const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterObject.Key);
   try {
     log.info(`Attempting to save messages that failed to process to ${bucket}/${s3KeyForFailedMessage}`);
