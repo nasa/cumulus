@@ -115,7 +115,7 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-unicorn": "^19.0.1",
     "file-loader": "^6.2.0",
-    "got": "^11.8.5",
+    "got": "^14.0.0",
     "hasha": "v5.2.0",
     "html-loader": "^2.1.2",
     "is-ip": "^3.1.0",
