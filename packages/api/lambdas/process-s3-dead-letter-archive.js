@@ -20,7 +20,7 @@ const { writeRecords } = require('./sf-event-sqs-to-db-records');
 const generateNewArchiveKeyForFailedMessage = (failedKey) => {
   log.error('in generateNewArchive');
   try {
-    if (failedKey.contains('sqs/')) {
+    if (failedKey.includes('sqs/')) {
       /* this is the expected path
       * this *should* be called with format
       * `${process.env.stackName}/dead-letter-archive/sqs/${messageId}`
@@ -30,7 +30,7 @@ const generateNewArchiveKeyForFailedMessage = (failedKey) => {
       log.error(`handling sqs case ${failedKey}, ${failedKey.replace('sqs/', 'failed-sqs/')}`);
       return failedKey.replace('sqs/', 'failed-sqs/');
     }
-    if (failedKey.contains('dead-letter-archive/')) {
+    if (failedKey.includes('dead-letter-archive/')) {
       // in case a weird path is passed, hopefully it contains dead-letter-archive/
       return failedKey.replace('failed-dead-letter-archive/');
     }
