@@ -97,6 +97,16 @@ test.serial('EsClient refreshClient() refreshes client credentials upon AWS cred
   t.is(connection[1].accessKeyId, 'NEW_KEY_ID');
 });
 
+test.serial('EsClient refreshClient() does not refresh client credentials if AWS credentials have not changed', async (t) => {
+  const esClient = new EsClient();
+  await esClient.initializeEsClient();
+  const connection = Array.from(esClient.client.transport.connectionPool.connections)[0];
+  t.is(connection[1].accessKeyId, 'ACCESS_KEY');
+  await esClient.refreshClient();
+  const newConnection = Array.from(esClient.client.transport.connectionPool.connections)[0];
+  t.is(newConnection[1].accessKeyId, 'ACCESS_KEY');
+});
+
 test.serial('EsClient is created with credentialed ES client with expected auth/endpoint configuration when in test mode', async (t) => {
   process.env.LOCAL_ES_HOST = 'testLocalHost';
   const esClient = new EsClient();
