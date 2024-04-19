@@ -239,8 +239,7 @@ class EsClient {
  */
 class BaseSearch {
   async initializeEsClient(host, metrics) {
-    const esClient = new EsClient(host, metrics);
-    this._esClient = esClient;
+    this._esClient = new EsClient(host, metrics);
     await this._esClient.initializeEsClient();
   }
 
