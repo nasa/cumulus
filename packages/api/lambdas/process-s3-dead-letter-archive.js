@@ -18,26 +18,20 @@ const { writeRecords } = require('./sf-event-sqs-to-db-records');
  * @returns {string}
  */
 const generateNewArchiveKeyForFailedMessage = (failedKey) => {
-  log.error('in generateNewArchive');
-  try {
-    if (failedKey.includes('sqs/')) {
-      /* this is the expected path
-      * this *should* be called with format
-      * `${process.env.stackName}/dead-letter-archive/sqs/${messageId}`
-      * this path will also handle a call pointed to
-      * `${process.env.stackName}/dead-letter-archive/failed-sqs/${messageId}`
-      * */
-      log.error(`handling sqs case ${failedKey}, ${failedKey.replace('sqs/', 'failed-sqs/')}`);
-      return failedKey.replace('sqs/', 'failed-sqs/');
-    }
-    if (failedKey.includes('dead-letter-archive/')) {
-      // in case a weird path is passed, hopefully it contains dead-letter-archive/
-      return failedKey.replace('failed-dead-letter-archive/');
-    }
-  } catch (error) {
-    log.error('error reported', error);
-    return failedKey.replace(process.env.stackName, `${process.env.stackName}/failed-dead-letter-archive`);
+  if (failedKey.includes('sqs/')) {
+    /* this is the expected path
+    * this *should* be called with format
+    * `${process.env.stackName}/dead-letter-archive/sqs/${messageId}`
+    * this path will also handle a call pointed to
+    * `${process.env.stackName}/dead-letter-archive/failed-sqs/${messageId}`
+    * */
+    return failedKey.replace('sqs/', 'failed-sqs/');
   }
+  if (failedKey.includes('dead-letter-archive/')) {
+    // in case a weird path is passed, hopefully it contains dead-letter-archive/
+    return failedKey.replace('failed-dead-letter-archive/');
+  }
+
   // catchall to avoid data loss in case of failure
   return failedKey.replace(process.env.stackName, `${process.env.stackName}/failed-dead-letter-archive`);
 };
@@ -52,7 +46,6 @@ const generateNewArchiveKeyForFailedMessage = (failedKey) => {
  */
 const transferUnprocessedMessage = async (deadLetterObject, bucket) => {
   // Save allFailedKeys messages to different location
-  log.error("in here");
   const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterObject.Key);
   try {
     log.info(`Attempting to save messages that failed to process to ${bucket}/${s3KeyForFailedMessage}`);
@@ -64,7 +57,6 @@ const transferUnprocessedMessage = async (deadLetterObject, bucket) => {
     log.info(`Saved message to S3 s3://${bucket}/${s3KeyForFailedMessage}`);
 
     // Delete failed key from old path
-    log.info(`Attempting to delete message that failed to process from old path ${bucket}/${deadLetterObject.Key}`);
     await deleteS3Object(bucket, deadLetterObject.Key);
     log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterObject.Key}`);
   } catch (error) {
@@ -96,7 +88,6 @@ async function processDeadLetterArchive({
   let continuationToken;
   let allSuccessKeys = [];
   const allFailedKeys = [];
-  log.error(`working with ${bucket}, ${path}`);
   /* eslint-disable no-await-in-loop */
   do {
     listObjectsResponse = await s3().listObjectsV2({
@@ -105,13 +96,11 @@ async function processDeadLetterArchive({
       ContinuationToken: continuationToken,
       MaxKeys: batchSize,
     });
-    log.error(listObjectsResponse);
     continuationToken = listObjectsResponse.NextContinuationToken;
     const deadLetterObjects = listObjectsResponse.Contents || [];
     const promises = await Promise.allSettled(deadLetterObjects.map(
       async (deadLetterObject) => {
         const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
-        log.error(deadLetterMessage);
         const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
         try {
           await writeRecordsFunction({ cumulusMessage, knex });
@@ -168,7 +157,6 @@ async function handler(event) {
     bucket,
     path,
   } = event;
-  log.error("but we're trying to call this at all");
   return processDeadLetterArchive({ knex, bucket, path });
 }
 
