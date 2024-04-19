@@ -28,8 +28,8 @@ class Stats extends BaseSearch {
   }
 
   async query() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
+    if (!this._esClient) {
+      await this.initializeEsClient(undefined, this.metrics);
     }
 
     // granules
@@ -105,8 +105,8 @@ class Stats extends BaseSearch {
   }
 
   async count() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
+    if (!this._esClient) {
+      await this.initializeEsClient(undefined, this.metrics);
     }
 
     const originalField = this.params.field || 'status';

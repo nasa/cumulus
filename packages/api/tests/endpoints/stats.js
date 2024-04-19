@@ -10,7 +10,7 @@ const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = rewire('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const models = require('../../models');
 const {
@@ -24,6 +24,8 @@ const assertions = require('../../lib/assertions');
 
 const stats = rewire('../../endpoints/stats');
 const getType = stats.__get__('getType');
+
+let esClient;
 
 process.env.AccessTokensTable = randomId('accessTokenTable');
 
@@ -39,14 +41,13 @@ process.env.TOKEN_SECRET = randomId('tokensecret');
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
-let esClient;
 let accessTokenModel;
 let jwtAuthToken;
 
 test.before(async () => {
   // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
-
+  esClient = await getEsClient();
   const username = randomId();
   await setAuthorizedOAuthUsers([username]);
 
@@ -61,8 +62,6 @@ test.before(async () => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await Search.es();
-
   // Index test data - 2 collections, 3 granules
   await Promise.all([
     indexer.indexCollection(esClient, fakeCollectionFactory(), esAlias),
@@ -95,7 +94,7 @@ test.before(async () => {
 
 test.after.always(async () => {
   await Promise.all([
-    esClient.indices.delete({ index: esIndex }),
+    esClient.client.indices.delete({ index: esIndex }),
     await accessTokenModel.deleteTable(),
     s3.recursivelyDeleteS3Bucket(process.env.system_bucket),
   ]);

@@ -18,8 +18,8 @@ class Collection extends BaseSearch {
   }
 
   async getStats(records, ids) {
-    if (!this.client) {
-      this.client = await this.constructor.es();
+    if (!this._esClient) {
+      await this.initializeEsClient();
     }
 
     const aggs = await this.client.search({
@@ -126,9 +126,10 @@ class Collection extends BaseSearch {
    * @returns {Promise<Array<string>>} - list of collection ids with active granules
    */
   async aggregateGranuleCollections() {
-    if (!this.client) {
-      this.client = await this.constructor.es();
+    if (!this._esClient) {
+      await this.initializeEsClient();
     }
+
     // granules
     const searchParams = this._buildSearch();
     delete searchParams.from;

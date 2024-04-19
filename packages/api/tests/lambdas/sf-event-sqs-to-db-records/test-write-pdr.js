@@ -474,8 +474,11 @@ test.serial('writePdr() does not write to PostgreSQL/Elasticsearch if Elasticsea
   cumulusMessage.meta.status = 'completed';
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('PDR ES error');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('PDR ES error');
+      },
     },
   };
 
