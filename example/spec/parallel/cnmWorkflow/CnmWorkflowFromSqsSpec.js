@@ -72,7 +72,6 @@ const s3data = [
   '@cumulus/test-data/granules/ascat_20121029_010301_metopb_00588_eps_o_coa_2101_ovw.l2.nc',
 ];
 
-/** */
 async function cleanUp() {
   setProcessEnvironment(config.stackName, config.bucket);
   console.log(`\nDeleting rule ${ruleOverride.name}`);

@@ -96,7 +96,6 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   let scheduleQueueUrl;
   let failingWorkflowExecution;
 
-  /** */
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
     // delete rule
