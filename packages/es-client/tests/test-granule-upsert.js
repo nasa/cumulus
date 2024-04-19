@@ -30,7 +30,7 @@ test.after.always(async (t) => {
   await cleanupTestIndex(t.context);
 });
 
-test.serial('upsertGranule removes deleted granule record', async (t) => {
+test('upsertGranule removes deleted granule record', async (t) => {
   const { esIndex, esClient } = t.context;
 
   const granule = {
