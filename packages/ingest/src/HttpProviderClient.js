@@ -4,7 +4,7 @@ const fs = require('fs');
 const https = require('https');
 const isIp = require('is-ip');
 const { basename } = require('path');
-const { pipeline } = require('stream');
+const { pipeline } = require('node:stream/promises');
 const Crawler = require('simplecrawler');
 const got = require('got');
 const { CookieJar } = require('tough-cookie');
@@ -315,9 +315,9 @@ class HttpProviderClient {
 
     const remoteUrl = buildURL(options);
     got.stream.options = options;
-    await promisify(pipeline)(
+    await pipeline(
       fs.createReadStream(localPath),
-      await got.stream.post(remoteUrl),
+      got.stream.post(remoteUrl),
       new stream.PassThrough()
     );
 
