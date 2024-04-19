@@ -1,5 +1,3 @@
-// TODO - rewrite using test context
-
 'use strict';
 
 const test = require('ava');
