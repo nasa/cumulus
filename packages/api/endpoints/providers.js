@@ -16,7 +16,7 @@ const {
   ValidationError,
 } = require('@cumulus/errors');
 const Logger = require('@cumulus/logger');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient, Search } = require('@cumulus/es-client/search');
 const { indexProvider, deleteProvider } = require('@cumulus/es-client/indexer');
 const { removeNilProperties } = require('@cumulus/common/util');
 
@@ -75,7 +75,7 @@ async function post(req, res) {
   const {
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const apiProvider = req.body;
@@ -125,7 +125,7 @@ async function put(req, res) {
   const {
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { params: { id }, body } = req;
@@ -177,7 +177,7 @@ async function del(req, res) {
   const {
     providerPgModel = new ProviderPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { id } = req.params;

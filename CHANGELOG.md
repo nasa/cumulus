@@ -45,6 +45,16 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 ### Breaking Changes
 
+- **CUMULUS-3618**
+  - Modified @cumulus/es-client/search.BaseSearch:
+    - Removed static class method `es` in favor of new class for managing
+       elasticsearch clients `EsClient` which allows for credential
+       refresh/reset.  Updated api/es-client code to
+       utilize new pattern.    Users making use of @cumulus/es-client should
+       update their code to make use of the new EsClient create/initialize pattern.
+    - Added helper method getEsClient to encapsulate logic to create/initialize
+      a new EsClient.
+
 - **CUMULUS-2889**
   - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
     client from the `@cumulus/aws-client` package.
@@ -123,7 +133,7 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     connections to the database, and is intended to help enforce security
     compliance rules.  This update can be opted-out by supplying a non-default
     `db_parameters` set in the terraform configuration.
-- **CUMULUS-3245**
+- **CUMULUS-3425**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
@@ -145,6 +155,13 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 ### Fixed
 
+- **CUMULUS-3618**
+  - Fixed `@cumulus/es-client` credentialing issue in instance where
+    lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
+    refresh behavior to `@cumulus/es-client/indexer.genericRecordUpdate` to ensure record indexing
+    does not fail in those instances.
+  - Updated `index-from-database` lambda to utilize updated es-client to prevent
+    credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
 - **CUMULUS-3587**

@@ -565,8 +565,11 @@ test.serial('del() does not remove from PostgreSQL if removing from Elasticsearc
   t.teardown(async () => await cleanupExecutionTestRecords(t.context, { arn }));
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
   };
 

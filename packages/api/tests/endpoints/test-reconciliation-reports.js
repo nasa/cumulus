@@ -19,9 +19,7 @@ const {
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = require('@cumulus/es-client/indexer');
-const {
-  Search,
-} = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const startAsyncOperation = require('../../lib/startAsyncOperation');
 const {
@@ -66,7 +64,7 @@ let fakeReportRecords = [];
 
 test.before(async () => {
   // create esClient
-  esClient = await Search.es('fakehost');
+  esClient = await getEsClient('fakehost');
 
   const esAlias = randomId('esalias');
   process.env.ES_INDEX = esAlias;
@@ -130,7 +128,7 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await reconciliationReportModel.deleteTable();
-  await esClient.indices.delete({
+  await esClient.client.indices.delete({
     index: esIndex,
   });
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
