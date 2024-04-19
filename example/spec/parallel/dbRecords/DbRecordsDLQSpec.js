@@ -15,12 +15,13 @@ const {
   deleteAsyncOperation,
   getAsyncOperation,
 } = require('@cumulus/api-client/asyncOperations');
-const {
-  waitForApiStatus,
-} = require('../../helpers/apiUtils');
+
 const { waitForListObjectsV2ResultCount } = require('@cumulus/integration-tests');
 const { postRecoverCumulusMessages } = require('@cumulus/api-client/deadLetterArchive');
 const { loadConfig } = require('../../helpers/testUtils');
+const {
+  waitForApiStatus,
+} = require('../../helpers/apiUtils');
 describe('when a bad record is ingested', () => {
   let stackName;
   let systemBucket;
@@ -145,6 +146,10 @@ describe('when a bad record is ingested', () => {
       Key: postRecoveryFailedKey,
     })).toEqual(true);
     leftoverS3Key = postRecoveryFailedKey;
+    await deleteAsyncOperation({
+      prefix: stackName,
+      asyncOperationid: deadLetterRecoveryAsyncOpId,
+    });
   });
 
   it('is sent to the DLA and processed to have expected metadata fields even when data is not found', async () => {
@@ -171,7 +176,7 @@ describe('when a bad record is ingested', () => {
     }
     console.log(`Waiting for the creation of failed message for execution ${executionArn}`);
     const prefix = `${stackName}/dead-letter-archive/sqs/${moment.utc().format('YYYY-MM-DD')}/${executionArn}`;
-    let failedMessageS3Key
+    let failedMessageS3Key;
     try {
       await expectAsync(waitForListObjectsV2ResultCount({
         bucket: systemBucket,
