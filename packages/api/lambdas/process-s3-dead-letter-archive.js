@@ -7,60 +7,52 @@ const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
-const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
+const {
+  unwrapDeadLetterCumulusMessage,
+  getDLAKey,
+} = require('@cumulus/message/DeadLetterMessage');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
-
+/**
+ *
+ * @typedef {import('@cumulus/types/api/dead_letters').DLARecord} DLARecord
+ */
 /**
  * Generates new archive key for unprocessed dead letter message
  *
- * @param {string}   [failedKey] - key of message that failed to process
+ * @param {DLARecord} failedMessage
  * @returns {string}
  */
-const generateNewArchiveKeyForFailedMessage = (failedKey) => {
-  if (failedKey.includes('sqs/')) {
-    /* this is the expected path
-    * this *should* be called with format
-    * `${process.env.stackName}/dead-letter-archive/sqs/${messageId}`
-    * this path will also handle a call pointed to
-    * `${process.env.stackName}/dead-letter-archive/failed-sqs/${messageId}`
-    * */
-    return failedKey.replace('sqs/', 'failed-sqs/');
-  }
-  if (failedKey.includes('dead-letter-archive/')) {
-    // in case a weird path is passed, hopefully it contains dead-letter-archive/
-    return failedKey.replace('failed-dead-letter-archive/');
-  }
-
-  // catchall to avoid data loss in case of failure
-  return failedKey.replace(process.env.stackName, `${process.env.stackName}/failed-dead-letter-archive`);
-};
+const generateNewArchiveKeyForFailedMessage = (failedMessage) => (
+  getDLAKey(process.env.stackName, failedMessage).replace('sqs/', 'failed-sqs/')
+);
 
 /**
  * Transfers unprocessed dead letters in the bucket to new location
  * and deletes dead letters from old archive path
  *
- * @param {string}   [deadLetterObject] - unprocessed dead letter object
+ * @param {string}   [deadLetterObjectKey] - unprocessed dead letter object key
  * @param {string}   [bucket] - S3 bucket
+ * @param {DLARecord}  [deadLetterMessage]
  * @returns {Promise<void>}
  */
-const transferUnprocessedMessage = async (deadLetterObject, bucket) => {
+const transferUnprocessedMessage = async (deadLetterObjectKey, bucket, deadLetterMessage) => {
   // Save allFailedKeys messages to different location
-  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterObject.Key);
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterMessage);
   try {
     log.info(`Attempting to save messages that failed to process to ${bucket}/${s3KeyForFailedMessage}`);
     await S3.s3CopyObject({
       Bucket: bucket,
       Key: s3KeyForFailedMessage,
-      CopySource: `${bucket}/${deadLetterObject.Key}`,
+      CopySource: `${bucket}/${deadLetterObjectKey}`,
     });
     log.info(`Saved message to S3 s3://${bucket}/${s3KeyForFailedMessage}`);
 
     // Delete failed key from old path
-    await deleteS3Object(bucket, deadLetterObject.Key);
-    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterObject.Key}`);
+    await deleteS3Object(bucket, deadLetterObjectKey);
+    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterObjectKey}`);
   } catch (error) {
-    log.error(`Failed to transfer S3 Object s3://${bucket}/${deadLetterObject.Key} due to error: ${error}`);
+    log.error(`Failed to transfer S3 Object s3://${bucket}/${deadLetterObjectKey} due to error: ${error}`);
     throw error;
   }
 };
@@ -109,7 +101,7 @@ async function processDeadLetterArchive({
           log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
           allFailedKeys.push(deadLetterObject.Key);
           log.info('Transferring unprocessed message to new archive location');
-          await transferUnprocessedMessage(deadLetterObject, bucket);
+          await transferUnprocessedMessage(deadLetterObject.Key, bucket, deadLetterMessage);
           throw error;
         }
       }
