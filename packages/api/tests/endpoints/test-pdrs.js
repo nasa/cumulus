@@ -504,8 +504,11 @@ test.serial('del() does not remove from PostgreSQL/S3 if removing from Elasticse
   });
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
   };
 
