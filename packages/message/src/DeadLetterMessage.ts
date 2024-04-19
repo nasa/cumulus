@@ -178,6 +178,6 @@ export const extractDateString = (message: DLARecord): string => (
 
 export const getDLAKey = (stackName: string, message: DLARecord): string => {
   const dateString = extractDateString(message);
-  const execution = message.executionArn || 'unknown';
+  const execution = message.executionArn ? message.executionArn.split(':').pop() : 'unknown';
   return `${getDLARootKey(stackName)}${dateString}/${execution}-${uuid()}`;
 };
