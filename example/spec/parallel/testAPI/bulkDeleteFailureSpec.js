@@ -15,7 +15,7 @@ const {
 } = require('@cumulus/api-client/granules');
 const { createCollection, deleteCollection } = require('@cumulus/api-client/collections');
 const { createExecution, deleteExecution } = require('@cumulus/api-client/executions');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { isValidAsyncOperationId, loadConfig, createTimestampedTestId } = require('../../helpers/testUtils');
 
@@ -63,7 +63,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     granule = fakeGranuleFactoryV2({
       published: true,
       execution: execution.execution,
-      collectionId: encodedConstructCollectionId(collection.name, collection.version),
+      collectionId: constructCollectionId(collection.name, collection.version),
     });
     await createGranule({
       prefix,

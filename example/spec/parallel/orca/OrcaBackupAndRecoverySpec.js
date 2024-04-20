@@ -20,7 +20,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { removeCollectionAndAllDependencies } = require('../../helpers/Collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -100,7 +100,7 @@ describe('The S3 Ingest Granules workflow', () => {
       {
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
-        collectionId: encodedConstructCollectionId(collection.name, collection.version),
+        collectionId: constructCollectionId(collection.name, collection.version),
       },
       'completed'
     );
@@ -168,7 +168,7 @@ describe('The S3 Ingest Granules workflow', () => {
         prefix: config.stackName,
         granules: [{
           granuleId,
-          collectionId: encodedConstructCollectionId(collection.name, collection.version),
+          collectionId: constructCollectionId(collection.name, collection.version),
         }],
         workflowName: recoveryWorkflowName,
       });
@@ -202,7 +202,7 @@ describe('The S3 Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId,
-          collectionId: encodedConstructCollectionId(collection.name, collection.version),
+          collectionId: constructCollectionId(collection.name, collection.version),
 
         },
         'completed'
@@ -277,7 +277,7 @@ describe('The S3 Ingest Granules workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId,
-        collectionId: encodedConstructCollectionId(collection.name, collection.version),
+        collectionId: constructCollectionId(collection.name, collection.version),
         query: { getRecoveryStatus: true },
       });
       expect(granule.granuleId).toEqual(granuleId);

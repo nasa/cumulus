@@ -467,6 +467,8 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
   - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
+- **CUMULUS-3673**
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
 
 ## [v14.1.0] 2023-02-27
 
