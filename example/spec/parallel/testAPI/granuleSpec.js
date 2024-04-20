@@ -27,7 +27,7 @@ const {
   fakeExecutionFactoryV2,
   fakeGranuleFactoryV2,
 } = require('@cumulus/api/lib/testUtils');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -58,7 +58,7 @@ describe('The Granules API', () => {
       prefix = config.stackName;
 
       collection1 = await createCollection(prefix);
-      collectionId = encodedConstructCollectionId(collection1.name, collection1.version);
+      collectionId = constructCollectionId(collection1.name, collection1.version);
 
       executionRecord = omit(fakeExecutionFactoryV2({
         collectionId,
@@ -245,7 +245,7 @@ describe('The Granules API', () => {
       const name = randomId('name');
       const version = randomId('version');
       const badRandomGranuleRecord = fakeGranuleFactoryV2({
-        collectionId: encodedConstructCollectionId(name, version),
+        collectionId: constructCollectionId(name, version),
         execution: undefined,
       });
       try {
@@ -321,7 +321,7 @@ describe('The Granules API', () => {
         fail(beforeAllError);
       }
       collection2 = await createCollection(prefix);
-      const newCollectionId = encodedConstructCollectionId(collection2.name, collection2.version);
+      const newCollectionId = constructCollectionId(collection2.name, collection2.version);
       granule1 = removeNilProperties(fakeGranuleFactoryV2({
         collectionId: newCollectionId,
         published: false,
@@ -333,7 +333,7 @@ describe('The Granules API', () => {
         body: granule1,
       });
       collection3 = await createCollection(prefix);
-      const diffCollectionId = encodedConstructCollectionId(collection3.name, collection3.version);
+      const diffCollectionId = constructCollectionId(collection3.name, collection3.version);
       const granuleWithDiffCollection = {
         ...granule1,
         collectionId: diffCollectionId,
@@ -359,7 +359,7 @@ describe('The Granules API', () => {
         fail(beforeAllError);
       }
       collection4 = await createCollection(prefix);
-      const newCollectionId = encodedConstructCollectionId(collection4.name, collection4.version);
+      const newCollectionId = constructCollectionId(collection4.name, collection4.version);
       invalidModifiedGranule = removeNilProperties(fakeGranuleFactoryV2({
         collectionId: newCollectionId,
         published: false,
@@ -371,7 +371,7 @@ describe('The Granules API', () => {
         body: invalidModifiedGranule,
       });
       collection5 = await createCollection(prefix);
-      const diffCollectionId = encodedConstructCollectionId(collection5.name, collection5.version);
+      const diffCollectionId = constructCollectionId(collection5.name, collection5.version);
       const granuleWithDiffCollection = {
         ...invalidModifiedGranule,
         collectionId: diffCollectionId,

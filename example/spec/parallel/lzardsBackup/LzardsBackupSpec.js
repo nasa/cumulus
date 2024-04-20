@@ -10,7 +10,7 @@ const { deleteCollection } = require('@cumulus/api-client/collections');
 const { lambda } = require('@cumulus/aws-client/services');
 const { putFile } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The Lzards Backup Task ', () => {
@@ -182,6 +182,7 @@ describe('The Lzards Backup Task ', () => {
   });
 
   it('has the expected backup information', () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
     const backupStatus = JSON.parse(new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)).meta.backupStatus;
     console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
     expect(backupStatus[0].status).toBe('COMPLETED');
@@ -189,7 +190,7 @@ describe('The Lzards Backup Task ', () => {
     expect(backupStatus[0].granuleId).toBe(granuleId);
     expect(backupStatus[0].provider).toBe(provider);
     expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
-    expect(backupStatus[0].collectionId).toBe(encodedConstructCollectionId(collection.name, collection.version));
+    expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
   });
 
   describe('The Lzards API Client', () => {
