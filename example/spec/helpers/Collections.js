@@ -126,17 +126,4 @@ const removeCollectionAndAllDependencies = async (params) => {
   }
 };
 
-/**
- * Returns collectionId with version encoded.
- *
- * @param {string} name - collection name
- * @param {string} version - collection version
- * @returns {string}
- */
-const encodedConstructCollectionId = (name, version) => {
-  const encodedVersion = encodeURIComponent(version);
-
-  return constructCollectionId(name, encodedVersion);
-};
-
-module.exports = { removeCollectionAndAllDependencies, encodedConstructCollectionId };
+module.exports = { removeCollectionAndAllDependencies };

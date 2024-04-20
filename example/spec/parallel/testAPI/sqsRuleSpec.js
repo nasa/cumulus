@@ -35,7 +35,7 @@ const { sleep } = require('@cumulus/common');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const { getExecutions } = require('@cumulus/api-client/executions');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { setupTestGranuleForIngest } = require('../../helpers/granuleUtils');
@@ -98,7 +98,7 @@ async function cleanUp() {
     prefix: config.stackName,
     query: {
       fields: ['arn'],
-      collectionId: encodedConstructCollectionId(collection.name, collection.version),
+      collectionId: constructCollectionId(collection.name, collection.version),
     },
   })).body).results;
   await Promise.all(executions.map(
@@ -109,7 +109,7 @@ async function cleanUp() {
   await Promise.all(inputPayload.granules.map(
     (granule) => deleteGranule({ prefix: config.stackName,
       granuleId: granule.granuleId,
-      collectionId: encodedConstructCollectionId(collection.name, collection.version) })
+      collectionId: constructCollectionId(collection.name, collection.version) })
   ));
 
   await apiTestUtils.deletePdr({
@@ -256,7 +256,7 @@ describe('The SQS rule', () => {
             {
               prefix: config.stackName,
               granuleId,
-              collectionId: encodedConstructCollectionId(collection.name, collection.version),
+              collectionId: constructCollectionId(collection.name, collection.version),
             },
             'completed'
           );

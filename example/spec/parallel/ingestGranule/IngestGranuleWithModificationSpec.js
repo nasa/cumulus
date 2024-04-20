@@ -23,7 +23,7 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -79,7 +79,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
       const ingestTime = Date.now() - 1000 * 30;
 
       // Ingest granule the first time
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
       ingestGranuleRule1 = await createOneTimeRule(
         prefix,
         {
@@ -151,7 +151,7 @@ describe('The IngestGranule workflow with a granule re-ingested with the collect
             granules: [
               {
                 granuleId,
-                collectionId: encodedConstructCollectionId(newCollection.name, newCollection.version),
+                collectionId: constructCollectionId(newCollection.name, newCollection.version),
                 version: collection.version,
                 files: [
                   {
