@@ -60,6 +60,7 @@ const writeRecords = async ({
   knex,
   testOverrides = {},
 }) => {
+  log.error('chandling cumulusMessage: ', cumulusMessage)
   const messageCollectionNameVersion = getCollectionNameAndVersionFromMessage(cumulusMessage);
   const messageAsyncOperationId = getMessageAsyncOperationId(cumulusMessage);
   const messageParentExecutionArn = getMessageExecutionParentArn(cumulusMessage);
