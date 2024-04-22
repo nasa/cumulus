@@ -17,15 +17,20 @@ const { writeRecords } = require('./sf-event-sqs-to-db-records');
  *
  * @typedef {import('@cumulus/types/api/dead_letters').DLARecord} DLARecord
  */
+
 /**
  * Generates new archive key for unprocessed dead letter message
- *
+ * @param {string} oldKey
+ * @param {string} stackName
  * @param {DLARecord} failedMessage
  * @returns {string}
  */
-const generateNewArchiveKeyForFailedMessage = (failedMessage) => (
-  getDLAKey(process.env.stackName, failedMessage).replace('sqs/', 'failed-sqs/')
-);
+const generateNewArchiveKeyForFailedMessage = (oldKey, stackName, failedMessage) => {
+  if (oldKey.includes('sqs/')) {
+    return oldKey.replace('sqs/', 'failed-sqs/');
+  }
+  return getDLAKey(stackName, failedMessage).replace('sqs/', 'failed-sqs/');
+};
 
 /**
  * Transfers unprocessed dead letters in the bucket to new location
@@ -38,7 +43,11 @@ const generateNewArchiveKeyForFailedMessage = (failedMessage) => (
  */
 const transferUnprocessedMessage = async (deadLetterObjectKey, bucket, deadLetterMessage) => {
   // Save allFailedKeys messages to different location
-  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterMessage);
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(
+    deadLetterObjectKey,
+    process.env.stackName,
+    deadLetterMessage
+  );
   try {
     log.info(`Attempting to save messages that failed to process to ${bucket}/${s3KeyForFailedMessage}`);
     await S3.s3CopyObject({

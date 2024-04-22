@@ -342,6 +342,32 @@ function fakeCumulusMessageFactory(params = {}) {
   }, params);
 }
 
+function fakeEventBridgeEventFactory(params = {}) {
+  return {
+    time: '2023-01-12',
+    detail: {
+      executionArn: randomId('cumulus-execution-arn'),
+      stateMachineArn: '1234',
+      status: 'RUNNING',
+      input: JSON.stringify(fakeCumulusMessageFactory(params)),
+    },
+  };
+}
+
+function fakeDeadLetterMessageFactory(params = {}) {
+  const eventBridgeEvent = fakeEventBridgeEventFactory(params);
+  return {
+    body: JSON.stringify(eventBridgeEvent),
+    error: 'error',
+    time: eventBridgeEvent.time,
+    status: 'complete',
+    collectionId: 'A_001',
+    providerId: 'B',
+    granules: ['a'],
+    executionArn: eventBridgeEvent.detail.executionArn,
+    stateMachineArn: '123:1234',
+  };
+}
 function fakeOrcaGranuleFactory(options = {}) {
   return {
     providerId: randomId('providerId'),
@@ -651,6 +677,7 @@ const cleanupExecutionTestRecords = async (context, { arn }) => {
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
+  fakeDeadLetterMessageFactory,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,
