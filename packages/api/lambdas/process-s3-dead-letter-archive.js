@@ -26,10 +26,10 @@ const { writeRecords } = require('./sf-event-sqs-to-db-records');
  * @returns {string}
  */
 const generateNewArchiveKeyForFailedMessage = (oldKey, stackName = '', failedMessage = {}) => {
-  if (oldKey.includes('sqs/')) {
-    return oldKey.replace('sqs/', 'failed-sqs/');
+  if (oldKey.includes('dead-letter-archive/sqs/')) {
+    return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
   }
-  return getDLAKey(stackName, failedMessage).replace('sqs/', 'failed-sqs/');
+  return getDLAKey(stackName, failedMessage).replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
 };
 
 /**
