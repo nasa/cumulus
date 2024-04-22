@@ -4,6 +4,7 @@ const fs = require('fs');
 const moment = require('moment');
 const path = require('path');
 const merge = require('lodash/merge');
+const set = require('lodash/set');
 const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
 
@@ -347,11 +348,11 @@ function fakeEventBridgeEventFactory(params = {}) {
   const messageParams = cloneDeep(params);
   let executionArn;
   if ('executionArn' in params) {
-    messageParams.execution_name = params.executionArn.split(/[/:]/).pop();
+    set(messageParams, 'cumulus_meta.execution_name', params.executionArn.split(/[/:]/).pop());
     executionArn = messageParams.executionArn;
     delete messageParams.executionArn;
   } else {
-    executionArn = randomId('cumulus-execution-arn')
+    executionArn = randomId('cumulus-execution-arn');
   }
   return {
     time: '2023-01-12',
