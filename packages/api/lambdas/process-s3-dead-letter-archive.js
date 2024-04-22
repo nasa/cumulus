@@ -104,7 +104,6 @@ async function processDeadLetterArchive({
         const deadLetterMessage = await getJsonS3Object(bucket, deadLetterObject.Key);
         const cumulusMessage = await unwrapDeadLetterCumulusMessage(deadLetterMessage);
         try {
-          console.log('running', writeRecordsFunction.toString(), cumulusMessage);
           await writeRecordsFunction({ cumulusMessage, knex });
           return deadLetterObject.Key;
         } catch (error) {
