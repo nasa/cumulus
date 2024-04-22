@@ -155,7 +155,7 @@ describe('when a bad record is ingested', () => {
       leftoverS3Key = postRecoveryFailedKey;
       await deleteAsyncOperation({
         prefix: stackName,
-        asyncOperationid: deadLetterRecoveryAsyncOpId,
+        asyncOperationId: deadLetterRecoveryAsyncOpId,
       });
     });
   });
