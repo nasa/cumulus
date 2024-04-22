@@ -25,7 +25,11 @@ const { writeRecords } = require('./sf-event-sqs-to-db-records');
  * @param {DLARecord} failedMessage
  * @returns {string}
  */
-const generateNewArchiveKeyForFailedMessage = (oldKey, stackName = '', failedMessage = {}) => {
+const generateNewArchiveKeyForFailedMessage = (
+  oldKey,
+  stackName = process.env.stackName,
+  failedMessage = {}
+) => {
   if (oldKey.includes('dead-letter-archive/sqs/')) {
     return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
   }
