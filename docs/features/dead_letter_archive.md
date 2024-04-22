@@ -142,4 +142,4 @@ to `date` folder under Dead Letter Archive S3 storage location.
         )
     ```
 
-    See `[SQL reference for Athena](https://docs.aws.amazon.com/athena/latest/ug/ddl-sql-reference.html)` for the complete SQL guide.
+    See [SQL reference for Athena](https://docs.aws.amazon.com/athena/latest/ug/ddl-sql-reference.html) for the complete SQL guide.
