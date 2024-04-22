@@ -9,7 +9,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js'
   },
-  externals: ['aws-sdk'],
+  externals: [],
   target: 'node',
   devtool: 'eval-cheap-module-source-map',
   optimization: {

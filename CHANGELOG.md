@@ -8,10 +8,52 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+#### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
+
 - The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
   [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
+
+Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
+
+- `YYYY-MM-DD` subfolders to organize by date
+- new top level fields for simplified search and analysis
+- captured error message
+
+To invoke the Lambda and start the DLA migration, you can use the AWS Console or CLI:
+
+```bash
+aws lambda invoke --function-name $PREFIX-migrationHelperAsyncOperation \
+  --payload $(echo '{"operationType": "DLA Migration"}' | base64) $OUTFILE
+```
+
+- `PREFIX` is your Cumulus deployment prefix.
+- `OUTFILE` (**optional**) is the filepath where the Lambda output will be saved.
+
+The Lambda will trigger an Async Operation and return an `id` such as:
+
+```json
+{"id":"41c9fbbf-a031-4dd8-91cc-8ec2d8b5e31a","description":"Migrate Dead Letter Archive Messages",
+"operationType":"DLA Migration","status":"RUNNING",
+"taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789"}
+```
+
+which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for
+the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view
+the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+
 ### Breaking Changes
+
+- **CUMULUS-3618**
+  - Modified @cumulus/es-client/search.BaseSearch:
+    - Removed static class method `es` in favor of new class for managing
+       elasticsearch clients `EsClient` which allows for credential
+       refresh/reset.  Updated api/es-client code to
+       utilize new pattern.    Users making use of @cumulus/es-client should
+       update their code to make use of the new EsClient create/initialize pattern.
+    - Added helper method getEsClient to encapsulate logic to create/initialize
+      a new EsClient.
 
 - **CUMULUS-2889**
   - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
@@ -43,12 +85,22 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added indexes granules_granule_id_index and granules_provider_collection_cumulus_id_granule_id_index
     to granules table
 
-### Add
+### Added
 
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
+- **CUMULUS-3616**
+  - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
+
+- **CUMULUS-3570**
+  - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
+- **CUMULUS-3519**
+  - Updates SQS and SNS code to AWS SDK V3 Syntax
+- **CUMULUS-3609**
+  - Adds dla-migration lambda to async-operations to be used for updating existing DLA records
+  - Moved hoistCumulusMessageDetails function from write-db-dlq-records-to-s3 lambda to @cumulus/message/DeadLetterMessage
 - **CUMULUS-3613**
   - Updated writeDbRecordsDLQtoS3 lambda to write messages to `YYYY-MM-DD` subfolder of S3 dead letter archive.
 - **CUMULUS-3518**
@@ -64,6 +116,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Updated STS code to AWS SDK v3.
 - **CUMULUS-2898**
   - Update Step Functions code to AWS SDK v3
+- **CUMULUS-2902**
+  - Removes `aws-sdk` from `es-client` package by replacing credential fetching with
+  the `@aws-sdk/credential-providers` AWS SDK v3 package.
+  - Removes `aws-sdk` from all cumulus packages and replaces usages with AWS SDK v3 clients.
 - **CUMULUS-3456**
   - Added stateMachineArn, executionArn, collectionId, providerId, granules, status, time, and error fields to Dead Letter Archive message
   - Added cumulusError field to records in sfEventSqsToDbRecordsDeadLetterQueue
@@ -77,7 +133,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     connections to the database, and is intended to help enforce security
     compliance rules.  This update can be opted-out by supplying a non-default
     `db_parameters` set in the terraform configuration.
-- **CUMULUS-3245**
+- **CUMULUS-3425**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
@@ -93,9 +149,19 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
   - Added suppport for additional kex algorithms in the sftp-client.
 - **CUMULUS-3610**
   - Updated `aws-client`'s ES client to use AWS SDK v3.
+- **CUMULUS-3617**
+  - Added lambdas to migrate DLA messages to `YYYY-MM-DD` subfolder
+  - Updated `@cumulus/aws-client/S3/recursivelyDeleteS3Bucket` to handle bucket with more than 1000 objects.
 
 ### Fixed
 
+- **CUMULUS-3618**
+  - Fixed `@cumulus/es-client` credentialing issue in instance where
+    lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
+    refresh behavior to `@cumulus/es-client/indexer.genericRecordUpdate` to ensure record indexing
+    does not fail in those instances.
+  - Updated `index-from-database` lambda to utilize updated es-client to prevent
+    credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
 - **CUMULUS-3587**
@@ -103,6 +169,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **CUMULUS-3673**
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
+- **Audit Issues**
+  - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
+    updating babel packages and .babelrc
 
 ## [v18.2.0] 2023-02-02
 

@@ -10,7 +10,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const {
   destroyLocalTestDb,
   fakeProviderRecordFactory,
@@ -59,7 +59,7 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  esClient = await Search.es('fakehost');
+  esClient = await getEsClient('fakehost');
   const { knex, knexAdmin } = await generateLocalTestDb(t.context.testDbName, migrationDir);
   t.context.knex = knex;
   t.context.knexAdmin = knexAdmin;
@@ -83,7 +83,7 @@ test.beforeEach(async (t) => {
 test.after.always(async (t) => {
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
   await accessTokenModel.deleteTable();
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
   await destroyLocalTestDb({
     knex: t.context.knex,
     knexAdmin: t.context.knexAdmin,

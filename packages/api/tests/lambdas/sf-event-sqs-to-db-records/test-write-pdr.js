@@ -20,6 +20,12 @@ const {
 const { Search } = require('@cumulus/es-client/search');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
+  CreateTopicCommand,
+  SubscribeCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
+const { ReceiveMessageCommand } = require('@aws-sdk/client-sqs');
+const {
   createTestIndex,
   cleanupTestIndex,
 } = require('@cumulus/es-client/testUtils');
@@ -128,7 +134,7 @@ test.beforeEach(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
   process.env.pdr_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -141,11 +147,11 @@ test.beforeEach(async (t) => {
   });
   const QueueArn = getQueueAttributesResponse.Attributes.QueueArn;
 
-  const { SubscriptionArn } = await sns().subscribe({
+  const { SubscriptionArn } = await sns().send(new SubscribeCommand({
     TopicArn,
     Protocol: 'sqs',
     Endpoint: QueueArn,
-  });
+  }));
 
   t.context.SubscriptionArn = SubscriptionArn;
 });
@@ -153,7 +159,7 @@ test.beforeEach(async (t) => {
 test.afterEach(async (t) => {
   const { QueueUrl, TopicArn } = t.context;
   await sqs().deleteQueue({ QueueUrl });
-  await sns().deleteTopic({ TopicArn });
+  await sns().send(new DeleteTopicCommand({ TopicArn }));
 });
 
 test.after.always(async (t) => {
@@ -468,8 +474,11 @@ test.serial('writePdr() does not write to PostgreSQL/Elasticsearch if Elasticsea
   cumulusMessage.meta.status = 'completed';
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('PDR ES error');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('PDR ES error');
+      },
     },
   };
 
@@ -543,7 +552,8 @@ test.serial('writePdr() does not publish an SNS message if pdr_sns_topic_arn is 
     }),
     { message: /Invalid parameter: TopicArn/ }
   );
-
-  const { Messages } = await sqs().receiveMessage({ QueueUrl, WaitTimeSeconds: 10 });
+  const { Messages } = await sqs().send(
+    new ReceiveMessageCommand({ QueueUrl, WaitTimeSeconds: 10 })
+  );
   t.is(Messages.length, 0);
 });

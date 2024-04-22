@@ -6,6 +6,10 @@ const pWaitFor = require('p-wait-for');
 
 const { createSqsQueues, getSqsQueueMessageCounts } = require('@cumulus/api/lib/testUtils');
 const { sns } = require('@cumulus/aws-client/services');
+const {
+  CreateTopicCommand,
+  DeleteTopicCommand,
+} = require('@aws-sdk/client-sns');
 const { getJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
   deleteQueue,
@@ -30,9 +34,10 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const { waitForTestSfForRecord } = require('../../helpers/kinesisHelpers');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 const {
   loadConfig,
@@ -75,13 +80,13 @@ async function cleanUp() {
   await deleteExecution({ prefix: config.stackName, executionArn: workflowExecution.executionArn });
   await removePublishedGranule({ prefix: config.stackName,
     granuleId,
-    collectionId: encodedConstructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
+    collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
   await Promise.all([
     deleteFolder(config.bucket, testDataFolder),
     deleteQueue(queues.sourceQueueUrl),
     deleteQueue(queues.deadLetterQueueUrl),
-    sns().deleteTopic({ TopicArn: cnmResponseStream }),
+    sns().send(new DeleteTopicCommand({ TopicArn: cnmResponseStream })),
     cleanupCollections(config.stackName, config.bucket, collectionsDir, testSuffix),
     cleanupProviders(config.stackName, config.bucket, providersDir, testSuffix),
   ]);
@@ -180,7 +185,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
 
       // create SNS topic for cnm response
       const snsTopicName = timestampedName(`${config.stackName}_CnmSqsTestTopic`);
-      const { TopicArn } = await sns().createTopic({ Name: snsTopicName });
+      const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: snsTopicName }));
       cnmResponseStream = TopicArn;
       config.cnmResponseStream = cnmResponseStream;
 
@@ -236,7 +241,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
             {
               prefix: config.stackName,
               granuleId,
-              collectionId: encodedConstructCollectionId(record.collection, record.product.dataVersion),
+              collectionId: constructCollectionId(record.collection, record.product.dataVersion),
             },
             'completed'
           );

@@ -16,7 +16,6 @@ module.exports = {
     }
   },
   externals: [
-    'aws-sdk',
     'electron',
     {'formidable': 'url'},
     // See https://github.com/knex/knex/issues/1128 re: webpack configuration

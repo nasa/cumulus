@@ -11,7 +11,7 @@ const {
 const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = rewire('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const models = require('../../../models');
 const {
@@ -53,7 +53,7 @@ test.before(async () => {
   await accessTokenModel.createTable();
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
-  esClient = await Search.es('fakehost');
+  esClient = await getEsClient('fakehost');
 
   await Promise.all([
     indexer.indexCollection(esClient, fakeCollectionFactory({
@@ -91,7 +91,7 @@ test.before(async () => {
 test.after.always(async () => {
   await accessTokenModel.deleteTable();
   await recursivelyDeleteS3Bucket(process.env.system_bucket);
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test('GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
