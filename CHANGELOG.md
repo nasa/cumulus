@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 - The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
   [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
-#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
 Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
 
@@ -86,12 +86,14 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     to granules table
 
 ### Added
+
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
   - Added user guide on querying dead-letter-archive messages using AWS Athena.
 
 ### Changed
+
 - **CUMULUS-3629**
   - dla guarantees de-nested SQS message bodies, preferring outermost metadata as found.
   - dla uses execution Name as filename and ensures no ':' or '/' characters in name
@@ -170,6 +172,8 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **CUMULUS-3673**
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
 - **Audit Issues**
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc

@@ -29,7 +29,7 @@ const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executi
 const { randomString } = require('@cumulus/common/test-utils');
 const { putJsonS3Object, s3ObjectExists, deleteS3Object, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { generateNewArchiveKeyForFailedMessage } = require('@cumulus/api/lambdas/process-s3-dead-letter-archive');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   waitForApiStatus,
@@ -93,7 +93,7 @@ describe('A dead letter record archive processing operation', () => {
         fakeFileFactory({ bucket: systemBucket }),
         fakeFileFactory({ bucket: systemBucket }),
       ];
-      collectionId = encodedConstructCollectionId(testCollection.name, testCollection.version);
+      collectionId = constructCollectionId(testCollection.name, testCollection.version);
       testGranule = fakeGranuleFactoryV2({
         granuleId: `MOD09GQ.${randomString()}.hdf`,
         collectionId,
