@@ -31,6 +31,10 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3547**
   - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
+## Fixed
+- **CUMULUS-3673**
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
+
 ## [v16.1.3] 2024-1-15
 
 Please note changes in 16.1.3 may not yet be released in future versions, as this
@@ -39,7 +43,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 
 ### Changed
 
-- **CUMULUS_3499
+- **CUMULUS_3499**
   - Update AWS-SDK dependency pin to "2.1490" to prevent SQS issue.  Dependency
     pin expected to be changed with the resolution to CUMULUS-2900
 
@@ -467,8 +471,6 @@ Users/clients that do not make use of these endpoints will not be impacted.
 - **CUMULUS-3187**
   - Restructured Earthdata Login class to be individual methods as opposed to a Class Object
   - Removed typescript no-checks and reformatted EarthdataLogin code to be more type friendly
-- **CUMULUS-3673**
-  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
 
 ## [v14.1.0] 2023-02-27
 
@@ -7341,7 +7343,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.3...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.4...HEAD
+[v16.1.4]: https://github.com/nasa/cumulus/compare/v16.1.3...v16.1.4
 [v16.1.3]: https://github.com/nasa/cumulus/compare/v16.1.2...v16.1.3
 [v16.1.2]: https://github.com/nasa/cumulus/compare/v16.1.1...v16.1.2
 [v16.1.1]: https://github.com/nasa/cumulus/compare/v16.0.0...v16.1.1
