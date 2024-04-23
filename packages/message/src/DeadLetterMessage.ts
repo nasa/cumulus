@@ -170,15 +170,24 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
   } as DLARecord; // cast to DLARecord: ts is confused by explicit 'undefined' fields in metadata
 };
 
-export const getDLARootKey = (stackName: string): string => `${stackName}/dead-letter-archive/sqs/`;
-
 export const extractDateString = (message: DLARecord): string => (
   message.time && moment.utc(message.time).isValid() ? moment.utc(message.time).format('YYYY-MM-DD') : moment.utc().format('YYYY-MM-DD')
 );
 
+export const extractFileName = (message: DLARecord): string => {
+  // get token after the last / or :
+  const executionName = message.executionArn ? message.executionArn.split(/[/:]/).pop() : 'unknown';
+  return `${executionName}-${uuid()}`;
+};
+
 export const getDLAKey = (stackName: string, message: DLARecord): string => {
   const dateString = extractDateString(message);
-  // get token after the last / or :
-  const execution = message.executionArn ? message.executionArn.split(/[/:]/).pop() : 'unknown';
-  return `${getDLARootKey(stackName)}${dateString}/${execution}-${uuid()}`;
+  const fileName = extractFileName(message);
+  return `${stackName}/dead-letter-archive/sqs/${dateString}/${fileName}`;
+};
+
+export const getDLAFailureKey = (stackName: string, message: DLARecord): string => {
+  const dateString = extractDateString(message);
+  const fileName = extractFileName(message);
+  return `${stackName}/dead-letter-archive/failed-sqs/${dateString}/${fileName}`;
 };

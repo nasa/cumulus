@@ -9,7 +9,7 @@ const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
 const {
   unwrapDeadLetterCumulusMessage,
-  getDLAKey,
+  getDLAFailureKey,
 } = require('@cumulus/message/DeadLetterMessage');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
@@ -30,11 +30,11 @@ const generateNewArchiveKeyForFailedMessage = (
   stackName = process.env.stackName,
   failedMessage = {}
 ) => {
-  if (!oldKey.includes('dead-letter-archive/sqs/')) {
-    //edge case if oldKey does not conform to expected pattern
-    return getDLAKey(stackName, failedMessage).replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
+  if (oldKey.includes('dead-letter-archive/sqs/')) {
+    return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
   }
-  return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
+  //edge case if oldKey does not conform to expected pattern
+  return getDLAFailureKey(stackName, failedMessage);
 };
 
 /**
