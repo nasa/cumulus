@@ -30,13 +30,11 @@ const generateNewArchiveKeyForFailedMessage = (
   stackName = process.env.stackName,
   failedMessage = {}
 ) => {
-  // if(!oldKey.includes('dead-letter-archive/sqs/')) {
-  //   return getDLAKey(stackName, failedMessage).replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
-  // }
-  if (oldKey.includes('dead-letter-archive/sqs/')) {
-    return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
+  if (!oldKey.includes('dead-letter-archive/sqs/')) {
+    //edge case if oldKey does not conform to expected pattern
+    return getDLAKey(stackName, failedMessage).replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
   }
-  // return getDLAKey(stackName, failedMessage).replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
+  return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
 };
 
 /**
