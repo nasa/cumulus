@@ -4,11 +4,11 @@ const fs = require('fs');
 const https = require('https');
 const isIp = require('is-ip');
 const { basename } = require('path');
-const { pipeline } = require('node:stream/promises');
+const { pipeline } = require('stream/promises');
+const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const { CookieJar } = require('tough-cookie');
 const { promisify } = require('util');
-const stream = require('node:stream');
 
 const {
   buildS3Uri,
@@ -214,8 +214,7 @@ class HttpProviderClient {
   async download(params) {
     // This doesn't work because typescript transpilation
     // const { got } = await import('got');
-
-    // This does though!   This is fine.
+    //
     // eslint-disable-next-line no-eval
     const { default: got } = await eval('import("got")');
     const { remotePath, localPath } = params;
@@ -260,8 +259,7 @@ class HttpProviderClient {
   async sync(params) {
     // This doesn't work because typescript transpilation
     // const { got } = await import('got');
-
-    // This does though!   This is fine.
+    //
     // eslint-disable-next-line no-eval
     const { default: got } = await eval('import("got")');
     const { destinationBucket, destinationKey, fileRemotePath } = params;
@@ -312,15 +310,15 @@ class HttpProviderClient {
    * @returns {Promise<string>} the uri of the uploaded file
    */
   async upload(params) {
-    // This doesn't work because typescript transpilation
+    // This doesn't work due to typescript transpilation
     // const { got } = await import('got');
-
-    // This does though!   This is fine.
+    //
     // eslint-disable-next-line no-eval
     const { default: got } = await eval('import("got")');
 
     const { localPath, uploadPath } = params;
-    log.info(params);
+    const { readStream = fs.createReadStream(localPath) } = params.test || {};
+    log.info({ localPath, uploadPath });
     await this.setUpGotOptions();
     await this.downloadTLSCertificate();
     const options = {
@@ -334,9 +332,9 @@ class HttpProviderClient {
     const remoteUrl = buildURL(options);
     got.stream.options = options;
     await pipeline(
-      fs.createReadStream(localPath),
+      readStream,
       got.stream.post(remoteUrl),
-      new stream.PassThrough()
+      new PassThrough()
     );
 
     log.info(`Finishing uploading ${localPath} to ${remoteUrl}`);

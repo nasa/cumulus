@@ -324,6 +324,16 @@ test.serial('upload() attempts to upload a file', async (t) => {
     .post(path.join('/', uploadPath))
     .reply(200);
 
-  await httpProviderClient.upload({ localPath, uploadPath });
+  // This text fixture is a workaround to an ongoing issue with
+  // got/pipeline/msw & nock in node 20.  Integration tests
+  // must cover the full use case
+  const readStream = new Readable({
+    read(item) {
+      this.push(JSON.stringify(item));
+    },
+  });
+  readStream.push('foobar');
+  readStream.push(null);
+  await httpProviderClient.upload({ localPath, uploadPath, test: { readStream } });
   t.true(nock.isDone());
 });
