@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
-## Unreleased
+## [v16.1.4] 2024-4-23
 
 ### Migration Notes
 
@@ -28,6 +28,8 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
 - **CUMULUS-3444**
   - Update `cumulus-rds-tf` module to take additional parameters in support of
     migration from Aurora PostgreSQl v11 to v13.   See Migration Notes for more details.
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 ## [v16.1.3] 2024-1-15
 
