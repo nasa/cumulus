@@ -317,7 +317,6 @@ class HttpProviderClient {
     const { default: got } = await eval('import("got")');
 
     const { localPath, uploadPath } = params;
-    const { readStream = fs.createReadStream(localPath) } = params.test || {};
     log.info({ localPath, uploadPath });
     await this.setUpGotOptions();
     await this.downloadTLSCertificate();
@@ -332,7 +331,7 @@ class HttpProviderClient {
     const remoteUrl = buildURL(options);
     got.stream.options = options;
     await pipeline(
-      readStream,
+      fs.createReadStream(localPath),
       got.stream.post(remoteUrl),
       new PassThrough()
     );

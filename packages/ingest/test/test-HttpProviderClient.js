@@ -316,14 +316,10 @@ test.serial('list fails if client wait time is set less than the response delay'
 test.serial('upload() attempts to upload a file', async (t) => {
   const localPath = path.join(tmpdir(), randomString());
   t.teardown(() => fs.unlinkSync(localPath));
-  const uploadPath = path.join(randomString(), 'destinationfile.txt');
+  const uploadPath = path.join('post_test', randomString(), 'destinationfile.txt');
   fs.writeFileSync(localPath, randomString());
 
   const { httpProviderClient } = t.context;
-  nock('http://localhost:3030')
-    .post(path.join('/', uploadPath))
-    .reply(200);
-
   // This text fixture is a workaround to an ongoing issue with
   // got/pipeline/msw & nock in node 20.  Integration tests
   // must cover the full use case
@@ -334,6 +330,6 @@ test.serial('upload() attempts to upload a file', async (t) => {
   });
   readStream.push('foobar');
   readStream.push(null);
-  await httpProviderClient.upload({ localPath, uploadPath, test: { readStream } });
+  await httpProviderClient.upload({ localPath, uploadPath });
   t.true(nock.isDone());
 });
