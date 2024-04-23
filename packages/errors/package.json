@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/errors",
-  "version": "16.1.3",
+  "version": "16.1.4",
   "description": "Provides error classes for Cumulus",
   "keywords": [
     "GIBS",
