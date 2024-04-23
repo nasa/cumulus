@@ -30,12 +30,9 @@ const generateNewArchiveKeyForFailedMessage = (
   stackName = process.env.stackName,
   failedMessage = {}
 ) => {
-  if (oldKey.includes('dead-letter-archive/sqs/')) {
-    // expected key pattern `${process.env.stackName}/dead-letter-archive/sqs/${date}/${messageId}`
-    return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
-  }
-  //edge case if oldKey does not conform to expected pattern
-  return getDLAFailureKey(stackName, failedMessage);
+  const filename = oldKey.split('/').pop();
+  const dlaDirectory = getDLAFailureKey(stackName, failedMessage).split('/').slice(0, -1).join('/');
+  return `${dlaDirectory}/${filename}`;
 };
 
 /**
