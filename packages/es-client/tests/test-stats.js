@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const rewire = require('rewire');
 const range = require('lodash/range');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -9,15 +8,13 @@ const s3 = require('@cumulus/aws-client/S3');
 const { randomId } = require('@cumulus/common/test-utils');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const indexer = rewire('../indexer');
-const { Search } = require('../search');
+const indexer = require('../indexer');
+const { EsClient } = require('../search');
 const { bootstrapElasticSearch } = require('../bootstrap');
 const Stats = require('../stats');
 
 process.env.system_bucket = randomId('system-bucket');
 process.env.stackName = randomId('stackName');
-
-let esClient;
 
 test.before(async () => {
   // create buckets
@@ -37,11 +34,12 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  esClient = await Search.es();
+  t.context.esClient = await new EsClient();
+  await t.context.esClient.initializeEsClient();
 });
 
 test.afterEach(async (t) => {
-  await esClient.indices.delete({ index: t.context.esIndex });
+  await t.context.esClient.client.indices.delete({ index: t.context.esIndex });
 });
 
 test.after.always(async () => {
@@ -49,6 +47,7 @@ test.after.always(async () => {
 });
 
 test.serial('Stats does not return a collection if the collection has no active granules', async (t) => {
+  const { esClient } = t.context;
   const collection = {
     name: randomId('name'),
     version: 1,
@@ -62,6 +61,7 @@ test.serial('Stats does not return a collection if the collection has no active 
 });
 
 test.serial('Stats returns one granule when a granule is indexed', async (t) => {
+  const { esClient } = t.context;
   const granule = {
     granuleId: randomId('granule'),
     collectionId: constructCollectionId(randomId('name'), 1),
@@ -75,6 +75,7 @@ test.serial('Stats returns one granule when a granule is indexed', async (t) => 
 });
 
 test.serial('Stats returns correct granule errors', async (t) => {
+  const { esClient } = t.context;
   await Promise.all(
     range(10).map(() => indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
@@ -110,6 +111,8 @@ test.serial('Count returns 0 if there are no granules', async (t) => {
 });
 
 test.serial('Count returns correct granule and collection count', async (t) => {
+  const { esClient } = t.context;
+
   await Promise.all(
     range(12).map(() =>
       indexer.indexCollection(esClient, {
@@ -155,6 +158,7 @@ test.serial('Count returns correct granule and collection count', async (t) => {
 });
 
 test.serial('Count returns correct count for date range', async (t) => {
+  const { esClient } = t.context;
   await Promise.all([
     indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),
@@ -227,6 +231,7 @@ test.serial('Count returns correct count for date range', async (t) => {
 });
 
 test.serial('Count returns correct count for with custom field specified', async (t) => {
+  const { esClient } = t.context;
   await Promise.all([
     indexer.indexGranule(esClient, {
       granuleId: randomId('granule'),

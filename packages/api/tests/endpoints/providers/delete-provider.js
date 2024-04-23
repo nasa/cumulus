@@ -298,8 +298,11 @@ test('del() does not remove from PostgreSQL if removing from Elasticsearch fails
   );
 
   const fakeEsClient = {
-    delete: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      delete: () => {
+        throw new Error('something bad');
+      },
     },
   };
 

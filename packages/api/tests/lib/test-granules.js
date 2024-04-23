@@ -5,7 +5,7 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 const awsServices = require('@cumulus/aws-client/services');
 const s3Utils = require('@cumulus/aws-client/S3');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
 const {
@@ -25,17 +25,18 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
-class FakeSearch {
-  static es() {
-    return new FakeEsClient();
-  }
-}
 
 const { getGranulesForPayload, getGranuleIdsForPayload, translateGranule } = proxyquire(
   '../../lib/granules',
   {
     '@cumulus/es-client/search': {
-      Search: FakeSearch,
+      getEsClient: () => Promise.resolve({
+        initializeEsClient: () => Promise.resolve(),
+        client: {
+          search: esSearchStub,
+          scroll: esScrollStub,
+        },
+      }),
     },
   }
 );
@@ -544,7 +545,7 @@ test.serial(
     const esAlias = randomId('esAlias');
     const esIndex = randomId('esindex');
     process.env.ES_INDEX = esAlias;
-    const esClient = await Search.es();
+    const esClient = await getEsClient();
 
     await bootstrapElasticSearch({
       host: 'fakeHost',

@@ -564,7 +564,10 @@ test.serial('POST does not write to PostgreSQL/SNS if writing to Elasticsearch f
   const collection = fakeCollectionFactory();
 
   const fakeEsClient = {
-    index: () => Promise.reject(new Error('something bad')),
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      index: () => Promise.reject(new Error('something bad')),
+    },
   };
 
   const expressRequest = {

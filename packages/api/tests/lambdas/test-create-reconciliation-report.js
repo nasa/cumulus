@@ -42,7 +42,7 @@ const {
 } = require('@cumulus/db');
 const { getDistributionBucketMapKey } = require('@cumulus/distribution-utils');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { Search, getEsClient } = require('@cumulus/es-client/search');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 
 const {
@@ -382,7 +382,7 @@ test.beforeEach(async (t) => {
     index: esIndex,
     alias: esAlias,
   });
-  esClient = await Search.es();
+  esClient = await getEsClient();
   t.context.esReportClient = new Search(
     {},
     'reconciliationReport',
@@ -410,7 +410,7 @@ test.afterEach.always(async (t) => {
     { cumulus_id: t.context.executionCumulusId }
   );
   CMR.prototype.searchConcept.restore();
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test.after.always(async (t) => {

@@ -6,7 +6,7 @@ const orderBy = require('lodash/orderBy');
 const { randomId } = require('@cumulus/common/test-utils');
 
 const indexer = require('../indexer');
-const { Search } = require('../search');
+const { Search, EsClient } = require('../search');
 const { bootstrapElasticSearch } = require('../bootstrap');
 
 const collectionIds = [randomId('collectionId-abc'), randomId('collectionId-efg')];
@@ -48,8 +48,8 @@ test.before(async () => {
     alias: esAlias,
   });
 
-  esClient = await Search.es();
-
+  esClient = new EsClient();
+  await esClient.initializeEsClient();
   await Promise.all(
     granules.map((granule) => indexer.indexGranule(esClient, granule, esAlias))
   );
@@ -62,7 +62,7 @@ test.before(async () => {
 });
 
 test.after.always(async () => {
-  await esClient.indices.delete({ index: esIndex });
+  await esClient.client.indices.delete({ index: esIndex });
 });
 
 test('Search with prefix returns correct granules', async (t) => {

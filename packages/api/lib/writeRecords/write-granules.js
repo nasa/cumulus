@@ -30,7 +30,7 @@ const {
   upsertGranule,
 } = require('@cumulus/es-client/indexer');
 const {
-  Search,
+  getEsClient,
 } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 const {
@@ -376,7 +376,7 @@ const updateGranuleStatusToFailed = async (params) => {
     error = {},
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
   const status = 'failed';
   const { granuleId, collectionId } = granule;
@@ -529,7 +529,7 @@ const _writeGranuleRecords = async (params) => {
     postgresGranuleRecord,
     apiGranuleRecord,
     knex,
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     executionCumulusId,
     granulePgModel,
     writeConstraints = true,
@@ -1104,7 +1104,7 @@ const updateGranuleStatusToQueued = async (params) => {
     knex,
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
   const status = 'queued';
   const { granuleId, collectionId } = apiGranule;
