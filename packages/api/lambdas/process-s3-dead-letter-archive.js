@@ -31,6 +31,7 @@ const generateNewArchiveKeyForFailedMessage = (
   failedMessage = {}
 ) => {
   if (oldKey.includes('dead-letter-archive/sqs/')) {
+    // expected key pattern `${process.env.stackName}/dead-letter-archive/sqs/${date}/${messageId}`
     return oldKey.replace('dead-letter-archive/sqs/', 'dead-letter-archive/failed-sqs/');
   }
   //edge case if oldKey does not conform to expected pattern
