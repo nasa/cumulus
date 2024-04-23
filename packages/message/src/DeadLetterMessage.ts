@@ -170,6 +170,10 @@ export const hoistCumulusMessageDetails = async (dlqRecord: SQSRecord): Promise<
   } as DLARecord; // cast to DLARecord: ts is confused by explicit 'undefined' fields in metadata
 };
 
+export const getDLARootKey = (stackName: string) => (
+  `${stackName}/dead-letter-archive/sqs/`
+);
+
 export const extractDateString = (message: DLARecord): string => (
   message.time && moment.utc(message.time).isValid() ? moment.utc(message.time).format('YYYY-MM-DD') : moment.utc().format('YYYY-MM-DD')
 );
@@ -183,7 +187,7 @@ export const extractFileName = (message: DLARecord): string => {
 export const getDLAKey = (stackName: string, message: DLARecord): string => {
   const dateString = extractDateString(message);
   const fileName = extractFileName(message);
-  return `${stackName}/dead-letter-archive/sqs/${dateString}/${fileName}`;
+  return `${getDLARootKey(stackName)}${dateString}/${fileName}`;
 };
 
 export const getDLAFailureKey = (stackName: string, message: DLARecord): string => {
