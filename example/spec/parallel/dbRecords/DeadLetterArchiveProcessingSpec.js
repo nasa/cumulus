@@ -288,7 +288,7 @@ describe('A dead letter record archive processing operation', () => {
       // Unsuccessfully processed dead letters should be deleted from old location
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: failingMessageKey })).toBeFalse();
 
-      newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey, process.env.stackName, failingMessage);
+      newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey, stackName, failingMessage);
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: newArchiveKey })).toBeTrue();
       // Check that the JSON object is not empty and contains at least one key
       expect(Object.keys(await getJsonS3Object(systemBucket, newArchiveKey)).length).toBeGreaterThan(0);
