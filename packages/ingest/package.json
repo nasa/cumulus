@@ -58,7 +58,8 @@
     "mime-types": "^2.1.22",
     "moment": "2.29.4",
     "simplecrawler": "^1.1.9",
-    "tough-cookie": "~4.0.0"
+    "tough-cookie": "~4.0.0",
+    "wtfnode": "^0.9.2"
   },
   "devDependencies": {
     "@cumulus/checksum": "18.2.0",
