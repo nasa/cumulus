@@ -12,6 +12,7 @@ const { v4: uuidv4 } = require('uuid');
 const Logger = require('@cumulus/logger');
 const { deconstructCollectionId } = require('@cumulus/message/Collections');
 const { RecordDoesNotExist } = require('@cumulus/errors');
+const { BaseSearch } = require('@cumulus/db');
 
 const {
   CollectionPgModel,
@@ -101,6 +102,7 @@ function _createNewGranuleDateValue() {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function list(req, res) {
+  log.trace(`list query ${JSON.stringify(req.query)}`);
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
   let es;
@@ -113,7 +115,15 @@ async function list(req, res) {
   } else {
     es = new Search({ queryStringParameters }, 'granule', process.env.ES_INDEX);
   }
-  const result = await es.query();
+  let result;
+  // TODO the condition should be removed after we support all the query parameters
+  if (Object.keys(queryStringParameters).filter((item) => !['limit', 'page', 'sort_key'].includes(item)).length === 0) {
+    log.info('list perform db search');
+    const dbClient = new BaseSearch({ queryStringParameters }, 'granule');
+    result = await dbClient.query();
+  } else {
+    result = await es.query();
+  }
   if (getRecoveryStatus === 'true') {
     return res.send(await addOrcaRecoveryStatus(result));
   }
