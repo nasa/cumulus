@@ -181,17 +181,17 @@ describe('The Lzards Backup Task ', () => {
     }
   });
 
-    it('has the expected backup information', () => {
-      if (beforeAllFailed) fail('beforeAll() failed');
-      const backupStatus = JSON.parse(new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)).meta.backupStatus;
-      console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
-      expect(backupStatus[0].status).toBe('COMPLETED');
-      expect(backupStatus[0].statusCode).toBe(201);
-      expect(backupStatus[0].granuleId).toBe(granuleId);
-      expect(backupStatus[0].provider).toBe(provider);
-      expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
-      expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
-    });
+  it('has the expected backup information', () => {
+    if (beforeAllFailed) fail('beforeAll() failed');
+    const backupStatus = JSON.parse(new TextDecoder('utf-8').decode(lzardsBackupOutput.Payload)).meta.backupStatus;
+    console.log(`backupStatus: ${JSON.stringify(backupStatus)}`);
+    expect(backupStatus[0].status).toBe('COMPLETED');
+    expect(backupStatus[0].statusCode).toBe(201);
+    expect(backupStatus[0].granuleId).toBe(granuleId);
+    expect(backupStatus[0].provider).toBe(provider);
+    expect(backupStatus[0].createdAt).toBe(tenMinutesAgo);
+    expect(backupStatus[0].collectionId).toBe(constructCollectionId(collection.name, collection.version));
+  });
 
   describe('The Lzards API Client', () => {
     it('throws an error when no search parameters are provided', async () => {
