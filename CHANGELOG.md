@@ -13,16 +13,16 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 The following applies only to users with a custom value configured for
 `async_operation_image`:
 
-- As part of the node v20 update process, we published a new version (49)
-  [cumuluss/async
-  operation](https://hub.docker.com/layers/cumuluss/async-operation).   User
-  operation](https://hub.docker.com/layers/cumuluss/async-operation).   The
-  default value for `async_operation_image` has been updated, however users
-  making use of a custom configuration should note the base image for Core async
-  operations must support node v20.x.
+- As part of the node v20 update process, a new version (49) of the Core
+  async-operation container was published - [cumuluss/async
+  operation](https://hub.docker.com/layers/cumuluss/async-operation)  The
+  default value for `async_operation_image` has been updated in the `cumulus`
+  module, however if you are using an internal image repository such as ECR,
+  please make sure to update your deployment configuration with the newly
+  provided image.
 
-  If you are using an internal image repository such as ECR, please make sure to update your deployment
-  configuration with the newly provided image.
+  Users making use of a custom image configuration should note the base image
+  for Core async operations must support node v20.x.
 
 #### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
 
