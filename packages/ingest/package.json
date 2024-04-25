@@ -56,7 +56,8 @@
     "lodash": "^4.17.21",
     "mime-types": "^2.1.22",
     "moment": "2.29.4",
-    "simplecrawler": "^1.1.9"
+    "simplecrawler": "^1.1.9",
+    "tough-cookie": "~4.0.0"
   },
   "devDependencies": {
     "@cumulus/checksum": "18.2.0",
