@@ -38,7 +38,7 @@
     "directory": "packages/ingest"
   },
   "author": "Cumulus Authors",
-  "license": "Apache-2.u0",
+  "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
     "@cumulus/common": "18.2.0",
