@@ -9,6 +9,7 @@ const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const { CookieJar } = require('tough-cookie');
 const { promisify } = require('util');
+const { importGot } = require('@cumulus/common/importGot');
 
 const {
   buildS3Uri,
@@ -212,11 +213,8 @@ class HttpProviderClient {
    * @returns {Promise.<string>} - the path that the file was saved to
    */
   async download(params) {
-    // This doesn't work because typescript transpilation
-    // const { got } = await import('got');
-    //
-    // eslint-disable-next-line no-eval
-    const { default: got } = await eval('import("got")');
+    const got = await importGot();
+
     const { remotePath, localPath } = params;
     validateHost(this.host);
     await this.setUpGotOptions();
@@ -257,11 +255,8 @@ class HttpProviderClient {
    *    the S3 URI and ETag of the destination file
    */
   async sync(params) {
-    // This doesn't work because typescript transpilation
-    // const { got } = await import('got');
-    //
-    // eslint-disable-next-line no-eval
-    const { default: got } = await eval('import("got")');
+    const got = await importGot();
+
     const { destinationBucket, destinationKey, fileRemotePath } = params;
     validateHost(this.host);
     await this.setUpGotOptions();
@@ -310,12 +305,7 @@ class HttpProviderClient {
    * @returns {Promise<string>} the uri of the uploaded file
    */
   async upload(params) {
-    // This doesn't work due to typescript transpilation
-    // const { got } = await import('got');
-    //
-    // eslint-disable-next-line no-eval
-    const { default: got } = await eval('import("got")');
-
+    const got = await importGot();
     const { localPath, uploadPath } = params;
     log.info({ localPath, uploadPath });
     await this.setUpGotOptions();

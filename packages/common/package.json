@@ -48,6 +48,7 @@
     "@cumulus/aws-client": "18.2.0",
     "@cumulus/errors": "18.2.0",
     "@cumulus/logger": "18.2.0",
+    "got": "^14.2.1",
     "ajv": "^6.12.3",
     "follow-redirects": "^1.2.4",
     "fs-extra": "^5.0.0",
