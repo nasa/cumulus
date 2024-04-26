@@ -136,7 +136,7 @@ test('getKnexClient logs retry errors and throws expected knexTimeoutError', asy
     { instanceOf: KnexTimeoutError }
   );
   t.deepEqual(loggerWarnStub.args[0][0], 'knex failed on attempted connection');
-  t.true(loggerWarnStub.args[0][1].errors.map((e) => e.message).some((error) => error.includes('connect ECONNREFUSED')));
+  t.is(loggerWarnStub.args[0][1].code, 'ECONNREFUSED');
   console.log(loggerWarnStub.callCount);
   t.true(loggerWarnStub.callCount > 1);
 });
