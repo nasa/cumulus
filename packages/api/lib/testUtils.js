@@ -4,6 +4,8 @@ const fs = require('fs');
 const moment = require('moment');
 const path = require('path');
 const merge = require('lodash/merge');
+const set = require('lodash/set');
+const cloneDeep = require('lodash/cloneDeep');
 const { v4: uuidv4 } = require('uuid');
 
 const { randomId, randomString } = require('@cumulus/common/test-utils');
@@ -342,6 +344,41 @@ function fakeCumulusMessageFactory(params = {}) {
   }, params);
 }
 
+function fakeEventBridgeEventFactory(params = {}) {
+  const messageParams = cloneDeep(params);
+  let executionArn;
+  if ('executionArn' in params) {
+    set(messageParams, 'cumulus_meta.execution_name', params.executionArn.split(/[/:]/).pop());
+    executionArn = messageParams.executionArn;
+    delete messageParams.executionArn;
+  } else {
+    executionArn = randomId('cumulus-execution-arn');
+  }
+  return {
+    time: '2023-01-12',
+    detail: {
+      executionArn,
+      stateMachineArn: '1234',
+      status: 'RUNNING',
+      input: JSON.stringify(fakeCumulusMessageFactory(messageParams)),
+    },
+  };
+}
+
+function fakeDeadLetterMessageFactory(params = {}) {
+  const eventBridgeEvent = fakeEventBridgeEventFactory(params);
+  return {
+    body: JSON.stringify(eventBridgeEvent),
+    error: 'error',
+    time: eventBridgeEvent.time,
+    status: 'complete',
+    collectionId: 'A_001',
+    providerId: 'B',
+    granules: ['a'],
+    executionArn: eventBridgeEvent.detail.executionArn,
+    stateMachineArn: '123:1234',
+  };
+}
 function fakeOrcaGranuleFactory(options = {}) {
   return {
     providerId: randomId('providerId'),
@@ -651,6 +688,7 @@ const cleanupExecutionTestRecords = async (context, { arn }) => {
 module.exports = {
   createFakeJwtAuthToken,
   createSqsQueues,
+  fakeDeadLetterMessageFactory,
   fakeAccessTokenFactory,
   fakeGranuleFactory,
   fakeGranuleFactoryV2,

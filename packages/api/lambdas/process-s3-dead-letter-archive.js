@@ -1,58 +1,70 @@
 'use strict';
 
-const moment = require('moment');
-
+//@ts-check
 const log = require('@cumulus/common/log');
 
 const S3 = require('@cumulus/aws-client/S3');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getJsonS3Object, deleteS3Object } = require('@cumulus/aws-client/S3');
 const { getKnexClient } = require('@cumulus/db');
-const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
+const {
+  unwrapDeadLetterCumulusMessage,
+  getDLAFailureKey,
+} = require('@cumulus/message/DeadLetterMessage');
 
 const { writeRecords } = require('./sf-event-sqs-to-db-records');
+/**
+ *
+ * @typedef {import('@cumulus/types/api/dead_letters').DLARecord} DLARecord
+ */
 
 /**
  * Generates new archive key for unprocessed dead letter message
- *
- * @param {string}   [failedKey] - key of message that failed to process
- * @returns {string}
+ * @param {string} oldKey
+ * @param {string} stackName
+ * @param {DLARecord} failedMessage
+ * @returns {string} ${stackName}/dead-letter-archive/failed-sqs/${date}/${execution}-${uuid}.json
  */
-const generateNewArchiveKeyForFailedMessage = (failedKey) => {
-  // Split key with format `${process.env.stackName}/dead-letter-archive/sqs/${messageId}`,
-  const splitKey = failedKey.split('/sqs/');
-  const pathPrefix = splitKey[0];
-  const messageId = splitKey[1];
-  const date = moment.utc().format('YYYY-MM-DD');
-  return `${pathPrefix}/failed-sqs/${date}/${messageId}`;
+const generateNewArchiveKeyForFailedMessage = (
+  oldKey,
+  stackName = process.env.stackName,
+  failedMessage = {}
+) => {
+  const filename = oldKey.split('/').pop();
+  const dlaDirectory = getDLAFailureKey(stackName, failedMessage).split('/').slice(0, -1).join('/');
+  return `${dlaDirectory}/${filename}`;
 };
 
 /**
  * Transfers unprocessed dead letters in the bucket to new location
  * and deletes dead letters from old archive path
  *
- * @param {string}   [deadLetterObject] - unprocessed dead letter object
+ * @param {string}   [deadLetterObjectKey] - unprocessed dead letter object key
  * @param {string}   [bucket] - S3 bucket
+ * @param {DLARecord}  [deadLetterMessage]
  * @returns {Promise<void>}
  */
-const transferUnprocessedMessage = async (deadLetterObject, bucket) => {
+const transferUnprocessedMessage = async (deadLetterObjectKey, bucket, deadLetterMessage) => {
   // Save allFailedKeys messages to different location
-  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterObject.Key);
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(
+    deadLetterObjectKey,
+    process.env.stackName,
+    deadLetterMessage
+  );
   try {
     log.info(`Attempting to save messages that failed to process to ${bucket}/${s3KeyForFailedMessage}`);
     await S3.s3CopyObject({
       Bucket: bucket,
       Key: s3KeyForFailedMessage,
-      CopySource: `${bucket}/${deadLetterObject.Key}`,
+      CopySource: `${bucket}/${deadLetterObjectKey}`,
     });
     log.info(`Saved message to S3 s3://${bucket}/${s3KeyForFailedMessage}`);
 
     // Delete failed key from old path
-    log.info(`Attempting to delete message that failed to process from old path ${bucket}/${deadLetterObject.Key}`);
-    await deleteS3Object(bucket, deadLetterObject.Key);
-    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterObject.Key}`);
+    await deleteS3Object(bucket, deadLetterObjectKey);
+    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterObjectKey}`);
   } catch (error) {
-    log.error(`Failed to transfer S3 Object s3://${bucket}/${deadLetterObject.Key} due to error: ${error}`);
+    log.error(`Failed to transfer S3 Object s3://${bucket}/${deadLetterObjectKey} due to error: ${error}`);
     throw error;
   }
 };
@@ -101,7 +113,7 @@ async function processDeadLetterArchive({
           log.error(`Failed to write records from cumulusMessage for dead letter ${deadLetterObject.Key} due to '${error}'`);
           allFailedKeys.push(deadLetterObject.Key);
           log.info('Transferring unprocessed message to new archive location');
-          await transferUnprocessedMessage(deadLetterObject, bucket);
+          await transferUnprocessedMessage(deadLetterObject.Key, bucket, deadLetterMessage);
           throw error;
         }
       }

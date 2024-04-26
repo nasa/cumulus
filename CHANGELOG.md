@@ -94,6 +94,9 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
 
 ### Changed
 
+- **CUMULUS-3629**
+  - dla guarantees de-nested SQS message bodies, preferring outermost metadata as found.
+  - dla uses execution Name as filename and ensures no ':' or '/' characters in name
 - **CUMULUS-3570**
   - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
 - **CUMULUS-3519**
