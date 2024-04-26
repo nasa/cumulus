@@ -27,6 +27,7 @@ const {
 } = require('@cumulus/db');
 const {
   Search,
+  getEsClient,
   recordNotFoundString,
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
@@ -162,7 +163,7 @@ const _setNewGranuleDefaults = (incomingApiGranule, isNewRecord = true) => {
 const create = async (req, res) => {
   const {
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     createGranuleFromApiMethod = createGranuleFromApi,
   } = req.testContext || {};
 
@@ -219,7 +220,7 @@ const patchGranule = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     updateGranuleFromApiMethod = updateGranuleFromApi,
   } = req.testContext || {};
   let apiGranule = req.body || {};
@@ -601,7 +602,7 @@ const associateExecution = async (req, res) => {
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   let pgGranule;
@@ -689,7 +690,7 @@ const associateExecution = async (req, res) => {
 async function delByGranuleId(req, res) {
   const {
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 
@@ -747,7 +748,7 @@ async function del(req, res) {
     knex = await getKnexClient(),
     collectionPgModel = new CollectionPgModel(),
     granulePgModel = new GranulePgModel(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     esGranulesClient = new Search({}, 'granule', process.env.ES_INDEX),
   } = req.testContext || {};
 

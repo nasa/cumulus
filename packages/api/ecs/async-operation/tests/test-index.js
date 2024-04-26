@@ -186,8 +186,10 @@ test('updateAsyncOperation does not update PostgreSQL if write to Elasticsearch 
   const updateTime = (Number(Date.now())).toString();
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('ES fail');
+    client: {
+      update: () => {
+        throw new Error('ES fail');
+      },
     },
   };
 

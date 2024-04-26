@@ -2896,10 +2896,13 @@ test.serial('PATCH rolls back PostgreSQL records and does not write to SNS if wr
   });
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('something bad');
+      },
+      delete: () => Promise.resolve(),
     },
-    delete: () => Promise.resolve(),
   };
   const apiGranule = await translatePostgresGranuleToApiGranule({
     granulePgRecord: newPgGranule,

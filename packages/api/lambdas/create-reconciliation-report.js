@@ -25,7 +25,7 @@ const { ESCollectionGranuleQueue } = require('@cumulus/es-client/esCollectionGra
 const Collection = require('@cumulus/es-client/collections');
 const { ESSearchQueue } = require('@cumulus/es-client/esSearchQueue');
 const { indexReconciliationReport } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const Logger = require('@cumulus/logger');
 
 const { createInternalReconciliationReport } = require('./internal-reconciliation-report');
@@ -814,7 +814,7 @@ async function processRequest(params) {
     reportName,
     systemBucket,
     stackName,
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
     knex = await getKnexClient(env),
   } = params;
   const createStartTime = moment.utc();

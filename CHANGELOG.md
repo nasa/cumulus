@@ -30,7 +30,7 @@ The following applies only to users with a custom value configured for
   production environment. Please follow [Update Cumulus_id Type and
   Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
-#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded.
+#### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
 Instructions for migrating old DLA (Dead Letter Archive) messages to new format:
 
@@ -64,6 +64,16 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Breaking Changes
 
+- **CUMULUS-3618**
+  - Modified @cumulus/es-client/search.BaseSearch:
+    - Removed static class method `es` in favor of new class for managing
+       elasticsearch clients `EsClient` which allows for credential
+       refresh/reset.  Updated api/es-client code to
+       utilize new pattern.    Users making use of @cumulus/es-client should
+       update their code to make use of the new EsClient create/initialize pattern.
+    - Added helper method getEsClient to encapsulate logic to create/initialize
+      a new EsClient.
+
 - **CUMULUS-2889**
   - Removed unused CloudWatch Logs AWS SDK client. This change removes the CloudWatch Logs
     client from the `@cumulus/aws-client` package.
@@ -95,6 +105,7 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     to granules table
 
 ### Added
+
 - **CUMULUS-3614**
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
@@ -114,7 +125,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
   - Updated `got` dependency in `@cumulus/ingest` to use `@cumulus/common`
     dynamic import helper / `got` > v10 in CommonJS.
   - Updated all Core lambdas to use [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js) v2.2.0
-
+- **CUMULUS-3629**
+  - dla guarantees de-nested SQS message bodies, preferring outermost metadata as found.
+  - dla uses execution Name as filename and ensures no ':' or '/' characters in name
 - **CUMULUS-3570**
   - Updated Kinesis docs to support latest AWS UI and recommend server-side encryption.
 - **CUMULUS-3519**
@@ -154,7 +167,7 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     connections to the database, and is intended to help enforce security
     compliance rules.  This update can be opted-out by supplying a non-default
     `db_parameters` set in the terraform configuration.
-- **CUMULUS-3245**
+- **CUMULUS-3425**
   - Update `@cumulus/lzards-backup` task to either respect the `lzards_provider`
     terraform configuration value or utilize `lzardsProvider` as part of the task
     workflow configuration
@@ -176,6 +189,13 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Fixed
 
+- **CUMULUS-3618**
+  - Fixed `@cumulus/es-client` credentialing issue in instance where
+    lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
+    refresh behavior to `@cumulus/es-client/indexer.genericRecordUpdate` to ensure record indexing
+    does not fail in those instances.
+  - Updated `index-from-database` lambda to utilize updated es-client to prevent
+    credentialing timeout in long-running ECS jobs.
 - **CUMULUS-3323**
   - Minor edits to errant integration test titles (dyanmo->postgres)
 - **CUMULUS-3587**
@@ -183,6 +203,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     updates of sub-dependencies and maintain without refactoring errors in
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+- **CUMULUS-3673**
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
 - **Audit Issues**
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc

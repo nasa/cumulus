@@ -8,7 +8,7 @@ const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { bootstrapElasticSearch } = require('../bootstrap');
 const { ESCollectionGranuleQueue } = require('../esCollectionGranuleQueue');
-const { Search } = require('../search');
+const { EsClient } = require('../search');
 const { granuleFactory, loadGranules } = require('./helpers/helpers');
 
 const sandbox = sinon.createSandbox();
@@ -22,13 +22,13 @@ test.beforeEach(async (t) => {
     index: t.context.esIndex,
     alias: t.context.esAlias,
   });
-  t.context.esClient = await Search.es();
-  t.context.esClientSpy = sandbox.spy(t.context.esClient, 'scroll');
+  t.context.esClient = await new EsClient();
+  await t.context.esClient.initializeEsClient();
 });
 
 test.afterEach.always(async (t) => {
   sandbox.restore();
-  await t.context.esClient.indices.delete({ index: t.context.esIndex });
+  await t.context.esClient.client.indices.delete({ index: t.context.esIndex });
 });
 
 const sortByGranuleId = (a, b) => (a.granuleId < b.granuleId ? -1 : 1);

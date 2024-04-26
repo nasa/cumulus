@@ -24,7 +24,7 @@ const {
   GranulePgModel,
 } = require('@cumulus/db');
 const indexer = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { fetchDistributionBucketMap } = require('@cumulus/distribution-utils');
 
@@ -95,7 +95,7 @@ async function moveGranuleFilesAndUpdateDatastore(params) {
     collectionPgModel = new CollectionPgModel(),
     filesPgModel = new FilePgModel(),
     dbClient = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
 
   const { name, version } = deconstructCollectionId(apiGranule.collectionId);
@@ -261,8 +261,8 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
   const granules = [];
   const responseQueue = [];
 
-  const client = await Search.es(undefined, true);
-  const searchResponse = await client.search({
+  const esClient = await getEsClient(undefined, true);
+  const searchResponse = await esClient.client.search({
     index,
     scroll: '30s',
     size: SCROLL_SIZE,
@@ -285,7 +285,7 @@ async function granuleEsQuery({ index, query, source, testBodyHits }) {
     if (totalHits !== granules.length) {
       responseQueue.push(
         // eslint-disable-next-line no-await-in-loop
-        await client.scroll({
+        await esClient.client.scroll({
           scrollId: body._scroll_id,
           scroll: '30s',
         })
