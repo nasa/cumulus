@@ -79,14 +79,15 @@ async function findProtectedBucket(systemBucket, stackName) {
 
 // add MYD13Q1___006 collection
 async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
-  const replicateData = () => {
+  const replicateData = (existingList) => {
     const originalFileName = '/Users/ecarton/cumulus/packages/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf';
     const substring = '71135';
     let newSubString = Math.random().toFixed(substring.length).split('.')[1];
-    while (substring === newSubString) {
+    let newFileName = originalFileName.replace(substring, newSubString);
+    while (existingList.includes(newFileName.replace('/Users/ecarton/cumulus/packages', '@cumulus'))) {
       newSubString = Math.random().toFixed(substring.length).split('.')[1];
+      newFileName = originalFileName.replace(substring, newSubString);
     }
-    const newFileName = originalFileName.replace(substring, newSubString);
     fs.copyFileSync(originalFileName, newFileName);
     const originalMetaFileName = `${originalFileName}.met`;
     const metaContent = fs.readFileSync(originalMetaFileName, 'utf8');
@@ -106,7 +107,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   ];
   const newData = [];
   for (let i = 0; i < 500; i += 1) {
-    const newNames = replicateData();
+    const newNames = replicateData(s3data);
 
     s3data.push(newNames.newFileName);
     s3data.push(newNames.newMetaFileName);
