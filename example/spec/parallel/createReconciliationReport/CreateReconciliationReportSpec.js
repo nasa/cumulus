@@ -87,10 +87,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
       newSubString = Math.random().toFixed(substring.length).split('.')[1];
     }
     const newFileName = originalFileName.replace(substring, newSubString);
-    fs.copyFile(originalFileName, newFileName, (err) => {
-      if (err) throw err;
-      console.log(`${originalFileName} was copied to ${newFileName}`);
-    });
+    fs.copyFileSync(originalFileName, newFileName);
     const originalMetaFileName = `${originalFileName}.met`;
     const metaContent = fs.readFileSync(originalMetaFileName, 'utf8');
     const newMetaFileName = originalMetaFileName.replace(substring, newSubString);
@@ -108,7 +105,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg',
   ];
   const newData = [];
-  for (let i = 0; i < 100; i += 1) {
+  for (let i = 0; i < 500; i += 1) {
     const newNames = replicateData();
 
     s3data.push(newNames.newFileName);
