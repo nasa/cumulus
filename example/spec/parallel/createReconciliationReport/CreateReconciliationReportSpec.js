@@ -82,7 +82,10 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
   const replicateData = () => {
     const originalFileName = '/Users/ecarton/cumulus/packages/test-data/granules/MYD13Q1.A2002185.h00v09.006.2015149071135.hdf';
     const substring = '71135';
-    const newSubString = Math.random().toFixed(substring.length).split('.')[1];
+    let newSubString = Math.random().toFixed(substring.length).split('.')[1];
+    while (substring === newSubString) {
+      newSubString = Math.random().toFixed(substring.length).split('.')[1];
+    }
     const newFileName = originalFileName.replace(substring, newSubString);
     fs.copyFile(originalFileName, newFileName, (err) => {
       if (err) throw err;
@@ -105,7 +108,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg',
   ];
   const newData = [];
-  for (let i = 0; i < 1000; i += 1) {
+  for (let i = 0; i < 100; i += 1) {
     const newNames = replicateData();
 
     s3data.push(newNames.newFileName);
