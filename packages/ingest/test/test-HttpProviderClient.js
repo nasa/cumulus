@@ -320,7 +320,7 @@ test.serial('upload() attempts to upload a file', async (t) => {
   fs.writeFileSync(localPath, randomString());
 
   const { httpProviderClient } = t.context;
-  // This text fixture is a workaround to an ongoing issue with
+  // This test fixture is a workaround to an ongoing issue with
   // got/pipeline/msw & nock in node 20.  Integration tests
   // must cover the full use case
   const readStream = new Readable({
