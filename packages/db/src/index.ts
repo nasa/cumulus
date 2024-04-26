@@ -139,6 +139,9 @@ export {
 export {
   BaseSearch,
 } from './search/BaseSearch';
+export {
+  GranuleSearch,
+} from './search/GranuleSearch';
 
 export { AsyncOperationPgModel } from './models/async_operation';
 export { BasePgModel } from './models/base';
