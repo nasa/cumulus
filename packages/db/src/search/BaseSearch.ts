@@ -12,9 +12,9 @@ class BaseSearch {
   readonly page: number;
   offset: number;
   params: any;
-  type: string | null;
+  type?: string;
 
-  constructor(event: any, type = null) {
+  constructor(event: any, type?: string) {
     const logLimit = 10;
     this.type = type;
     this.params = event.queryStringParameters ?? {};

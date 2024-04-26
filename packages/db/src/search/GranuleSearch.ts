@@ -9,8 +9,8 @@ import { TableNames } from '../tables';
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
 export class GranuleSearch extends BaseSearch {
-  constructor(event: any, type = null) {
-    super(event, type);
+  constructor(event: any) {
+    super(event, 'granule');
   }
 
   protected buildBasicQuery(knex: Knex)
@@ -40,9 +40,7 @@ export class GranuleSearch extends BaseSearch {
       })
       .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
       .leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
-      .leftJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`)
-      .limit(this.limit)
-      .offset(this.offset);
+      .leftJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
     return { countQuery, searchQuery };
   }
 
