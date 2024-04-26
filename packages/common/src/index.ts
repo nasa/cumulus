@@ -1,7 +1,7 @@
 import BucketsConfig = require('./BucketsConfig');
 export { BucketsConfig };
 
-export * as importGot from './importGot';
+export * as importEsm from './importEsm';
 export * as cliUtils from './cli-utils';
 export * as envUtils from './env';
 export * as fakeProvider from './fake-provider';

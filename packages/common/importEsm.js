@@ -1,3 +1,7 @@
+const imports = Object.freeze({
+  got: 'got',
+});
+
 /**
  * Asynchronously imports the 'got' module.
  *
@@ -9,8 +13,8 @@
  * @throws {Error} If an error occurs while importing the module.
  */
 const importGot = async () => {
-  const { default: got } = await import('got');
+  const { default: got } = await import(imports.got);
   return got;
-}
+};
 
 module.exports = { importGot };

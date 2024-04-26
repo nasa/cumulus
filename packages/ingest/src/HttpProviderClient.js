@@ -9,7 +9,7 @@ const { PassThrough } = require('stream');
 const Crawler = require('simplecrawler');
 const { CookieJar } = require('tough-cookie');
 const { promisify } = require('util');
-const { importGot } = require('@cumulus/common/importGot');
+const { importGot } = require('@cumulus/common/importEsm');
 
 const {
   buildS3Uri,
