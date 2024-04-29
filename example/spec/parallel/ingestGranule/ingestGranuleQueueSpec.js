@@ -29,7 +29,7 @@ const {
   getTEARequestHeaders,
 } = require('@cumulus/integration-tests/api/distribution');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -92,7 +92,7 @@ describe('The S3 Ingest Granules workflow', () => {
       testDataFolder = createTestDataPath(testId);
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
-      const newCollectionId = encodedConstructCollectionId(collection.name, collection.version);
+      const newCollectionId = constructCollectionId(collection.name, collection.version);
       provider = { id: `s3_provider${testSuffix}` };
       process.env.system_bucket = config.bucket;
 
@@ -191,7 +191,7 @@ describe('The S3 Ingest Granules workflow', () => {
       // process.env.DISTRIBUTION_ENDPOINT needs to be set for below
       setDistributionApiEnvVars();
 
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
 
       console.log('Start SuccessExecution');
       workflowExecutionArn = await buildAndStartWorkflow(
