@@ -1,36 +1,64 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import { getKnexClient } from '../connection';
+import { BaseRecord } from '../types/base';
+import { ParsedQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
 
+export interface Meta {
+  name: string,
+  stack?: string,
+  table?: string,
+  limit?: number,
+  page?: number,
+  count?: number,
+}
+
 /**
- * Class to build db search query and return result
+ * Class to build and execute db search query
  */
 class BaseSearch {
-  readonly limit: number;
-  readonly page: number;
-  offset: number;
-  params: any;
-  type?: string;
+  readonly type?: string;
+  readonly queryStringParameters: QueryStringParameters;
+  // parsed from queryStringParameters
+  parsedQueryParameters: ParsedQueryParameters = {};
 
-  constructor(event: any, type?: string) {
-    const logLimit = 10;
+  constructor(event: QueryEvent, type?: string) {
     this.type = type;
-    this.params = event.queryStringParameters ?? {};
-    this.page = Number.parseInt((this.params.page) ? this.params.page : 1, 10);
-    this.limit = Number.parseInt((this.params.limit) ? this.params.limit : logLimit, 10);
-    this.offset = (this.page - 1) * this.limit;
+    this.queryStringParameters = event?.queryStringParameters ?? {};
+    this.parsedQueryParameters.page = Number.parseInt(
+      (this.queryStringParameters.page) ?? '1',
+      10
+    );
+    this.parsedQueryParameters.limit = Number.parseInt(
+      (this.queryStringParameters.limit) ?? '10',
+      10
+    );
+    this.parsedQueryParameters.offset = (this.parsedQueryParameters.page - 1)
+      * this.parsedQueryParameters.limit;
   }
 
+  /**
+   * build basic query
+   *
+   * @param knex - DB client
+   * @throws - function is not implemented
+   */
   protected buildBasicQuery(knex: Knex): {
     countQuery: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
   } {
-    log.trace(`buildBasicQuery is not implemented ${knex.constructor.name}`);
+    log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
     throw new Error('buildBasicQuery is not implemented');
   }
 
+  /**
+   * build the search query
+   *
+   * @param knex - DB client
+   * @returns queries for getting count and search result
+   */
   private _buildSearch(knex: Knex)
     : {
       countQuery: Knex.QueryBuilder,
@@ -38,13 +66,18 @@ class BaseSearch {
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
     const updatedQuery = searchQuery.modify((queryBuilder) => {
-      if (this.limit) queryBuilder.limit(this.limit);
-      if (this.offset) queryBuilder.offset(this.offset);
+      if (this.parsedQueryParameters.limit) queryBuilder.limit(this.parsedQueryParameters.limit);
+      if (this.parsedQueryParameters.offset) queryBuilder.offset(this.parsedQueryParameters.offset);
     });
     return { countQuery, searchQuery: updatedQuery };
   }
 
-  private _metaTemplate(): any {
+  /**
+   * metadata template for query result
+   *
+   * @returns metadata template
+   */
+  private _metaTemplate(): Meta {
     return {
       name: 'cumulus-api',
       stack: process.env.stackName,
@@ -52,24 +85,34 @@ class BaseSearch {
     };
   }
 
-  protected translatePostgresRecordsToApiRecords(pgRecords: any) {
+  /**
+   * Translate postgres records to api records
+   *
+   * @param pgRecords - postgres records returned from query
+   * @throws - function is not implemented
+   */
+  protected translatePostgresRecordsToApiRecords(pgRecords: BaseRecord[]) {
     log.error(`translatePostgresRecordsToApiRecords is not implemented ${pgRecords[0]}`);
     throw new Error('translatePostgresRecordsToApiRecords is not implemented');
   }
 
-  async query() {
-    const knex = await getKnexClient();
+  /**
+   * build and execute search query
+   *
+   * @param testKnex - knex for testing
+   * @returns search result
+   */
+  async query(testKnex: Knex | undefined) {
+    const knex = testKnex ?? await getKnexClient();
     const { countQuery, searchQuery } = this._buildSearch(knex);
     try {
-      const meta = this._metaTemplate();
-      meta.limit = this.limit;
-      meta.page = this.page;
       const countResult = await countQuery;
-      log.trace(`Count response: ${JSON.stringify(countResult)}`);
+      const meta = this._metaTemplate();
+      meta.limit = this.parsedQueryParameters.limit;
+      meta.page = this.parsedQueryParameters.page;
       meta.count = Number(countResult[0]?.count ?? 0);
 
       const pgRecords = await searchQuery;
-      log.trace(`Search response: ${JSON.stringify(pgRecords)}`);
       const apiRecords = this.translatePostgresRecordsToApiRecords(pgRecords);
 
       return {

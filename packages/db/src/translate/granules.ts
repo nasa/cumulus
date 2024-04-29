@@ -35,7 +35,7 @@ export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   collectionPgRecord: Pick<PostgresCollectionRecord, 'cumulus_id' | 'name' | 'version'>,
   executionUrls?: Partial<PostgresExecutionRecord>[],
   files?: PostgresFileRecord[],
-  pdr?: PostgresPdrRecord,
+  pdr?: Pick<PostgresPdrRecord, 'name'>,
   providerPgRecord?: Pick<PostgresProviderRecord, 'name'>,
 }): ApiGranuleRecord => removeNilProperties({
   beginningDateTime: granulePgRecord.beginning_date_time?.toISOString(),
