@@ -3,7 +3,7 @@
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const {
-  fakeCumulusMessageFactory,
+  fakeDeadLetterMessageFactory,
   fakeFileFactory,
   fakeGranuleFactoryV2,
 } = require('@cumulus/api/lib/testUtils');
@@ -141,10 +141,10 @@ describe('A dead letter record archive processing operation', () => {
         },
         { timeout: 60 }
       );
-      cumulusMessage = fakeCumulusMessageFactory({
+      cumulusMessage = fakeDeadLetterMessageFactory({
+        executionArn,
         cumulus_meta: {
           state_machine: getStateMachineArnFromExecutionArn(executionArn),
-          execution_name: executionArn.split(':').pop(),
         },
         meta: {
           provider: testProvider,
@@ -158,11 +158,10 @@ describe('A dead letter record archive processing operation', () => {
         },
       });
 
-      const failingExecutionName = failingExecutionArn.split(':').pop();
-      failingMessage = fakeCumulusMessageFactory({
+      failingMessage = fakeDeadLetterMessageFactory({
+        executionArn: failingExecutionArn,
         cumulus_meta: {
           state_machine: getStateMachineArnFromExecutionArn(executionArn),
-          execution_name: failingExecutionName,
         },
         meta: {
           status: 'failed',
@@ -174,8 +173,8 @@ describe('A dead letter record archive processing operation', () => {
         },
       });
       archivePath = `${stackName}/dead-letter-archive-${testId}/sqs`;
-      messageKey = `${archivePath}/${cumulusMessage.cumulus_meta.execution_name}`;
-      failingMessageKey = `${archivePath}/${failingMessage.cumulus_meta.execution_name}`;
+      messageKey = `${archivePath}/${cumulusMessage.executionArn}`;
+      failingMessageKey = `${archivePath}/${failingMessage.executionArn}`;
 
       await Promise.all([
         putJsonS3Object(systemBucket, messageKey, cumulusMessage),
@@ -289,7 +288,7 @@ describe('A dead letter record archive processing operation', () => {
       // Unsuccessfully processed dead letters should be deleted from old location
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: failingMessageKey })).toBeFalse();
 
-      newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey);
+      newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey, stackName, failingMessage);
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: newArchiveKey })).toBeTrue();
       // Check that the JSON object is not empty and contains at least one key
       expect(Object.keys(await getJsonS3Object(systemBucket, newArchiveKey)).length).toBeGreaterThan(0);
