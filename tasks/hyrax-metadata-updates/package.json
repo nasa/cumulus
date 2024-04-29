@@ -44,7 +44,7 @@
     "@cumulus/cmr-client": "18.2.0",
     "@cumulus/cmrjs": "18.2.0",
     "@cumulus/common": "18.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/errors": "18.2.0",
     "lodash": "^4.17.21",
     "xml2js": "0.6.2"
