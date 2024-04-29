@@ -118,7 +118,7 @@ async function list(req, res) {
   let result;
   // TODO the condition should be removed after we support all the query parameters
   if (Object.keys(queryStringParameters).filter((item) => !['limit', 'page', 'sort_key'].includes(item)).length === 0) {
-    log.info('list perform db search');
+    log.debug('list perform db search');
     const dbSearch = new GranuleSearch({ queryStringParameters });
     result = await dbSearch.query();
   } else {

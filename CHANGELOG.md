@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Replace ElasticSearch Phase 1
+
+- **CUMULUS-3692**
+  - Update granules List endpoints to query postgres for basic queries
+
+
 ### Migration Notes
 
 #### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
