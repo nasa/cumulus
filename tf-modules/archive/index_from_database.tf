@@ -4,7 +4,7 @@ resource "aws_lambda_function" "index_from_database" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/indexFromDatabase/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.index_from_database.arn
-  runtime          = "nodejs16.x"
+  runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "IndexFromDatabase", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "IndexFromDatabase", 512)
   environment {
