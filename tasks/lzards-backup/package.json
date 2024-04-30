@@ -12,7 +12,7 @@
     "directory": "tasks/lzards-backup"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "main": "dist/index.js",
   "directories": {
@@ -47,7 +47,7 @@
     "@cumulus/api-client": "18.2.0",
     "@cumulus/aws-client": "18.2.0",
     "@cumulus/common": "18.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/db": "18.2.0",
     "@cumulus/distribution-utils": "18.2.0",
     "@cumulus/launchpad-auth": "18.2.0",

@@ -7,7 +7,7 @@ resource "aws_lambda_function" "dla_migration" {
   source_code_hash = filebase64sha256(local.lambda_path)
   handler          = "index.handler"
   role             = aws_iam_role.dla_migration_role.arn
-  runtime          = "nodejs16.x"
+  runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "dlaMigration", 900)
   memory_size      = lookup(var.lambda_memory_sizes, "dlaMigration", 512)
   environment {

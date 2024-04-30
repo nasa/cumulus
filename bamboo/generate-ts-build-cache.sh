@@ -13,8 +13,6 @@ npm install @octokit/graphql@2.1.1 simple-git@3.7.0
 . ./bamboo/abort-if-not-pr.sh
 
 
-npm config set unsafe-perm true
-
 set -o pipefail
 
 CURRENT_WORKING_DIR=$NONCACHE_WORKING_DIR
