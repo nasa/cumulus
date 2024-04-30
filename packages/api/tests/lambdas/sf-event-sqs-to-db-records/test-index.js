@@ -45,22 +45,9 @@ const {
   writeRecords,
 } = require('../../../lambdas/sf-event-sqs-to-db-records');
 
-const { createSqsQueues, getSqsQueueMessageCounts } = require('../../../lib/testUtils');
-const {
-  writeRecords,
-} = require('../../../lambdas/sf-event-sqs-to-db-records');
-
 const {
   handler,
 } = proxyquire('../../../lambdas/sf-event-sqs-to-db-records', {
-  '@cumulus/message/Executions': {
-    getMessageExecutionParentArn: (cumulusMessage) => {
-      if (cumulusMessage.fail === true) {
-        throw new Error('Intentional failure: test case');
-      }
-      return getMessageExecutionParentArn(cumulusMessage);
-    },
-  },
   '@cumulus/message/Executions': {
     getMessageExecutionParentArn: (cumulusMessage) => {
       if (cumulusMessage.fail === true) {
