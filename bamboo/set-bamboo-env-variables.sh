@@ -56,6 +56,7 @@ declare -a param_list=(
   "bamboo_USE_NPM_PACKAGES"
   "bamboo_USE_TERRAFORM_ZIPS"
   "bamboo_VERSION_FLAG"
+  "bamboo_CUMULUS_BASE_IMAGE"
 )
 
 ## Strip 'bamboo_SECRET_' from secret keys
@@ -146,7 +147,6 @@ if [[ $bamboo_NGAP_ENV = "SIT" ]]; then
   export ORCA_DATABASE_USER_PASSWORD=$bamboo_SECRET_SIT_ORCA_DATABASE_USER_PASSWORD
   DEPLOYMENT=$bamboo_SIT_DEPLOYMENT
 fi
-
 
 ## Run detect-pr script and set flag to true/false
 ## depending on if there is a PR associated with the

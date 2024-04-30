@@ -12,6 +12,7 @@ const { sqs } = require('@cumulus/aws-client/services');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getGranule } = require('@cumulus/api-client/granules');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
@@ -49,8 +50,6 @@ describe('The Queue Granules workflow', () => {
     config = await loadConfig();
     lambdaStep = new LambdaStep();
 
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
     const s3data = [
@@ -67,9 +66,6 @@ describe('The Queue Granules workflow', () => {
 
     collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
     provider = { id: `s3_provider${testSuffix}` };
-
-    process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-    process.env.CollectionsTable = `${config.stackName}-CollectionsTable`;
 
     // populate collections, providers and test data
     await Promise.all([
@@ -135,6 +131,7 @@ describe('The Queue Granules workflow', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           'queued'
         );
       })
@@ -175,6 +172,7 @@ describe('The Queue Granules workflow', () => {
             {
               prefix: config.stackName,
               granuleId: granule.granuleId,
+              collectionId: constructCollectionId(collection.name, collection.version),
             },
             'queued'
           );

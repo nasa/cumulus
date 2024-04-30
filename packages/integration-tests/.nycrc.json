@@ -1,0 +1,13 @@
+{
+  "extends": "../../nyc.config.js",
+  "include": [
+    "*.js",
+    "api",
+    "bin",
+    "lambdas"
+  ],
+  "lines": 54.0,
+  "functions": 53.0,
+  "statements": 54.0,
+  "branches": 37.0
+}

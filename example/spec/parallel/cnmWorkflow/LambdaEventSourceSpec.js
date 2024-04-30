@@ -88,8 +88,6 @@ describe('When adding multiple rules that share a kinesis event stream', () => {
     ruleSuffix = replace(testSuffix, /-/g, '_');
     lambdaStep = new LambdaStep();
 
-    process.env.ExecutionsTable = `${testConfig.stackName}-ExecutionsTable`;
-
     streamName = `${testId}-LambdaEventSourceTestStream`;
     testConfig.streamName = streamName;
 

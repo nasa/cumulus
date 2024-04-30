@@ -23,8 +23,8 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildFtpProvider } = require('../helpers/Providers');
-
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const {
   createTestDataPath,
@@ -75,8 +75,6 @@ describe('Ingesting from PDR', () => {
     try {
       config = await loadConfig();
       functionName = `${config.stackName}-populateTestLambda`;
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       const testId = createTimestampedTestId(config.stackName, 'IngestFromPdrWithNodeName');
       testSuffix = createTestSuffix(testId);
@@ -353,17 +351,20 @@ describe('Ingesting from PDR', () => {
           // delete ingested granule(s)
           await Promise.all(
             finalOutput.payload.granules.map(async (g) => {
+              const newCollectionId = constructCollectionId(addedCollection.name, addedCollection.version);
               await waitForApiStatus(
                 getGranule,
                 {
                   prefix: config.stackName,
                   granuleId: g.granuleId,
+                  collectionId: newCollectionId,
                 },
                 'completed'
               );
               await deleteGranule({
                 prefix: config.stackName,
                 granuleId: g.granuleId,
+                collectionId: newCollectionId,
               });
             })
           );

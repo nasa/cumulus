@@ -4,13 +4,12 @@ resource "aws_lambda_function" "start_async_operation" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/startAsyncOperation/lambda.zip")
   handler          = "index.handler"
   role             = aws_iam_role.start_async_operation.arn
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = 300
   memory_size      = 960
   environment {
     variables = {
       acquireTimeoutMillis         = var.rds_connection_timing_configuration.acquireTimeoutMillis
-      AsyncOperationsTable         = var.dynamo_tables.async_operations.name
       AsyncOperationTaskDefinition = aws_ecs_task_definition.async_operation.arn
       createRetryIntervalMillis    = var.rds_connection_timing_configuration.createRetryIntervalMillis
       createTimeoutMillis          = var.rds_connection_timing_configuration.createTimeoutMillis

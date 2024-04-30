@@ -140,6 +140,8 @@ module "cumulus" {
   oauth_user_group = var.oauth_user_group
 
   orca_api_uri = module.orca[0].orca_api_deployment_invoke_url
+  orca_lambda_copy_to_archive_arn = module.orca[0].orca_lambda_copy_to_archive_arn
+  orca_sfn_recovery_workflow_arn  = module.orca[0].orca_sfn_recovery_workflow_arn
 
   saml_entity_id                  = var.saml_entity_id
   saml_assertion_consumer_service = var.saml_assertion_consumer_service
@@ -177,7 +179,7 @@ module "cumulus" {
     "mobrien84",
     "nnageswa",
     "npauzenga",
-    "vnguyen",
+    "vnguyen"
   ]
   archive_api_url             = var.archive_api_url
   archive_api_port            = var.archive_api_port

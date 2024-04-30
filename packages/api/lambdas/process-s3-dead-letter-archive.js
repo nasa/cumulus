@@ -31,28 +31,28 @@ const generateNewArchiveKeyForFailedMessage = (failedKey) => {
  * Transfers unprocessed dead letters in the bucket to new location
  * and deletes dead letters from old archive path
  *
- * @param {string}   [deadLetterMessage] - unprocessed dead letter message
+ * @param {string}   [deadLetterObject] - unprocessed dead letter object
  * @param {string}   [bucket] - S3 bucket
  * @returns {Promise<void>}
  */
-const transferUnprocessedMessage = async (deadLetterMessage, bucket) => {
+const transferUnprocessedMessage = async (deadLetterObject, bucket) => {
   // Save allFailedKeys messages to different location
-  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterMessage.Key);
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(deadLetterObject.Key);
   try {
     log.info(`Attempting to save messages that failed to process to ${bucket}/${s3KeyForFailedMessage}`);
-    await S3.s3PutObject({
+    await S3.s3CopyObject({
       Bucket: bucket,
       Key: s3KeyForFailedMessage,
-      Body: deadLetterMessage.Body,
+      CopySource: `${bucket}/${deadLetterObject.Key}`,
     });
     log.info(`Saved message to S3 s3://${bucket}/${s3KeyForFailedMessage}`);
 
     // Delete failed key from old path
-    log.info(`Attempting to delete message that failed to process from old path ${bucket}/${deadLetterMessage.Key}`);
-    await deleteS3Object(bucket, deadLetterMessage.Key);
-    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterMessage.Key}`);
+    log.info(`Attempting to delete message that failed to process from old path ${bucket}/${deadLetterObject.Key}`);
+    await deleteS3Object(bucket, deadLetterObject.Key);
+    log.info(`Deleted archived dead letter message from S3 at ${bucket}/${deadLetterObject.Key}`);
   } catch (error) {
-    log.error(`Failed to transfer S3 Object s3://${bucket}/${deadLetterMessage.Key} due to error: ${error}`);
+    log.error(`Failed to transfer S3 Object s3://${bucket}/${deadLetterObject.Key} due to error: ${error}`);
     throw error;
   }
 };

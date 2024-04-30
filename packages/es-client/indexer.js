@@ -127,6 +127,14 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
   return updateExistingRecord(esClient, id, updates, index, type);
 }
 
+const executionInvalidNullFields = [
+  'arn',
+  'name',
+  'status',
+  'updatedAt',
+  'createdAt',
+];
+
 /**
  * Upsert an execution record in Elasticsearch
  *
@@ -136,6 +144,8 @@ function updateAsyncOperation(esClient, id, updates, index = defaultIndexAlias, 
  * @param {string} params.index - Elasticsearch index alias (default defined in search.js)
  * @param {string} params.type - Elasticsearch type (default: execution)
  * @param {string} [params.refresh] - whether to refresh the index on update or not
+ * @param {boolean}   writeConstraints       - boolean toggle restricting if conditionals should
+ *                                          be used to determine write eligibility
  * @returns {Promise} elasticsearch update response
  */
 async function upsertExecution({
@@ -144,11 +154,42 @@ async function upsertExecution({
   index = defaultIndexAlias,
   type = 'execution',
   refresh,
-}) {
+}, writeConstraints = true) {
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] === null && executionInvalidNullFields.includes(key)) {
+      throw new ValidationError(`Attempted Elasticsearch write with invalid key ${key} set to null.  Please remove or change this field and retry`);
+    }
+  });
+
   const upsertDoc = {
-    ...updates,
-    timestamp: Date.now(),
+    ...removeNilProperties(updates),
+    timestamp: updates.timestamp || Date.now(),
   };
+
+  let removeString = '';
+  // Set field removal for null values
+  Object.entries(updates).forEach(([fieldName, value]) => {
+    if (value === null) {
+      removeString += `ctx._source.remove('${fieldName}'); `;
+    }
+  });
+
+  let inlineDocWriteString = 'ctx._source.putAll(params.doc);';
+  if (removeString !== '') {
+    inlineDocWriteString += removeString;
+  }
+  let inline = inlineDocWriteString;
+  if (writeConstraints === true) {
+    inline = `
+          if (params.doc.status == "running") {
+            ctx._source.updatedAt = params.doc.updatedAt;
+            ctx._source.timestamp = params.doc.timestamp;
+            ctx._source.originalPayload = params.doc.originalPayload;
+          } else {
+            ${inlineDocWriteString}
+          }
+        `;
+  }
   return await esClient.update({
     index,
     type,
@@ -156,15 +197,7 @@ async function upsertExecution({
     body: {
       script: {
         lang: 'painless',
-        inline: `
-          if (params.doc.status == "running") {
-            ctx._source.updatedAt = params.doc.updatedAt;
-            ctx._source.timestamp = params.doc.timestamp;
-            ctx._source.originalPayload = params.doc.originalPayload;
-          } else {
-            ctx._source.putAll(params.doc)
-          }
-        `,
+        inline,
         params: {
           doc: upsertDoc,
         },
@@ -320,7 +353,7 @@ async function upsertGranule({
 }, writeConstraints = true) {
   Object.keys(updates).forEach((key) => {
     if (updates[key] === null && granuleInvalidNullFields.includes(key)) {
-      throw new ValidationError(`Attempted DynamoDb write with invalid key ${key} set to null.  Please remove or change this field and retry`);
+      throw new ValidationError(`Attempted Elasticsearch write with invalid key ${key} set to null.  Please remove or change this field and retry`);
     }
   });
   // If the granule exists in 'deletedgranule', delete it first before inserting the granule
@@ -766,5 +799,6 @@ module.exports = {
   deleteGranule,
   deleteExecution,
   deleteReconciliationReport,
+  executionInvalidNullFields,
   granuleInvalidNullFields,
 };

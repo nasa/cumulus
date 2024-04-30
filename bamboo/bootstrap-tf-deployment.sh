@@ -27,7 +27,6 @@ echo "terraform {
     dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
   }
 }" >> ci_backend.tf
-
 # Initialize deployment
 ../terraform init \
   -input=false
@@ -66,7 +65,6 @@ echo "terraform {
     dynamodb_table = \"$TFSTATE_LOCK_TABLE\"
   }
 }" >> ci_backend.tf
-
 # Initialize deployment
 ../terraform init \
   -input=false
@@ -98,3 +96,5 @@ echo "Deploying Cumulus example to $DEPLOYMENT"
   -var "pdr_node_name_provider_bucket=$PDR_NODE_NAME_PROVIDER_BUCKET" \
   -var "rds_admin_access_secret_arn=$RDS_ADMIN_ACCESS_SECRET_ARN" \
   -var "orca_db_user_password=$ORCA_DATABASE_USER_PASSWORD" \
+  -var "orca_s3_access_key=$AWS_ACCESS_KEY_ID" \
+  -var "orca_s3_secret_key=$AWS_SECRET_ACCESS_KEY" \

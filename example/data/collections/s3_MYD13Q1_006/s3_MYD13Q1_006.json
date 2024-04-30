@@ -10,8 +10,10 @@
     "url_path": "{cmrMetadata.Granule.Collection.ShortName}___{cmrMetadata.Granule.Collection.VersionId}/{substring(file.fileName, 0, 3)}",
     "sampleFileName": "MYD13Q1.A2017025.h21v00.006.2017034065104.hdf",
     "meta": {
-        "granuleRecoveryWorkflow": "OrcaRecoveryWorkflow",
-        "excludeFileTypes": [".met"],
+        "granuleRecoveryWorkflow": "OrcaRecoveryAdapterWorkflow",
+        "orca": {
+            "excludedFileExtensions": [".met"]
+        },
         "s3MultipartChunksizeMb": 16
     },
     "files": [

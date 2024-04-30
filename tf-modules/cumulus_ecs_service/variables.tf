@@ -99,3 +99,15 @@ variable "log_destination_arn" {
   default     = null
   description = "A shared AWS:Log:Destination that receives logs in log_groups"
 }
+
+variable "health_check" {
+  description = "Health check used by AWS ECS to determine containers health status. See https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#container_definition_healthcheck"
+  type = object({
+    command     = list(string)
+    interval    = number
+    timeout     = number
+    retries     = number
+    startPeriod = number
+  })
+  default = null
+}

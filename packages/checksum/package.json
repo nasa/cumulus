@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/checksum",
-  "version": "15.0.4",
+  "version": "16.1.4",
   "description": "Cumulus checksum utilities",
   "engines": {
     "node": ">=16.19.0"
@@ -18,7 +18,8 @@
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
-    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles"
+    "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "timeout": "15m"

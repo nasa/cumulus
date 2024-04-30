@@ -150,8 +150,8 @@ test.beforeEach(async (t) => {
   // Create files
   t.context.filePgModel = new FilePgModel();
   t.context.fileKeys = [
-    cryptoRandomString({ length: 10 }),
-    cryptoRandomString({ length: 10 }),
+    `file0-${cryptoRandomString({ length: 10 })}`,
+    `file1-${cryptoRandomString({ length: 10 })}`,
   ].sort();
   const files = [
     fakeFileRecordFactory({
@@ -250,6 +250,7 @@ test('translatePostgresGranuleToApiGranule converts Postgres granule to API gran
     providerPgModel,
     filePgModel,
   });
+  result.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
 
   t.deepEqual(
     {
@@ -339,6 +340,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional Collection', asyn
     providerPgModel,
     filePgModel,
   });
+  result.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
 
   t.deepEqual(
     {
@@ -421,6 +423,7 @@ test('translatePostgresGranuleToApiGranule accepts an optional provider', async 
     providerPgModel,
     filePgModel,
   });
+  result.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
 
   t.deepEqual(
     {
@@ -572,6 +575,7 @@ test('translatePostgresGranuleToApiGranule does not require a PDR or Provider', 
     providerPgModel,
     filePgModel,
   });
+  result.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
 
   t.deepEqual(
     {
@@ -1325,6 +1329,7 @@ test('translatePostgresGranuleResultToApiGranule converts DB result to API granu
     knex,
     dbResult
   );
+  result.files.sort((a, b) => (a.fileName > b.fileName ? 1 : -1));
 
   t.deepEqual(
     {

@@ -16,13 +16,16 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": [ "files", "granuleId", "dataType", "version" ],
+        "required": ["files", "granuleId"],
         "properties": {
           "type": { "type": "string" },
           "granuleId": { "type": "string" },
           "dataType": { "type": "string" },
           "version": { "type": "string" },
           "provider": { "type": "string" },
+          "collectionId": { "type": "string" },
+          "status": { "type": "string" },
+          "updatedAt": { "type": "integer" },
           "files": { "type": "array" }
         }
       }

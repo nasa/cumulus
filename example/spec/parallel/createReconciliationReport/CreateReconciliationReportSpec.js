@@ -16,7 +16,6 @@ const {
 const { CMR } = require('@cumulus/cmr-client');
 const { lambda, s3 } = require('@cumulus/aws-client/services');
 const BucketsConfig = require('@cumulus/common/BucketsConfig');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { getBucketsConfigKey } = require('@cumulus/common/stack');
 const { randomString, randomId, randomStringFromRegex } = require('@cumulus/common/test-utils');
 const { getExecutionWithStatus } = require('@cumulus/integration-tests/Executions');
@@ -39,6 +38,7 @@ const {
   updateGranule,
 } = require('@cumulus/api-client/granules');
 const { getCmrSettings } = require('@cumulus/cmrjs/cmr-utils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   waitForApiStatus,
@@ -158,6 +158,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     {
       prefix,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId: constructCollectionId(newCollection.name, newCollection.version),
     },
     'completed'
   );
@@ -169,7 +170,10 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     status: 'completed',
   });
 
-  await getGranuleWithStatus({ prefix, granuleId, status: 'completed' });
+  await getGranuleWithStatus({ prefix,
+    granuleId,
+    collectionId: constructCollectionId(newCollection.name, newCollection.version),
+    status: 'completed' });
   return newCollection;
 };
 
@@ -203,6 +207,7 @@ async function ingestAndPublishGranule(config, testSuffix, testDataFolder, publi
     {
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId: constructCollectionId(collection.name, collection.version),
     },
     'completed'
   );
@@ -252,6 +257,8 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
   });
   await updateGranule({
     prefix,
+    granuleId: granule.granuleId,
+    collectionId: granule.collectionId,
     body: {
       ...granule,
       files: updatedFiles,
@@ -324,9 +331,6 @@ describe('When there are granule differences and granule reconciliation is run',
 
       config = await loadConfig();
 
-      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-
       process.env.ReconciliationReportsTable = `${config.stackName}-ReconciliationReportsTable`;
       process.env.CMR_ENVIRONMENT = 'UAT';
 
@@ -391,6 +395,7 @@ describe('When there are granule differences and granule reconciliation is run',
       granuleBeforeUpdate = await getGranule({
         prefix: config.stackName,
         granuleId: publishedGranuleId,
+        collectionId,
       });
       console.log('XXXXX Completed for getGranule()');
       await waitForGranuleRecordUpdatedInList(config.stackName, granuleBeforeUpdate);
@@ -404,8 +409,8 @@ describe('When there are granule differences and granule reconciliation is run',
       console.log(`XXXXX Completed for updateGranuleFile(${publishedGranuleId})`);
 
       const [dbGranule, granuleAfterUpdate] = await Promise.all([
-        getGranule({ prefix: config.stackName, granuleId: dbGranuleId }),
-        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId }),
+        getGranule({ prefix: config.stackName, granuleId: dbGranuleId, collectionId }),
+        getGranule({ prefix: config.stackName, granuleId: publishedGranuleId, collectionId }),
       ]);
       console.log('XXXX Waiting for granules updated in list');
       await Promise.all([
@@ -961,6 +966,8 @@ describe('When there are granule differences and granule reconciliation is run',
     console.log(`update database state back for  ${publishedGranuleId}, ${activeCollectionId}`);
     await updateGranule({
       prefix: config.stackName,
+      granuleId: publishedGranuleId,
+      collectionId: granuleBeforeUpdate.collectionId,
       body: {
         granuleId: publishedGranuleId,
         ...granuleBeforeUpdate,

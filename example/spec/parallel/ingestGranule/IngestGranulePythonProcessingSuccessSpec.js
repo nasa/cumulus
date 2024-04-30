@@ -2,16 +2,11 @@
 
 const fs = require('fs-extra');
 const hasha = require('hasha');
-const pMap = require('p-map');
-const pRetry = require('p-retry');
-
-const GranuleFilesCache = require('@cumulus/api/lib/GranuleFilesCache');
 const { s3 } = require('@cumulus/aws-client/services');
 const { getObjectReadStream, getObjectStreamContents } = require('@cumulus/aws-client/S3');
 const {
   addCollections,
   api: apiTestUtils,
-  getExecutionOutput,
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 const { deleteCollection } = require('@cumulus/api-client/collections');
@@ -22,6 +17,7 @@ const {
 } = require('@cumulus/api-client/providers');
 
 const { ActivityStep } = require('@cumulus/integration-tests/sfnStep');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndStartWorkflow } = require('../../helpers/workflowUtils');
 
 const {
@@ -53,6 +49,7 @@ describe('The TestPythonProcessing workflow', () => {
 
   let beforeAllError;
   let collection;
+  let collectionId;
   let config;
   let expectedS3TagSet;
   let granuleResult;
@@ -73,11 +70,7 @@ describe('The TestPythonProcessing workflow', () => {
 
       collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       provider = { id: `s3_provider${testSuffix}` };
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      process.env.ExecutionsTable = `${config.stackName}-ExecutionsTable`;
       process.env.system_bucket = config.bucket;
-      process.env.ProvidersTable = `${config.stackName}-ProvidersTable`;
-      process.env.PdrsTable = `${config.stackName}-PdrsTable`;
 
       const providerJson = JSON.parse(fs.readFileSync(`${providersDir}/s3_provider.json`, 'utf8'));
       providerData = {
@@ -97,6 +90,8 @@ describe('The TestPythonProcessing workflow', () => {
       inputPayload = await setupTestGranuleForIngest(config.bucket, inputPayloadJson, granuleRegex, testSuffix, testDataFolder);
       pdrFilename = inputPayload.pdr.name;
       const granuleId = inputPayload.granules[0].granuleId;
+      collectionId = constructCollectionId(collection.name, collection.version);
+
       expectedS3TagSet = [{ Key: 'granuleId', Value: granuleId }];
       await Promise.all(inputPayload.granules[0].files.map((fileToTag) =>
         s3().putObjectTagging({ Bucket: config.bucket, Key: `${fileToTag.path}/${fileToTag.name}`, Tagging: { TagSet: expectedS3TagSet } })));
@@ -127,6 +122,7 @@ describe('The TestPythonProcessing workflow', () => {
     await deleteGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId,
     });
     await apiTestUtils.deletePdr({
       prefix: config.stackName,
@@ -149,11 +145,13 @@ describe('The TestPythonProcessing workflow', () => {
     await waitForGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId,
       status: 'completed',
     });
     granuleResult = await getGranule({
       prefix: config.stackName,
       granuleId: inputPayload.granules[0].granuleId,
+      collectionId,
     });
     expect(granuleResult.granuleId).toEqual(inputPayload.granules[0].granuleId);
     expect(granuleResult.status).toEqual('completed');
@@ -176,29 +174,6 @@ describe('The TestPythonProcessing workflow', () => {
   it('completes execution with success status', async () => {
     const workflowExecutionStatus = await waitForCompletedExecution(workflowExecutionArn);
     expect(workflowExecutionStatus).toEqual('SUCCEEDED');
-  });
-
-  it('results in the files being added to the granule files cache table', async () => {
-    process.env.FilesTable = `${config.stackName}-FilesTable`;
-
-    const executionOutput = await getExecutionOutput(workflowExecutionArn);
-
-    await pMap(
-      executionOutput.payload.granules[0].files,
-      async (file) => {
-        const granuleId = await pRetry(
-          async () => {
-            const id = await GranuleFilesCache.getGranuleId(file.bucket, file.key);
-            if (id === undefined) throw new Error(`File not found in cache: s3://${file.bucket}/${file.key}`);
-            return id;
-          },
-          { retries: 30, minTimeout: 2000, maxTimeout: 2000 }
-        );
-
-        expect(granuleId).toEqual(executionOutput.payload.granules[0].granuleId);
-      },
-      { concurrency: 1 }
-    );
   });
 
   describe('the ProcessingStep activity', () => {

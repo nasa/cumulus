@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/files-to-granules",
-  "version": "15.0.4",
+  "version": "16.1.4",
   "description": "Converts array-of-files input into a granules object by extracting granuleId from filename",
   "main": "index.js",
   "directories": {
@@ -21,7 +21,8 @@
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w"
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "engines": {
     "node": ">=16.19.0"
@@ -32,12 +33,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.4",
+    "@cumulus/aws-client": "16.1.4",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/common": "15.0.4",
-    "@cumulus/schemas": "15.0.4"
+    "@cumulus/common": "16.1.4",
+    "@cumulus/schemas": "16.1.4"
   }
 }

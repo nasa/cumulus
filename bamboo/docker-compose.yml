@@ -1,7 +1,7 @@
 version: "3"
 services:
   postgres:
-    image: postgres:11.13-alpine
+    image: postgres:13.9-alpine
     environment:
       - POSTGRES_PASSWORD=password
     network_mode: "service:build_env"
@@ -41,12 +41,12 @@ services:
     environment:
       ES_JAVA_OPTS: "-Xms750m -Xmx750m"
   localstack:
-    image: localstack/localstack:1.3.1
+    image: localstack/localstack:1.4.0
     network_mode: "service:build_env"
     environment:
       SERVICES: "cloudformation,cloudwatch,cloudwatchlogs,dynamodb,iam,kinesis,kms,lambda,s3,secretsmanager,sns,sqs,stepfunctions,ssm,logs"
   build_env:
-    image: maven.earthdata.nasa.gov/cumulus:latest
+    image: $CUMULUS_BASE_IMAGE
     volumes:
       - /tmp/cumulus_unit_test_data:/tmp/cumulus_unit_test_data
     environment:

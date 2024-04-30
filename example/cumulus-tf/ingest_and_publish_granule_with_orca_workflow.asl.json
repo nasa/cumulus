@@ -307,7 +307,7 @@
       },
       "Type": "Task",
       "Resource": "${hyrax_metadata_updates_task_arn}",
-      "Next": "CopyToGlacier",
+      "Next": "CopyToArchive",
       "Catch": [
         {
           "ErrorEquals": [
@@ -330,13 +330,13 @@
         }
       ]
     },
-    "CopyToGlacier": {
+    "CopyToArchive": {
       "Parameters": {
         "cma": {
           "event.$": "$",
           "task_config": {
-            "multipart_chunksize_mb": "{$.meta.collection.meta.s3MultipartChunksizeMb}",
-            "excludeFileTypes": "{$.meta.collection.meta.excludeFileTypes}",
+            "s3MultipartChunksizeMb": "{$.meta.collection.meta.s3MultipartChunksizeMb}",
+            "excludedFileExtensions": "{$.meta.collection.meta.orca.excludedFileExtensions}",
             "providerId": "{$.meta.provider.id}",
             "executionId": "{$.cumulus_meta.execution_name}",
             "collectionShortname": "{$.meta.collection.name}",
@@ -345,7 +345,7 @@
         }
       },
       "Type": "Task",
-      "Resource": "${orca_lambda_copy_to_glacier_arn}",
+      "Resource": "${orca_copy_to_archive_adapter_task}",
       "Next": "CmrStep",
       "Catch": [
         {

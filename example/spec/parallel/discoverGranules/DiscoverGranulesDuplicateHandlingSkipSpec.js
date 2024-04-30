@@ -9,7 +9,7 @@ const { createCollection } = require('@cumulus/integration-tests/Collections');
 const {
   findExecutionArn, getExecutionWithStatus,
 } = require('@cumulus/integration-tests/Executions');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
@@ -22,12 +22,14 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 
 describe('The DiscoverGranules workflow with one existing granule, one queued granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllError;
   let collection;
+  let collectionId;
   let discoverGranulesRule;
   let existingGranuleId;
   let existingGranuleKey;
@@ -73,7 +75,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
         Body: 'asdf-queued',
       });
 
-      const collectionId = constructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
       const randomQueuedGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
         collectionId,
         granuleId: queuedGranuleId,
@@ -141,7 +143,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
       await getExecutionWithStatus({ prefix, arn: ingestGranuleExecutionArn, status: 'completed' });
 
       // Wait for the existing granule to be fully ingested
-      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed' });
+      await getGranuleWithStatus({ prefix, granuleId: existingGranuleId, status: 'completed', collectionId });
 
       // Stage the new granule file to S3
       newGranuleId = randomId('new-granule-');
@@ -220,7 +222,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
     else {
       const granule = await waitForApiStatus(
         getGranule,
-        { prefix, granuleId: newGranuleId },
+        { prefix, granuleId: newGranuleId, collectionId },
         'completed'
       );
       expect(granule).toBeDefined();
@@ -232,7 +234,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
     else {
       const granule = await waitForApiStatus(
         getGranule,
-        { prefix, granuleId: queuedGranuleId },
+        { prefix, granuleId: queuedGranuleId, collectionId },
         'queued'
       );
       expect(granule).toBeDefined();
@@ -256,9 +258,9 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
 
     await pAll(
       [
-        () => deleteGranule({ prefix, granuleId: existingGranuleId }),
-        () => deleteGranule({ prefix, granuleId: newGranuleId }),
-        () => deleteGranule({ prefix, granuleId: queuedGranuleId }),
+        () => deleteGranule({ prefix, granuleId: existingGranuleId, collectionId }),
+        () => deleteGranule({ prefix, granuleId: newGranuleId, collectionId }),
+        () => deleteGranule({ prefix, granuleId: queuedGranuleId, collectionId }),
       ],
       { stopOnError: false }
     ).catch(console.error);

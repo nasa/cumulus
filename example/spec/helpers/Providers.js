@@ -37,6 +37,7 @@ const buildFtpProvider = async (postfix = '') => {
     username: 'testuser',
     password: 'testpass',
     globalConnectionLimit: 10,
+    maxDownloadTime: 500,
   };
 
   if (process.env.PROVIDER_FTP_PORT) {
@@ -59,6 +60,7 @@ const buildHttpOrHttpsProvider = async (postfix, systemBucket, protocol = 'http'
     host: await getProviderHost(),
     port: fakeProviderPortMap[protocol],
     globalConnectionLimit: 10,
+    maxDownloadTime: 360,
   };
 
   if (protocol === 'https') {
@@ -162,7 +164,7 @@ const deleteProvidersAndAllDependenciesByHost = async (prefix, host) => {
   const granuleResponse = await Promise.all(ids.map((id) => listGranules({
     prefix,
     query: {
-      fields: ['published', 'granuleId'],
+      fields: ['published', 'granuleId', 'collectionId'],
       'provider.keyword': id,
     },
   })));

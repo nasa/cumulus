@@ -28,6 +28,10 @@
           }
         }
       },
+      "meta": {
+        "type": "object",
+        "dynamic": false
+      },
       "timestamp": {
         "type": "date"
       }
@@ -266,6 +270,10 @@
       "published": {
         "type": "boolean"
       },
+      "queryFields": {
+        "type": "object",
+        "dynamic": false
+      },
       "duration": {
         "type": "float"
       },
@@ -348,6 +356,10 @@
       },
       "published": {
         "type": "boolean"
+      },
+      "queryFields": {
+        "type": "object",
+        "dynamic": false
       },
       "duration": {
         "type": "float"

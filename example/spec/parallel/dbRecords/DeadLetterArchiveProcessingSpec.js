@@ -19,16 +19,17 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { deleteGranule, waitForGranule } = require('@cumulus/api-client/granules');
 const { createProvider, deleteProvider } = require('@cumulus/api-client/providers');
 const { deleteRule } = require('@cumulus/api-client/rules');
+
 const {
   loadCollection,
 } = require('@cumulus/integration-tests');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
 const { getStateMachineArnFromExecutionArn } = require('@cumulus/message/Executions');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
-const { putJsonS3Object, s3ObjectExists, deleteS3Object } = require('@cumulus/aws-client/S3');
+const { putJsonS3Object, s3ObjectExists, deleteS3Object, getJsonS3Object } = require('@cumulus/aws-client/S3');
 const { generateNewArchiveKeyForFailedMessage } = require('@cumulus/api/lambdas/process-s3-dead-letter-archive');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   waitForApiStatus,
@@ -52,6 +53,7 @@ describe('A dead letter record archive processing operation', () => {
   let stackName;
   let systemBucket;
   let testCollection;
+  let collectionId;
   let testGranule;
   let testProvider;
   let testRule;
@@ -91,10 +93,10 @@ describe('A dead letter record archive processing operation', () => {
         fakeFileFactory({ bucket: systemBucket }),
         fakeFileFactory({ bucket: systemBucket }),
       ];
-
+      collectionId = constructCollectionId(testCollection.name, testCollection.version);
       testGranule = fakeGranuleFactoryV2({
         granuleId: `MOD09GQ.${randomString()}.hdf`,
-        collectionId: constructCollectionId(testCollection.name, testCollection.version),
+        collectionId,
         files: testFiles,
         published: false,
       });
@@ -203,7 +205,7 @@ describe('A dead letter record archive processing operation', () => {
     const failedRuleName = get(failingTestRule, 'name');
     if (testGranule) {
       await deleteGranule(
-        { prefix: stackName, granuleId: testGranule.granuleId }
+        { prefix: stackName, granuleId: testGranule.granuleId, collectionId }
       );
     }
     if (ruleName) {
@@ -265,6 +267,7 @@ describe('A dead letter record archive processing operation', () => {
       await expectAsync(waitForGranule({
         prefix: stackName,
         granuleId: testGranule.granuleId,
+        collectionId: testGranule.collectionId,
         pRetryOptions: {
           interval: 5 * 1000,
           timeout: 30 * 1000,
@@ -288,6 +291,8 @@ describe('A dead letter record archive processing operation', () => {
 
       newArchiveKey = generateNewArchiveKeyForFailedMessage(failingMessageKey);
       expect(await s3ObjectExists({ Bucket: systemBucket, Key: newArchiveKey })).toBeTrue();
+      // Check that the JSON object is not empty and contains at least one key
+      expect(Object.keys(await getJsonS3Object(systemBucket, newArchiveKey)).length).toBeGreaterThan(0);
     }
   });
 });

@@ -10,7 +10,6 @@ const path = require('path');
 const pWaitFor = require('p-wait-for');
 
 const { buildS3Uri } = require('@cumulus/aws-client/S3');
-const { Granule } = require('@cumulus/api/models');
 const { s3 } = require('@cumulus/aws-client/services');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
@@ -145,29 +144,22 @@ async function setupTestGranuleForIngest(bucket, inputPayloadJson, granuleRegex,
 }
 
 const deleteGranules = async (prefix, granules) => {
-  process.env.GranulesTable = `${prefix}-GranulesTable`;
-  const granuleModel = new Granule();
-  return await Promise.all(
+  await Promise.all(
     granules.map(async (granule) => {
-      // Temporary fix to handle granules that are in a bad state
-      // and cannot be deleted via the API
-      try {
-        if (granule.published === true) {
-          return await removePublishedGranule({
-            prefix,
-            granuleId: granule.granuleId,
-          });
-        }
-        return await deleteGranule({
+    // Temporary fix to handle granules that are in a bad state
+    // and cannot be deleted via the API
+      if (granule.published === true) {
+        return await removePublishedGranule({
           prefix,
           granuleId: granule.granuleId,
+          collectionId: granule.collectionId,
         });
-      } catch (error) {
-        if (error.statusCode === 400 && JSON.parse(error.apiMessage).message.includes('validation errors')) { // TODO wat
-          return await granuleModel.delete({ granuleId: granule.granuleId });
-        }
-        throw error;
       }
+      return await deleteGranule({
+        prefix,
+        granuleId: granule.granuleId,
+        collectionId: granule.collectionId,
+      });
     })
   );
 };
@@ -282,12 +274,13 @@ const waitForGranuleRecordUpdatedInList = async (stackName, granule, additionalQ
   }
 );
 
-const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = {}) => {
+const waitForGranuleAndDelete = async (prefix, granuleId, collectionId, status, retryConfig = {}) => {
   await waitForApiStatus(
     getGranule,
     {
       prefix,
       granuleId,
+      collectionId,
     },
     status,
     retryConfig
@@ -296,6 +289,7 @@ const waitForGranuleAndDelete = async (prefix, granuleId, status, retryConfig = 
   await deleteGranule({
     prefix,
     granuleId,
+    collectionId,
   });
 };
 

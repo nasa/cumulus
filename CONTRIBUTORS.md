@@ -35,11 +35,14 @@
 * Nate Pauzenga
 * Pat Cappelaere
 * Patrick Quinn
+* Paul Pilone
 * Phil Osip
 * Sara Chaparro Diaz
+* Sean Quinlan
 * Seth Vincent
 * Slav Korolev
 * Snyk bot
+* Tim Clark
 * Tobias Nießen
 * Vanh Khuyen Nguyen
 * Vanh Nguyen

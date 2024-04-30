@@ -1,7 +1,7 @@
 'use strict';
 
 const router = require('express-promise-router')();
-const schemas = require('../models/schemas');
+const schemas = require('../lib/schemas');
 
 /**
  * get a particular schema

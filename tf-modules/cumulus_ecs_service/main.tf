@@ -33,6 +33,7 @@ resource "aws_ecs_task_definition" "default" {
       privileged        = var.privileged
       environment       = [for k, v in var.environment : { name = k, value = v }]
       image             = var.image
+      healthCheck       = var.health_check
       memoryReservation = var.memory_reservation
       command           = var.command
       logConfiguration = {

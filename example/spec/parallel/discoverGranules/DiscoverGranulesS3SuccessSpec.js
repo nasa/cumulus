@@ -15,6 +15,8 @@ const { getExecution, deleteExecution } = require('@cumulus/api-client/execution
 const {
   createProvider, deleteProvider,
 } = require('@cumulus/api-client/providers');
+const { constructCollectionId } = require('@cumulus/message/Collections');
+
 const {
   waitForApiStatus,
 } = require('../../helpers/apiUtils');
@@ -50,8 +52,6 @@ describe('The DiscoverGranules workflow', () => {
 
       process.env.stackName = stackName;
       process.env.system_bucket = bucket;
-
-      process.env.ProvidersTable = `${stackName}-ProvidersTable`;
 
       const testId = createTimestampedTestId(stackName, 'DiscoverGranuleS3Success');
 
@@ -115,6 +115,7 @@ describe('The DiscoverGranules workflow', () => {
         await waitForGranuleAndDelete(
           stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           'completed'
         );
       }

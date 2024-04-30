@@ -1,38 +1,18 @@
 #!/usr/bin/env node
+/* eslint-disable node/shebang */
 
 'use strict';
 
 const program = require('commander');
-const { lambda } = require('@cumulus/aws-client/services');
 const pckg = require('../package.json');
 const backup = require('./backup');
 const restore = require('./restore');
-const { serveApi, serveDistributionApi, resetTables } = require('./serve');
+const { serveApi, serveDistributionApi } = require('./serve');
 
 program.version(pckg.version);
 
 program
   .usage('TYPE COMMAND [options]');
-
-program
-  .command('migrate')
-  .option('--stack <stack>', 'AWS CloudFormation stack name')
-  .option('--migrationVersion <version>', 'Migration version to run')
-  .description('Invokes the migration lambda function')
-  .action((cmd) => {
-    if (!cmd.migrationVersion) {
-      throw new Error('version argument is missing');
-    }
-    if (!cmd.stack) {
-      throw new Error('stack name is missing');
-    }
-    const l = lambda();
-    console.log(`Invoking migration: ${cmd.migrationVersion}`);
-    l.invoke({
-      FunctionName: `${cmd.stack}-executeMigrations`,
-      Payload: `{ "migrations": ["${cmd.migrationVersion}"] }`,
-    }).promise().then(console.log).catch(console.error);
-  });
 
 program
   .command('backup')
@@ -85,18 +65,6 @@ program
   .description('Serves the local version of the distribution API')
   .action(() => {
     serveDistributionApi(process.env.stackName).catch(console.error);
-  });
-
-program
-  .command('reset-tables')
-  .option('--username <username>', 'username [default: process.env.USERNAME]', process.env.USERNAME)
-  .option('--stack-name <stackName>', 'Name of stack', 'localrun')
-  .option('--system-bucket <systemBucket>', 'Name of systemBucket', 'localbucket')
-  .option('--run-it', 'Override check for TestMode and run commands.')
-  .description('Resets dynamodb tables for testing')
-  .action((cmd) => {
-    resetTables(cmd.username, cmd.stackName, cmd.systemBucket, cmd.runIt)
-      .catch(console.error);
   });
 
 program

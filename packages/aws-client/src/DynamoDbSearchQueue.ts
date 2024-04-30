@@ -1,11 +1,15 @@
-import * as AWS from 'aws-sdk';
 import {
   DynamoDBDocument,
 } from '@aws-sdk/lib-dynamodb';
+import {
+  AttributeValue,
+  ScanCommandInput,
+  QueryCommandInput,
+} from '@aws-sdk/client-dynamodb';
 import { dynamodbDocClient } from './services';
 
 type SearchType = 'scan' | 'query';
-type SearchParams = AWS.DynamoDB.DocumentClient.ScanInput | AWS.DynamoDB.DocumentClient.QueryInput;
+type SearchParams = ScanCommandInput | QueryCommandInput;
 
 /**
  * Class to efficiently search all of the items in a DynamoDB table, without loading them all into
@@ -15,9 +19,9 @@ class DynamoDbSearchQueue {
   private readonly dynamodbDocClient: DynamoDBDocument;
   private readonly searchType: SearchType;
   private readonly params: SearchParams;
-  private items: Array<AWS.DynamoDB.DocumentClient.AttributeMap | null>;
+  private items: (Record<string, AttributeValue> | null)[];
 
-  constructor(params: AWS.DynamoDB.DocumentClient.ScanInput, searchType: SearchType = 'scan') {
+  constructor(params: SearchParams, searchType: SearchType = 'scan') {
     this.items = [];
     this.params = params;
     this.dynamodbDocClient = dynamodbDocClient();
@@ -71,7 +75,7 @@ class DynamoDbSearchQueue {
    * A DynamoDbSearchQueue instance stores the list of items to be returned in
    * the `this.items` array. When that list is empty, the `fetchItems()` method
    * is called to repopulate `this.items`. Typically, the new items are fetched
-   * using the AWS.DynamoDB.`DocumentClient.scan()` method.
+   * using the `DynamoDBDocument.scan()` method.
    *
    * DynamoDB scans up to 1 MB of items at a time and then filters that 1 MB to
    * look for matching items. If there are more items to be search beyond that
@@ -90,7 +94,7 @@ class DynamoDbSearchQueue {
    * items. It will continue to call `scan()` until one of those two conditions
    * has been satisfied.
    *
-   * Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB.html#scan-property
+   * Reference: https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/Package/-aws-sdk-lib-dynamodb/Class/DynamoDBDocument/
    *
    * @private
    */

@@ -15,14 +15,13 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { getGranule, reingestGranule } = require('@cumulus/api-client/granules');
 const { s3 } = require('@cumulus/aws-client/services');
 const {
-  deleteS3Object,
   s3GetObjectTagging,
   s3Join,
   s3ObjectExists,
 } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getExecution } = require('@cumulus/api-client/executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -66,8 +65,6 @@ describe('The Sync Granules workflow', () => {
   beforeAll(async () => {
     config = await loadConfig();
     lambdaStep = new LambdaStep();
-
-    process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 
     const granuleRegex = '^MOD09GQ\\.A[\\d]{7}\\.[\\w]{6}\\.006\\.[\\d]{13}$';
 
@@ -161,9 +158,11 @@ describe('The Sync Granules workflow', () => {
     // clean up stack state added by test
     await Promise.all(inputPayload.granules.map(
       async (granule) => {
+        const collectionId = constructCollectionId(collection.name, collection.version);
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          collectionId,
           ['completed', 'failed']
         );
       }
@@ -292,6 +291,7 @@ describe('The Sync Granules workflow', () => {
       granule = await getGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
+        collectionId: constructCollectionId(collection.name, collection.version),
       });
 
       oldUpdatedAt = granule.updatedAt;
@@ -299,6 +299,7 @@ describe('The Sync Granules workflow', () => {
       const reingestGranuleResponse = await reingestGranule({
         prefix: config.stackName,
         granuleId: newGranuleId,
+        collectionId: constructCollectionId(collection.name, collection.version),
       });
       reingestResponse = JSON.parse(reingestGranuleResponse.body);
     });
@@ -346,6 +347,7 @@ describe('The Sync Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId: constructCollectionId(collection.name, collection.version),
         },
         'completed'
       );
@@ -353,6 +355,8 @@ describe('The Sync Granules workflow', () => {
       const updatedGranule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: constructCollectionId(collection.name, collection.version),
+
       });
       expect(updatedGranule.status).toEqual('completed');
       expect(updatedGranule.updatedAt).toBeGreaterThan(oldUpdatedAt);
@@ -367,59 +371,6 @@ describe('The Sync Granules workflow', () => {
       currentFiles.forEach((cf) => {
         expect(cf.LastModified).toBeGreaterThan(reingestGranuleExecution.startDate);
       });
-    });
-  });
-
-  describe('when an ACL is provided in the task config and set to disabled', () => {
-    const meta = { ACL: 'disabled' };
-    let executionArn;
-    let lambdaOutput;
-    let objectACLs;
-    let files;
-    let key1;
-    let key2;
-
-    beforeAll(async () => {
-      const execution = await buildAndExecuteWorkflow(
-        config.stackName, config.bucket, workflowName, collection, provider, inputPayload, meta
-      );
-
-      executionArn = execution.executionArn;
-      console.log(`Wait for completed execution ${executionArn}`);
-
-      await waitForCompletedExecution(executionArn);
-
-      lambdaOutput = await lambdaStep.getStepOutput(executionArn, 'SyncGranule');
-      files = lambdaOutput.payload.granules[0].files;
-      key1 = s3Join(files[0].key);
-      key2 = s3Join(files[1].key);
-
-      await Promise.all([
-        s3ObjectExists({ Bucket: files[0].bucket, Key: key1 }),
-        s3ObjectExists({ Bucket: files[1].bucket, Key: key2 }),
-      ]);
-      objectACLs = await Promise.all(files.map(
-        (file) => s3().getObjectAcl({
-          Bucket: file.bucket,
-          Key: file.key,
-        })
-      ));
-    });
-
-    afterAll(async () => {
-      await Promise.all([
-        deleteS3Object(files[0].bucket, key1),
-        deleteS3Object(files[1].bucket, key2),
-      ]);
-      await deleteExecution({ prefix: config.stackName, executionArn: executionArn });
-    });
-
-    it('puts objects with ACL disabled (full control permission)', () => {
-      objectACLs.map((acl) => expect(acl.Grants[0].Permission).toBe('FULL_CONTROL'));
-    });
-
-    it('a disabled ACL configuration value in the lamba output', () => {
-      expect(lambdaOutput.meta.ACL).toBe('disabled');
     });
   });
 

@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/message",
-  "version": "15.0.4",
+  "version": "16.1.4",
   "description": "Utilities for building and parsing Cumulus messages",
   "keywords": [
     "GIBS",
@@ -26,7 +26,8 @@
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
     "tsc:listEmittedFiles": "../../node_modules/.bin/tsc --listEmittedFiles",
-    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'"
+    "watch-test": "../../node_modules/.bin/tsc-watch --onsuccess 'npm test'",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "ava": {
     "files": [
@@ -38,11 +39,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "15.0.4",
-    "@cumulus/common": "15.0.4",
-    "@cumulus/errors": "15.0.4",
-    "@cumulus/logger": "15.0.4",
-    "@cumulus/types": "15.0.4",
+    "@cumulus/aws-client": "16.1.4",
+    "@cumulus/common": "16.1.4",
+    "@cumulus/errors": "16.1.4",
+    "@cumulus/logger": "16.1.4",
+    "@cumulus/types": "16.1.4",
     "jsonpath-plus": "^3.0.0",
     "lodash": "^4.17.21",
     "uuid": "^8.2.0"

@@ -4,7 +4,6 @@ const fs = require('fs-extra');
 const pMap = require('p-map');
 const mime = require('mime-types');
 
-const { models: { Granule } } = require('@cumulus/api');
 const { headObject } = require('@cumulus/aws-client/S3');
 const { randomStringFromRegex } = require('@cumulus/common/test-utils');
 const {
@@ -15,7 +14,7 @@ const {
 const { deleteExecution, getExecution } = require('@cumulus/api-client/executions');
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { deleteProvider } = require('@cumulus/api-client/providers');
-
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { loadConfig, createTimestampedTestId, createTestSuffix } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
@@ -28,7 +27,6 @@ describe('The FTP Ingest Granules workflow', () => {
   const collectionsDir = './data/collections/s3_MOD09GQ_006';
 
   let config;
-  let granuleModel;
   let inputPayload;
   let pdrFilename;
   let provider;
@@ -47,9 +45,6 @@ describe('The FTP Ingest Granules workflow', () => {
       const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       provider = await buildFtpProvider(testSuffix);
 
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
-      granuleModel = new Granule();
-
       // populate collections, providers and test data
       const promiseResults = await Promise.all([
         addCollections(config.stackName, config.bucket, collectionsDir, testSuffix, testId),
@@ -65,9 +60,6 @@ describe('The FTP Ingest Granules workflow', () => {
       pdrFilename = inputPayload.pdr.name;
 
       console.log(`Granule id is ${inputPayload.granules[0].granuleId}`);
-
-      // delete the granule record from DynamoDB if exists
-      await granuleModel.delete({ granuleId: inputPayload.granules[0].granuleId });
 
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName, config.bucket, workflowName, collection, createdProvider, inputPayload
@@ -88,6 +80,7 @@ describe('The FTP Ingest Granules workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId: constructCollectionId(collection.name, collection.version),
         },
         'completed'
       );
@@ -117,6 +110,7 @@ describe('The FTP Ingest Granules workflow', () => {
       await deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId: testGranule.collectionId,
       });
     });
 

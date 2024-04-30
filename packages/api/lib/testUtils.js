@@ -10,12 +10,15 @@ const { randomId, randomString } = require('@cumulus/common/test-utils');
 const { sqs } = require('@cumulus/aws-client/services');
 const { s3PutObject, putJsonS3Object } = require('@cumulus/aws-client/S3');
 const {
-  translateApiCollectionToPostgresCollection,
-  translateApiProviderToPostgresProvider,
-  translateApiRuleToPostgresRule,
-  translateApiPdrToPostgresPdr,
-  translateApiExecutionToPostgresExecution,
+  fakePdrRecordFactory,
+  fakeRuleRecordFactory,
   translateApiAsyncOperationToPostgresAsyncOperation,
+  translateApiCollectionToPostgresCollection,
+  translateApiExecutionToPostgresExecution,
+  translateApiProviderToPostgresProvider,
+  translateApiRuleToPostgresRuleRaw,
+  translatePostgresPdrToApiPdr,
+  translatePostgresRuleToApiRule,
 } = require('@cumulus/db');
 const {
   indexCollection,
@@ -36,6 +39,7 @@ const {
 
 const { createJwtToken } = require('./token');
 const { authorizedOAuthUsersKey } = require('../app/auth');
+const { createRuleTrigger } = require('./rulesHelpers');
 
 const isLocalApi = () => process.env.CUMULUS_ENV === 'local';
 
@@ -278,6 +282,7 @@ function fakeProviderFactory(options = {}) {
   return {
     id: randomId('id'),
     globalConnectionLimit: 1,
+    maxDownloadTime: 100,
     protocol: 'http',
     host: randomId('host'),
     port: 80,
@@ -453,9 +458,11 @@ const createCollectionTestRecords = async (context, collectionParams) => {
     esCollectionClient,
   } = context;
   const originalCollection = fakeCollectionFactory(collectionParams);
+  if (collectionModel) {
+    await collectionModel.create(originalCollection);
+  }
 
   const insertPgRecord = await translateApiCollectionToPostgresCollection(originalCollection);
-  await collectionModel.create(originalCollection);
   const [pgCollection] = await collectionPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await collectionPgModel.get(
     testKnex, { cumulus_id: pgCollection.cumulus_id }
@@ -474,7 +481,6 @@ const createCollectionTestRecords = async (context, collectionParams) => {
 const createProviderTestRecords = async (context, providerParams) => {
   const {
     testKnex,
-    providerModel,
     providerPgModel,
     esClient,
     esProviderClient,
@@ -482,7 +488,6 @@ const createProviderTestRecords = async (context, providerParams) => {
   const originalProvider = fakeProviderFactory(providerParams);
 
   const insertPgRecord = await translateApiProviderToPostgresProvider(originalProvider);
-  await providerModel.create(originalProvider);
   const [pgProvider] = await providerPgModel.create(testKnex, insertPgRecord);
   const originalPgRecord = await providerPgModel.get(
     testKnex, { cumulus_id: pgProvider.cumulus_id }
@@ -498,27 +503,37 @@ const createProviderTestRecords = async (context, providerParams) => {
   };
 };
 
+/*
+ * Creates rules for testing
+ *
+ * @param {object} context
+ * @param {PostgresRule} - Postgres Rule parameters
+ *
+ * @returns {Object}
+ *   Returns new object consisting of `originalApiRule`, `originalPgRecord, and `originalEsRecord`
+ */
 const createRuleTestRecords = async (context, ruleParams) => {
   const {
     testKnex,
-    ruleModel,
     rulePgModel,
     esClient,
     esRulesClient,
   } = context;
-  const originalRule = fakeRuleFactoryV2(ruleParams);
 
-  const dynamoRuleWithTrigger = await ruleModel.createRuleTrigger(originalRule);
-  const originalDynamoRule = await ruleModel.create(dynamoRuleWithTrigger);
-  const insertPgRecord = await translateApiRuleToPostgresRule(originalDynamoRule, testKnex);
+  const originalRule = fakeRuleRecordFactory(ruleParams);
+  const apiRule = await translatePostgresRuleToApiRule(originalRule, testKnex);
 
-  const [originalPgRecord] = await rulePgModel.create(testKnex, insertPgRecord, '*');
-  await indexRule(esClient, originalDynamoRule, process.env.ES_INDEX);
+  const ruleWithTrigger = await createRuleTrigger(apiRule);
+  const pgRuleWithTrigger = await translateApiRuleToPostgresRuleRaw(ruleWithTrigger, testKnex);
+
+  const [originalPgRecord] = await rulePgModel.create(testKnex, pgRuleWithTrigger, '*');
+  const originalApiRule = await translatePostgresRuleToApiRule(originalPgRecord, testKnex);
+  await indexRule(esClient, originalApiRule, process.env.ES_INDEX);
   const originalEsRecord = await esRulesClient.get(
     originalRule.name
   );
   return {
-    originalDynamoRule,
+    originalApiRule,
     originalPgRecord,
     originalEsRecord,
   };
@@ -527,39 +542,36 @@ const createRuleTestRecords = async (context, ruleParams) => {
 const createPdrTestRecords = async (context, pdrParams = {}) => {
   const {
     knex,
-    pdrModel,
     pdrPgModel,
     esClient,
     esPdrsClient,
-    testPgCollection,
-    testPgProvider,
+    collectionCumulusId,
+    providerCumulusId,
   } = context;
 
-  const originalPdr = fakePdrFactoryV2({
+  const insertPgRecord = fakePdrRecordFactory({
     ...pdrParams,
-    collectionId: constructCollectionId(testPgCollection.name, testPgCollection.version),
-    provider: testPgProvider.name,
+    collection_cumulus_id: collectionCumulusId,
+    provider_cumulus_id: providerCumulusId,
   });
 
-  const pdrS3Key = `${process.env.stackName}/pdrs/${originalPdr.pdrName}`;
+  const pdrS3Key = `${process.env.stackName}/pdrs/${insertPgRecord.name}`;
   await s3PutObject({
     Bucket: process.env.system_bucket,
     Key: pdrS3Key,
     Body: randomString(),
   });
 
-  const insertPgRecord = await translateApiPdrToPostgresPdr(originalPdr, knex);
-  const originalDynamoPdr = await pdrModel.create(originalPdr);
   const [pgPdr] = await pdrPgModel.create(knex, insertPgRecord);
   const originalPgRecord = await pdrPgModel.get(
     knex, { cumulus_id: pgPdr.cumulus_id }
   );
+  const originalPdr = await translatePostgresPdrToApiPdr(originalPgRecord, knex);
   await indexPdr(esClient, originalPdr, process.env.ES_INDEX);
   const originalEsRecord = await esPdrsClient.get(
     originalPdr.pdrName
   );
   return {
-    originalDynamoPdr,
     originalPgRecord,
     originalEsRecord,
   };
@@ -568,7 +580,6 @@ const createPdrTestRecords = async (context, pdrParams = {}) => {
 const createExecutionTestRecords = async (context, executionParams = {}) => {
   const {
     knex,
-    executionModel,
     executionPgModel,
     esClient,
     esExecutionsClient,
@@ -576,7 +587,6 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
 
   const originalExecution = fakeExecutionFactoryV2(executionParams);
   const insertPgRecord = await translateApiExecutionToPostgresExecution(originalExecution, knex);
-  const originalDynamoExecution = await executionModel.create(originalExecution);
   const [pgExecution] = await executionPgModel.create(knex, insertPgRecord);
   const executionCumulusId = pgExecution.cumulus_id;
   const originalPgRecord = await executionPgModel.get(
@@ -587,7 +597,6 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
     originalExecution.arn
   );
   return {
-    originalDynamoExecution,
     originalPgRecord,
     originalEsRecord,
   };
@@ -596,7 +605,6 @@ const createExecutionTestRecords = async (context, executionParams = {}) => {
 const createAsyncOperationTestRecords = async (context) => {
   const {
     knex,
-    asyncOperationModel,
     asyncOperationPgModel,
     esClient,
     esAsyncOperationClient,
@@ -607,7 +615,6 @@ const createAsyncOperationTestRecords = async (context) => {
     originalAsyncOperation,
     knex
   );
-  const originalDynamoAsyncOperation = await asyncOperationModel.create(originalAsyncOperation);
   const [pgAsyncOperation] = await asyncOperationPgModel.create(
     knex,
     insertPgRecord
@@ -620,7 +627,6 @@ const createAsyncOperationTestRecords = async (context) => {
     originalAsyncOperation.id
   );
   return {
-    originalDynamoAsyncOperation,
     originalPgRecord,
     originalEsRecord,
   };
@@ -629,13 +635,11 @@ const createAsyncOperationTestRecords = async (context) => {
 const cleanupExecutionTestRecords = async (context, { arn }) => {
   const {
     knex,
-    executionModel,
     executionPgModel,
     esClient,
     esIndex,
   } = context;
 
-  await executionModel.delete({ arn });
   await executionPgModel.delete(knex, { arn });
   await deleteExecution({
     esClient,

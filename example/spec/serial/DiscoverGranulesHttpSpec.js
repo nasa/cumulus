@@ -10,6 +10,7 @@ const {
   waitForCompletedExecution,
 } = require('@cumulus/integration-tests');
 
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../helpers/workflowUtils');
 const { waitForApiStatus } = require('../helpers/apiUtils');
 const {
@@ -114,6 +115,7 @@ describe('The Discover Granules workflow with http Protocol', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           'completed'
         );
       }

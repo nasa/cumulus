@@ -13,7 +13,7 @@ locals {
 # ORCA Module
 module "orca" {
   count = 1
-  source = "https://github.com/nasa/cumulus-orca/releases/download/v4.0.1/cumulus-orca-terraform.zip"
+  source = "https://github.com/nasa/cumulus-orca/releases/download/v8.0.1/cumulus-orca-terraform.zip"
 
   ## --------------------------
   ## Cumulus Variables
@@ -23,7 +23,6 @@ module "orca" {
   lambda_subnet_ids        = local.subnet_ids
   permissions_boundary_arn = var.permissions_boundary_arn
   prefix                   = var.prefix
-  rds_security_group_id    = local.rds_security_group
   system_bucket            = var.system_bucket
   vpc_id                   = local.vpc_id
   workflow_config          = module.cumulus.workflow_config
@@ -38,7 +37,12 @@ module "orca" {
   db_admin_password    = local.rds_admin_login.password
   db_host_endpoint     = local.rds_admin_login.host
   db_user_password     = var.orca_db_user_password
+  dlq_subscription_email   = var.orca_dlq_subscription_email
   orca_default_bucket  = var.orca_default_bucket
+  orca_reports_bucket_name = var.system_bucket
+  rds_security_group_id    = local.rds_security_group
+  s3_access_key        = var.orca_s3_access_key
+  s3_secret_key        = var.orca_s3_secret_key
 
   ## OPTIONAL
   db_admin_username                                    = local.rds_admin_login.username

@@ -4,7 +4,6 @@ const fs = require('fs');
 
 const { s3 } = require('@cumulus/aws-client/services');
 const { s3Join } = require('@cumulus/aws-client/S3');
-const { constructCollectionId } = require('@cumulus/message/Collections');
 const { randomString } = require('@cumulus/common/test-utils');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { getGranule } = require('@cumulus/api-client/granules');
@@ -17,6 +16,7 @@ const {
   cleanupProviders,
 } = require('@cumulus/integration-tests');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const {
@@ -139,6 +139,7 @@ describe('When the Sync Granule workflow is configured', () => {
         await waitForGranuleAndDelete(
           config.stackName,
           granule.granuleId,
+          constructCollectionId(collection.name, collection.version),
           ['completed', 'failed']
         );
       }

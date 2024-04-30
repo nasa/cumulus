@@ -3,7 +3,7 @@
 variable "async_operation_image" {
   description = "docker image to use for Cumulus async operations tasks"
   type = string
-  default = "cumuluss/async-operation:44"
+  default = "cumuluss/async-operation:48"
 }
 
 variable "cmr_client_id" {
@@ -394,6 +394,18 @@ variable "lzards_api" {
 
 variable "lzards_s3_link_timeout" {
   description = "LZARDS S3 access link timeout (seconds)"
+  type        = string
+  default     = ""
+}
+
+variable "orca_lambda_copy_to_archive_arn" {
+  description = "AWS ARN of the ORCA copy_to_archive lambda."
+  type        = string
+  default     = ""
+}
+
+variable "orca_sfn_recovery_workflow_arn" {
+  description = "The ARN of the recovery step function."
   type        = string
   default     = ""
 }

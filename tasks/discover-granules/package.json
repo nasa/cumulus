@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/discover-granules",
-  "version": "15.0.4",
+  "version": "16.1.4",
   "description": "Discover Granules in FTP/HTTP/HTTPS/SFTP/S3 endpoints",
   "main": "index.js",
   "directories": {
@@ -21,7 +21,8 @@
     "package": "npm run build && (cd dist && node ../../../bin/zip.js lambda.zip index.js schemas)",
     "test": "../../node_modules/.bin/ava",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
-    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w"
+    "watch": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack --progress -w",
+    "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "publishConfig": {
     "access": "public"
@@ -35,16 +36,16 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "15.0.4",
+    "@cumulus/api-client": "16.1.4",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/ingest": "15.0.4",
-    "@cumulus/logger": "15.0.4",
+    "@cumulus/ingest": "16.1.4",
+    "@cumulus/logger": "16.1.4",
     "got": "^11.8.5",
     "lodash": "^4.17.21",
     "p-map": "^4.0.0"
   },
   "devDependencies": {
-    "@cumulus/aws-client": "15.0.4",
-    "@cumulus/common": "15.0.4"
+    "@cumulus/aws-client": "16.1.4",
+    "@cumulus/common": "16.1.4"
   }
 }

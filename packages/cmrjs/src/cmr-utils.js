@@ -16,6 +16,7 @@ const {
   parseS3Uri,
   promiseS3Upload,
   s3GetObjectTagging,
+  s3ObjectExists,
   s3TagSetToQueryString,
   waitForObject,
   getObjectStreamContents,
@@ -1099,6 +1100,11 @@ async function getGranuleTemporalInfo(granule) {
   if (cmrFile === undefined || cmrFile.length === 0) return {};
 
   const cmrFilename = getS3UrlOfFile(cmrFile[0]);
+
+  if (!(await s3ObjectExists(parseS3Uri(cmrFilename)))) {
+    log.warn(`getGranuleTemporalInfo cmr file does not exist ${cmrFilename}`);
+    return {};
+  }
 
   if (isCMRISOFilename(cmrFilename)) {
     const metadata = await metadataObjectFromCMRXMLFile(cmrFilename);

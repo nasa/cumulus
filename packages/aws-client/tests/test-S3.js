@@ -34,6 +34,7 @@ const {
   deleteS3Objects,
   promiseS3Upload,
   fileExists,
+  s3ObjectExists,
 } = require('../S3');
 const awsServices = require('../services');
 const { streamToString } = require('../test-utils');
@@ -94,8 +95,7 @@ test('createBucket() creates a bucket', async (t) => {
   }
 });
 
-// TODO enable the test after CUMULUS-3106 fix
-test.skip('deleteS3Objects() deletes s3 objects', async (t) => {
+test('deleteS3Objects() deletes s3 objects', async (t) => {
   const bucketName = randomString();
   await createBucket(bucketName);
 
@@ -501,4 +501,17 @@ test('fileExists() correctly returns head object response for existing file', as
 test('fileExists() correctly returns false for non-existent file', async (t) => {
   const { Bucket } = t.context;
   t.false(await fileExists(Bucket, randomString()));
+});
+
+test('s3ObjectExists() returns true for existing file', async (t) => {
+  const { Bucket } = t.context;
+
+  const { Key } = await stageTestObjectToLocalStack(Bucket, 'asdf');
+  t.true(await s3ObjectExists({ Bucket, Key }));
+});
+
+test('s3ObjectExists() returns false for non-existent file', async (t) => {
+  const { Bucket } = t.context;
+  t.false(await s3ObjectExists({ Bucket, Key: randomString() }));
+  t.false(await s3ObjectExists({ Bucket: randomString(), Key: randomString() }));
 });

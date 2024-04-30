@@ -14,9 +14,9 @@ const {
   updateGranule,
 } = require('@cumulus/api-client/granules');
 const { createCollection, deleteCollection } = require('@cumulus/api-client/collections');
+const { createExecution, deleteExecution } = require('@cumulus/api-client/executions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
 
-const { createExecution, deleteExecution } = require('@cumulus/api-client/executions');
 const { isValidAsyncOperationId, loadConfig, createTimestampedTestId } = require('../../helpers/testUtils');
 
 describe('POST /granules/bulkDelete with a failed bulk delete operation', () => {
@@ -73,7 +73,7 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     postBulkDeleteResponse = await bulkDeleteGranules({
       prefix: config.stackName,
       body: {
-        ids: [granule.granuleId],
+        granules: [{ granuleId: granule.granuleId, collectionId: granule.collectionId }],
       },
     });
     postBulkDeleteBody = JSON.parse(postBulkDeleteResponse.body);
@@ -95,13 +95,15 @@ describe('POST /granules/bulkDelete with a failed bulk delete operation', () => 
     // mark granule as unpublished to allow delete
     await updateGranule({
       prefix,
+      granuleId: granule.granuleId,
+      collectionId: granule.collectionId,
       body: {
         ...granule,
         published: false,
       },
     });
 
-    await deleteGranule({ prefix, granuleId: granule.granuleId });
+    await deleteGranule({ prefix, granuleId: granule.granuleId, collectionId: granule.collectionId });
     await deleteCollection({
       prefix,
       collectionName: collection.name,

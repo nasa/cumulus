@@ -13,7 +13,7 @@ const {
 const { getExecution } = require('@cumulus/api-client/executions');
 
 const { deleteExecution } = require('@cumulus/api-client/executions');
-
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
 const {
@@ -47,6 +47,7 @@ describe('The Ingest Granule failure workflow', () => {
   let testDataFolder;
   let testSuffix;
   let workflowExecution;
+  let collectionId;
 
   beforeAll(async () => {
     try {
@@ -57,8 +58,6 @@ describe('The Ingest Granule failure workflow', () => {
 
       const collection = { name: `MOD09GQ${testSuffix}`, version: '006' };
       const provider = { id: `s3_provider${testSuffix}` };
-
-      process.env.GranulesTable = `${config.stackName}-GranulesTable`;
 
       // populate collections, providers and test data
       await Promise.all([
@@ -86,7 +85,7 @@ describe('The Ingest Granule failure workflow', () => {
         },
         ...inputPayload.granules[0].files,
       ];
-
+      collectionId = constructCollectionId(inputPayload.granules[0].dataType, inputPayload.granules[0].version);
       console.log(`testSuffix: ${testSuffix}, granuleId: ${inputPayload.granules[0].granuleId}`);
       workflowExecution = await buildAndExecuteWorkflow(
         config.stackName,
@@ -110,6 +109,7 @@ describe('The Ingest Granule failure workflow', () => {
       await deleteGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId,
         pRetryOptions: {
           retries: 0,
         },
@@ -233,6 +233,7 @@ describe('The Ingest Granule failure workflow', () => {
         {
           prefix: config.stackName,
           granuleId: inputPayload.granules[0].granuleId,
+          collectionId,
         },
         'failed'
       );
@@ -240,6 +241,7 @@ describe('The Ingest Granule failure workflow', () => {
       const granule = await getGranule({
         prefix: config.stackName,
         granuleId: inputPayload.granules[0].granuleId,
+        collectionId,
       });
 
       expect(granule.status).toBe('failed');
@@ -250,7 +252,7 @@ describe('The Ingest Granule failure workflow', () => {
         const isSchemaValidationError = (error.Error === 'CumulusMessageAdapterExecutionError') &&
           error.Cause.includes('jsonschema.exceptions.ValidationError');
         const isPostgresWriteError = error.Error.includes('Failed writing files to PostgreSQL') &&
-          error.Cause.includes('null value in column "bucket" violates not-null constraint');
+          error.Cause.includes('null value in column "bucket" of relation "files" violates not-null constraint');
         expect(isSchemaValidationError || isPostgresWriteError).toBeTrue();
       });
     });

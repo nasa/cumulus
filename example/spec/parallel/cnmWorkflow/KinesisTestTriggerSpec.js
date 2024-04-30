@@ -31,6 +31,7 @@ const { getExecution, deleteExecution } = require('@cumulus/api-client/execution
 const { getGranule, deleteGranule } = require('@cumulus/api-client/granules');
 const { randomString } = require('@cumulus/common/test-utils');
 const { getExecutionUrlFromArn } = require('@cumulus/message/Executions');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   waitForApiRecord,
@@ -98,7 +99,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
   async function cleanUp() {
     setProcessEnvironment(testConfig.stackName, testConfig.bucket);
     // delete rule
-    console.log(`\nDeleting ${ruleOverride.name}`);
+    console.log(`\nDeleting rule ${ruleOverride.name}`);
     const rules = await readJsonFilesFromDir(ruleDirectory);
     // clean up stack state added by test
     console.log(`\nCleaning up stack & deleting test streams '${streamName}' and '${cnmResponseStreamName}'`);
@@ -106,7 +107,9 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
 
     await deleteExecution({ prefix: testConfig.stackName, executionArn: failingWorkflowExecution.executionArn });
     await deleteExecution({ prefix: testConfig.stackName, executionArn: workflowExecution.executionArn });
-    await deleteGranule({ prefix: testConfig.stackName, granuleId });
+    await deleteGranule({ prefix: testConfig.stackName,
+      granuleId,
+      collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version) });
 
     await Promise.all([
       deleteFolder(testConfig.bucket, testDataFolder),
@@ -367,6 +370,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
           {
             prefix: testConfig.stackName,
             granuleId,
+            collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
           },
           {
             status: 'completed',
@@ -460,6 +464,7 @@ describe('The Cloud Notification Mechanism Kinesis workflow', () => {
             {
               prefix: testConfig.stackName,
               granuleId,
+              collectionId: constructCollectionId(ruleOverride.collection.name, ruleOverride.collection.version),
             },
             {
               status: 'failed',

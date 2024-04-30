@@ -324,6 +324,17 @@ test('getGranuleCmrTemporalInfo() handles empty return from CMR', async (t) => {
   t.deepEqual(updatedCmrTemporalInfo, {});
 });
 
+test('getGranuleCmrTemporalInfo() handles empty return from CMR and gets temporal info from granule object', async (t) => {
+  const updatedCmrTemporalInfo = await getGranuleCmrTemporalInfo({
+    granule: t.context.fakeCmrMetadata,
+    cmrUtils: {
+      getGranuleTemporalInfo: () => Promise.resolve({}),
+    },
+  });
+
+  t.deepEqual(updatedCmrTemporalInfo, t.context.fakeCmrMetadata);
+});
+
 test('getGranuleProcessingTimeInfo() converts input timestamps to standardized format', (t) => {
   const { timestampExtraPrecision } = t.context;
 

@@ -3,14 +3,7 @@ resource "aws_ssm_parameter" "dynamo_table_names" {
   type = "String"
   value = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-    CollectionsTable           = var.dynamo_tables.collections.name
-    ExecutionsTable            = var.dynamo_tables.executions.name
-    GranulesTable              = var.dynamo_tables.granules.name
-    PdrsTable                  = var.dynamo_tables.pdrs.name
-    ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-    RulesTable                 = var.dynamo_tables.rules.name
   })
 }
 locals {
@@ -20,14 +13,7 @@ locals {
   api_redirect_uri          = "${local.api_uri}token"
   dynamo_table_namestring   = jsonencode({
     AccessTokensTable          = var.dynamo_tables.access_tokens.name
-    AsyncOperationsTable       = var.dynamo_tables.async_operations.name
-    CollectionsTable           = var.dynamo_tables.collections.name
-    ExecutionsTable            = var.dynamo_tables.executions.name
-    GranulesTable              = var.dynamo_tables.granules.name
-    PdrsTable                  = var.dynamo_tables.pdrs.name
-    ProvidersTable             = var.dynamo_tables.providers.name
     ReconciliationReportsTable = var.dynamo_tables.reconciliation_reports.name
-    RulesTable                 = var.dynamo_tables.rules.name
   })
   api_env_variables = {
         auth_mode                      = "public"
@@ -85,8 +71,7 @@ locals {
       METRICS_ES_HOST                  = var.metrics_es_host
       METRICS_ES_PASS                  = var.metrics_es_password
       METRICS_ES_USER                  = var.metrics_es_username
-      MigrationAsyncOperationLambda    = var.postgres_migration_async_operation_function_arn
-      MigrationCountToolLambda         = var.postgres_migration_count_tool_function_arn
+      OAUTH_PROVIDER                   = var.oauth_provider
       oauth_user_group                 = var.oauth_user_group
       orca_api_uri                     = var.orca_api_uri
       protected_buckets                = join(",", local.protected_buckets)

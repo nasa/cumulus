@@ -7,14 +7,14 @@ const {
   waitForObjectToExist,
 } = require('@cumulus/aws-client/S3');
 const { createCollection } = require('@cumulus/integration-tests/Collections');
-const { waitForListGranulesResult } = require('@cumulus/integration-tests/Granules');
-const { constructCollectionId } = require('@cumulus/message/Collections');
+const { waitForListGranulesResult, getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { deleteCollection } = require('@cumulus/api-client/collections');
 const {
   associateExecutionWithGranule,
   createGranule,
   deleteGranule,
   getGranule,
+  replaceGranule,
   updateGranule,
 } = require('@cumulus/api-client/granules');
 const {
@@ -27,6 +27,7 @@ const {
   fakeExecutionFactoryV2,
   fakeGranuleFactoryV2,
 } = require('@cumulus/api/lib/testUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const { loadConfig } = require('../../helpers/testUtils');
 
@@ -47,6 +48,7 @@ describe('The Granules API', () => {
   let modifiedGranule;
   let invalidModifiedGranule;
   let prefix;
+  let putReplaceGranule;
   let randomGranuleRecord;
   let updatedGranuleFromApi;
 
@@ -83,6 +85,14 @@ describe('The Granules API', () => {
         Body: 'testfile',
       });
 
+      putReplaceGranule = removeNilProperties(fakeGranuleFactoryV2({
+        collectionId: collectionId,
+        published: false,
+        execution: undefined,
+        files: [granuleFile],
+        status: 'completed',
+      }));
+
       randomGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
         collectionId,
         published: false,
@@ -101,8 +111,10 @@ describe('The Granules API', () => {
 
   afterAll(async () => {
     await deleteExecution({ prefix, executionArn: executionRecord.arn });
-    await deleteGranule({ prefix, granuleId: granule1.granuleId });
-    await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId });
+    await deleteGranule({ prefix, granuleId: granule1.granuleId, collectionId: granule1.collectionId });
+    await deleteGranule({ prefix, granuleId: invalidModifiedGranule.granuleId, collectionId: invalidModifiedGranule.collectionId });
+    await deleteGranule({ prefix, granuleId: putReplaceGranule.granuleId, collectionId: putReplaceGranule.collectionId });
+
     await deleteCollection({
       prefix,
       collectionName: collection1.name,
@@ -153,6 +165,7 @@ describe('The Granules API', () => {
       discoveredGranule = await getGranule({
         prefix,
         granuleId,
+        collectionId,
       });
       expect(discoveredGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
     });
@@ -185,6 +198,8 @@ describe('The Granules API', () => {
       };
       const response = await updateGranule({
         prefix,
+        granuleId: modifiedGranule.granuleId,
+        collectionId: modifiedGranule.collectionId,
         body: modifiedGranule,
       });
 
@@ -192,6 +207,7 @@ describe('The Granules API', () => {
       updatedGranuleFromApi = await getGranule({
         prefix,
         granuleId: modifiedGranule.granuleId,
+        collectionId: modifiedGranule.collectionId,
       });
       updatedGranuleFromApi.execution = undefined;
       expect(updatedGranuleFromApi).toEqual(jasmine.objectContaining(modifiedGranule));
@@ -216,6 +232,7 @@ describe('The Granules API', () => {
       updatedGranuleFromApi = await getGranule({
         prefix,
         granuleId,
+        collectionId,
       });
       expect(updatedGranuleFromApi.execution).toBe(executionRecord.execution);
     });
@@ -283,7 +300,7 @@ describe('The Granules API', () => {
         fail('beforeAll() failed');
       } else {
         const timestamp = Date.now();
-        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId });
+        const response = await deleteGranule({ prefix, granuleId: modifiedGranule.granuleId, collectionId: modifiedGranule.collectionId });
         expect(response.statusCode).toBe(200);
 
         const granuleKey = `${config.stackName}/test-output/${modifiedGranule.granuleId}-${modifiedGranule.status}-Delete.output`;
@@ -364,6 +381,8 @@ describe('The Granules API', () => {
       try {
         await updateGranule({
           prefix,
+          granuleId: granuleWithDiffCollection.granuleId,
+          collectionId: granuleWithDiffCollection.collectionId,
           body: granuleWithDiffCollection,
         });
       } catch (error) {
@@ -373,6 +392,46 @@ describe('The Granules API', () => {
         expect(apiError.message).toContain('Modifying collectionId for a granule is not allowed');
         expect(apiError.message).toContain(granuleWithDiffCollection.granuleId);
       }
+    });
+
+    it('replaces a granule, removing all applicable fields not provided', async () => {
+      if (beforeAllError) {
+        fail(beforeAllError);
+      }
+      const createResponse = await createGranule({
+        prefix,
+        body: putReplaceGranule,
+      });
+      expect(createResponse.statusCode).toBe(200);
+
+      const replacementGranule = {
+        granuleId: putReplaceGranule.granuleId,
+        collectionId,
+        status: 'failed',
+      };
+      const replaceResponse = await replaceGranule({
+        prefix,
+        body: replacementGranule,
+      });
+      expect(replaceResponse.statusCode).toBe(200);
+      const searchResults = await getGranuleWithStatus({
+        prefix,
+        granuleId: replacementGranule.granuleId,
+        collectionId,
+        status: 'failed',
+      });
+
+      const replacementGranuleWithDefaultsFilled = {
+        ...replacementGranule,
+        files: [],
+        error: {},
+        published: false,
+        timestamp: searchResults.timestamp,
+        updatedAt: searchResults.updatedAt,
+        createdAt: searchResults.createdAt,
+      };
+
+      expect(searchResults).toEqual(replacementGranuleWithDefaultsFilled);
     });
   });
 });

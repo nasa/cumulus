@@ -13,7 +13,6 @@ const logger = new Logger({ sender: '@cumulus/api/start-async-operation' });
  * @returns {Promise} an AsyncOperation record
  */
 const handler = async (event) => {
-  const dynamoTableName = process.env.AsyncOperationsTable;
   const stackName = process.env.stackName;
   const systemBucket = process.env.system_bucket;
   const cluster = process.env.EcsCluster;
@@ -34,7 +33,6 @@ const handler = async (event) => {
     payload,
     stackName,
     systemBucket,
-    dynamoTableName,
     knexConfig: process.env,
     useLambdaEnvironmentVariables: true,
   }, models.AsyncOperation);
