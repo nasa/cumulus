@@ -42,7 +42,7 @@ resource "aws_lambda_function" "cumulus_test_cleanup" {
   function_name = "cumulus-test-cleanup"
   role          = aws_iam_role.test_cleanup_lambda_role.arn
   handler       = "index.handler"
-  runtime       = "nodejs16.x"
+  runtime       = "nodejs20.x"
   timeout       = 900
 
   source_code_hash = filebase64sha256("${path.module}/dist/lambda.zip")
