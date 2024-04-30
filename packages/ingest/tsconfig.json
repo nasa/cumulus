@@ -5,5 +5,5 @@
     "outDir": "./"
   },
   "include": ["src"],
-  "exclude": []
+  "exclude": [],
 }

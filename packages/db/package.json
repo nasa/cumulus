@@ -27,7 +27,7 @@
     "timeout": "5m"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.2",

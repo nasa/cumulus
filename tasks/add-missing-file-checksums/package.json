@@ -12,7 +12,7 @@
     "directory": "tasks/add-missing-file-checksums"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "main": "dist/index.js",
   "directories": {
@@ -44,7 +44,7 @@
   },
   "dependencies": {
     "@cumulus/aws-client": "18.2.2",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5"
+    "@cumulus/cumulus-message-adapter-js": "2.2.0"
   },
   "devDependencies": {
     "@cumulus/schemas": "18.2.2",

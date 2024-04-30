@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Migration Notes
+
+#### CUMULUS-3433 Update to node.js v20
+
+The following applies only to users with a custom value configured for
+`async_operation_image`:
+
+- As part of the node v20 update process, a new version (49) of the Core
+  async-operation container was published - [cumuluss/async
+  operation](https://hub.docker.com/layers/cumuluss/async-operation)  The
+  default value for `async_operation_image` has been updated in the `cumulus`
+  module, however if you are using an internal image repository such as ECR,
+  please make sure to update your deployment configuration with the newly
+  provided image.
+
+  Users making use of a custom image configuration should note the base image
+  for Core async operations must support node v20.x.
+
+### Changed
+
+- **CUMULUS-3433**
+  - Updated all node.js lambda dependencies to node 20.x/20.12.2
+  - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
+    requests, and removed nock dependency from tests involving `fs.Readstream`
+    and `got` due to a likely incompatibility with changes in node v18, `got`,
+    fs.Readstream and nock when used in combination in units
+    (https://github.com/sindresorhus/got/issues/2341)
+  - Updated `got` dependency in `@cumulus/ingest` to use `@cumulus/common`
+    dynamic import helper / `got` > v10 in CommonJS.
+  - Updated all Core lambdas to use [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js) v2.2.0
+
 ## [v18.2.2] 2024-06-4
 
 ### Migration Notes

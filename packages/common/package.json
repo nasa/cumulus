@@ -8,7 +8,7 @@
     "NASA"
   ],
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "files": [
     "*.js",
@@ -47,6 +47,7 @@
     "@cumulus/aws-client": "18.2.2",
     "@cumulus/errors": "18.2.2",
     "@cumulus/logger": "18.2.2",
+    "got": "^14.2.1",
     "ajv": "^6.12.3",
     "aws-sdk": "^2.1492.0",
     "follow-redirects": "^1.2.4",

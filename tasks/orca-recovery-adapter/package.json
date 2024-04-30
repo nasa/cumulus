@@ -14,7 +14,7 @@
     "directory": "tasks/orca-recovery-adapter"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "clean": "rm -rf dist",
@@ -40,7 +40,7 @@
   "dependencies": {
     "@cumulus/aws-client": "18.2.2",
     "@cumulus/common": "18.2.2",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/logger": "18.2.2",
     "@cumulus/message": "18.2.2",
     "lodash": "^4.17.15"

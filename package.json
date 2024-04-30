@@ -56,7 +56,7 @@
     "url": "https://github.com/nasa/cumulus"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "bin": {
     "build-tasks-doc": "./bin/build-tasks-doc.js"
@@ -130,7 +130,7 @@
     "md5": "^2.2.1",
     "mime-types": "^2.1.22",
     "moment": "2.29.4",
-    "nock": "^12.0.3",
+    "nock": "^13.5.4",
     "node-loader": "^2.0.0",
     "npm-package-json-lint": "^5.1.0",
     "nyc": "^15.1.0",
