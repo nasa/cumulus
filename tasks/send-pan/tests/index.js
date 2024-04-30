@@ -1,7 +1,6 @@
 'use strict';
 
 const test = require('ava');
-const nock = require('nock');
 const path = require('path');
 const urljoin = require('url-join');
 const { randomId, validateInput, validateConfig, validateOutput } = require('@cumulus/common/test-utils');
@@ -25,17 +24,19 @@ test.after.always(async (t) => await Promise.all([
 
 test('SendPan task calls upload', async (t) => {
   const fileNameBase = 'test-uploadcall-pdr';
+  const port = 3030;
   const event = {
     config: {
       provider: {
         id: randomId('provideId'),
         globalConnectionLimit: 5,
-        host: 'some-host.org',
+        host: 'localhost',
+        port,
         protocol: 'http',
         createdAt: 1676325180635,
         updatedAt: 1677776213600,
       },
-      remoteDir: 'some-remote-dir',
+      remoteDir: 'post_test',
     },
     input: {
       pdr: {
@@ -45,21 +46,18 @@ test('SendPan task calls upload', async (t) => {
     },
   };
 
-  const url = `http://${event.config.provider.host}`;
-  const remotePath = path.join('/', event.config.remoteDir, `${fileNameBase}.pan`);
+  const url = `http://${event.config.provider.host}:${port}`;
+  const remotePath = path.join(event.config.remoteDir, `${fileNameBase}.pan`);
   // Message should look like this:
   // MESSAGE_TYPE = "SHORTPAN";
   // DISPOSITION = "SUCCESSFUL";
   // TIME_STAMP = 2023-03-27T18:10:56.402Z;
-  nock(url).post(remotePath, regex)
-    .reply(200);
 
   await validateInput(t, event.input);
   await validateConfig(t, event.config);
   const output = await sendPAN(event);
   await validateOutput(t, output);
 
-  t.true(nock.isDone());
   t.is(output.pan.uri, urljoin(url, remotePath));
 });
 

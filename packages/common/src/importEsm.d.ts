@@ -1,0 +1,2 @@
+declare module 'importEsm';
+export {};

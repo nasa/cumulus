@@ -8,10 +8,27 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ### Migration Notes
 
+#### CUMULUS-3433 Update to node.js v20
+
+The following applies only to users with a custom value configured for
+`async_operation_image`:
+
+- As part of the node v20 update process, a new version (49) of the Core
+  async-operation container was published - [cumuluss/async
+  operation](https://hub.docker.com/layers/cumuluss/async-operation)  The
+  default value for `async_operation_image` has been updated in the `cumulus`
+  module, however if you are using an internal image repository such as ECR,
+  please make sure to update your deployment configuration with the newly
+  provided image.
+
+  Users making use of a custom image configuration should note the base image
+  for Core async operations must support node v20.x.
+
 #### CUMULUS-3449 Please follow instructions before upgrading Cumulus.
 
-- The updates in CUMULUS-3449 requires manual update to postgres database in production environment. Please follow
-  [Update Cumulus_id Type and Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
+- The updates in CUMULUS-3449 requires manual update to postgres database in
+  production environment. Please follow [Update Cumulus_id Type and
+  Indexes](https://nasa.github.io/cumulus/docs/next/upgrade-notes/update-cumulus_id-type-indexes-CUMULUS-3449)
 
 #### CUMULUS-3617 Migration of DLA messages should be performed after Cumulus is upgraded
 
@@ -39,9 +56,11 @@ The Lambda will trigger an Async Operation and return an `id` such as:
 "taskArn":"arn:aws:ecs:us-east-1:AWSID:task/$PREFIX-CumulusECSCluster/123456789"}
 ```
 
-which you can then query the Async Operations [API Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for
-the output or status of your request. If you want to directly observe the progress of the migration as it runs, you can view
-the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
+which you can then query the Async Operations [API
+Endpoint](https://nasa.github.io/cumulus-api/#retrieve-async-operation) for the
+output or status of your request. If you want to directly observe the progress
+of the migration as it runs, you can view the CloudWatch logs for your async
+operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Breaking Changes
 - **CUMULUS-3689**
@@ -92,9 +111,21 @@ the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLog
   - `tf-modules/monitoring` module now deploys Glue table for querying dead-letter-archive messages.
 - **CUMULUS-3616**
   - Added user guide on querying dead-letter-archive messages using AWS Athena.
+- **CUMULUS-3433**
+  - Added `importGot` helper method to import `got` as an ESM module in
+    CommmonJS typescript/webpack clients.
 
 ### Changed
-
+- **CUMULUS-3433**
+  - Updated all node.js lambda dependencies to node 20.x/20.12.2
+  - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
+    requests, and removed nock dependency from tests involving `fs.Readstream`
+    and `got` due to a likely incompatibility with changes in node v18, `got`,
+    fs.Readstream and nock when used in combination in units
+    (https://github.com/sindresorhus/got/issues/2341)
+  - Updated `got` dependency in `@cumulus/ingest` to use `@cumulus/common`
+    dynamic import helper / `got` > v10 in CommonJS.
+  - Updated all Core lambdas to use [cumulus-message-adapter-js](https://github.com/nasa/cumulus-message-adapter-js) v2.2.0
 - **CUMULUS-3629**
   - dla guarantees de-nested SQS message bodies, preferring outermost metadata as found.
   - dla uses execution Name as filename and ensures no ':' or '/' characters in name
