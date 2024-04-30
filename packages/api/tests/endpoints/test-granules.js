@@ -447,6 +447,48 @@ test.serial.skip('default lists and paginates correctly with search_after', asyn
   t.not(meta.searchContext === newMeta.searchContext);
 });
 
+test.serial('default lists and paginates correctly', async (t) => {
+  const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
+  const response = await request(app)
+    .get('/granules')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta, results } = response.body;
+  t.is(results.length, 4);
+  t.is(meta.stack, process.env.stackName);
+  t.is(meta.table, 'granule');
+  t.is(meta.count, 4);
+  results.forEach((r) => {
+    t.true(granuleIds.includes(r.granuleId));
+  });
+  // default paginates correctly with search_after
+  const firstResponse = await request(app)
+    .get('/granules?limit=1')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: firstMeta, results: firstResults } = firstResponse.body;
+  t.is(firstResults.length, 1);
+  t.is(firstMeta.page, 1);
+
+  const newResponse = await request(app)
+    .get('/granules?limit=1&page=2')
+    .set('Accept', 'application/json')
+    .set('Authorization', `Bearer ${jwtAuthToken}`)
+    .expect(200);
+
+  const { meta: newMeta, results: newResults } = newResponse.body;
+  t.is(newResults.length, 1);
+  t.is(newMeta.page, 2);
+
+  t.true(granuleIds.includes(results[0].granuleId));
+  t.true(granuleIds.includes(newResults[0].granuleId));
+  t.not(results[0].granuleId, newResults[0].granuleId);
+});
+
 test.serial('CUMULUS-911 GET without pathParameters and without an Authorization header returns an Authorization Missing response', async (t) => {
   const response = await request(app)
     .get('/granules')
