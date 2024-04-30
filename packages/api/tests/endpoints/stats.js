@@ -4,6 +4,7 @@ const test = require('ava');
 const request = require('supertest');
 const rewire = require('rewire');
 const sinon = require('sinon');
+const cryptoRandomString = require('crypto-random-string');
 
 const awsServices = require('@cumulus/aws-client/services');
 const s3 = require('@cumulus/aws-client/S3');
@@ -11,8 +12,8 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = rewire('@cumulus/es-client/indexer');
 const { getEsClient } = require('@cumulus/es-client/search');
-
 const models = require('../../models');
+
 const {
   fakeGranuleFactoryV2,
   fakeCollectionFactory,
@@ -20,10 +21,23 @@ const {
   setAuthorizedOAuthUsers,
 } = require('../../lib/testUtils');
 
+const {
+  destroyLocalTestDb,
+  generateLocalTestDb,
+  GranulePgModel,
+  CollectionPgModel,
+  fakeCollectionRecordFactory,
+  fakeGranuleRecordFactory,
+  migrationDir,
+} = require('../../../db/dist');
+
+const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
+
 const assertions = require('../../lib/assertions');
 
 const stats = rewire('../../endpoints/stats');
 const getType = stats.__get__('getType');
+const aggregateStats = stats.__get__('aggregateStats');
 
 let esClient;
 
@@ -44,7 +58,7 @@ const { app } = require('../../app');
 let accessTokenModel;
 let jwtAuthToken;
 
-test.before(async () => {
+test.before(async (t) => {
   // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
   esClient = await getEsClient();
@@ -88,11 +102,56 @@ test.before(async () => {
       duration: 4,
     }), esAlias),
   ]);
-
   stub.restore();
+
+  const { knexAdmin, knex } = await generateLocalTestDb(
+    testDbName,
+    migrationDir
+  );
+
+  t.context.knexAdmin = knexAdmin;
+  t.context.knex = knex;
+
+  t.context.collectionPgModel = new CollectionPgModel();
+  t.context.granulePgModel = new GranulePgModel();
+
+  const collection1 = fakeCollectionRecordFactory();
+  const collection2 = fakeCollectionRecordFactory();
+  const collection3 = fakeCollectionRecordFactory();
+
+  const pgCollections = await t.context.collectionPgModel.insert(
+    t.context.knex,
+    [collection1, collection2, collection3],
+    '*'
+  );
+
+  const granules = [
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[0].cumulus_id, status: 'completed', beginning_date_time: '2018/11/20', ending_date_time: '2024/03/1' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[0].cumulus_id, status: 'failed', beginning_date_time: '2018/11/20', ending_date_time: '2024/03/2' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[0].cumulus_id, status: 'queued', beginning_date_time: '2018/11/20', ending_date_time: '2024/03/3' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[0].cumulus_id, status: 'running', beginning_date_time: '2018/11/20', ending_date_time: '2024/03/4' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id, status: 'completed', beginning_date_time: '2018/11/20', ending_date_time: '2022/03/2' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id, status: 'failed', beginning_date_time: '2018/11/20', ending_date_time: '2022/03/3' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id, status: 'queued', beginning_date_time: '2018/11/20', ending_date_time: '2022/03/4' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[1].cumulus_id, status: 'running', beginning_date_time: '2018/11/20', ending_date_time: '2022/03/5' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[2].cumulus_id, status: 'completed', beginning_date_time: '2018/11/20', ending_date_time: '2019/03/1' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[2].cumulus_id, status: 'failed', beginning_date_time: '2018/11/20', ending_date_time: '2019/04/1' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[2].cumulus_id, status: 'queued', beginning_date_time: '2018/11/20', ending_date_time: '2019/05/3' }),
+    fakeGranuleRecordFactory({ collection_cumulus_id: pgCollections[2].cumulus_id, status: 'running', beginning_date_time: '2018/11/20', ending_date_time: '2019/06/2' }),
+  ];
+
+  await t.context.granulePgModel.insert(
+    t.context.knex,
+    granules
+  );
 });
 
-test.after.always(async () => {
+test.after.always(async (t) => {
+  await destroyLocalTestDb({
+    ...t.context,
+    testDbName,
+  });
+
   await Promise.all([
     esClient.client.indices.delete({ index: esIndex }),
     await accessTokenModel.deleteTable(),
@@ -215,27 +274,50 @@ test('GET /stats returns correct response with date params filters values correc
 });
 
 test('GET /stats/aggregate returns correct response', async (t) => {
-  const response = await request(app)
+  const { knex } = t.context;
+  const response = await aggregateStats('/stats/aggregate?type=granules', knex);
+  /*const response = await request(app)
     .get('/stats/aggregate?type=granules')
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
+    .expect(200);*/
 
-  t.is(response.body.meta.count, 5);
-  t.deepEqual(response.body.count, [
-    { key: 'completed', count: 3 }, { key: 'failed', count: 2 },
-  ]);
+  const expectedResponse = [
+    { status: 'completed', count: '3' },
+    { status: 'running', count: '3' },
+    { status: 'queued', count: '3' },
+    { status: 'failed', count: '3' },
+  ];
+
+  //console.log("RESPONSE", response);
+  //t.is(response.body.meta.count, 5);
+  //t.deepEqual(response.body.count, [
+  //  { key: 'completed', count: 3 }, { key: 'failed', count: 2 },
+  //]);
+  t.deepEqual(response, expectedResponse);
 });
 
 test('GET /stats/aggregate filters correctly by date', async (t) => {
-  const response = await request(app)
-    .get(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 0, 28)).getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`)
+  const { knex } = t.context;
+  const response = await aggregateStats(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 0, 28)).getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`, knex);
+  /*const response = await request(app)
+    .get(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 0, 28))
+      .getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`)
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);
+    .expect(200);*/
 
-  t.is(response.body.meta.count, 2);
-  t.deepEqual(response.body.count, [
-    { key: 'completed', count: 1 }, { key: 'failed', count: 1 },
-  ]);
+  const expectedResponse = [
+    { status: 'queued', count: '2' },
+    { status: 'failed', count: '2' },
+    { status: 'running', count: '2' },
+    { status: 'completed', count: '2' },
+  ];
+
+  //console.log("RESPONSE", response);
+  //t.is(response.body.meta.count, 2);
+  //t.deepEqual(response.body.count, [
+  //  { key: 'completed', count: 1 }, { key: 'failed', count: 1 },
+  //]);
+  t.deepEqual(response, expectedResponse);
 });

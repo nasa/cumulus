@@ -44,7 +44,8 @@ the output or status of your request. If you want to directly observe the progre
 the CloudWatch logs for your async operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Breaking Changes
-
+- **CUMULUS-3689**
+ - updated aggregate_stats api endpoint to use postgresql instead of elasticsearch
 - **CUMULUS-3618**
   - Modified @cumulus/es-client/search.BaseSearch:
     - Removed static class method `es` in favor of new class for managing
