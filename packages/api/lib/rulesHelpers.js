@@ -1,9 +1,13 @@
+//@ts-check
+
 'use strict';
 
 const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 const set = require('lodash/set');
+const isObject = require('lodash/isObject');
+
 const {
   AddPermissionCommand,
   DeleteEventSourceMappingCommand,
@@ -635,14 +639,34 @@ async function invokeRerun(rule) {
 }
 
 /**
- * Updates rule trigger for rule
+ * Recursively removes keys with null values from an object.
+ *
+ * This function creates a deep copy of the input object, and then recursively removes all keys
+ * that have null values. The input object is not modified.
+ * @param {RuleRecord} obj - The object to remove null key-values from.
+ * @returns The modified object, with all keys that had null values removed.
+ */
+function removeNullKeyValues(obj) {
+  const modifiedObj = cloneDeep(obj);
+  Object.keys(modifiedObj).forEach((key) => {
+    if (modifiedObj[key] && isObject(modifiedObj[key])) {
+      modifiedObj[key] = removeNullKeyValues(modifiedObj[key]);
+    } else if (modifiedObj[key] === null) {
+      delete modifiedObj[key];
+    }
+  });
+  return modifiedObj;
+}
+
+/**
+ * Updates rule trigger for rule object
  *
  * @param {RuleRecord} original - Rule to update trigger for
  * @param {RuleRecord} updated  - Updated rule for rule trigger
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
 async function updateRuleTrigger(original, updated) {
-  let resultRule = cloneDeep(updated);
+  let resultRule = removeNullKeyValues(updated);
   validateRecord(resultRule);
 
   const stateChanged = updated.state && updated.state !== original.state;
@@ -696,7 +720,7 @@ async function updateRuleTrigger(original, updated) {
  * @returns {Promise<RuleRecord>} - Returns new rule object
  */
 async function createRuleTrigger(ruleItem, testParams = {}) {
-  let newRuleItem = cloneDeep(ruleItem);
+  let newRuleItem = removeNullKeyValues(ruleItem);
   // the default value for enabled is true
   if (newRuleItem.state === undefined) {
     newRuleItem.state = 'ENABLED';
@@ -763,5 +787,6 @@ module.exports = {
   isEventSourceMappingShared,
   lookupCollectionInEvent,
   queueMessageForRule,
+  removeNullKeyValues,
   updateRuleTrigger,
 };
