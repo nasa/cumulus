@@ -34,7 +34,7 @@ const {
   waitForCompletedExecution,
   waitForStartedExecution,
 } = require('@cumulus/integration-tests');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { waitForExecutionAndDelete } = require('../../helpers/executionUtils');
 const { waitForGranuleAndDelete } = require('../../helpers/granuleUtils');
 const { waitAndDeletePdr } = require('../../helpers/pdrUtils');
@@ -187,7 +187,7 @@ describe('The DiscoverAndQueuePdrsExecutionPrefix workflow', () => {
     await waitForGranuleAndDelete(
       config.stackName,
       testDataGranuleId,
-      encodedConstructCollectionId(addedCollections[0].name, addedCollections[0].version),
+      constructCollectionId(addedCollections[0].name, addedCollections[0].version),
       'completed'
     );
     // clean up stack state added by test

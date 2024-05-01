@@ -28,7 +28,7 @@ const {
 const { getGranuleWithStatus } = require('@cumulus/integration-tests/Granules');
 const { createProvider } = require('@cumulus/integration-tests/Providers');
 const { createOneTimeRule } = require('@cumulus/integration-tests/Rules');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 
 const {
   createTimestampedTestId,
@@ -104,7 +104,7 @@ describe('POST /granules/bulk', () => {
           Body: 'asdf',
         });
 
-        collectionId = encodedConstructCollectionId(collection.name, collection.version);
+        collectionId = constructCollectionId(collection.name, collection.version);
         granuleId = randomId('granule-id-');
         console.log('granuleId', granuleId);
 
