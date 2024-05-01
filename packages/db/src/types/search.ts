@@ -8,7 +8,7 @@ export interface QueryEvent {
   queryStringParameters?: QueryStringParameters,
 }
 
-export interface ParsedQueryParameters {
+export interface DbQueryParameters {
   limit?: number,
   offset?: number,
   page?: number,

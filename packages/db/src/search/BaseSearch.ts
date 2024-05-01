@@ -2,7 +2,7 @@ import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
 import { getKnexClient } from '../connection';
 import { BaseRecord } from '../types/base';
-import { ParsedQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
+import { DbQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
 
@@ -21,22 +21,22 @@ export interface Meta {
 class BaseSearch {
   readonly type?: string;
   readonly queryStringParameters: QueryStringParameters;
-  // parsed from queryStringParameters
-  parsedQueryParameters: ParsedQueryParameters = {};
+  // parsed from queryStringParameters for query build
+  dbQueryParameters: DbQueryParameters = {};
 
   constructor(event: QueryEvent, type?: string) {
     this.type = type;
     this.queryStringParameters = event?.queryStringParameters ?? {};
-    this.parsedQueryParameters.page = Number.parseInt(
+    this.dbQueryParameters.page = Number.parseInt(
       (this.queryStringParameters.page) ?? '1',
       10
     );
-    this.parsedQueryParameters.limit = Number.parseInt(
+    this.dbQueryParameters.limit = Number.parseInt(
       (this.queryStringParameters.limit) ?? '10',
       10
     );
-    this.parsedQueryParameters.offset = (this.parsedQueryParameters.page - 1)
-      * this.parsedQueryParameters.limit;
+    this.dbQueryParameters.offset = (this.dbQueryParameters.page - 1)
+      * this.dbQueryParameters.limit;
   }
 
   /**
@@ -66,8 +66,8 @@ class BaseSearch {
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
     const updatedQuery = searchQuery.modify((queryBuilder) => {
-      if (this.parsedQueryParameters.limit) queryBuilder.limit(this.parsedQueryParameters.limit);
-      if (this.parsedQueryParameters.offset) queryBuilder.offset(this.parsedQueryParameters.offset);
+      if (this.dbQueryParameters.limit) queryBuilder.limit(this.dbQueryParameters.limit);
+      if (this.dbQueryParameters.offset) queryBuilder.offset(this.dbQueryParameters.offset);
     });
     return { countQuery, searchQuery: updatedQuery };
   }
@@ -108,8 +108,8 @@ class BaseSearch {
     try {
       const countResult = await countQuery;
       const meta = this._metaTemplate();
-      meta.limit = this.parsedQueryParameters.limit;
-      meta.page = this.parsedQueryParameters.page;
+      meta.limit = this.dbQueryParameters.limit;
+      meta.page = this.dbQueryParameters.page;
       meta.count = Number(countResult[0]?.count ?? 0);
 
       const pgRecords = await searchQuery;
