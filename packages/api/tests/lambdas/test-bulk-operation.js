@@ -49,15 +49,17 @@ const esSearchStub = sandbox.stub();
 const esScrollStub = sandbox.stub();
 FakeEsClient.prototype.scroll = esScrollStub;
 FakeEsClient.prototype.search = esSearchStub;
-class FakeSearch {
-  static es() {
-    return new FakeEsClient();
-  }
-}
+
 const bulkOperation = proxyquire('../../lambdas/bulk-operation', {
   '../lib/granules': proxyquire('../../lib/granules', {
     '@cumulus/es-client/search': {
-      Search: FakeSearch,
+      getEsClient: () => Promise.resolve({
+        initializeEsClient: () => Promise.resolve(),
+        client: {
+          search: esSearchStub,
+          scroll: esScrollStub,
+        },
+      }),
     },
   }),
 });

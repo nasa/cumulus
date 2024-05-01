@@ -16,6 +16,14 @@ const aws4 = require('aws4');
  */
 const createAmazonConnection = (awsConfig) => {
   class AmazonConnection extends Connection {
+    constructor(opts = {}) {
+      super(opts);
+      if (awsConfig.credentials) {
+        this.accessKeyId = awsConfig.credentials.accessKeyId;
+        this.secretAccessKey = awsConfig.credentials.secretAccessKey;
+      }
+    }
+
     buildRequestObject(params) {
       const req = super.buildRequestObject(params);
 

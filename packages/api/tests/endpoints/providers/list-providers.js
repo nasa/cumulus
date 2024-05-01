@@ -9,7 +9,7 @@ const {
 } = require('@cumulus/aws-client/S3');
 const { randomString } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const indexer = require('@cumulus/es-client/indexer');
 
 const {
@@ -74,13 +74,13 @@ test.before(async (t) => {
 
   jwtAuthToken = await createFakeJwtAuthToken({ accessTokenModel, username });
 
-  esClient = await Search.es('fakehost');
+  esClient = await getEsClient('fakehost');
 });
 
 test.after.always((t) => Promise.all([
   recursivelyDeleteS3Bucket(process.env.system_bucket),
   accessTokenModel.deleteTable(),
-  esClient.indices.delete({ index: esIndex }),
+  esClient.client.indices.delete({ index: esIndex }),
   destroyLocalTestDb({
     ...t.context,
   }),

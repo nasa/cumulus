@@ -26,7 +26,7 @@
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "ava": {
     "timeout": "15m",
@@ -36,7 +36,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/aws-client": "18.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {

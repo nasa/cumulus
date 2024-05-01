@@ -23,7 +23,7 @@ const { deleteRule } = require('@cumulus/api-client/rules');
 
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 
 describe('The IngestGranule workflow with DuplicateHandling="version" and a granule re-ingested with one new file, one unchanged existing file, and one modified file', () => {
@@ -144,7 +144,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       // Wait for the granule to be fully ingested
       await getGranuleWithStatus({ prefix,
         granuleId,
-        collectionId: encodedConstructCollectionId(collection.name, collection.version),
+        collectionId: constructCollectionId(collection.name, collection.version),
         status: 'completed' });
 
       // Modify the contents of the updated granule file
@@ -259,7 +259,7 @@ describe('The IngestGranule workflow with DuplicateHandling="version" and a gran
       { stopOnError: false }
     ).catch(console.error);
 
-    await deleteGranule({ prefix, granuleId, collectionId: encodedConstructCollectionId(collection.name, collection.version) });
+    await deleteGranule({ prefix, granuleId, collectionId: constructCollectionId(collection.name, collection.version) });
     await Promise.all([
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution2Arn }),
       deleteExecution({ prefix: config.stackName, executionArn: ingestGranuleExecution1Arn }),

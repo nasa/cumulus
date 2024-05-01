@@ -22,9 +22,9 @@ const { deleteExecution } = require('@cumulus/api-client/executions');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { deleteS3Object, s3PutObject } = require('@cumulus/aws-client/S3');
 const { fakeGranuleFactoryV2 } = require('@cumulus/api/lib/testUtils');
+const { constructCollectionId } = require('@cumulus/message/Collections');
 const { loadConfig } = require('../../helpers/testUtils');
 const { waitForApiStatus } = require('../../helpers/apiUtils');
-const { encodedConstructCollectionId } = require('../../helpers/Collections');
 
 describe('The DiscoverGranules workflow with one existing granule, one queued granule, one new granule, and duplicateHandling="skip"', () => {
   let beforeAllError;
@@ -75,7 +75,7 @@ describe('The DiscoverGranules workflow with one existing granule, one queued gr
         Body: 'asdf-queued',
       });
 
-      collectionId = encodedConstructCollectionId(collection.name, collection.version);
+      collectionId = constructCollectionId(collection.name, collection.version);
       const randomQueuedGranuleRecord = removeNilProperties(fakeGranuleFactoryV2({
         collectionId,
         granuleId: queuedGranuleId,

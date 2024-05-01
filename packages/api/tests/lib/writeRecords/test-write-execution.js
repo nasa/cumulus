@@ -418,8 +418,11 @@ test.serial('writeExecutionRecordFromMessage() does not write record to RDS if E
   } = t.context;
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('ES error');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('ES error');
+      },
     },
   };
 
