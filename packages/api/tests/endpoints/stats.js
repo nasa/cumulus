@@ -12,6 +12,7 @@ const { randomId } = require('@cumulus/common/test-utils');
 const { bootstrapElasticSearch } = require('@cumulus/es-client/bootstrap');
 const indexer = rewire('@cumulus/es-client/indexer');
 const { getEsClient } = require('@cumulus/es-client/search');
+const { StatsSearch } = require('@cumulus/db/dist/search/StatsSearch');
 const models = require('../../models');
 
 const {
@@ -37,7 +38,6 @@ const assertions = require('../../lib/assertions');
 
 const stats = rewire('../../endpoints/stats');
 const getType = stats.__get__('getType');
-const aggregateStats = stats.__get__('aggregateStats');
 
 let esClient;
 
@@ -275,12 +275,7 @@ test('GET /stats returns correct response with date params filters values correc
 
 test('GET /stats/aggregate returns correct response', async (t) => {
   const { knex } = t.context;
-  const response = await aggregateStats('/stats/aggregate?type=granules', knex);
-  /*const response = await request(app)
-    .get('/stats/aggregate?type=granules')
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);*/
+  const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules');
 
   const expectedResponse = [
     { status: 'completed', count: '3' },
@@ -289,23 +284,12 @@ test('GET /stats/aggregate returns correct response', async (t) => {
     { status: 'failed', count: '3' },
   ];
 
-  //console.log("RESPONSE", response);
-  //t.is(response.body.meta.count, 5);
-  //t.deepEqual(response.body.count, [
-  //  { key: 'completed', count: 3 }, { key: 'failed', count: 2 },
-  //]);
-  t.deepEqual(response, expectedResponse);
+  t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
 });
 
 test('GET /stats/aggregate filters correctly by date', async (t) => {
   const { knex } = t.context;
-  const response = await aggregateStats(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 0, 28)).getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`, knex);
-  /*const response = await request(app)
-    .get(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 0, 28))
-      .getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`)
-    .set('Accept', 'application/json')
-    .set('Authorization', `Bearer ${jwtAuthToken}`)
-    .expect(200);*/
+  const AggregateSearch = new StatsSearch(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 0, 28)).getTime()}&timestamp__to=${(new Date(2020, 0, 30)).getTime()}`);
 
   const expectedResponse = [
     { status: 'queued', count: '2' },
@@ -314,10 +298,5 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
     { status: 'completed', count: '2' },
   ];
 
-  //console.log("RESPONSE", response);
-  //t.is(response.body.meta.count, 2);
-  //t.deepEqual(response.body.count, [
-  //  { key: 'completed', count: 1 }, { key: 'failed', count: 1 },
-  //]);
-  t.deepEqual(response, expectedResponse);
+  t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
 });

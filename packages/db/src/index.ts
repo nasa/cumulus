@@ -147,3 +147,7 @@ export { GranulesExecutionsPgModel } from './models/granules-executions';
 export { PdrPgModel } from './models/pdr';
 export { ProviderPgModel } from './models/provider';
 export { RulePgModel } from './models/rule';
+
+export {
+  StatsSearch,
+} from './search/StatsSearch';
