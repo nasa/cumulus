@@ -16,7 +16,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "generate-task-schemas": "npx generate-task-schemas . files",
@@ -44,11 +44,10 @@
     "@cumulus/cmr-client": "18.2.0",
     "@cumulus/cmrjs": "18.2.0",
     "@cumulus/common": "18.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/errors": "18.2.0",
-    "libxmljs": "^0.19.7",
     "lodash": "^4.17.21",
-    "xml2js": "0.5.0"
+    "xml2js": "0.6.2"
   },
   "devDependencies": {
     "@cumulus/schemas": "18.2.0",
