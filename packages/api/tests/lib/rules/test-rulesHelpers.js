@@ -2385,14 +2385,14 @@ test('removeNullKeyValues returns an empty object if input is empty', (t) => {
   t.deepEqual(actual, expected);
 });
 
-test('removeNullKeyValues processes non-object entries without modification', (t) => {
+test('removeNullKeyValues returns non-object entries without modification', (t) => {
   const input = { a: 'hello', b: [1, 2, 3], c: null };
   const expected = { a: 'hello', b: [1, 2, 3] };
   const actual = removeNullKeyValues(input);
   t.deepEqual(actual, expected);
 });
 
-test('removeNullKeyValues processes non-objects without modification', (t) => {
+test('removeNullKeyValues returns non-objects without modification', (t) => {
   const input = 'hello';
   const expected = input;
   const actual = removeNullKeyValues(input);
