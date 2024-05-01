@@ -639,15 +639,15 @@ async function invokeRerun(rule) {
 }
 
 /**
- * Recursively removes keys with null values from an object.
+ * Recursively removes keys with null values from an RuleRecord.
  *
  * This function creates a deep copy of the input object, and then recursively removes all keys
  * that have null values. The input object is not modified.
- * @param {RuleRecord} obj - The object to remove null key-values from.
+ * @param {RuleRecord} record - The object to remove null key-values from.
  * @returns The modified object, with all keys that had null values removed.
  */
-function removeNullKeyValues(obj) {
-  const modifiedObj = cloneDeep(obj);
+function removeNullKeyValues(record) {
+  const modifiedObj = cloneDeep(record);
   Object.keys(modifiedObj).forEach((key) => {
     if (modifiedObj[key] && isObject(modifiedObj[key])) {
       modifiedObj[key] = removeNullKeyValues(modifiedObj[key]);
