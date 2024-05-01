@@ -189,6 +189,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Fixed
 
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 - **CUMULUS-3618**
   - Fixed `@cumulus/es-client` credentialing issue in instance where
     lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
@@ -204,7 +206,7 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
 - **CUMULUS-3673**
-  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
 - **Audit Issues**
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc
