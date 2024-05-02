@@ -4,7 +4,7 @@ resource "aws_lambda_function" "pdr_status_check_task" {
   source_code_hash = filebase64sha256("${path.module}/../../tasks/pdr-status-check/dist/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs16.x"
+  runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "PdrStatusCheck", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "PdrStatusCheck", 1024)
 
