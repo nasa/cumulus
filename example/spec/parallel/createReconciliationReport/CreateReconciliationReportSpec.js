@@ -58,7 +58,7 @@ const {
   setupTestGranuleForIngest, waitForGranuleRecordUpdatedInList,
 } = require('../../helpers/granuleUtils');
 const { buildAndExecuteWorkflow } = require('../../helpers/workflowUtils');
-
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 12000000;
 const providersDir = './data/providers/s3/';
 const collectionsDir = './data/collections/s3_MYD13Q1_006';
 const collection = { name: 'MYD13Q1', version: '006' };
@@ -106,7 +106,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg',
   ];
   const newData = [];
-  for (let i = 0; i < 500; i += 1) {
+  for (let i = 0; i < 1500; i += 1) {
     const newNames = replicateData(s3data);
 
     s3data.push(newNames.newFileName);
