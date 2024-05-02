@@ -97,11 +97,12 @@ module "cumulus" {
 
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
 
+  ecs_cluster_instance_type       = "t3.xlarge"
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? local.subnet_ids : var.ecs_cluster_instance_subnet_ids
-  ecs_cluster_min_size            = 2
-  ecs_cluster_desired_size        = 2
-  ecs_cluster_max_size            = 3
+  ecs_cluster_min_size            = 1
+  ecs_cluster_desired_size        = 1
+  ecs_cluster_max_size            = 2
   ecs_include_docker_cleanup_cronjob = var.ecs_include_docker_cleanup_cronjob
   key_name                        = var.key_name
   ecs_custom_sg_ids               = var.ecs_custom_sg_ids
