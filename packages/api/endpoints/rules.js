@@ -1,3 +1,5 @@
+//@ts-check
+
 'use strict';
 
 const router = require('express-promise-router')();
@@ -32,6 +34,10 @@ const {
 const schemas = require('../lib/schemas.js');
 
 const log = new Logger({ sender: '@cumulus/api/rules' });
+
+/**
+ * @typedef {import('@cumulus/types/api/rules').RuleRecord} RuleRecord
+ */
 
 /**
  * List all rules.
@@ -133,7 +139,7 @@ async function post(req, res) {
  *
  * @param {object} params                   - params object
  * @param {object} params.res               - express response object
- * @param {object} params.oldApiRule        - API 'rule' to update
+ * @param {RuleRecord} params.oldApiRule        - API 'rule' to update
  * @param {object} params.apiRule           - updated API rule
  * @param {object} params.rulePgModel       - @cumulus/db compatible rule module instance
  * @param {object} params.knex              - Knex object
@@ -158,7 +164,7 @@ async function patchRule(params) {
     return invokeRerun(oldApiRule).then(() => res.send(oldApiRule));
   }
 
-  const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule, knex);
+  const apiRuleWithTrigger = await updateRuleTrigger(oldApiRule, apiRule);
   const apiPgRule = await translateApiRuleToPostgresRuleRaw(apiRuleWithTrigger, knex);
   log.debug(`rules.patchRule apiRuleWithTrigger: ${JSON.stringify(apiRuleWithTrigger)}`);
 

@@ -594,7 +594,7 @@ async function addRule(item, payload) {
 /**
  * Checks if record is valid
  *
- * @param {RuleRecord} rule - Rule to check validation
+ * @param {any} rule - Object to validate as a Rule Record validation
  * @returns {void}          - Returns if record is valid, throws error otherwise
  */
 function validateRecord(rule) {
@@ -643,7 +643,7 @@ async function invokeRerun(rule) {
  *
  * This function creates a deep copy of the input object, and then recursively removes all keys
  * that have null values. The input object is not modified.
- * @param {RuleRecord} record - The object to remove null key-values from.
+ * @param {any} record - The object to remove null key-values from.
  * @returns The modified object, with all keys that had null values removed.
  */
 function removeNullKeyValues(record) {
@@ -715,12 +715,17 @@ async function updateRuleTrigger(original, updated) {
 /**
  * Creates rule trigger for rule
  *
- * @param {RuleRecord} ruleItem - Rule to create trigger for
+ * @param {any} ruleItem - Rule to create trigger for
  * @param {Object} testParams - Function to determine to use actual invoke or testInvoke
  * @returns {Promise<RuleRecord>} - Returns new rule object
  */
 async function createRuleTrigger(ruleItem, testParams = {}) {
-  let newRuleItem = removeNullKeyValues(ruleItem);
+  /** @type {RuleRecord} */
+  let newRuleItem;
+  const candidateRuleItem = removeNullKeyValues(ruleItem);
+  validateRecord(candidateRuleItem);
+  newRuleItem = candidateRuleItem;
+
   // the default value for enabled is true
   if (newRuleItem.state === undefined) {
     newRuleItem.state = 'ENABLED';
@@ -735,7 +740,6 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   }
 
   // Validate rule before kicking off workflows or adding event source mappings
-  validateRecord(newRuleItem);
 
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {
