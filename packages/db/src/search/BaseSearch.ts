@@ -40,20 +40,6 @@ class BaseSearch {
   }
 
   /**
-   * build basic query
-   *
-   * @param knex - DB client
-   * @throws - function is not implemented
-   */
-  protected buildBasicQuery(knex: Knex): {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
-  } {
-    log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
-    throw new Error('buildBasicQuery is not implemented');
-  }
-
-  /**
    * build the search query
    *
    * @param knex - DB client
@@ -83,6 +69,20 @@ class BaseSearch {
       stack: process.env.stackName,
       table: this.type,
     };
+  }
+
+  /**
+   * build basic query
+   *
+   * @param knex - DB client
+   * @throws - function is not implemented
+   */
+  protected buildBasicQuery(knex: Knex): {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+  } {
+    log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
+    throw new Error('buildBasicQuery is not implemented');
   }
 
   /**
