@@ -57,7 +57,7 @@ async function summary(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  if (req.url.includes('limit') || req.url.includes('sort_key') || req.url.includes('page')) {
+  if (req.method === 'GET') {
     const type = getType(req);
     const stats = new Stats({
       queryStringParameters: req.query,

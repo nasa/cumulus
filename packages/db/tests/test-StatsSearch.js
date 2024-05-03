@@ -214,7 +214,7 @@ test('StatsSearch returns correct response when queried by collection and provid
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
 });
 
-test('GET /stats/aggregate returns correct response when queried by error', async (t) => {
+test('StatsSearch returns correct response when queried by error', async (t) => {
   const { knex } = t.context;
   const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules&field=error.Error.keyword');
 
