@@ -231,6 +231,7 @@ module.exports = {
         'example/spec/**/*.js',
       ],
       rules: {
+        'jsdoc/require-jsdoc': 'off',
         'max-classes-per-file': 'off',
         'no-console': 'off',
         'no-new': 'off',
