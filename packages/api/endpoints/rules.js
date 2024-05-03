@@ -139,7 +139,7 @@ async function post(req, res) {
  *
  * @param {object} params                   - params object
  * @param {object} params.res               - express response object
- * @param {RuleRecord} params.oldApiRule        - API 'rule' to update
+ * @param {RuleRecord} params.oldApiRule    - API 'rule' to update
  * @param {object} params.apiRule           - updated API rule
  * @param {object} params.rulePgModel       - @cumulus/db compatible rule module instance
  * @param {object} params.knex              - Knex object
