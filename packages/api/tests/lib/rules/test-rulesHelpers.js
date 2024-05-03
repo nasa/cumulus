@@ -56,7 +56,6 @@ const {
   createRuleTrigger,
   deleteRuleResources,
   updateRuleTrigger,
-  removeNullKeyValues,
 } = require('../../../lib/rulesHelpers');
 const { getSnsTriggerPermissionId } = require('../../../lib/snsRuleHelpers');
 
@@ -2355,46 +2354,4 @@ test.serial('Enabling a disabled SNS rule and passing rule.arn throws specific e
   t.teardown(() => {
     snsStub.restore();
   });
-});
-
-test('removeNullKeyValues removes null values from a flat object', (t) => {
-  const input = { a: 1, b: null, c: 3 };
-  const expected = { a: 1, c: 3 };
-  const actual = removeNullKeyValues(input);
-  t.deepEqual(actual, expected);
-});
-
-test('removeNullKeyValues removes null values from a nested object', (t) => {
-  const input = { a: 1, b: { x: null, y: 2 }, c: null };
-  const expected = { a: 1, b: { y: 2 } };
-  const actual = removeNullKeyValues(input);
-  t.deepEqual(actual, expected);
-});
-
-test('removeNullKeyValues returns unchanged object if there are no null values', (t) => {
-  const input = { a: 1, b: 2 };
-  const expected = { a: 1, b: 2 };
-  const actual = removeNullKeyValues(input);
-  t.deepEqual(actual, expected);
-});
-
-test('removeNullKeyValues returns an empty object if input is empty', (t) => {
-  const input = {};
-  const expected = {};
-  const actual = removeNullKeyValues(input);
-  t.deepEqual(actual, expected);
-});
-
-test('removeNullKeyValues returns non-object entries without modification', (t) => {
-  const input = { a: 'hello', b: [1, 2, 3], c: null };
-  const expected = { a: 'hello', b: [1, 2, 3] };
-  const actual = removeNullKeyValues(input);
-  t.deepEqual(actual, expected);
-});
-
-test('removeNullKeyValues returns non-objects without modification', (t) => {
-  const input = 'hello';
-  const expected = input;
-  const actual = removeNullKeyValues(input);
-  t.deepEqual(actual, expected);
 });

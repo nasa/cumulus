@@ -6,7 +6,6 @@ const cloneDeep = require('lodash/cloneDeep');
 const get = require('lodash/get');
 const isNil = require('lodash/isNil');
 const set = require('lodash/set');
-const isObject = require('lodash/isObject');
 
 const {
   AddPermissionCommand,
@@ -595,7 +594,7 @@ async function addRule(item, payload) {
  * Checks if record is valid
  *
  * @param {any} rule - Object to validate as a Rule Record validation
- * @returns {void}          - Returns if record is valid, throws error otherwise
+ * @returns {RuleRecord}          - Returns if record is valid, throws error otherwise
  */
 function validateRecord(rule) {
   const error = new Error('The record has validation errors. ');
@@ -619,6 +618,7 @@ function validateRecord(rule) {
     error.message += `Rule value is undefined for ${rule.rule.type} rule`;
     throw error;
   }
+  return rule;
 }
 
 /**
@@ -639,35 +639,14 @@ async function invokeRerun(rule) {
 }
 
 /**
- * Recursively removes keys with null values from an RuleRecord.
- *
- * This function creates a deep copy of the input object, and then recursively removes all keys
- * that have null values. The input object is not modified.
- * @param {any} record - The object to remove null key-values from.
- * @returns The modified object, with all keys that had null values removed.
- */
-function removeNullKeyValues(record) {
-  const modifiedObj = cloneDeep(record);
-  Object.keys(modifiedObj).forEach((key) => {
-    if (modifiedObj[key] && isObject(modifiedObj[key])) {
-      modifiedObj[key] = removeNullKeyValues(modifiedObj[key]);
-    } else if (modifiedObj[key] === null) {
-      delete modifiedObj[key];
-    }
-  });
-  return modifiedObj;
-}
-
-/**
  * Updates rule trigger for rule object
  *
  * @param {RuleRecord} original - Rule to update trigger for
- * @param {RuleRecord} updated  - Updated rule for rule trigger
+ * @param {Object} updated  - Updated rule for rule trigger
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
 async function updateRuleTrigger(original, updated) {
-  let resultRule = removeNullKeyValues(updated);
-  validateRecord(resultRule);
+  let resultRule = validateRecord(omitDeepBy(updated, isNil));
 
   const stateChanged = updated.state && updated.state !== original.state;
   const valueUpdated = updated.rule && updated.rule.value !== original.rule.value;
@@ -715,14 +694,12 @@ async function updateRuleTrigger(original, updated) {
 /**
  * Creates rule trigger for rule
  *
- * @param {any} ruleItem - Rule to create trigger for
+ * @param {Object} ruleItem - Rule to create trigger for
  * @param {Object} testParams - Function to determine to use actual invoke or testInvoke
  * @returns {Promise<RuleRecord>} - Returns new rule object
  */
 async function createRuleTrigger(ruleItem, testParams = {}) {
-  /** @type {RuleRecord} */
-  let newRuleItem;
-  const candidateRuleItem = removeNullKeyValues(ruleItem);
+  const candidateRuleItem = omitDeepBy(ruleItem, isNil);
 
   // the default value for enabled is true
   if (candidateRuleItem.state === undefined) {
@@ -738,8 +715,7 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   }
 
   // Validate rule before kicking off workflows or adding event source mappings
-  validateRecord(candidateRuleItem);
-  newRuleItem = candidateRuleItem;
+  let newRuleItem = validateRecord(candidateRuleItem);
 
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {
@@ -791,6 +767,5 @@ module.exports = {
   isEventSourceMappingShared,
   lookupCollectionInEvent,
   queueMessageForRule,
-  removeNullKeyValues,
   updateRuleTrigger,
 };
