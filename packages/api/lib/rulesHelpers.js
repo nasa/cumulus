@@ -612,7 +612,7 @@ function validateRecord(rule) {
     throw error;
   }
 
-  recordIsValid(omitDeepBy(rule, isNil), ruleSchema, false);
+  recordIsValid(rule, ruleSchema, false);
 
   if (rule.rule.type !== 'onetime' && !rule.rule.value) {
     error.message += `Rule value is undefined for ${rule.rule.type} rule`;
