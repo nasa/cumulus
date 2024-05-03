@@ -57,7 +57,7 @@ async function summary(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  if (req.includes('limit') || req.includes('sort_key') || req.includes('page')) {
+  if (req.url.includes('limit') || req.url.includes('sort_key') || req.url.includes('page')) {
     const type = getType(req);
     const stats = new Stats({
       queryStringParameters: req.query,
@@ -66,7 +66,7 @@ async function aggregate(req, res) {
     const r = await stats.count();
     return res.send(r);
   }
-  const statsSearcher = new StatsSearch(req).aggregate_search();
+  const statsSearcher = new StatsSearch(req.query).aggregate_search();
   return res.send(statsSearcher);
 }
 

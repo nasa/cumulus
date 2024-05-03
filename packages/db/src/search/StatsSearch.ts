@@ -18,6 +18,68 @@ class StatsSearch {
     this.query = statsQuery;
   }
 
+  public providerAndCollectionIdBuilder(type: string, field: string, collectionName: string,
+    providerId: string, knex: Knex): any {
+    let aggregateQuery;
+    if (collectionName && providerId) {
+      aggregateQuery = (knex.select(
+        this.whatToGroupBy(field, knex)
+      ).from(`${type}`).join('collections', `${type}.collection_cumulus_id`, 'collections.cumulus_id').groupBy(
+        this.whatToGroupBy(field, knex)
+      ))
+        .select(
+          this.whatToGroupBy(field, knex)
+        )
+        .from(`${type}`)
+        .join('providers', `${type}.provider_cumulus_id`, 'providers.cumulus_id')
+        .groupBy(
+          this.whatToGroupBy(field, knex)
+        );
+    } else {
+      if (collectionName && !providerId) {
+        aggregateQuery = knex.select(
+          this.whatToGroupBy(field, knex)
+        ).from(`${type}`)
+          .join('collections', `${type}.collection_cumulus_id`, 'collections.cumulus_id')
+          .groupBy(
+            this.whatToGroupBy(field, knex)
+          );
+      }
+      if (!collectionName && providerId) {
+        aggregateQuery = knex.select(
+          this.whatToGroupBy(field, knex)
+        ).from(`${type}`)
+          .join('providers', `${type}.provider_cumulus_id`, 'providers.cumulus_id')
+          .groupBy(
+            this.whatToGroupBy(field, knex)
+          );
+      }
+    }
+    return aggregateQuery;
+  }
+
+  public whatToGroupBy(field: string, knex: Knex): string {
+    let groupStrings = '';
+    if (field.includes('error.Error')) {
+      groupStrings += ('*', knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count'));
+    } else {
+      groupStrings += (` ${field}`);
+    }
+    return groupStrings;
+  }
+
+  public aggregateQueryField(field: string, query: any, knex: Knex): any {
+    let tempQuery = '';
+    if (field.includes('error.Error')) {
+      tempQuery = query.select(knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count')).groupByRaw("error #>> '{Error, keyword}'").orderBy('count', 'desc');
+    } else {
+      tempQuery = query.select(`${field}`).count('* as count').groupBy(`${field}`)
+        .orderBy('count', 'desc');
+    }
+    return tempQuery;
+  }
+
+  // eslint-disable-next-line complexity
   public async aggregate_search(sendKnex: Knex): Promise<any> {
     if (this.query) {
       let aggregateQuery;
@@ -36,25 +98,24 @@ class StatsSearch {
       const dateQueryStringTo = queryType === 'granules' ? 'ending_date_time' : 'updated_at';
       const dateQueryStringFrom = queryType === 'granules' ? 'beginning_date_time' : 'created_at';
 
-      if (queryField.includes('error.Error')) {
-        aggregateQuery = knex(`${queryType}`).select(knex.raw("error #>> '{Error, keyword}' as error"), knex.raw("COUNT(*) as count")).groupByRaw("error #>> '{Error, keyword}'").orderBy('count', 'desc');
-      } else {
-        aggregateQuery = knex(`${queryType}`).select(`${queryField}`).count('* as count').groupBy(`${queryField}`)
-          .orderBy('count', 'desc');
-      }
-      // query builder
+      aggregateQuery = (queryProvider || queryCollectionId) ? this.providerAndCollectionIdBuilder(queryType, queryField, queryCollectionId, queryProvider, knex) : knex(`${queryType}`);
+
       if (queryCollectionId) {
-        aggregateQuery = aggregateQuery.where('collection_cumulus_id', '=', queryCollectionId);
+        aggregateQuery = aggregateQuery.where('collections.name', '=', queryCollectionId);
       }
+      if (queryProvider) {
+        aggregateQuery = aggregateQuery.where('providers.name', '=', queryProvider);
+      }
+
       if (queryTo) {
         aggregateQuery = aggregateQuery.where(dateQueryStringTo, '>', new Date(Number.parseInt(queryTo, 10)));
       }
       if (queryFrom) {
         aggregateQuery = aggregateQuery.where(dateQueryStringFrom, '<', new Date(Number.parseInt(queryFrom, 10)));
       }
-      if (queryProvider) {
-        aggregateQuery = aggregateQuery.where('provider_cumulus_id', '=', queryProvider);
-      }
+
+      aggregateQuery = this.aggregateQueryField(queryField, aggregateQuery, knex);
+
       const result = await knex.raw(aggregateQuery.toString());
       const r = result.rows;
       /***getting query results*/
