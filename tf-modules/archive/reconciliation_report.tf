@@ -15,7 +15,7 @@ resource "aws_lambda_function" "create_reconciliation_report" {
       CMR_HOST                         = var.cmr_custom_host
       DISTRIBUTION_ENDPOINT            = var.distribution_url
       ES_HOST                          = var.elasticsearch_hostname
-      ES_SCROLL                        = lookup(var.elasticsearch_client_config, "create_reconciliation_report_es_scroll_duration", "3s")
+      ES_SCROLL                        = lookup(var.elasticsearch_client_config, "create_reconciliation_report_es_scroll_duration", "30m")
       ES_SCROLL_SIZE                   = lookup(var.elasticsearch_client_config, "create_reconciliation_report_es_scroll_size", 1000)
       ReconciliationReportsTable       = var.dynamo_tables.reconciliation_reports.name
       stackName                        = var.prefix

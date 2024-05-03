@@ -44,7 +44,7 @@ csdap_host_url = "https://auth.csdap.uat.earthdatacloud.nasa.gov"
 default_s3_multipart_chunksize_mb = 128
 
 elasticsearch_client_config = {
-  create_reconciliation_report_es_scroll_duration = "3s"
+  create_reconciliation_report_es_scroll_duration = "30m"
   create_reconciliation_report_es_scroll_size = 1500
 }
 
