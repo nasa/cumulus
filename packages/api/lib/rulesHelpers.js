@@ -723,15 +723,13 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   /** @type {RuleRecord} */
   let newRuleItem;
   const candidateRuleItem = removeNullKeyValues(ruleItem);
-  validateRecord(candidateRuleItem);
-  newRuleItem = candidateRuleItem;
 
   // the default value for enabled is true
-  if (newRuleItem.state === undefined) {
-    newRuleItem.state = 'ENABLED';
+  if (candidateRuleItem.state === undefined) {
+    candidateRuleItem.state = 'ENABLED';
   }
 
-  const enabled = newRuleItem.state === 'ENABLED';
+  const enabled = candidateRuleItem.state === 'ENABLED';
   const invokeMethod = testParams.invokeMethod || invoke;
   // make sure the name only has word characters
   const re = /\W/;
@@ -740,6 +738,8 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   }
 
   // Validate rule before kicking off workflows or adding event source mappings
+  validateRecord(candidateRuleItem);
+  newRuleItem = candidateRuleItem;
 
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {
