@@ -3,7 +3,6 @@
 const router = require('express-promise-router')();
 const get = require('lodash/get');
 const Stats = require('@cumulus/es-client/stats');
-const { StatsSearch } = require('@cumulus/db/dist/search/StatsSearch');
 
 /**
  * Map requested stats types to supported types
@@ -57,17 +56,13 @@ async function summary(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  if (req.method === 'GET') {
-    const type = getType(req);
-    const stats = new Stats({
-      queryStringParameters: req.query,
-    }, type, process.env.ES_INDEX);
+  const type = getType(req);
 
-    const r = await stats.count();
-    return res.send(r);
-  }
-  const statsSearcher = new StatsSearch(req.query).aggregate_search();
-  return res.send(statsSearcher);
+  const stats = new Stats({
+    queryStringParameters: req.query,
+  }, type, process.env.ES_INDEX);
+  const r = await stats.count();
+  return res.send(r);
 }
 
 router.get('/aggregate/:type?', aggregate);
