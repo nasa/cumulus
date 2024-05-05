@@ -19,6 +19,32 @@ class StatsSearch {
     this.query = statsQuery;
   }
 
+  public handleTime(end: string, beg: string, queryTo: string, queryFrom: string, query: any): any {
+    let tempQuery = query;
+    if (queryTo) {
+      tempQuery = tempQuery.whereBetween(end,
+        [new Date(Number.parseInt(queryFrom, 10)), new Date(Number.parseInt(queryTo, 10))]);
+    }
+    if (queryFrom) {
+      tempQuery = tempQuery.whereBetween(beg,
+        [new Date(Number.parseInt(queryFrom, 10)), new Date(Number.parseInt(queryTo, 10))]);
+    }
+    return tempQuery;
+  }
+
+  public async summary(sendknex: Knex, queryTo: string, queryFrom: string): Promise<any> {
+    const knex = sendknex ?? await getKnexClient();
+    let aggregateQuery = this.handleTime('beginning_date_time', 'ending_date_time', queryTo, queryFrom, knex('granules'));
+    aggregateQuery = await aggregateQuery.select(
+      knex.raw("COUNT(CASE WHEN error ->> 'Error' != '{}' THEN 1 END) AS count_errors"),
+      knex.raw('COUNT(cumulus_id) AS count_granules'),
+      knex.raw('AVG(time_to_process) AS avg_processing_time'),
+      knex.raw('COUNT(DISTINCT collection_cumulus_id) AS count_collections')
+    );
+    const result = aggregateQuery;
+    return result;
+  }
+
   public providerAndCollectionIdBuilder(type: string, field: string, collectionName: string,
     providerId: string, knex: Knex): any {
     let aggregateQuery;
@@ -99,8 +125,8 @@ class StatsSearch {
         (this.query).match(this.matches.field)[1] : 'status';
       const queryStatus = (this.query).match(this.matches.status) ?
         (this.query).match(this.matches.status)[1] : undefined;
-      const dateQueryStringTo = queryType === 'granules' ? `${queryType}.ending_date_time` : `${queryType}.updated_at`;
-      const dateQueryStringFrom = queryType === 'granules' ? `${queryType}.beginning_date_time` : `${queryType}.created_at`;
+      const dateStringTo = queryType === 'granules' ? `${queryType}.ending_date_time` : `${queryType}.updated_at`;
+      const dateStringFrom = queryType === 'granules' ? `${queryType}.beginning_date_time` : `${queryType}.created_at`;
 
       aggregateQuery = (queryProvider || queryCollectionId) ? this.providerAndCollectionIdBuilder(queryType, queryField, queryCollectionId, queryProvider, knex) : knex(`${queryType}`);
 
@@ -111,14 +137,8 @@ class StatsSearch {
         aggregateQuery = aggregateQuery.where('providers.name', '=', queryProvider);
       }
 
-      if (queryTo) {
-        aggregateQuery = aggregateQuery.whereBetween(dateQueryStringTo,
-          [new Date(Number.parseInt(queryFrom, 10)), new Date(Number.parseInt(queryTo, 10))]);
-      }
-      if (queryFrom) {
-        aggregateQuery = aggregateQuery.whereBetween(dateQueryStringFrom,
-          [new Date(Number.parseInt(queryFrom, 10)), new Date(Number.parseInt(queryTo, 10))]);
-      }
+      aggregateQuery = this.handleTime(dateStringTo,
+        dateStringFrom, queryTo, queryFrom, aggregateQuery);
 
       aggregateQuery = this.aggregateQueryField(queryField, aggregateQuery, knex);
 

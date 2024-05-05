@@ -40,7 +40,7 @@ test.before(async (t) => {
   t.context.ExecutionPgModel = new ExecutionPgModel();
 
   const statuses = ['queued', 'failed', 'completed', 'running'];
-  const errors = [{ Error: { keyword: 'UnknownError' } }, { Error: { keyword: 'CumulusMessageAdapterError' } }, { Error: { keyword: 'IngestFailure' } }, { Error: { keyword: 'CmrFailure' } }];
+  const errors = [{ Error: { keyword: 'UnknownError' } }, { Error: { keyword: 'CumulusMessageAdapterError' } }, { Error: { keyword: 'IngestFailure' } }, { Error: { keyword: 'CmrFailure' } }, { Error: {} }];
   const granules = [];
   const collections = [];
   const executions = [];
@@ -70,7 +70,8 @@ test.before(async (t) => {
       status: statuses[num % 4],
       beginning_date_time: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
       ending_date_time: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
-      error: errors[num % 4],
+      error: errors[num % 5],
+      time_to_process: num + (num / 10),
       provider_cumulus_id: num % 10,
     }))
   ));
@@ -89,7 +90,7 @@ test.before(async (t) => {
     executions.push(fakeExecutionRecordFactory({
       collection_cumulus_id: num,
       status: statuses[(num % 3) + 1],
-      error: errors[num % 4],
+      error: errors[num % 5],
       created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
       updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
     }))
@@ -243,21 +244,51 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules&field=error.Error.keyword');
 
   const expectedResponse = [
-    { error: 'CumulusMessageAdapterError', count: '25' },
-    { error: 'CmrFailure', count: '25' },
-    { error: 'UnknownError', count: '25' },
-    { error: 'IngestFailure', count: '25' },
+    { error: null, count: '20' },
+    { error: 'CumulusMessageAdapterError', count: '20' },
+    { error: 'CmrFailure', count: '20' },
+    { error: 'UnknownError', count: '20' },
+    { error: 'IngestFailure', count: '20' },
   ];
 
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
 
   const AggregateSearch2 = new StatsSearch(`/stats/aggregate?type=granules&field=error.Error.keyword&timestamp__from=${(new Date(2020, 1, 28)).getTime()}&timestamp__to=${(new Date(2021, 12, 9)).getTime()}`);
   const expectedResponse2 = [
-    { error: 'CmrFailure', count: '9' },
-    { error: 'IngestFailure', count: '9' },
-    { error: 'CumulusMessageAdapterError', count: '8' },
-    { error: 'UnknownError', count: '8' },
+    { error: 'CmrFailure', count: '8' },
+    { error: 'IngestFailure', count: '7' },
+    { error: null, count: '7' },
+    { error: 'CumulusMessageAdapterError', count: '6' },
+    { error: 'UnknownError', count: '6' },
   ];
 
   t.deepEqual(await AggregateSearch2.aggregate_search(knex), expectedResponse2);
+});
+
+test('StatsSummary works', async (t) => {
+  const { knex } = t.context;
+
+  const StatsSummary = new StatsSearch('');
+  const results = await StatsSummary.summary(knex);
+  const expectedResponse = [
+    {
+      count_errors: '80',
+      count_granules: '100',
+      avg_processing_time: 54.44999999642372,
+      count_collections: '20',
+    },
+  ];
+
+  const results2 = await StatsSummary.summary(knex, `${(new Date(2019, 12, 9)).getTime()}`, `${(new Date(2018, 1, 28)).getTime()}`);
+  const expectedResponse2 = [
+    {
+      count_errors: '21',
+      count_granules: '25',
+      avg_processing_time: 53.54799992084503,
+      count_collections: '15',
+    },
+  ];
+
+  t.deepEqual(results, expectedResponse);
+  t.deepEqual(results2, expectedResponse2);
 });
