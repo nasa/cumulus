@@ -12,6 +12,7 @@ class StatsSearch {
     type: /[&?]type=([^&]+)/,
     collection_id: /[&?]collectionId=([^&]+)/,
     provider_id: /[&?]providerId=([^&]+)/,
+    status: /[&?]status=([^&]+)/,
   };
 
   constructor(statsQuery: string) {
@@ -94,9 +95,12 @@ class StatsSearch {
         (this.query).match(this.matches.collection_id)[1] : undefined; //collection NAME
       const queryProvider = (this.query).match(this.matches.provider_id) ?
         (this.query).match(this.matches.provider_id)[1] : undefined; //provider NAME
-      const queryField = (this.query).match(this.matches.field) ? (this.query).match(this.matches.field)[1] : 'status';
-      const dateQueryStringTo = queryType === 'granules' ? 'ending_date_time' : 'updated_at';
-      const dateQueryStringFrom = queryType === 'granules' ? 'beginning_date_time' : 'created_at';
+      const queryField = (this.query).match(this.matches.field) ?
+        (this.query).match(this.matches.field)[1] : 'status';
+      const queryStatus = (this.query).match(this.matches.status) ?
+        (this.query).match(this.matches.status)[1] : undefined;
+      const dateQueryStringTo = queryType === 'granules' ? `${queryType}.ending_date_time` : `${queryType}.updated_at`;
+      const dateQueryStringFrom = queryType === 'granules' ? `${queryType}.beginning_date_time` : `${queryType}.created_at`;
 
       aggregateQuery = (queryProvider || queryCollectionId) ? this.providerAndCollectionIdBuilder(queryType, queryField, queryCollectionId, queryProvider, knex) : knex(`${queryType}`);
 
@@ -108,16 +112,21 @@ class StatsSearch {
       }
 
       if (queryTo) {
-        aggregateQuery = aggregateQuery.where(dateQueryStringTo, '>', new Date(Number.parseInt(queryTo, 10)));
+        aggregateQuery = aggregateQuery.whereBetween(dateQueryStringTo,
+          [new Date(Number.parseInt(queryFrom, 10)), new Date(Number.parseInt(queryTo, 10))]);
       }
       if (queryFrom) {
-        aggregateQuery = aggregateQuery.where(dateQueryStringFrom, '<', new Date(Number.parseInt(queryFrom, 10)));
+        aggregateQuery = aggregateQuery.whereBetween(dateQueryStringFrom,
+          [new Date(Number.parseInt(queryFrom, 10)), new Date(Number.parseInt(queryTo, 10))]);
       }
 
       aggregateQuery = this.aggregateQueryField(queryField, aggregateQuery, knex);
 
       const result = await knex.raw(aggregateQuery.toString());
-      const r = result.rows;
+      let r = result.rows;
+      if (queryStatus) {
+        r = r.filter((rec) => (rec.status === queryStatus)).map((rec) => ({ count: rec.count }));
+      }
       /***getting query results*/
       return r;
     }
