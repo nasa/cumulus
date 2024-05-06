@@ -1,4 +1,4 @@
-/* 'use strict';
+'use strict';
 
 const EventEmitter = require('events');
 const fs = require('fs');
@@ -326,4 +326,4 @@ test.serial('upload() attempts to upload a file', async (t) => {
   readStream.push(null);
   await httpProviderClient.upload({ localPath, uploadPath });
   t.true(nock.isDone());
-}); */
+});
