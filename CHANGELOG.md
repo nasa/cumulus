@@ -117,7 +117,7 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 ### Changed
 - **CUMULUS-3717**
   - Updated dynamic import added in CUMULUS-3433 to be memoized in the ingest
-    pacakge to defend against repeat imports resulting in node errors
+    package to defend against repeat imports resulting in node errors
 - **CUMULUS-3433**
   - Updated all node.js lambda dependencies to node 20.x/20.12.2
   - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
