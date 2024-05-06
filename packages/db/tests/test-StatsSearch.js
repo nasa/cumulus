@@ -68,8 +68,8 @@ test.before(async (t) => {
     granules.push(fakeGranuleRecordFactory({
       collection_cumulus_id: num % 20,
       status: statuses[num % 4],
-      beginning_date_time: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
-      ending_date_time: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
+      created_at: (new Date(2018 + (num % 6), (num % 12), (num % 30))).toISOString(),
+      updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
       error: errors[num % 5],
       time_to_process: num + (num / 10),
       provider_cumulus_id: num % 10,
@@ -131,7 +131,10 @@ test.after.always(async (t) => {
 
 test('StatsSearch returns correct response for basic granules query', async (t) => {
   const { knex } = t.context;
-  const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules');
+  const queryStringParams = {
+    type: 'granules',
+  };
+  const AggregateSearch = new StatsSearch(queryStringParams);
 
   const expectedResponse = [
     { status: 'completed', count: '25' },
@@ -145,7 +148,13 @@ test('StatsSearch returns correct response for basic granules query', async (t) 
 
 test('StatsSearch filters correctly by date', async (t) => {
   const { knex } = t.context;
-  const AggregateSearch = new StatsSearch(`/stats/aggregate?type=granules&timestamp__from=${(new Date(2020, 1, 28)).getTime()}&timestamp__to=${(new Date(2022, 2, 30)).getTime()}`);
+  const queryStringParams = {
+    type: 'granules',
+    from: `${(new Date(2020, 1, 28)).getTime()}`,
+    to: `${(new Date(2022, 2, 30)).getTime()}`,
+  };
+
+  const AggregateSearch = new StatsSearch(queryStringParams);
 
   const expectedResponse = [
     { status: 'completed', count: '9' },
@@ -159,24 +168,46 @@ test('StatsSearch filters correctly by date', async (t) => {
 
 test('StatsSearch filters executions correctly', async (t) => {
   const { knex } = t.context;
-  const AggregateSearch = new StatsSearch('/stats/aggregate?type=executions&field=status');
+  const queryStringParams1 = {
+    type: 'executions',
+    field: 'status',
+  };
+
+  const AggregateSearch = new StatsSearch(queryStringParams1);
   const expectedResponse = [
     { status: 'completed', count: '7' },
     { status: 'failed', count: '7' },
     { status: 'running', count: '6' },
   ];
-
-  const AggregateSearch2 = new StatsSearch(`/stats/aggregate?type=executions&field=status&timestamp__from=${(new Date(2021, 1, 28)).getTime()}&timestamp__to=${(new Date(2023, 11, 30)).getTime()}`);
+  const queryStringParams2 = {
+    type: 'executions',
+    field: 'status',
+    to: `${(new Date(2023, 11, 30)).getTime()}`,
+    from: `${(new Date(2021, 1, 28)).getTime()}`,
+  };
+  const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = [
     { status: 'completed', count: '3' },
     { status: 'failed', count: '3' },
     { status: 'running', count: '3' },
   ];
-
-  const AggregateSearch3 = new StatsSearch(`/stats/aggregate?type=executions&field=status&timestamp__from=${(new Date(2021, 1, 28)).getTime()}&timestamp__to=${(new Date(2023, 11, 30)).getTime()}&collectionId=testCollection5`);
-  const expectedResponse3 = [{ status: 'running', count: '1' }];
-
-  const AggregateSearch4 = new StatsSearch(`/stats/aggregate?type=executions&field=status&timestamp__from=${(new Date(2021, 1, 28)).getTime()}&timestamp__to=${(new Date(2023, 11, 30)).getTime()}&collectionId=testCollection5&status=running`);
+  const queryStringParams3 = {
+    type: 'executions',
+    field: 'status',
+    from: `${(new Date(2023, 1, 28)).getTime()}`,
+    to: `${(new Date(2023, 11, 30)).getTime()}`,
+  };
+  const AggregateSearch3 = new StatsSearch(queryStringParams3);
+  const expectedResponse3 = [{ status: 'running', count: '3' }];
+  const queryStringParams4 = {
+    type: 'executions',
+    field: 'status',
+    to: `${(new Date(2023, 11, 30)).getTime()}`,
+    from: `${(new Date(2021, 1, 28)).getTime()}`,
+    collectionId: 'testCollection5',
+    status: 'running',
+  };
+  const AggregateSearch4 = new StatsSearch(queryStringParams4);
   const expectedResponse4 = [{ count: '1' }];
 
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
@@ -187,20 +218,37 @@ test('StatsSearch filters executions correctly', async (t) => {
 
 test('StatsSearch filters PDRs correctly', async (t) => {
   const { knex } = t.context;
-  const AggregateSearch = new StatsSearch('/stats/aggregate?type=pdrs&field=status');
+  const queryStringParams1 = {
+    type: 'pdrs',
+    field: 'status',
+  };
+  const AggregateSearch = new StatsSearch(queryStringParams1);
   const expectedResponse = [
     { status: 'completed', count: '7' },
     { status: 'failed', count: '7' },
     { status: 'running', count: '6' },
   ];
-
-  const AggregateSearch2 = new StatsSearch(`/stats/aggregate?type=pdrs&field=status&timestamp__from=${(new Date(2018, 1, 28)).getTime()}&timestamp__to=${(new Date(2019, 12, 9)).getTime()}`);
+  const queryStringParams2 = {
+    type: 'pdrs',
+    field: 'status',
+    to: `${(new Date(2019, 12, 9)).getTime()}`,
+    from: `${(new Date(2018, 1, 28)).getTime()}`,
+  };
+  const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = [
     { status: 'completed', count: '4' },
     { status: 'failed', count: '2' },
   ];
 
-  const AggregateSearch3 = new StatsSearch(`/stats/aggregate?type=pdrs&field=status&timestamp__from=${(new Date(2018, 1, 28)).getTime()}&timestamp__to=${(new Date(2019, 12, 9)).getTime()}&status=failed`);
+  const queryStringParams3 = {
+    type: 'pdrs',
+    field: 'status',
+    to: `${(new Date(2019, 12, 9)).getTime()}`,
+    from: `${(new Date(2018, 1, 28)).getTime()}`,
+    status: 'failed',
+  };
+
+  const AggregateSearch3 = new StatsSearch(queryStringParams3);
   const expectedResponse3 = [{ count: '2' }];
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
   t.deepEqual(await AggregateSearch2.aggregate_search(knex), expectedResponse2);
@@ -209,31 +257,69 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 
 test('StatsSearch returns correct response when queried by provider', async (t) => {
   const { knex } = t.context;
+  const queryStringParams = {
+    type: 'granules',
+    field: 'status',
+    providerId: 'testProvider2',
+  };
+
   const expectedResponse = [
     { status: 'completed', count: '5' },
     { status: 'queued', count: '5' },
   ];
-  const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules&field=status&providerId=testProvider2');
+
+  const AggregateSearch = new StatsSearch(queryStringParams);
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
 });
 
 test('StatsSearch returns correct response when queried by collection', async (t) => {
   const { knex } = t.context;
+  const queryStringParams = {
+    type: 'granules',
+    field: 'status',
+    collectionId: 'testCollection8',
+  };
+
   const expectedResponse = [{ status: 'queued', count: '5' }];
-  const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules&field=status&collectionId=testCollection8');
+  const AggregateSearch = new StatsSearch(queryStringParams);
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
 });
 
 test('StatsSearch returns correct response when queried by collection and provider', async (t) => {
   const { knex } = t.context;
+  const queryStringParams = {
+    type: 'granules',
+    field: 'status',
+    collectionId: 'testCollection1',
+    providerId: 'testProvider1',
+  };
+
   const expectedResponse = [{ status: 'failed', count: '5' }];
-  const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules&field=status&collectionId=testCollection1&providerId=testProvider1');
+  const AggregateSearch = new StatsSearch(queryStringParams);
+
+  const queryStringParams2 = {
+    type: 'granules',
+    field: 'status',
+    collectionId: 'testCollection1',
+    providerId: 'testProvider1',
+    to: `${(new Date(2019, 12, 9)).getTime()}`,
+    from: `${(new Date(2018, 1, 28)).getTime()}`,
+  };
 
   const expectedResponse2 = [{ status: 'failed', count: '2' }];
-  const AggregateSearch2 = new StatsSearch(`/stats/aggregate?type=granules&field=status&collectionId=testCollection1&providerId=testProvider1&timestamp__from=${(new Date(2018, 1, 28)).getTime()}&timestamp__to=${(new Date(2019, 12, 9)).getTime()}`);
+  const AggregateSearch2 = new StatsSearch(queryStringParams2);
+  const queryStringParams3 = {
+    type: 'granules',
+    field: 'status',
+    collectionId: 'testCollection1',
+    providerId: 'testProvider1',
+    to: `${(new Date(2019, 12, 9)).getTime()}`,
+    from: `${(new Date(2018, 1, 28)).getTime()}`,
+    status: 'failed',
+  };
 
   const expectedResponse3 = [{ count: '2' }];
-  const AggregateSearch3 = new StatsSearch(`/stats/aggregate?type=granules&field=status&collectionId=testCollection1&providerId=testProvider1&timestamp__from=${(new Date(2018, 1, 28)).getTime()}&timestamp__to=${(new Date(2019, 12, 9)).getTime()}&status=failed`);
+  const AggregateSearch3 = new StatsSearch(queryStringParams3);
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
   t.deepEqual(await AggregateSearch2.aggregate_search(knex), expectedResponse2);
   t.deepEqual(await AggregateSearch3.aggregate_search(knex), expectedResponse3);
@@ -241,8 +327,11 @@ test('StatsSearch returns correct response when queried by collection and provid
 
 test('StatsSearch returns correct response when queried by error', async (t) => {
   const { knex } = t.context;
-  const AggregateSearch = new StatsSearch('/stats/aggregate?type=granules&field=error.Error.keyword');
-
+  const queryStringParams = {
+    type: 'granules',
+    field: 'error.Error.keyword',
+  };
+  const AggregateSearch = new StatsSearch(queryStringParams);
   const expectedResponse = [
     { error: null, count: '20' },
     { error: 'CumulusMessageAdapterError', count: '20' },
@@ -252,8 +341,14 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   ];
 
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
+  const queryStringParams2 = {
+    type: 'granules',
+    field: 'error.Error.keyword',
+    to: `${(new Date(2021, 12, 9)).getTime()}`,
+    from: `${(new Date(2020, 1, 28)).getTime()}`,
+  };
 
-  const AggregateSearch2 = new StatsSearch(`/stats/aggregate?type=granules&field=error.Error.keyword&timestamp__from=${(new Date(2020, 1, 28)).getTime()}&timestamp__to=${(new Date(2021, 12, 9)).getTime()}`);
+  const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = [
     { error: 'CmrFailure', count: '8' },
     { error: 'IngestFailure', count: '7' },
@@ -267,8 +362,7 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
 
 test('StatsSummary works', async (t) => {
   const { knex } = t.context;
-
-  const StatsSummary = new StatsSearch('');
+  const StatsSummary = new StatsSearch({});
   const results = await StatsSummary.summary(knex);
   const expectedResponse = [
     {
@@ -279,7 +373,13 @@ test('StatsSummary works', async (t) => {
     },
   ];
 
-  const results2 = await StatsSummary.summary(knex, `${(new Date(2019, 12, 9)).getTime()}`, `${(new Date(2018, 1, 28)).getTime()}`);
+  const queryStringParams2 = {
+    to: `${(new Date(2019, 12, 9)).getTime()}`,
+    from: `${(new Date(2018, 1, 28)).getTime()}`,
+  };
+
+  const StatsSummary2 = new StatsSearch(queryStringParams2);
+  const results2 = await StatsSummary2.summary(knex);
   const expectedResponse2 = [
     {
       count_errors: '21',
