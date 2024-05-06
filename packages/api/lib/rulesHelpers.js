@@ -571,8 +571,9 @@ async function addRule(item, payload) {
 /**
  * Checks if record is valid
  *
- * @param {RuleRecord} rule - Rule to check validation
- * @returns {void}          - Returns if record is valid, throws error otherwise
+ * @param {any} rule - Object to validate as a Rule Record validation
+ * @param {any} rule     - Object to validate as a Rule Record validation
+ * @returns {RuleRecord} - Returns if record is valid, throws error otherwise
  */
 function validateRecord(rule) {
   const error = new Error('The record has validation errors. ');
@@ -590,12 +591,13 @@ function validateRecord(rule) {
     throw error;
   }
 
-  recordIsValid(omitDeepBy(rule, isNil), ruleSchema, false);
+  recordIsValid(rule, ruleSchema, false);
 
   if (rule.rule.type !== 'onetime' && !rule.rule.value) {
     error.message += `Rule value is undefined for ${rule.rule.type} rule`;
     throw error;
   }
+  return rule;
 }
 
 /**
@@ -616,15 +618,14 @@ async function invokeRerun(rule) {
 }
 
 /**
- * Updates rule trigger for rule
+ * Updates rule trigger for rule object
  *
  * @param {RuleRecord} original - Rule to update trigger for
- * @param {RuleRecord} updated  - Updated rule for rule trigger
+ * @param {Object} updated  - Updated rule for rule trigger
  * @returns {Promise<RuleRecord>}        - Returns new rule object
  */
 async function updateRuleTrigger(original, updated) {
-  let resultRule = cloneDeep(updated);
-  validateRecord(resultRule);
+  let resultRule = validateRecord(omitDeepBy(updated, isNil));
 
   const stateChanged = updated.state && updated.state !== original.state;
   const valueUpdated = updated.rule && updated.rule.value !== original.rule.value;
@@ -672,18 +673,19 @@ async function updateRuleTrigger(original, updated) {
 /**
  * Creates rule trigger for rule
  *
- * @param {RuleRecord} ruleItem - Rule to create trigger for
+ * @param {Object} ruleItem - Rule to create trigger for
  * @param {Object} testParams - Function to determine to use actual invoke or testInvoke
  * @returns {Promise<RuleRecord>} - Returns new rule object
  */
 async function createRuleTrigger(ruleItem, testParams = {}) {
-  let newRuleItem = cloneDeep(ruleItem);
+  const candidateRuleItem = omitDeepBy(ruleItem, isNil);
+
   // the default value for enabled is true
-  if (newRuleItem.state === undefined) {
-    newRuleItem.state = 'ENABLED';
+  if (candidateRuleItem.state === undefined) {
+    candidateRuleItem.state = 'ENABLED';
   }
 
-  const enabled = newRuleItem.state === 'ENABLED';
+  const enabled = candidateRuleItem.state === 'ENABLED';
   const invokeMethod = testParams.invokeMethod || invoke;
   // make sure the name only has word characters
   const re = /\W/;
@@ -692,7 +694,7 @@ async function createRuleTrigger(ruleItem, testParams = {}) {
   }
 
   // Validate rule before kicking off workflows or adding event source mappings
-  validateRecord(newRuleItem);
+  let newRuleItem = validateRecord(candidateRuleItem);
 
   const payload = await buildPayload(newRuleItem);
   switch (newRuleItem.rule.type) {
