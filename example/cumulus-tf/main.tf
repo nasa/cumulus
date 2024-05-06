@@ -97,7 +97,7 @@ module "cumulus" {
 
   async_operation_image = "${data.aws_ecr_repository.async_operation.repository_url}:${var.async_operation_image_version}"
 
-  ecs_cluster_instance_type       = "i4g.xlarge"
+  ecs_cluster_instance_type       = "Im4gn.xlarge"
   ecs_cluster_instance_image_id   = data.aws_ssm_parameter.ecs_image_id.value
   ecs_cluster_instance_subnet_ids = length(var.ecs_cluster_instance_subnet_ids) == 0 ? local.subnet_ids : var.ecs_cluster_instance_subnet_ids
   ecs_cluster_min_size            = 1
