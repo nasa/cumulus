@@ -118,7 +118,7 @@ describe('The SNS-type rule', () => {
 
       await addCollections(config.stackName, config.bucket, collectionsDir,
         testSuffix, testId);
-      const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: snsTopicName }));
+      const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: snsTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
       snsTopicArn = TopicArn;
       snsRuleDefinition.rule.value = TopicArn;
       const postRuleResponse = await postRule({
@@ -308,7 +308,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: newValueTopicName }));
+        const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: newValueTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
         newTopicArn = TopicArn;
         const updateParams = {
           rule: {
@@ -366,7 +366,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: newValueTopicName }));
+        const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: newValueTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
         newTopicArn = TopicArn;
         const subscriptionParams = {
           TopicArn,

@@ -185,7 +185,7 @@ describe('The Cloud Notification Mechanism SQS workflow', () => {
 
       // create SNS topic for cnm response
       const snsTopicName = timestampedName(`${config.stackName}_CnmSqsTestTopic`);
-      const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: snsTopicName }));
+      const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: snsTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
       cnmResponseStream = TopicArn;
       config.cnmResponseStream = cnmResponseStream;
 
