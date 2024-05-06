@@ -594,7 +594,8 @@ async function addRule(item, payload) {
  * Checks if record is valid
  *
  * @param {any} rule - Object to validate as a Rule Record validation
- * @returns {RuleRecord}          - Returns if record is valid, throws error otherwise
+ * @param {any} rule     - Object to validate as a Rule Record validation
+ * @returns {RuleRecord} - Returns if record is valid, throws error otherwise
  */
 function validateRecord(rule) {
   const error = new Error('The record has validation errors. ');
