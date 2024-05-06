@@ -115,6 +115,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     CommmonJS typescript/webpack clients.
 
 ### Changed
+- **CUMULUS-3951**
+  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
+  - Update all integration/unit tests to use encrypted SNS topics
 - **CUMULUS-3433**
   - Updated all node.js lambda dependencies to node 20.x/20.12.2
   - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
