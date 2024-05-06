@@ -68,7 +68,7 @@ test.before(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: randomString() }));
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: randomString(), KmsMasterKeyId: 'alias/aws/sns' }));
   t.context.granules_sns_topic_arn = TopicArn;
   process.env.granule_sns_topic_arn = t.context.granules_sns_topic_arn;
 

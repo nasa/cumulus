@@ -103,7 +103,7 @@ test.beforeEach(async (t) => {
   await t.context.collectionPgModel.create(t.context.testKnex, t.context.testCollection);
 
   const topicName = randomString();
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName, KmsMasterKeyId: 'alias/aws/sns' }));
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

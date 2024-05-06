@@ -168,7 +168,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   t.context.sandbox = sinon.createSandbox();
-  const topic = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('sns') }));
+  const topic = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('sns'), KmsMasterKeyId: 'alias/aws/sns' }));
   t.context.snsTopicArn = topic.TopicArn;
   await deleteKinesisEventSourceMappings();
 });
@@ -986,7 +986,7 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
     testKnex,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -1032,7 +1032,7 @@ test.serial('deleteRuleResources() does not throw if a rule is passed in without
     testKnex,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -1111,7 +1111,7 @@ test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s su
     testKnex,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const snsRule = fakeRuleFactoryV2({
     workflow,

@@ -170,8 +170,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await sns().send(new CreateTopicCommand({ Name: executionsTopicName }));
-  const pdrsTopic = await sns().send(new CreateTopicCommand({ Name: pdrsTopicName }));
+  const executionsTopic = await sns().send(new CreateTopicCommand({ Name: executionsTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
+  const pdrsTopic = await sns().send(new CreateTopicCommand({ Name: pdrsTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -190,7 +190,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName, KmsMasterKeyId: 'alias/aws/sns' }));
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

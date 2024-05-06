@@ -66,7 +66,7 @@ async function prepareServices(stackName, bucket) {
   });
   await s3().createBucket({ Bucket: bucket });
 
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: randomId('topicName') }));
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: randomId('topicName'), KmsMasterKeyId: 'alias/aws/sns' }));
   process.env.collection_sns_topic_arn = TopicArn;
 }
 

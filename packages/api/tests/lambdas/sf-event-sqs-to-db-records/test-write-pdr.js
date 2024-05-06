@@ -134,7 +134,7 @@ test.beforeEach(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName, KmsMasterKeyId: 'alias/aws/sns' }));
   process.env.pdr_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

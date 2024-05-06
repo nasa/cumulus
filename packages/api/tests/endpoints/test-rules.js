@@ -543,7 +543,7 @@ test.serial('post() creates SNS rule with same trigger information in PostgreSQL
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const rule = fakeRuleFactoryV2({
     state: 'ENABLED',
@@ -1560,8 +1560,8 @@ test.serial('PATCH creates the same updated SNS rule in PostgreSQL/Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const {
     originalPgRecord,
@@ -1824,8 +1824,8 @@ test.serial('PATCH keeps initial trigger information if writing to PostgreSQL fa
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const {
     originalPgRecord,
@@ -1915,8 +1915,8 @@ test.serial('PATCH keeps initial trigger information if writing to Elasticsearch
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const {
     originalPgRecord,
@@ -2515,8 +2515,8 @@ test.serial('PUT creates the same updated SNS rule in PostgreSQL/Elasticsearch',
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const {
     originalApiRule,
@@ -2779,8 +2779,8 @@ test.serial('PUT keeps initial trigger information if writing to PostgreSQL fail
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const {
     originalApiRule,
@@ -2871,8 +2871,8 @@ test.serial('PUT keeps initial trigger information if writing to Elasticsearch f
     pgCollection,
   } = t.context;
 
-  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_') }));
-  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_') }));
+  const topic1 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic1_'), KmsMasterKeyId: 'alias/aws/sns' }));
+  const topic2 = await awsServices.sns().send(new CreateTopicCommand({ Name: randomId('topic2_'), KmsMasterKeyId: 'alias/aws/sns' }));
 
   const {
     originalApiRule,
