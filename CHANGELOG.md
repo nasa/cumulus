@@ -115,6 +115,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     CommmonJS typescript/webpack clients.
 
 ### Changed
+- **CUMULUS-3717**
+  - Updated dynamic import added in CUMULUS-3433 to be memoized in the ingest
+    pacakge to defend against repeat imports resulting in node errors
 - **CUMULUS-3433**
   - Updated all node.js lambda dependencies to node 20.x/20.12.2
   - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
@@ -204,7 +207,7 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
 - **CUMULUS-3673**
-  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
 - **Audit Issues**
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc
