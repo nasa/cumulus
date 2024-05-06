@@ -1,5 +1,3 @@
-const memoize = require('lodash/memoize');
-
 /**
  * Asynchronously imports the 'got' module.
  *
@@ -14,9 +12,9 @@ const memoize = require('lodash/memoize');
  * @returns {Promise<Function>} A promise that resolves to the 'got' function.
  * @throws {Error} If an error occurs while importing the module.
  */
-const importGot = memoize(async () => {
+const importGot = async () => {
   const { default: got } = await import('got');
   return got;
-});
+};
 
 module.exports = { importGot };
