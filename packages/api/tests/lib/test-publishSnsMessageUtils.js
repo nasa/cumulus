@@ -4,8 +4,8 @@ const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
 
 const { sns, sqs } = require('@cumulus/aws-client/services');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const {
-  CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
@@ -28,7 +28,7 @@ test.before((t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName, KmsMasterKeyId: 'alias/aws/sns' }));
+  const { TopicArn } = await createSnsTopic(topicName);
   t.context.TopicArn = TopicArn;
 
   const QueueName = cryptoRandomString({ length: 10 });

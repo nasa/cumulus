@@ -10,8 +10,8 @@ const proxyquire = require('proxyquire');
 
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { sns, sqs } = require('@cumulus/aws-client/services');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const {
-  CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
@@ -170,8 +170,8 @@ test.before(async (t) => {
 
   const executionsTopicName = cryptoRandomString({ length: 10 });
   const pdrsTopicName = cryptoRandomString({ length: 10 });
-  const executionsTopic = await sns().send(new CreateTopicCommand({ Name: executionsTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
-  const pdrsTopic = await sns().send(new CreateTopicCommand({ Name: pdrsTopicName, KmsMasterKeyId: 'alias/aws/sns' }));
+  const executionsTopic = await createSnsTopic(executionsTopicName);
+  const pdrsTopic = await createSnsTopic(pdrsTopicName);
   process.env.execution_sns_topic_arn = executionsTopic.TopicArn;
   process.env.pdr_sns_topic_arn = pdrsTopic.TopicArn;
   t.context.ExecutionsTopicArn = executionsTopic.TopicArn;
@@ -190,7 +190,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName, KmsMasterKeyId: 'alias/aws/sns' }));
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

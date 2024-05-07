@@ -5,9 +5,9 @@ const { randomString } = require('@cumulus/common/test-utils');
 const Lambda = require('@cumulus/aws-client/Lambda');
 const { sns } = require('@cumulus/aws-client/services');
 const {
-  CreateTopicCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { createBucket } = require('@cumulus/aws-client/S3');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -68,7 +68,7 @@ test.before(async (t) => {
   t.context.esIndex = esIndex;
   t.context.esClient = esClient;
 
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: randomString(), KmsMasterKeyId: 'alias/aws/sns' }));
+  const { TopicArn } = await createSnsTopic(randomString());
   t.context.granules_sns_topic_arn = TopicArn;
   process.env.granule_sns_topic_arn = t.context.granules_sns_topic_arn;
 
