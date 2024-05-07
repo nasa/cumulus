@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Fixed
+
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
