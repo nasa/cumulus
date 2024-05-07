@@ -447,7 +447,7 @@ test.serial.skip('default lists and paginates correctly with search_after', asyn
   t.not(meta.searchContext === newMeta.searchContext);
 });
 
-test.serial('default lists and paginates correctly', async (t) => {
+test.serial('default lists and paginates correctly from querying database', async (t) => {
   const granuleIds = t.context.fakePGGranules.map((i) => i.granule_id);
   const response = await request(app)
     .get('/granules')
