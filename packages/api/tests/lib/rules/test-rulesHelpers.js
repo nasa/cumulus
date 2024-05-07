@@ -3,6 +3,8 @@
 const test = require('ava');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
+const isObject = require('lodash/isObject');
+const cloneDeep = require('lodash/cloneDeep');
 const proxyquire = require('proxyquire');
 const fs = require('fs-extra');
 
@@ -1758,6 +1760,46 @@ test.serial('Creating a rule trigger for a scheduled rule succeeds', async (t) =
   });
 });
 
+test.serial('Creating a rule trigger for a scheduled rule with null values in the rule results in putRule being called with an object missing null values', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'scheduled',
+      value: 'rate(1 min)',
+    },
+    state: 'ENABLED',
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+      someOtherValue: null,
+    },
+    queueUrl: null,
+  });
+
+  const cloudwatchStub = sinon.stub(awsServices, 'cloudwatchevents')
+    .returns({
+      putRule: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      putTargets: (params) => {
+        const valueFunc = (obj) =>
+          ((obj && isObject(obj))
+            ? Object.values(obj).map(valueFunc).flat()
+            : [obj]);
+        const paramValues = params.Targets.map((target) => JSON.parse(target.Input)).map((x) => valueFunc(x)).flat();
+        t.false(paramValues.includes(null));
+        return {
+          promise: () => Promise.resolve(),
+        };
+      },
+    });
+  await createRuleTrigger(rule);
+  t.true(cloudwatchStub.called);
+  t.teardown(() => {
+    cloudwatchStub.restore();
+  });
+});
+
 test('buildPayload builds a lambda payload from the rule', async (t) => {
   const collectionPgModel = new CollectionPgModel();
   const providerPgModel = new ProviderPgModel();
@@ -1823,6 +1865,47 @@ test('buildPayload throws error if workflow file does not exist', async (t) => {
     buildPayload(rule),
     { message: `Workflow doesn\'t exist: s3://${process.env.system_bucket}/${workflowFileKey} for ${rule.name}` }
   );
+});
+
+test.serial('Updating a rule trigger for a scheduled rule with null values in the rule results in putRule being called with an object missing null values', async (t) => {
+  const rule = fakeRuleFactoryV2({
+    workflow,
+    rule: {
+      type: 'scheduled',
+      value: 'rate(1 min)',
+    },
+    state: 'ENABLED',
+    meta: {
+      visibilityTimeout: 100,
+      retries: 4,
+    },
+  });
+
+  const updatedRule = cloneDeep(rule);
+  updatedRule.queueUrl = null;
+  updatedRule.meta.someOtherValue = null;
+  const cloudwatchStub = sinon.stub(awsServices, 'cloudwatchevents')
+    .returns({
+      putRule: () => ({
+        promise: () => Promise.resolve(),
+      }),
+      putTargets: (params) => {
+        const valueFunc = (obj) =>
+          ((obj && isObject(obj))
+            ? Object.values(obj).map(valueFunc).flat()
+            : [obj]);
+        const paramValues = params.Targets.map((target) => JSON.parse(target.Input)).map((x) => valueFunc(x)).flat();
+        t.false(paramValues.includes(null));
+        return {
+          promise: () => Promise.resolve(),
+        };
+      },
+    });
+  await updateRuleTrigger(rule, updatedRule);
+  t.true(cloudwatchStub.called);
+  t.teardown(() => {
+    cloudwatchStub.restore();
+  });
 });
 
 test.serial('Updating a rule trigger with an "onetime" rule type returns updated rule', async (t) => {
