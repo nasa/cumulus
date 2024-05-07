@@ -12,26 +12,15 @@ class StatsSearch {
   /** Updates the knex query to filter by time ranges if applicable
    *
    * @param {any} query - the current knex query before time filters
+   * @param {string} queryField - updated_at or created_at string
    * @returns {any} The updated query based on time filters
    */
-  public handleTime(query: any): any {
-    let tempQuery = query;
-    if (this.queryStringParameters.timestamp__to) {
-      tempQuery = tempQuery.whereBetween(
-        `${this.queryStringParameters.type}.updated_at`,
-        [new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)),
-          new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10))]
-      );
-    }
-
-    if (this.queryStringParameters.timestamp__from) {
-      tempQuery = tempQuery.whereBetween(
-        `${this.queryStringParameters.type}.created_at`,
-        [new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)),
-          new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10))]
-      );
-    }
-    return tempQuery;
+  public handleTime(query: any, queryField: any): any {
+    return query.whereBetween(
+      `${this.queryStringParameters.type}.${queryField}`,
+      [new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)),
+        new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10))]
+    );
   }
 
   /** Provides a summary of statistics around the granules in the system
@@ -42,7 +31,13 @@ class StatsSearch {
   public async summary(sendknex: Knex): Promise<any> {
     const knex = sendknex ?? await getKnexClient();
     this.queryStringParameters.type = 'granules';
-    let aggregateQuery = this.handleTime(knex('granules'));
+    let aggregateQuery = knex('granules');
+    if (this.queryStringParameters.timestamp__to) {
+      aggregateQuery = this.handleTime(knex('granules'), 'updated_at');
+    }
+    if (this.queryStringParameters.timestamp__from) {
+      aggregateQuery = this.handleTime(aggregateQuery, 'created_at');
+    }
     aggregateQuery = await aggregateQuery.select(
       knex.raw("COUNT(CASE WHEN error ->> 'Error' != '{}' THEN 1 END) AS count_errors"),
       knex.raw('COUNT(cumulus_id) AS count_granules'),
@@ -59,40 +54,16 @@ class StatsSearch {
    * @returns {any} Returns the knex query of a joined table or not based on queryStringParameters
    */
   public providerAndCollectionIdBuilder(knex: Knex): any {
-    let aggregateQuery;
-    if (this.queryStringParameters.collectionId && this.queryStringParameters.providerId) {
-      aggregateQuery = (knex.select(
-        this.whatToGroupBy(this.queryStringParameters.field, knex)
-      ).from(`${this.queryStringParameters.type}`).join('collections', `${this.queryStringParameters.type}.collection_cumulus_id`, 'collections.cumulus_id').groupBy(
-        this.whatToGroupBy(this.queryStringParameters.field, knex)
-      ))
-        .select(
-          this.whatToGroupBy(this.queryStringParameters.field, knex)
-        )
-        .from(`${this.queryStringParameters.type}`)
-        .join('providers', `${this.queryStringParameters.type}.provider_cumulus_id`, 'providers.cumulus_id')
-        .groupBy(
-          this.whatToGroupBy(this.queryStringParameters.field, knex)
-        );
-    } else {
-      if (this.queryStringParameters.collectionId && !this.queryStringParameters.providerId) {
-        aggregateQuery = knex.select(
-          this.whatToGroupBy(this.queryStringParameters.field, knex)
-        ).from(`${this.queryStringParameters.type}`)
-          .join('collections', `${this.queryStringParameters.type}.collection_cumulus_id`, 'collections.cumulus_id')
-          .groupBy(
-            this.whatToGroupBy(this.queryStringParameters.field, knex)
-          );
-      }
-      if (!this.queryStringParameters.collectionId && this.queryStringParameters.providerId) {
-        aggregateQuery = knex.select(
-          this.whatToGroupBy(this.queryStringParameters.field, knex)
-        ).from(`${this.queryStringParameters.type}`)
-          .join('providers', `${this.queryStringParameters.type}.provider_cumulus_id`, 'providers.cumulus_id')
-          .groupBy(
-            this.whatToGroupBy(this.queryStringParameters.field, knex)
-          );
-      }
+    let aggregateQuery = knex.select(
+      this.whatToGroupBy(this.queryStringParameters.field, knex)
+    ).from(`${this.queryStringParameters.type}`);
+
+    if (this.queryStringParameters.collectionId) {
+      aggregateQuery = aggregateQuery.join('collections', `${this.queryStringParameters.type}.collection_cumulus_id`, 'collections.cumulus_id');
+    }
+
+    if (this.queryStringParameters.providerId) {
+      aggregateQuery = aggregateQuery.join('providers', `${this.queryStringParameters.type}.provider_cumulus_id`, 'providers.cumulus_id');
     }
     return aggregateQuery;
   }
@@ -150,8 +121,12 @@ class StatsSearch {
       if (this.queryStringParameters.providerId) {
         aggregateQuery = aggregateQuery.where('providers.name', '=', this.queryStringParameters.providerId);
       }
-
-      aggregateQuery = this.handleTime(aggregateQuery);
+      if (this.queryStringParameters.timestamp__to) {
+        aggregateQuery = this.handleTime(aggregateQuery, 'updated_at');
+      }
+      if (this.queryStringParameters.timestamp__from) {
+        aggregateQuery = this.handleTime(aggregateQuery, 'created_at');
+      }
       this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
       aggregateQuery = this.aggregateQueryField(aggregateQuery, knex);
 

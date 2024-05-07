@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const request = require('supertest');
-const rewire = require('rewire');
 const cryptoRandomString = require('crypto-random-string');
 const range = require('lodash/range');
 
@@ -31,19 +30,6 @@ const testDbName = `collection_${cryptoRandomString({ length: 10 })}`;
 
 const assertions = require('../../lib/assertions');
 
-const stats = rewire('../../endpoints/stats');
-const getType = stats.__get__('getType');
-
-process.env.AccessTokensTable = randomId('accessTokenTable');
-
-process.env.system_bucket = randomId('bucket');
-process.env.stackName = randomId('stackName');
-
-const esAlias = randomId('esAlias');
-
-process.env.ES_INDEX = esAlias;
-process.env.TOKEN_SECRET = randomId('tokensecret');
-
 // import the express app after setting the env variables
 const { app } = require('../../app');
 
@@ -54,6 +40,11 @@ process.env.PG_HOST = `hostname_${cryptoRandomString({ length: 10 })}`;
 process.env.PG_USER = `user_${cryptoRandomString({ length: 10 })}`;
 process.env.PG_PASSWORD = `password_${cryptoRandomString({ length: 10 })}`;
 process.env.stackName = randomString();
+process.env.AccessTokensTable = randomId('accessTokenTable');
+process.env.system_bucket = randomId('bucket');
+process.env.stackName = randomId('stackName');
+process.env.TOKEN_SECRET = randomId('tokensecret');
+
 process.env = {
   ...process.env,
   ...localStackConnectionEnv,
@@ -170,54 +161,6 @@ test('GET /stats/aggregate with an invalid access token returns an unauthorized 
   assertions.isInvalidAccessTokenResponse(t, response);
 });
 
-test('getType gets correct type for granules', (t) => {
-  const type = getType({ params: { type: 'granules' } });
-
-  t.is(type, 'granule');
-});
-
-test('getType gets correct type for collections', (t) => {
-  const type = getType({ params: { type: 'collections' } });
-
-  t.is(type, 'collection');
-});
-
-test('getType gets correct type for pdrs', (t) => {
-  const type = getType({ params: { type: 'pdrs' } });
-
-  t.is(type, 'pdr');
-});
-
-test('getType gets correct type for executions', (t) => {
-  const type = getType({ params: { type: 'executions' } });
-
-  t.is(type, 'execution');
-});
-
-test('getType gets correct type for logs', (t) => {
-  const type = getType({ params: { type: 'logs' } });
-
-  t.is(type, 'logs');
-});
-
-test('getType gets correct type for providers', (t) => {
-  const type = getType({ params: { type: 'providers' } });
-
-  t.is(type, 'provider');
-});
-
-test('getType returns undefined if type is not supported', (t) => {
-  const type = getType({ params: { type: 'provide' } });
-
-  t.falsy(type);
-});
-
-test('getType returns correct type from query params', (t) => {
-  const type = getType({ query: { type: 'providers' } });
-
-  t.is(type, 'provider');
-});
-
 test('GET /stats returns correct response, defaulted to all', async (t) => {
   const response = await request(app)
     .get('/stats')
@@ -233,6 +176,7 @@ test('GET /stats returns correct response, defaulted to all', async (t) => {
       count_collections: '20',
     },
   ];
+
   t.deepEqual(response.body, expectedResponse);
 });
 

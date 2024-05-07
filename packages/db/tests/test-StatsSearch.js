@@ -2,7 +2,6 @@
 
 const test = require('ava');
 const cryptoRandomString = require('crypto-random-string');
-//const { randomId } = require('@cumulus/common/test-utils');
 const range = require('lodash/range');
 const { StatsSearch } = require('../dist/search/StatsSearch');
 
@@ -179,24 +178,28 @@ test('StatsSearch filters executions correctly', async (t) => {
     { status: 'failed', count: '7' },
     { status: 'running', count: '6' },
   ];
+
   const queryStringParams2 = {
     type: 'executions',
     field: 'status',
     timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
     timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
   };
+
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = [
     { status: 'completed', count: '3' },
     { status: 'failed', count: '3' },
     { status: 'running', count: '3' },
   ];
+
   const queryStringParams3 = {
     type: 'executions',
     field: 'status',
     timestamp__from: `${(new Date(2023, 1, 28)).getTime()}`,
     timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
   };
+
   const AggregateSearch3 = new StatsSearch(queryStringParams3);
   const expectedResponse3 = [{ status: 'running', count: '3' }];
   const queryStringParams4 = {
@@ -207,9 +210,9 @@ test('StatsSearch filters executions correctly', async (t) => {
     collectionId: 'testCollection5',
     status: 'running',
   };
+
   const AggregateSearch4 = new StatsSearch(queryStringParams4);
   const expectedResponse4 = [{ count: '1' }];
-
   t.deepEqual(await AggregateSearch.aggregate_search(knex), expectedResponse);
   t.deepEqual(await AggregateSearch2.aggregate_search(knex), expectedResponse2);
   t.deepEqual(await AggregateSearch3.aggregate_search(knex), expectedResponse3);
@@ -222,18 +225,21 @@ test('StatsSearch filters PDRs correctly', async (t) => {
     type: 'pdrs',
     field: 'status',
   };
+
   const AggregateSearch = new StatsSearch(queryStringParams1);
   const expectedResponse = [
     { status: 'completed', count: '7' },
     { status: 'failed', count: '7' },
     { status: 'running', count: '6' },
   ];
+
   const queryStringParams2 = {
     type: 'pdrs',
     field: 'status',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
+
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = [
     { status: 'completed', count: '4' },
@@ -331,6 +337,7 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
     type: 'granules',
     field: 'error.Error.keyword',
   };
+
   const AggregateSearch = new StatsSearch(queryStringParams);
   const expectedResponse = [
     { error: null, count: '20' },
