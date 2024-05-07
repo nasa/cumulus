@@ -150,8 +150,8 @@ test('StatsSearch filters correctly by date', async (t) => {
   const { knex } = t.context;
   const queryStringParams = {
     type: 'granules',
-    from: `${(new Date(2020, 1, 28)).getTime()}`,
-    to: `${(new Date(2022, 2, 30)).getTime()}`,
+    timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2022, 2, 30)).getTime()}`,
   };
 
   const AggregateSearch = new StatsSearch(queryStringParams);
@@ -182,8 +182,8 @@ test('StatsSearch filters executions correctly', async (t) => {
   const queryStringParams2 = {
     type: 'executions',
     field: 'status',
-    to: `${(new Date(2023, 11, 30)).getTime()}`,
-    from: `${(new Date(2021, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
+    timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
   };
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = [
@@ -194,16 +194,16 @@ test('StatsSearch filters executions correctly', async (t) => {
   const queryStringParams3 = {
     type: 'executions',
     field: 'status',
-    from: `${(new Date(2023, 1, 28)).getTime()}`,
-    to: `${(new Date(2023, 11, 30)).getTime()}`,
+    timestamp__from: `${(new Date(2023, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
   };
   const AggregateSearch3 = new StatsSearch(queryStringParams3);
   const expectedResponse3 = [{ status: 'running', count: '3' }];
   const queryStringParams4 = {
     type: 'executions',
     field: 'status',
-    to: `${(new Date(2023, 11, 30)).getTime()}`,
-    from: `${(new Date(2021, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
+    timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
     collectionId: 'testCollection5',
     status: 'running',
   };
@@ -231,8 +231,8 @@ test('StatsSearch filters PDRs correctly', async (t) => {
   const queryStringParams2 = {
     type: 'pdrs',
     field: 'status',
-    to: `${(new Date(2019, 12, 9)).getTime()}`,
-    from: `${(new Date(2018, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
+    timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = [
@@ -243,8 +243,8 @@ test('StatsSearch filters PDRs correctly', async (t) => {
   const queryStringParams3 = {
     type: 'pdrs',
     field: 'status',
-    to: `${(new Date(2019, 12, 9)).getTime()}`,
-    from: `${(new Date(2018, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
+    timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
     status: 'failed',
   };
 
@@ -302,8 +302,8 @@ test('StatsSearch returns correct response when queried by collection and provid
     field: 'status',
     collectionId: 'testCollection1',
     providerId: 'testProvider1',
-    to: `${(new Date(2019, 12, 9)).getTime()}`,
-    from: `${(new Date(2018, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
+    timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
 
   const expectedResponse2 = [{ status: 'failed', count: '2' }];
@@ -313,8 +313,8 @@ test('StatsSearch returns correct response when queried by collection and provid
     field: 'status',
     collectionId: 'testCollection1',
     providerId: 'testProvider1',
-    to: `${(new Date(2019, 12, 9)).getTime()}`,
-    from: `${(new Date(2018, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
+    timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
     status: 'failed',
   };
 
@@ -344,8 +344,8 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   const queryStringParams2 = {
     type: 'granules',
     field: 'error.Error.keyword',
-    to: `${(new Date(2021, 12, 9)).getTime()}`,
-    from: `${(new Date(2020, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2021, 12, 9)).getTime()}`,
+    timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
   };
 
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
@@ -374,8 +374,8 @@ test('StatsSummary works', async (t) => {
   ];
 
   const queryStringParams2 = {
-    to: `${(new Date(2019, 12, 9)).getTime()}`,
-    from: `${(new Date(2018, 1, 28)).getTime()}`,
+    timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
+    timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
 
   const StatsSummary2 = new StatsSearch(queryStringParams2);

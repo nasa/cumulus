@@ -16,22 +16,21 @@ class StatsSearch {
    */
   public handleTime(query: any): any {
     let tempQuery = query;
-    if (this.queryStringParameters.to) {
+    if (this.queryStringParameters.timestamp__to) {
       tempQuery = tempQuery.whereBetween(
         `${this.queryStringParameters.type}.updated_at`,
-        [new Date(Number.parseInt(this.queryStringParameters.from, 10)),
-          new Date(Number.parseInt(this.queryStringParameters.to, 10))]
+        [new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)),
+          new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10))]
       );
     }
 
-    if (this.queryStringParameters.from) {
+    if (this.queryStringParameters.timestamp__from) {
       tempQuery = tempQuery.whereBetween(
         `${this.queryStringParameters.type}.created_at`,
-        [new Date(Number.parseInt(this.queryStringParameters.from, 10)),
-          new Date(Number.parseInt(this.queryStringParameters.to, 10))]
+        [new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)),
+          new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10))]
       );
     }
-
     return tempQuery;
   }
 
