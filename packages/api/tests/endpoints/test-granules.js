@@ -463,7 +463,7 @@ test.serial('default lists and paginates correctly', async (t) => {
   results.forEach((r) => {
     t.true(granuleIds.includes(r.granuleId));
   });
-  // default paginates correctly with search_after
+  // default paginates correctly
   const firstResponse = await request(app)
     .get('/granules?limit=1')
     .set('Accept', 'application/json')

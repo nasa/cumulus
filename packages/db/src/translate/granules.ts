@@ -23,6 +23,19 @@ import { PostgresProviderRecord } from '../types/provider';
 
 import { translatePostgresFileToApiFile } from './file';
 
+/**
+ * Generate an API Granule object from the granule and associated Postgres objects without
+ * querying the database
+ *
+ * @param params - params
+ * @param params.granulePgRecord - Granule from Postgres
+ * @param params.collectionPgRecord - Collection from Postgres
+ * @param [params.executionUrls] - executionUrls from Postgres
+ * @param [params.files] - granule files from Postgres
+ * @param [params.pdr] - pdr from Postgres
+ * @param [params.providerPgRecord] - provider from Postgres
+ * @returns An API Granule with associated Files
+ */
 export const translatePostgresGranuleToApiGranuleWithoutDbQuery = ({
   granulePgRecord,
   collectionPgRecord,
