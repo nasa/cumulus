@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/api",
-  "version": "18.2.0",
+  "version": "18.2.0-3721",
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
@@ -49,26 +49,26 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "18.2.0",
-    "@cumulus/async-operations": "18.2.0",
-    "@cumulus/aws-client": "18.2.0",
-    "@cumulus/cmr-client": "18.2.0",
-    "@cumulus/cmrjs": "18.2.0",
-    "@cumulus/collection-config-store": "18.2.0",
-    "@cumulus/common": "18.2.0",
-    "@cumulus/db": "18.2.0",
-    "@cumulus/distribution-utils": "18.2.0",
-    "@cumulus/errors": "18.2.0",
-    "@cumulus/es-client": "18.2.0",
-    "@cumulus/ingest": "18.2.0",
-    "@cumulus/launchpad-auth": "18.2.0",
-    "@cumulus/logger": "18.2.0",
-    "@cumulus/message": "18.2.0",
-    "@cumulus/oauth-client": "18.2.0",
-    "@cumulus/object-store": "18.2.0",
-    "@cumulus/pvl": "18.2.0",
-    "@cumulus/sftp-client": "18.2.0",
-    "@cumulus/types": "18.2.0",
+    "@cumulus/api-client": "18.2.0-3721",
+    "@cumulus/async-operations": "18.2.0-3721",
+    "@cumulus/aws-client": "18.2.0-3721",
+    "@cumulus/cmr-client": "18.2.0-3721",
+    "@cumulus/cmrjs": "18.2.0-3721",
+    "@cumulus/collection-config-store": "18.2.0-3721",
+    "@cumulus/common": "18.2.0-3721",
+    "@cumulus/db": "18.2.0-3721",
+    "@cumulus/distribution-utils": "18.2.0-3721",
+    "@cumulus/errors": "18.2.0-3721",
+    "@cumulus/es-client": "18.2.0-3721",
+    "@cumulus/ingest": "18.2.0-3721",
+    "@cumulus/launchpad-auth": "18.2.0-3721",
+    "@cumulus/logger": "18.2.0-3721",
+    "@cumulus/message": "18.2.0-3721",
+    "@cumulus/oauth-client": "18.2.0-3721",
+    "@cumulus/object-store": "18.2.0-3721",
+    "@cumulus/pvl": "18.2.0-3721",
+    "@cumulus/sftp-client": "18.2.0-3721",
+    "@cumulus/types": "18.2.0-3721",
     "@mapbox/dyno": "^1.4.2",
     "aggregate-error": "^3.1.0",
     "ajv": "^6.12.3",
@@ -120,6 +120,6 @@
     }
   },
   "devDependencies": {
-    "@cumulus/test-data": "18.2.0"
+    "@cumulus/test-data": "18.2.0-3721"
   }
 }
