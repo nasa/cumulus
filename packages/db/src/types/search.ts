@@ -8,15 +8,15 @@ export type QueryEvent = {
   queryStringParameters?: QueryStringParameters,
 };
 
-export interface QueryTermField {
+export type QueryTermField = {
   name: string,
   value: any,
-}
+};
 
-export interface QueryTermsField {
+export type QueryTermsField = {
   name: string,
   value: any[],
-}
+};
 
 export type DbQueryParameters = {
   limit?: number,
