@@ -189,6 +189,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Fixed
 
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
 - **CUMULUS-3701**
   - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 - **CUMULUS-3618**
