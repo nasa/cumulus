@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+## Hotfix v18.2.0-3721
+
+**Note**: This release is a hotfix intended to address the issues noted in CUMULUS-3721 as a direct patch to release 18.2.0.   Users are advised to wait for a formal release on the 18.2.x release series and forward versions unless this issue directly impacts them.
+
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+
 ## [v18.2.0] 2023-02-02
 
 ### Migration Notes
