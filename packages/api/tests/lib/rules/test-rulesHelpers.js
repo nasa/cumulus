@@ -8,6 +8,7 @@ const cloneDeep = require('lodash/cloneDeep');
 const proxyquire = require('proxyquire');
 const fs = require('fs-extra');
 
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const awsServices = require('@cumulus/aws-client/services');
 const workflows = require('@cumulus/common/workflows');
 const Logger = require('@cumulus/logger');
@@ -152,7 +153,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   t.context.sandbox = sinon.createSandbox();
-  const topic = await awsServices.sns().createTopic({ Name: randomId('sns') });
+  const topic = await createSnsTopic(randomId('sns'));
   t.context.snsTopicArn = topic.TopicArn;
   await deleteKinesisEventSourceMappings();
 });
@@ -986,7 +987,7 @@ test.serial('deleteRuleResources() removes SNS source mappings and permissions',
     testKnex,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -1032,7 +1033,7 @@ test.serial('deleteRuleResources() does not throw if a rule is passed in without
     testKnex,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
 
   // create rule trigger and rule
   const snsRule = fakeRuleFactoryV2({
@@ -1109,7 +1110,7 @@ test.serial('checkForSnsSubscriptions returns the correct status of a Rule\'s su
     testKnex,
   } = t.context;
 
-  const topic1 = await awsServices.sns().createTopic({ Name: randomId('topic1_') });
+  const topic1 = await createSnsTopic(randomId('topic1_'));
 
   const snsRule = fakeRuleFactoryV2({
     workflow,
@@ -1238,9 +1239,7 @@ test.serial('Multiple rules using same SNS topic can be created and deleted', as
     ),
   ]);
   const unsubscribeSpy = sinon.spy(awsServices.sns(), 'unsubscribe');
-  const { TopicArn } = await awsServices.sns().createTopic({
-    Name: randomId('topic'),
-  });
+  const { TopicArn } = await createSnsTopic('topic');
 
   const ruleWithTrigger = await rulesHelpers.createRuleTrigger(fakeRuleFactoryV2({
     name: randomId('rule1'),
@@ -1674,9 +1673,7 @@ test('Creating a disabled SNS rule creates no event source mapping', async (t) =
 });
 
 test.serial('Creating an enabled SNS rule creates an event source mapping', async (t) => {
-  const { TopicArn } = await awsServices.sns().createTopic({
-    Name: randomId('topic'),
-  });
+  const { TopicArn } = await createSnsTopic(randomId('topic'));
 
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
@@ -2184,13 +2181,10 @@ test.serial('Updating the queue for an SQS rule succeeds and allows 0 retries an
 test.serial('Updating an SNS rule updates the event source mapping', async (t) => {
   const snsTopicArn = randomString();
   const newSnsTopicArn = randomString();
-  const { TopicArn } = await awsServices.sns().createTopic({
-    Name: snsTopicArn,
-  });
-  const { TopicArn: TopicArn2 } = await awsServices.sns().createTopic({
-    Name: newSnsTopicArn,
-  });
-
+  
+  const { TopicArn } = await createSnsTopic(snsTopicArn);
+  const { TopicArn: TopicArn2 } = await createSnsTopic(newSnsTopicArn);
+  
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({
@@ -2253,10 +2247,8 @@ test.serial('Updating an SNS rule updates the event source mapping', async (t) =
 
 test.serial('Updating an SNS rule to "disabled" removes the event source mapping ARN', async (t) => {
   const snsTopicArn = randomString();
-  const { TopicArn } = await awsServices.sns().createTopic({
-    Name: snsTopicArn,
-  });
-
+  const { TopicArn } = await createSnsTopic(snsTopicArn);
+  
   const lambdaStub = sinon.stub(awsServices, 'lambda')
     .returns({
       addPermission: () => ({

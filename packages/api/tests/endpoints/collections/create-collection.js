@@ -18,10 +18,8 @@ const {
   translateApiCollectionToPostgresCollection,
   translatePostgresCollectionToApiCollection,
 } = require('@cumulus/db');
-const {
-  sns,
-  sqs,
-} = require('@cumulus/aws-client/services');
+const { sns, sqs } = require('@cumulus/aws-client/services');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const {
   constructCollectionId,
 } = require('@cumulus/message/Collections');
@@ -91,7 +89,7 @@ test.before(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.collection_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

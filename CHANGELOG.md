@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Migration Notes
+
+#### CUMULUS-3591 - SNS topics set to use encrypted storage
+
+As part of the requirements for this ticket Cumulus Core created SNS topics are
+being updated to use server-side encryption with an AWS managed key.    No user
+action is required, this note is being added to increase visibility re: this
+modification.
+
+### Changed
+
+- **CUMULUS-3591**
+  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
+  - Update all integration/unit tests to use encrypted SNS topics
+
 ### Fixed
 
 - **CUMULUS-3547**

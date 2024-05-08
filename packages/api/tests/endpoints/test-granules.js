@@ -35,7 +35,6 @@ const {
 } = require('@cumulus/db');
 
 const { createTestIndex, cleanupTestIndex } = require('@cumulus/es-client/testUtils');
-
 const {
   buildS3Uri,
   createBucket,
@@ -45,7 +44,7 @@ const {
   s3ObjectExists,
   s3PutObject,
 } = require('@cumulus/aws-client/S3');
-
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { secretsManager, sfn, s3, sns, sqs } = require('@cumulus/aws-client/services');
 const { CMR } = require('@cumulus/cmr-client');
 const { metadataObjectFromCMRFile } = require('@cumulus/cmrjs/cmr-utils');
@@ -348,7 +347,7 @@ test.beforeEach(async (t) => {
   );
 
   const topicName = randomString();
-  const { TopicArn } = await sns().createTopic({ Name: topicName });
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.granule_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 

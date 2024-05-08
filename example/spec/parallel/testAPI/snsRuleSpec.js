@@ -19,7 +19,8 @@ const {
   updateRule,
   listRules,
 } = require('@cumulus/api-client/rules');
-const { sns, lambda } = require('@cumulus/aws-client/services');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
+const { lambda, sns } = require('@cumulus/aws-client/services');
 const { LambdaStep } = require('@cumulus/integration-tests/sfnStep');
 const { findExecutionArn } = require('@cumulus/integration-tests/Executions');
 const { randomId } = require('@cumulus/common/test-utils');
@@ -108,7 +109,7 @@ describe('The SNS-type rule', () => {
 
       await addCollections(config.stackName, config.bucket, collectionsDir,
         testSuffix, testId);
-      const { TopicArn } = await SNS.createTopic({ Name: snsTopicName });
+      const { TopicArn } = await createSnsTopic(snsTopicName);
       snsTopicArn = TopicArn;
       snsRuleDefinition.rule.value = TopicArn;
       const postRuleResponse = await postRule({
@@ -298,7 +299,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName });
+        const { TopicArn } = await createSnsTopic(newValueTopicName);
         newTopicArn = TopicArn;
         const updateParams = {
           rule: {
@@ -356,7 +357,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = await SNS.createTopic({ Name: newValueTopicName });
+        const { TopicArn } = await createSnsTopic(newValueTopicName);
         newTopicArn = TopicArn;
         const subscriptionParams = {
           TopicArn,
