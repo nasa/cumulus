@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
+## [v16.1.5] 2024-05-09
+
+ **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming.
 
 ## [v16.1.4] 2024-4-23
 
@@ -23,6 +27,7 @@ upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
 ## Changed
+
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-3444**
