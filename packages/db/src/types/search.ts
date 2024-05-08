@@ -1,12 +1,12 @@
-export interface QueryStringParameters {
+export type QueryStringParameters = {
   limit?: string,
   page?: string,
   [key: string]: string | string[] | undefined,
-}
+};
 
-export interface QueryEvent {
+export type QueryEvent = {
   queryStringParameters?: QueryStringParameters,
-}
+};
 
 export interface QueryTermField {
   name: string,
@@ -18,10 +18,10 @@ export interface QueryTermsField {
   value: any[],
 }
 
-export interface DbQueryParameters {
+export type DbQueryParameters = {
   limit?: number,
   offset?: number,
   page?: number,
   termFields?: QueryTermField[],
   termsFields?: QueryTermsField[],
-}
+};

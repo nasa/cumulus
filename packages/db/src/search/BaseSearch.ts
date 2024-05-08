@@ -6,14 +6,14 @@ import { DbQueryParameters, QueryEvent, QueryStringParameters } from '../types/s
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
 
-export interface Meta {
+export type Meta = {
   name: string,
   stack?: string,
   table?: string,
   limit?: number,
   page?: number,
   count?: number,
-}
+};
 
 /**
  * Class to build and execute db search query
@@ -51,11 +51,10 @@ class BaseSearch {
       searchQuery: Knex.QueryBuilder,
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
-    const updatedQuery = searchQuery.modify((queryBuilder) => {
-      if (this.dbQueryParameters.limit) queryBuilder.limit(this.dbQueryParameters.limit);
-      if (this.dbQueryParameters.offset) queryBuilder.offset(this.dbQueryParameters.offset);
-    });
-    return { countQuery, searchQuery: updatedQuery };
+    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
+    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
+
+    return { countQuery, searchQuery };
   }
 
   /**
@@ -120,6 +119,7 @@ class BaseSearch {
         results: apiRecords,
       };
     } catch (error) {
+      log.error(`Error caught in search query for ${JSON.stringify(this.queryStringParameters)}`, error);
       return error;
     }
   }
