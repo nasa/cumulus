@@ -19,12 +19,12 @@
     "access": "private"
   },
   "dependencies": {
-    "@cumulus/api": "18.2.0-3721",
-    "@cumulus/api-client": "18.2.0-3721",
-    "@cumulus/common": "18.2.0-3721",
-    "@cumulus/integration-tests": "18.2.0-3721",
-    "@cumulus/logger": "18.2.0-3721",
-    "@cumulus/test-data": "18.2.0-3721",
+    "@cumulus/api": "18.2.0",
+    "@cumulus/api-client": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/integration-tests": "18.2.0",
+    "@cumulus/logger": "18.2.0",
+    "@cumulus/test-data": "18.2.0",
     "aws-sdk": "^2.1492.0",
     "fs-extra": "^9.0.0",
     "jsftp": "https://github.com/jkovarik/jsftp.git#add_288",

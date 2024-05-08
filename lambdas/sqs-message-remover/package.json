@@ -37,10 +37,10 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.0-3721",
-    "@cumulus/common": "18.2.0-3721",
-    "@cumulus/ingest": "18.2.0-3721",
-    "@cumulus/logger": "18.2.0-3721",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/common": "18.2.0",
+    "@cumulus/ingest": "18.2.0",
+    "@cumulus/logger": "18.2.0",
     "lodash": "^4.17.21"
   }
 }

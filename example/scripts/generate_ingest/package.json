@@ -22,8 +22,8 @@
     "directory": "packages/types"
   },
   "dependencies": {
-    "@cumulus/aws-client": "18.2.0-3721",
-    "@cumulus/common": "18.2.0-3721"
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/common": "18.2.0"
   },
   "author": "Cumulus Authors",
   "license": "Apache-2.0"

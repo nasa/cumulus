@@ -43,12 +43,12 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/api-client": "18.2.0-3721",
-    "@cumulus/aws-client": "18.2.0-3721",
-    "@cumulus/common": "18.2.0-3721",
+    "@cumulus/api-client": "18.2.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/common": "18.2.0",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/ingest": "18.2.0-3721",
-    "@cumulus/message": "18.2.0-3721",
+    "@cumulus/ingest": "18.2.0",
+    "@cumulus/message": "18.2.0",
     "lodash": "^4.17.21",
     "p-map": "^4.0.0"
   }

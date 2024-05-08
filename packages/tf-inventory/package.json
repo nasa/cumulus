@@ -31,11 +31,11 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.0-3721",
+    "@cumulus/aws-client": "18.2.0",
     "commander": "^4.1.0",
     "lodash": "^4.17.21"
   },
   "devDependencies": {
-    "@cumulus/common": "18.2.0-3721"
+    "@cumulus/common": "18.2.0"
   }
 }

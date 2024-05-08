@@ -18,12 +18,12 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/api": "18.2.0-3721",
-    "@cumulus/aws-client": "18.2.0-3721",
-    "@cumulus/cmrjs": "18.2.0-3721",
-    "@cumulus/errors": "18.2.0-3721",
-    "@cumulus/logger": "18.2.0-3721",
-    "@cumulus/oauth-client": "18.2.0-3721",
+    "@cumulus/api": "18.2.0",
+    "@cumulus/aws-client": "18.2.0",
+    "@cumulus/cmrjs": "18.2.0",
+    "@cumulus/errors": "18.2.0",
+    "@cumulus/logger": "18.2.0",
+    "@cumulus/oauth-client": "18.2.0",
     "aws-serverless-express": "^3.3.6",
     "body-parser": "^1.19.0",
     "cookie-parser": "^1.4.4",

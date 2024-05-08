@@ -40,6 +40,6 @@
   "author": "Cumulus Authors",
   "license": "Apache-2.0",
   "dependencies": {
-    "@cumulus/aws-client": "18.2.0-3721"
+    "@cumulus/aws-client": "18.2.0"
   }
 }
