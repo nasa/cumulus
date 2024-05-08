@@ -168,16 +168,10 @@ test('GET /stats returns correct response, defaulted to all', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedResponse = [
-    {
-      count_errors: '80',
-      count_granules: '100',
-      avg_processing_time: 54.44999999642372,
-      count_collections: '20',
-    },
-  ];
-
-  t.deepEqual(response.body, expectedResponse);
+  t.is(response.body.errors.value, '80');
+  t.is(response.body.processingTime.value, '54.44999999642372');
+  t.is(response.body.granules.value, '100');
+  t.is(response.body.collections.value, '20');
 });
 
 test('GET /stats returns correct response with date params filters values correctly', async (t) => {
@@ -187,14 +181,36 @@ test('GET /stats returns correct response with date params filters values correc
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedResponse = [
-    {
-      count_errors: '15',
-      count_granules: '17',
-      avg_processing_time: 53.38235317258274,
-      count_collections: '10',
+  const expectedResponse = {
+    errors: {
+      dateFrom: '2018-02-28T05:00:00.000Z',
+      dateTo: '2019-03-02T05:00:00.000Z',
+      value: '15',
+      aggregation: 'count',
+      unit: 'error',
     },
-  ];
+    collections: {
+      dateFrom: '2018-02-28T05:00:00.000Z',
+      dateTo: '2019-03-02T05:00:00.000Z',
+      value: '10',
+      aggregation: 'count',
+      unit: 'collection',
+    },
+    processingTime: {
+      dateFrom: '2018-02-28T05:00:00.000Z',
+      dateTo: '2019-03-02T05:00:00.000Z',
+      value: '53.38235317258274',
+      aggregation: 'average',
+      unit: 'second',
+    },
+    granules: {
+      dateFrom: '2018-02-28T05:00:00.000Z',
+      dateTo: '2019-03-02T05:00:00.000Z',
+      value: '17',
+      aggregation: 'count',
+      unit: 'granule',
+    },
+  };
 
   t.deepEqual(response.body, expectedResponse);
 });
@@ -206,12 +222,15 @@ test('GET /stats/aggregate returns correct response', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedResponse = [
-    { status: 'completed', count: '25' },
-    { status: 'running', count: '25' },
-    { status: 'queued', count: '25' },
-    { status: 'failed', count: '25' },
-  ];
+  const expectedResponse = {
+    meta: { name: 'cumulus-api', count: '100', field: 'status' },
+    count: [
+      { key: 'completed', count: '25' },
+      { key: 'running', count: '25' },
+      { key: 'queued', count: '25' },
+      { key: 'failed', count: '25' },
+    ],
+  };
 
   t.deepEqual(response.body, expectedResponse);
 });
@@ -223,12 +242,15 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedResponse = [
-    { status: 'failed', count: '16' },
-    { status: 'running', count: '9' },
-    { status: 'completed', count: '8' },
-    { status: 'queued', count: '8' },
-  ];
+  const expectedResponse = {
+    meta: { name: 'cumulus-api', count: '41', field: 'status' },
+    count: [
+      { key: 'failed', count: '16' },
+      { key: 'running', count: '9' },
+      { key: 'completed', count: '8' },
+      { key: 'queued', count: '8' },
+    ],
+  };
 
   t.deepEqual(response.body, expectedResponse);
 });
