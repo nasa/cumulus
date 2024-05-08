@@ -308,7 +308,7 @@ describe('The SNS-type rule', () => {
     beforeAll(async () => {
       if (beforeAllFailed) return;
       try {
-        const { TopicArn } = createSnsTopic(newValueTopicName);
+        const { TopicArn } = await createSnsTopic(newValueTopicName);
         newTopicArn = TopicArn;
         const updateParams = {
           rule: {
