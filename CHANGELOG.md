@@ -189,6 +189,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Fixed
 
+- **CUMULUS-3175**
+  - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
+    flags to knex custom code
 - **CUMULUS-3701**
   - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 - **CUMULUS-3618**
