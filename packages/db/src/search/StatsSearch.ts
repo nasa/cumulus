@@ -9,7 +9,7 @@ class StatsSearch {
     this.queryStringParameters = queryStringParameters;
   }
 
-  private formatAggregateResult(result: any): any {
+  private formatAggregateResult(result: Object): Object {
     let totalCount = 0;
     const responses = [];
     for (const row of Object.keys(result)) {
@@ -32,7 +32,7 @@ class StatsSearch {
     };
   }
 
-  private formatSummaryResult(result: any): any {
+  private formatSummaryResult(result: Object): Object {
     const dateto = this.queryStringParameters.timestamp__to ?
       new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)) : new Date();
     const datefrom = this.queryStringParameters.timestamp__from ?
@@ -72,9 +72,9 @@ class StatsSearch {
   /** Provides a summary of statistics around the granules in the system
    *
    * @param {Knex} sendKnex - the knex client to be used
-   * @returns {Promise<any>} An Object with the summary statistics
+   * @returns {Promise<Object>} An Object with the summary statistics
    */
-  public async summary(sendknex: Knex): Promise<any> {
+  public async summary(sendknex: Knex): Promise<Object> {
     const knex = sendknex ?? await getKnexClient();
     let aggregateQuery = knex('granules');
     if (this.queryStringParameters.timestamp__from) {
@@ -96,9 +96,9 @@ class StatsSearch {
   /** Performs joins on the provider/collection table if neccessary
    *
    * @param {Knex} knex - the knex client to be used
-   * @returns {any} Returns the knex query of a joined table or not based on queryStringParameters
+   * @returns {Object} the knex query of a joined table or not based on queryStringParameters
    */
-  private providerAndCollectionIdBuilder(knex: Knex): any {
+  private providerAndCollectionIdBuilder(knex: Knex): Object {
     const aggregateQuery = knex.select(
       this.whatToGroupBy(this.queryStringParameters.field, knex)
     ).from(`${this.queryStringParameters.type}`);
@@ -130,11 +130,11 @@ class StatsSearch {
 
   /** Provides a knex raw string to aggregate the query based on queryStringParameters
    *
-   * @param {query} any - the current knex query to be aggregated
+   * @param {query} Object - the current knex query to be aggregated
    * @param {Knex} knex - the knex client to be used
-   * @returns {any} The query with its new Aggregatation string
+   * @returns {Object} The query with its new Aggregatation string
    */
-  private aggregateQueryField(query: any, knex: Knex): any {
+  private aggregateQueryField(query: Object, knex: Knex): Object {
     if (this.queryStringParameters.field.includes('error.Error')) {
       query.select(knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count')).groupByRaw("error #>> '{Error, keyword}'").orderBy('count', 'desc');
     } else {
@@ -147,9 +147,9 @@ class StatsSearch {
   /** Counts the value frequencies for a given field for a given type of record
    *
    * @param {Knex} knex - the knex client to be used
-   * @returns {Promise<any>} Aggregated results based on queryStringParameters
+   * @returns {Promise<Object>} Aggregated results based on queryStringParameters
    */
-  public async aggregate_search(sendKnex: Knex): Promise<any> {
+  public async aggregate_search(sendKnex: Knex): Promise<Object> {
     if (this.queryStringParameters !== {}) {
       let aggregateQuery;
       const knex = sendKnex ?? await getKnexClient();
