@@ -19,9 +19,13 @@ export type QueryTermsField = {
 };
 
 export type DbQueryParameters = {
+  infix?: string,
   limit?: number,
   offset?: number,
   page?: number,
+  prefix?: string,
+  q?: string,
+  returnFields?: string[],
   termFields?: QueryTermField[],
   termsFields?: QueryTermsField[],
 };

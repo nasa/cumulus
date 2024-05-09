@@ -1,8 +1,10 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
-import { getKnexClient } from '../connection';
 import { BaseRecord } from '../types/base';
+import { getKnexClient } from '../connection';
+import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
+import { buildDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
 
@@ -15,28 +17,23 @@ export type Meta = {
   count?: number,
 };
 
+const typeToTable: { [key: string]: string } = {
+  granule: TableNames.granules,
+};
+
 /**
  * Class to build and execute db search query
  */
 class BaseSearch {
-  readonly type?: string;
+  readonly type: string;
   readonly queryStringParameters: QueryStringParameters;
   // parsed from queryStringParameters for query build
   dbQueryParameters: DbQueryParameters = {};
 
-  constructor(event: QueryEvent, type?: string) {
+  constructor(event: QueryEvent, type: string) {
     this.type = type;
     this.queryStringParameters = event?.queryStringParameters ?? {};
-    this.dbQueryParameters.page = Number.parseInt(
-      (this.queryStringParameters.page) ?? '1',
-      10
-    );
-    this.dbQueryParameters.limit = Number.parseInt(
-      (this.queryStringParameters.limit) ?? '10',
-      10
-    );
-    this.dbQueryParameters.offset = (this.dbQueryParameters.page - 1)
-      * this.dbQueryParameters.limit;
+    this.dbQueryParameters = buildDbQueryParameters(this.type, this.queryStringParameters);
   }
 
   /**
@@ -66,7 +63,7 @@ class BaseSearch {
     return {
       name: 'cumulus-api',
       stack: process.env.stackName,
-      table: this.type,
+      table: this.type && typeToTable[this.type],
     };
   }
 

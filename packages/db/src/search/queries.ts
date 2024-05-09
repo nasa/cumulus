@@ -1,9 +1,12 @@
 import omit from 'lodash/omit';
 import isNil from 'lodash/isNil';
-import { DbQueryParameters, QueryStringParameters, QueryTermField } from '../types/search';
+import Logger from '@cumulus/logger';
+import { DbQueryParameters, QueryStringParameters, QueryTermField, QueryTermsField } from '../types/search';
 import { mapQueryStringFieldToDbField } from './field-mapping';
 
-const regexes: any = {
+const log = new Logger({ sender: '@cumulus/db/queries' });
+
+const regexes: { [key: string]: RegExp } = {
   terms: /^(.*)__in$/,
   term: /^((?!__).)*$/,
   not: /^(.*)__not$/,
@@ -28,18 +31,16 @@ const reservedWords = [
  * build term query fields for db query parameters from query string fields
  *
  * @param type -
- * @param dbQueryParameters -
  * @param queryFields -
  * @param regex -
  * @returns updated db query parameters
  */
 const buildTerm = (
   type: string,
-  dbQueryParameters: DbQueryParameters,
   queryFields: { name: string, value: string }[],
   regex: string
-): DbQueryParameters => {
-  const termFields = dbQueryParameters.termFields ?? [];
+): { termFields: QueryTermField[] } => {
+  const termFields: QueryTermField[] = [];
 
   queryFields.map((queryField: { name: string, value: string }) => {
     const match = queryField.name.match(regex);
@@ -49,25 +50,23 @@ const buildTerm = (
     const queryParam = mapQueryStringFieldToDbField(type, { ...queryField, name: fieldName });
     return queryParam && termFields.push(queryParam);
   });
-  return { ...dbQueryParameters, termFields };
+  return { termFields };
 };
 
 /**
  * build terms query fields for db query parameters from query string fields
  *
  * @param type -
- * @param dbQueryParameters -
  * @param queryFields -
  * @param regex -
  * @returns updated db query parameters
  */
 const buildTerms = (
   type: string,
-  dbQueryParameters: DbQueryParameters,
   queryFields: { name: string, value: string }[],
   regex: string
-): DbQueryParameters => {
-  const termsFields = dbQueryParameters.termsFields ?? [];
+): { termsFields: QueryTermsField[] } => {
+  const termsFields: QueryTermsField[] = [];
 
   queryFields.map((queryField: { name: string, value: string }) => {
     const match = queryField.name.match(regex);
@@ -89,13 +88,11 @@ const buildTerms = (
     termsFields.push(queryParam);
     return queryParam;
   });
-  return { ...dbQueryParameters, termsFields };
+  return { termsFields };
 };
 
-const build: any = {
-  // queryFields { name, value }
+const build: { [key: string]: Function } = {
   term: buildTerm,
-
   terms: buildTerms,
 };
 
@@ -111,24 +108,24 @@ const build: any = {
 // TODO q parameter is the query to execute directly
 // TODO nested error fieldsjjj
 
-export const buildQueryParameters = (
+export const buildDbQueryParameters = (
   type: string,
-  params: QueryStringParameters,
-  dbQueryParameters: DbQueryParameters
-) => {
-  let updatedQueryParams = dbQueryParameters;
-  // const sortParams = params.sortParams || { sort: build.sort(params) };
-  // delete params.sortParams;
+  queryStringParameters: QueryStringParameters
+): DbQueryParameters => {
+  const { limit, page, prefix, infix, fields: returnFields, q } = queryStringParameters;
 
-  // const { prefix: _prefix, infix: _infix } = params;
+  const dbQueryParameters: DbQueryParameters = {};
+  dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
+  dbQueryParameters.limit = Number.parseInt(limit ?? '10', 10);
+  dbQueryParameters.offset = (dbQueryParameters.page - 1) * dbQueryParameters.limit;
 
-  // // Do general search
-  // if (params.q) {
-  //   response.query = build.general(params);
-  //   return response;
-  // }
+  if (typeof infix === 'string') dbQueryParameters.infix = infix;
+  if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
+  if (typeof q === 'string') dbQueryParameters.q = q;
+  if (typeof returnFields === 'string') dbQueryParameters.returnFields = returnFields.split(',');
+
   // remove reserved words (that are not fields)
-  const fieldParams = omit(params, reservedWords);
+  const fieldParams = omit(queryStringParameters, reservedWords);
   // determine which search strategy should be applied
   // options are term, terms, range, exists and not in
   const fields = Object.entries(fieldParams).map(([name, value]) => ({ name, value }));
@@ -137,18 +134,11 @@ export const buildQueryParameters = (
     const matchedFields = fields.filter((f: any) => f.name.match(regexes[k]));
 
     if (matchedFields && matchedFields.length > 0 && build[k]) {
-      updatedQueryParams = build[k](type, updatedQueryParams, matchedFields, regexes[k]);
+      const queryParams = build[k](type, matchedFields, regexes[k]);
+      Object.assign(dbQueryParameters, queryParams);
     }
   });
-  console.log(JSON.stringify(updatedQueryParams));
 
-  // perform prefix and infix searches
-  // build.prefix(queries, _prefix, fields);
-  // build.infix(queries, _infix, fields);
-
-  // response.query = {
-  //   bool: queries,
-  // };
-
-  // return response;
+  log.debug(`buildDbQueryParameters returns ${JSON.stringify(dbQueryParameters)}`);
+  return dbQueryParameters;
 };
