@@ -1,5 +1,6 @@
 # Report executions
 resource "aws_sns_topic" "report_executions_topic" {
+  kms_master_key_id = "alias/aws/sns"
   name = "${var.prefix}-report-executions-topic"
   tags = var.tags
 }
@@ -65,6 +66,7 @@ data "aws_iam_policy_document" "report_execution_sns_topic_policy" {
 
 # Report granules
 resource "aws_sns_topic" "report_granules_topic" {
+  kms_master_key_id = "alias/aws/sns"
   name = "${var.prefix}-report-granules-topic"
   tags = var.tags
 }
@@ -130,6 +132,7 @@ data "aws_iam_policy_document" "report_granules_sns_topic_policy" {
 
 # Report PDRs
 resource "aws_sns_topic" "report_pdrs_topic" {
+  kms_master_key_id = "alias/aws/sns"
   name = "${var.prefix}-report-pdrs-topic"
   tags = var.tags
 }
@@ -195,6 +198,7 @@ data "aws_iam_policy_document" "report_pdrs_sns_topic_policy" {
 }
 # Report collections
 resource "aws_sns_topic" "report_collections_topic" {
+  kms_master_key_id = "alias/aws/sns"
   name = "${var.prefix}-report-collections-topic"
   tags = var.tags
 }
