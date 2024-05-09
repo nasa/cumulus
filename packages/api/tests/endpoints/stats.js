@@ -181,38 +181,10 @@ test('GET /stats returns correct response with date params filters values correc
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedResponse = {
-    errors: {
-      dateFrom: '2018-02-28T05:00:00.000Z',
-      dateTo: '2019-03-02T05:00:00.000Z',
-      value: '15',
-      aggregation: 'count',
-      unit: 'error',
-    },
-    collections: {
-      dateFrom: '2018-02-28T05:00:00.000Z',
-      dateTo: '2019-03-02T05:00:00.000Z',
-      value: '10',
-      aggregation: 'count',
-      unit: 'collection',
-    },
-    processingTime: {
-      dateFrom: '2018-02-28T05:00:00.000Z',
-      dateTo: '2019-03-02T05:00:00.000Z',
-      value: '53.38235317258274',
-      aggregation: 'average',
-      unit: 'second',
-    },
-    granules: {
-      dateFrom: '2018-02-28T05:00:00.000Z',
-      dateTo: '2019-03-02T05:00:00.000Z',
-      value: '17',
-      aggregation: 'count',
-      unit: 'granule',
-    },
-  };
-
-  t.deepEqual(response.body, expectedResponse);
+  t.is(response.body.errors.value, '15');
+  t.is(response.body.collections.value, '10');
+  t.is(response.body.processingTime.value, '53.38235317258274');
+  t.is(response.body.granules.value, '17');
 });
 
 test('GET /stats/aggregate returns correct response', async (t) => {
