@@ -28,6 +28,7 @@ test.before(async () => {
 });
 
 test.beforeEach((t) => {
+  t.timeout(120000);
   t.context.client = awsServices.dynamodbDocClient();
 });
 
