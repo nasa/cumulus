@@ -10,6 +10,7 @@ const omit = require('lodash/omit');
 const StepFunctions = require('@cumulus/aws-client/StepFunctions');
 const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 
+const pRetry = require('p-retry');
 const { randomId } = require('@cumulus/common/test-utils');
 const { removeNilProperties } = require('@cumulus/common/util');
 const { constructCollectionId } = require('@cumulus/message/Collections');
@@ -4796,16 +4797,24 @@ test.serial('updateGranuleStatusToQueued() updates granule status in PostgreSQL/
   t.deepEqual(sortBy(translatedPgGranule.files, sortByKeys), sortBy(esRecord.files, sortByKeys));
   t.deepEqual(omit(esRecord, omitList), omit(updatedEsRecord, omitList));
   t.deepEqual(omit(translatedPgGranule, omitList), omit(updatedEsRecord, omitList));
-
-  const { Messages } = await sqs().receiveMessage({
-    QueueUrl,
-    MaxNumberOfMessages: 2,
-    WaitTimeSeconds: 10,
-  });
-  const snsMessageBody = JSON.parse(Messages[1].Body);
+  const SqsMessages = await pRetry(
+    async () => {
+      const { Messages } = await sqs().receiveMessage({
+        QueueUrl,
+        MaxNumberOfMessages: 2,
+        WaitTimeSeconds: 10,
+      });
+      if (Messages.length === 0) {
+        throw new Error('a');
+      }
+      return Messages;
+    },
+    { retries: 5, minTimeout: 1000, maxTimeout: 20000 }
+  );
+  const snsMessageBody = JSON.parse(SqsMessages[1].Body);
   const publishedMessage = JSON.parse(snsMessageBody.Message);
 
-  t.is(Messages.length, 2);
+  t.is(SqsMessages.length, 2);
   t.deepEqual(publishedMessage.record, translatedPgGranule);
   t.is(publishedMessage.event, 'Update');
 });
