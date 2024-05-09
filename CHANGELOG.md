@@ -62,6 +62,13 @@ output or status of your request. If you want to directly observe the progress
 of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
+#### CUMULUS-3951 - SNS topics set to use encrypted storage
+
+As part of the requirements for this ticket Cumulus Core created SNS topics are
+being updated to use server-side encryption with an AWS managed key.    No user
+action is required, this note is being added to increase visibility re: this
+modification.
+
 ### Breaking Changes
 - **CUMULUS-3689**
  - updated aggregate_stats api endpoint to use postgresql instead of elasticsearch
@@ -116,6 +123,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     CommmonJS typescript/webpack clients.
 
 ### Changed
+- **CUMULUS-3951**
+  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
+  - Update all integration/unit tests to use encrypted SNS topics
 - **CUMULUS-3433**
   - Updated all node.js lambda dependencies to node 20.x/20.12.2
   - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
@@ -190,6 +200,8 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Fixed
 
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
 - **CUMULUS-3701**
   - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 - **CUMULUS-3618**
