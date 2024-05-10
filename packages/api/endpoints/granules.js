@@ -32,7 +32,6 @@ const {
   recordNotFoundString,
   multipleRecordFoundString,
 } = require('@cumulus/es-client/search');
-const ESSearchAfter = require('@cumulus/es-client/esSearchAfter');
 
 const { deleteGranuleAndFiles } = require('../src/lib/granule-delete');
 const { zodParser } = require('../src/zod-utils');
@@ -107,7 +106,7 @@ async function list(req, res) {
 
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const result = await dbSearch.query();
- 
+
   if (getRecoveryStatus === 'true') {
     return res.send(await addOrcaRecoveryStatus(result));
   }
