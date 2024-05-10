@@ -71,7 +71,7 @@ data "aws_iam_policy_document" "start_async_operation" {
     actions = [
       "lambda:GetFunctionConfiguration",
     ]
-    resources = ["arn:aws:lambda:*"]
+    resources = ["*"]
   }
 
 statement {
