@@ -48,9 +48,14 @@ class BaseSearch {
       searchQuery: Knex.QueryBuilder,
     } {
     const { countQuery, searchQuery } = this.buildBasicQuery(knex);
-    if (this.dbQueryParameters.limit) searchQuery.limit(this.dbQueryParameters.limit);
-    if (this.dbQueryParameters.offset) searchQuery.offset(this.dbQueryParameters.offset);
+    this.buildTermQuery({ countQuery, searchQuery });
+    this.buildInfixPrefixQuery({ countQuery, searchQuery });
 
+    const { limit, offset } = this.dbQueryParameters;
+    if (limit) searchQuery.limit(limit);
+    if (offset) searchQuery.offset(offset);
+
+    log.debug(`_buildSearch returns countQuery ${countQuery.toSQL().sql}, searchQuery ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
@@ -79,6 +84,30 @@ class BaseSearch {
   } {
     log.debug(`buildBasicQuery is not implemented ${knex.constructor.name}`);
     throw new Error('buildBasicQuery is not implemented');
+  }
+
+  protected buildTermQuery(queries: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const table = typeToTable[this.type];
+    const { countQuery, searchQuery, dbQueryParameters } = queries;
+    const { termFields = {} } = dbQueryParameters || this.dbQueryParameters;
+
+    Object.entries(termFields).forEach(([name, value]) => {
+      countQuery.where(`${table}.${name}`, value);
+      searchQuery.where(`${table}.${name}`, value);
+    });
+  }
+
+  protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    log.debug(`buildInfixPrefixQuery is not implemented ${Object.keys(params)}`);
+    throw new Error('buildInfixPrefixQuery is not implemented');
   }
 
   /**

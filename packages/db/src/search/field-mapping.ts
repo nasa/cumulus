@@ -88,7 +88,7 @@ const supportedMappings: any = {
 export const mapQueryStringFieldToDbField = (
   type: string,
   queryField: { name: string, value?: string }
-): { name: string, value: any } | undefined => {
+): { [key: string]: any } | undefined => {
   if (!(supportedMappings[type] && supportedMappings[type][queryField.name])) {
     log.warn(`No db mapping field found for type: ${type}, field ${JSON.stringify(queryField)}`);
     return undefined;

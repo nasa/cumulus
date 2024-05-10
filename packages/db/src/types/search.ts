@@ -8,16 +8,6 @@ export type QueryEvent = {
   queryStringParameters?: QueryStringParameters,
 };
 
-export type QueryTermField = {
-  name: string,
-  value: any,
-};
-
-export type QueryTermsField = {
-  name: string,
-  value: any[],
-};
-
 export type DbQueryParameters = {
   infix?: string,
   limit?: number,
@@ -26,6 +16,6 @@ export type DbQueryParameters = {
   prefix?: string,
   q?: string,
   returnFields?: string[],
-  termFields?: QueryTermField[],
-  termsFields?: QueryTermsField[],
+  termFields?: { [key: string]: any },
+  termsFields?: { [key: string]: any },
 };
