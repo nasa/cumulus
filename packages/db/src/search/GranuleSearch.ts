@@ -108,6 +108,7 @@ export class GranuleSearch extends BaseSearch {
     dbQueryParameters?: DbQueryParameters,
   }) {
     const {
+      granules: granulesTable,
       collections: collectionsTable,
       providers: providersTable,
       pdrs: pdrsTable,
@@ -131,11 +132,15 @@ export class GranuleSearch extends BaseSearch {
         countQuery.where(`${pdrsTable}.name`, value);
         searchQuery.where(`${pdrsTable}.name`, value);
       }
+      if (name === 'error.Error') {
+        countQuery.whereRaw(`${granulesTable}.error->>'Error' = '${value}'`);
+        searchQuery.whereRaw(`${granulesTable}.error->>'Error' = '${value}'`);
+      }
     });
 
     super.buildTermQuery({
       ...queries,
-      dbQueryParameters: { term: omit(term, foreignFields) },
+      dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
     });
   }
 

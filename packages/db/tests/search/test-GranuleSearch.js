@@ -107,6 +107,11 @@ test.before(async (t) => {
     timestamp: 1579352700000,
   };
 
+  const error = {
+    Cause: 'cause string',
+    Error: 'CumulusMessageAdapterExecutionError',
+  };
+
   t.context.granulePgModel = new GranulePgModel();
   t.context.pgGranules = await t.context.granulePgModel.insert(
     knex,
@@ -114,13 +119,14 @@ test.before(async (t) => {
       granule_id: generateGranuleId(num),
       collection_cumulus_id: (num % 2)
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
-      pdr_cumulus_id: !(num % 2) ? t.context.pdrCumulusId : null,
-      provider_cumulus_id: !(num % 2) ? t.context.providerCumulusId : null,
+      pdr_cumulus_id: !(num % 2) ? t.context.pdrCumulusId : undefined,
+      provider_cumulus_id: !(num % 2) ? t.context.providerCumulusId : undefined,
       beginning_date_time: !(num % 2)
         ? new Date(t.context.granuleSearchFields.beginningDateTime) : undefined,
       duration: !(num % 2) ? Number(t.context.granuleSearchFields.duration) : undefined,
       ending_date_time: !(num % 2)
         ? new Date(t.context.granuleSearchFields.endingDateTime) : new Date(),
+      error: !(num % 2) ? JSON.stringify(error) : undefined,
       published: !!(num % 2),
       product_volume: !(num % 5) ? Number(t.context.granuleSearchFields.productVolume) : undefined,
       time_to_archive: !(num % 10)
@@ -304,6 +310,18 @@ test('GranuleSearch supports timestamp term search', async (t) => {
   const queryStringParameters = {
     limit: 200,
     timestamp: t.context.granuleSearchFields.timestamp,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports nested error.Error term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    'error.Error': 'CumulusMessageAdapterExecutionError',
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);

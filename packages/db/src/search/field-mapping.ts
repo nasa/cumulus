@@ -56,6 +56,10 @@ const granuleMapping = {
   updatedAt: (value?: string) => ({
     updated_at: new Date(Number(value)),
   }),
+  // nested error field
+  'error.Error': (value?: string) => ({
+    'error.Error': value,
+  }),
   // The following fields require querying other tables
   collectionId: (value?: string) => {
     const { name, version } = (value && deconstructCollectionId(value)) || {};
