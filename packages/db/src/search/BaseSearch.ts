@@ -93,9 +93,9 @@ class BaseSearch {
   }) {
     const table = typeToTable[this.type];
     const { countQuery, searchQuery, dbQueryParameters } = queries;
-    const { termFields = {} } = dbQueryParameters || this.dbQueryParameters;
+    const { term = {} } = dbQueryParameters || this.dbQueryParameters;
 
-    Object.entries(termFields).forEach(([name, value]) => {
+    Object.entries(term).forEach(([name, value]) => {
       countQuery.where(`${table}.${name}`, value);
       searchQuery.where(`${table}.${name}`, value);
     });

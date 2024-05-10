@@ -37,18 +37,18 @@ export class GranuleSearch extends BaseSearch {
   }
 
   private searchCollection(): boolean {
-    const termFields = this.dbQueryParameters.termFields;
-    return !!(termFields && (termFields.collectionName || termFields.collectionVersion));
+    const term = this.dbQueryParameters.term;
+    return !!(term && (term.collectionName || term.collectionVersion));
   }
 
   private searchPdr(): boolean {
-    const termFields = this.dbQueryParameters.termFields;
-    return !!(termFields && termFields.pdrName);
+    const term = this.dbQueryParameters.term;
+    return !!(term && term.pdrName);
   }
 
   private searchProvider(): boolean {
-    const termFields = this.dbQueryParameters.termFields;
-    return !!(termFields && termFields.providerName);
+    const term = this.dbQueryParameters.term;
+    return !!(term && term.providerName);
   }
 
   /**
@@ -112,8 +112,8 @@ export class GranuleSearch extends BaseSearch {
       pdrs: pdrsTable,
     } = TableNames;
     const { countQuery, searchQuery, dbQueryParameters } = queries;
-    const { termFields = {} } = dbQueryParameters || this.dbQueryParameters;
-    Object.entries(termFields).forEach(([name, value]) => {
+    const { term = {} } = dbQueryParameters || this.dbQueryParameters;
+    Object.entries(term).forEach(([name, value]) => {
       if (name === 'collectionName') {
         countQuery.where(`${collectionsTable}.name`, value);
         searchQuery.where(`${collectionsTable}.name`, value);
@@ -134,7 +134,7 @@ export class GranuleSearch extends BaseSearch {
 
     super.buildTermQuery({
       ...queries,
-      dbQueryParameters: { termFields: omit(termFields, foreignFields) },
+      dbQueryParameters: { term: omit(term, foreignFields) },
     });
   }
 

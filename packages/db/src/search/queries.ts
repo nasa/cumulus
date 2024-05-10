@@ -34,13 +34,13 @@ const regexes: { [key: string]: RegExp } = {
  *
  * @param type - query record type
  * @param queryFields - query fields
- * @returns termFields
+ * @returns term
  */
 const buildTerm = (
   type: string,
   queryFields: { name: string, value: string }[]
-): { termFields: { [key: string]: any } } => {
-  const termFields = queryFields.reduce((acc, queryField) => {
+): { term: { [key: string]: any } } => {
+  const term = queryFields.reduce((acc, queryField) => {
     const queryParam = mapQueryStringFieldToDbField(type, queryField);
     return {
       ...acc,
@@ -48,7 +48,7 @@ const buildTerm = (
     };
   }, {});
 
-  return { termFields };
+  return { term };
 };
 
 /**
@@ -78,7 +78,6 @@ export const buildDbQueryParameters = (
 
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
-  if (typeof q === 'string') dbQueryParameters.q = q;
   if (typeof returnFields === 'string') dbQueryParameters.returnFields = returnFields.split(',');
 
   // remove reserved words (that are not fields)

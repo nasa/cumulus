@@ -14,8 +14,7 @@ export type DbQueryParameters = {
   offset?: number,
   page?: number,
   prefix?: string,
-  q?: string,
   returnFields?: string[],
-  termFields?: { [key: string]: any },
-  termsFields?: { [key: string]: any },
+  term?: { [key: string]: any },
+  terms?: { [key: string]: any },
 };
