@@ -2,14 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
-
-## Unreleased
+The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
+## [v16.1.5] 2024-05-09
 
 ## Fixed
 
+ **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming.
  **CUMULUS-3527**
-  - Added suppport for additional kex algorithms in the sftp-client.
+  - Added support for additional kex algorithms in the sftp-client.
 
 ## [v16.1.4] 2024-4-23
 
@@ -7351,7 +7352,8 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 
-[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.4...HEAD
+[unreleased]: https://github.com/nasa/cumulus/compare/v16.1.5...HEAD
+[v16.1.5]: https://github.com/nasa/cumulus/compare/v16.1.4...v16.1.5
 [v16.1.4]: https://github.com/nasa/cumulus/compare/v16.1.3...v16.1.4
 [v16.1.3]: https://github.com/nasa/cumulus/compare/v16.1.2...v16.1.3
 [v16.1.2]: https://github.com/nasa/cumulus/compare/v16.1.1...v16.1.2

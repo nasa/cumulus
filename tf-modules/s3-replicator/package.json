@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/s3-replicator",
-  "version": "16.1.4",
+  "version": "16.1.5",
   "description": "Replicate S3 Events to alternate bucket. Solves same-region replication.",
   "main": "index.js",
   "engines": {

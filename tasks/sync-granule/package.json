@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/sync-granule",
-  "version": "16.1.4",
+  "version": "16.1.5",
   "description": "Download a given granule",
   "main": "index.js",
   "directories": {
@@ -38,19 +38,19 @@
     "timeout": "15m"
   },
   "dependencies": {
-    "@cumulus/aws-client": "16.1.4",
-    "@cumulus/collection-config-store": "16.1.4",
-    "@cumulus/common": "16.1.4",
+    "@cumulus/aws-client": "16.1.5",
+    "@cumulus/collection-config-store": "16.1.5",
+    "@cumulus/common": "16.1.5",
     "@cumulus/cumulus-message-adapter-js": "2.0.5",
-    "@cumulus/errors": "16.1.4",
-    "@cumulus/ingest": "16.1.4",
-    "@cumulus/message": "16.1.4",
+    "@cumulus/errors": "16.1.5",
+    "@cumulus/ingest": "16.1.5",
+    "@cumulus/message": "16.1.5",
     "lodash": "^4.17.21",
     "p-map": "^2.1.0",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
-    "@cumulus/schemas": "16.1.4",
-    "@cumulus/test-data": "16.1.4"
+    "@cumulus/schemas": "16.1.5",
+    "@cumulus/test-data": "16.1.5"
   }
 }

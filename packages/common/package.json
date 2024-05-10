@@ -1,6 +1,6 @@
 {
   "name": "@cumulus/common",
-  "version": "16.1.4",
+  "version": "16.1.5",
   "description": "Common utilities used across tasks",
   "keywords": [
     "GIBS",
@@ -44,9 +44,9 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.58.0",
     "@aws-sdk/signature-v4-crt": "^3.58.0",
-    "@cumulus/aws-client": "16.1.4",
-    "@cumulus/errors": "16.1.4",
-    "@cumulus/logger": "16.1.4",
+    "@cumulus/aws-client": "16.1.5",
+    "@cumulus/errors": "16.1.5",
+    "@cumulus/logger": "16.1.5",
     "ajv": "^6.12.3",
     "aws-sdk": "2.1490.0",
     "follow-redirects": "^1.2.4",
