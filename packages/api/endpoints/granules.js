@@ -107,7 +107,7 @@ async function list(req, res) {
 
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const result = await dbSearch.query();
-
+ 
   if (getRecoveryStatus === 'true') {
     return res.send(await addOrcaRecoveryStatus(result));
   }

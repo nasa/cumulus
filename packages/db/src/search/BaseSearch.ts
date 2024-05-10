@@ -1,5 +1,6 @@
 import { Knex } from 'knex';
 import Logger from '@cumulus/logger';
+
 import { BaseRecord } from '../types/base';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
