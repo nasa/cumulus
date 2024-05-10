@@ -223,7 +223,7 @@ modification.
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc
 
-## [v18.2.1] 2023-05-08
+## [v18.2.1] 2024-05-08
 
 **Please note** changes in 18.2.1 may not yet be released in future versions, as this
 is a backport/patch release on the 18.2.x series of releases.  Updates that are
@@ -236,7 +236,7 @@ included in the future will have a corresponding CHANGELOG entry in future relea
 - **CUMULUS-3701**
   - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 
-## [v18.2.0] 2023-02-02
+## [v18.2.0] 2024-02-02
 
 ### Migration Notes
 
