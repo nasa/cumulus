@@ -71,6 +71,10 @@ echo "terraform {
 ../terraform init \
   -input=false
 
+../terraform force-unlock \
+  -auto-approve \
+  -input=false \
+  -var "LOCK_ID=ed5f7611-e2e8-c3c9-a681-b5f2a42301f1"
 # Deploy cumulus-tf via terraform
 echo "Deploying Cumulus example to $DEPLOYMENT"
 ../terraform apply \
