@@ -5,14 +5,6 @@ import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/queries' });
 
-const regexes: { [key: string]: RegExp } = {
-  terms: /^(.*)__in$/,
-  term: /^((?!__).)*$/,
-  not: /^(.*)__not$/,
-  exists: /^(.*)__exists$/,
-  range: /^(.*)__(from|to)$/,
-};
-
 const reservedWords = [
   'limit',
   'page',
@@ -27,11 +19,22 @@ const reservedWords = [
 ];
 
 /**
+ * regexp for matching query string parameter to query type
+ */
+const regexes: { [key: string]: RegExp } = {
+  terms: /^(.*)__in$/,
+  term: /^((?!__).)*$/,
+  not: /^(.*)__not$/,
+  exists: /^(.*)__exists$/,
+  range: /^(.*)__(from|to)$/,
+};
+
+/**
  * build term query fields for db query parameters from query string fields
  *
- * @param type -
- * @param queryFields -
- * @returns updated db query parameters
+ * @param type - query record type
+ * @param queryFields - query fields
+ * @returns termFields
  */
 const buildTerm = (
   type: string,
@@ -48,27 +51,25 @@ const buildTerm = (
   return { termFields };
 };
 
+/**
+ * functions for building db query parameters for each query type
+ */
 const build: { [key: string]: Function } = {
   term: buildTerm,
 };
 
-// NOT handled
-// ISO string to date?
-//error: granulePgRecord.error,
-//execution: executionUrls[0] ? executionUrls[0].url : undefined,
-//files: files.length > 0 ? files.map((file) => translatePostgresFileToApiFile(file)) : [],
-
-// match and determine the category
-// map api granule fields to postgres field and add to dbQueryParameters
-// build db search
-// TODO q parameter is the query to execute directly
-// TODO nested error fieldsjjj
-
+/**
+ * build db query parameters from query string fields
+ *
+ * @param type - query record type
+ * @param queryStringParameters - query string parameters
+ * @returns db query parameters
+ */
 export const buildDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
-  const { limit, page, prefix, infix, fields: returnFields, q } = queryStringParameters;
+  const { limit, page, prefix, infix, fields: returnFields } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
@@ -86,6 +87,7 @@ export const buildDbQueryParameters = (
   // options are term, terms, range, exists and not in
   const fields = Object.entries(fieldParams).map(([name, value]) => ({ name, value }));
 
+  // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {
     const matchedFields = fields.filter((f: any) => f.name.match(regexes[k]));
 

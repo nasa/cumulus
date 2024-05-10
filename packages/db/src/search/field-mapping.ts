@@ -45,7 +45,7 @@ const granuleMapping = {
     status: value,
   }),
   timestamp: (value?: string) => ({
-    timestamp: value && new Date(Number(value)),
+    updated_at: value && new Date(Number(value)),
   }),
   timeToArchive: (value?: string) => ({
     time_to_archive: Number(value),
@@ -79,7 +79,7 @@ const supportedMappings: any = {
 /**
  * map query string field to db field
  *
- * @param type - type of record to search
+ * @param type - query record type
  * @param queryField - query field
  * @param queryField.name - query field value
  * @param [queryField.value] - query field value
