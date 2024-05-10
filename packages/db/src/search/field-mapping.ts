@@ -39,7 +39,7 @@ const granuleMapping = {
     product_volume: value && Number(value),
   }),
   published: (value?: string) => ({
-    published: value,
+    published: (value === 'true'),
   }),
   status: (value?: string) => ({
     status: value,

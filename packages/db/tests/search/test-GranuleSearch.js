@@ -96,6 +96,17 @@ test.before(async (t) => {
   t.context.pdrCumulusId = pgPdr.cumulus_id;
 
   // Create Granule
+  t.context.granuleSearchFields = {
+    beginningDateTime: '2020-03-16T19:50:24.757Z',
+    duration: '6.8',
+    endingDateTime: '2020-03-17T00:00:00.000Z',
+    productVolume: '600',
+    timeToArchive: '700.29',
+    timeToPreprocess: '800.18',
+    status: 'failed',
+    timestamp: '2020-01-18T13:05:00.000Z',
+  };
+
   t.context.granulePgModel = new GranulePgModel();
   t.context.pgGranules = await t.context.granulePgModel.insert(
     knex,
@@ -103,13 +114,26 @@ test.before(async (t) => {
       granule_id: generateGranuleId(num),
       collection_cumulus_id: (num % 2)
         ? t.context.collectionCumulusId : t.context.collectionCumulusId2,
-      pdr_cumulus_id: t.context.pdrCumulusId,
-      provider_cumulus_id: t.context.providerCumulusId,
+      pdr_cumulus_id: !(num % 2) ? t.context.pdrCumulusId : null,
+      provider_cumulus_id: !(num % 2) ? t.context.providerCumulusId : null,
+      beginning_date_time: !(num % 2)
+        ? new Date(t.context.granuleSearchFields.beginningDateTime) : undefined,
+      duration: !(num % 2) ? Number(t.context.granuleSearchFields.duration) : undefined,
+      ending_date_time: !(num % 2)
+        ? new Date(t.context.granuleSearchFields.endingDateTime) : undefined,
+      published: !!(num % 2),
+      product_volume: !(num % 5) ? Number(t.context.granuleSearchFields.productVolume) : undefined,
+      time_to_archive: !(num % 10)
+        ? Number(t.context.granuleSearchFields.timeToArchive) : undefined,
+      time_to_process: !(num % 20)
+        ? Number(t.context.granuleSearchFields.timeToPreprocess) : undefined,
+      status: !(num % 2) ? t.context.granuleSearchFields.status : 'completed',
+      updated_at: !(num % 2) ? new Date(t.context.granuleSearchFields.timestamp) : undefined,
     }))
   );
 });
 
-test('Granule search returns 10 granule records by default', async (t) => {
+test('GranuleSearch returns 10 granule records by default', async (t) => {
   const { knex } = t.context;
   const dbSearch = new GranuleSearch();
   const response = await dbSearch.query(knex);
@@ -120,12 +144,12 @@ test('Granule search returns 10 granule records by default', async (t) => {
   t.is(apiGranules.length, 10);
   const validatedRecords = apiGranules.filter((granule) => (
     [t.context.collectionId, t.context.collectionId2].includes(granule.collectionId)
-    && granule.provider === t.context.provider.name
-    && granule.pdrName === t.context.pdr.name));
+    && (!granule.provider || granule.provider === t.context.provider.name)
+    && (!granule.pdrName || granule.pdrName === t.context.pdr.name)));
   t.is(validatedRecords.length, apiGranules.length);
 });
 
-test('Granule search supports page and limit params', async (t) => {
+test('GranuleSearch supports page and limit params', async (t) => {
   const { knex } = t.context;
   let queryStringParameters = {
     limit: 20,
@@ -155,7 +179,7 @@ test('Granule search supports page and limit params', async (t) => {
   t.is(response.results?.length, 0);
 });
 
-test('Granule search supports infix search', async (t) => {
+test('GranuleSearch supports infix search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -167,7 +191,7 @@ test('Granule search supports infix search', async (t) => {
   t.is(response.results?.length, 3);
 });
 
-test('Granule search supports prefix search', async (t) => {
+test('GranuleSearch supports prefix search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -179,7 +203,7 @@ test('Granule search supports prefix search', async (t) => {
   t.is(response.results?.length, 2);
 });
 
-test('Granule search supports collectionId term search', async (t) => {
+test('GranuleSearch supports collectionId term search', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -190,4 +214,87 @@ test('Granule search supports collectionId term search', async (t) => {
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
 });
-//TODO provider and pdr search
+
+test('GranuleSearch supports provider term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    provider: t.context.provider.name,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports pdrName term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    pdrName: t.context.pdr.name,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports term search for boolean field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    published: 'true',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports term search for date field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    beginningDateTime: t.context.granuleSearchFields.beginningDateTime,
+    endingDateTime: t.context.granuleSearchFields.endingDateTime,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports term search for number field', async (t) => {
+  const { knex } = t.context;
+  let queryStringParameters = {
+    limit: 5,
+    duration: t.context.granuleSearchFields.duration,
+    productVolume: t.context.granuleSearchFields.productVolume,
+  };
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
+  t.is(response.meta.count, 10);
+  t.is(response.results?.length, 5);
+
+  queryStringParameters = {
+    limit: 200,
+    timeToArchive: t.context.granuleSearchFields.timeToArchive,
+    timeToPreprocess: t.context.granuleSearchFields.timeToPreprocess,
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 5);
+  t.is(response.results?.length, 5);
+});
+
+test('GranuleSearch supports term search for string field', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    status: t.context.granuleSearchFields.status,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});

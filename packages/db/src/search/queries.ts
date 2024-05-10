@@ -59,7 +59,7 @@ const build: { [key: string]: Function } = {
 };
 
 /**
- * build db query parameters from query string fields
+ * build db query parameters from query string parameters
  *
  * @param type - query record type
  * @param queryStringParameters - query string parameters
@@ -69,7 +69,7 @@ export const buildDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
-  const { limit, page, prefix, infix, fields: returnFields } = queryStringParameters;
+  const { limit, page, prefix, infix, fields } = queryStringParameters;
 
   const dbQueryParameters: DbQueryParameters = {};
   dbQueryParameters.page = Number.parseInt(page ?? '1', 10);
@@ -78,17 +78,17 @@ export const buildDbQueryParameters = (
 
   if (typeof infix === 'string') dbQueryParameters.infix = infix;
   if (typeof prefix === 'string') dbQueryParameters.prefix = prefix;
-  if (typeof returnFields === 'string') dbQueryParameters.returnFields = returnFields.split(',');
+  if (typeof fields === 'string') dbQueryParameters.fields = fields.split(',');
 
   // remove reserved words (that are not fields)
   const fieldParams = omit(queryStringParameters, reservedWords);
   // determine which search strategy should be applied
   // options are term, terms, range, exists and not in
-  const fields = Object.entries(fieldParams).map(([name, value]) => ({ name, value }));
+  const fieldsList = Object.entries(fieldParams).map(([name, value]) => ({ name, value }));
 
   // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {
-    const matchedFields = fields.filter((f: any) => f.name.match(regexes[k]));
+    const matchedFields = fieldsList.filter((f: any) => f.name.match(regexes[k]));
 
     if (matchedFields && matchedFields.length > 0 && build[k]) {
       const queryParams = build[k](type, matchedFields, regexes[k]);
