@@ -58,7 +58,7 @@ The following subsections explain these approaches in turn.
 
 Since your Cumulus Distribution API Gateway URL is private, the only way you can use it to confirm that your integration with Cognito is working is by using tunneling (again, generally for development). Here is an outline of the required steps with details provided further below:
 
-1. Create/import a key pair into your AWS EC2 service (if you haven't already done so)
+1. Create/import a key pair into your AWS EC2 service (if you haven't already done so), or setup auth using a PKCS11Provider
 2. Add a reference to the name of the key pair to your Terraform variables (we'll set the `key_name` Terraform variable)
 3. Choose an open local port on your machine (we'll use 9000 in the following example)
 4. Add a reference to the value of your `cumulus_distribution_api_uri` (mentioned earlier), including your chosen port (we'll set the `cumulus_distribution_url` Terraform variable)
@@ -67,6 +67,10 @@ Since your Cumulus Distribution API Gateway URL is private, the only way you can
 7. Add a redirect URI to Cognito via the Cognito API
 8. Install the Session Manager Plugin for the AWS CLI (if you haven't already done so; assuming you have already installed the AWS CLI)
 9. Add a sample file to S3 to test downloading via Cognito
+
+### Setting up SSH Keypair
+
+#### *Note - Setting up a keypair is optional if your organization is making use of alternative authentication mechanisms built into the AMI*
 
 To create or import an existing key pair, you can use the AWS CLI (see AWS [ec2 import-key-pair](https://docs.aws.amazon.com/cli/latest/reference/ec2/import-key-pair.html)), or the AWS Console (see [Amazon EC2 key pairs and Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)).
 
@@ -149,8 +153,16 @@ Waiting for connections...
 
 In another terminal window, open a tunnel with port forwarding using your chosen port from above (e.g., 9000):
 
+##### Using SSH keypair authentication
+
 ```bash
 ssh -4 -p 6000 -N -L <port>:<api-gateway-host>:443 ec2-user@127.0.0.1
+```
+
+##### Using PKCS11Provider
+
+```bash
+ssh -4 -I /usr/lib/ssh-keychain.dylib -p 6000 -N -L <port>:<api-gateway-host>:443 <userid>@127.0.0.1
 ```
 
 where:
