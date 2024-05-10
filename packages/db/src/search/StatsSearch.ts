@@ -1,15 +1,37 @@
-//@ts-nocheck
 import { Knex } from 'knex';
 import { getKnexClient } from '../connection';
 
-class StatsSearch {
-  queryStringParameters: Object = {};
+interface QueryStringParams {
+  field: string;
+  timestamp__to?: string,
+  timestamp__from?: string,
+  type?: string,
+  status?: string,
+  collectionId?: string,
+  provider?: string,
+}
 
-  constructor(queryStringParameters: Object) {
+interface SummaryObject {
+  count_errors: number,
+  count_collections: number,
+  count_granules: number,
+  avg_processing_time: number,
+}
+
+interface AggregateObject {
+  count: string,
+  status?: string,
+  error?: string,
+}
+
+class StatsSearch {
+  queryStringParameters: QueryStringParams;
+
+  constructor(queryStringParameters: QueryStringParams) {
     this.queryStringParameters = queryStringParameters;
   }
 
-  private formatAggregateResult(result: Object): Object {
+  private formatAggregateResult(result: Record<string, AggregateObject>): Object {
     let totalCount = 0;
     const responses = [];
     for (const row of Object.keys(result)) {
@@ -32,7 +54,7 @@ class StatsSearch {
     };
   }
 
-  private formatSummaryResult(result: Object): Object {
+  private formatSummaryResult(result: SummaryObject): Object {
     const dateto = this.queryStringParameters.timestamp__to ?
       new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)) : new Date();
     const datefrom = this.queryStringParameters.timestamp__from ?
@@ -76,31 +98,30 @@ class StatsSearch {
    */
   public async summary(sendknex: Knex): Promise<Object> {
     const knex = sendknex ?? await getKnexClient();
-    let aggregateQuery = knex('granules');
+    const aggregateQuery:Knex.QueryBuilder = knex('granules');
     if (this.queryStringParameters.timestamp__from) {
       aggregateQuery.where('granules.updated_at', '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)));
     }
     if (this.queryStringParameters.timestamp__to) {
       aggregateQuery.where('granules.updated_at', '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)));
     }
-    aggregateQuery = await aggregateQuery.select(
+    const aggregateQueryRes: SummaryObject[] = await aggregateQuery.select(
       knex.raw("COUNT(CASE WHEN error ->> 'Error' != '{}' THEN 1 END) AS count_errors"),
       knex.raw('COUNT(cumulus_id) AS count_granules'),
       knex.raw('AVG(time_to_process) AS avg_processing_time'),
       knex.raw('COUNT(DISTINCT collection_cumulus_id) AS count_collections')
     );
-    const result = aggregateQuery;
-    return this.formatSummaryResult(result[0]);
+    return this.formatSummaryResult(aggregateQueryRes[0]);
   }
 
   /** Performs joins on the provider/collection table if neccessary
    *
    * @param {Knex} knex - the knex client to be used
-   * @returns {Object} the knex query of a joined table or not based on queryStringParameters
+   * @returns {Knex.QueryBuilder} the knex query of a joined table or not based on queryStringParams
    */
-  private providerAndCollectionIdBuilder(knex: Knex): Object {
+  private providerAndCollectionIdBuilder(knex: Knex): Knex.QueryBuilder {
     const aggregateQuery = knex.select(
-      this.whatToGroupBy(this.queryStringParameters.field, knex)
+      this.whatToGroupBy(knex)
     ).from(`${this.queryStringParameters.type}`);
 
     if (this.queryStringParameters.collectionId) {
@@ -121,7 +142,7 @@ class StatsSearch {
   private whatToGroupBy(knex: Knex): string {
     let groupStrings = '';
     if (this.queryStringParameters.field.includes('error.Error')) {
-      groupStrings += ('*', knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count'));
+      groupStrings = `${groupStrings}*` + (knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count'));
     } else {
       groupStrings += (` ${this.queryStringParameters.field}`);
     }
@@ -134,7 +155,7 @@ class StatsSearch {
    * @param {Knex} knex - the knex client to be used
    * @returns {Object} The query with its new Aggregatation string
    */
-  private aggregateQueryField(query: Object, knex: Knex): Object {
+  private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex): Knex.QueryBuilder {
     if (this.queryStringParameters.field.includes('error.Error')) {
       query.select(knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count')).groupByRaw("error #>> '{Error, keyword}'").orderBy('count', 'desc');
     } else {
@@ -150,8 +171,8 @@ class StatsSearch {
    * @returns {Promise<Object>} Aggregated results based on queryStringParameters
    */
   public async aggregate_search(sendKnex: Knex): Promise<Object> {
-    if (this.queryStringParameters !== {}) {
-      let aggregateQuery;
+    if (this.queryStringParameters) {
+      let aggregateQuery:Knex.QueryBuilder;
       const knex = sendKnex ?? await getKnexClient();
       if (this.queryStringParameters.provider || this.queryStringParameters.collectionId) {
         aggregateQuery = this.providerAndCollectionIdBuilder(knex);
@@ -177,14 +198,15 @@ class StatsSearch {
       const result = await knex.raw(aggregateQuery.toString());
       let r = result.rows;
       if (this.queryStringParameters.status) {
-        r = r.filter((rec) => (rec.status === this.queryStringParameters.status)).map(
-          (rec) => ({ count: rec.count })
+        r = r.filter((rec:AggregateObject) =>
+          (rec.status === this.queryStringParameters.status)).map(
+          (rec:AggregateObject) => ({ count: rec.count })
         );
       }
       /***getting query results*/
       return this.formatAggregateResult(r);
     }
-    return undefined;
+    return {};
   }
 }
 
