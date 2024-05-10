@@ -5,15 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 ## [v16.1.5] 2024-05-09
 
- **CUMULUS-3721**
-  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming.
-
-## Unreleased
-
 ## Fixed
 
+ **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming.
  **CUMULUS-3527**
-  - Added suppport for additional kex algorithms in the sftp-client.
+  - Added support for additional kex algorithms in the sftp-client.
 
 ## [v16.1.4] 2024-4-23
 
