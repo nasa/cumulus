@@ -120,7 +120,7 @@ test.before(async (t) => {
         ? new Date(t.context.granuleSearchFields.beginningDateTime) : undefined,
       duration: !(num % 2) ? Number(t.context.granuleSearchFields.duration) : undefined,
       ending_date_time: !(num % 2)
-        ? new Date(t.context.granuleSearchFields.endingDateTime) : undefined,
+        ? new Date(t.context.granuleSearchFields.endingDateTime) : new Date(),
       published: !!(num % 2),
       product_volume: !(num % 5) ? Number(t.context.granuleSearchFields.productVolume) : undefined,
       time_to_archive: !(num % 10)
@@ -297,4 +297,17 @@ test('GranuleSearch supports term search for string field', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch returns fields specified', async (t) => {
+  const { knex } = t.context;
+  const fields = 'granuleId,endingDateTime,collectionId,published,status';
+  const queryStringParameters = {
+    fields,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 10);
+  response.results.forEach((granule) => t.deepEqual(Object.keys(granule), fields.split(',')));
 });
