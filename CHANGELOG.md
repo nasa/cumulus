@@ -9,8 +9,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 ### Replace ElasticSearch Phase 1
 
 - **CUMULUS-3692**
-  - Update granules List endpoints to query postgres for basic queries
-
+  - Added `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
+    support basic queries for granules
+  - Updated granules List endpoints to query postgres for basic queries
+- **CUMULUS-3694**
+  - Updated `@cumulus/db/src/search` `BaseSearch` and `GranuleSearch` classes to
+    support term queries for granules
+  - Updated granules List endpoints to search postgres
 
 ### Migration Notes
 

@@ -104,7 +104,7 @@ test.before(async (t) => {
     timeToArchive: '700.29',
     timeToPreprocess: '800.18',
     status: 'failed',
-    timestamp: '2020-01-18T13:05:00.000Z',
+    timestamp: 1579352700000,
   };
 
   t.context.granulePgModel = new GranulePgModel();
@@ -292,6 +292,18 @@ test('GranuleSearch supports term search for string field', async (t) => {
   const queryStringParameters = {
     limit: 200,
     status: t.context.granuleSearchFields.status,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch supports timestamp term search', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    timestamp: t.context.granuleSearchFields.timestamp,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);

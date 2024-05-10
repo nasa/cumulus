@@ -105,25 +105,9 @@ async function list(req, res) {
   log.trace(`list query ${JSON.stringify(req.query)}`);
   const { getRecoveryStatus, ...queryStringParameters } = req.query;
 
-  let es;
-  if (queryStringParameters.searchContext) {
-    es = new ESSearchAfter(
-      { queryStringParameters },
-      'granule',
-      process.env.ES_INDEX
-    );
-  } else {
-    es = new Search({ queryStringParameters }, 'granule', process.env.ES_INDEX);
-  }
-  let result;
-  // TODO the condition should be removed after we support all the query parameters
-  if (Object.keys(queryStringParameters).filter((item) => !['limit', 'page', 'sort_key'].includes(item)).length === 0) {
-    log.debug('list perform db search');
-    const dbSearch = new GranuleSearch({ queryStringParameters });
-    result = await dbSearch.query();
-  } else {
-    result = await es.query();
-  }
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const result = await dbSearch.query();
+
   if (getRecoveryStatus === 'true') {
     return res.send(await addOrcaRecoveryStatus(result));
   }
