@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Fixed
+
+- **CUMULUS-3547**
+  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
+- **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
+- **CUMULUS-3587**
+  - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
+    updates of sub-dependencies and maintain without refactoring errors in
+    API/etc wholesale
+  - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
+
 ## [v18.2.1] 2023-05-08
 
 **Please note** changes in 18.2.1 may not yet be released in future versions, as this
@@ -16,14 +30,6 @@ included in the future will have a corresponding CHANGELOG entry in future relea
   - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
 - **CUMULUS-3701**
   - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
-
-### Fixed
-
-- **CUMULUS-3587**
-  - Ported https://github.com/scottcorgan/express-boom into API/lib to allow
-    updates of sub-dependencies and maintain without refactoring errors in
-    API/etc wholesale
-  - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
 
 ## [v18.2.0] 2023-02-02
 
@@ -39,7 +45,7 @@ Users utilizing the `cumulus-rds-tf` module should reference [cumulus-rds-tf
 upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
-### Changed
+## Changed
 
 - **CUMULUS-3444**
   - Update `cumulus-rds-tf` module to take additional parameters in support of
@@ -85,8 +91,6 @@ instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-clus
   - stubbed cmr interfaces in integration tests allow integration tests to pass
   - needed while cmr is failing to continue needed releases and progress
   - this change should be reverted ASAP when cmr is working as needed again
-- **CUMULUS-3547**
-  - Updated ECS Cluster `/dev/xvdcz` EBS volumes so they're encrypted.
 
 ### Fixed
 
