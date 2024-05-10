@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+## Fixed
+
+ **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
+
 ## [v16.1.4] 2024-4-23
 
 ### Migration Notes
@@ -23,6 +30,7 @@ upgrade
 instructions](https://nasa.github.io/cumulus/docs/upgrade-notes/upgrade-rds-cluster-tf-postgres-13).
 
 ## Changed
+
 - **CUMULUS-3564**
   - Update webpack configuration to explicitly disable chunking
 - **CUMULUS-3444**
