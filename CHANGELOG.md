@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
  **CUMULUS-3721**
   - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming.
 
+## Unreleased
+
+## Fixed
+
+ **CUMULUS-3527**
+  - Added suppport for additional kex algorithms in the sftp-client.
+
 ## [v16.1.4] 2024-4-23
 
 ### Migration Notes
