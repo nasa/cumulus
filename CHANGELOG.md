@@ -73,6 +73,13 @@ output or status of your request. If you want to directly observe the progress
 of the migration as it runs, you can view the CloudWatch logs for your async
 operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
+#### CUMULUS-3951 - SNS topics set to use encrypted storage
+
+As part of the requirements for this ticket Cumulus Core created SNS topics are
+being updated to use server-side encryption with an AWS managed key.    No user
+action is required, this note is being added to increase visibility re: this
+modification.
+
 ### Breaking Changes
 
 - **CUMULUS-3618**
@@ -126,6 +133,9 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     CommmonJS typescript/webpack clients.
 
 ### Changed
+- **CUMULUS-3951**
+  - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
+  - Update all integration/unit tests to use encrypted SNS topics
 - **CUMULUS-3433**
   - Updated all node.js lambda dependencies to node 20.x/20.12.2
   - Modified `@cumulus/ingest` unit test HTTPs server to accept localhost POST
@@ -200,6 +210,10 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
 
 ### Fixed
 
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
 - **CUMULUS-3618**
   - Fixed `@cumulus/es-client` credentialing issue in instance where
     lambda/Fargate task runtime would exceed the timeout for the es-client. Added retry/credential
@@ -215,12 +229,25 @@ operations (e.g. `PREFIX-AsyncOperationEcsLogs`).
     API/etc wholesale
   - Addresses [CVE-2020-36604](https://github.com/advisories/GHSA-c429-5p7v-vgjp)
 - **CUMULUS-3673**
-  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.  
+  - Fixes Granules API so that paths containing a granule and/or collection ID properly URI encode the ID.
 - **Audit Issues**
   - Addressed [CVE-2023-45133](https://github.com/advisories/GHSA-67hx-6x53-jw92) by
     updating babel packages and .babelrc
 
-## [v18.2.0] 2023-02-02
+## [v18.2.1] 2024-05-08
+
+**Please note** changes in 18.2.1 may not yet be released in future versions, as this
+is a backport/patch release on the 18.2.x series of releases.  Updates that are
+included in the future will have a corresponding CHANGELOG entry in future releases.
+
+### Fixed
+
+- **CUMULUS-3721**
+  - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
+- **CUMULUS-3701**
+  - Updated `@cumulus/api` to no longer improperly pass PATCH/PUT null values to Eventbridge rules
+
+## [v18.2.0] 2024-02-02
 
 ### Migration Notes
 
@@ -7788,6 +7815,7 @@ Note: There was an issue publishing 1.12.0. Upgrade to 1.12.1.
 ## [v1.0.0] - 2018-02-23
 
 [unreleased]: https://github.com/nasa/cumulus/compare/v18.2.0...HEAD
+[v18.2.1]: https://github.com/nasa/cumulus/compare/v18.2.0...v18.2.1
 [v18.2.0]: https://github.com/nasa/cumulus/compare/v18.1.0...v18.2.0
 [v18.1.0]: https://github.com/nasa/cumulus/compare/v18.0.0...v18.1.0
 [v18.0.0]: https://github.com/nasa/cumulus/compare/v17.0.0...v18.0.0
