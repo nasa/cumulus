@@ -103,17 +103,26 @@ async function updateAndUploadTestFileToBucket(params) {
  * @returns {Array<Promise>} - responses from S3 upload
  */
 async function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
-  return await Promise.all(
-    data.map(
-      (file) =>
-        updateAndUploadTestFileToBucket({
-          file,
-          bucket,
-          prefix,
-          replacements,
-        })
-    )
-  );
+  let a = [];
+  for (let i = 0; i < data.length; i+=1) {
+    a.push(await updateAndUploadTestFileToBucket(
+      {
+        file: data[i],
+        bucket, prefix, replacements
+      }
+    ))
+  }
+  // return await Promise.all(
+  //   data.map(
+  //     (file) =>
+  //       updateAndUploadTestFileToBucket({
+  //         file,
+  //         bucket,
+  //         prefix,
+  //         replacements,
+  //       })
+  //   )
+  // );
 }
 
 /**
@@ -140,12 +149,15 @@ async function deleteFolder(bucket, folder) {
     Bucket: bucket,
     Prefix: folder,
   });
-
-  await Promise.all((l.Contents || []).map((item) =>
-    s3().deleteObject({
-      Bucket: bucket,
-      Key: item.Key,
-    })));
+  (l.Contents || []).forEach((item) => s3().deleteObject({
+    Bucket: bucket,
+    Key: item.Key,
+  }));
+  // await Promise.all((l.Contents || []).map((item) =>
+  //   s3().deleteObject({
+  //     Bucket: bucket,
+  //     Key: item.Key,
+  //   })));
 }
 
 /**
@@ -157,7 +169,7 @@ async function deleteFolder(bucket, folder) {
 function getExecutionUrl(executionArn) {
   const region = process.env.AWS_DEFAULT_REGION || 'us-east-1';
   return `https://console.aws.amazon.com/states/home?region=${region}` +
-          `#/executions/details/${executionArn}`;
+    `#/executions/details/${executionArn}`;
 }
 
 async function getFileMetadata(file) {

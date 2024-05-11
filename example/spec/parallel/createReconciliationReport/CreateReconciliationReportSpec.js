@@ -106,7 +106,7 @@ async function setupCollectionAndTestData(config, testSuffix, testDataFolder) {
     '@cumulus/test-data/granules/BROWSE.MYD13Q1.A2002185.h00v09.006.2015149071135.1.jpg',
   ];
   const newData = [];
-  for (let i = 0; i < 1500; i += 1) {
+  for (let i = 0; i < 15; i += 1) {
     const newNames = replicateData(s3data);
 
     s3data.push(newNames.newFileName);
@@ -206,10 +206,12 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     status: 'completed',
   });
 
-  await getGranuleWithStatus({ prefix,
+  await getGranuleWithStatus({
+    prefix,
     granuleId,
     collectionId: constructCollectionId(newCollection.name, newCollection.version),
-    status: 'completed' });
+    status: 'completed'
+  });
   return newCollection;
 };
 
@@ -306,8 +308,10 @@ async function updateGranuleFile(prefix, granule, regex, replacement) {
 const waitForCollectionRecordsInList = async (stackName, collectionIds, additionalQueryParams = {}) => await pWaitFor(
   async () => {
     // Verify the collection is returned when listing collections
-    const collsResp = await getCollections({ prefix: stackName,
-      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 } });
+    const collsResp = await getCollections({
+      prefix: stackName,
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 }
+    });
     const results = get(JSON.parse(collsResp.body), 'results', []);
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
     return isEqual(ids.sort(), collectionIds.sort());
@@ -385,7 +389,10 @@ describe('When there are granule differences and granule reconciliation is run',
       testDataFolder = createTestDataPath(testId);
 
       console.log('XXX Waiting for setupCollectionAndTestData');
-      await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      for (let i = 0; i < 20000; i+=1) {
+        await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+      }
+
       console.log('XXX Completed for setupCollectionAndTestData');
 
       // Write an extra file to the DynamoDB Files table
