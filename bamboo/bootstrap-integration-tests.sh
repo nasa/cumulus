@@ -5,8 +5,6 @@ set -ex
 . ./bamboo/abort-if-not-pr-or-redeployment.sh
 . ./bamboo/abort-if-skip-integration-tests.sh
 
-npm config set unsafe-perm true
-
 if [[ $USE_TERRAFORM_ZIPS == true ]]; then
   ## Configure TF deployment to use deployed packages for the version being built
   echo "***Deploying stack with deployment packages"

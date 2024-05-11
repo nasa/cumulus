@@ -4,7 +4,7 @@ resource "aws_lambda_function" "custom_bootstrap" {
   source_code_hash = filebase64sha256("${path.module}/../../packages/api/dist/bootstrap/lambda.zip")
   handler          = "index.handler"
   role             = var.lambda_processing_role_arn
-  runtime          = "nodejs16.x"
+  runtime          = "nodejs20.x"
   timeout          = lookup(var.lambda_timeouts, "CustomBootstrap", 300)
   memory_size      = lookup(var.lambda_memory_sizes, "CustomBootstrap", 512)
   environment {
