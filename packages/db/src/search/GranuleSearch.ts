@@ -1,17 +1,18 @@
 import { Knex } from 'knex';
+import omit from 'lodash/omit';
+import pick from 'lodash/pick';
 
 import { ApiGranuleRecord } from '@cumulus/types/api/granules';
 import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { BaseSearch } from './BaseSearch';
+import { DbQueryParameters, QueryEvent } from '../types/search';
 import { PostgresGranuleRecord } from '../types/granule';
-import { QueryEvent } from '../types/search';
-
-import { TableNames } from '../tables';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
+import { TableNames } from '../tables';
 
-const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
+const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
 export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   cumulus_id: number,
@@ -25,6 +26,8 @@ export interface GranuleRecord extends BaseRecord, PostgresGranuleRecord {
   providerName?: string,
 }
 
+const foreignFields = ['collectionName', 'collectionVersion', 'providerName', 'pdrName'];
+
 /**
  * Class to build and execute db search query for granules
  */
@@ -33,8 +36,23 @@ export class GranuleSearch extends BaseSearch {
     super(event, 'granule');
   }
 
+  private searchCollection(): boolean {
+    const term = this.dbQueryParameters.term;
+    return !!(term && (term.collectionName || term.collectionVersion));
+  }
+
+  private searchPdr(): boolean {
+    const term = this.dbQueryParameters.term;
+    return !!(term && term.pdrName);
+  }
+
+  private searchProvider(): boolean {
+    const term = this.dbQueryParameters.term;
+    return !!(term && term.providerName);
+  }
+
   /**
-   * build basic query
+   * Build basic query
    *
    * @param knex - DB client
    * @returns queries for getting count and search result
@@ -61,10 +79,104 @@ export class GranuleSearch extends BaseSearch {
         collectionVersion: `${collectionsTable}.version`,
         pdrName: `${pdrsTable}.name`,
       })
-      .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`)
-      .leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`)
-      .leftJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+      .innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+
+    if (this.searchCollection()) {
+      countQuery.innerJoin(collectionsTable, `${granulesTable}.collection_cumulus_id`, `${collectionsTable}.cumulus_id`);
+    }
+
+    if (this.searchProvider()) {
+      countQuery.innerJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+      searchQuery.innerJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    } else {
+      searchQuery.leftJoin(providersTable, `${granulesTable}.provider_cumulus_id`, `${providersTable}.cumulus_id`);
+    }
+
+    if (this.searchPdr()) {
+      countQuery.innerJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+      searchQuery.innerJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    } else {
+      searchQuery.leftJoin(pdrsTable, `${granulesTable}.pdr_cumulus_id`, `${pdrsTable}.cumulus_id`);
+    }
     return { countQuery, searchQuery };
+  }
+
+  /**
+   * Build queries for infix and prefix
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { granules: granulesTable } = TableNames;
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
+    if (infix) {
+      countQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
+      searchQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
+    }
+    if (prefix) {
+      countQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
+      searchQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
+    }
+  }
+
+  /**
+   * Build queries for term fields
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildTermQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const {
+      granules: granulesTable,
+      collections: collectionsTable,
+      providers: providersTable,
+      pdrs: pdrsTable,
+    } = TableNames;
+
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters || this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      if (name === 'collectionName') {
+        countQuery.where(`${collectionsTable}.name`, value);
+        searchQuery.where(`${collectionsTable}.name`, value);
+      }
+      if (name === 'collectionVersion') {
+        countQuery.where(`${collectionsTable}.version`, value);
+        searchQuery.where(`${collectionsTable}.version`, value);
+      }
+      if (name === 'providerName') {
+        countQuery.where(`${providersTable}.name`, value);
+        searchQuery.where(`${providersTable}.name`, value);
+      }
+      if (name === 'pdrName') {
+        countQuery.where(`${pdrsTable}.name`, value);
+        searchQuery.where(`${pdrsTable}.name`, value);
+      }
+      if (name === 'error.Error') {
+        countQuery.whereRaw(`${granulesTable}.error->>'Error' = '${value}'`);
+        searchQuery.whereRaw(`${granulesTable}.error->>'Error' = '${value}'`);
+      }
+    });
+
+    super.buildTermQuery({
+      ...params,
+      dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
+    });
   }
 
   /**
@@ -73,7 +185,8 @@ export class GranuleSearch extends BaseSearch {
    * @param pgRecords - postgres records returned from query
    * @returns translated api records
    */
-  protected translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[]) : ApiGranuleRecord[] {
+  protected translatePostgresRecordsToApiRecords(pgRecords: GranuleRecord[])
+    : Partial<ApiGranuleRecord>[] {
     log.debug(`translatePostgresRecordsToApiRecords number of records ${pgRecords.length} `);
     const apiRecords = pgRecords.map((item: GranuleRecord) => {
       const granulePgRecord = item;
@@ -84,9 +197,12 @@ export class GranuleSearch extends BaseSearch {
       };
       const pdr = item.pdrName ? { name: item.pdrName } : undefined;
       const providerPgRecord = item.providerName ? { name: item.providerName } : undefined;
-      return translatePostgresGranuleToApiGranuleWithoutDbQuery({
+      const apiRecord = translatePostgresGranuleToApiGranuleWithoutDbQuery({
         granulePgRecord, collectionPgRecord, pdr, providerPgRecord,
       });
+      return this.dbQueryParameters.fields
+        ? pick(apiRecord, this.dbQueryParameters.fields)
+        : apiRecord;
     });
     return apiRecords;
   }
