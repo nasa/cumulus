@@ -4,7 +4,7 @@ import Logger from '@cumulus/logger';
 const log = new Logger({ sender: '@cumulus/db/field-mapping' });
 
 // functions to map the api search string field name and value to postgres db field
-const granuleMapping = {
+const granuleMapping: { [key: string]: Function } = {
   beginningDateTime: (value?: string) => ({
     beginning_date_time: value,
   }),
@@ -12,7 +12,7 @@ const granuleMapping = {
     cmr_link: value,
   }),
   createdAt: (value?: string) => ({
-    created_at: value && new Date(Number(value)),
+    created_at: value,
   }),
   duration: (value?: string) => ({
     duration: value && Number(value),
@@ -54,7 +54,7 @@ const granuleMapping = {
     time_to_process: Number(value),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: new Date(Number(value)),
+    updated_at: value,
   }),
   // nested error field
   'error.Error': (value?: string) => ({
@@ -76,12 +76,13 @@ const granuleMapping = {
   }),
 };
 
-const supportedMappings: any = {
+// type and its mapping
+const supportedMappings: { [key: string]: any } = {
   granule: granuleMapping,
 };
 
 /**
- * map query string field to db field
+ * Map query string field to db field
  *
  * @param type - query record type
  * @param queryField - query field

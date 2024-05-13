@@ -1,6 +1,12 @@
 export type QueryStringParameters = {
+  fields?: string,
+  infix?: string,
   limit?: string,
   page?: string,
+  order?: string,
+  prefix?: string,
+  sort_by?: string,
+  sort_key?: string,
   [key: string]: string | string[] | undefined,
 };
 

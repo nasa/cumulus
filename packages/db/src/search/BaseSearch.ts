@@ -5,7 +5,7 @@ import { BaseRecord } from '../types/base';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters, QueryEvent, QueryStringParameters } from '../types/search';
-import { buildDbQueryParameters } from './queries';
+import { convertQueryStringToDbQueryParameters } from './queries';
 
 const log = new Logger({ sender: '@cumulus/db/BaseSearch' });
 
@@ -34,11 +34,13 @@ class BaseSearch {
   constructor(event: QueryEvent, type: string) {
     this.type = type;
     this.queryStringParameters = event?.queryStringParameters ?? {};
-    this.dbQueryParameters = buildDbQueryParameters(this.type, this.queryStringParameters);
+    this.dbQueryParameters = convertQueryStringToDbQueryParameters(
+      this.type, this.queryStringParameters
+    );
   }
 
   /**
-   * build the search query
+   * Build the search query
    *
    * @param knex - DB client
    * @returns queries for getting count and search result
@@ -56,12 +58,12 @@ class BaseSearch {
     if (limit) searchQuery.limit(limit);
     if (offset) searchQuery.offset(offset);
 
-    log.debug(`_buildSearch returns countQuery ${countQuery.toSQL().sql}, searchQuery ${searchQuery.toSQL().sql}`);
+    log.debug(`_buildSearch returns countQuery: ${countQuery.toSQL().sql}, searchQuery: ${searchQuery.toSQL().sql}`);
     return { countQuery, searchQuery };
   }
 
   /**
-   * metadata template for query result
+   * Get metadata template for query result
    *
    * @returns metadata template
    */
@@ -74,7 +76,7 @@ class BaseSearch {
   }
 
   /**
-   * build basic query
+   * Build basic query
    *
    * @param knex - DB client
    * @throws - function is not implemented
@@ -87,21 +89,14 @@ class BaseSearch {
     throw new Error('buildBasicQuery is not implemented');
   }
 
-  protected buildTermQuery(queries: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const table = typeToTable[this.type];
-    const { countQuery, searchQuery, dbQueryParameters } = queries;
-    const { term = {} } = dbQueryParameters || this.dbQueryParameters;
-
-    Object.entries(term).forEach(([name, value]) => {
-      countQuery.where(`${table}.${name}`, value);
-      searchQuery.where(`${table}.${name}`, value);
-    });
-  }
-
+  /**
+   * Build queries for infix and prefix
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
   protected buildInfixPrefixQuery(params: {
     countQuery: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
@@ -109,6 +104,29 @@ class BaseSearch {
   }) {
     log.debug(`buildInfixPrefixQuery is not implemented ${Object.keys(params)}`);
     throw new Error('buildInfixPrefixQuery is not implemented');
+  }
+
+  /**
+   * Build queries for term fields
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildTermQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const table = typeToTable[this.type];
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { term = {} } = dbQueryParameters || this.dbQueryParameters;
+
+    Object.entries(term).forEach(([name, value]) => {
+      countQuery.where(`${table}.${name}`, value);
+      searchQuery.where(`${table}.${name}`, value);
+    });
   }
 
   /**
@@ -123,7 +141,7 @@ class BaseSearch {
   }
 
   /**
-   * build and execute search query
+   * Build and execute search query
    *
    * @param testKnex - knex for testing
    * @returns search result

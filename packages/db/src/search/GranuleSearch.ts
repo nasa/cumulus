@@ -7,11 +7,10 @@ import Logger from '@cumulus/logger';
 
 import { BaseRecord } from '../types/base';
 import { BaseSearch } from './BaseSearch';
-import { PostgresGranuleRecord } from '../types/granule';
 import { DbQueryParameters, QueryEvent } from '../types/search';
-
-import { TableNames } from '../tables';
+import { PostgresGranuleRecord } from '../types/granule';
 import { translatePostgresGranuleToApiGranuleWithoutDbQuery } from '../translate/granules';
+import { TableNames } from '../tables';
 
 const log = new Logger({ sender: '@cumulus/db/GranuleSearch' });
 
@@ -53,7 +52,7 @@ export class GranuleSearch extends BaseSearch {
   }
 
   /**
-   * build basic query
+   * Build basic query
    *
    * @param knex - DB client
    * @returns queries for getting count and search result
@@ -102,7 +101,41 @@ export class GranuleSearch extends BaseSearch {
     return { countQuery, searchQuery };
   }
 
-  protected buildTermQuery(queries: {
+  /**
+   * Build queries for infix and prefix
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { granules: granulesTable } = TableNames;
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
+    if (infix) {
+      countQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
+      searchQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
+    }
+    if (prefix) {
+      countQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
+      searchQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
+    }
+  }
+
+  /**
+   * Build queries for term fields
+   *
+   * @param params
+   * @param params.countQuery - query builder for getting count
+   * @param params.searchQuery - query builder for search
+   * @param [params.dbQueryParameters] - db query parameters
+   */
+  protected buildTermQuery(params: {
     countQuery: Knex.QueryBuilder,
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -113,8 +146,10 @@ export class GranuleSearch extends BaseSearch {
       providers: providersTable,
       pdrs: pdrsTable,
     } = TableNames;
-    const { countQuery, searchQuery, dbQueryParameters } = queries;
+
+    const { countQuery, searchQuery, dbQueryParameters } = params;
     const { term = {} } = dbQueryParameters || this.dbQueryParameters;
+
     Object.entries(term).forEach(([name, value]) => {
       if (name === 'collectionName') {
         countQuery.where(`${collectionsTable}.name`, value);
@@ -139,27 +174,9 @@ export class GranuleSearch extends BaseSearch {
     });
 
     super.buildTermQuery({
-      ...queries,
+      ...params,
       dbQueryParameters: { term: omit(term, foreignFields, 'error.Error') },
     });
-  }
-
-  protected buildInfixPrefixQuery(params: {
-    countQuery: Knex.QueryBuilder,
-    searchQuery: Knex.QueryBuilder,
-    dbQueryParameters?: DbQueryParameters,
-  }) {
-    const { granules: granulesTable } = TableNames;
-    const { countQuery, searchQuery, dbQueryParameters } = params;
-    const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
-    if (infix) {
-      countQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
-      searchQuery.whereLike(`${granulesTable}.granule_id`, `%${infix}%`);
-    }
-    if (prefix) {
-      countQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
-      searchQuery.whereLike(`${granulesTable}.granule_id`, `${prefix}%`);
-    }
   }
 
   /**

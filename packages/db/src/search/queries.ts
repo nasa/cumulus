@@ -5,6 +5,7 @@ import { mapQueryStringFieldToDbField } from './field-mapping';
 
 const log = new Logger({ sender: '@cumulus/db/queries' });
 
+// reserved words which are not record fields
 const reservedWords = [
   'limit',
   'page',
@@ -19,7 +20,7 @@ const reservedWords = [
 ];
 
 /**
- * regexp for matching query string parameter to query type
+ * regexp for matching api query string parameter to query type
  */
 const regexes: { [key: string]: RegExp } = {
   terms: /^(.*)__in$/,
@@ -30,42 +31,40 @@ const regexes: { [key: string]: RegExp } = {
 };
 
 /**
- * build term query fields for db query parameters from query string fields
+ * Conert term query fields to db query parameters from api query string fields
  *
  * @param type - query record type
- * @param queryFields - query fields
- * @returns term
+ * @param queryStringFields - api query fields
+ * @returns term query parameter
  */
-const buildTerm = (
+const convertTerm = (
   type: string,
-  queryFields: { name: string, value: string }[]
+  queryStringFields: { name: string, value: string }[]
 ): { term: { [key: string]: any } } => {
-  const term = queryFields.reduce((acc, queryField) => {
+  const term = queryStringFields.reduce((acc, queryField) => {
     const queryParam = mapQueryStringFieldToDbField(type, queryField);
-    return {
-      ...acc,
-      ...queryParam,
-    };
+    return { ...acc, ...queryParam };
   }, {});
 
   return { term };
 };
 
 /**
- * functions for building db query parameters for each query type
+ * functions for converting from api query string parameters to db query parameters
+ * for each type of query
  */
-const build: { [key: string]: Function } = {
-  term: buildTerm,
+const convert: { [key: string]: Function } = {
+  term: convertTerm,
 };
 
 /**
- * build db query parameters from query string parameters
+ * Convert api query string parameters to db query parameters
  *
  * @param type - query record type
  * @param queryStringParameters - query string parameters
  * @returns db query parameters
  */
-export const buildDbQueryParameters = (
+export const convertQueryStringToDbQueryParameters = (
   type: string,
   queryStringParameters: QueryStringParameters
 ): DbQueryParameters => {
@@ -88,14 +87,14 @@ export const buildDbQueryParameters = (
 
   // for each search strategy, get all parameters and convert them to db parameters
   Object.keys(regexes).forEach((k: string) => {
-    const matchedFields = fieldsList.filter((f: any) => f.name.match(regexes[k]));
+    const matchedFields = fieldsList.filter((f) => f.name.match(regexes[k]));
 
-    if (matchedFields && matchedFields.length > 0 && build[k]) {
-      const queryParams = build[k](type, matchedFields, regexes[k]);
+    if (matchedFields && matchedFields.length > 0 && convert[k]) {
+      const queryParams = convert[k](type, matchedFields, regexes[k]);
       Object.assign(dbQueryParameters, queryParams);
     }
   });
 
-  log.debug(`buildDbQueryParameters returns ${JSON.stringify(dbQueryParameters)}`);
+  log.debug(`convertQueryStringToDbQueryParameters returns ${JSON.stringify(dbQueryParameters)}`);
   return dbQueryParameters;
 };

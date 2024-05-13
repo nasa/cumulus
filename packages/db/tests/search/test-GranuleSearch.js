@@ -20,6 +20,7 @@ const {
 
 const testDbName = `granule_${cryptoRandomString({ length: 10 })}`;
 
+// generate granuleId for infix and prefix search
 const generateGranuleId = (num) => {
   let granuleId = cryptoRandomString({ length: 10 });
   if (num % 30 === 0) granuleId = `${cryptoRandomString({ length: 5 })}infix${cryptoRandomString({ length: 5 })}`;
@@ -98,13 +99,17 @@ test.before(async (t) => {
   // Create Granule
   t.context.granuleSearchFields = {
     beginningDateTime: '2020-03-16T19:50:24.757Z',
+    cmrLink: 'https://fakeLink',
     duration: '6.8',
-    endingDateTime: '2020-03-17T00:00:00.000Z',
+    endingDateTime: '2020-03-17T10:00:00.000Z',
+    lastUpdateDateTime: '2020-03-18T10:00:00.000Z',
+    processingEndDateTime: '2020-03-16T10:00:00.000Z',
     productVolume: '600',
     timeToArchive: '700.29',
     timeToPreprocess: '800.18',
     status: 'failed',
     timestamp: 1579352700000,
+    updatedAt: new Date(1579352700000).toISOString(),
   };
 
   const error = {
@@ -123,10 +128,13 @@ test.before(async (t) => {
       provider_cumulus_id: !(num % 2) ? t.context.providerCumulusId : undefined,
       beginning_date_time: !(num % 2)
         ? new Date(t.context.granuleSearchFields.beginningDateTime) : undefined,
+      cmr_link: !(num % 100) ? t.context.granuleSearchFields.cmrLink : undefined,
       duration: !(num % 2) ? Number(t.context.granuleSearchFields.duration) : undefined,
       ending_date_time: !(num % 2)
         ? new Date(t.context.granuleSearchFields.endingDateTime) : new Date(),
       error: !(num % 2) ? JSON.stringify(error) : undefined,
+      last_update_date_time: !(num % 2)
+        ? t.context.granuleSearchFields.lastUpdateDateTime : undefined,
       published: !!(num % 2),
       product_volume: !(num % 5) ? Number(t.context.granuleSearchFields.productVolume) : undefined,
       time_to_archive: !(num % 10)
@@ -263,6 +271,8 @@ test('GranuleSearch supports term search for date field', async (t) => {
     limit: 200,
     beginningDateTime: t.context.granuleSearchFields.beginningDateTime,
     endingDateTime: t.context.granuleSearchFields.endingDateTime,
+    lastUpdateDateTime: t.context.granuleSearchFields.lastUpdateDateTime,
+    updatedAt: t.context.granuleSearchFields.updatedAt,
   };
   const dbSearch = new GranuleSearch({ queryStringParameters });
   const response = await dbSearch.query(knex);
@@ -295,17 +305,26 @@ test('GranuleSearch supports term search for number field', async (t) => {
 
 test('GranuleSearch supports term search for string field', async (t) => {
   const { knex } = t.context;
-  const queryStringParameters = {
+  let queryStringParameters = {
     limit: 200,
     status: t.context.granuleSearchFields.status,
   };
-  const dbSearch = new GranuleSearch({ queryStringParameters });
-  const response = await dbSearch.query(knex);
+  let dbSearch = new GranuleSearch({ queryStringParameters });
+  let response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
+
+  queryStringParameters = {
+    limit: 200,
+    cmrLink: t.context.granuleSearchFields.cmrLink,
+  };
+  dbSearch = new GranuleSearch({ queryStringParameters });
+  response = await dbSearch.query(knex);
+  t.is(response.meta.count, 1);
+  t.is(response.results?.length, 1);
 });
 
-test('GranuleSearch supports timestamp term search', async (t) => {
+test('GranuleSearch supports term search for timestamp', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -317,7 +336,7 @@ test('GranuleSearch supports timestamp term search', async (t) => {
   t.is(response.results?.length, 50);
 });
 
-test('GranuleSearch supports nested error.Error term search', async (t) => {
+test('GranuleSearch supports term search for nested error.Error', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
     limit: 200,
@@ -327,6 +346,18 @@ test('GranuleSearch supports nested error.Error term search', async (t) => {
   const response = await dbSearch.query(knex);
   t.is(response.meta.count, 50);
   t.is(response.results?.length, 50);
+});
+
+test('GranuleSearch non-existing fields are ignored', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    non_existing_field: `non_exist_${cryptoRandomString({ length: 5 })}`,
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 100);
+  t.is(response.results?.length, 100);
 });
 
 test('GranuleSearch returns fields specified', async (t) => {
