@@ -19,7 +19,13 @@ export type Meta = {
 };
 
 const typeToTable: { [key: string]: string } = {
+  asyncOperation: TableNames.asyncOperations,
+  collection: TableNames.collections,
+  execution: TableNames.executions,
   granule: TableNames.granules,
+  pdr: TableNames.pdrs,
+  provider: TableNames.providers,
+  rule: TableNames.rules,
 };
 
 /**

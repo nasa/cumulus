@@ -76,9 +76,130 @@ const granuleMapping: { [key: string]: Function } = {
   }),
 };
 
+// TODO add all queryable fields for the following record types
+const asyncOperationMapping : { [key: string]: Function } = {
+  createdAt: (value?: string) => ({
+    created_at: value,
+  }),
+  id: (value?: string) => ({
+    id: value,
+  }),
+  operationType: (value?: string) => ({
+    operation_type: value,
+  }),
+  status: (value?: string) => ({
+    status: value,
+  }),
+  taskArn: (value?: string) => ({
+    task_arn: value,
+  }),
+  timestamp: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+  updatedAt: (value?: string) => ({
+    updated_at: value,
+  }),
+};
+
+const collectionMapping : { [key: string]: Function } = {
+  createdAt: (value?: string) => ({
+    created_at: value,
+  }),
+  name: (value?: string) => ({
+    name: value,
+  }),
+  version: (value?: string) => ({
+    version: value,
+  }),
+  timestamp: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+  updatedAt: (value?: string) => ({
+    updated_at: value,
+  }),
+};
+
+const executionMapping : { [key: string]: Function } = {
+  arn: (value?: string) => ({
+    arn: value,
+  }),
+  createdAt: (value?: string) => ({
+    created_at: value,
+  }),
+  execution: (value?: string) => ({
+    url: value,
+  }),
+  status: (value?: string) => ({
+    status: value,
+  }),
+  timestamp: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+  updatedAt: (value?: string) => ({
+    updated_at: value,
+  }),
+};
+
+const pdrMapping : { [key: string]: Function } = {
+  createdAt: (value?: string) => ({
+    created_at: value,
+  }),
+  pdrName: (value?: string) => ({
+    name: value,
+  }),
+  status: (value?: string) => ({
+    status: value,
+  }),
+  timestamp: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+  updatedAt: (value?: string) => ({
+    updated_at: value,
+  }),
+};
+
+const providerMapping : { [key: string]: Function } = {
+  createdAt: (value?: string) => ({
+    created_at: value,
+  }),
+  id: (value?: string) => ({
+    name: value,
+  }),
+  timestamp: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+  updatedAt: (value?: string) => ({
+    updated_at: value,
+  }),
+};
+
+const ruleMapping : { [key: string]: Function } = {
+  createdAt: (value?: string) => ({
+    created_at: value,
+  }),
+  name: (value?: string) => ({
+    name: value,
+  }),
+  state: (value?: string) => ({
+    enabled: (value === 'ENABLED'),
+  }),
+  timestamp: (value?: string) => ({
+    updated_at: value && new Date(Number(value)),
+  }),
+  updatedAt: (value?: string) => ({
+    updated_at: value,
+  }),
+};
+
 // type and its mapping
 const supportedMappings: { [key: string]: any } = {
   granule: granuleMapping,
+  asyncOperation: asyncOperationMapping,
+  collection: collectionMapping,
+  execution: executionMapping,
+  pdr: pdrMapping,
+  provider: providerMapping,
+  rule: ruleMapping,
 };
 
 /**
