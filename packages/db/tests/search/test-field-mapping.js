@@ -16,13 +16,12 @@ test('mapQueryStringFieldToDbField returns undefined if the api field is not sup
   t.falsy(dbQueryParam);
 });
 
-test('mapQueryStringFieldToDbField correctly converts all granule api field to db field', (t) => {
+test('mapQueryStringFieldToDbField correctly converts all granule api fields to db fields', (t) => {
   const queryStringParameters = {
     beginningDateTime: '2017-10-24T00:00:00.000Z',
     cmrLink: 'example.com',
-    createdAt: '2019-12-11T23:19:23.823Z',
+    createdAt: '1591312763823',
     duration: '26.939',
-    execution: t.context.executionUrl,
     endingDateTime: '2017-11-08T23:59:59.000Z',
     granuleId: 'MOD09GQ.A1657416.CbyoRi.006.9697917818587',
     lastUpdateDateTime: '2018-04-25T21:45:45.524Z',
@@ -44,7 +43,7 @@ test('mapQueryStringFieldToDbField correctly converts all granule api field to d
   const expectedDbParameters = {
     beginning_date_time: '2017-10-24T00:00:00.000Z',
     cmr_link: 'example.com',
-    created_at: '2019-12-11T23:19:23.823Z',
+    created_at: new Date(1591312763823),
     duration: 26.939,
     ending_date_time: '2017-11-08T23:59:59.000Z',
     granule_id: 'MOD09GQ.A1657416.CbyoRi.006.9697917818587',
@@ -69,6 +68,154 @@ test('mapQueryStringFieldToDbField correctly converts all granule api field to d
     .map(([name, value]) => ({ name, value }));
   const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
     const queryParam = mapQueryStringFieldToDbField('granule', queryField);
+    return { ...acc, ...queryParam };
+  }, {});
+  t.deepEqual(dbQueryParams, expectedDbParameters);
+});
+
+test('mapQueryStringFieldToDbField correctly converts all asyncOperation api fields to db fields', (t) => {
+  const queryStringParameters = {
+    createdAt: '1591312763823',
+    id: '0eb8e809-8790-5409-1239-bcd9e8d28b8e',
+    operationType: 'Bulk Granule Delete',
+    taskArn: 'arn:aws:ecs:us-east-1:111111111111:task/d481e76e-f5fc-9c1c-2411-fa13779b111a',
+    status: 'SUCCEEDED',
+    timestamp: '1591384094512',
+  };
+
+  const expectedDbParameters = {
+    created_at: new Date(1591312763823),
+    id: '0eb8e809-8790-5409-1239-bcd9e8d28b8e',
+    operation_type: 'Bulk Granule Delete',
+    task_arn: 'arn:aws:ecs:us-east-1:111111111111:task/d481e76e-f5fc-9c1c-2411-fa13779b111a',
+    status: 'SUCCEEDED',
+    updated_at: new Date(1591384094512),
+  };
+
+  const apiFieldsList = Object.entries(queryStringParameters)
+    .map(([name, value]) => ({ name, value }));
+  const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
+    const queryParam = mapQueryStringFieldToDbField('asyncOperation', queryField);
+    return { ...acc, ...queryParam };
+  }, {});
+  t.deepEqual(dbQueryParams, expectedDbParameters);
+});
+
+test('mapQueryStringFieldToDbField correctly converts all collection api fields to db fields', (t) => {
+  const queryStringParameters = {
+    createdAt: '1591312763823',
+    name: 'MOD11A1',
+    version: '006',
+    updatedAt: 1591384094512,
+  };
+
+  const expectedDbParameters = {
+    created_at: new Date(1591312763823),
+    name: 'MOD11A1',
+    version: '006',
+    updated_at: new Date(1591384094512),
+  };
+
+  const apiFieldsList = Object.entries(queryStringParameters)
+    .map(([name, value]) => ({ name, value }));
+  const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
+    const queryParam = mapQueryStringFieldToDbField('collection', queryField);
+    return { ...acc, ...queryParam };
+  }, {});
+  t.deepEqual(dbQueryParams, expectedDbParameters);
+});
+
+test('mapQueryStringFieldToDbField correctly converts all execution api fields to db fields', (t) => {
+  const queryStringParameters = {
+    arn: 'https://example.com/arn',
+    createdAt: '1591312763823',
+    execution: 'https://example.com',
+    status: 'completed',
+    updatedAt: 1591384094512,
+  };
+
+  const expectedDbParameters = {
+    arn: 'https://example.com/arn',
+    created_at: new Date(1591312763823),
+    url: 'https://example.com',
+    status: 'completed',
+    updated_at: new Date(1591384094512),
+  };
+
+  const apiFieldsList = Object.entries(queryStringParameters)
+    .map(([name, value]) => ({ name, value }));
+  const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
+    const queryParam = mapQueryStringFieldToDbField('execution', queryField);
+    return { ...acc, ...queryParam };
+  }, {});
+  t.deepEqual(dbQueryParams, expectedDbParameters);
+});
+
+test('mapQueryStringFieldToDbField correctly converts all pdr api fields to db fields', (t) => {
+  const queryStringParameters = {
+    createdAt: '1591312763823',
+    pdrName: 'fakePdrName',
+    status: 'completed',
+    updatedAt: 1591384094512,
+  };
+
+  const expectedDbParameters = {
+    created_at: new Date(1591312763823),
+    name: 'fakePdrName',
+    status: 'completed',
+    updated_at: new Date(1591384094512),
+  };
+
+  const apiFieldsList = Object.entries(queryStringParameters)
+    .map(([name, value]) => ({ name, value }));
+  const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
+    const queryParam = mapQueryStringFieldToDbField('pdr', queryField);
+    return { ...acc, ...queryParam };
+  }, {});
+  t.deepEqual(dbQueryParams, expectedDbParameters);
+});
+
+test('mapQueryStringFieldToDbField correctly converts all provider api fields to db fields', (t) => {
+  const queryStringParameters = {
+    createdAt: '1591312763823',
+    id: 'fakeProviderId',
+    updatedAt: 1591384094512,
+  };
+
+  const expectedDbParameters = {
+    created_at: new Date(1591312763823),
+    name: 'fakeProviderId',
+    updated_at: new Date(1591384094512),
+  };
+
+  const apiFieldsList = Object.entries(queryStringParameters)
+    .map(([name, value]) => ({ name, value }));
+  const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
+    const queryParam = mapQueryStringFieldToDbField('provider', queryField);
+    return { ...acc, ...queryParam };
+  }, {});
+  t.deepEqual(dbQueryParams, expectedDbParameters);
+});
+
+test('mapQueryStringFieldToDbField correctly converts all rule api fields to db fields', (t) => {
+  const queryStringParameters = {
+    createdAt: '1591312763823',
+    name: 'fakePdrName',
+    state: 'DISABLED',
+    updatedAt: 1591384094512,
+  };
+
+  const expectedDbParameters = {
+    created_at: new Date(1591312763823),
+    name: 'fakePdrName',
+    enabled: false,
+    updated_at: new Date(1591384094512),
+  };
+
+  const apiFieldsList = Object.entries(queryStringParameters)
+    .map(([name, value]) => ({ name, value }));
+  const dbQueryParams = apiFieldsList.reduce((acc, queryField) => {
+    const queryParam = mapQueryStringFieldToDbField('rule', queryField);
     return { ...acc, ...queryParam };
   }, {});
   t.deepEqual(dbQueryParams, expectedDbParameters);

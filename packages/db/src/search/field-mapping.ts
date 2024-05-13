@@ -12,7 +12,7 @@ const granuleMapping: { [key: string]: Function } = {
     cmr_link: value,
   }),
   createdAt: (value?: string) => ({
-    created_at: value,
+    created_at: value && new Date(Number(value)),
   }),
   duration: (value?: string) => ({
     duration: value && Number(value),
@@ -54,7 +54,7 @@ const granuleMapping: { [key: string]: Function } = {
     time_to_process: Number(value),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: value,
+    updated_at: value && new Date(Number(value)),
   }),
   // nested error field
   'error.Error': (value?: string) => ({
@@ -76,10 +76,10 @@ const granuleMapping: { [key: string]: Function } = {
   }),
 };
 
-// TODO add all queryable fields for the following record types
+// TODO add and verify all queryable fields for the following record types
 const asyncOperationMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
-    created_at: value,
+    created_at: value && new Date(Number(value)),
   }),
   id: (value?: string) => ({
     id: value,
@@ -97,13 +97,13 @@ const asyncOperationMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: value,
+    updated_at: value && new Date(Number(value)),
   }),
 };
 
 const collectionMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
-    created_at: value,
+    created_at: value && new Date(Number(value)),
   }),
   name: (value?: string) => ({
     name: value,
@@ -115,7 +115,7 @@ const collectionMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: value,
+    updated_at: value && new Date(Number(value)),
   }),
 };
 
@@ -124,7 +124,7 @@ const executionMapping : { [key: string]: Function } = {
     arn: value,
   }),
   createdAt: (value?: string) => ({
-    created_at: value,
+    created_at: value && new Date(Number(value)),
   }),
   execution: (value?: string) => ({
     url: value,
@@ -136,13 +136,13 @@ const executionMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: value,
+    updated_at: value && new Date(Number(value)),
   }),
 };
 
 const pdrMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
-    created_at: value,
+    created_at: value && new Date(Number(value)),
   }),
   pdrName: (value?: string) => ({
     name: value,
@@ -154,13 +154,13 @@ const pdrMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: value,
+    updated_at: value && new Date(Number(value)),
   }),
 };
 
 const providerMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
-    created_at: value,
+    created_at: value && new Date(Number(value)),
   }),
   id: (value?: string) => ({
     name: value,
@@ -169,13 +169,13 @@ const providerMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: value,
+    updated_at: value && new Date(Number(value)),
   }),
 };
 
 const ruleMapping : { [key: string]: Function } = {
   createdAt: (value?: string) => ({
-    created_at: value,
+    created_at: value && new Date(Number(value)),
   }),
   name: (value?: string) => ({
     name: value,
@@ -187,7 +187,7 @@ const ruleMapping : { [key: string]: Function } = {
     updated_at: value && new Date(Number(value)),
   }),
   updatedAt: (value?: string) => ({
-    updated_at: value,
+    updated_at: value && new Date(Number(value)),
   }),
 };
 
