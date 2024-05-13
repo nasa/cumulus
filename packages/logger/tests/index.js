@@ -54,7 +54,7 @@ test.beforeEach((t) => {
 
 test('sender defaults to "unknown"', (t) => {
   const { testConsole } = t.context;
-  t.true(false);
+  // t.true(false);
   const logger = new Logger({ console: testConsole });
 
   logger.info('hello');
