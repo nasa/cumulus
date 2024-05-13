@@ -6,7 +6,7 @@ type QueryStringParams = {
   field: string;
   timestamp__to?: string,
   timestamp__from?: string,
-  type?: string,
+  type: string,
   status?: string,
   collectionId?: string,
   provider?: string,
@@ -28,7 +28,7 @@ type AggregateObject = {
 type SummaryObject = {
   dateFrom: string | Date,
   dateTo: string | Date,
-  value: string,
+  value: number,
   aggregation: string,
   unit: string,
 };
@@ -42,13 +42,13 @@ type SummaryResultObject = {
 
 type MetaObject = {
   name: string,
-  count: string,
+  count: number,
   field: string,
 };
 
 type AggregateResObject = {
   key: string,
-  count: string,
+  count: number,
 };
 
 type ApiAggregateResult = {
@@ -75,7 +75,7 @@ class StatsSearch {
       responses.push(
         {
           key: this.queryStringParameters.field === 'status' ? `${result[row].status}` : `${result[row].error}`,
-          count: `${result[row].count}`,
+          count: Number.parseInt(result[row].count, 10),
         }
       );
       totalCount += Number(result[row].count);
@@ -84,7 +84,7 @@ class StatsSearch {
     return {
       meta: {
         name: 'cumulus-api',
-        count: `${totalCount}`,
+        count: totalCount,
         field: `${this.queryStringParameters.field}`,
       },
       count: responses,
@@ -105,28 +105,28 @@ class StatsSearch {
       errors: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: `${result.count_errors}`,
+        value: result.count_errors,
         aggregation: 'count',
         unit: 'error',
       },
       collections: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: `${result.count_collections}`,
+        value: result.count_collections,
         aggregation: 'count',
         unit: 'collection',
       },
       processingTime: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: `${result.avg_processing_time}`,
+        value: result.avg_processing_time,
         aggregation: 'average',
         unit: 'second',
       },
       granules: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: `${result.count_granules}`,
+        value: result.count_granules,
         aggregation: 'count',
         unit: 'granule',
       },
@@ -215,6 +215,7 @@ class StatsSearch {
     if (this.queryStringParameters) {
       let aggregateQuery:Knex.QueryBuilder;
       const knex = sendKnex ?? await getKnexClient();
+      this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
       if (this.queryStringParameters.provider || this.queryStringParameters.collectionId) {
         aggregateQuery = this.providerAndCollectionIdBuilder(knex);
       } else {
@@ -233,7 +234,6 @@ class StatsSearch {
       if (this.queryStringParameters.timestamp__to) {
         aggregateQuery.where(`${this.queryStringParameters.type}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)));
       }
-      this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
       aggregateQuery = this.aggregateQueryField(aggregateQuery, knex);
 
       const result = await knex.raw(aggregateQuery.toString());

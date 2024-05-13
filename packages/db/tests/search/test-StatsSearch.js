@@ -136,12 +136,12 @@ test('StatsSearch returns correct response for basic granules query', async (t) 
   const AggregateSearch = new StatsSearch(queryStringParams);
 
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '100', field: 'status' },
+    meta: { name: 'cumulus-api', count: 100, field: 'status' },
     count: [
-      { key: 'completed', count: '25' },
-      { key: 'running', count: '25' },
-      { key: 'queued', count: '25' },
-      { key: 'failed', count: '25' },
+      { key: 'completed', count: 25 },
+      { key: 'running', count: 25 },
+      { key: 'queued', count: 25 },
+      { key: 'failed', count: 25 },
     ],
   };
 
@@ -159,12 +159,12 @@ test('StatsSearch filters correctly by date', async (t) => {
   const AggregateSearch = new StatsSearch(queryStringParams);
 
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '34', field: 'status' },
+    meta: { name: 'cumulus-api', count: 34, field: 'status' },
     count: [
-      { key: 'completed', count: '9' },
-      { key: 'running', count: '9' },
-      { key: 'failed', count: '8' },
-      { key: 'queued', count: '8' },
+      { key: 'completed', count: 9 },
+      { key: 'running', count: 9 },
+      { key: 'failed', count: 8 },
+      { key: 'queued', count: 8 },
     ],
   };
 
@@ -180,11 +180,11 @@ test('StatsSearch filters executions correctly', async (t) => {
 
   const AggregateSearch = new StatsSearch(queryStringParams1);
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '20', field: 'status' },
+    meta: { name: 'cumulus-api', count: 20, field: 'status' },
     count: [
-      { key: 'completed', count: '7' },
-      { key: 'failed', count: '7' },
-      { key: 'running', count: '6' },
+      { key: 'completed', count: 7 },
+      { key: 'failed', count: 7 },
+      { key: 'running', count: 6 },
     ],
   };
 
@@ -197,11 +197,11 @@ test('StatsSearch filters executions correctly', async (t) => {
 
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = {
-    meta: { name: 'cumulus-api', count: '9', field: 'status' },
+    meta: { name: 'cumulus-api', count: 9, field: 'status' },
     count: [
-      { key: 'completed', count: '3' },
-      { key: 'failed', count: '3' },
-      { key: 'running', count: '3' },
+      { key: 'completed', count: 3 },
+      { key: 'failed', count: 3 },
+      { key: 'running', count: 3 },
     ],
   };
 
@@ -214,8 +214,8 @@ test('StatsSearch filters executions correctly', async (t) => {
 
   const AggregateSearch3 = new StatsSearch(queryStringParams3);
   const expectedResponse3 = {
-    meta: { name: 'cumulus-api', count: '3', field: 'status' },
-    count: [{ key: 'running', count: '3' }],
+    meta: { name: 'cumulus-api', count: 3, field: 'status' },
+    count: [{ key: 'running', count: 3 }],
   };
 
   const queryStringParams4 = {
@@ -229,8 +229,8 @@ test('StatsSearch filters executions correctly', async (t) => {
 
   const AggregateSearch4 = new StatsSearch(queryStringParams4);
   const expectedResponse4 = {
-    meta: { name: 'cumulus-api', count: '1', field: 'status' },
-    count: [{ key: 'undefined', count: '1' }],
+    meta: { name: 'cumulus-api', count: 1, field: 'status' },
+    count: [{ key: 'undefined', count: 1 }],
   };
   t.deepEqual(await AggregateSearch.aggregate(knex), expectedResponse);
   t.deepEqual(await AggregateSearch2.aggregate(knex), expectedResponse2);
@@ -247,11 +247,11 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 
   const AggregateSearch = new StatsSearch(queryStringParams1);
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '20', field: 'status' },
+    meta: { name: 'cumulus-api', count: 20, field: 'status' },
     count: [
-      { key: 'completed', count: '7' },
-      { key: 'failed', count: '7' },
-      { key: 'running', count: '6' },
+      { key: 'completed', count: 7 },
+      { key: 'failed', count: 7 },
+      { key: 'running', count: 6 },
     ],
   };
 
@@ -264,8 +264,8 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = {
-    meta: { name: 'cumulus-api', count: '6', field: 'status' },
-    count: [{ key: 'completed', count: '4' }, { key: 'failed', count: '2' }],
+    meta: { name: 'cumulus-api', count: 6, field: 'status' },
+    count: [{ key: 'completed', count: 4 }, { key: 'failed', count: 2 }],
   };
 
   const queryStringParams3 = {
@@ -278,8 +278,8 @@ test('StatsSearch filters PDRs correctly', async (t) => {
 
   const AggregateSearch3 = new StatsSearch(queryStringParams3);
   const expectedResponse3 = {
-    meta: { name: 'cumulus-api', count: '2', field: 'status' },
-    count: [{ key: 'undefined', count: '2' }],
+    meta: { name: 'cumulus-api', count: 2, field: 'status' },
+    count: [{ key: 'undefined', count: 2 }],
   };
 
   t.deepEqual(await AggregateSearch.aggregate(knex), expectedResponse);
@@ -296,12 +296,12 @@ test('StatsSearch returns correct response when queried by provider', async (t) 
   };
 
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '100', field: 'status' },
+    meta: { name: 'cumulus-api', count: 100, field: 'status' },
     count: [
-      { key: 'completed', count: '25' },
-      { key: 'running', count: '25' },
-      { key: 'queued', count: '25' },
-      { key: 'failed', count: '25' },
+      { key: 'completed', count: 25 },
+      { key: 'running', count: 25 },
+      { key: 'queued', count: 25 },
+      { key: 'failed', count: 25 },
     ],
   };
 
@@ -318,8 +318,8 @@ test('StatsSearch returns correct response when queried by collection', async (t
   };
 
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '5', field: 'status' },
-    count: [{ key: 'queued', count: '5' }],
+    meta: { name: 'cumulus-api', count: 5, field: 'status' },
+    count: [{ key: 'queued', count: 5 }],
   };
 
   const AggregateSearch = new StatsSearch(queryStringParams);
@@ -336,8 +336,8 @@ test('StatsSearch returns correct response when queried by collection and provid
   };
 
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '5', field: 'status' },
-    count: [{ key: 'failed', count: '5' }],
+    meta: { name: 'cumulus-api', count: 5, field: 'status' },
+    count: [{ key: 'failed', count: 5 }],
   };
 
   const AggregateSearch = new StatsSearch(queryStringParams);
@@ -352,8 +352,8 @@ test('StatsSearch returns correct response when queried by collection and provid
   };
 
   const expectedResponse2 = {
-    meta: { name: 'cumulus-api', count: '2', field: 'status' },
-    count: [{ key: 'failed', count: '2' }],
+    meta: { name: 'cumulus-api', count: 2, field: 'status' },
+    count: [{ key: 'failed', count: 2 }],
   };
 
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
@@ -368,8 +368,8 @@ test('StatsSearch returns correct response when queried by collection and provid
   };
 
   const expectedResponse3 = {
-    meta: { name: 'cumulus-api', count: '2', field: 'status' },
-    count: [{ key: 'undefined', count: '2' }],
+    meta: { name: 'cumulus-api', count: 2, field: 'status' },
+    count: [{ key: 'undefined', count: 2 }],
   };
 
   const AggregateSearch3 = new StatsSearch(queryStringParams3);
@@ -387,13 +387,13 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
 
   const AggregateSearch = new StatsSearch(queryStringParams);
   const expectedResponse = {
-    meta: { name: 'cumulus-api', count: '100', field: 'error.Error.keyword' },
+    meta: { name: 'cumulus-api', count: 100, field: 'error.Error.keyword' },
     count: [
-      { key: 'null', count: '20' },
-      { key: 'CumulusMessageAdapterError', count: '20' },
-      { key: 'CmrFailure', count: '20' },
-      { key: 'UnknownError', count: '20' },
-      { key: 'IngestFailure', count: '20' },
+      { key: 'null', count: 20 },
+      { key: 'CumulusMessageAdapterError', count: 20 },
+      { key: 'CmrFailure', count: 20 },
+      { key: 'UnknownError', count: 20 },
+      { key: 'IngestFailure', count: 20 },
     ],
   };
 
@@ -407,13 +407,13 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
 
   const AggregateSearch2 = new StatsSearch(queryStringParams2);
   const expectedResponse2 = {
-    meta: { name: 'cumulus-api', count: '34', field: 'error.Error.keyword' },
+    meta: { name: 'cumulus-api', count: 34, field: 'error.Error.keyword' },
     count: [
-      { key: 'CmrFailure', count: '8' },
-      { key: 'IngestFailure', count: '7' },
-      { key: 'null', count: '7' },
-      { key: 'CumulusMessageAdapterError', count: '6' },
-      { key: 'UnknownError', count: '6' },
+      { key: 'CmrFailure', count: 8 },
+      { key: 'IngestFailure', count: 7 },
+      { key: 'null', count: 7 },
+      { key: 'CumulusMessageAdapterError', count: 6 },
+      { key: 'UnknownError', count: 6 },
     ],
   };
   t.deepEqual(await AggregateSearch2.aggregate(knex), expectedResponse2);
@@ -433,9 +433,9 @@ test('StatsSummary works', async (t) => {
   const results2 = await StatsSummary2.summary(knex);
 
   t.is(results.errors.value, '80');
-  t.is(results.processingTime.value, '54.44999999642372');
+  t.is(results.processingTime.value, 54.44999999642372);
   t.is(results.granules.value, '100');
   t.is(results2.errors.value, '21');
   t.is(results2.granules.value, '25');
-  t.is(results2.processingTime.value, '53.54799992084503');
+  t.is(results2.processingTime.value, 53.54799992084503);
 });
