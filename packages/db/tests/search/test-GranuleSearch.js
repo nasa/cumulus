@@ -348,6 +348,21 @@ test('GranuleSearch supports term search for nested error.Error', async (t) => {
   t.is(response.results?.length, 50);
 });
 
+test('GranuleSearch supports term search for multiple fields', async (t) => {
+  const { knex } = t.context;
+  const queryStringParameters = {
+    limit: 200,
+    collectionId: t.context.collectionId2,
+    provider: t.context.provider.name,
+    'error.Error': 'CumulusMessageAdapterExecutionError',
+    status: 'failed',
+  };
+  const dbSearch = new GranuleSearch({ queryStringParameters });
+  const response = await dbSearch.query(knex);
+  t.is(response.meta.count, 50);
+  t.is(response.results?.length, 50);
+});
+
 test('GranuleSearch non-existing fields are ignored', async (t) => {
   const { knex } = t.context;
   const queryStringParameters = {
