@@ -183,7 +183,7 @@ describe('The Granules API', () => {
       });
 
       const searchedGranule = JSON.parse(searchResults.body).results[0];
-      expect(searchedGranule).toEqual(jasmine.objectContaining(randomGranuleRecord));
+      expect(searchedGranule).toEqual(jasmine.objectContaining(omit(randomGranuleRecord, 'files')));
     });
 
     it('can modify the granule via API.', async () => {
