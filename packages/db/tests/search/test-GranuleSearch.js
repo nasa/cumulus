@@ -109,7 +109,7 @@ test.before(async (t) => {
     timeToPreprocess: '800.18',
     status: 'failed',
     timestamp: 1579352700000,
-    updatedAt: new Date(1579352700000).toISOString(),
+    updatedAt: 1579352700000,
   };
 
   const error = {
