@@ -2,6 +2,7 @@
 
 const test = require('ava');
 const request = require('supertest');
+const rewire = require('rewire');
 const range = require('lodash/range');
 
 const awsServices = require('@cumulus/aws-client/services');
@@ -28,6 +29,9 @@ const {
 const testDbName = randomId('collection');
 
 const assertions = require('../../lib/assertions');
+
+const stats = rewire('../../endpoints/stats');
+const getType = stats.__get__('getType');
 
 // import the express app after setting the env variables
 const { app } = require('../../app');
@@ -146,6 +150,54 @@ test('GET without pathParameters and with an invalid access token returns an una
     .expect(401);
 
   assertions.isInvalidAccessTokenResponse(t, response);
+});
+
+test('getType gets correct type for granules', (t) => {
+  const type = getType({ params: { type: 'granules' } });
+
+  t.is(type, 'granule');
+});
+
+test('getType gets correct type for collections', (t) => {
+  const type = getType({ params: { type: 'collections' } });
+
+  t.is(type, 'collection');
+});
+
+test('getType gets correct type for pdrs', (t) => {
+  const type = getType({ params: { type: 'pdrs' } });
+
+  t.is(type, 'pdr');
+});
+
+test('getType gets correct type for executions', (t) => {
+  const type = getType({ params: { type: 'executions' } });
+
+  t.is(type, 'execution');
+});
+
+test('getType gets correct type for logs', (t) => {
+  const type = getType({ params: { type: 'logs' } });
+
+  t.is(type, 'logs');
+});
+
+test('getType gets correct type for providers', (t) => {
+  const type = getType({ params: { type: 'providers' } });
+
+  t.is(type, 'provider');
+});
+
+test('getType returns undefined if type is not supported', (t) => {
+  const type = getType({ params: { type: 'provide' } });
+
+  t.falsy(type);
+});
+
+test('getType returns correct type from query params', (t) => {
+  const type = getType({ query: { type: 'providers' } });
+
+  t.is(type, 'provider');
 });
 
 test.todo('GET without pathParameters and with an unauthorized user returns an unauthorized response');

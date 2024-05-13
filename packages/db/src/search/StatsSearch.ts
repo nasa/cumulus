@@ -101,7 +101,7 @@ class StatsSearch {
       new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)) : new Date();
     const datefrom = this.queryStringParameters.timestamp__from ?
       new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)) : '1970-01-01T12:00:00+00:00';
-    return { //make 2 types, use table names
+    return {
       errors: {
         dateFrom: datefrom,
         dateTo: dateto,
