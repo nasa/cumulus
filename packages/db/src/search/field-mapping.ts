@@ -36,7 +36,7 @@ const granuleMapping: { [key: string]: Function } = {
     production_date_time: value,
   }),
   productVolume: (value?: string) => ({
-    product_volume: value && Number(value),
+    product_volume: value,
   }),
   published: (value?: string) => ({
     published: (value === 'true'),
