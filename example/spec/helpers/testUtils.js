@@ -103,15 +103,20 @@ async function updateAndUploadTestFileToBucket(params) {
  * @returns {Array<Promise>} - responses from S3 upload
  */
 async function updateAndUploadTestDataToBucket(bucket, data, prefix, replacements) {
-  let a = [];
-  for (let i = 0; i < data.length; i+=1) {
-    a.push(await updateAndUploadTestFileToBucket(
+  const out = [];
+  for (let i = 0; i < data.length; i += 1) {
+    /* eslint-disable no-await-in-loop */
+    out.push(await updateAndUploadTestFileToBucket(
       {
         file: data[i],
-        bucket, prefix, replacements
+        bucket,
+        prefix,
+        replacements,
       }
-    ))
+    ));
+    /* eslint-enable no-await-in-loop */
   }
+  return out;
   // return await Promise.all(
   //   data.map(
   //     (file) =>

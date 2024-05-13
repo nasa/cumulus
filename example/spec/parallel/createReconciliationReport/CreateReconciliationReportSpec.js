@@ -210,7 +210,7 @@ const createActiveCollection = async (prefix, sourceBucket) => {
     prefix,
     granuleId,
     collectionId: constructCollectionId(newCollection.name, newCollection.version),
-    status: 'completed'
+    status: 'completed',
   });
   return newCollection;
 };
@@ -310,7 +310,7 @@ const waitForCollectionRecordsInList = async (stackName, collectionIds, addition
     // Verify the collection is returned when listing collections
     const collsResp = await getCollections({
       prefix: stackName,
-      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 }
+      query: { _id__in: collectionIds.join(','), ...additionalQueryParams, limit: 30 },
     });
     const results = get(JSON.parse(collsResp.body), 'results', []);
     const ids = results.map((c) => constructCollectionId(c.name, c.version));
@@ -389,8 +389,10 @@ describe('When there are granule differences and granule reconciliation is run',
       testDataFolder = createTestDataPath(testId);
 
       console.log('XXX Waiting for setupCollectionAndTestData');
-      for (let i = 0; i < 20000; i+=1) {
+      for (let i = 0; i < 20000; i += 1) {
+        /* eslint-disable no-await-in-loop */
         await setupCollectionAndTestData(config, testSuffix, testDataFolder);
+        /* eslint-enable no-await-in-loop */
       }
 
       console.log('XXX Completed for setupCollectionAndTestData');
