@@ -130,6 +130,7 @@ test.serial('getLaunchpadToken gets a new token when existing token is expired',
 });
 
 test.serial('validateLaunchpadToken returns success status when user is in specified group', async (t) => {
+  t.true(Math.random() < 0.5);
   const token = randomString();
   nock('https://www.example.com:12345')
     .post('/api/validate')

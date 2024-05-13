@@ -37,6 +37,7 @@ test.after.always(async (t) => {
 });
 
 test.serial('deleteGranule deletes granule record and creates deletedgranule record', async (t) => {
+  t.true(Math.random() < 0.5);
   const { esIndex, esClient } = t.context;
 
   const granuleType = 'granule';

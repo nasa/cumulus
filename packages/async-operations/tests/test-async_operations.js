@@ -179,6 +179,7 @@ test.serial('The AsyncOperation start method starts an ECS task with the correct
 });
 
 test.serial('The AsyncOperation start method starts an ECS task with the asyncOperationId passed in', async (t) => {
+  t.true(Math.random() < 0.5);
   stubbedEcsRunTaskParams = {};
   stubbedEcsRunTaskResult = {
     tasks: [{ taskArn: randomString() }],

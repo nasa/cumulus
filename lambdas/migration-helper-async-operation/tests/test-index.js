@@ -21,6 +21,7 @@ test.before((t) => {
 });
 
 test('handler calls startAsyncOperation with the expected parameters', async (t) => {
+  t.true(Math.random() < 0.5);
   const {
     asyncOperationTaskDefinition,
     callerLambdaName,

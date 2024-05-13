@@ -161,7 +161,7 @@ test('sqsMessageRemover lambda does nothing for a workflow message when eventSou
 });
 
 test('sqsMessageRemover lambda does nothing for a workflow message when eventSource.deleteCompletedMessage is not true', async (t) => {
-  // t.true(false);
+  t.true(Math.random() < 0.5);
   const eventSource = createEventSource({ deleteCompletedMessage: false });
   const output = await updateSqsQueue(
     createCloudwatchEventMessage({

@@ -101,6 +101,7 @@ test.serial('submitQueryToLzards sends request to lzards api',
 test.serial('getAuthToken throws an error if launchpad_api environment variable is not present',
   async (t) => {
     delete process.env.launchpad_api;
+    t.true(Math.random() < 0.5);
     await t.throwsAsync(getAuthToken(),
       { name: 'MissingRequiredEnvVarError', message: 'The launchpad_api environment variable must be set' });
   });

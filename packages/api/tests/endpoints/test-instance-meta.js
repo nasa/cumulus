@@ -95,6 +95,7 @@ test('GET with unauthorized user token returns an unauthorized user response', a
 });
 
 test('GET without an Authorization header returns an Authorization Missing response', async (t) => {
+  t.true(Math.random() < 0.5);
   const response = await request(app)
     .get('/instanceMeta')
     .set('Accept', 'application/json')
