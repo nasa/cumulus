@@ -76,7 +76,9 @@ action is required, this note is being added to increase visibility re: this
 modification.
 
 ### Breaking Changes
-
+- **CUMULUS-3689**
+ - Updated `stats/aggregate` api endpoint to query postgres instead of elasticsearch
+ - Created a new StatsSearch class for querying psql with the stats endpoint based on queryStringParameters
 - **CUMULUS-3618**
   - Modified @cumulus/es-client/search.BaseSearch:
     - Removed static class method `es` in favor of new class for managing
