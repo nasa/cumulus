@@ -16,6 +16,7 @@
     "build-lambda-zip": "cd dist/webpack && node ../../../../bin/zip.js lambda.zip index.js",
     "package": "npm run clean && npm run prepare && npm run webpack && npm run build-lambda-zip",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "npm run test:coverage | tee ../../unit-logs/migration-helper-async-operation.log && rm ../../migration-helper-async-operation.log",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
