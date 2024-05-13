@@ -18,7 +18,7 @@ import { ApiFile, ApiGranuleRecord } from '@cumulus/types';
 import Logger from '@cumulus/logger';
 
 const { deleteGranule } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 const { publishGranuleDeleteSnsMessage } = require('../../lib/publishSnsMessageUtils');
 const FileUtils = require('../../lib/FileUtils');
 
@@ -77,7 +77,7 @@ const deleteGranuleAndFiles = async (params: {
     filePgModel = new FilePgModel(),
     granulePgModel = new GranulePgModel(),
     collectionPgModel = new CollectionPgModel(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = params;
 
   // Most of the calls using this method aren't typescripted

@@ -18,9 +18,9 @@ const {
   migrationDir,
 } = require('@cumulus/db');
 const { Search } = require('@cumulus/es-client/search');
+const { createSnsTopic } = require('@cumulus/aws-client/SNS');
 const { sns, sqs } = require('@cumulus/aws-client/services');
 const {
-  CreateTopicCommand,
   SubscribeCommand,
   DeleteTopicCommand,
 } = require('@aws-sdk/client-sns');
@@ -134,7 +134,7 @@ test.beforeEach(async (t) => {
 
 test.beforeEach(async (t) => {
   const topicName = cryptoRandomString({ length: 10 });
-  const { TopicArn } = await sns().send(new CreateTopicCommand({ Name: topicName }));
+  const { TopicArn } = await createSnsTopic(topicName);
   process.env.pdr_sns_topic_arn = TopicArn;
   t.context.TopicArn = TopicArn;
 
@@ -474,8 +474,11 @@ test.serial('writePdr() does not write to PostgreSQL/Elasticsearch if Elasticsea
   cumulusMessage.meta.status = 'completed';
 
   const fakeEsClient = {
-    update: () => {
-      throw new Error('PDR ES error');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      update: () => {
+        throw new Error('PDR ES error');
+      },
     },
   };
 

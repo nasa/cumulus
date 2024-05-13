@@ -13,7 +13,7 @@
     "directory": "tasks/discover-granules"
   },
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build": "rm -rf dist && mkdir dist && cp -R schemas dist/ && ../../node_modules/.bin/webpack",
@@ -39,7 +39,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@cumulus/api-client": "18.2.0",
-    "@cumulus/cumulus-message-adapter-js": "2.0.5",
+    "@cumulus/cumulus-message-adapter-js": "2.2.0",
     "@cumulus/ingest": "18.2.0",
     "@cumulus/logger": "18.2.0",
     "got": "^11.8.5",

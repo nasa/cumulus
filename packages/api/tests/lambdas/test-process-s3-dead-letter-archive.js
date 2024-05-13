@@ -3,14 +3,13 @@
 const test = require('ava');
 const sinon = require('sinon');
 const uuidv4 = require('uuid/v4');
-
+const { createHash } = require('crypto');
 const S3 = require('@cumulus/aws-client/S3');
-const { getMessageExecutionName } = require('@cumulus/message/Executions');
 
 const { randomString } = require('@cumulus/common/test-utils');
+const { unwrapDeadLetterCumulusMessage } = require('@cumulus/message/DeadLetterMessage');
 
-const { fakeCumulusMessageFactory } = require('../../lib/testUtils');
-
+const { fakeDeadLetterMessageFactory } = require('../../lib/testUtils');
 const {
   processDeadLetterArchive, generateNewArchiveKeyForFailedMessage,
 } = require('../../lambdas/process-s3-dead-letter-archive');
@@ -24,42 +23,32 @@ test.beforeEach(async (t) => {
   t.context.stackName = randomString();
   t.context.path = `${t.context.stackName}/dead-letter-archive/sqs/`;
   t.context.sqsPath = `${t.context.stackName}/dead-letter-archive/sqsTest/`;
-  const cumulusMessages = [
-    fakeCumulusMessageFactory(),
-    fakeCumulusMessageFactory(),
+  const dlaMessages = [
+    fakeDeadLetterMessageFactory(),
+    fakeDeadLetterMessageFactory(),
   ];
 
-  t.context.SQSCumulusMessage = fakeCumulusMessageFactory();
-  t.context.SQSCumulusMessage.stopDate = 150;
-
-  const SQSMessage = {
-    body: JSON.stringify(
-      {
-        detail: {
-          status: 'SUCCEEDED',
-          output: JSON.stringify(t.context.SQSCumulusMessage),
-          startDate: t.context.SQSCumulusMessage.cumulus_meta.workflow_start_time,
-          stopDate: t.context.SQSCumulusMessage.stopDate,
-        },
-      }
-    ),
-  };
-  t.context.cumulusMessages = cumulusMessages;
+  const SQSMessage = fakeDeadLetterMessageFactory();
+  t.context.SQSMessage = SQSMessage;
+  t.context.dlaMessages = dlaMessages;
   t.context.messageKeys = [
-    `${t.context.path}${getMessageExecutionName(cumulusMessages[0])}.json`,
-    `${t.context.path}${getMessageExecutionName(cumulusMessages[1])}.json`,
+    `${t.context.path}${dlaMessages[0].executionArn}.json`,
+    `${t.context.path}${dlaMessages[1].executionArn}.json`,
   ];
-  await Promise.all(cumulusMessages.map((cumulusMessage, index) => {
+  t.context.messageHashes = await Promise.all(
+    dlaMessages.map(async (dlaMessage) => createHash('md5').update(JSON.stringify(await unwrapDeadLetterCumulusMessage(dlaMessage))).digest('hex'))
+  );
+  await Promise.all(dlaMessages.map((dlaMessage, index) => {
     const key = t.context.messageKeys[index];
     return S3.putJsonS3Object(
       t.context.bucket,
       key,
-      cumulusMessage
+      dlaMessage
     );
   }));
   await S3.putJsonS3Object(
     t.context.bucket,
-    `${t.context.sqsPath}/${getMessageExecutionName(t.context.SQSCumulusMessage)}`,
+    `${t.context.sqsPath}/${SQSMessage.executionArn}`,
     SQSMessage
   );
 });
@@ -68,7 +57,6 @@ test.after(async (t) => {
   await S3.recursivelyDeleteS3Bucket(t.context.bucket);
 });
 
-// TODO enable all the skipped tests after CUMULUS-3106 fix
 test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus message', async (t) => {
   const writeRecordsFunctionSpy = sinon.spy();
   const { bucket, path } = t.context;
@@ -79,13 +67,18 @@ test('processDeadLetterArchive calls writeRecords for each dead letter Cumulus m
   });
   t.true(writeRecordsFunctionSpy.calledTwice);
   const messageArgs = writeRecordsFunctionSpy.getCalls().map((call) => call.args[0].cumulusMessage);
+
   t.is(messageArgs.filter(
-    (argMsg) =>
-      getMessageExecutionName(argMsg) === getMessageExecutionName(t.context.cumulusMessages[0])
+    (argMsg) => (
+      t.context.messageHashes[0]
+      === createHash('md5').update(JSON.stringify(argMsg)).digest('hex')
+    )
   ).length, 1);
   t.is(messageArgs.filter(
-    (argMsg) =>
-      getMessageExecutionName(argMsg) === getMessageExecutionName(t.context.cumulusMessages[1])
+    (argMsg) => (
+      t.context.messageHashes[1]
+      === createHash('md5').update(JSON.stringify(argMsg)).digest('hex')
+    )
   ).length, 1);
   t.deepEqual(
     {
@@ -140,19 +133,16 @@ test('processDeadLetterArchive is able to handle processing multiple batches of 
 
 test('processDeadLetterArchive deletes dead letter that processed successfully', async (t) => {
   const { bucket, path } = t.context;
-  const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
   const processedMessageKey = t.context.messageKeys[1];
   const writeRecordsErrorThrower = ({ cumulusMessage }) => {
-    if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
+    if (createHash('md5').update(JSON.stringify(cumulusMessage)).digest('hex') === t.context.messageHashes[1]) return;
     throw new Error('write failure');
   };
-
   const output = await processDeadLetterArchive({
     bucket,
     path,
     writeRecordsFunction: writeRecordsErrorThrower,
   });
-
   // Check that processed message key was deleted
   const processedDeadLetterExists = await S3.fileExists(bucket, processedMessageKey);
   t.is(processedDeadLetterExists, false);
@@ -164,12 +154,18 @@ test('processDeadLetterArchive saves failed dead letters to different S3 and rem
     bucket,
     path,
     messageKeys,
+    stackName,
   } = t.context;
-  const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
+  process.env.stackName = stackName;
   const failingMessageKey = messageKeys[0];
-  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(failingMessageKey);
+  const failingFileContents = await S3.getJsonS3Object(bucket, failingMessageKey);
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(
+    failingMessageKey,
+    stackName,
+    failingFileContents
+  );
   const writeRecordsErrorThrower = ({ cumulusMessage }) => {
-    if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
+    if (createHash('md5').update(JSON.stringify(cumulusMessage)).digest('hex') === t.context.messageHashes[1]) return;
     throw new Error('write failure');
   };
 
@@ -178,7 +174,6 @@ test('processDeadLetterArchive saves failed dead letters to different S3 and rem
     path,
     writeRecordsFunction: writeRecordsErrorThrower,
   });
-
   // Check that failing message key was deleted
   const failingMessageRemainsInOldLocation = await S3.fileExists(bucket, failingMessageKey);
   t.is(failingMessageRemainsInOldLocation, false);
@@ -197,12 +192,18 @@ test.serial('processDeadLetterArchive does not remove message from archive S3 pa
     bucket,
     path,
     messageKeys,
+    stackName,
+    dlaMessages,
   } = t.context;
-  const passingMessageExecutionName = getMessageExecutionName(t.context.cumulusMessages[1]);
   const failingMessageKey = messageKeys[0];
-  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(failingMessageKey);
+  const failingMessage = dlaMessages[0];
+  const s3KeyForFailedMessage = generateNewArchiveKeyForFailedMessage(
+    failingMessageKey,
+    stackName,
+    failingMessage
+  );
   const writeRecordsErrorThrower = ({ cumulusMessage }) => {
-    if (getMessageExecutionName(cumulusMessage) === passingMessageExecutionName) return;
+    if (createHash('md5').update(JSON.stringify(cumulusMessage)).digest('hex') === t.context.messageHashes[1]) return;
     throw new Error('write failure');
   };
   const s3Stub = sinon.stub(S3, 's3CopyObject').throws(
@@ -229,19 +230,16 @@ test.serial('processDeadLetterArchive does not remove message from archive S3 pa
 });
 
 test.serial('processDeadLetterArchive processes a SQS Message', async (t) => {
-  const { bucket, sqsPath, SQSCumulusMessage } = t.context;
+  const { bucket, sqsPath, SQSMessage } = t.context;
   const writeRecordsFunctionSpy = sinon.spy();
-
-  const expected = { ...SQSCumulusMessage };
-  expected.cumulus_meta.workflow_stop_time = SQSCumulusMessage.stopDate;
 
   await processDeadLetterArchive({
     bucket,
     path: sqsPath,
     writeRecordsFunction: writeRecordsFunctionSpy,
   });
-
-  t.deepEqual(writeRecordsFunctionSpy.getCall(0).firstArg.cumulusMessage, SQSCumulusMessage);
+  const cumulusMessage = await unwrapDeadLetterCumulusMessage(SQSMessage);
+  t.deepEqual(writeRecordsFunctionSpy.getCall(0).firstArg.cumulusMessage, cumulusMessage);
 });
 
 test.serial('processDeadLetterArchive uses default values if no bucket and key are passed', async (t) => {

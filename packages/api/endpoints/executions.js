@@ -14,7 +14,7 @@ const {
   createRejectableTransaction,
 } = require('@cumulus/db');
 const { deleteExecution } = require('@cumulus/es-client/indexer');
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient, Search } = require('@cumulus/es-client/search');
 
 const { isBadRequestError } = require('../lib/errors');
 const { getGranulesForPayload } = require('../lib/granules');
@@ -170,7 +170,7 @@ async function del(req, res) {
   const {
     executionPgModel = new ExecutionPgModel(),
     knex = await getKnexClient(),
-    esClient = await Search.es(),
+    esClient = await getEsClient(),
   } = req.testContext || {};
 
   const { arn } = req.params;

@@ -525,8 +525,11 @@ test.serial('createAsyncOperation() does not write to Elasticsearch if writing t
 test.serial('createAsyncOperation() does not write to PostgreSQL if writing to Elasticsearch fails', async (t) => {
   const { id, createObject } = t.context;
   const fakeEsClient = {
-    index: () => {
-      throw new Error('ES something bad');
+    initializeEsClient: () => Promise.resolve(),
+    client: {
+      index: () => {
+        throw new Error('ES something bad');
+      },
     },
   };
 

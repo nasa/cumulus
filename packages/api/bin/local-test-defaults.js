@@ -1,6 +1,6 @@
 'use strict';
 
-const { Search } = require('@cumulus/es-client/search');
+const { getEsClient } = require('@cumulus/es-client/search');
 
 const localStackName = 'localrun';
 const localSystemBucket = 'localbucket';
@@ -18,9 +18,9 @@ const setLocalEsVariables = (stackName) => {
  */
 const getESClientAndIndex = async (stackName = localStackName) => {
   setLocalEsVariables(stackName);
-  const client = await Search.es(process.env.ES_HOST);
+  const client = await getEsClient(process.env.ES_HOST);
   const index = process.env.ES_INDEX;
-  return { client, index };
+  return { client: client.client, index };
 };
 
 module.exports = {

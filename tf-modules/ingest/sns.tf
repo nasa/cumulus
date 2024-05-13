@@ -1,6 +1,7 @@
 # Kinesis fallback
 
 resource "aws_sns_topic" "kinesis_fallback" {
+  kms_master_key_id = "alias/aws/sns"
   name = "${var.prefix}-kinesisFallback"
   tags = var.tags
 }

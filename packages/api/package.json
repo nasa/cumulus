@@ -4,7 +4,7 @@
   "description": "Lambda functions for handling all daac's API operations",
   "main": "index.js",
   "engines": {
-    "node": ">=16.19.0"
+    "node": ">=20.12.2"
   },
   "scripts": {
     "build-lambda-zips": "for x in $(ls dist); do (cd dist/${x} && rm -f lambda.zip && find . | xargs node ../../../../bin/zip.js lambda.zip && echo zipped ${x}); done",
@@ -83,8 +83,8 @@
     "cors": "^2.8.5",
     "deepdash": "^5.3.9",
     "dynamodb-data-types": "^3.0.0",
-    "express": "^4.16.4",
     "express-promise-router": "^3.0.3",
+    "express": "^4.16.4",
     "googleapis": "^49.0.0",
     "got": "^11.8.5",
     "hsts": "^2.1.0",
