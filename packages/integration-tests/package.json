@@ -23,6 +23,7 @@
     "clean": "rm -rf dist",
     "package": "npm run build",
     "test": "../../node_modules/.bin/ava",
+    "test:ci": "npm run test:coverage | tee ../../unit-logs/$(jq -r '.name' package.json).log && rm ../../unit-logs/$(jq -r '.name' package.json).log",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "coverage": "python ../../scripts/coverage_handler/coverage.py"
   },
