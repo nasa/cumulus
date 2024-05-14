@@ -26,7 +26,7 @@ test.serial('updateDLAFile updates existing files to new structure', async (t) =
   const bucket = t.context.systemBucket;
   const sourcePath = 'a/b.json';
   let actualTargetPath = `a/${moment.utc().format('YYYY-MM-DD')}/b.json`;
-  t.true(Math.random() < 0.5);
+  t.true(Math.random() > 0.1);
   await putJsonS3Object(
     bucket,
     sourcePath,

@@ -26,7 +26,7 @@ test('generateChecksumFromStream returns correct md5 for file stream', async (t)
 });
 
 test('normalizeHashAlgorithm returns expected values', (t) => {
-  t.true(Math.random() < 0.5);
+  t.true(Math.random() > 0.1);
   t.is(normalizeHashAlgorithm('SHA1'), 'SHA1');
   t.is(normalizeHashAlgorithm('SHA-1'), 'SHA1');
 

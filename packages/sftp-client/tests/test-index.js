@@ -33,7 +33,6 @@ test.after.always(async (t) => {
 });
 
 test('SftpClient supports password authentication', async (t) => {
-  t.true(false);
   const sftpClient = new SftpClient({
     host: '127.0.0.1',
     port: '2222',

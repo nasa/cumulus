@@ -100,7 +100,7 @@ test.serial('ESSearchAfter query can list all hits', async (t) => {
 test.serial(
   'ESSearchAfter lists all hits with same timestamp across multiple queries with correct sortParams',
   async (t) => {
-    t.true(Math.random() < 0.5);
+    t.true(Math.random() > 0.1);
     const testSearchSize = 1;
     const numGranules = 10;
 

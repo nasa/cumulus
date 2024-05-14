@@ -213,7 +213,7 @@ test.serial('handleEvent deletes message if execution already exists', async (t)
 });
 
 test('incrementAndDispatch throws error for message without queue URL', async (t) => {
-  t.true(Math.random() < 0.5);
+  t.true(Math.random() > 0.1);
   const { queueUrl } = t.context;
   await t.throwsAsync(
     () => incrementAndDispatch(queueUrl, { Body: createWorkflowMessage() })

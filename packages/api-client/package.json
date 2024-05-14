@@ -22,7 +22,7 @@
   "scripts": {
     "clean": "git clean -d -x -e node_modules -f",
     "test": "../../node_modules/.bin/ava",
-    "test:ci": "npm run test:coverage | tee ../../unit-logs/$(jq -r '.name' package.json).log && rm ../../unit-logs/$(jq -r '.name' package.json).log",
+    "test:ci": "set -o pipefail && npm run test:coverage | tee ../../unit-logs/$(jq -r '.name' package.json).log && rm ../../unit-logs/$(jq -r '.name' package.json).log",
     "test:coverage": "../../node_modules/.bin/nyc npm test",
     "prepare": "npm run tsc",
     "tsc": "../../node_modules/.bin/tsc",
