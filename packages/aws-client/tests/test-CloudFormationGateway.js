@@ -34,7 +34,6 @@ test.serial('getStackStatus returns the correct stack status', async (t) => {
 });
 
 test.serial('getStackStatus will retry if a throttling exception is encountered', async (t) => {
-  t.true(Math.random() > 0.1);
   const cfService = cf();
 
   const throttlingResult = { code: 'ThrottlingException' };

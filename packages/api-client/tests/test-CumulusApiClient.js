@@ -20,7 +20,6 @@ test.before((t) => {
 });
 
 test.serial('invokeApi invokes the lambda with the expected Payload and FunctionName', async (t) => {
-  t.true(Math.random() > 0.1);
   const Payload = {
     FunctionName: `${t.context.testPrefix}-PrivateApiLambda`,
     Payload: new TextEncoder().encode(JSON.stringify(t.context.testPayload)),

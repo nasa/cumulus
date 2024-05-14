@@ -567,7 +567,6 @@ test.serial('Generates valid GNF reconciliation report when everything is in syn
 });
 
 test.serial('Generates a valid Inventory reconciliation report when everything is in sync', async (t) => {
-  t.true(Math.random() > 0.1);
   const { filePgModel, granulePgModel, knex } = t.context;
 
   const dataBuckets = range(2).map(() => randomId('bucket'));
