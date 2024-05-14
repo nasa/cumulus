@@ -199,6 +199,9 @@ modification.
 
 ### Fixed
 
+- **CUMULUS-3715**
+  - Update `ProvisionUserDatabase` lambda to correctly pass in knex/node debug
+    flags to knex custom code
 - **CUMULUS-3721**
   - Update lambda:GetFunctionConfiguration policy statement to fix error related to resource naming
 - **CUMULUS-3701**
