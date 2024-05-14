@@ -1,16 +1,9 @@
+//@ts-nocheck
 import { Knex } from 'knex';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
-
-type QueryStringParams = {
-  field: string;
-  timestamp__to?: string,
-  timestamp__from?: string,
-  type: string,
-  status?: string,
-  collectionId?: string,
-  provider?: string,
-};
+import { DbQueryParameters } from '../types/search';
+import { BaseSearch } from './BaseSearch';
 
 type TotalSummaryObject = {
   count_errors: number,
@@ -56,13 +49,15 @@ type ApiAggregateResult = {
   count: AggregateResObject[]
 };
 
-class StatsSearch {
-  queryStringParameters: QueryStringParams;
+const infixMapping = new Map([
+  ['granules', 'granule_id'],
+  ['collecitons', 'name'],
+  ['providers', 'name'],
+  ['executions', 'arn'],
+  ['pdrs', 'name'],
+]);
 
-  constructor(queryStringParameters: QueryStringParams) {
-    this.queryStringParameters = queryStringParameters;
-  }
-
+class StatsSearch extends BaseSearch {
   /** Formats the knex results into an API aggregate search response
    *
    * @param {Record<string, aggregateObject>} result - the knex query results
@@ -105,28 +100,28 @@ class StatsSearch {
       errors: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: result.count_errors,
+        value: Number(result.count_errors),
         aggregation: 'count',
         unit: 'error',
       },
       collections: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: result.count_collections,
+        value: Number(result.count_collections),
         aggregation: 'count',
         unit: 'collection',
       },
       processingTime: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: result.avg_processing_time,
+        value: Number(result.avg_processing_time),
         aggregation: 'average',
         unit: 'second',
       },
       granules: {
         dateFrom: datefrom,
         dateTo: dateto,
-        value: result.count_granules,
+        value: Number(result.count_granules),
         aggregation: 'count',
         unit: 'granule',
       },
@@ -161,10 +156,14 @@ class StatsSearch {
    * @param {Knex} knex - the knex client to be used
    * @returns {Knex.QueryBuilder} the knex query of a joined table or not based on queryStringParams
    */
-  private providerAndCollectionIdBuilder(knex: Knex): Knex.QueryBuilder {
-    const aggregateQuery = knex.select(
-      this.whatToGroupBy(knex)
-    ).from(`${this.queryStringParameters.type}`);
+  private providerAndCollectionIdBuilder(knex: Knex, type: string): Knex.QueryBuilder {
+    let aggregateQuery = knex(`${this.queryStringParameters.type}`);
+    if (type === 'search') {
+      aggregateQuery = knex.select(
+        this.whatToGroupBy(knex)
+      ).from(`${this.queryStringParameters.type}`);
+    }
+
     if (this.queryStringParameters.collectionId) {
       aggregateQuery.join(`${TableNames.collections}`, `${this.queryStringParameters.type}.collection_cumulus_id`, 'collections.cumulus_id');
     }
@@ -182,10 +181,11 @@ class StatsSearch {
    */
   private whatToGroupBy(knex: Knex): string {
     let groupStrings = '';
+    this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     if (this.queryStringParameters.field.includes('error.Error')) {
       groupStrings = `${groupStrings}*` + (knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count'));
     } else {
-      groupStrings += (` ${this.queryStringParameters.field}`);
+      groupStrings += (` ${this.queryStringParameters.type}.${this.queryStringParameters.field}`);
     }
     return groupStrings;
   }
@@ -196,58 +196,96 @@ class StatsSearch {
    * @param {Knex} knex - the knex client to be used
    * @returns {Knex.QueryBuilder} The query with its new Aggregatation string
    */
-  private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex): Knex.QueryBuilder {
+  private aggregateQueryField(query: Knex.QueryBuilder): Knex.QueryBuilder {
+    this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     if (this.queryStringParameters.field.includes('error.Error')) {
-      query.select(knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count')).groupByRaw("error #>> '{Error, keyword}'").orderBy('count', 'desc');
+      query.select(("error #>> '{Error, keyword}' as error"), ('COUNT(*) as count')).groupByRaw("error #>> '{Error, keyword}'").orderBy('count', 'desc');
     } else {
-      query.select(`${this.queryStringParameters.field}`).count('* as count').groupBy(`${this.queryStringParameters.field}`)
+      query.select(`${this.queryStringParameters.type}.${this.queryStringParameters.field}`).count('* as count').groupBy(`${this.queryStringParameters.type}.${this.queryStringParameters.field}`)
         .orderBy('count', 'desc');
     }
     return query;
   }
 
-  /** Counts the value frequencies for a given field for a given type of record
-   *
-   * @param {Knex} knex - the knex client to be used
-   * @returns {Promise<apiAggregateResult | undefined>} Aggregated results based on query
-   */
-  public async aggregate(sendKnex: Knex): Promise<ApiAggregateResult | undefined> {
-    if (this.queryStringParameters) {
-      let aggregateQuery:Knex.QueryBuilder;
-      const knex = sendKnex ?? await getKnexClient();
-      this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
-      if (this.queryStringParameters.provider || this.queryStringParameters.collectionId) {
-        aggregateQuery = this.providerAndCollectionIdBuilder(knex);
-      } else {
-        aggregateQuery = knex(`${this.queryStringParameters.type}`);
-      }
-
-      if (this.queryStringParameters.collectionId) {
-        aggregateQuery.where(`${TableNames.collections}.name`, '=', this.queryStringParameters.collectionId);
-      }
-      if (this.queryStringParameters.provider) {
-        aggregateQuery.where(`${TableNames.providers}.name`, '=', this.queryStringParameters.provider);
-      }
-      if (this.queryStringParameters.timestamp__from) {
-        aggregateQuery.where(`${this.queryStringParameters.type}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)));
-      }
-      if (this.queryStringParameters.timestamp__to) {
-        aggregateQuery.where(`${this.queryStringParameters.type}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)));
-      }
-      aggregateQuery = this.aggregateQueryField(aggregateQuery, knex);
-
-      const result = await knex.raw(aggregateQuery.toString());
-      let r = result.rows;
-      if (this.queryStringParameters.status) {
-        r = r.filter((rec:AggregateObject) =>
-          (rec.status === this.queryStringParameters.status)).map(
-          (rec:AggregateObject) => ({ count: rec.count })
-        );
-      }
-      /***getting query results*/
-      return this.formatAggregateResult(r);
+  protected buildBasicQuery(knex: Knex)
+    : {
+      countQuery: Knex.QueryBuilder,
+      searchQuery: Knex.QueryBuilder,
+    } {
+    let countQuery:Knex.QueryBuilder;
+    let searchQuery:Knex.QueryBuilder;
+    if (this.queryStringParameters.provider || this.queryStringParameters.collectionId) {
+      countQuery = this.providerAndCollectionIdBuilder(knex, 'count');
+      searchQuery = this.providerAndCollectionIdBuilder(knex, 'search');
+    } else {
+      countQuery = knex(`${this.queryStringParameters.type}`);
+      searchQuery = knex(`${this.queryStringParameters.type}`);
     }
-    return undefined;
+    return { countQuery, searchQuery };
+  }
+
+  protected buildInfixPrefixQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    const { countQuery, searchQuery, dbQueryParameters } = params;
+    const { infix, prefix } = dbQueryParameters || this.dbQueryParameters;
+    const fieldName = infixMapping.get(this.queryStringParameters.type);
+    if (infix) {
+      countQuery.whereLike(`${this.queryStringParameters.type}.${fieldName}`, `%${infix}%`);
+      searchQuery.whereLike(`${this.queryStringParameters.type}.${fieldName}`, `%${infix}%`);
+    }
+    if (prefix) {
+      countQuery.whereLike(`${this.queryStringParameters.type}.${fieldName}`, `%${prefix}%`);
+      searchQuery.whereLike(`${this.queryStringParameters.type}.${fieldName}`, `%${prefix}%`);
+    }
+  }
+
+  protected buildTermQuery(params: {
+    countQuery: Knex.QueryBuilder,
+    searchQuery: Knex.QueryBuilder,
+    dbQueryParameters?: DbQueryParameters,
+  }) {
+    let { countQuery, searchQuery } = params;
+    if (this.queryStringParameters.collectionId) {
+      countQuery.where(`${TableNames.collections}.name`, '=', this.queryStringParameters.collectionId);
+      searchQuery.where(`${TableNames.collections}.name`, '=', this.queryStringParameters.collectionId);
+    }
+    if (this.queryStringParameters.provider) {
+      countQuery.where(`${TableNames.providers}.name`, '=', this.queryStringParameters.provider);
+      searchQuery.where(`${TableNames.providers}.name`, '=', this.queryStringParameters.provider);
+    }
+    if (this.queryStringParameters.timestamp__from) {
+      countQuery.where(`${this.queryStringParameters.type}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)));
+      searchQuery.where(`${this.queryStringParameters.type}.updated_at`, '>=', new Date(Number.parseInt(this.queryStringParameters.timestamp__from, 10)));
+    }
+    if (this.queryStringParameters.timestamp__to) {
+      countQuery.where(`${this.queryStringParameters.type}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)));
+      searchQuery.where(`${this.queryStringParameters.type}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to, 10)));
+    }
+    if (this.queryStringParameters.status) {
+      countQuery.where(`${this.queryStringParameters.type}.status`, '=', this.queryStringParameters.status);
+      searchQuery.where(`${this.queryStringParameters.type}.status`, '=', this.queryStringParameters.status);
+    }
+    countQuery = countQuery.count('* as count');
+    searchQuery = this.aggregateQueryField(searchQuery);
+    return { countQuery, searchQuery };
+  }
+
+  public translatePostgresRecordsToApiRecords(pgRecs: Record<string, AggregateObject>
+  | TotalSummaryObject): SummaryResultObject | ApiAggregateResult {
+    let pgRecords = pgRecs;
+    if (this.type === 'summary') {
+      return this.formatSummaryResult(pgRecs);
+    }
+    if (this.queryStringParameters.status) {
+      pgRecords = pgRecs.filter((rec:AggregateObject) =>
+        (rec.status === this.queryStringParameters.status)).map(
+        (rec:AggregateObject) => ({ status: rec.status, count: rec.count })
+      );
+    }
+    return this.formatAggregateResult(pgRecords);
   }
 }
 

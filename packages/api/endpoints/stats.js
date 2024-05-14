@@ -10,7 +10,7 @@ const { StatsSearch } = require('@cumulus/db/dist/search/StatsSearch');
  * @param {Object} req - express request object
  * @returns {string|undefined} returns the type of stats
  */
-//eslint-disable-next-line no-unused-vars
+
 function getType(req) {
   const supportedTypes = {
     granules: 'granule',
@@ -35,7 +35,11 @@ function getType(req) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function summary(req, res) {
-  const stats = new StatsSearch(req.query);
+  const queryObj = {
+    queryStringParameters: req.query,
+  };
+
+  const stats = new StatsSearch(queryObj, 'summary');
   const r = await stats.summary();
   return res.send(r);
 }
@@ -48,9 +52,16 @@ async function summary(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  const stats = new StatsSearch(req.query);
-  const r = await stats.aggregate();
-  return res.send(r);
+  const queryObj = {
+    queryStringParameters: req.query,
+  };
+
+  if (getType(req)) {
+    const stats = new StatsSearch(queryObj, 'aggregate');
+    const r = await stats.query();
+    return res.send(r);
+  }
+  throw new Error('No type defined in AggregateQueryRequest');
 }
 
 router.get('/aggregate/:type?', aggregate);

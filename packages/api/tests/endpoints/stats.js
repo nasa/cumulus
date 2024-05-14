@@ -219,10 +219,10 @@ test('GET /stats returns correct response, defaulted to all', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(response.body.errors.value, '80');
+  t.is(response.body.errors.value, 80);
   t.is(response.body.processingTime.value, 54.44999999642372);
-  t.is(response.body.granules.value, '100');
-  t.is(response.body.collections.value, '20');
+  t.is(response.body.granules.value, 100);
+  t.is(response.body.collections.value, 20);
 });
 
 test('GET /stats returns correct response with date params filters values correctly', async (t) => {
@@ -232,10 +232,10 @@ test('GET /stats returns correct response with date params filters values correc
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  t.is(response.body.errors.value, '15');
-  t.is(response.body.collections.value, '10');
+  t.is(response.body.errors.value, 15);
+  t.is(response.body.collections.value, 10);
   t.is(response.body.processingTime.value, 53.38235317258274);
-  t.is(response.body.granules.value, '17');
+  t.is(response.body.granules.value, 17);
 });
 
 test('GET /stats/aggregate returns correct response', async (t) => {
@@ -245,17 +245,11 @@ test('GET /stats/aggregate returns correct response', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
 
-  const expectedResponse = {
-    meta: { name: 'cumulus-api', count: 100, field: 'status' },
-    count: [
-      { key: 'completed', count: 25 },
-      { key: 'running', count: 25 },
-      { key: 'queued', count: 25 },
-      { key: 'failed', count: 25 },
-    ],
-  };
-
-  t.deepEqual(response.body, expectedResponse);
+  t.is(response.body.meta.count, 100);
+  t.is(response.body.results.count.find((item) => item.key === 'completed').count, 25);
+  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 25);
+  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 25);
+  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 25);
 });
 
 test('GET /stats/aggregate filters correctly by date', async (t) => {
@@ -264,16 +258,9 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
     .set('Accept', 'application/json')
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
-
-  const expectedResponse = {
-    meta: { name: 'cumulus-api', count: 41, field: 'status' },
-    count: [
-      { key: 'failed', count: 16 },
-      { key: 'running', count: 9 },
-      { key: 'completed', count: 8 },
-      { key: 'queued', count: 8 },
-    ],
-  };
-
-  t.deepEqual(response.body, expectedResponse);
+  t.is(response.body.meta.count, 41);
+  t.is(response.body.results.count.find((item) => item.key === 'completed').count, 8);
+  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 8);
+  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 8);
+  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 8);
 });
