@@ -10,33 +10,28 @@ interface UnitErrorArgs {
   date: string
   bucket: string
 }
-const momentFormat = 'YYYY.mm.DDTHH.mm.ss';
+const momentFormat = 'YYYY-mm-DDTHH.mm.ss';
 
 export const extractDate = (key: string): string => {
   const keySegments = key.split('/');
   keySegments.pop();
   const date = keySegments.pop();
-  console.log(date);
-  return moment(date).format(momentFormat);
-}
-const compare = (a: string, b: string) => {
-  console.log(a, b);
-  return a > b
+  const out = moment(date, momentFormat).format(momentFormat);
+  return out;
 }
 
 export const getErrorLogs = async (
   branch: string = 'master',
   date: string,
-  bucket: string = 'unit-test-error-logs'
+  bucket: string = 'unit-test-error-logs-example'
 ): Promise<Array<any>> => {
   const objects: Array<any> = [];
   for await (
     const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: branch })
   ) {
-    console.log(objectBatch);
     if (objectBatch){
       objectBatch.filter(
-        (object) => object.Key && object.Key.endsWith('.log') && compare(extractDate(object.Key),date)
+        (object) => object.Key && object.Key.endsWith('.log') && extractDate(object.Key) > date
       ).forEach((object) => objects.push(object.Key));
     }
   }
@@ -95,13 +90,13 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
       default: {
         prefix: 'master',
         date: undefined,
-        bucket: 'unit-test-error-logs'
+        bucket: 'unit-test-error-logs-example'
       },
     }
   );
   return {
     prefix,
-    date: moment(date).format(momentFormat),
+    date: moment(date).format('YYYY-MM-DD'),
     bucket,
   };
 };
@@ -111,7 +106,6 @@ const main = async () => {
     date,
     bucket
   } = await processArgs();
-
   const keys = await getErrorLogs(prefix, date, bucket);
   console.log(organizeByDate(keys));
   console.log(organizeByErrorType(keys));
