@@ -7,32 +7,13 @@ interface UnitErrorArgs {
   date: Date
 }
 
-const parseDate = (
-  year?: number,
-  month?: number,
-  day?: number,
-): Date => {
-  const today = new Date();
-  // js month is 0 indexed
-  const parsedMonth = month ? month - 1 : today.getMonth();
-  const parsedDay = day ? day : today.getDay();
-  let parsedYear = year;
-  if(!parsedYear){
-    parsedYear = new Date().getFullYear();
-    if (new Date(today.getFullYear(), parsedMonth, parsedDay) > today){
-      parsedYear -= 1;
-    }
-  }
-  return new Date(parsedYear, parsedMonth, parsedDay);
-}
-
 const getKeys = async (
   branch: string = "master",
   date: Date,
 ): Promise<Array<any>> => {
   const objects: Array<any> = [];
   for await (
-    const objectBatch of listS3ObjectsV2Batch({ Bucket: 'unit-test-error-logs', Prefix: branch })
+    const objectBatch of listS3ObjectsV2Batch({ Bucket: 'unit-test-error-logs-example', Prefix: branch })
   ) {
     if (objectBatch){
       objectBatch.filter(
@@ -50,28 +31,37 @@ const analyzeKeys = async (keys: Array<string>) => {
     if(!segments) return;
     const errorPoint = segments.pop()?.split('.')[0];
     if(!errorPoint) return;
-    const errorDate = segments.pop();
-    if(!errorDate) return;
     if(!(errorPoint in mapping)) {
       mapping[errorPoint] = [];
     }
-    mapping[errorPoint].push(errorDate);
+    mapping[errorPoint].push(key);
   })
   Object.values(mapping).forEach((list) => list.sort());
   console.log(mapping);
+  const sortedList: Array<Array<string>> = [];
+  keys.forEach((key) => {
+    const segments = key.split('/')
+    if(!segments) return;
+    const errorPoint = segments.pop()?.split('.')[0];
+    if(!errorPoint) return;
+    const errorDate = segments.pop();
+    if(!errorDate) return;
+    sortedList.push(
+      [errorDate, errorPoint]
+    );
+  })
+  sortedList.sort((a, b)=> a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0);
+  console.log(sortedList);
 }; 
 
 export const processArgs = async (): Promise<UnitErrorArgs> => {
   const {
     prefix,
-    year,
-    month,
-    day,
     date,
   } = minimist(
     process.argv,
     {
-      string: ['prefix', 'year', 'month', 'day', 'date'],
+      string: ['prefix', 'date'],
       alias: {
         p: 'prefix',
         key: 'prefix',
@@ -79,23 +69,17 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
         path: 'prefix',
         b: 'prefix',
         branch: 'prefix',
-        y: 'year',
-        m: 'month',
-        d: 'day'
+        d: 'date'
       },
       default: {
         prefix: 'master',
-        year: undefined,
-        month: undefined,
-        day: undefined,
         date: undefined
       },
     }
   );
-  const parsedDate = date ? new Date(date) : parseDate(year, month, day);
   return {
     prefix,
-    date: parsedDate,
+    date: date ? new Date(date) : new Date(),
   };
 };
 const main = async () => {
