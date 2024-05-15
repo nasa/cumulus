@@ -1,6 +1,4 @@
 
-//@ts-check
-
 import minimist from 'minimist';
 import moment from 'moment';
 import { listS3ObjectsV2Batch } from "@cumulus/aws-client/S3";
@@ -23,7 +21,7 @@ export const extractDate = (key: string): string => {
 export const getErrorLogs = async (
   branch: string = 'master',
   date: string,
-  bucket: string = 'unit-test-error-logs-example'
+  bucket: string = 'unit-test-error-logs'
 ): Promise<Array<any>> => {
   const objects: Array<any> = [];
   for await (
@@ -90,7 +88,7 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
       default: {
         prefix: 'master',
         date: undefined,
-        bucket: 'unit-test-error-logs-example'
+        bucket: 'unit-test-error-logs'
       },
     }
   );
