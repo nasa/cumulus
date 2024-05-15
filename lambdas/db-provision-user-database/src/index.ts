@@ -42,6 +42,7 @@ export const handler = async (event: HandlerEvent): Promise<void> => {
     knex = await getKnexClient({
       env: {
         databaseCredentialSecretArn: event.rootLoginSecret,
+        KNEX_DEBUG: process.env.KNEX_DEBUG,
       },
       secretsManager,
     });
