@@ -49,7 +49,7 @@ test.before(async (t) => {
   range(20).map((num) => (
     // collections is never aggregate queried
     collections.push(fakeCollectionRecordFactory({
-      name: `testCollection${num}`,
+      name: `testCollection___${num}`,
       cumulus_id: num,
     }))
   ));
@@ -134,12 +134,12 @@ test('StatsSearch returns correct response for basic granules query', async (t) 
   const queryStringParameters = {
     type: 'granules',
   };
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
-  t.is(results.results.count.find((item) => item.key === 'completed').count, 25);
-  t.is(results.results.count.find((item) => item.key === 'failed')?.count, 25);
-  t.is(results.results.count.find((item) => item.key === 'queued')?.count, 25);
-  t.is(results.results.count.find((item) => item.key === 'running')?.count, 25);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const results = await AggregateSearch.aggregate(knex);
+  t.is(results.count.find((item) => item.key === 'completed')?.count, 25);
+  t.is(results.count.find((item) => item.key === 'failed')?.count, 25);
+  t.is(results.count.find((item) => item.key === 'queued')?.count, 25);
+  t.is(results.count.find((item) => item.key === 'running')?.count, 25);
   t.is(results.meta.count, 100);
 });
 
@@ -151,12 +151,12 @@ test('StatsSearch filters correctly by date', async (t) => {
     timestamp__to: `${(new Date(2022, 2, 30)).getTime()}`,
   };
 
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
-  t.is(results.results.count.find((item) => item.key === 'completed').count, 9);
-  t.is(results.results.count.find((item) => item.key === 'failed')?.count, 8);
-  t.is(results.results.count.find((item) => item.key === 'queued')?.count, 8);
-  t.is(results.results.count.find((item) => item.key === 'running')?.count, 9);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const results = await AggregateSearch.aggregate(knex);
+  t.is(results.count.find((item) => item.key === 'completed').count, 9);
+  t.is(results.count.find((item) => item.key === 'failed')?.count, 8);
+  t.is(results.count.find((item) => item.key === 'queued')?.count, 8);
+  t.is(results.count.find((item) => item.key === 'running')?.count, 9);
   t.is(results.meta.count, 34);
 });
 
@@ -167,11 +167,11 @@ test('StatsSearch filters executions correctly', async (t) => {
     field: 'status',
   };
 
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
-  t.is(results.results.count.find((item) => item.key === 'completed').count, 7);
-  t.is(results.results.count.find((item) => item.key === 'failed').count, 7);
-  t.is(results.results.count.find((item) => item.key === 'running').count, 6);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'execution');
+  const results = await AggregateSearch.aggregate(knex);
+  t.is(results.count.find((item) => item.key === 'completed').count, 7);
+  t.is(results.count.find((item) => item.key === 'failed').count, 7);
+  t.is(results.count.find((item) => item.key === 'running').count, 6);
   t.is(results.meta.count, 20);
 
   queryStringParameters = {
@@ -181,11 +181,11 @@ test('StatsSearch filters executions correctly', async (t) => {
     timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
   };
 
-  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results2 = await AggregateSearch2.query(knex);
-  t.is(results2.results.count.find((item) => item.key === 'completed').count, 3);
-  t.is(results2.results.count.find((item) => item.key === 'failed').count, 3);
-  t.is(results2.results.count.find((item) => item.key === 'running').count, 3);
+  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'execution');
+  const results2 = await AggregateSearch2.aggregate(knex);
+  t.is(results2.count.find((item) => item.key === 'completed').count, 3);
+  t.is(results2.count.find((item) => item.key === 'failed').count, 3);
+  t.is(results2.count.find((item) => item.key === 'running').count, 3);
   t.is(results2.meta.count, 9);
 
   queryStringParameters = {
@@ -193,13 +193,13 @@ test('StatsSearch filters executions correctly', async (t) => {
     field: 'status',
     timestamp__to: `${(new Date(2023, 11, 30)).getTime()}`,
     timestamp__from: `${(new Date(2021, 1, 28)).getTime()}`,
-    collectionId: 'testCollection5',
+    collectionId: 'testCollection___5',
     status: 'running',
   };
 
-  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results3 = await AggregateSearch3.query(knex);
-  t.is(results3.results.count.find((item) => item.key === 'running').count, 1);
+  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'execution');
+  const results3 = await AggregateSearch3.aggregate(knex);
+  t.is(results3.count.find((item) => item.key === 'running').count, 1);
   t.is(results3.meta.count, 1);
 });
 
@@ -210,11 +210,11 @@ test('StatsSearch filters PDRs correctly', async (t) => {
     field: 'status',
   };
 
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
-  t.is(results.results.count.find((item) => item.key === 'completed').count, 7);
-  t.is(results.results.count.find((item) => item.key === 'failed').count, 7);
-  t.is(results.results.count.find((item) => item.key === 'running').count, 6);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'pdr');
+  const results = await AggregateSearch.aggregate(knex);
+  t.is(results.count.find((item) => item.key === 'completed').count, 7);
+  t.is(results.count.find((item) => item.key === 'failed').count, 7);
+  t.is(results.count.find((item) => item.key === 'running').count, 6);
   t.is(results.meta.count, 20);
 
   queryStringParameters = {
@@ -224,10 +224,10 @@ test('StatsSearch filters PDRs correctly', async (t) => {
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
 
-  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results2 = await AggregateSearch2.query(knex);
-  t.is(results2.results.count.find((item) => item.key === 'completed').count, 4);
-  t.is(results2.results.count.find((item) => item.key === 'failed').count, 2);
+  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'pdr');
+  const results2 = await AggregateSearch2.aggregate(knex);
+  t.is(results2.count.find((item) => item.key === 'completed').count, 4);
+  t.is(results2.count.find((item) => item.key === 'failed').count, 2);
   t.is(results2.meta.count, 6);
   queryStringParameters = {
     type: 'pdrs',
@@ -237,9 +237,9 @@ test('StatsSearch filters PDRs correctly', async (t) => {
     status: 'failed',
   };
 
-  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results3 = await AggregateSearch3.query(knex);
-  t.is(results3.results.count.find((item) => item.key === 'failed').count, 2);
+  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'pdr');
+  const results3 = await AggregateSearch3.aggregate(knex);
+  t.is(results3.count.find((item) => item.key === 'failed').count, 2);
   t.is(results3.meta.count, 2);
 });
 
@@ -251,11 +251,11 @@ test('StatsSearch returns correct response when queried by provider', async (t) 
     provider: 'testProvider2',
   };
 
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const results = await AggregateSearch.aggregate(knex);
   t.is(results.meta.count, 10);
-  t.is(results.results.count.find((item) => item.key === 'completed').count, 5);
-  t.is(results.results.count.find((item) => item.key === 'queued').count, 5);
+  t.is(results.count.find((item) => item.key === 'completed').count, 5);
+  t.is(results.count.find((item) => item.key === 'queued').count, 5);
 });
 
 test('StatsSearch returns correct response when queried by collection', async (t) => {
@@ -263,11 +263,11 @@ test('StatsSearch returns correct response when queried by collection', async (t
   const queryStringParameters = {
     type: 'granules',
     field: 'status',
-    collectionId: 'testCollection8',
+    collectionId: 'testCollection___8',
   };
 
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const results = await AggregateSearch.aggregate(knex);
   t.is(results.meta.count, 5);
 });
 
@@ -276,42 +276,42 @@ test('StatsSearch returns correct response when queried by collection and provid
   let queryStringParameters = {
     type: 'granules',
     field: 'status',
-    collectionId: 'testCollection1',
+    collectionId: 'testCollection___1',
     providerId: 'testProvider1',
   };
 
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const results = await AggregateSearch.aggregate(knex);
   t.is(results.meta.count, 5);
-  t.is(results.results.count.find((item) => item.key === 'failed').count, 5);
+  t.is(results.count.find((item) => item.key === 'failed').count, 5);
 
   queryStringParameters = {
     type: 'granules',
     field: 'status',
-    collectionId: 'testCollection1',
+    collectionId: 'testCollection___1',
     providerId: 'testProvider1',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
   };
 
-  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results2 = await AggregateSearch2.query(knex);
+  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'granule');
+  const results2 = await AggregateSearch2.aggregate(knex);
   t.is(results2.meta.count, 2);
-  t.is(results2.results.count.find((item) => item.key === 'failed').count, 2);
+  t.is(results2.count.find((item) => item.key === 'failed').count, 2);
   queryStringParameters = {
     type: 'granules',
     field: 'status',
-    collectionId: 'testCollection1',
+    collectionId: 'testCollection___1',
     providerId: 'testProvider1',
     timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
     status: 'failed',
   };
 
-  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results3 = await AggregateSearch3.query(knex);
+  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'granule');
+  const results3 = await AggregateSearch3.aggregate(knex);
   t.is(results3.meta.count, 2);
-  t.is(results3.results.count.find((item) => item.key === 'failed').count, 2);
+  t.is(results3.count.find((item) => item.key === 'failed').count, 2);
 });
 
 test('StatsSearch returns correct response when queried by error', async (t) => {
@@ -320,26 +320,26 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
     type: 'granules',
     field: 'error.Error.keyword',
   };
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const results = await AggregateSearch.aggregate(knex);
   t.is(results.meta.count, 100);
-  t.is(results.results.count.find((item) => item.key === 'CmrFailure').count, 20);
-  t.is(results.results.count.find((item) => item.key === 'UnknownError').count, 20);
-  t.is(results.results.count.find((item) => item.key === 'IngestFailure').count, 20);
-  t.is(results.results.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 20);
+  t.is(results.count.find((item) => item.key === 'CmrFailure').count, 20);
+  t.is(results.count.find((item) => item.key === 'UnknownError').count, 20);
+  t.is(results.count.find((item) => item.key === 'IngestFailure').count, 20);
+  t.is(results.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 20);
   queryStringParameters = {
     type: 'granules',
     field: 'error.Error.keyword',
     timestamp__to: `${(new Date(2021, 12, 9)).getTime()}`,
     timestamp__from: `${(new Date(2020, 1, 28)).getTime()}`,
   };
-  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results2 = await AggregateSearch2.query(knex);
+  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'granule');
+  const results2 = await AggregateSearch2.aggregate(knex);
   t.is(results2.meta.count, 34);
-  t.is(results2.results.count.find((item) => item.key === 'CmrFailure').count, 8);
-  t.is(results2.results.count.find((item) => item.key === 'UnknownError').count, 6);
-  t.is(results2.results.count.find((item) => item.key === 'IngestFailure').count, 7);
-  t.is(results2.results.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 6);
+  t.is(results2.count.find((item) => item.key === 'CmrFailure').count, 8);
+  t.is(results2.count.find((item) => item.key === 'UnknownError').count, 6);
+  t.is(results2.count.find((item) => item.key === 'IngestFailure').count, 7);
+  t.is(results2.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 6);
 });
 
 test('StatsSearch can query by infix and prefix when type is defined', async (t) => {
@@ -348,29 +348,29 @@ test('StatsSearch can query by infix and prefix when type is defined', async (t)
     type: 'granules',
     infix: 'testGra',
   };
-  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results = await AggregateSearch.query(knex);
+  const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
+  const results = await AggregateSearch.aggregate(knex);
   t.is(results.meta.count, 50);
-  t.is(results.results.count.find((item) => item.key === 'completed').count, 25);
-  t.is(results.results.count.find((item) => item.key === 'queued').count, 25);
+  t.is(results.count.find((item) => item.key === 'completed').count, 25);
+  t.is(results.count.find((item) => item.key === 'queued').count, 25);
 
   queryStringParameters = {
     type: 'granules',
     prefix: 'query',
   };
-  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results2 = await AggregateSearch2.query(knex);
+  const AggregateSearch2 = new StatsSearch({ queryStringParameters }, 'granule');
+  const results2 = await AggregateSearch2.aggregate(knex);
   t.is(results2.meta.count, 50);
-  t.is(results2.results.count.find((item) => item.key === 'failed').count, 25);
-  t.is(results2.results.count.find((item) => item.key === 'running').count, 25);
+  t.is(results2.count.find((item) => item.key === 'failed').count, 25);
+  t.is(results2.count.find((item) => item.key === 'running').count, 25);
 
   queryStringParameters = {
     type: 'collections',
-    infix: 'testCollection8',
+    infix: 'testCollection___8',
     field: 'name',
   };
-  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'aggregate');
-  const results3 = await AggregateSearch3.query(knex);
+  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'collection');
+  const results3 = await AggregateSearch3.aggregate(knex);
   t.is(results3.meta.count, 1);
 });
 

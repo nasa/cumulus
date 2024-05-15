@@ -246,10 +246,10 @@ test('GET /stats/aggregate returns correct response', async (t) => {
     .expect(200);
 
   t.is(response.body.meta.count, 100);
-  t.is(response.body.results.count.find((item) => item.key === 'completed').count, 25);
-  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 25);
-  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 25);
-  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 25);
+  t.is(response.body.count.find((item) => item.key === 'completed').count, 25);
+  t.is(response.body.count.find((item) => item.key === 'queued').count, 25);
+  t.is(response.body.count.find((item) => item.key === 'queued').count, 25);
+  t.is(response.body.count.find((item) => item.key === 'queued').count, 25);
 });
 
 test('GET /stats/aggregate filters correctly by date', async (t) => {
@@ -259,8 +259,8 @@ test('GET /stats/aggregate filters correctly by date', async (t) => {
     .set('Authorization', `Bearer ${jwtAuthToken}`)
     .expect(200);
   t.is(response.body.meta.count, 41);
-  t.is(response.body.results.count.find((item) => item.key === 'completed').count, 8);
-  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 8);
-  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 8);
-  t.is(response.body.results.count.find((item) => item.key === 'queued').count, 8);
+  t.is(response.body.count.find((item) => item.key === 'completed').count, 8);
+  t.is(response.body.count.find((item) => item.key === 'queued').count, 8);
+  t.is(response.body.count.find((item) => item.key === 'queued').count, 8);
+  t.is(response.body.count.find((item) => item.key === 'queued').count, 8);
 });

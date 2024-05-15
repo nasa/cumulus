@@ -2,7 +2,7 @@
 
 const router = require('express-promise-router')();
 const get = require('lodash/get');
-const { StatsSearch } = require('@cumulus/db/dist/search/StatsSearch');
+const { StatsSearch } = require('@cumulus/db');
 
 /**
  * Map requested stats types to supported types
@@ -10,7 +10,6 @@ const { StatsSearch } = require('@cumulus/db/dist/search/StatsSearch');
  * @param {Object} req - express request object
  * @returns {string|undefined} returns the type of stats
  */
-
 function getType(req) {
   const supportedTypes = {
     granules: 'granule',
@@ -35,11 +34,9 @@ function getType(req) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function summary(req, res) {
-  const queryObj = {
+  const stats = new StatsSearch({
     queryStringParameters: req.query,
-  };
-
-  const stats = new StatsSearch(queryObj, 'summary');
+  }, 'granule');
   const r = await stats.summary();
   return res.send(r);
 }
@@ -52,16 +49,12 @@ async function summary(req, res) {
  * @returns {Promise<Object>} the promise of express response object
  */
 async function aggregate(req, res) {
-  const queryObj = {
-    queryStringParameters: req.query,
-  };
-
   if (getType(req)) {
-    const stats = new StatsSearch(queryObj, 'aggregate');
-    const r = await stats.query();
+    const stats = new StatsSearch({ queryStringParameters: req.query }, getType(req));
+    const r = await stats.aggregate();
     return res.send(r);
   }
-  throw new Error('No type defined in AggregateQueryRequest');
+  return res.boom.badRequest('Type must be included in Stats Aggregate query string parameters');
 }
 
 router.get('/aggregate/:type?', aggregate);
