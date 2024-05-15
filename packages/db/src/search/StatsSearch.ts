@@ -57,11 +57,14 @@ const infixMapping = new Map([
   ['pdrs', 'name'],
 ]);
 
+/**
+ * A class to query postgres for the STATS and STATS/AGGREGATE endpoints
+ */
 class StatsSearch extends BaseSearch {
-  /** Formats the knex results into an API aggregate search response
+  /** Formats the postgres records into an API stats/aggregate response
    *
-   * @param {Record<string, aggregateObject>} result - the knex query results
-   * @returns {apiAggregateResult} An api Object with the aggregate statistics
+   * @param {Record<string, AggregateObject>} result - the postgres query results
+   * @returns {ApiAggregateResult} the api object with the aggregate statistics
    */
   private formatAggregateResult(result: Record<string, AggregateObject>): ApiAggregateResult {
     let totalCount = 0;
@@ -86,10 +89,10 @@ class StatsSearch extends BaseSearch {
     };
   }
 
-  /** Formats the knex results into an API aggregate search response
+  /** Formats the postgres results into an API stats/summary response
    *
-   * @param {totalSummaryObject} result - the knex summary query results
-   * @returns {SummaryResultObject} An api Object with the summary statistics
+   * @param {TotalSummaryObject} result - the knex summary query results
+   * @returns {SummaryResultObject} the api object with the summary statistics
    */
   private formatSummaryResult(result: TotalSummaryObject): SummaryResultObject {
     const timestampTo = Number.parseInt(this.queryStringParameters.timestamp__to as string, 10);
@@ -130,10 +133,10 @@ class StatsSearch extends BaseSearch {
     };
   }
 
-  /** Provides a summary of statistics around the granules in the system
+  /** Queries postgres for a summary of statistics around the granules in the system
    *
    * @param {Knex} sendKnex - the knex client to be used
-   * @returns {Promis<SummaryResultObject>} An Object with the summary statistics
+   * @returns {Promise<SummaryResultObject>} the postgres aggregations based on query
    */
   public async summary(sendknex: Knex): Promise<SummaryResultObject> {
     const knex = sendknex ?? await getKnexClient();
@@ -154,7 +157,7 @@ class StatsSearch extends BaseSearch {
     return this.formatSummaryResult(aggregateQueryRes[0]);
   }
 
-  /** Performs joins on the provider/collection table if neccessary
+  /** Performs joins on the provider and/or collection table if neccessary
    *
    * @param {Knex} knex - the knex client to be used
    * @returns {Knex.QueryBuilder} the knex query of a joined table or not based on queryStringParams
@@ -177,11 +180,11 @@ class StatsSearch extends BaseSearch {
     return aggregateQuery;
   }
 
-  /** Provides a knex raw string to aggregate the query based on queryStringParameters
+  /** Aggregates the search query based on queryStringParameters
    *
-   * @param {query} Knex.QueryBuilder - the current knex query to be aggregated
+   * @param {Knex.QueryBuilder} query - the knex query to be aggregated
    * @param {Knex} knex - the knex client to be used
-   * @returns {Knex.QueryBuilder} The query with its new Aggregatation string
+   * @returns {Knex.QueryBuilder} the query with its new Aggregatation
    */
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex): Knex.QueryBuilder {
     this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
@@ -199,6 +202,12 @@ class StatsSearch extends BaseSearch {
     return query;
   }
 
+  /**
+   * Builds basic query
+   *
+   * @param knex - the knex client
+   * @returns the search query
+   */
   protected buildBasicQuery(knex: Knex)
     : {
       searchQuery: Knex.QueryBuilder,
@@ -213,6 +222,12 @@ class StatsSearch extends BaseSearch {
     return { searchQuery };
   }
 
+  /**
+   * Builds queries for infix and prefix
+   *
+   * @param params
+   * @param {Knex.QueryBuilder} params.searchQuery - the search query
+   */
   protected buildInfixPrefixQuery(params: {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -228,6 +243,14 @@ class StatsSearch extends BaseSearch {
     }
   }
 
+  /**
+   * Builds queries for term fields
+   *
+   * @param params
+   * @param {Knex.QueryBuilder} params.searchQuery - the search query
+   * @param [params.dbQueryParameters] - the db query parameters
+   * @returns {Knex.QueryBuilder} - the updated search query based on queryStringParams
+   */
   protected buildTermQuery(params: {
     searchQuery: Knex.QueryBuilder,
     dbQueryParameters?: DbQueryParameters,
@@ -251,6 +274,13 @@ class StatsSearch extends BaseSearch {
     return { searchQuery };
   }
 
+  /**
+   * Executes the aggregate search query
+   *
+   * @param {Knex} knex - the knex client to be used
+   * @param [params.dbQueryParameters] - the db query parameters
+   * @returns {ApiAggregateResult} - the aggregate query results in api format
+   */
   async aggregate(testKnex: Knex | undefined) {
     const knex = testKnex ?? await getKnexClient();
     const { searchQuery } = this.buildSearch(knex);

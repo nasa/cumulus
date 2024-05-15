@@ -47,7 +47,6 @@ test.before(async (t) => {
   const providers = [];
 
   range(20).map((num) => (
-    // collections is never aggregate queried
     collections.push(fakeCollectionRecordFactory({
       name: `testCollection___${num}`,
       cumulus_id: num,
@@ -55,7 +54,6 @@ test.before(async (t) => {
   ));
 
   range(10).map((num) => (
-    // providers is never aggregate queried
     providers.push(fakeProviderRecordFactory({
       cumulus_id: num,
       name: `testProvider${num}`,
@@ -63,7 +61,6 @@ test.before(async (t) => {
   ));
 
   range(100).map((num) => (
-    // granules can be queried by timestampto/from, collectionid, providerid, status,
     granules.push(fakeGranuleRecordFactory({
       collection_cumulus_id: num % 20,
       granule_id: num % 2 === 0 ? `testGranule${num}` : `query__Granule${num}`,
@@ -77,7 +74,6 @@ test.before(async (t) => {
   ));
 
   range(20).map((num) => (
-    // pdrs can be queried by timestampto/from, status
     pdrs.push(fakePdrRecordFactory({
       collection_cumulus_id: num,
       status: statuses[(num % 3) + 1],
@@ -86,7 +82,6 @@ test.before(async (t) => {
       updated_at: (new Date(2018 + (num % 6), (num % 12), ((num + 1) % 29))).toISOString(),
     // eslint-disable-next-line no-sequences
     })),
-    // executions can be queried by: timestampto/from, collectionid, status
     executions.push(fakeExecutionRecordFactory({
       collection_cumulus_id: num,
       status: statuses[(num % 3) + 1],

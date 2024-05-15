@@ -55,7 +55,6 @@ process.env = {
 };
 
 test.before(async (t) => {
-  // create buckets
   await awsServices.s3().createBucket({ Bucket: process.env.system_bucket });
   const username = randomId();
   await setAuthorizedOAuthUsers([username]);
@@ -82,7 +81,6 @@ test.before(async (t) => {
   const collections = [];
 
   range(20).map((num) => (
-    // collections is never aggregate queried
     collections.push(fakeCollectionRecordFactory({
       name: `testCollection${num}`,
       cumulus_id: num,
@@ -90,7 +88,6 @@ test.before(async (t) => {
   ));
 
   range(100).map((num) => (
-    // granules can be queried by timestampto/from, collectionid, providerid, status,
     granules.push(fakeGranuleRecordFactory({
       collection_cumulus_id: num % 20,
       status: statuses[num % 4],
