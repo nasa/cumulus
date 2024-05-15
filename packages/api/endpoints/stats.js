@@ -3,6 +3,7 @@
 const router = require('express-promise-router')();
 const get = require('lodash/get');
 const { StatsSearch } = require('@cumulus/db');
+const omit = require('lodash/omit');
 
 /**
  * Map requested stats types to supported types
@@ -35,7 +36,7 @@ function getType(req) {
  */
 async function summary(req, res) {
   const stats = new StatsSearch({
-    queryStringParameters: req.query,
+    queryStringParameters: omit(req.query, 'type'),
   }, 'granule');
   const r = await stats.summary();
   return res.send(r);
@@ -50,7 +51,7 @@ async function summary(req, res) {
  */
 async function aggregate(req, res) {
   if (getType(req)) {
-    const stats = new StatsSearch({ queryStringParameters: req.query }, getType(req));
+    const stats = new StatsSearch({ queryStringParameters: omit(req.query, 'type') }, getType(req));
     const r = await stats.aggregate();
     return res.send(r);
   }

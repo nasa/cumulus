@@ -1,52 +1,53 @@
 import { Knex } from 'knex';
+import omit from 'lodash/omit';
 import { getKnexClient } from '../connection';
 import { TableNames } from '../tables';
 import { DbQueryParameters } from '../types/search';
 import { BaseSearch, typeToTable } from './BaseSearch';
 
-type TotalSummaryObject = {
+type TotalSummary = {
   count_errors: number,
   count_collections: number,
   count_granules: number,
   avg_processing_time: number,
 };
 
-type AggregateObject = {
+type Aggregate = {
   count: string,
   status?: string,
   error?: string,
   name?: string,
 };
 
-type SummaryObject = {
-  dateFrom: string | Date,
-  dateTo: string | Date,
+type Summary = {
+  dateFrom: string,
+  dateTo: string,
   value: number,
   aggregation: string,
   unit: string,
 };
 
-type SummaryResultObject = {
-  errors: SummaryObject,
-  granules: SummaryObject,
-  collections: SummaryObject,
-  processingTime: SummaryObject,
+type SummaryResult = {
+  errors: Summary,
+  granules: Summary,
+  collections: Summary,
+  processingTime: Summary,
 };
 
-type MetaObject = {
+type Meta = {
   name: string,
   count: number,
   field: string,
 };
 
-type AggregateResObject = {
+type AggregateRes = {
   key: string,
   count: number,
 };
 
 type ApiAggregateResult = {
-  meta: MetaObject,
-  count: AggregateResObject[]
+  meta: Meta,
+  count: AggregateRes[]
 };
 
 const infixMapping = new Map([
@@ -63,10 +64,10 @@ const infixMapping = new Map([
 class StatsSearch extends BaseSearch {
   /** Formats the postgres records into an API stats/aggregate response
    *
-   * @param {Record<string, AggregateObject>} result - the postgres query results
+   * @param {Record<string, Aggregate>} result - the postgres query results
    * @returns {ApiAggregateResult} the api object with the aggregate statistics
    */
-  private formatAggregateResult(result: Record<string, AggregateObject>): ApiAggregateResult {
+  private formatAggregateResult(result: Record<string, Aggregate>): ApiAggregateResult {
     let totalCount = 0;
     const responses = [];
     for (const row of Object.keys(result)) {
@@ -91,16 +92,16 @@ class StatsSearch extends BaseSearch {
 
   /** Formats the postgres results into an API stats/summary response
    *
-   * @param {TotalSummaryObject} result - the knex summary query results
-   * @returns {SummaryResultObject} the api object with the summary statistics
+   * @param {TotalSummary} result - the knex summary query results
+   * @returns {SummaryResult} the api object with the summary statistics
    */
-  private formatSummaryResult(result: TotalSummaryObject): SummaryResultObject {
+  private formatSummaryResult(result: TotalSummary): SummaryResult {
     const timestampTo = Number.parseInt(this.queryStringParameters.timestamp__to as string, 10);
     const timestampFrom = Number.parseInt(this.queryStringParameters.timestamp__from as string, 10);
     const dateto = this.queryStringParameters.timestamp__to ?
-      new Date(timestampTo) : new Date();
+      new Date(timestampTo).toISOString() : new Date().toISOString();
     const datefrom = this.queryStringParameters.timestamp__from ?
-      new Date(timestampFrom) : '1970-01-01T12:00:00+00:00';
+      new Date(timestampFrom).toISOString() : '1970-01-01T12:00:00+00:00';
     return {
       errors: {
         dateFrom: datefrom,
@@ -136,9 +137,9 @@ class StatsSearch extends BaseSearch {
   /** Queries postgres for a summary of statistics around the granules in the system
    *
    * @param {Knex} sendKnex - the knex client to be used
-   * @returns {Promise<SummaryResultObject>} the postgres aggregations based on query
+   * @returns {Promise<SummaryResult>} the postgres aggregations based on query
    */
-  public async summary(sendknex: Knex): Promise<SummaryResultObject> {
+  public async summary(sendknex: Knex): Promise<SummaryResult> {
     const knex = sendknex ?? await getKnexClient();
     const aggregateQuery:Knex.QueryBuilder = knex(`${TableNames.granules}`);
     if (this.queryStringParameters.timestamp__from) {
@@ -148,12 +149,12 @@ class StatsSearch extends BaseSearch {
       aggregateQuery.where(`${TableNames.granules}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
     }
     aggregateQuery.select(
-      knex.raw(`COUNT(CASE WHEN ${TableNames.granules}.error ->> 'Error' != '{}' THEN 1 END) AS count_errors`),
+      knex.raw(`COUNT(CASE WHEN ${TableNames.granules}.error ->> 'Error' != '{}' THEN 1 ELSE 0 END) AS count_errors`),
       knex.raw(`COUNT(${TableNames.granules}.cumulus_id) AS count_granules`),
       knex.raw(`AVG(${TableNames.granules}.duration) AS avg_processing_time`),
       knex.raw(`COUNT(DISTINCT ${TableNames.granules}.collection_cumulus_id) AS count_collections`)
     );
-    const aggregateQueryRes: TotalSummaryObject[] = await aggregateQuery;
+    const aggregateQueryRes: TotalSummary[] = await aggregateQuery;
     return this.formatSummaryResult(aggregateQueryRes[0]);
   }
 
@@ -166,7 +167,7 @@ class StatsSearch extends BaseSearch {
     let aggregateQuery;
     this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     if (this.queryStringParameters.field?.includes('error.Error')) {
-      aggregateQuery = knex.select(knex.raw("error #>> '{Error, keyword}' as error")).from(typeToTable[this.type]);
+      aggregateQuery = knex.select(knex.raw(`"count(${typeToTable[this.type]}.cumulus_id), error ->> 'Error' as error"`)).from(typeToTable[this.type]);
     } else {
       aggregateQuery = knex.select(`${typeToTable[this.type]}.${this.queryStringParameters.field}`).from(typeToTable[this.type]);
     }
@@ -189,13 +190,13 @@ class StatsSearch extends BaseSearch {
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex): Knex.QueryBuilder {
     this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     if (this.queryStringParameters.field?.includes('error.Error')) {
-      query.select(knex.raw("error #>> '{Error, keyword}' as error"))
-        .count('* as count')
-        .groupByRaw(knex.raw("error #>> '{Error, keyword}'"))
+      query.select(knex.raw("error ->> 'Error' as error"))
+        .count(`${typeToTable[this.type]}.cumulus_id as count`)
+        .groupByRaw(knex.raw("error ->> 'Error'"))
         .orderBy('count', 'desc');
     } else {
       query.select(`${typeToTable[this.type]}.${this.queryStringParameters.field}`)
-        .count('* as count')
+        .count(`${typeToTable[this.type]}.cumulus_id as count`)
         .groupBy(`${typeToTable[this.type]}.${this.queryStringParameters.field}`)
         .orderBy('count', 'desc');
     }
@@ -268,10 +269,11 @@ class StatsSearch extends BaseSearch {
     if (this.queryStringParameters.timestamp__to) {
       searchQuery.where(`${typeToTable[this.type]}.updated_at`, '<=', new Date(Number.parseInt(this.queryStringParameters.timestamp__to as string, 10)));
     }
-    if (this.queryStringParameters.status) {
-      searchQuery.where(`${typeToTable[this.type]}.status`, '=', this.queryStringParameters.status);
-    }
-    return { searchQuery };
+    const { term = {} } = this.dbQueryParameters;
+    return super.buildTermQuery({
+      ...params,
+      dbQueryParameters: { term: omit(term, ['collectionName', 'collectionVersion', 'pdrName', 'error.Error', 'providerName']) },
+    });
   }
 
   /**
