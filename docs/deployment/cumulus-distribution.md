@@ -70,7 +70,9 @@ Since your Cumulus Distribution API Gateway URL is private, the only way you can
 
 ### Setting up SSH Keypair
 
-#### *Note - Setting up a keypair is optional if your organization is making use of alternative authentication mechanisms built into the AMI*
+:::note
+Setting up a keypair is optional if your organization is making use of alternative authentication mechanisms built into the AMI
+:::
 
 To create or import an existing key pair, you can use the AWS CLI (see AWS [ec2 import-key-pair](https://docs.aws.amazon.com/cli/latest/reference/ec2/import-key-pair.html)), or the AWS Console (see [Amazon EC2 key pairs and Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)).
 
