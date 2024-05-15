@@ -155,7 +155,7 @@ Waiting for connections...
 
 In another terminal window, open a tunnel with port forwarding using your chosen port from above (e.g., 9000):
 
-##### Using SSH keypair authentication
+#### Using SSH keypair authentication
 
 ```bash
 ssh -4 -p 6000 -N -L <port>:<api-gateway-host>:443 ec2-user@127.0.0.1
