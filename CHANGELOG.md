@@ -122,6 +122,12 @@ modification.
     CommmonJS typescript/webpack clients.
 
 ### Changed
+- **CUMULUS-3725**
+  - Updated the default parameter group for `cumulus-rds-tf` to set `force_ssl`
+    to 0. This setting for the Aurora Serverless v2 database allows non-SSL
+    connections to the database, and is intended to be a temporary solution
+    until Cumulus has been updated to import the RDS rds-ca-rsa2048-g1 CA bundles in Lambda environments.
+    See [CUMULUS-3724](https://bugs.earthdata.nasa.gov/browse/CUMULUS-3724).
 - **CUMULUS-3951**
   - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
   - Update all integration/unit tests to use encrypted SNS topics
