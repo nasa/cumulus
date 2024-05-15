@@ -7,6 +7,12 @@ export type QueryStringParameters = {
   prefix?: string,
   sort_by?: string,
   sort_key?: string,
+  type?: string,
+  field?: string,
+  provider?: string,
+  collectionId?: string,
+  timestamp__to?: string,
+  timestamp__from?: string,
   [key: string]: string | string[] | undefined,
 };
 
