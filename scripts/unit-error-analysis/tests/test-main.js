@@ -1,6 +1,5 @@
 const test = require('ava');
 const { putFile, createBucket, deleteS3Buckets } = require('@cumulus/aws-client/S3');
-const clone = require('lodash/clone');
 const {
   organizeByErrorType,
   organizeByDate,
