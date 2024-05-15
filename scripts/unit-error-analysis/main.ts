@@ -1,30 +1,48 @@
-import minimist from 'minimist';
 
+//@ts-check
+
+import minimist from 'minimist';
+import moment from 'moment';
 import { listS3ObjectsV2Batch } from "@cumulus/aws-client/S3";
 
 interface UnitErrorArgs {
   prefix: string
-  date: Date
+  date: string
+  bucket: string
+}
+const momentFormat = 'YYYY.mm.DDTHH.mm.ss';
+
+export const extractDate = (key: string): string => {
+  const keySegments = key.split('/');
+  keySegments.pop();
+  const date = keySegments.pop();
+  console.log(date);
+  return moment(date).format(momentFormat);
+}
+const compare = (a: string, b: string) => {
+  console.log(a, b);
+  return a > b
 }
 
-const getKeys = async (
-  branch: string = "master",
-  date: Date,
+export const getErrorLogs = async (
+  branch: string = 'master',
+  date: string,
+  bucket: string = 'unit-test-error-logs'
 ): Promise<Array<any>> => {
   const objects: Array<any> = [];
   for await (
-    const objectBatch of listS3ObjectsV2Batch({ Bucket: 'unit-test-error-logs-example', Prefix: branch })
+    const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: branch })
   ) {
+    console.log(objectBatch);
     if (objectBatch){
       objectBatch.filter(
-        (object) => object.LastModified && object.Key && object.Key.endsWith('.log') && object.LastModified > date
+        (object) => object.Key && object.Key.endsWith('.log') && compare(extractDate(object.Key),date)
       ).forEach((object) => objects.push(object.Key));
     }
   }
   return objects;
 }
-
-const analyzeKeys = async (keys: Array<string>) => {
+export const organizeByErrorType = (keys: Array<string>): {[key:string]: Array<string>} => {
   const mapping: {[key:string]: Array<string>} = {}
   keys.forEach((key) => {
     const segments = key.split('/')
@@ -37,7 +55,9 @@ const analyzeKeys = async (keys: Array<string>) => {
     mapping[errorPoint].push(key);
   })
   Object.values(mapping).forEach((list) => list.sort());
-  console.log(mapping);
+  return mapping;
+}
+export const organizeByDate = (keys: Array<string>): Array<Array<string>> => {
   const sortedList: Array<Array<string>> = [];
   keys.forEach((key) => {
     const segments = key.split('/')
@@ -51,17 +71,18 @@ const analyzeKeys = async (keys: Array<string>) => {
     );
   })
   sortedList.sort((a, b)=> a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0);
-  console.log(sortedList);
-}; 
+  return sortedList;
+}
 
 export const processArgs = async (): Promise<UnitErrorArgs> => {
   const {
     prefix,
     date,
+    bucket,
   } = minimist(
     process.argv,
     {
-      string: ['prefix', 'date'],
+      string: ['prefix', 'date', 'bucket'],
       alias: {
         p: 'prefix',
         key: 'prefix',
@@ -73,22 +94,27 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
       },
       default: {
         prefix: 'master',
-        date: undefined
+        date: undefined,
+        bucket: 'unit-test-error-logs'
       },
     }
   );
   return {
     prefix,
-    date: date ? new Date(date) : new Date(),
+    date: moment(date).format(momentFormat),
+    bucket,
   };
 };
 const main = async () => {
   const {
     prefix,
-    date
+    date,
+    bucket
   } = await processArgs();
-  const keys = await getKeys(prefix, date);
-  analyzeKeys(keys);
+
+  const keys = await getErrorLogs(prefix, date, bucket);
+  console.log(organizeByDate(keys));
+  console.log(organizeByErrorType(keys));
 
 };
 
