@@ -169,7 +169,7 @@ variable "db_parameters" {
     },
     {
       name         = "rds.force_ssl"
-      value        = 1
+      value        = 0
       apply_method = "pending-reboot"
     }
   ]
