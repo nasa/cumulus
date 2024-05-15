@@ -181,9 +181,9 @@ class StatsSearch extends BaseSearch {
     let groupStrings = '';
     this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     if (this.queryStringParameters.field.includes('error.Error')) {
-      groupStrings = `${groupStrings}*` + (knex.raw("error ->>'Error'->>'keyword' as error"), knex.raw('COUNT(*) as count'));
+      groupStrings += (knex.raw("error #>> '{Error, keyword}' as error"));
     } else {
-      groupStrings += (` ${this.queryStringParameters.type}.${this.queryStringParameters.field}`);
+      groupStrings += (`${this.queryStringParameters.type}.${this.queryStringParameters.field}`);
     }
     return groupStrings;
   }
@@ -197,7 +197,7 @@ class StatsSearch extends BaseSearch {
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex): Knex.QueryBuilder {
     this.queryStringParameters.field = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
     if (this.queryStringParameters.field.includes('error.Error')) {
-      query.select(knex.raw("error #>> '{Error, keyword}' as error"), knex.raw('COUNT(*) as count')).groupByRaw("error #>> '{Error, keyword}'").orderByRaw('count DESC');
+      query.select(knex.raw("error #>> '{Error, keyword}' as error")).count('* as count').groupByRaw("error #>> '{Error, keyword}'").orderBy('count', 'desc');
     } else {
       query.select(`${this.queryStringParameters.type}.${this.queryStringParameters.field}`).count('* as count').groupBy(`${this.queryStringParameters.type}.${this.queryStringParameters.field}`)
         .orderBy('count', 'desc');
