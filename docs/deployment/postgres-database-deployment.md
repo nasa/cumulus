@@ -403,6 +403,7 @@ Replace HOST value and PORT value with the values retrieved from Secrets Manager
 The LocalForward number 9202 can be any unused LocalForward number in your SSH config:
 
 ##### Using SSH keypair authentication
+
 ```shell
 Host ssm-proxy
   Hostname 127.0.0.1
