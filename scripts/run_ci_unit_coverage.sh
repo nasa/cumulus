@@ -5,6 +5,7 @@ tail -f ./test_output.txt &
 TAIL_PID=$!
 
 npm run test:ci > ./test_output.txt 2>&1
+
 RESULT=$?
 if [ -n "$(ls -A ./unit-logs/@cumulus 2>/dev/null)" ]
 then 
@@ -14,7 +15,9 @@ fi
 kill -9 $TAIL_PID
 if [ $RESULT ]
 then
-    return $RESULT
+    printf '\n\n\n*****TEST FAILURES:\n'
+    grep '✘' ./test_output.txt
+    exit $RESULT
 fi
 npm run coverage -- --noRerun
-return $RESULT
+exit $RESULT
