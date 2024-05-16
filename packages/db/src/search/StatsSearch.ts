@@ -15,7 +15,7 @@ type TotalSummary = {
 
 type Aggregate = {
   count: string,
-  aggregatedField: string,
+  aggregatedfield: string,
 };
 
 type Summary = {
@@ -66,6 +66,7 @@ class StatsSearch extends BaseSearch {
   constructor(event: QueryEvent, type: string) {
     super(event, type);
     this.tableName = typeToTable[this.type];
+    this.queryStringParameters.field = this.queryStringParameters.field ?? 'status';
   }
 
   /** Formats the postgres records into an API stats/aggregate response
@@ -76,11 +77,10 @@ class StatsSearch extends BaseSearch {
   private formatAggregateResult(result: Record<string, Aggregate>): ApiAggregateResult {
     let totalCount = 0;
     const responses = [];
-    const localField = this.queryStringParameters.field ?? 'status';
     for (const row of Object.keys(result)) {
       responses.push(
         {
-          key: result[row].aggregatedField,
+          key: result[row].aggregatedfield,
           count: Number.parseInt(result[row].count, 10),
         }
       );
@@ -90,7 +90,7 @@ class StatsSearch extends BaseSearch {
       meta: {
         name: 'cumulus-api',
         count: totalCount,
-        field: `${localField}`,
+        field: `${this.queryStringParameters.field}`,
       },
       count: responses,
     };
@@ -167,9 +167,8 @@ class StatsSearch extends BaseSearch {
   /** Performs joins on the provider and/or collection table if neccessary
    *
    * @param {Knex} knex - the knex client to be used
-   * @returns {Knex.QueryBuilder} the knex query of a joined table or not based on queryStringParams
    */
-  private joinTables(query: Knex.QueryBuilder): Knex.QueryBuilder {
+  private joinTables(query: Knex.QueryBuilder) {
     if (this.queryStringParameters.collectionId) {
       query.join(`${TableNames.collections}`, `${this.tableName}.collection_cumulus_id`, 'collections.cumulus_id');
     }
@@ -177,7 +176,6 @@ class StatsSearch extends BaseSearch {
     if (this.queryStringParameters.provider) {
       query.join(`${TableNames.providers}`, `${this.tableName}.provider_cumulus_id`, 'providers.cumulus_id');
     }
-    return query;
   }
 
   /** Aggregates the search query based on queryStringParameters
@@ -186,14 +184,13 @@ class StatsSearch extends BaseSearch {
    * @param {Knex} knex - the knex client to be used
    */
   private aggregateQueryField(query: Knex.QueryBuilder, knex: Knex) {
-    const localField = this.queryStringParameters.field ? this.queryStringParameters.field : 'status';
-    if (localField?.includes('error.Error')) {
-      query.select(knex.raw("error ->> 'Error' as aggregatedField"));
+    if (this.queryStringParameters.field?.includes('error.Error')) {
+      query.select(knex.raw("error ->> 'Error' as aggregatedfield"));
     } else {
-      query.select(`${this.tableName}.${localField} as aggregatedField`);
+      query.select(`${this.tableName}.${this.queryStringParameters.field} as aggregatedfield`);
     }
-    query.modify((query) => this.joinTables(query));
-    query.count(`${this.tableName}.cumulus_id as count`).groupBy('aggregatedField').orderBy('count', 'desc');
+    query.modify((queryBuilder) => this.joinTables(queryBuilder));
+    query.count(`${this.tableName}.cumulus_id as count`).groupBy('aggregatedfield').orderBy('count', 'desc');
   }
 
   /**
@@ -206,7 +203,7 @@ class StatsSearch extends BaseSearch {
     : {
       searchQuery: Knex.QueryBuilder,
     } {
-    let searchQuery:Knex.QueryBuilder = knex(`${this.tableName}`);
+    const searchQuery:Knex.QueryBuilder = knex(`${this.tableName}`);
     this.aggregateQueryField(searchQuery, knex);
     return { searchQuery };
   }

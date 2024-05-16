@@ -317,12 +317,12 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   };
   const AggregateSearch = new StatsSearch({ queryStringParameters }, 'granule');
   const results = await AggregateSearch.aggregate(knex);
-  console.log("RESULTS", results);
   t.is(results.meta.count, 100);
   t.is(results.count.find((item) => item.key === 'CmrFailure').count, 20);
   t.is(results.count.find((item) => item.key === 'UnknownError').count, 20);
   t.is(results.count.find((item) => item.key === 'IngestFailure').count, 20);
   t.is(results.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 20);
+
   queryStringParameters = {
     type: 'granules',
     field: 'error.Error.keyword',
@@ -336,6 +336,19 @@ test('StatsSearch returns correct response when queried by error', async (t) => 
   t.is(results2.count.find((item) => item.key === 'UnknownError').count, 6);
   t.is(results2.count.find((item) => item.key === 'IngestFailure').count, 7);
   t.is(results2.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 6);
+
+  queryStringParameters = {
+    type: 'granules',
+    collectionId: 'testCollection___1',
+    providerId: 'testProvider1',
+    field: 'error.Error.keyword',
+    timestamp__to: `${(new Date(2019, 12, 9)).getTime()}`,
+    timestamp__from: `${(new Date(2018, 1, 28)).getTime()}`,
+  };
+  const AggregateSearch3 = new StatsSearch({ queryStringParameters }, 'granule');
+  const results3 = await AggregateSearch3.aggregate(knex);
+  t.is(results3.meta.count, 2);
+  t.is(results3.count.find((item) => item.key === 'CumulusMessageAdapterError').count, 2);
 });
 
 test('StatsSearch can query by infix and prefix when type is defined', async (t) => {
