@@ -120,8 +120,12 @@ modification.
 - **CUMULUS-3433**
   - Added `importGot` helper method to import `got` as an ESM module in
     CommmonJS typescript/webpack clients.
+- **CUMULUS-3606**
+  - Updated  with additional documentation covering tunneling configuration
+    using a PKCS11 provider
 
 ### Changed
+
 - **CUMULUS-3951**
   - Enable server-side encryption for all SNS topcis deployed by Cumulus Core
   - Update all integration/unit tests to use encrypted SNS topics
