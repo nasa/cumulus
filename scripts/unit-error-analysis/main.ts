@@ -1,7 +1,6 @@
-
 import minimist from 'minimist';
 import moment from 'moment';
-import { listS3ObjectsV2Batch } from "@cumulus/aws-client/S3";
+import { listS3ObjectsV2Batch } from '@cumulus/aws-client/S3';
 
 interface UnitErrorArgs {
   prefix: string
@@ -12,14 +11,13 @@ const momentFormat = 'YYYY-mm-DDTHH.mm.ss';
 
 //expects key in format <branch>/YYYY-mm-DDTHH.MM.SS/<error>.log
 export const extractError = (key: string): string => key.split('/')?.pop()?.split('.')[0] || 'unknown';
-  
 
 export const extractDate = (key: string): string => {
   //expects key in format <branch>/YYYY-mm-DDTHH.MM.SS/<error>.log
   const keySegments = key.split('/');
   const out = moment(keySegments[keySegments.length - 2], momentFormat).format(momentFormat);
   return out;
-}
+};
 
 export const getErrorLogs = async (
   branch: string = 'master',
@@ -30,26 +28,28 @@ export const getErrorLogs = async (
   for await (
     const objectBatch of listS3ObjectsV2Batch({ Bucket: bucket, Prefix: branch })
   ) {
-    if (objectBatch){
+    if (objectBatch) {
       objectBatch.filter(
         (object) => object.Key && object.Key.endsWith('.log') && extractDate(object.Key) > date
       ).forEach((object) => objects.push(object.Key));
     }
   }
   return objects;
-}
-export const organizeByErrorType = (keys: Array<string>): {[key:string]: Array<string>} => {
-  const mapping: {[key:string]: Array<string>} = {}
+};
+
+export const organizeByErrorType = (keys: Array<string>): { [key: string]: Array<string> } => {
+  const mapping: { [key: string]: Array<string> } = {};
   keys.forEach((key) => {
     const error = extractError(key);
-    if(!(error in mapping)) {
+    if (!(error in mapping)) {
       mapping[error] = [];
     }
     mapping[error].push(key);
-  })
+  });
   Object.values(mapping).forEach((list) => list.sort());
   return mapping;
-}
+};
+
 export const organizeByDate = (keys: Array<string>): Array<Array<string>> => {
   const sortedList: Array<Array<string>> = [];
   keys.forEach((key) => {
@@ -58,10 +58,10 @@ export const organizeByDate = (keys: Array<string>): Array<Array<string>> => {
     sortedList.push(
       [errorDate, error]
     );
-  })
-  sortedList.sort((a, b)=> a[0] > b[0] ? 1 : a[0] < b[0] ? -1 : 0);
+  });
+  sortedList.sort((a, b) => (a[0] > b[0] ? 1 : (a[0] < b[0] ? -1 : 0)));
   return sortedList;
-}
+};
 
 export const processArgs = async (): Promise<UnitErrorArgs> => {
   const {
@@ -79,12 +79,12 @@ export const processArgs = async (): Promise<UnitErrorArgs> => {
         path: 'prefix',
         b: 'prefix',
         branch: 'prefix',
-        d: 'date'
+        d: 'date',
       },
       default: {
         prefix: 'master',
         date: undefined,
-        bucket: 'unit-test-error-logs'
+        bucket: 'unit-test-error-logs',
       },
     }
   );
@@ -98,12 +98,11 @@ const main = async () => {
   const {
     prefix,
     date,
-    bucket
+    bucket,
   } = await processArgs();
   const keys = await getErrorLogs(prefix, date, bucket);
   console.log(organizeByDate(keys));
   console.log(organizeByErrorType(keys));
-
 };
 
 if (require.main === module) {
@@ -114,4 +113,4 @@ if (require.main === module) {
     console.log(`failed: ${error}`);
     throw error;
   });
-};
+}
